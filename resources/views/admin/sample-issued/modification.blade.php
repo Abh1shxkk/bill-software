@@ -252,7 +252,17 @@ let originalItems = []; // Store original items for comparison during update
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
-    loadPartyList();
+    
+    // Auto-load transaction if ID is passed in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const loadId = urlParams.get('load');
+    if (loadId) {
+        // Don't load party list initially if we're loading a transaction
+        setTimeout(() => loadTransactionData(loadId), 300);
+    } else {
+        // Only load party list if not loading a transaction
+        loadPartyList();
+    }
 });
 
 function updateDayName() {
@@ -409,9 +419,15 @@ function populateForm(transaction) {
         partyTypeSelect.value = transaction.party_type;
     }
     
-    // Load party list and set party_id AFTER party list is loaded
-    loadPartyList().then(() => {
-        const partySelect = document.getElementById('party_id');
+    // Set party name immediately while loading party list
+    const partySelect = document.getElementById('party_id');
+    if (transaction.party_id && transaction.party_name) {
+        // Set a temporary option with the party name so it shows immediately
+        partySelect.innerHTML = `<option value="${transaction.party_id}" data-name="${transaction.party_name}" selected>${transaction.party_name}</option>`;
+    }
+    
+    // Load party list with preserveSelection=true to keep the current selection visible
+    loadPartyList(true).then(() => {
         if (transaction.party_id) {
             // Try to set the value
             partySelect.value = transaction.party_id;
@@ -515,12 +531,19 @@ function addItemRowFromData(item) {
 }
 
 // ============ PARTY DROPDOWN FUNCTIONS ============
-function loadPartyList() {
+function loadPartyList(preserveSelection = false) {
     return new Promise((resolve) => {
         const partyType = document.getElementById('party_type').value;
         const partySelect = document.getElementById('party_id');
         
-        partySelect.innerHTML = '<option value="">-- Loading... --</option>';
+        // Preserve current selection if needed
+        const currentValue = partySelect.value;
+        const currentText = partySelect.options[partySelect.selectedIndex]?.text || '';
+        const currentDataName = partySelect.options[partySelect.selectedIndex]?.dataset?.name || '';
+        
+        if (!preserveSelection) {
+            partySelect.innerHTML = '<option value="">-- Loading... --</option>';
+        }
         
         fetch(`{{ url('admin/sample-issued/get-party-list') }}?party_type=${partyType}`)
             .then(response => response.json())
@@ -533,6 +556,20 @@ function loadPartyList() {
                     option.dataset.name = party.name;
                     partySelect.appendChild(option);
                 });
+                
+                // Restore selection if it was preserved
+                if (preserveSelection && currentValue) {
+                    partySelect.value = currentValue;
+                    // If not found in list, add it back
+                    if (partySelect.value != currentValue && currentText) {
+                        const option = document.createElement('option');
+                        option.value = currentValue;
+                        option.textContent = currentText;
+                        option.dataset.name = currentDataName || currentText;
+                        option.selected = true;
+                        partySelect.appendChild(option);
+                    }
+                }
                 resolve();
             })
             .catch(error => {
@@ -979,6 +1016,9 @@ function updateTransaction() {
     });
     formData.append('total_qty', totalQty);
     formData.append('total_amount', document.getElementById('net_amount').value);
+    
+    // Ensure _method is set to PUT for Laravel method spoofing
+    formData.set('_method', 'PUT');
     
     fetch(`{{ url('admin/sample-issued') }}/${loadedTransactionId}`, {
         method: 'POST',

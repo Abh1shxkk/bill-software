@@ -93,7 +93,7 @@
               <a class="btn btn-sm btn-outline-info" href="{{ route('admin.sample-issued.show', $transaction->id) }}" title="View Details">
                 <i class="bi bi-eye"></i>
               </a>
-              <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.sample-issued.edit', $transaction->id) }}" title="Edit">
+              <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.sample-issued.modification') }}?load={{ $transaction->id }}" title="Edit">
                 <i class="bi bi-pencil"></i>
               </a>
               <button type="button" class="btn btn-sm btn-outline-danger delete-si" 
