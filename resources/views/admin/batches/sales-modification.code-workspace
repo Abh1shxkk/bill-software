@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../../Users/abhis/Downloads/sales-modification"
+		},
+		{
+			"path": "../../../../../../../Users/abhis/Downloads/Purchase-transaction"
+		},
+		{
+			"path": "../../../.."
+		}
+	],
+	"settings": {
+		"liveServer.settings.port": 5501,
+		"liveServer.settings.multiRootWorkspaceName": "Purchase-transaction"
+	}
+}
