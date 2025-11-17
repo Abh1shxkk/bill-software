@@ -229,6 +229,16 @@
                     <li><a class="dropdown-item" href="{{ route('admin.sample-received.index') }}">Invoice</a></li>
                   </ul>
                 </li>
+
+                <!-- Godown Breakage/Expiry -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Godown Breakage/Expiry</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.godown-breakage-expiry.create') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.godown-breakage-expiry.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.godown-breakage-expiry.index') }}">Invoice</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
           </ul>
