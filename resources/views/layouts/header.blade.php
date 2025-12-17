@@ -130,6 +130,16 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Misc Transaction</a>
               <ul class="dropdown-menu">
+                <!-- Quotation -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Quotation</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.quotation.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.quotation.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.quotation.index') }}">Quotation List</a></li>
+                  </ul>
+                </li>
+                
                 <!-- Replacement Note -->
                 <li class="dropdown-submenu">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Replacement Note</a>
