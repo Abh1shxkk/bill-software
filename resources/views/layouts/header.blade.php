@@ -248,6 +248,16 @@
                     <li><a class="dropdown-item" href="{{ route('admin.pending-order-item.index') }}">List</a></li>
                   </ul>
                 </li>
+
+                <!-- Claim to Supplier -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Claim to Supplier</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.claim-to-supplier.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.claim-to-supplier.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.claim-to-supplier.index') }}">Claim Invoices</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
           </ul>
@@ -317,14 +327,21 @@
     border: none;
   }
 
-  /* Dropdown menu styling */
+  /* Dropdown menu styling - Windows 11 Style (Sharp) */
   .dropdown-menu {
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 0px; /* Sharp corners */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     border: 1px solid rgba(0, 0, 0, 0.08);
-    padding: 0.25rem 0;
+    padding: 4px;
     display: none;
     font-size: 12px;
+    background-color: #ffffff;
+    animation: dropdownFadeIn 0.15s ease-out;
+  }
+  
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .dropdown-menu.show {
@@ -332,14 +349,18 @@
   }
 
   .dropdown-item {
-    padding: 0.3rem 0.8rem;
-    transition: all 0.2s ease;
+    padding: 6px 12px;
+    margin: 0; /* Full width items for sharp look */
+    width: 100%;
+    border-radius: 0px; /* Sharp corners */
+    transition: all 0.1s ease;
     white-space: nowrap;
     font-size: 12px;
+    position: relative;
   }
 
-  .dropdown-item:hover {
-    background-color: rgba(13, 110, 253, 0.1);
+  .dropdown-item:hover, .dropdown-item:focus {
+    background-color: rgba(13, 110, 253, 0.1); /* Keep original color */
     color: #0d6efd;
   }
 
@@ -352,59 +373,59 @@
     top: -4px;
     left: 100%;
     margin-top: 0;
-    margin-left: 0;
+    margin-left: 6px; /* Slight gap */
     min-width: 160px;
     z-index: 1060;
-    padding-left: 0;
   }
   
-  /* Add invisible bridge to prevent menu closing when moving cursor */
+  /* Remove the old invisible bridge as we use JS delay now, 
+     but keeping a small one doesn't hurt for fast movements */
   .dropdown-submenu > .dropdown-menu::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -20px;
-    width: 20px;
+    left: -10px;
+    width: 10px;
     height: 100%;
     background: transparent;
   }
   
-  /* Keep parent item highlighted when hovering submenu */
-  .dropdown-submenu > .dropdown-toggle {
-    position: relative;
-  }
-  
-  /* Extend clickable area of parent toggle */
-  .dropdown-submenu > .dropdown-toggle::after {
-    display: none;
-  }
-  
-  /* Add right padding extension for easier hover */
-  .dropdown-submenu > .dropdown-toggle::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -15px;
-    width: 15px;
-    height: 100%;
-    background: transparent;
-  }
-
   /* Submenu opens upward when near bottom */
   .dropdown-submenu.dropup > .dropdown-menu {
     top: auto;
     bottom: 0;
   }
 
-  /* Show submenu on hover */
-  .dropdown-submenu:hover > .dropdown-menu {
-    display: block !important;
-  }
-
   /* Active/hover state for submenu toggle */
   .dropdown-submenu:hover > .dropdown-toggle {
     background-color: rgba(13, 110, 253, 0.1);
     color: #0d6efd;
+  }
+
+  /* Align submenu arrow to right and use sharp SVG */
+  .dropdown-submenu > .dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dropdown-submenu > .dropdown-toggle::after {
+    border: none;
+    content: "";
+    width: 10px;
+    height: 10px;
+    /* Sharp chevron right SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23666' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpath d='M6 12l4-4-4-4'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    transform: none;
+    margin-left: 10px;
+  }
+
+  /* Change arrow color on hover */
+  .dropdown-submenu > .dropdown-toggle:hover::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230d6efd' stroke-width='1.5' stroke-linecap='square' stroke-linejoin='miter'%3E%3Cpath d='M6 12l4-4-4-4'/%3E%3C/svg%3E");
   }
 </style>
 <script>
@@ -450,35 +471,58 @@
       }
     }
 
-    // Submenu functionality for nested dropdowns
+    // Submenu functionality for nested dropdowns with Delay
     document.querySelectorAll('.dropdown-submenu').forEach(function (submenu) {
       const submenuDropdown = submenu.querySelector(':scope > .dropdown-menu');
       const toggle = submenu.querySelector(':scope > .dropdown-toggle');
+      let enterTimeout;
+      let leaveTimeout;
       
-      // Mouse enter - open submenu
+      // Mouse enter - open submenu with slight delay
       submenu.addEventListener('mouseenter', function () {
-        if (submenuDropdown) {
-          // Close sibling submenus first
-          const parentMenu = submenu.closest('.dropdown-menu');
-          if (parentMenu) {
-            parentMenu.querySelectorAll(':scope > .dropdown-submenu > .dropdown-menu').forEach(function(menu) {
-              if (menu !== submenuDropdown) {
-                menu.classList.remove('show');
+        clearTimeout(leaveTimeout); // Cancel any pending close
+        
+        enterTimeout = setTimeout(function() {
+            if (submenuDropdown) {
+              // Close sibling submenus first
+              const parentMenu = submenu.closest('.dropdown-menu');
+              if (parentMenu) {
+                parentMenu.querySelectorAll(':scope > .dropdown-submenu > .dropdown-menu').forEach(function(menu) {
+                  if (menu !== submenuDropdown) {
+                    menu.classList.remove('show');
+                  }
+                });
               }
-            });
-          }
-          submenuDropdown.classList.add('show');
-          setTimeout(function() { adjustSubmenuPosition(submenu, submenuDropdown); }, 10);
-        }
+              submenuDropdown.classList.add('show');
+              adjustSubmenuPosition(submenu, submenuDropdown);
+            }
+        }, 300); // 300ms delay to prevent accidental opening
       });
 
-      // Mouse leave - close submenu
+      // Mouse leave - close submenu with delay
       submenu.addEventListener('mouseleave', function () {
-        if (submenuDropdown) {
-          submenuDropdown.classList.remove('show');
-          submenu.classList.remove('dropup');
-        }
+        clearTimeout(enterTimeout); // Cancel any pending open
+        
+        leaveTimeout = setTimeout(function() {
+            if (submenuDropdown) {
+              submenuDropdown.classList.remove('show');
+              submenu.classList.remove('dropup');
+            }
+        }, 600); // 600ms delay to allow moving to submenu
       });
+
+      // Keep submenu open when hovering the menu itself
+      if (submenuDropdown) {
+          submenuDropdown.addEventListener('mouseenter', function() {
+              clearTimeout(leaveTimeout);
+          });
+          submenuDropdown.addEventListener('mouseleave', function() {
+              leaveTimeout = setTimeout(function() {
+                  submenuDropdown.classList.remove('show');
+                  submenu.classList.remove('dropup');
+              }, 600);
+          });
+      }
 
       // Click support for mobile/touch devices
       if (toggle) {
@@ -499,7 +543,7 @@
             
             if (!isShowing) {
               submenuDropdown.classList.add('show');
-              setTimeout(function() { adjustSubmenuPosition(submenu, submenuDropdown); }, 10);
+              adjustSubmenuPosition(submenu, submenuDropdown);
             } else {
               submenuDropdown.classList.remove('show');
               submenu.classList.remove('dropup');
