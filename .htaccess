@@ -1,6 +1,6 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /bill-software1/
+    RewriteBase /bill-software/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
@@ -14,13 +14,13 @@
     # Serve files directly from public directory if they exist
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{DOCUMENT_ROOT}/bill-software1/public/$1 -f
+    RewriteCond %{DOCUMENT_ROOT}/bill-software/public/$1 -f
     RewriteRule ^(.*)$ public/$1 [L]
 
     # Serve directories directly from public directory if they exist
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{DOCUMENT_ROOT}/bill-software1/public/$1 -d
+    RewriteCond %{DOCUMENT_ROOT}/bill-software/public/$1 -d
     RewriteRule ^(.*)$ public/$1 [L]
 
     # Send all other requests to Front Controller

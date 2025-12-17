@@ -402,12 +402,12 @@ Route::middleware(['admin'])->group(function () {
         Route::get('sample-received/get-items', [SampleReceivedController::class, 'getItems'])->name('sample-received.getItems');
         Route::get('sample-received/load-by-trn-no', [SampleReceivedController::class, 'loadByTrnNo'])->name('sample-received.loadByTrnNo');
         Route::get('sample-received/get-party-list', [SampleReceivedController::class, 'getPartyList'])->name('sample-received.getPartyList');
+        Route::get('sample-received/get-past-invoices', [SampleReceivedController::class, 'getPastInvoices'])->name('sample-received.getPastInvoices');
+        Route::get('sample-received-modification', [SampleReceivedController::class, 'modification'])->name('sample-received.modification');
         Route::get('sample-received/{id}', [SampleReceivedController::class, 'show'])->name('sample-received.show');
         Route::get('sample-received/{id}/edit', [SampleReceivedController::class, 'edit'])->name('sample-received.edit');
         Route::put('sample-received/{id}', [SampleReceivedController::class, 'update'])->name('sample-received.update');
         Route::delete('sample-received/{id}', [SampleReceivedController::class, 'destroy'])->name('sample-received.destroy');
-        Route::get('sample-received-modification', [SampleReceivedController::class, 'modification'])->name('sample-received.modification');
-        Route::get('sample-received/get-past-invoices', [SampleReceivedController::class, 'getPastInvoices'])->name('sample-received.getPastInvoices');
         
         // Purchase Return Routes
         Route::get('purchase-return', [PurchaseReturnController::class, 'index'])->name('purchase-return.index');
