@@ -261,38 +261,46 @@ function populateForm(quotation) {
     const customerSelect = document.getElementById('customer_id');
     const customerNameInput = document.getElementById('customer_name');
     
-    // Reset dropdown first
-    customerSelect.value = '';
+    // Get customer info - try from customer relation first, then from quotation fields
+    const customerId = quotation.customer?.id || quotation.customer_id;
+    const customerName = quotation.customer?.name || quotation.customer_name;
     
-    if (quotation.customer_id) {
-        // Try to select existing option
-        customerSelect.value = quotation.customer_id;
-        
-        // If customer not found in dropdown, add it
-        if (customerSelect.value != quotation.customer_id && quotation.customer_name) {
-            const option = document.createElement('option');
-            option.value = quotation.customer_id;
-            option.textContent = quotation.customer_name;
-            option.dataset.name = quotation.customer_name;
-            customerSelect.appendChild(option);
-            customerSelect.value = quotation.customer_id;
-        }
-    } else if (quotation.customer_name) {
-        // If no customer_id but has customer_name, find by name in dropdown
+    // Set customer name immediately
+    customerNameInput.value = customerName || '';
+    
+    if (customerId) {
+        // Check if option already exists
+        let found = false;
         for (let i = 0; i < customerSelect.options.length; i++) {
-            if (customerSelect.options[i].textContent === quotation.customer_name) {
-                customerSelect.selectedIndex = i;
+            if (customerSelect.options[i].value == customerId) {
+                found = true;
                 break;
             }
         }
-    }
-    
-    // Set customer name from quotation data
-    customerNameInput.value = quotation.customer_name || '';
-    
-    // Update from dropdown if selected
-    if (customerSelect.value) {
-        updateCustomerName();
+        
+        // If customer not found in dropdown, add it as a new option
+        if (!found && customerName) {
+            const option = new Option(customerName, customerId, true, true);
+            option.dataset.name = customerName;
+            customerSelect.appendChild(option);
+        }
+        
+        // Set value and trigger Select2 update
+        customerSelect.value = customerId;
+        if (typeof $ !== 'undefined' && $(customerSelect).data('select2')) {
+            $(customerSelect).val(customerId).trigger('change');
+        }
+    } else if (customerName) {
+        // If no customer_id but has customer_name, find by name in dropdown
+        for (let i = 0; i < customerSelect.options.length; i++) {
+            if (customerSelect.options[i].textContent === customerName) {
+                customerSelect.selectedIndex = i;
+                if (typeof $ !== 'undefined' && $(customerSelect).data('select2')) {
+                    $(customerSelect).trigger('change');
+                }
+                break;
+            }
+        }
     }
     
     document.getElementById('discount_percent').value = quotation.discount_percent || 0;
