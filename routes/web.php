@@ -526,6 +526,19 @@ Route::middleware(['admin'])->group(function () {
         Route::put('stock-adjustment/{id}', [StockAdjustmentController::class, 'update'])->name('stock-adjustment.update');
         Route::delete('stock-adjustment/{id}', [StockAdjustmentController::class, 'destroy'])->name('stock-adjustment.destroy');
         Route::get('stock-adjustment/{id}/details', [StockAdjustmentController::class, 'getDetails'])->name('stock-adjustment.details');
+
+        // Quotation Routes
+        Route::get('quotation', [\App\Http\Controllers\Admin\QuotationController::class, 'index'])->name('quotation.index');
+        Route::get('quotation/transaction', [\App\Http\Controllers\Admin\QuotationController::class, 'transaction'])->name('quotation.transaction');
+        Route::get('quotation/modification', [\App\Http\Controllers\Admin\QuotationController::class, 'modification'])->name('quotation.modification');
+        Route::get('quotation/get-items', [\App\Http\Controllers\Admin\QuotationController::class, 'getItems'])->name('quotation.getItems');
+        Route::get('quotation/get-batches/{itemId}', [\App\Http\Controllers\Admin\QuotationController::class, 'getBatches'])->name('quotation.getBatches');
+        Route::get('quotation/get-quotations', [\App\Http\Controllers\Admin\QuotationController::class, 'getQuotations'])->name('quotation.getQuotations');
+        Route::post('quotation', [\App\Http\Controllers\Admin\QuotationController::class, 'store'])->name('quotation.store');
+        Route::get('quotation/{id}', [\App\Http\Controllers\Admin\QuotationController::class, 'show'])->name('quotation.show');
+        Route::get('quotation/{id}/edit', [\App\Http\Controllers\Admin\QuotationController::class, 'edit'])->name('quotation.edit');
+        Route::put('quotation/{id}', [\App\Http\Controllers\Admin\QuotationController::class, 'update'])->name('quotation.update');
+        Route::post('quotation/{id}/cancel', [\App\Http\Controllers\Admin\QuotationController::class, 'cancel'])->name('quotation.cancel');
     });
     // Profile settings page
     Route::get('/profile', function () {

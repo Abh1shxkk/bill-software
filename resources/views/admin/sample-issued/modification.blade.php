@@ -499,16 +499,16 @@ function addItemRowFromData(item) {
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="${item.qty || 0}" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" value="${parseFloat(item.rate || 0).toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="${parseFloat(item.amount || 0).toFixed(2)}" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
-        <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemId}">
-        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchId}">
-        <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
-        <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || ''}">
-        <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
-        <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${item.hsn_code || ''}">
-        <input type="hidden" name="items[${rowIndex}][mrp]" value="${item.mrp || 0}">
-        <input type="hidden" name="items[${rowIndex}][original_batch_id]" value="${batchId}">
-        <input type="hidden" name="items[${rowIndex}][original_qty]" value="${item.qty || 0}">
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemId}">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchId}">
+            <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
+            <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || ''}">
+            <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
+            <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${item.hsn_code || ''}">
+            <input type="hidden" name="items[${rowIndex}][mrp]" value="${item.mrp || 0}">
+        </td>
     `;
     
     tbody.appendChild(row);
@@ -637,14 +637,16 @@ function selectItemFromModal(item) {
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
-        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
-        <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
-        <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
-        <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || '1'}">
-        <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
-        <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${item.hsn_code || ''}">
-        <input type="hidden" name="items[${rowIndex}][mrp]" value="${item.mrp || 0}">
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
+            <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
+            <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || '1'}">
+            <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
+            <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${item.hsn_code || ''}">
+            <input type="hidden" name="items[${rowIndex}][mrp]" value="${item.mrp || 0}">
+        </td>
     `;
     
     tbody.appendChild(row);
@@ -819,14 +821,16 @@ function addNewRow() {
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
-        <input type="hidden" name="items[${rowIndex}][item_id]" value="">
-        <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
-        <input type="hidden" name="items[${rowIndex}][packing]" value="">
-        <input type="hidden" name="items[${rowIndex}][unit]" value="">
-        <input type="hidden" name="items[${rowIndex}][company_name]" value="">
-        <input type="hidden" name="items[${rowIndex}][hsn_code]" value="">
-        <input type="hidden" name="items[${rowIndex}][mrp]" value="0">
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
+            <input type="hidden" name="items[${rowIndex}][packing]" value="">
+            <input type="hidden" name="items[${rowIndex}][unit]" value="">
+            <input type="hidden" name="items[${rowIndex}][company_name]" value="">
+            <input type="hidden" name="items[${rowIndex}][hsn_code]" value="">
+            <input type="hidden" name="items[${rowIndex}][mrp]" value="0">
+        </td>
     `;
     
     tbody.appendChild(row);
@@ -976,9 +980,21 @@ function updateTransaction() {
     rows.forEach(row => {
         const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
         totalQty += qty;
+        
+        // Debug: Log batch_id for each row
+        const batchIdInput = row.querySelector('input[name*="[batch_id]"]');
+        console.log('Row batch_id:', batchIdInput ? batchIdInput.value : 'NOT FOUND');
     });
     formData.append('total_qty', totalQty);
     formData.append('total_amount', document.getElementById('net_amount').value);
+    
+    // Debug: Log all form data
+    console.log('Form Data being sent:');
+    for (let [key, value] of formData.entries()) {
+        if (key.includes('batch_id') || key.includes('item_id') || key.includes('qty')) {
+            console.log(key + ': ' + value);
+        }
+    }
     
     fetch(`{{ url('admin/sample-issued') }}/${loadedTransactionId}`, {
         method: 'POST',

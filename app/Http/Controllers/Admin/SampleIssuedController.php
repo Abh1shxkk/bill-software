@@ -268,6 +268,7 @@ class SampleIssuedController extends Controller
             foreach ($transaction->items as $oldItem) {
                 if ($oldItem->batch_id) {
                     $oldItemsData[$oldItem->batch_id] = ($oldItemsData[$oldItem->batch_id] ?? 0) + $oldItem->qty;
+                    \Log::info("Old item - Batch ID: {$oldItem->batch_id}, Qty: {$oldItem->qty}");
                 }
             }
             
@@ -275,8 +276,10 @@ class SampleIssuedController extends Controller
             foreach ($oldItemsData as $batchId => $totalQty) {
                 $oldBatch = Batch::find($batchId);
                 if ($oldBatch) {
+                    $beforeQty = $oldBatch->qty;
                     $oldBatch->qty = $oldBatch->qty + $totalQty;
                     $oldBatch->save();
+                    \Log::info("Restored batch {$batchId}: {$beforeQty} + {$totalQty} = {$oldBatch->qty}");
                 }
             }
 
@@ -360,9 +363,13 @@ class SampleIssuedController extends Controller
                 if ($batchIdForItem) {
                     $batch = Batch::find($batchIdForItem);
                     if ($batch) {
+                        $beforeQty = $batch->qty;
                         $batch->qty = max(0, $batch->qty - $qty);
                         $batch->save();
+                        \Log::info("Deducted batch {$batchIdForItem}: {$beforeQty} - {$qty} = {$batch->qty}");
                     }
+                } else {
+                    \Log::info("No batch_id for item, skipping stock deduction");
                 }
 
                 // Create Stock Ledger entry
