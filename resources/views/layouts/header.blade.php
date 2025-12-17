@@ -239,6 +239,15 @@
                     <li><a class="dropdown-item" href="{{ route('admin.godown-breakage-expiry.index') }}">Invoice</a></li>
                   </ul>
                 </li>
+
+                <!-- New Item Generation in Pending Order -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">New Item in Pending Order</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.pending-order-item.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.pending-order-item.index') }}">List</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
           </ul>

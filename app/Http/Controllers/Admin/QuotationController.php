@@ -133,7 +133,7 @@ class QuotationController extends Controller
 
     public function edit($id)
     {
-        $quotation = Quotation::with('items')->findOrFail($id);
+        $quotation = Quotation::with(['items', 'customer'])->findOrFail($id);
         
         if (request()->wantsJson()) {
             return response()->json($quotation);

@@ -551,6 +551,13 @@ Route::middleware(['admin'])->group(function () {
         Route::get('quotation/{id}/edit', [\App\Http\Controllers\Admin\QuotationController::class, 'edit'])->name('quotation.edit');
         Route::put('quotation/{id}', [\App\Http\Controllers\Admin\QuotationController::class, 'update'])->name('quotation.update');
         Route::post('quotation/{id}/cancel', [\App\Http\Controllers\Admin\QuotationController::class, 'cancel'])->name('quotation.cancel');
+
+        // Pending Order Item Routes
+        Route::get('pending-order-item', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'index'])->name('pending-order-item.index');
+        Route::get('pending-order-item/transaction', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'transaction'])->name('pending-order-item.transaction');
+        Route::get('pending-order-item/get-items', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'getItems'])->name('pending-order-item.getItems');
+        Route::post('pending-order-item', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'store'])->name('pending-order-item.store');
+        Route::delete('pending-order-item/{id}', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'destroy'])->name('pending-order-item.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {
