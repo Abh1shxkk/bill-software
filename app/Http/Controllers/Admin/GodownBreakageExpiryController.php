@@ -219,10 +219,13 @@ class GodownBreakageExpiryController extends Controller
 
             $transaction = GodownBreakageExpiryTransaction::with('items')->findOrFail($id);
             
-            // Delete old stock ledger entries (StockLedgerObserver will restore batch quantities)
-            StockLedger::where('reference_type', 'GODOWN_BREAKAGE_EXPIRY')
+            // Delete old stock ledger entries one by one (so StockLedgerObserver triggers and restores batch quantities)
+            $oldStockLedgers = StockLedger::where('reference_type', 'GODOWN_BREAKAGE_EXPIRY')
                 ->where('reference_id', $transaction->id)
-                ->delete();
+                ->get();
+            foreach ($oldStockLedgers as $oldLedger) {
+                $oldLedger->delete(); // This triggers the observer
+            }
 
             // Delete old items
             $transaction->items()->delete();
@@ -325,10 +328,13 @@ class GodownBreakageExpiryController extends Controller
 
             $transaction = GodownBreakageExpiryTransaction::with('items')->findOrFail($id);
 
-            // Delete stock ledger entries (StockLedgerObserver will restore batch quantities)
-            StockLedger::where('reference_type', 'GODOWN_BREAKAGE_EXPIRY')
+            // Delete stock ledger entries one by one (so StockLedgerObserver triggers and restores batch quantities)
+            $oldStockLedgers = StockLedger::where('reference_type', 'GODOWN_BREAKAGE_EXPIRY')
                 ->where('reference_id', $transaction->id)
-                ->delete();
+                ->get();
+            foreach ($oldStockLedgers as $oldLedger) {
+                $oldLedger->delete(); // This triggers the observer
+            }
 
             // Soft delete
             $transaction->update([
@@ -357,23 +363,32 @@ class GodownBreakageExpiryController extends Controller
      */
     public function getItems()
     {
-        $items = Item::select('id', 'name', 'packing', 'mrp', 's_rate', 'p_rate', 'company_short_name', 'hsn_code')
-            ->where('is_deleted', 0)
-            ->orderBy('name')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'packing' => $item->packing,
-                    'mrp' => $item->mrp,
-                    's_rate' => $item->s_rate,
-                    'p_rate' => $item->p_rate,
-                    'company_name' => $item->company_short_name,
-                    'hsn_code' => $item->hsn_code,
-                ];
-            });
+        try {
+            $items = Item::select('id', 'name', 'packing', 'mrp', 's_rate', 'pur_rate', 'cost', 'company_short_name', 'hsn_code', 'unit')
+                ->where(function($query) {
+                    $query->where('is_deleted', 0)
+                          ->orWhere('is_deleted', '0')
+                          ->orWhereNull('is_deleted');
+                })
+                ->orderBy('name')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'packing' => $item->packing,
+                        'mrp' => $item->mrp ?? 0,
+                        's_rate' => $item->s_rate ?? 0,
+                        'p_rate' => $item->pur_rate ?? $item->cost ?? 0,
+                        'company_name' => $item->company_short_name ?? '',
+                        'hsn_code' => $item->hsn_code ?? '',
+                        'unit' => $item->unit ?? '',
+                    ];
+                });
 
-        return response()->json($items);
+            return response()->json($items);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

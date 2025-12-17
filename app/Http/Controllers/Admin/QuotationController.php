@@ -241,34 +241,31 @@ class QuotationController extends Controller
     public function getItems()
     {
         try {
-            // Only get items that have available batches (total_qty > 0)
+            // Get all items (quotation doesn't need stock check)
             $items = Item::select('id', 'name', 'bar_code', 'hsn_code', 'packing', 'company_short_name', 's_rate', 'mrp', 'unit')
-                ->whereHas('batches', function($query) {
-                    $query->where('is_deleted', 0)->where('total_qty', '>', 0);
+                ->where(function($query) {
+                    $query->where('is_deleted', 0)
+                          ->orWhere('is_deleted', '0')
+                          ->orWhereNull('is_deleted');
                 })
-                ->with(['batches' => function($query) {
-                    $query->where('is_deleted', 0)->where('total_qty', '>', 0);
-                }])
+                ->orderBy('name')
                 ->get()
                 ->map(function($item) {
-                    // Calculate total available quantity from batches
-                    $availableQty = $item->batches->sum('total_qty');
-                    
                     return [
                         'id' => $item->id,
                         'name' => $item->name,
-                        'bar_code' => $item->bar_code,
-                        'packing' => $item->packing,
-                        'company_name' => $item->company_short_name ?? 'N/A',
+                        'bar_code' => $item->bar_code ?? '',
+                        'packing' => $item->packing ?? '',
+                        'company_name' => $item->company_short_name ?? '',
                         's_rate' => $item->s_rate ?? 0,
                         'mrp' => $item->mrp ?? 0,
                         'unit' => $item->unit ?? '1',
-                        'available_qty' => $availableQty,
                     ];
                 });
             
             return response()->json($items);
         } catch (\Exception $e) {
+            \Log::error('QuotationController getItems error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }

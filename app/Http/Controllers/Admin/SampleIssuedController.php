@@ -148,16 +148,10 @@ class SampleIssuedController extends Controller
                     'row_order' => $rowOrder++,
                 ]);
 
-                // Decrease batch quantity (Sample Issued = Stock OUT)
-                if ($batchIdForItem) {
-                    $batch = Batch::find($batchIdForItem);
-                    if ($batch) {
-                        $batch->qty = max(0, $batch->qty - $qty);
-                        $batch->save();
-                    }
-                }
+                // NOTE: Batch quantity is automatically updated by StockLedgerObserver
+                // when the stock ledger entry is created below - DO NOT manually deduct here
 
-                // Create Stock Ledger entry - OUT transaction
+                // Create Stock Ledger entry - OUT transaction (Observer will update batch qty)
                 $stockLedger = new StockLedger();
                 $stockLedger->item_id = $transactionItem->item_id;
                 $stockLedger->batch_id = $batchIdForItem;
@@ -263,30 +257,13 @@ class SampleIssuedController extends Controller
 
             $transaction = SampleIssuedTransaction::with('items')->findOrFail($id);
             
-            // Store old items data for batch restoration
-            $oldItemsData = [];
-            foreach ($transaction->items as $oldItem) {
-                if ($oldItem->batch_id) {
-                    $oldItemsData[$oldItem->batch_id] = ($oldItemsData[$oldItem->batch_id] ?? 0) + $oldItem->qty;
-                    \Log::info("Old item - Batch ID: {$oldItem->batch_id}, Qty: {$oldItem->qty}");
-                }
-            }
-            
-            // Restore old batch quantities (reverse the previous decrease)
-            foreach ($oldItemsData as $batchId => $totalQty) {
-                $oldBatch = Batch::find($batchId);
-                if ($oldBatch) {
-                    $beforeQty = $oldBatch->qty;
-                    $oldBatch->qty = $oldBatch->qty + $totalQty;
-                    $oldBatch->save();
-                    \Log::info("Restored batch {$batchId}: {$beforeQty} + {$totalQty} = {$oldBatch->qty}");
-                }
-            }
-
-            // Delete old stock ledger entries
-            StockLedger::where('reference_type', 'SAMPLE_ISSUED')
+            // Delete old stock ledger entries one by one (so StockLedgerObserver triggers and restores batch quantities)
+            $oldStockLedgers = StockLedger::where('reference_type', 'SAMPLE_ISSUED')
                 ->where('reference_id', $transaction->id)
-                ->delete();
+                ->get();
+            foreach ($oldStockLedgers as $oldLedger) {
+                $oldLedger->delete(); // This triggers the observer which restores batch qty
+            }
 
             // Delete old items
             $transaction->items()->delete();
@@ -359,20 +336,10 @@ class SampleIssuedController extends Controller
                     'row_order' => $rowOrder++,
                 ]);
 
-                // Decrease batch quantity only if batch_id is valid
-                if ($batchIdForItem) {
-                    $batch = Batch::find($batchIdForItem);
-                    if ($batch) {
-                        $beforeQty = $batch->qty;
-                        $batch->qty = max(0, $batch->qty - $qty);
-                        $batch->save();
-                        \Log::info("Deducted batch {$batchIdForItem}: {$beforeQty} - {$qty} = {$batch->qty}");
-                    }
-                } else {
-                    \Log::info("No batch_id for item, skipping stock deduction");
-                }
+                // NOTE: Batch quantity is automatically updated by StockLedgerObserver
+                // when the stock ledger entry is created below - DO NOT manually deduct here
 
-                // Create Stock Ledger entry
+                // Create Stock Ledger entry (Observer will update batch qty)
                 $stockLedger = new StockLedger();
                 $stockLedger->item_id = $transactionItem->item_id;
                 $stockLedger->batch_id = $batchIdForItem;
@@ -416,21 +383,13 @@ class SampleIssuedController extends Controller
 
             $transaction = SampleIssuedTransaction::with('items')->findOrFail($id);
 
-            // Restore batch quantities (reverse the decrease)
-            foreach ($transaction->items as $item) {
-                if ($item->batch_id) {
-                    $batch = Batch::find($item->batch_id);
-                    if ($batch) {
-                        $batch->qty = $batch->qty + $item->qty;
-                        $batch->save();
-                    }
-                }
-            }
-
-            // Delete stock ledger entries
-            StockLedger::where('reference_type', 'SAMPLE_ISSUED')
+            // Delete stock ledger entries one by one (so StockLedgerObserver triggers and restores batch quantities)
+            $oldStockLedgers = StockLedger::where('reference_type', 'SAMPLE_ISSUED')
                 ->where('reference_id', $transaction->id)
-                ->delete();
+                ->get();
+            foreach ($oldStockLedgers as $oldLedger) {
+                $oldLedger->delete(); // This triggers the observer which restores batch qty
+            }
 
             // Soft delete
             $transaction->update([

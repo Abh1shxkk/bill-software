@@ -16,7 +16,7 @@
     .readonly-field { background-color: #e9ecef !important; cursor: not-allowed; }
     .summary-section { background: #ffcccc; padding: 5px 10px; }
     .footer-section { background: #ffe4b5; padding: 8px; }
-    .row-selected { background-color: #d4edff !important; }
+    .row-selected { background-color: #d4edff !important; outline: 2px solid #007bff !important; outline-offset: -2px; }
     .row-complete { background-color: #d4edda !important; }
     .batch-modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1050; }
     .batch-modal-backdrop.show { display: block; }
@@ -266,6 +266,9 @@ function addItemRowFromData(item) {
     row.dataset.rowIndex = rowIndex;
     row.dataset.itemId = item.item_id || '';
     row.dataset.batchId = item.batch_id || '';
+    row.dataset.mrp = item.mrp || '0';
+    row.dataset.sRate = item.s_rate || '0';
+    row.dataset.clQty = '0';
     row.onclick = function() { selectRow(rowIndex); };
     row.className = 'row-complete';
     
@@ -322,7 +325,21 @@ function addNewRow() {
 function selectRow(rowIndex) {
     document.querySelectorAll('#itemsTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
     const row = document.getElementById(`row-${rowIndex}`);
-    if (row) { row.classList.add('row-selected'); selectedRowIndex = rowIndex; }
+    if (row) { 
+        row.classList.add('row-selected'); 
+        selectedRowIndex = rowIndex;
+        updateFooterFromRow(row);
+    }
+}
+
+function updateFooterFromRow(row) {
+    if (!row) return;
+    document.getElementById('packing').value = row.querySelector('input[name*="[packing]"]')?.value || '';
+    document.getElementById('unit').value = row.querySelector('input[name*="[unit]"]')?.value || '';
+    document.getElementById('p_rate').value = row.querySelector('input[name*="[cost]"]')?.value || '0';
+    document.getElementById('s_rate').value = row.dataset.sRate || '0';
+    document.getElementById('mrp').value = row.dataset.mrp || '0';
+    document.getElementById('cl_qty').value = row.dataset.clQty || '0';
 }
 
 function handleCodeKeydown(event, rowIndex) {
@@ -385,8 +402,12 @@ function selectItemForRow(item, rowIndex) {
     row.querySelector('input[name*="[name]"]').value = item.name;
     row.querySelector('input[name*="[item_id]"]').value = item.id;
     row.querySelector('input[name*="[packing]"]').value = item.packing || '';
+    row.querySelector('input[name*="[unit]"]').value = item.unit || '';
     row.querySelector('input[name*="[cost]"]').value = item.p_rate || 0;
     row.dataset.itemId = item.id;
+    row.dataset.mrp = item.mrp || 0;
+    row.dataset.sRate = item.s_rate || 0;
+    updateFooterFromRow(row);
     showBatchModal(rowIndex);
 }
 
@@ -408,17 +429,23 @@ function showBatchModal(rowIndex) {
     
     fetch(`{{ url('admin/api/item-batches') }}/${row.dataset.itemId}`)
         .then(response => response.json())
-        .then(batches => {
+        .then(data => {
             const modalBody = document.querySelector('#batchModal .modal-body-custom');
-            if (batches.length === 0) { modalBody.innerHTML = '<div class="text-center text-muted py-3">No batches available</div>'; return; }
+            // Handle response format: { success: true, batches: [...] }
+            const batches = data.batches || data || [];
+            if (!batches || batches.length === 0) { modalBody.innerHTML = '<div class="text-center text-muted py-3">No batches available</div>'; return; }
             modalBody.innerHTML = `<div class="table-responsive"><table class="table table-bordered table-sm" style="font-size: 11px;">
-                <thead class="table-warning"><tr><th>Batch No</th><th>Expiry</th><th class="text-end">Qty</th><th class="text-end">MRP</th></tr></thead>
-                <tbody>${batches.map(b => `<tr class="batch-row" onclick="selectBatch(${b.id}, '${b.batch_no || ''}', '${b.expiry || ''}', ${b.qty || 0}, ${b.p_rate || 0})" style="cursor: pointer;"><td>${b.batch_no || '-'}</td><td>${b.expiry || '-'}</td><td class="text-end">${b.qty || 0}</td><td class="text-end">${parseFloat(b.mrp || 0).toFixed(2)}</td></tr>`).join('')}</tbody>
+                <thead class="table-warning"><tr><th>Batch No</th><th>Expiry</th><th class="text-end">Qty</th><th class="text-end">MRP</th><th class="text-end">P.Rate</th><th class="text-end">S.Rate</th></tr></thead>
+                <tbody>${batches.map(b => `<tr class="batch-row" onclick="selectBatch(${b.id}, '${(b.batch_no || '').replace(/'/g, "\\'")}', '${(b.expiry_display || '').replace(/'/g, "\\'")}', ${b.qty || 0}, ${b.pur_rate || b.cost || 0}, ${b.mrp || 0}, ${b.s_rate || 0})" style="cursor: pointer;"><td>${b.batch_no || '-'}</td><td>${b.expiry_display || '-'}</td><td class="text-end">${b.qty || 0}</td><td class="text-end">${parseFloat(b.mrp || 0).toFixed(2)}</td><td class="text-end">${parseFloat(b.pur_rate || b.cost || 0).toFixed(2)}</td><td class="text-end">${parseFloat(b.s_rate || 0).toFixed(2)}</td></tr>`).join('')}</tbody>
             </table></div>`;
+        })
+        .catch(error => {
+            console.error('Error loading batches:', error);
+            document.querySelector('#batchModal .modal-body-custom').innerHTML = '<div class="text-center text-danger py-3">Error loading batches</div>';
         });
 }
 
-function selectBatch(batchId, batchNo, expiry, qty, pRate) {
+function selectBatch(batchId, batchNo, expiry, qty, pRate, mrp, sRate) {
     const row = document.getElementById(`row-${document.body.dataset.batchRowIndex}`);
     if (!row) return;
     row.querySelector('input[name*="[batch]"]').value = batchNo;
@@ -426,8 +453,12 @@ function selectBatch(batchId, batchNo, expiry, qty, pRate) {
     row.querySelector('input[name*="[batch_id]"]').value = batchId;
     row.querySelector('input[name*="[cost]"]').value = pRate || 0;
     row.dataset.batchId = batchId;
+    row.dataset.clQty = qty || 0;
+    row.dataset.mrp = mrp || 0;
+    row.dataset.sRate = sRate || 0;
     row.classList.add('row-complete');
     closeBatchModal();
+    updateFooterFromRow(row);
     row.querySelector('input[name*="[qty]"]').focus();
 }
 

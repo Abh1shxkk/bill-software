@@ -340,23 +340,51 @@
   }
 
   .dropdown-submenu > .dropdown-menu {
-    top: 0;
+    top: -4px;
     left: 100%;
-    margin-top: -4px;
+    margin-top: 0;
     margin-left: 0;
     min-width: 160px;
     z-index: 1060;
+    padding-left: 0;
+  }
+  
+  /* Add invisible bridge to prevent menu closing when moving cursor */
+  .dropdown-submenu > .dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -20px;
+    width: 20px;
+    height: 100%;
+    background: transparent;
+  }
+  
+  /* Keep parent item highlighted when hovering submenu */
+  .dropdown-submenu > .dropdown-toggle {
+    position: relative;
+  }
+  
+  /* Extend clickable area of parent toggle */
+  .dropdown-submenu > .dropdown-toggle::after {
+    display: none;
+  }
+  
+  /* Add right padding extension for easier hover */
+  .dropdown-submenu > .dropdown-toggle::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -15px;
+    width: 15px;
+    height: 100%;
+    background: transparent;
   }
 
   /* Submenu opens upward when near bottom */
   .dropdown-submenu.dropup > .dropdown-menu {
     top: auto;
     bottom: 0;
-  }
-
-  /* Arrow for submenu items - Hidden */
-  .dropdown-submenu > .dropdown-toggle::after {
-    display: none;
   }
 
   /* Show submenu on hover */

@@ -257,10 +257,13 @@ class SampleReceivedController extends Controller
 
             $transaction = SampleReceivedTransaction::with('items')->findOrFail($id);
             
-            // Delete old stock ledger entries (StockLedgerObserver will automatically restore batch quantities)
-            StockLedger::where('reference_type', 'SAMPLE_RECEIVED')
+            // Delete old stock ledger entries one by one (so StockLedgerObserver triggers and restores batch quantities)
+            $oldStockLedgers = StockLedger::where('reference_type', 'SAMPLE_RECEIVED')
                 ->where('reference_id', $transaction->id)
-                ->delete();
+                ->get();
+            foreach ($oldStockLedgers as $oldLedger) {
+                $oldLedger->delete(); // This triggers the observer which restores batch qty
+            }
 
             // Delete old items
             $transaction->items()->delete();
@@ -379,10 +382,13 @@ class SampleReceivedController extends Controller
 
             $transaction = SampleReceivedTransaction::with('items')->findOrFail($id);
 
-            // Delete stock ledger entries (StockLedgerObserver will automatically restore batch quantities)
-            StockLedger::where('reference_type', 'SAMPLE_RECEIVED')
+            // Delete stock ledger entries one by one (so StockLedgerObserver triggers and restores batch quantities)
+            $oldStockLedgers = StockLedger::where('reference_type', 'SAMPLE_RECEIVED')
                 ->where('reference_id', $transaction->id)
-                ->delete();
+                ->get();
+            foreach ($oldStockLedgers as $oldLedger) {
+                $oldLedger->delete(); // This triggers the observer which restores batch qty
+            }
 
             // Soft delete
             $transaction->update([

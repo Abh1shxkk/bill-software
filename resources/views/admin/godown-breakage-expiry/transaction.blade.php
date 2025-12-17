@@ -200,7 +200,7 @@ let selectedRowIndex = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
-    addNewRow();
+    // Initially no row - user will click Add Row button
 });
 
 function updateDayName() {
@@ -313,7 +313,9 @@ function findItemByCode(code, rowIndex) {
 }
 
 function showItemSelectionModal(targetRowIndex = null) {
-    const rowIndex = targetRowIndex !== null ? targetRowIndex : selectedRowIndex;
+    // Store if we need to create new row or use existing
+    window.createNewRowAfterSelection = (targetRowIndex === null);
+    const rowIndex = targetRowIndex !== null ? targetRowIndex : -1;
     
     let html = `
         <div class="batch-modal-backdrop show" id="itemModalBackdrop"></div>
@@ -378,10 +380,148 @@ function filterItems() {
 function selectItem(itemId) {
     const item = itemsData.find(i => i.id === itemId);
     if (item) {
-        const rowIndex = parseInt(document.body.dataset.targetRowIndex);
-        selectItemForRow(item, rowIndex);
+        // Store selected item for batch selection
+        window.selectedItemData = item;
         closeItemModal();
+        // Show batch modal - row will be created after batch selection
+        showBatchModalForItem(item);
     }
+}
+
+function showBatchModalForItem(item) {
+    let html = `
+        <div class="batch-modal-backdrop show" id="batchModalBackdrop"></div>
+        <div class="batch-modal show" id="batchModal">
+            <div class="modal-header-custom" style="background: #ffc107; color: #000;">
+                <h5 class="mb-0"><i class="bi bi-box me-2"></i>Select Batch - ${item.name}</h5>
+                <button type="button" class="btn-close" onclick="closeBatchModalAndClear()"></button>
+            </div>
+            <div class="modal-body-custom">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-warning" role="status"></div>
+                    <div class="mt-2">Loading batches...</div>
+                </div>
+            </div>
+            <div class="modal-footer-custom">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModalAndClear()">Cancel</button>
+            </div>
+        </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+    
+    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+        .then(response => response.json())
+        .then(data => {
+            const modalBody = document.querySelector('#batchModal .modal-body-custom');
+            // Handle response format: { success: true, batches: [...] }
+            const batches = data.batches || data || [];
+            
+            if (!batches || batches.length === 0) {
+                modalBody.innerHTML = '<div class="text-center text-muted py-3">No batches available for this item</div>';
+                return;
+            }
+            
+            modalBody.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm" style="font-size: 11px;">
+                        <thead class="table-warning">
+                            <tr>
+                                <th>Batch No</th>
+                                <th>Expiry</th>
+                                <th class="text-end">Qty</th>
+                                <th class="text-end">MRP</th>
+                                <th class="text-end">P.Rate</th>
+                                <th>Company</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${batches.map(batch => `
+                                <tr class="batch-row" onclick="selectBatchAndCreateRow('${batch.id}', '${(batch.batch_no || '').replace(/'/g, "\\'")}', '${(batch.expiry_display || batch.expiry || '').replace(/'/g, "\\'")}', ${batch.qty || 0}, ${batch.mrp || 0}, ${batch.pur_rate || batch.cost || 0}, '${(batch.company_name || '').replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                                    <td>${batch.batch_no || '-'}</td>
+                                    <td>${batch.expiry_display || '-'}</td>
+                                    <td class="text-end">${batch.qty || 0}</td>
+                                    <td class="text-end">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
+                                    <td class="text-end">${parseFloat(batch.pur_rate || batch.cost || 0).toFixed(2)}</td>
+                                    <td>${batch.company_name || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+        })
+        .catch(error => {
+            console.error('Error loading batches:', error);
+            document.querySelector('#batchModal .modal-body-custom').innerHTML = '<div class="text-center text-danger py-3">Error loading batches</div>';
+        });
+}
+
+function selectBatchAndCreateRow(batchId, batchNo, expiry, qty, mrp, pRate, location) {
+    const item = window.selectedItemData;
+    if (!item) return;
+    
+    // Create new row
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" readonly></td>
+        <td>
+            <select class="form-select form-select-sm" name="items[${rowIndex}][br_ex_type]">
+                <option value="BREAKAGE">Brk</option>
+                <option value="EXPIRY">Exp</option>
+            </select>
+        </td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="1" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="${pRate || item.p_rate || 0}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="${pRate || item.p_rate || 0}" step="0.01" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchId}">
+        <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
+        <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || ''}">
+        <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
+        <input type="hidden" name="items[${rowIndex}][mrp]" value="${mrp || item.mrp || 0}">
+        <input type="hidden" name="items[${rowIndex}][s_rate]" value="${item.s_rate || 0}">
+        <input type="hidden" name="items[${rowIndex}][p_rate]" value="${pRate || item.p_rate || 0}">
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Store data for footer
+    row.dataset.itemId = item.id;
+    row.dataset.itemData = JSON.stringify({
+        packing: item.packing || '',
+        unit: item.unit || '',
+        mrp: mrp || item.mrp || 0,
+        s_rate: item.s_rate || 0,
+        p_rate: pRate || item.p_rate || 0,
+        company_name: item.company_name || ''
+    });
+    row.dataset.batchData = JSON.stringify({ qty: qty, location: location });
+    
+    row.classList.add('row-complete');
+    selectRow(rowIndex);
+    calculateRowAmount(rowIndex);
+    calculateTotalAmount();
+    
+    closeBatchModal();
+    window.selectedItemData = null;
+    
+    // Focus qty field
+    row.querySelector('input[name*="[qty]"]').focus();
+}
+
+function closeBatchModalAndClear() {
+    closeBatchModal();
+    window.selectedItemData = null;
 }
 
 function selectItemForRow(item, rowIndex) {
@@ -450,9 +590,12 @@ function showBatchModal(rowIndex) {
     
     fetch(`{{ url('admin/api/item-batches') }}/${itemId}`)
         .then(response => response.json())
-        .then(batches => {
+        .then(data => {
             const modalBody = document.querySelector('#batchModal .modal-body-custom');
-            if (batches.length === 0) {
+            // Handle response format: { success: true, batches: [...] }
+            const batches = data.batches || data || [];
+            
+            if (!batches || batches.length === 0) {
                 modalBody.innerHTML = '<div class="text-center text-muted py-3">No batches available for this item</div>';
                 return;
             }
@@ -466,17 +609,17 @@ function showBatchModal(rowIndex) {
                                 <th>Expiry</th>
                                 <th class="text-end">Qty</th>
                                 <th class="text-end">MRP</th>
-                                <th>Location</th>
+                                <th>Company</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${batches.map(batch => `
-                                <tr class="batch-row" onclick="selectBatch(${batch.id}, '${batch.batch_no || ''}', '${batch.expiry || ''}', ${batch.qty || 0}, ${batch.mrp || 0}, ${batch.p_rate || 0}, '${batch.location || ''}')" style="cursor: pointer;">
+                                <tr class="batch-row" onclick="selectBatch(${batch.id}, '${(batch.batch_no || '').replace(/'/g, "\\'")}', '${(batch.expiry_display || '').replace(/'/g, "\\'")}', ${batch.qty || 0}, ${batch.mrp || 0}, ${batch.pur_rate || batch.cost || 0}, '${(batch.company_name || '').replace(/'/g, "\\'")}')" style="cursor: pointer;">
                                     <td>${batch.batch_no || '-'}</td>
-                                    <td>${batch.expiry || '-'}</td>
+                                    <td>${batch.expiry_display || '-'}</td>
                                     <td class="text-end">${batch.qty || 0}</td>
                                     <td class="text-end">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
-                                    <td>${batch.location || '-'}</td>
+                                    <td>${batch.company_name || '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
