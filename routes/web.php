@@ -387,12 +387,12 @@ Route::middleware(['admin'])->group(function () {
         Route::get('sample-issued/get-items', [SampleIssuedController::class, 'getItems'])->name('sample-issued.getItems');
         Route::get('sample-issued/load-by-trn-no', [SampleIssuedController::class, 'loadByTrnNo'])->name('sample-issued.loadByTrnNo');
         Route::get('sample-issued/get-party-list', [SampleIssuedController::class, 'getPartyList'])->name('sample-issued.getPartyList');
+        Route::get('sample-issued/get-past-invoices', [SampleIssuedController::class, 'getPastInvoices'])->name('sample-issued.getPastInvoices');
+        Route::get('sample-issued/modification', [SampleIssuedController::class, 'modification'])->name('sample-issued.modification');
         Route::get('sample-issued/{id}', [SampleIssuedController::class, 'show'])->name('sample-issued.show');
         Route::get('sample-issued/{id}/edit', [SampleIssuedController::class, 'edit'])->name('sample-issued.edit');
         Route::put('sample-issued/{id}', [SampleIssuedController::class, 'update'])->name('sample-issued.update');
         Route::delete('sample-issued/{id}', [SampleIssuedController::class, 'destroy'])->name('sample-issued.destroy');
-        Route::get('sample-issued-modification', [SampleIssuedController::class, 'modification'])->name('sample-issued.modification');
-        Route::get('sample-issued/get-past-invoices', [SampleIssuedController::class, 'getPastInvoices'])->name('sample-issued.getPastInvoices');
         
         // Purchase Return Routes
         Route::get('purchase-return', [PurchaseReturnController::class, 'index'])->name('purchase-return.index');

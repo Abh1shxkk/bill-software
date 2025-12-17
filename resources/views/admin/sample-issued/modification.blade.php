@@ -27,7 +27,6 @@
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
     .invoice-row:hover { background-color: #fff3cd !important; cursor: pointer; }
-    .no-invoice-loaded { opacity: 0.5; pointer-events: none; }
 </style>
 @endpush
 
@@ -53,17 +52,8 @@
         </div>
 
         <div class="card shadow-sm border-0 rounded">
-            <div class="card-body" id="formContainer">
-                <div class="text-center py-5" id="noInvoiceMessage">
-                    <i class="bi bi-folder2-open text-muted" style="font-size: 4rem;"></i>
-                    <h5 class="text-muted mt-3">No Invoice Loaded</h5>
-                    <p class="text-muted">Click "Load Invoice" button to select and load a transaction for modification.</p>
-                    <button type="button" class="btn btn-warning" onclick="showLoadInvoiceModal()">
-                        <i class="bi bi-folder2-open me-1"></i> Load Invoice
-                    </button>
-                </div>
-
-                <form id="siForm" method="POST" autocomplete="off" style="display: none;">
+            <div class="card-body">
+                <form id="siForm" method="POST" autocomplete="off">
                     @csrf
                     @method('PUT')
                     <input type="hidden" id="transaction_id" name="transaction_id" value="">
@@ -74,15 +64,15 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" onchange="updateDayName()" required>
+                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required>
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 40px;"></label>
-                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" readonly style="width: 100px;">
+                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width: 100px;">
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 50px;">Trn.No :</label>
-                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" readonly style="width: 100px;">
+                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="" readonly style="width: 100px;">
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -90,7 +80,7 @@
                                     <label style="width: 70px;">Party Type :</label>
                                     <select id="party_type" name="party_type" class="form-select" onchange="loadPartyList()">
                                         @foreach($partyTypes as $key => $label)
-                                        <option value="{{ $key }}">{{ $label }}</option>
+                                        <option value="{{ $key }}" {{ $loop->first ? 'selected' : '' }}>{{ $label }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -134,7 +124,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date :</label>
-                                    <input type="date" id="gr_date" name="gr_date" class="form-control">
+                                    <input type="date" id="gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}">
                                 </div>
                             </div>
                             <div class="col-md-1">
@@ -233,7 +223,7 @@
                     <div class="d-flex justify-content-between mt-3">
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-success" onclick="updateTransaction()">
-                                <i class="bi bi-save"></i> Save (End)
+                                <i class="bi bi-save"></i> Update (End)
                             </button>
                             <button type="button" class="btn btn-danger" onclick="deleteSelectedItem()">
                                 <i class="bi bi-trash"></i> Delete Item
@@ -258,9 +248,11 @@ let currentRowIndex = 0;
 let itemsData = [];
 let selectedRowIndex = null;
 let loadedTransactionId = null;
+let originalItems = []; // Store original items for comparison during update
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
+    loadPartyList();
 });
 
 function updateDayName() {
@@ -334,7 +326,7 @@ function loadPastInvoices(search = '') {
             }
             
             tbody.innerHTML = data.map(inv => `
-                <tr class="invoice-row" onclick="selectInvoice(${inv.id})">
+                <tr class="invoice-row" onclick="selectInvoice(${inv.id})" style="cursor: pointer;">
                     <td><strong>${inv.trn_no}</strong></td>
                     <td>${inv.transaction_date ? new Date(inv.transaction_date).toLocaleDateString('en-GB') : '-'}</td>
                     <td><span class="badge bg-info">${inv.party_type || '-'}</span></td>
@@ -370,41 +362,34 @@ function selectInvoice(id) {
 }
 
 function loadTransactionData(id) {
-    fetch(`{{ url('admin/sample-issued/load-by-trn-no') }}?id=${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success && !data.transaction) {
-                // Try another way
-                fetch(`{{ url('admin/sample-issued') }}/${id}`, {
-                    headers: { 'Accept': 'application/json' }
-                })
-                .then(r => r.json())
-                .then(d => populateForm(d))
-                .catch(e => alert('Error loading transaction'));
-                return;
-            }
-            populateForm(data.transaction || data);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading transaction');
-        });
+    fetch(`{{ url('admin/sample-issued') }}/${id}`, {
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data && data.id) {
+            populateForm(data);
+        } else {
+            alert('Transaction not found');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error loading transaction');
+    });
 }
 
 function populateForm(transaction) {
-    // Hide no invoice message, show form
-    document.getElementById('noInvoiceMessage').style.display = 'none';
-    document.getElementById('siForm').style.display = 'block';
-    
     loadedTransactionId = transaction.id;
     document.getElementById('transaction_id').value = transaction.id;
     
+    // Store original items for comparison during update
+    originalItems = transaction.items ? JSON.parse(JSON.stringify(transaction.items)) : [];
+    
     // Populate header fields
     document.getElementById('transaction_date').value = transaction.transaction_date ? transaction.transaction_date.split('T')[0] : '';
-    document.getElementById('day_name').value = transaction.day_name || '';
+    updateDayName();
     document.getElementById('trn_no').value = transaction.trn_no || '';
-    document.getElementById('party_type').value = transaction.party_type || '';
-    document.getElementById('party_name').value = transaction.party_name || '';
     document.getElementById('remarks').value = transaction.remarks || '';
     document.getElementById('on_field').value = transaction.on_field || '';
     document.getElementById('rate').value = transaction.rate || 0;
@@ -416,56 +401,114 @@ function populateForm(transaction) {
     document.getElementById('truck_no').value = transaction.truck_no || '';
     document.getElementById('transport').value = transaction.transport || '';
     document.getElementById('net_amount').value = parseFloat(transaction.net_amount || 0).toFixed(2);
+    document.getElementById('party_name').value = transaction.party_name || '';
     
-    // Load party list and set party_id
+    // Set party type first
+    const partyTypeSelect = document.getElementById('party_type');
+    if (transaction.party_type) {
+        partyTypeSelect.value = transaction.party_type;
+    }
+    
+    // Load party list and set party_id AFTER party list is loaded
     loadPartyList().then(() => {
         const partySelect = document.getElementById('party_id');
         if (transaction.party_id) {
+            // Try to set the value
             partySelect.value = transaction.party_id;
+            
+            // If value didn't set (party not found), add it manually
+            if (partySelect.value != transaction.party_id && transaction.party_name) {
+                const option = document.createElement('option');
+                option.value = transaction.party_id;
+                option.textContent = transaction.party_name;
+                option.dataset.name = transaction.party_name;
+                option.selected = true;
+                partySelect.appendChild(option);
+            }
         }
+        // Trigger change to update hidden party_name field
+        updatePartyName();
     });
     
-    // Populate items
+    // Clear and populate items
     const tbody = document.getElementById('itemsTableBody');
     tbody.innerHTML = '';
     currentRowIndex = 0;
     
     if (transaction.items && transaction.items.length > 0) {
         transaction.items.forEach((item, index) => {
-            addItemRow(item);
+            addItemRowFromData(item);
+            // Update footer with first item's data
+            if (index === 0) {
+                document.getElementById('packing').value = item.packing || '';
+                document.getElementById('unit').value = item.unit || '';
+                document.getElementById('cl_qty').value = '0'; // Will be fetched from batch if clicked
+            }
         });
+        // Select first row
+        if (transaction.items.length > 0) {
+            selectRow(0);
+        }
     }
     
     calculateTotalAmount();
+    
+    // Show success message
+    alert('Transaction loaded successfully: ' + transaction.trn_no);
 }
 
-function addItemRow(item) {
+function addItemRowFromData(item) {
     const tbody = document.getElementById('itemsTableBody');
     const rowIndex = currentRowIndex++;
+    
+    // Get batch_id - check multiple possible field names
+    const batchId = item.batch_id || item.batchId || '';
+    const itemId = item.item_id || item.itemId || '';
+    const itemCode = item.item_code || item.itemCode || itemId || '';
+    const itemName = item.item_name || item.itemName || item.name || '';
+    const batchNo = item.batch_no || item.batchNo || item.batch || '';
     
     const row = document.createElement('tr');
     row.id = `row-${rowIndex}`;
     row.dataset.rowIndex = rowIndex;
-    row.dataset.itemId = item.item_id;
+    row.dataset.itemId = itemId;
+    // Store item data for footer updates
+    row.dataset.itemData = JSON.stringify({
+        packing: item.packing || '',
+        unit: item.unit || '',
+        qty: item.qty || 0,
+        name: itemName,
+        id: itemId
+    });
+    // Store batch data for footer updates
+    if (batchId) {
+        row.dataset.batchId = batchId;
+        row.dataset.batchData = JSON.stringify({
+            qty: 0, // Closing qty will be fetched if needed
+            batch_no: batchNo
+        });
+    }
     row.onclick = function() { selectRow(rowIndex); };
     row.className = 'row-complete';
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.item_code || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.item_name || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${item.batch_no || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${itemCode}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemName}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${item.expiry || ''}"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="${item.qty || 0}" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" value="${parseFloat(item.rate || 0).toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="${parseFloat(item.amount || 0).toFixed(2)}" step="0.01" readonly></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
-        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.item_id || ''}">
-        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${item.batch_id || ''}">
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemId}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchId}">
         <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
         <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || ''}">
         <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
         <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${item.hsn_code || ''}">
         <input type="hidden" name="items[${rowIndex}][mrp]" value="${item.mrp || 0}">
+        <input type="hidden" name="items[${rowIndex}][original_batch_id]" value="${batchId}">
+        <input type="hidden" name="items[${rowIndex}][original_qty]" value="${item.qty || 0}">
     `;
     
     tbody.appendChild(row);
@@ -528,18 +571,28 @@ function showItemSelectionModal() {
                 <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                     <table class="table table-bordered table-sm" style="font-size: 11px;">
                         <thead class="table-success" style="position: sticky; top: 0;">
-                            <tr><th>Code</th><th>Item Name</th><th>Packing</th><th>S.Rate</th><th>MRP</th></tr>
+                            <tr>
+                                <th>Code</th>
+                                <th>Item Name</th>
+                                <th>Packing</th>
+                                <th>S.Rate</th>
+                                <th>MRP</th>
+                            </tr>
                         </thead>
-                        <tbody id="itemsListBody">` +
-    itemsData.map(item => `
-        <tr class="item-row" onclick="selectItemFromModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
-            <td><strong>${item.id || ''}</strong></td>
-            <td>${item.name || ''}</td>
-            <td>${item.packing || ''}</td>
-            <td class="text-end">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
-        </tr>`).join('') +
-    `</tbody></table></div></div>
+                        <tbody id="itemsListBody">`;
+    
+    itemsData.forEach(item => {
+        html += `
+            <tr class="item-row" onclick="selectItemFromModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                <td><strong>${item.id || ''}</strong></td>
+                <td>${item.name || ''}</td>
+                <td>${item.packing || ''}</td>
+                <td class="text-end">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
+            </tr>`;
+    });
+    
+    html += `</tbody></table></div></div>
             <div class="modal-footer-custom">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
             </div>
@@ -551,8 +604,10 @@ function showItemSelectionModal() {
 
 function filterItems() {
     const search = document.getElementById('itemSearchInput').value.toLowerCase();
-    document.querySelectorAll('#itemsListBody tr').forEach(row => {
-        row.style.display = row.textContent.toLowerCase().includes(search) ? '' : 'none';
+    const rows = document.querySelectorAll('#itemsListBody tr');
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(search) ? '' : 'none';
     });
 }
 
@@ -564,48 +619,301 @@ function closeItemModal() {
 function selectItemFromModal(item) {
     closeItemModal();
     
-    const newItem = {
-        item_id: item.id,
-        item_code: item.id,
-        item_name: item.name,
-        batch_no: '',
-        expiry: '',
-        qty: 0,
-        rate: item.s_rate || 0,
-        amount: 0,
-        packing: item.packing || '',
-        company_name: item.company_name || '',
-        hsn_code: item.hsn_code || '',
-        mrp: item.mrp || 0
-    };
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
     
-    addItemRow(newItem);
-    selectRow(currentRowIndex - 1);
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = item.id;
+    row.dataset.itemData = JSON.stringify(item);
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
+        <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
+        <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || '1'}">
+        <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
+        <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${item.hsn_code || ''}">
+        <input type="hidden" name="items[${rowIndex}][mrp]" value="${item.mrp || 0}">
+    `;
+    
+    tbody.appendChild(row);
+    selectRow(rowIndex);
+    showBatchSelectionForItem(item, rowIndex);
+}
+
+function showBatchSelectionForItem(item, rowIndex) {
+    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+        .then(response => response.json())
+        .then(data => {
+            const batches = data.batches || data || [];
+            showBatchSelectionModal(Array.isArray(batches) ? batches : [], rowIndex, item);
+        })
+        .catch(error => {
+            console.error('Error fetching batches:', error);
+            showBatchSelectionModal([], rowIndex, item);
+        });
+}
+
+function showBatchSelectionModal(batches, rowIndex, itemData) {
+    let html = `
+        <div class="batch-modal-backdrop show" id="batchBackdrop"></div>
+        <div class="batch-modal show" id="batchModal">
+            <div class="modal-header-custom" style="background: #17a2b8;">
+                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Select Batch for Sample</h5>
+                <button type="button" class="btn-close btn-close-white" onclick="closeBatchModal()"></button>
+            </div>
+            <div class="modal-body-custom">
+                <div class="d-flex justify-content-between align-items-center mb-3 p-2" style="background: #f8f9fa; border-radius: 5px;">
+                    <div>
+                        <strong>ITEM:</strong> <span style="color: #6f42c1; font-weight: bold;">${itemData.name || ''}</span>
+                    </div>
+                    <button type="button" class="btn btn-warning btn-sm" onclick="skipBatchSelection(${rowIndex})">
+                        <i class="bi bi-skip-forward me-1"></i> Skip (No Batch)
+                    </button>
+                </div>`;
+    
+    if (batches.length > 0) {
+        html += `
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-bordered table-sm" style="font-size: 10px;">
+                        <thead style="background: #ffb6c1;">
+                            <tr>
+                                <th>BATCH</th>
+                                <th>S.RATE</th>
+                                <th>MRP</th>
+                                <th>QTY</th>
+                                <th>EXP.</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+    
+        batches.forEach(batch => {
+            const expiry = batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB', {month: '2-digit', year: '2-digit'}) : '';
+            html += `
+                <tr style="cursor: pointer;">
+                    <td><strong>${batch.batch_no || ''}</strong></td>
+                    <td class="text-end">${parseFloat(batch.s_rate || 0).toFixed(2)}</td>
+                    <td class="text-end">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
+                    <td class="text-end">${batch.qty || 0}</td>
+                    <td>${expiry}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-sm btn-success py-0 px-2" onclick='selectBatchFromModal(${rowIndex}, ${JSON.stringify(batch).replace(/'/g, "&apos;")})'>
+                            <i class="bi bi-check"></i> Select
+                        </button>
+                    </td>
+                </tr>`;
+        });
+    
+        html += `</tbody></table></div>`;
+    } else {
+        html += `
+                <div class="text-center py-4" style="background: #fff3cd; border-radius: 5px;">
+                    <i class="bi bi-exclamation-triangle text-warning" style="font-size: 2rem;"></i>
+                    <p class="mb-0 mt-2"><strong>No batches found for this item.</strong></p>
+                    <p class="text-muted small">Click "Skip" to continue without batch selection.</p>
+                </div>`;
+    }
+    
+    html += `</div>
+            <div class="modal-footer-custom">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
+            </div>
+        </div>`;
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function skipBatchSelection(rowIndex) {
+    closeBatchModal();
+    const row = document.getElementById(`row-${rowIndex}`);
+    row?.querySelector('input[name*="[qty]"]')?.focus();
+}
+
+function selectBatchFromModal(rowIndex, batch) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    row.querySelector('input[name*="[batch]"]').value = batch.batch_no || '';
+    if (batch.expiry_date) {
+        const d = new Date(batch.expiry_date);
+        row.querySelector('input[name*="[expiry]"]').value = `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+    row.querySelector('input[name*="[rate]"]').value = parseFloat(batch.s_rate || 0).toFixed(2);
+    row.querySelector('input[name*="[batch_id]"]').value = batch.id || '';
+    row.dataset.batchId = batch.id;
+    row.dataset.batchData = JSON.stringify(batch);
+    
+    // Update Cl.Qty in footer
+    document.getElementById('cl_qty').value = batch.qty || 0;
+    
+    closeBatchModal();
+    row.querySelector('input[name*="[qty]"]')?.focus();
+}
+
+function closeBatchModal() {
+    document.getElementById('batchModal')?.remove();
+    document.getElementById('batchBackdrop')?.remove();
+}
+
+// ============ KEYBOARD NAVIGATION ============
+function handleBatchKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const row = document.getElementById(`row-${rowIndex}`);
+        row?.querySelector('input[name*="[expiry]"]')?.focus();
+    }
+}
+
+function handleExpiryKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const row = document.getElementById(`row-${rowIndex}`);
+        row?.querySelector('input[name*="[qty]"]')?.focus();
+    }
+}
+
+function handleQtyKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        calculateRowAmount(rowIndex);
+        completeRow(rowIndex);
+    }
+}
+
+function completeRow(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (row) {
+        row.classList.remove('row-selected');
+        row.classList.add('row-complete');
+        calculateTotalAmount();
+        selectedRowIndex = null;
+    }
 }
 
 function addNewRow() {
-    const newItem = {
-        item_id: '',
-        item_code: '',
-        item_name: '',
-        batch_no: '',
-        expiry: '',
-        qty: 0,
-        rate: 0,
-        amount: 0
-    };
-    addItemRow(newItem);
-    selectRow(currentRowIndex - 1);
-    document.querySelector(`#row-${currentRowIndex - 1} input[name*="[code]"]`)?.focus();
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
+        <input type="hidden" name="items[${rowIndex}][packing]" value="">
+        <input type="hidden" name="items[${rowIndex}][unit]" value="">
+        <input type="hidden" name="items[${rowIndex}][company_name]" value="">
+        <input type="hidden" name="items[${rowIndex}][hsn_code]" value="">
+        <input type="hidden" name="items[${rowIndex}][mrp]" value="0">
+    `;
+    
+    tbody.appendChild(row);
+    selectRow(rowIndex);
+    row.querySelector('input[name*="[code]"]').focus();
+}
+
+function handleCodeKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const row = document.getElementById(`row-${rowIndex}`);
+        const codeInput = row?.querySelector('input[name*="[code]"]');
+        if (codeInput && codeInput.value.trim()) {
+            searchItemByCode(rowIndex, codeInput.value);
+        }
+    }
+}
+
+function searchItemByCode(rowIndex, code) {
+    if (!code) return;
+    const item = itemsData.find(i => i.id == code);
+    if (item) {
+        fillRowWithItem(rowIndex, item);
+    }
+}
+
+function fillRowWithItem(rowIndex, item) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    row.querySelector('input[name*="[code]"]').value = item.id || '';
+    row.querySelector('input[name*="[name]"]').value = item.name || '';
+    row.querySelector('input[name*="[rate]"]').value = parseFloat(item.s_rate || 0).toFixed(2);
+    row.querySelector('input[name*="[item_id]"]').value = item.id;
+    row.querySelector('input[name*="[packing]"]').value = item.packing || '';
+    row.querySelector('input[name*="[company_name]"]').value = item.company_name || '';
+    row.querySelector('input[name*="[hsn_code]"]').value = item.hsn_code || '';
+    row.querySelector('input[name*="[mrp]"]').value = item.mrp || 0;
+    row.dataset.itemData = JSON.stringify(item);
+    row.dataset.itemId = item.id;
+    
+    updateFooterFromRow(row);
+    showBatchSelectionForItem(item, rowIndex);
 }
 
 function selectRow(rowIndex) {
-    document.querySelectorAll('#itemsTableBody tr').forEach(r => r.classList.remove('row-selected'));
+    document.querySelectorAll('#itemsTableBody tr').forEach(r => {
+        r.classList.remove('row-selected');
+    });
+    
     const row = document.getElementById(`row-${rowIndex}`);
     if (row) {
         row.classList.add('row-selected');
         selectedRowIndex = rowIndex;
+        updateFooterFromRow(row);
     }
+}
+
+function updateFooterFromRow(row) {
+    let packing = '';
+    let unit = '';
+    let clQty = '0';
+    
+    // Try to get from dataset first
+    if (row.dataset.itemData) {
+        const itemData = JSON.parse(row.dataset.itemData);
+        packing = itemData.packing || '';
+        unit = itemData.unit || '';
+    }
+    
+    // Fallback to hidden inputs
+    if (!packing) {
+        packing = row.querySelector('input[name*="[packing]"]')?.value || '';
+    }
+    if (!unit) {
+        unit = row.querySelector('input[name*="[unit]"]')?.value || '';
+    }
+    
+    // Get closing qty from batch data
+    if (row.dataset.batchData) {
+        const batchData = JSON.parse(row.dataset.batchData);
+        clQty = batchData.qty || '0';
+    }
+    
+    document.getElementById('packing').value = packing;
+    document.getElementById('unit').value = unit || '1';
+    document.getElementById('cl_qty').value = clQty;
 }
 
 function calculateRowAmount(rowIndex) {
@@ -614,22 +922,30 @@ function calculateRowAmount(rowIndex) {
     
     const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
     const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
-    row.querySelector('input[name*="[amount]"]').value = (qty * rate).toFixed(2);
+    const amount = qty * rate;
+    
+    row.querySelector('input[name*="[amount]"]').value = amount.toFixed(2);
     
     calculateTotalAmount();
 }
 
 function calculateTotalAmount() {
     let total = 0;
+    
     document.querySelectorAll('#itemsTableBody tr').forEach(row => {
-        total += parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
+        const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
+        total += amount;
     });
+    
     document.getElementById('net_amount').value = total.toFixed(2);
 }
 
 function removeRow(rowIndex) {
-    document.getElementById(`row-${rowIndex}`)?.remove();
-    calculateTotalAmount();
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (row) {
+        row.remove();
+        calculateTotalAmount();
+    }
 }
 
 function deleteSelectedItem() {
@@ -643,7 +959,7 @@ function deleteSelectedItem() {
 
 function updateTransaction() {
     if (!loadedTransactionId) {
-        alert('No transaction loaded');
+        alert('Please load an invoice first using the "Load Invoice" button');
         return;
     }
     
@@ -658,7 +974,8 @@ function updateTransaction() {
     
     let totalQty = 0;
     rows.forEach(row => {
-        totalQty += parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+        const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+        totalQty += qty;
     });
     formData.append('total_qty', totalQty);
     formData.append('total_amount', document.getElementById('net_amount').value);
@@ -673,7 +990,7 @@ function updateTransaction() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
+            alert(data.message || 'Transaction updated successfully!');
             window.location.href = '{{ route("admin.sample-issued.index") }}';
         } else {
             alert(data.message || 'Error updating transaction');

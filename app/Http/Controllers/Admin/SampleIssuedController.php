@@ -199,6 +199,11 @@ class SampleIssuedController extends Controller
         $transaction = SampleIssuedTransaction::with('items')->findOrFail($id);
         $partyTypes = SampleIssuedTransaction::getPartyTypes();
         
+        // Return JSON for AJAX requests
+        if (request()->expectsJson()) {
+            return response()->json($transaction);
+        }
+        
         return view('admin.sample-issued.show', compact('transaction', 'partyTypes'));
     }
 
@@ -258,14 +263,20 @@ class SampleIssuedController extends Controller
 
             $transaction = SampleIssuedTransaction::with('items')->findOrFail($id);
             
-            // Restore old batch quantities (reverse the previous decrease)
+            // Store old items data for batch restoration
+            $oldItemsData = [];
             foreach ($transaction->items as $oldItem) {
                 if ($oldItem->batch_id) {
-                    $oldBatch = Batch::find($oldItem->batch_id);
-                    if ($oldBatch) {
-                        $oldBatch->qty = $oldBatch->qty + $oldItem->qty;
-                        $oldBatch->save();
-                    }
+                    $oldItemsData[$oldItem->batch_id] = ($oldItemsData[$oldItem->batch_id] ?? 0) + $oldItem->qty;
+                }
+            }
+            
+            // Restore old batch quantities (reverse the previous decrease)
+            foreach ($oldItemsData as $batchId => $totalQty) {
+                $oldBatch = Batch::find($batchId);
+                if ($oldBatch) {
+                    $oldBatch->qty = $oldBatch->qty + $totalQty;
+                    $oldBatch->save();
                 }
             }
 
@@ -309,7 +320,8 @@ class SampleIssuedController extends Controller
                 }
 
                 $qty = (float)$item['qty'];
-                $batchIdForItem = $item['batch_id'] ?? null;
+                // Handle batch_id - ensure it's not empty string
+                $batchIdForItem = !empty($item['batch_id']) ? $item['batch_id'] : null;
 
                 // Parse expiry date
                 $expiryInput = $item['expiry'] ?? null;
@@ -344,7 +356,7 @@ class SampleIssuedController extends Controller
                     'row_order' => $rowOrder++,
                 ]);
 
-                // Decrease batch quantity
+                // Decrease batch quantity only if batch_id is valid
                 if ($batchIdForItem) {
                     $batch = Batch::find($batchIdForItem);
                     if ($batch) {
