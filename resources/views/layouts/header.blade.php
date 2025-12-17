@@ -209,6 +209,16 @@
                     <li><a class="dropdown-item" href="{{ route('admin.sample-issued.index') }}">Invoice</a></li>
                   </ul>
                 </li>
+                
+                <!-- Sample Received -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sample Received</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.sample-received.create') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sample-received.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sample-received.index') }}">Invoice</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
           </ul>
