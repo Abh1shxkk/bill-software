@@ -124,7 +124,10 @@ class QuotationController extends Controller
 
     public function modification()
     {
-        $customers = Customer::where('is_deleted', '!=', 1)->orderBy('name')->get();
+        $customers = Customer::where(function($query) {
+            $query->where('is_deleted', '!=', 1)
+                  ->orWhereNull('is_deleted');
+        })->orderBy('name')->get();
         return view('admin.quotation.modification', compact('customers'));
     }
 

@@ -157,7 +157,7 @@ let loadedQuotationId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
-    showLoadModal();
+    // Don't auto-open modal - let user click "Load Quotation" button
 });
 
 function loadItems() {
@@ -257,21 +257,43 @@ function populateForm(quotation) {
     document.getElementById('quotation_date').value = quotation.quotation_date ? quotation.quotation_date.split('T')[0] : '';
     document.getElementById('quotation_no').value = quotation.quotation_no || '';
     
-    // Set customer dropdown
+    // Set customer dropdown and name
     const customerSelect = document.getElementById('customer_id');
+    const customerNameInput = document.getElementById('customer_name');
+    
+    // Reset dropdown first
+    customerSelect.value = '';
+    
     if (quotation.customer_id) {
+        // Try to select existing option
         customerSelect.value = quotation.customer_id;
+        
         // If customer not found in dropdown, add it
         if (customerSelect.value != quotation.customer_id && quotation.customer_name) {
             const option = document.createElement('option');
             option.value = quotation.customer_id;
             option.textContent = quotation.customer_name;
             option.dataset.name = quotation.customer_name;
-            option.selected = true;
             customerSelect.appendChild(option);
+            customerSelect.value = quotation.customer_id;
+        }
+    } else if (quotation.customer_name) {
+        // If no customer_id but has customer_name, find by name in dropdown
+        for (let i = 0; i < customerSelect.options.length; i++) {
+            if (customerSelect.options[i].textContent === quotation.customer_name) {
+                customerSelect.selectedIndex = i;
+                break;
+            }
         }
     }
-    document.getElementById('customer_name').value = quotation.customer_name || '';
+    
+    // Set customer name from quotation data
+    customerNameInput.value = quotation.customer_name || '';
+    
+    // Update from dropdown if selected
+    if (customerSelect.value) {
+        updateCustomerName();
+    }
     
     document.getElementById('discount_percent').value = quotation.discount_percent || 0;
     document.getElementById('remarks').value = quotation.remarks || '';
