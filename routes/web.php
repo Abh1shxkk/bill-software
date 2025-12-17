@@ -52,6 +52,7 @@ use App\Http\Controllers\Admin\StockTransferIncomingController;
 use App\Http\Controllers\Admin\StockTransferIncomingReturnController;
 use App\Http\Controllers\Admin\SampleIssuedController;
 use App\Http\Controllers\Admin\SampleReceivedController;
+use App\Http\Controllers\Admin\GodownBreakageExpiryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\ProfileController;
 
@@ -408,6 +409,17 @@ Route::middleware(['admin'])->group(function () {
         Route::get('sample-received/{id}/edit', [SampleReceivedController::class, 'edit'])->name('sample-received.edit');
         Route::put('sample-received/{id}', [SampleReceivedController::class, 'update'])->name('sample-received.update');
         Route::delete('sample-received/{id}', [SampleReceivedController::class, 'destroy'])->name('sample-received.destroy');
+        
+        // Godown Breakage/Expiry Routes
+        Route::get('godown-breakage-expiry', [GodownBreakageExpiryController::class, 'index'])->name('godown-breakage-expiry.index');
+        Route::get('godown-breakage-expiry/create', [GodownBreakageExpiryController::class, 'create'])->name('godown-breakage-expiry.create');
+        Route::post('godown-breakage-expiry', [GodownBreakageExpiryController::class, 'store'])->name('godown-breakage-expiry.store');
+        Route::get('godown-breakage-expiry/get-items', [GodownBreakageExpiryController::class, 'getItems'])->name('godown-breakage-expiry.getItems');
+        Route::get('godown-breakage-expiry/get-past-invoices', [GodownBreakageExpiryController::class, 'getPastInvoices'])->name('godown-breakage-expiry.getPastInvoices');
+        Route::get('godown-breakage-expiry-modification', [GodownBreakageExpiryController::class, 'modification'])->name('godown-breakage-expiry.modification');
+        Route::get('godown-breakage-expiry/{id}', [GodownBreakageExpiryController::class, 'show'])->name('godown-breakage-expiry.show');
+        Route::put('godown-breakage-expiry/{id}', [GodownBreakageExpiryController::class, 'update'])->name('godown-breakage-expiry.update');
+        Route::delete('godown-breakage-expiry/{id}', [GodownBreakageExpiryController::class, 'destroy'])->name('godown-breakage-expiry.destroy');
         
         // Purchase Return Routes
         Route::get('purchase-return', [PurchaseReturnController::class, 'index'])->name('purchase-return.index');
