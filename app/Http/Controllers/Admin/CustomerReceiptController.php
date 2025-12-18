@@ -77,10 +77,14 @@ class CustomerReceiptController extends Controller
         $validated = $request->validate([
             'receipt_date' => 'required|date',
             'ledger' => 'nullable|string|max:10',
+            'salesman_id' => 'nullable|integer',
             'salesman_code' => 'nullable|string|max:20',
+            'area_id' => 'nullable|integer',
             'area_code' => 'nullable|string|max:20',
+            'route_id' => 'nullable|integer',
             'route_code' => 'nullable|string|max:20',
             'bank_code' => 'nullable|string|max:20',
+            'coll_boy_id' => 'nullable|integer',
             'coll_boy_code' => 'nullable|string|max:20',
             'day_value' => 'nullable|string|max:20',
             'tag' => 'nullable|string|max:50',
@@ -100,11 +104,36 @@ class CustomerReceiptController extends Controller
             // Get day name
             $dayName = date('l', strtotime($validated['receipt_date']));
 
-            // Get related names (SalesMan uses 'code', Area/Route use 'alter_code')
-            $salesman = SalesMan::where('code', $validated['salesman_code'])->first();
-            $area = Area::where('alter_code', $validated['area_code'])->first();
-            $route = Route::where('alter_code', $validated['route_code'])->first();
+            // Get related models by ID (preferred) or code (fallback)
+            $salesman = null;
+            if (!empty($validated['salesman_id'])) {
+                $salesman = SalesMan::find($validated['salesman_id']);
+            } elseif (!empty($validated['salesman_code'])) {
+                $salesman = SalesMan::where('code', $validated['salesman_code'])->first();
+            }
+
+            $area = null;
+            if (!empty($validated['area_id'])) {
+                $area = Area::find($validated['area_id']);
+            } elseif (!empty($validated['area_code'])) {
+                $area = Area::where('alter_code', $validated['area_code'])->first();
+            }
+
+            $route = null;
+            if (!empty($validated['route_id'])) {
+                $route = Route::find($validated['route_id']);
+            } elseif (!empty($validated['route_code'])) {
+                $route = Route::where('alter_code', $validated['route_code'])->first();
+            }
+
             $bank = CashBankBook::where('alter_code', $validated['bank_code'])->first();
+
+            $collBoy = null;
+            if (!empty($validated['coll_boy_id'])) {
+                $collBoy = SalesMan::find($validated['coll_boy_id']);
+            } elseif (!empty($validated['coll_boy_code'])) {
+                $collBoy = SalesMan::where('code', $validated['coll_boy_code'])->first();
+            }
 
             // Calculate totals
             $totalCash = 0;
@@ -117,24 +146,38 @@ class CustomerReceiptController extends Controller
                 }
             }
 
+            // Calculate total adjusted amount
+            $amtAdjusted = 0;
+            if ($request->has('adjustments')) {
+                foreach ($request->adjustments as $adj) {
+                    $amtAdjusted += floatval($adj['adjusted_amount'] ?? 0);
+                }
+            }
+
             $receipt = CustomerReceipt::create([
                 'receipt_date' => $validated['receipt_date'],
                 'day_name' => $dayName,
                 'trn_no' => $nextTrnNo,
                 'ledger' => $validated['ledger'] ?? 'CL',
-                'salesman_code' => $validated['salesman_code'] ?? null,
+                'salesman_id' => $salesman?->id,
+                'salesman_code' => $salesman?->code,
                 'salesman_name' => $salesman?->name,
-                'area_code' => $validated['area_code'] ?? null,
+                'area_id' => $area?->id,
+                'area_code' => $area?->alter_code,
                 'area_name' => $area?->name,
-                'route_code' => $validated['route_code'] ?? null,
+                'route_id' => $route?->id,
+                'route_code' => $route?->alter_code,
                 'route_name' => $route?->name,
                 'bank_code' => $validated['bank_code'] ?? null,
                 'bank_name' => $bank?->name,
-                'coll_boy_code' => $validated['coll_boy_code'] ?? null,
+                'coll_boy_id' => $collBoy?->id,
+                'coll_boy_code' => $collBoy?->code,
+                'coll_boy_name' => $collBoy?->name,
                 'day_value' => $validated['day_value'] ?? null,
                 'tag' => $validated['tag'] ?? null,
                 'total_cash' => $totalCash,
                 'total_cheque' => $totalCheque,
+                'amt_adjusted' => $amtAdjusted,
                 'tds_amount' => $validated['tds_amount'] ?? 0,
                 'currency_detail' => $validated['currency_detail'] ?? false,
                 'remarks' => $validated['remarks'] ?? null,
@@ -248,31 +291,36 @@ class CustomerReceiptController extends Controller
             ], 404);
         }
 
-        // Look up IDs from codes for Select2 dropdowns
+        // Convert to array
         $receiptData = $receipt->toArray();
         
-        // Get salesman ID from code
-        if ($receipt->salesman_code) {
+        // Ensure IDs are present (prefer saved IDs, fallback to lookup by code)
+        if (!$receipt->salesman_id && $receipt->salesman_code) {
             $salesman = SalesMan::where('code', $receipt->salesman_code)->first();
             $receiptData['salesman_id'] = $salesman ? $salesman->id : null;
+        } else {
+            $receiptData['salesman_id'] = $receipt->salesman_id;
         }
         
-        // Get area ID from alter_code
-        if ($receipt->area_code) {
+        if (!$receipt->area_id && $receipt->area_code) {
             $area = Area::where('alter_code', $receipt->area_code)->first();
             $receiptData['area_id'] = $area ? $area->id : null;
+        } else {
+            $receiptData['area_id'] = $receipt->area_id;
         }
         
-        // Get route ID from alter_code
-        if ($receipt->route_code) {
+        if (!$receipt->route_id && $receipt->route_code) {
             $route = Route::where('alter_code', $receipt->route_code)->first();
             $receiptData['route_id'] = $route ? $route->id : null;
+        } else {
+            $receiptData['route_id'] = $receipt->route_id;
         }
         
-        // Get coll_boy ID from code (uses SalesMan table)
-        if ($receipt->coll_boy_code) {
+        if (!$receipt->coll_boy_id && $receipt->coll_boy_code) {
             $collBoy = SalesMan::where('code', $receipt->coll_boy_code)->first();
             $receiptData['coll_boy_id'] = $collBoy ? $collBoy->id : null;
+        } else {
+            $receiptData['coll_boy_id'] = $receipt->coll_boy_id;
         }
 
         return response()->json([
@@ -383,10 +431,14 @@ class CustomerReceiptController extends Controller
         $validated = $request->validate([
             'receipt_date' => 'required|date',
             'ledger' => 'nullable|string|max:10',
+            'salesman_id' => 'nullable|integer',
             'salesman_code' => 'nullable|string|max:20',
+            'area_id' => 'nullable|integer',
             'area_code' => 'nullable|string|max:20',
+            'route_id' => 'nullable|integer',
             'route_code' => 'nullable|string|max:20',
             'bank_code' => 'nullable|string|max:20',
+            'coll_boy_id' => 'nullable|integer',
             'coll_boy_code' => 'nullable|string|max:20',
             'day_value' => 'nullable|string|max:20',
             'tag' => 'nullable|string|max:50',
@@ -402,11 +454,36 @@ class CustomerReceiptController extends Controller
             // Get day name
             $dayName = date('l', strtotime($validated['receipt_date']));
 
-            // Get related names (SalesMan uses 'code', Area/Route use 'alter_code')
-            $salesman = SalesMan::where('code', $validated['salesman_code'])->first();
-            $area = Area::where('alter_code', $validated['area_code'])->first();
-            $route = Route::where('alter_code', $validated['route_code'])->first();
+            // Get related models by ID (preferred) or code (fallback)
+            $salesman = null;
+            if (!empty($validated['salesman_id'])) {
+                $salesman = SalesMan::find($validated['salesman_id']);
+            } elseif (!empty($validated['salesman_code'])) {
+                $salesman = SalesMan::where('code', $validated['salesman_code'])->first();
+            }
+
+            $area = null;
+            if (!empty($validated['area_id'])) {
+                $area = Area::find($validated['area_id']);
+            } elseif (!empty($validated['area_code'])) {
+                $area = Area::where('alter_code', $validated['area_code'])->first();
+            }
+
+            $route = null;
+            if (!empty($validated['route_id'])) {
+                $route = Route::find($validated['route_id']);
+            } elseif (!empty($validated['route_code'])) {
+                $route = Route::where('alter_code', $validated['route_code'])->first();
+            }
+
             $bank = CashBankBook::where('alter_code', $validated['bank_code'])->first();
+
+            $collBoy = null;
+            if (!empty($validated['coll_boy_id'])) {
+                $collBoy = SalesMan::find($validated['coll_boy_id']);
+            } elseif (!empty($validated['coll_boy_code'])) {
+                $collBoy = SalesMan::where('code', $validated['coll_boy_code'])->first();
+            }
 
             // Calculate totals
             $totalCash = 0;
@@ -419,23 +496,37 @@ class CustomerReceiptController extends Controller
                 }
             }
 
+            // Calculate total adjusted amount
+            $amtAdjusted = 0;
+            if ($request->has('adjustments')) {
+                foreach ($request->adjustments as $adj) {
+                    $amtAdjusted += floatval($adj['adjusted_amount'] ?? 0);
+                }
+            }
+
             $receipt->update([
                 'receipt_date' => $validated['receipt_date'],
                 'day_name' => $dayName,
                 'ledger' => $validated['ledger'] ?? 'CL',
-                'salesman_code' => $validated['salesman_code'] ?? null,
+                'salesman_id' => $salesman?->id,
+                'salesman_code' => $salesman?->code,
                 'salesman_name' => $salesman?->name,
-                'area_code' => $validated['area_code'] ?? null,
+                'area_id' => $area?->id,
+                'area_code' => $area?->alter_code,
                 'area_name' => $area?->name,
-                'route_code' => $validated['route_code'] ?? null,
+                'route_id' => $route?->id,
+                'route_code' => $route?->alter_code,
                 'route_name' => $route?->name,
                 'bank_code' => $validated['bank_code'] ?? null,
                 'bank_name' => $bank?->name,
-                'coll_boy_code' => $validated['coll_boy_code'] ?? null,
+                'coll_boy_id' => $collBoy?->id,
+                'coll_boy_code' => $collBoy?->code,
+                'coll_boy_name' => $collBoy?->name,
                 'day_value' => $validated['day_value'] ?? null,
                 'tag' => $validated['tag'] ?? null,
                 'total_cash' => $totalCash,
                 'total_cheque' => $totalCheque,
+                'amt_adjusted' => $amtAdjusted,
                 'tds_amount' => $validated['tds_amount'] ?? 0,
                 'currency_detail' => $validated['currency_detail'] ?? false,
                 'remarks' => $validated['remarks'] ?? null,
@@ -549,30 +640,62 @@ class CustomerReceiptController extends Controller
     {
         try {
             $page = $request->get('page', 1);
-            $perPage = $request->get('per_page', 6);
+            $perPage = $request->get('per_page', 100); // Increased for adjustment modal
             $offset = ($page - 1) * $perPage;
+            $receiptId = $request->get('receipt_id'); // For modification - to get existing adjustments
+
+            // Get existing adjustments for this receipt (if in modification mode)
+            $existingAdjustments = [];
+            if ($receiptId) {
+                $adjustments = CustomerReceiptAdjustment::where('customer_receipt_id', $receiptId)->get();
+                foreach ($adjustments as $adj) {
+                    // Map by reference_no (invoice_no)
+                    $existingAdjustments[$adj->reference_no] = floatval($adj->adjusted_amount);
+                }
+            }
+
+            // Build query - include invoices that have balance OR have existing adjustments for this receipt
+            $query = DB::table('sale_transactions')
+                ->where('customer_id', $customerId);
+            
+            if ($receiptId && !empty($existingAdjustments)) {
+                // In modification mode: include both outstanding and previously adjusted invoices
+                $adjustedInvoiceNos = array_keys($existingAdjustments);
+                $query->where(function($q) use ($adjustedInvoiceNos) {
+                    $q->where('balance_amount', '>', 0)
+                      ->orWhereIn('invoice_no', $adjustedInvoiceNos);
+                });
+            } else {
+                // Normal mode: only outstanding
+                $query->where('balance_amount', '>', 0);
+            }
 
             // Get total count
-            $total = DB::table('sale_transactions')
-                ->where('customer_id', $customerId)
-                ->where('balance_amount', '>', 0)
-                ->count();
+            $total = (clone $query)->count();
 
             // Get total outstanding amount
-            $totalAmount = DB::table('sale_transactions')
-                ->where('customer_id', $customerId)
-                ->where('balance_amount', '>', 0)
-                ->sum('balance_amount');
+            $totalAmount = (clone $query)->sum('balance_amount');
 
-            // Get paginated outstanding invoices
-            $outstanding = DB::table('sale_transactions')
-                ->where('customer_id', $customerId)
-                ->where('balance_amount', '>', 0)
+            // Get outstanding invoices
+            $outstanding = $query
                 ->select('id', 'invoice_no', 'sale_date as invoice_date', 'net_amount', 'balance_amount')
                 ->orderBy('sale_date')
                 ->offset($offset)
                 ->limit($perPage)
                 ->get();
+
+            // Add existing adjustment info to each invoice
+            $outstanding = $outstanding->map(function($inv) use ($existingAdjustments) {
+                $existingAdj = $existingAdjustments[$inv->invoice_no] ?? 0;
+                $inv->existing_adjustment = $existingAdj;
+                // Available amount = current balance + existing adjustment (what was available before this receipt adjusted it)
+                $inv->available_amount = floatval($inv->balance_amount) + $existingAdj;
+                return $inv;
+            });
+
+            // Also add back existing adjustments to total amount for modification
+            $existingAdjTotal = array_sum($existingAdjustments);
+            $totalAmount = floatval($totalAmount) + $existingAdjTotal;
 
             $hasMore = ($offset + $perPage) < $total;
 
@@ -582,7 +705,8 @@ class CustomerReceiptController extends Controller
                 'total_amount' => $totalAmount,
                 'total_count' => $total,
                 'current_page' => (int)$page,
-                'has_more' => $hasMore
+                'has_more' => $hasMore,
+                'existing_adjustments' => $existingAdjustments
             ]);
         } catch (\Exception $e) {
             \Log::error('Customer Outstanding Error: ' . $e->getMessage());

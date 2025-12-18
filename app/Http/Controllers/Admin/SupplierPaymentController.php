@@ -276,7 +276,7 @@ class SupplierPaymentController extends Controller
             foreach ($payment->adjustments as $oldAdj) {
                 if ($oldAdj->reference_no) {
                     $purchaseTransaction = DB::table('purchase_transactions')
-                        ->where('invoice_no', $oldAdj->reference_no)
+                        ->where('bill_no', $oldAdj->reference_no)
                         ->first();
                     if ($purchaseTransaction) {
                         DB::table('purchase_transactions')
@@ -376,27 +376,62 @@ class SupplierPaymentController extends Controller
     {
         try {
             $page = $request->get('page', 1);
-            $perPage = $request->get('per_page', 6);
+            $perPage = $request->get('per_page', 100); // Increased for adjustment modal
             $offset = ($page - 1) * $perPage;
+            $paymentId = $request->get('payment_id'); // For modification - to get existing adjustments
 
-            $total = DB::table('purchase_transactions')
-                ->where('supplier_id', $supplierId)
-                ->where('balance_amount', '>', 0)
-                ->count();
+            // Get existing adjustments for this payment (if in modification mode)
+            $existingAdjustments = [];
+            if ($paymentId) {
+                $adjustments = SupplierPaymentAdjustment::where('supplier_payment_id', $paymentId)->get();
+                foreach ($adjustments as $adj) {
+                    // Map by reference_no (bill_no)
+                    $existingAdjustments[$adj->reference_no] = floatval($adj->adjusted_amount);
+                }
+            }
 
-            $totalAmount = DB::table('purchase_transactions')
-                ->where('supplier_id', $supplierId)
-                ->where('balance_amount', '>', 0)
-                ->sum('balance_amount');
+            // Build query - include invoices that have balance OR have existing adjustments for this payment
+            $query = DB::table('purchase_transactions')
+                ->where('supplier_id', $supplierId);
+            
+            if ($paymentId && !empty($existingAdjustments)) {
+                // In modification mode: include both outstanding and previously adjusted invoices
+                $adjustedInvoiceNos = array_keys($existingAdjustments);
+                $query->where(function($q) use ($adjustedInvoiceNos) {
+                    $q->where('balance_amount', '>', 0)
+                      ->orWhereIn('bill_no', $adjustedInvoiceNos);
+                });
+            } else {
+                // Normal mode: only outstanding
+                $query->where('balance_amount', '>', 0);
+            }
 
-            $outstanding = DB::table('purchase_transactions')
-                ->where('supplier_id', $supplierId)
-                ->where('balance_amount', '>', 0)
+            // Get total count
+            $total = (clone $query)->count();
+
+            // Get total outstanding amount
+            $totalAmount = (clone $query)->sum('balance_amount');
+
+            // Get outstanding invoices
+            $outstanding = $query
                 ->select('id', 'bill_no as invoice_no', 'bill_date as invoice_date', 'inv_amount as net_amount', 'balance_amount')
                 ->orderBy('bill_date')
                 ->offset($offset)
                 ->limit($perPage)
                 ->get();
+
+            // Add existing adjustment info to each invoice
+            $outstanding = $outstanding->map(function($inv) use ($existingAdjustments) {
+                $existingAdj = $existingAdjustments[$inv->invoice_no] ?? 0;
+                $inv->existing_adjustment = $existingAdj;
+                // Available amount = current balance + existing adjustment
+                $inv->available_amount = floatval($inv->balance_amount) + $existingAdj;
+                return $inv;
+            });
+
+            // Also add back existing adjustments to total amount for modification
+            $existingAdjTotal = array_sum($existingAdjustments);
+            $totalAmount = floatval($totalAmount) + $existingAdjTotal;
 
             $hasMore = ($offset + $perPage) < $total;
 
@@ -406,7 +441,8 @@ class SupplierPaymentController extends Controller
                 'total_amount' => $totalAmount,
                 'total_count' => $total,
                 'current_page' => (int)$page,
-                'has_more' => $hasMore
+                'has_more' => $hasMore,
+                'existing_adjustments' => $existingAdjustments
             ]);
         } catch (\Exception $e) {
             \Log::error('Supplier Outstanding Error: ' . $e->getMessage());

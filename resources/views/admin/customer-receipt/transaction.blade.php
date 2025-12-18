@@ -194,6 +194,15 @@
         border: 1px solid #ced4da;
         border-radius: 0;
     }
+    
+    /* Cash Highlighted Style */
+    .cheque-no.cash-highlighted {
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+        background-color: #d4edda !important;
+        color: #155724 !important;
+        border-color: #28a745 !important;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -696,8 +705,8 @@ function addItemRow(customer = null) {
             <input type="hidden" class="cheque-closed-on" name="items[${itemRowCount}][cheque_closed_on]">
         </td>
         <td><input type="date" class="form-control cheque-date" name="items[${itemRowCount}][cheque_date]"></td>
-        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="" onchange="calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModalForRow(this.closest('tr'))"></td>
-        <td><input type="number" class="form-control text-end unadjusted" name="items[${itemRowCount}][unadjusted]" step="0.01" value=""></td>
+        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="" onchange="setUnadjustedAmount(this); calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModalForRow(this.closest('tr'))"></td>
+        <td><input type="number" class="form-control text-end unadjusted readonly-field" name="items[${itemRowCount}][unadjusted]" step="0.01" value="" readonly></td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Remove"><i class="bi bi-trash"></i></button>
         </td>
@@ -745,6 +754,14 @@ function updateRowStatus(row) {
     } else {
         row.classList.remove('row-complete');
     }
+}
+
+// Set unadjusted amount = entered amount (before adjustment modal opens)
+function setUnadjustedAmount(amountInput) {
+    const row = amountInput.closest('tr');
+    const unadjustedInput = row.querySelector('.unadjusted');
+    const amount = parseFloat(amountInput.value) || 0;
+    unadjustedInput.value = amount.toFixed(2);
 }
 
 function calculateTotals() {
@@ -817,10 +834,14 @@ function saveReceipt() {
     const data = {
         receipt_date: document.getElementById('receiptDate').value,
         ledger: document.getElementById('ledger').value,
+        salesman_id: document.getElementById('salesmanSelect').value || null,
         salesman_code: document.getElementById('salesmanCode').value,
+        area_id: document.getElementById('areaSelect').value || null,
         area_code: document.getElementById('areaCode').value,
+        route_id: document.getElementById('routeSelect').value || null,
         route_code: document.getElementById('routeCode').value,
         bank_code: document.getElementById('bankSelect').value,
+        coll_boy_id: document.getElementById('collBoySelect').value || null,
         coll_boy_code: document.getElementById('collBoyCode').value,
         day_value: document.getElementById('dayValue').value,
         tag: document.getElementById('tag').value,
@@ -1089,9 +1110,21 @@ function closeAdjustmentModal() {
 // Bank Details Modal Variables
 let currentBankRow = null;
 
-// Open Bank Details Modal when cheque number is entered
+// Open Bank Details Modal when cheque number is entered (skip if 'cash')
 function onChequeNoChange(input) {
     const chequeNo = input.value.trim();
+    const chequeNoLower = chequeNo.toLowerCase();
+    
+    // If cash, capitalize and highlight
+    if (chequeNoLower === 'cash') {
+        input.value = 'CASH';
+        input.classList.add('cash-highlighted');
+        return; // Skip bank modal
+    } else {
+        input.classList.remove('cash-highlighted');
+    }
+    
+    // Skip bank modal if empty
     if (chequeNo) {
         currentBankRow = input.closest('tr');
         
@@ -1144,6 +1177,11 @@ function saveBankDetails() {
     currentBankRow.querySelector('.cheque-bank-name').value = bankName;
     currentBankRow.querySelector('.cheque-bank-area').value = bankArea;
     currentBankRow.querySelector('.cheque-closed-on').value = closedOn;
+    
+    // Also set the cheque date in the row from 'Closed On'
+    if (closedOn) {
+        currentBankRow.querySelector('.cheque-date').value = closedOn;
+    }
     
     closeBankModal();
 }

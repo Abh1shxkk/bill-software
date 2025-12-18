@@ -204,12 +204,7 @@
             <button type="button" class="btn-close-modal" onclick="closeLoadModal()">&times;</button>
         </div>
         <div class="modal-body-box">
-            <div class="row g-2 mb-3">
-                <div class="col-md-5"><label class="form-label small">From Date</label><input type="date" class="form-control form-control-sm" id="loadFromDate"></div>
-                <div class="col-md-5"><label class="form-label small">To Date</label><input type="date" class="form-control form-control-sm" id="loadToDate"></div>
-                <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary btn-sm w-100" onclick="searchPayments()"><i class="bi bi-search"></i></button></div>
-            </div>
-            <div style="max-height: 300px; overflow-y: auto;">
+            <div style="max-height: 400px; overflow-y: auto;">
                 <table class="table table-sm table-bordered table-hover" style="font-size: 11px;">
                     <thead class="table-light" style="position: sticky; top: 0;"><tr><th>Trn No</th><th>Date</th><th>Bank</th><th>Amount</th></tr></thead>
                     <tbody id="loadPaymentsList"></tbody>
@@ -640,6 +635,18 @@ function saveBankDetails() {
 function openLoadModal() {
     document.getElementById('loadModalBackdrop').classList.add('show');
     document.getElementById('loadModal').classList.add('show');
+    
+    // Load all payments automatically
+    document.getElementById('loadPaymentsList').innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+    fetch('{{ url("admin/supplier-payment/get-payments") }}')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.payments) displayPaymentsList(data.payments);
+            else document.getElementById('loadPaymentsList').innerHTML = '<tr><td colspan="4" class="text-center text-muted">No payments found</td></tr>';
+        })
+        .catch(() => {
+            document.getElementById('loadPaymentsList').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading payments</td></tr>';
+        });
 }
 
 function closeLoadModal() {
@@ -647,23 +654,13 @@ function closeLoadModal() {
     document.getElementById('loadModal').classList.remove('show');
 }
 
-function searchPayments() {
-    const fromDate = document.getElementById('loadFromDate').value;
-    const toDate = document.getElementById('loadToDate').value;
-    let url = '{{ url("admin/supplier-payment/get-payments") }}';
-    const params = new URLSearchParams();
-    if (fromDate) params.append('from_date', fromDate);
-    if (toDate) params.append('to_date', toDate);
-    if (params.toString()) url += '?' + params.toString();
-    
-    fetch(url).then(r => r.json()).then(data => {
-        if (data.success && data.payments) displayPaymentsList(data.payments);
-    });
-}
-
 function displayPaymentsList(payments) {
     const tbody = document.getElementById('loadPaymentsList');
     tbody.innerHTML = '';
+    if (!payments || payments.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No payments found</td></tr>';
+        return;
+    }
     payments.forEach(p => {
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
@@ -694,7 +691,13 @@ function openAdjustmentModalDirect() {
     document.getElementById('autoAdjustAmount').value = amount.toFixed(2);
     const supplierId = row.dataset.supplierId;
     
-    fetch(`{{ url('admin/supplier-payment/supplier-outstanding') }}/${supplierId}?page=1&per_page=100`)
+    // Build URL with payment_id if in modification mode
+    let url = `{{ url('admin/supplier-payment/supplier-outstanding') }}/${supplierId}?page=1&per_page=100`;
+    if (currentPayment && currentPayment.id) {
+        url += `&payment_id=${currentPayment.id}`;
+    }
+    
+    fetch(url)
         .then(r => r.json())
         .then(data => { if (data.success && data.outstanding) populateAdjustmentTable(data.outstanding); });
     
@@ -710,14 +713,30 @@ function populateAdjustmentTable(invoices) {
         return;
     }
     invoices.forEach((inv, idx) => {
+        // Available amount = balance + existing adjustment (what's actually available)
+        const availableAmount = parseFloat(inv.available_amount || inv.balance_amount || 0);
+        const existingAdj = parseFloat(inv.existing_adjustment || 0);
+        const currentBalance = availableAmount - existingAdj;
+        
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align: center;">${idx + 1}</td>
             <td style="text-align: center;">${inv.invoice_no || '-'}</td>
             <td style="text-align: center;">${inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
-            <td style="text-align: right;">${parseFloat(inv.net_amount || 0).toFixed(2)}</td>
-            <td><input type="number" class="form-control form-control-sm adj-amount" data-id="${inv.id}" data-invoice="${inv.invoice_no}" data-date="${inv.invoice_date}" data-bill="${inv.net_amount}" data-balance="${inv.balance_amount}" step="0.01" value="0.00" style="text-align: right;" onchange="updateAdjustmentRemaining()"></td>
-            <td style="text-align: right;">${parseFloat(inv.balance_amount || 0).toFixed(2)}</td>
+            <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${availableAmount.toFixed(2)}</td>
+            <td><input type="number" class="form-control form-control-sm adj-amount" 
+                data-id="${inv.id}" 
+                data-invoice="${inv.invoice_no}" 
+                data-date="${inv.invoice_date}" 
+                data-bill="${inv.net_amount}" 
+                data-available="${availableAmount}" 
+                step="0.01" 
+                value="${existingAdj > 0 ? existingAdj.toFixed(2) : '0.00'}" 
+                max="${availableAmount}"
+                style="text-align: right;" 
+                onchange="updateAdjustmentRemaining()" 
+                oninput="updateAdjustmentRemaining()"></td>
+            <td style="text-align: right;" id="adj_bal_${inv.id}"><span style="color: #28a745;">₹ ${currentBalance.toFixed(2)}</span></td>
         `;
         tbody.appendChild(tr);
     });
@@ -726,18 +745,40 @@ function populateAdjustmentTable(invoices) {
 
 function updateAdjustmentRemaining() {
     let totalAdjusted = 0;
-    document.querySelectorAll('.adj-amount').forEach(input => { totalAdjusted += parseFloat(input.value || 0); });
+    document.querySelectorAll('.adj-amount').forEach(input => {
+        let adjusted = parseFloat(input.value || 0);
+        const invoiceId = input.dataset.id;
+        const available = parseFloat(input.dataset.available || input.dataset.balance || 0);
+        
+        // Prevent adjusting more than available
+        if (adjusted > available) {
+            input.value = available.toFixed(2);
+            adjusted = available;
+        }
+        
+        totalAdjusted += adjusted;
+        
+        // Update balance display
+        const newBalance = available - adjusted;
+        const balanceCell = document.getElementById(`adj_bal_${invoiceId}`);
+        if (balanceCell) {
+            balanceCell.innerHTML = `<span style="color: ${newBalance === 0 ? '#28a745' : '#28a745'};">₹ ${newBalance.toFixed(2)}</span>`;
+        }
+    });
     const remaining = currentAdjustmentAmount - totalAdjusted;
-    document.getElementById('adjustmentRemainingDisplay').textContent = '₹ ' + remaining.toFixed(2);
-    document.getElementById('adjustmentRemainingDisplay').style.color = remaining >= 0 ? '#28a745' : '#dc3545';
+    const remainingEl = document.getElementById('adjustmentRemainingDisplay');
+    if (remainingEl) {
+        remainingEl.textContent = '₹ ' + remaining.toFixed(2);
+        remainingEl.style.color = remaining >= 0 ? '#28a745' : '#dc3545';
+    }
 }
 
 function autoDistributeAmount() {
     let remaining = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
     document.querySelectorAll('.adj-amount').forEach(input => {
         if (remaining <= 0) { input.value = '0.00'; return; }
-        const balance = parseFloat(input.dataset.balance || 0);
-        const toAdjust = Math.min(remaining, balance);
+        const available = parseFloat(input.dataset.available || input.dataset.balance || 0);
+        const toAdjust = Math.min(remaining, available);
         input.value = toAdjust.toFixed(2);
         remaining -= toAdjust;
     });
@@ -750,7 +791,16 @@ function saveAdjustmentData() {
     document.querySelectorAll('.adj-amount').forEach(input => {
         const adjAmount = parseFloat(input.value || 0);
         if (adjAmount > 0) {
-            adjustmentData.push({ purchase_transaction_id: input.dataset.id, reference_no: input.dataset.invoice, reference_date: input.dataset.date, reference_amount: parseFloat(input.dataset.bill || 0), adjusted_amount: adjAmount, balance_amount: parseFloat(input.dataset.balance || 0) - adjAmount, adjustment_type: 'outstanding' });
+            const available = parseFloat(input.dataset.available || input.dataset.balance || 0);
+            adjustmentData.push({ 
+                purchase_transaction_id: input.dataset.id, 
+                reference_no: input.dataset.invoice, 
+                reference_date: input.dataset.date, 
+                reference_amount: parseFloat(input.dataset.bill || 0), 
+                adjusted_amount: adjAmount, 
+                balance_amount: available - adjAmount, 
+                adjustment_type: 'outstanding' 
+            });
             totalAdjusted += adjAmount;
         }
     });

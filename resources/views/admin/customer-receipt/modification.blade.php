@@ -399,7 +399,7 @@
                     <input class="form-check-input" type="checkbox" name="currency_detail" id="currencyDetail">
                     <label class="form-check-label" for="currencyDetail">Currency Detail</label>
                 </div>
-                <button type="button" class="btn btn-success" onclick="saveReceipt()">Save (End)</button>
+                <button type="button" class="btn btn-success" id="btnSave" onclick="saveReceipt()">Save (End)</button>
                 <button type="button" class="btn btn-danger" onclick="deleteReceipt()">Delete</button>
                 <a href="{{ route('admin.customer-receipt.index') }}" class="btn btn-secondary">Exit (Esc)</a>
             </div>
@@ -523,20 +523,7 @@
             <button type="button" class="btn-close-modal" onclick="closeLoadInvoicesModal()">&times;</button>
         </div>
         <div class="customer-modal-body" style="max-height: 500px;">
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <input type="date" class="form-control form-control-sm" id="invoiceFilterFromDate" placeholder="From Date">
-                </div>
-                <div class="col-md-4">
-                    <input type="date" class="form-control form-control-sm" id="invoiceFilterToDate" placeholder="To Date">
-                </div>
-                <div class="col-md-4">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="loadPastInvoices()">
-                        <i class="bi bi-search me-1"></i> Search
-                    </button>
-                </div>
-            </div>
-            <div style="max-height: 350px; overflow-y: auto;">
+            <div style="max-height: 400px; overflow-y: auto;">
                 <table class="table table-bordered table-sm" style="font-size: 11px;">
                     <thead style="position: sticky; top: 0; background: #e9ecef; z-index: 5;">
                         <tr>
@@ -549,7 +536,7 @@
                         </tr>
                     </thead>
                     <tbody id="invoicesListBody">
-                        <tr><td colspan="6" class="text-center text-muted py-3">Click Search to load receipts</td></tr>
+                        <tr><td colspan="6" class="text-center text-muted py-3">Loading...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -871,10 +858,14 @@ function saveReceipt() {
     const data = {
         receipt_date: document.getElementById('receiptDate').value,
         ledger: document.getElementById('ledger').value,
+        salesman_id: document.getElementById('salesmanSelect').value || null,
         salesman_code: document.getElementById('salesmanCode').value,
+        area_id: document.getElementById('areaSelect').value || null,
         area_code: document.getElementById('areaCode').value,
+        route_id: document.getElementById('routeSelect').value || null,
         route_code: document.getElementById('routeCode').value,
         bank_code: document.getElementById('bankSelect').value,
+        coll_boy_id: document.getElementById('collBoySelect').value || null,
         coll_boy_code: document.getElementById('collBoyCode').value,
         day_value: document.getElementById('dayValue').value,
         tag: document.getElementById('tag').value,
@@ -883,15 +874,31 @@ function saveReceipt() {
         adjustments: adjustments
     };
     
-    fetch('{{ route("admin.customer-receipt.store") }}', {
-        method: 'POST',
+    // Determine if this is an update or new save
+    let url, method;
+    if (currentReceiptId) {
+        // Update existing receipt
+        url = `{{ url('admin/customer-receipt') }}/${currentReceiptId}`;
+        method = 'PUT';
+    } else {
+        // Create new receipt
+        url = '{{ route("admin.customer-receipt.store") }}';
+        method = 'POST';
+    }
+    
+    fetch(url, {
+        method: method,
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
         body: JSON.stringify(data)
     })
     .then(r => r.json())
     .then(result => {
         if (result.success) {
-            alert('Receipt saved successfully! Trn No: ' + result.trn_no);
+            if (currentReceiptId) {
+                alert('Receipt updated successfully!');
+            } else {
+                alert('Receipt saved successfully! Trn No: ' + result.trn_no);
+            }
             window.location.href = '{{ route("admin.customer-receipt.index") }}';
         } else {
             alert(result.message || 'Failed to save receipt');
@@ -919,8 +926,14 @@ function openAdjustmentModalForRow(row) {
     currentAdjustmentRow = row;
     currentAdjustmentAmount = amount;
     
+    // Build URL with receipt_id if in modification mode
+    let url = `{{ url('admin/customer-receipt/customer-outstanding') }}/${customerId}?page=1&per_page=100`;
+    if (currentReceiptId) {
+        url += `&receipt_id=${currentReceiptId}`;
+    }
+    
     // Fetch customer's outstanding invoices
-    fetch(`{{ url('admin/customer-receipt/customer-outstanding') }}/${customerId}?page=1&per_page=100`)
+    fetch(url)
         .then(r => r.json())
         .then(data => {
             if (data.success && data.outstanding && data.outstanding.length > 0) {
@@ -934,28 +947,33 @@ function openAdjustmentModalForRow(row) {
 // Show Adjustment Modal
 function showAdjustmentModal(invoices, receiptAmount, rowIndex) {
     const tbody = document.getElementById('adjustmentTableBody');
-    const existingAdjustments = rowAdjustments[rowIndex] || {};
+    const existingRowAdjustments = rowAdjustments[rowIndex] || {};
     
     tbody.innerHTML = invoices.map((inv, index) => {
-        const billAmount = parseFloat(inv.net_amount || 0);
-        const balance = parseFloat(inv.balance_amount || 0);
-        const existingAdj = existingAdjustments[inv.id] || 0;
-        const currentBalance = balance - existingAdj;
+        // Available amount = balance + existing adjustment (what's actually available for this receipt)
+        const availableAmount = parseFloat(inv.available_amount || inv.balance_amount || 0);
+        const existingAdj = parseFloat(inv.existing_adjustment || 0);
+        
+        // Check if we have a local adjustment stored (user modified in current session)
+        const localAdj = existingRowAdjustments[inv.id];
+        const displayAdj = localAdj !== undefined ? localAdj : existingAdj;
+        const currentBalance = availableAmount - displayAdj;
         
         return `
             <tr>
                 <td style="text-align: center;">${index + 1}</td>
                 <td style="text-align: center;">${inv.invoice_no || '-'}</td>
                 <td style="text-align: center;">${inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
-                <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${balance.toFixed(2)}</td>
+                <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${availableAmount.toFixed(2)}</td>
                 <td style="text-align: center;">
                     <input type="number" class="form-control form-control-sm adj-input" 
                            id="adj_${inv.id}" 
                            data-invoice-id="${inv.id}"
-                           data-balance="${balance}"
-                           value="${existingAdj > 0 ? existingAdj.toFixed(2) : ''}" 
+                           data-invoice-no="${inv.invoice_no || ''}"
+                           data-available="${availableAmount}"
+                           value="${displayAdj > 0 ? displayAdj.toFixed(2) : ''}" 
                            min="0" 
-                           max="${balance}"
+                           max="${availableAmount}"
                            step="0.01"
                            onchange="updateAdjustmentBalances()"
                            oninput="updateAdjustmentBalances()"
@@ -996,18 +1014,19 @@ function updateAdjustmentBalances() {
     inputs.forEach(input => {
         let adjusted = parseFloat(input.value || 0);
         const invoiceId = input.getAttribute('data-invoice-id');
-        const balance = parseFloat(input.getAttribute('data-balance'));
+        // Use data-available (available amount = balance + existing adjustment)
+        const available = parseFloat(input.getAttribute('data-available') || input.getAttribute('data-balance') || 0);
         
-        // Prevent adjusting more than balance
-        if (adjusted > balance) {
-            input.value = balance.toFixed(2);
-            adjusted = balance;
+        // Prevent adjusting more than available
+        if (adjusted > available) {
+            input.value = available.toFixed(2);
+            adjusted = available;
         }
         
         totalAdjusted += adjusted;
         
         // Calculate new balance
-        const newBalance = balance - adjusted;
+        const newBalance = available - adjusted;
         const balanceCell = document.getElementById(`bal_${invoiceId}`);
         if (balanceCell) {
             if (newBalance === 0) {
@@ -1021,14 +1040,16 @@ function updateAdjustmentBalances() {
     // Update remaining
     const remaining = currentAdjustmentAmount - totalAdjusted;
     const remainingEl = document.getElementById('adjustmentRemainingDisplay');
-    remainingEl.textContent = `₹ ${remaining.toFixed(2)}`;
-    
-    if (remaining < 0) {
-        remainingEl.style.color = '#dc3545';
-    } else if (remaining === 0) {
-        remainingEl.style.color = '#28a745';
-    } else {
-        remainingEl.style.color = '#ffc107';
+    if (remainingEl) {
+        remainingEl.textContent = `₹ ${remaining.toFixed(2)}`;
+        
+        if (remaining < 0) {
+            remainingEl.style.color = '#dc3545';
+        } else if (remaining === 0) {
+            remainingEl.style.color = '#28a745';
+        } else {
+            remainingEl.style.color = '#ffc107';
+        }
     }
 }
 
@@ -1046,12 +1067,12 @@ function autoDistributeAmount() {
         input.value = '';
     });
     
-    // Get all inputs sorted by balance
+    // Get all inputs sorted by available amount
     const inputs = Array.from(document.querySelectorAll('.adj-input'));
     const transactions = inputs.map(input => ({
         input: input,
-        balance: parseFloat(input.getAttribute('data-balance'))
-    })).filter(t => t.balance > 0);
+        available: parseFloat(input.getAttribute('data-available') || input.getAttribute('data-balance') || 0)
+    })).filter(t => t.available > 0);
     
     let remainingAmount = totalAmount;
     
@@ -1059,7 +1080,7 @@ function autoDistributeAmount() {
     transactions.forEach(transaction => {
         if (remainingAmount <= 0) return;
         
-        const adjustAmount = Math.min(remainingAmount, transaction.balance);
+        const adjustAmount = Math.min(remainingAmount, transaction.available);
         transaction.input.value = adjustAmount.toFixed(2);
         remainingAmount -= adjustAmount;
     });
@@ -1208,11 +1229,8 @@ let currentReceiptId = null;
 function openLoadInvoicesModal() {
     document.getElementById('loadInvoicesModalBackdrop').classList.add('show');
     document.getElementById('loadInvoicesModal').classList.add('show');
-    // Set default dates (last 30 days)
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-    document.getElementById('invoiceFilterToDate').value = today.toISOString().split('T')[0];
-    document.getElementById('invoiceFilterFromDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+    // Auto-load all past invoices
+    loadPastInvoices();
 }
 
 function closeLoadInvoicesModal() {
@@ -1221,21 +1239,10 @@ function closeLoadInvoicesModal() {
 }
 
 function loadPastInvoices() {
-    const fromDate = document.getElementById('invoiceFilterFromDate').value;
-    const toDate = document.getElementById('invoiceFilterToDate').value;
-    
     const tbody = document.getElementById('invoicesListBody');
     tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
     
-    let url = `{{ url('admin/customer-receipt/get-receipts') }}`;
-    let params = [];
-    if (fromDate) params.push(`from_date=${fromDate}`);
-    if (toDate) params.push(`to_date=${toDate}`);
-    if (params.length > 0) url += '?' + params.join('&');
-    
-    console.log('Fetching receipts from:', url);
-    
-    fetch(url, {
+    fetch(`{{ url('admin/customer-receipt/get-receipts') }}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
@@ -1243,14 +1250,12 @@ function loadPastInvoices() {
         }
     })
         .then(r => {
-            console.log('Response status:', r.status);
             if (!r.ok) {
                 throw new Error(`HTTP error! status: ${r.status}`);
             }
             return r.json();
         })
         .then(data => {
-            console.log('Response data:', data);
             if (data.success && data.receipts && data.receipts.length > 0) {
                 tbody.innerHTML = data.receipts.map(r => `
                     <tr>
@@ -1267,7 +1272,7 @@ function loadPastInvoices() {
                     </tr>
                 `).join('');
             } else if (data.success && (!data.receipts || data.receipts.length === 0)) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No receipts found for selected date range. Try expanding the date range.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No receipts found in database.</td></tr>';
             } else {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">${data.message || 'Error loading receipts'}</td></tr>`;
             }
@@ -1308,38 +1313,118 @@ function populateFormWithReceipt(receipt) {
     document.getElementById('routeCode').value = receipt.route_code || '';
     document.getElementById('collBoyCode').value = receipt.coll_boy_code || '';
     
-    // Set Select2/dropdown values using IDs
+    // Set dropdown values - Use IDs if available, otherwise match by code/name
+    const salesmanSelect = document.getElementById('salesmanSelect');
+    const areaSelect = document.getElementById('areaSelect');
+    const routeSelect = document.getElementById('routeSelect');
+    const collBoySelect = document.getElementById('collBoySelect');
+    const bankSelect = document.getElementById('bankSelect');
+    
+    // Salesman
     if (receipt.salesman_id) {
-        document.getElementById('salesmanSelect').value = receipt.salesman_id;
+        salesmanSelect.value = receipt.salesman_id;
+    } else if (receipt.salesman_code) {
+        // Find by code
+        const option = Array.from(salesmanSelect.options).find(opt => opt.dataset.code === receipt.salesman_code);
+        if (option) salesmanSelect.value = option.value;
     }
+    salesmanSelect.dispatchEvent(new Event('change'));
+    
+    // Area
     if (receipt.area_id) {
-        document.getElementById('areaSelect').value = receipt.area_id;
+        areaSelect.value = receipt.area_id;
+    } else if (receipt.area_code) {
+        const option = Array.from(areaSelect.options).find(opt => opt.dataset.code === receipt.area_code);
+        if (option) areaSelect.value = option.value;
     }
+    areaSelect.dispatchEvent(new Event('change'));
+    
+    // Route
     if (receipt.route_id) {
-        document.getElementById('routeSelect').value = receipt.route_id;
+        routeSelect.value = receipt.route_id;
+    } else if (receipt.route_code) {
+        const option = Array.from(routeSelect.options).find(opt => opt.dataset.code === receipt.route_code);
+        if (option) routeSelect.value = option.value;
     }
+    routeSelect.dispatchEvent(new Event('change'));
+    
+    // Collection Boy
     if (receipt.coll_boy_id) {
-        document.getElementById('collBoySelect').value = receipt.coll_boy_id;
+        collBoySelect.value = receipt.coll_boy_id;
+    } else if (receipt.coll_boy_code) {
+        const option = Array.from(collBoySelect.options).find(opt => opt.dataset.code === receipt.coll_boy_code);
+        if (option) collBoySelect.value = option.value;
     }
+    collBoySelect.dispatchEvent(new Event('change'));
+    
+    // Bank (uses alter_code directly)
     if (receipt.bank_code) {
-        document.getElementById('bankSelect').value = receipt.bank_code;
+        bankSelect.value = receipt.bank_code;
     }
+    bankSelect.dispatchEvent(new Event('change'));
     
     // Clear and populate items
     document.getElementById('itemsTableBody').innerHTML = '';
     itemRowCount = 0;
     
+    // Clear outstanding table first
+    const outstandingTbody = document.getElementById('outstandingTableBody');
+    if (outstandingTbody) {
+        outstandingTbody.innerHTML = '';
+    }
+    const outstandingTotalEl = document.getElementById('outstandingTotal');
+    if (outstandingTotalEl) {
+        outstandingTotalEl.textContent = '0.00';
+    }
+    
     if (receipt.items && receipt.items.length > 0) {
         receipt.items.forEach(item => {
             addItemRowFromData(item);
         });
+        
+        // Fetch outstanding invoices for the first customer
+        const firstCustomerId = receipt.items[0]?.customer_id;
+        if (firstCustomerId) {
+            fetchCustomerOutstanding(firstCustomerId);
+        }
+    }
+    
+    // Clear and populate adjustments
+    const adjustedTbody = document.getElementById('adjustedTableBody');
+    if (adjustedTbody) {
+        adjustedTbody.innerHTML = '';
+    }
+    let totalAdjusted = 0;
+    
+    if (receipt.adjustments && receipt.adjustments.length > 0 && adjustedTbody) {
+        receipt.adjustments.forEach(adj => {
+            const adjustedAmt = parseFloat(adj.adjusted_amount || 0);
+            totalAdjusted += adjustedAmt;
+            
+            const row = document.createElement('tr');
+            row.style.height = '28px';
+            row.innerHTML = `
+                <td style="padding: 3px 5px;">${adj.reference_no || '-'}</td>
+                <td style="padding: 3px 5px;">${adj.reference_date ? new Date(adj.reference_date).toLocaleDateString('en-GB') : '-'}</td>
+                <td class="text-end" style="padding: 3px 5px;">${adjustedAmt.toFixed(2)}</td>
+            `;
+            adjustedTbody.appendChild(row);
+        });
+    }
+    
+    const adjustedTotalEl = document.getElementById('adjustedTotal');
+    if (adjustedTotalEl) {
+        adjustedTotalEl.textContent = totalAdjusted.toFixed(2);
     }
     
     // Update totals
     calculateTotals();
     
     // Enable update button
-    document.getElementById('btnSave').textContent = 'Update';
+    const btnSave = document.getElementById('btnSave');
+    if (btnSave) {
+        btnSave.textContent = 'Update';
+    }
 }
 
 function addItemRowFromData(item) {
@@ -1367,7 +1452,7 @@ function addItemRowFromData(item) {
             <input type="hidden" class="cheque-closed-on" name="items[${itemRowCount}][cheque_closed_on]" value="${item.cheque_closed_on || ''}">
         </td>
         <td><input type="date" class="form-control cheque-date" name="items[${itemRowCount}][cheque_date]" value="${chequeDate}"></td>
-        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="${item.amount || ''}" onchange="calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModal(this.closest('tr'))"></td>
+        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="${item.amount || ''}" onchange="calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModalForRow(this.closest('tr'))"></td>
         <td><input type="number" class="form-control text-end unadjusted readonly-field" name="items[${itemRowCount}][unadjusted]" step="0.01" value="${item.unadjusted || ''}" readonly></td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Remove"><i class="bi bi-trash"></i></button>

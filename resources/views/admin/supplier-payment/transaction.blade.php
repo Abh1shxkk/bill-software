@@ -49,6 +49,15 @@
     .bank-field-group { display: flex; align-items: center; margin-bottom: 10px; }
     .bank-field-group label { width: 100px; font-weight: 600; font-size: 12px; }
     .bank-field-group input, .bank-field-group select { flex: 1; font-size: 12px; padding: 4px 8px; height: 28px; border: 1px solid #ced4da; }
+    
+    /* Cash Highlighted Style */
+    .cheque-no.cash-highlighted {
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+        background-color: #d4edda !important;
+        color: #155724 !important;
+        border-color: #28a745 !important;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -407,24 +416,36 @@ function addItemRow(supplier) {
     tbody.appendChild(tr);
     selectRow(rowIndex);
     
-    // Cheque No - Press Enter to open Bank Modal
+    // Cheque No - Press Enter to open Bank Modal (skip if 'cash')
     const chequeNoInput = tr.querySelector('.cheque-no');
     chequeNoInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            if (this.value) {
+            const value = this.value.trim().toLowerCase();
+            if (value && value !== 'cash') {
+                // Open bank modal only for actual cheque numbers
                 const row = document.getElementById(`itemRow_${rowIndex}`);
                 row.dataset.paymentType = 'cheque';
                 openBankModal(rowIndex);
             } else {
-                // If no cheque number, move to date field
+                // If empty or 'cash', skip to date field
                 tr.querySelector('.cheque-date').focus();
             }
         }
     });
     chequeNoInput.addEventListener('change', function() {
         const row = document.getElementById(`itemRow_${rowIndex}`);
-        row.dataset.paymentType = this.value ? 'cheque' : 'cash';
+        const value = this.value.trim().toLowerCase();
+        
+        // If cash, capitalize and highlight
+        if (value === 'cash') {
+            this.value = 'CASH';
+            this.classList.add('cash-highlighted');
+            row.dataset.paymentType = 'cash';
+        } else {
+            this.classList.remove('cash-highlighted');
+            row.dataset.paymentType = value ? 'cheque' : 'cash';
+        }
         updateTotals();
     });
     
@@ -444,14 +465,25 @@ function addItemRow(supplier) {
             e.preventDefault();
             const amount = parseFloat(this.value || 0);
             if (amount > 0) {
+                setUnadjustedAmount(tr, amount);
                 updateTotals();
                 openAdjustmentModalDirect();
             }
         }
     });
     amountInput.addEventListener('change', function() {
+        const amount = parseFloat(this.value || 0);
+        setUnadjustedAmount(tr, amount);
         updateTotals();
     });
+}
+
+// Set unadjusted amount = entered amount (before adjustment)
+function setUnadjustedAmount(row, amount) {
+    const unadjustedInput = row.querySelector('.unadjusted-input');
+    if (unadjustedInput) {
+        unadjustedInput.value = amount.toFixed(2);
+    }
 }
 
 function selectRow(rowIndex) {
@@ -530,11 +562,18 @@ function closeBankModal() {
 
 function saveBankDetails() {
     if (currentBankRow !== null) {
+        const closedOn = document.getElementById('chequeClosedOn').value;
         rowBankDetails[currentBankRow] = {
             bankName: document.getElementById('chequeBankName').value,
             bankArea: document.getElementById('chequeBankArea').value,
-            closedOn: document.getElementById('chequeClosedOn').value
+            closedOn: closedOn
         };
+        
+        // Also set the cheque date in the row
+        const row = document.getElementById(`itemRow_${currentBankRow}`);
+        if (row && closedOn) {
+            row.querySelector('.cheque-date').value = closedOn;
+        }
     }
     closeBankModal();
 }
@@ -585,14 +624,30 @@ function populateAdjustmentTable(invoices) {
     }
     
     invoices.forEach((inv, idx) => {
+        // Available amount = balance + existing adjustment (for consistency)
+        const availableAmount = parseFloat(inv.available_amount || inv.balance_amount || 0);
+        const existingAdj = parseFloat(inv.existing_adjustment || 0);
+        const currentBalance = availableAmount - existingAdj;
+        
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align: center;">${idx + 1}</td>
             <td style="text-align: center;">${inv.invoice_no || '-'}</td>
             <td style="text-align: center;">${inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
-            <td style="text-align: right;">${parseFloat(inv.net_amount || 0).toFixed(2)}</td>
-            <td><input type="number" class="form-control form-control-sm adj-amount" data-id="${inv.id}" data-invoice="${inv.invoice_no}" data-date="${inv.invoice_date}" data-bill="${inv.net_amount}" data-balance="${inv.balance_amount}" step="0.01" value="0.00" style="text-align: right;" onchange="updateAdjustmentRemaining()"></td>
-            <td style="text-align: right;">${parseFloat(inv.balance_amount || 0).toFixed(2)}</td>
+            <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${availableAmount.toFixed(2)}</td>
+            <td><input type="number" class="form-control form-control-sm adj-amount" 
+                data-id="${inv.id}" 
+                data-invoice="${inv.invoice_no}" 
+                data-date="${inv.invoice_date}" 
+                data-bill="${inv.net_amount}" 
+                data-available="${availableAmount}" 
+                step="0.01" 
+                value="${existingAdj > 0 ? existingAdj.toFixed(2) : '0.00'}" 
+                max="${availableAmount}"
+                style="text-align: right;" 
+                onchange="updateAdjustmentRemaining()" 
+                oninput="updateAdjustmentRemaining()"></td>
+            <td style="text-align: right;" id="adj_bal_${inv.id}"><span style="color: #28a745;">₹ ${currentBalance.toFixed(2)}</span></td>
         `;
         tbody.appendChild(tr);
     });
@@ -601,18 +656,40 @@ function populateAdjustmentTable(invoices) {
 
 function updateAdjustmentRemaining() {
     let totalAdjusted = 0;
-    document.querySelectorAll('.adj-amount').forEach(input => { totalAdjusted += parseFloat(input.value || 0); });
+    document.querySelectorAll('.adj-amount').forEach(input => {
+        let adjusted = parseFloat(input.value || 0);
+        const invoiceId = input.dataset.id;
+        const available = parseFloat(input.dataset.available || input.dataset.balance || 0);
+        
+        // Prevent adjusting more than available
+        if (adjusted > available) {
+            input.value = available.toFixed(2);
+            adjusted = available;
+        }
+        
+        totalAdjusted += adjusted;
+        
+        // Update balance display
+        const newBalance = available - adjusted;
+        const balanceCell = document.getElementById(`adj_bal_${invoiceId}`);
+        if (balanceCell) {
+            balanceCell.innerHTML = `<span style="color: #28a745;">₹ ${newBalance.toFixed(2)}</span>`;
+        }
+    });
     const remaining = currentAdjustmentAmount - totalAdjusted;
-    document.getElementById('adjustmentRemainingDisplay').textContent = '₹ ' + remaining.toFixed(2);
-    document.getElementById('adjustmentRemainingDisplay').style.color = remaining >= 0 ? '#28a745' : '#dc3545';
+    const remainingEl = document.getElementById('adjustmentRemainingDisplay');
+    if (remainingEl) {
+        remainingEl.textContent = '₹ ' + remaining.toFixed(2);
+        remainingEl.style.color = remaining >= 0 ? '#28a745' : '#dc3545';
+    }
 }
 
 function autoDistributeAmount() {
     let remaining = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
     document.querySelectorAll('.adj-amount').forEach(input => {
         if (remaining <= 0) { input.value = '0.00'; return; }
-        const balance = parseFloat(input.dataset.balance || 0);
-        const toAdjust = Math.min(remaining, balance);
+        const available = parseFloat(input.dataset.available || input.dataset.balance || 0);
+        const toAdjust = Math.min(remaining, available);
         input.value = toAdjust.toFixed(2);
         remaining -= toAdjust;
     });
@@ -626,13 +703,14 @@ function saveAdjustmentData() {
     document.querySelectorAll('.adj-amount').forEach(input => {
         const adjAmount = parseFloat(input.value || 0);
         if (adjAmount > 0) {
+            const available = parseFloat(input.dataset.available || input.dataset.balance || 0);
             adjustmentData.push({
                 purchase_transaction_id: input.dataset.id,
                 reference_no: input.dataset.invoice,
                 reference_date: input.dataset.date,
                 reference_amount: parseFloat(input.dataset.bill || 0),
                 adjusted_amount: adjAmount,
-                balance_amount: parseFloat(input.dataset.balance || 0) - adjAmount,
+                balance_amount: available - adjAmount,
                 adjustment_type: 'outstanding'
             });
             totalAdjusted += adjAmount;
