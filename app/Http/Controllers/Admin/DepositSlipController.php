@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\DepositSlip;
 use App\Models\CustomerReceiptItem;
+use App\Models\CustomerReceiptAdjustment;
 use App\Models\Customer;
 use App\Models\CashBankBook;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class DepositSlipController extends Controller
         $nextSlipNo = $lastSlip ? $lastSlip + 1 : 1;
 
         // Fetch all pending cheques (not yet deposited)
-        $cheques = CustomerReceiptItem::with(['receipt', 'customer'])
+        $cheques = CustomerReceiptItem::with(['receipt', 'customer', 'adjustments'])
             ->where('payment_type', 'cheque')
             ->whereNotNull('cheque_no')
             ->where('cheque_no', '!=', '')
@@ -38,6 +39,22 @@ class DepositSlipController extends Controller
                 ->where('customer_id', $item->customer_id)
                 ->first();
             
+            // Get adjustments - try by item_id first, then by receipt_id
+            $adjustments = CustomerReceiptAdjustment::where(function ($query) use ($item) {
+                $query->where('customer_receipt_item_id', $item->id)
+                      ->orWhere('customer_receipt_id', $item->customer_receipt_id);
+            })->get()->map(function ($adj) {
+                return [
+                    'id' => $adj->id,
+                    'adjustment_type' => $adj->adjustment_type,
+                    'reference_no' => $adj->reference_no,
+                    'reference_date' => $adj->reference_date?->format('d-M-y') ?? '-',
+                    'reference_amount' => floatval($adj->reference_amount),
+                    'adjusted_amount' => floatval($adj->adjusted_amount),
+                    'balance_amount' => floatval($adj->balance_amount),
+                ];
+            })->toArray();
+            
             return [
                 'id' => $item->id,
                 'receipt_id' => $item->customer_receipt_id,
@@ -49,9 +66,11 @@ class DepositSlipController extends Controller
                 'cheque_date_raw' => $item->cheque_date?->format('Y-m-d'),
                 'bank_name' => $item->cheque_bank_name ?? '-',
                 'amount' => floatval($item->amount),
+                'unadjusted' => floatval($item->unadjusted ?? 0),
                 'trn_no' => $item->receipt?->trn_no ?? '-',
                 'status' => $depositSlip?->status ?? 'pending',
                 'deposit_slip_id' => $depositSlip?->id,
+                'adjustments' => $adjustments,
             ];
         });
 
