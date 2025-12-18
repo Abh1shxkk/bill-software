@@ -222,9 +222,13 @@ class CustomerReceiptController extends Controller
         $areas = Area::orderBy('name')->get();
         $routes = Route::orderBy('name')->get();
         $banks = CashBankBook::orderBy('name')->get();
+        
+        // Get next transaction number
+        $nextTrnNo = CustomerReceipt::max('trn_no') + 1;
+        if ($nextTrnNo < 1) $nextTrnNo = 1;
 
         return view('admin.customer-receipt.modification', compact(
-            'customers', 'salesmen', 'areas', 'routes', 'banks'
+            'customers', 'salesmen', 'areas', 'routes', 'banks', 'nextTrnNo'
         ));
     }
 
@@ -244,9 +248,84 @@ class CustomerReceiptController extends Controller
             ], 404);
         }
 
+        // Look up IDs from codes for Select2 dropdowns
+        $receiptData = $receipt->toArray();
+        
+        // Get salesman ID from code
+        if ($receipt->salesman_code) {
+            $salesman = SalesMan::where('code', $receipt->salesman_code)->first();
+            $receiptData['salesman_id'] = $salesman ? $salesman->id : null;
+        }
+        
+        // Get area ID from alter_code
+        if ($receipt->area_code) {
+            $area = Area::where('alter_code', $receipt->area_code)->first();
+            $receiptData['area_id'] = $area ? $area->id : null;
+        }
+        
+        // Get route ID from alter_code
+        if ($receipt->route_code) {
+            $route = Route::where('alter_code', $receipt->route_code)->first();
+            $receiptData['route_id'] = $route ? $route->id : null;
+        }
+        
+        // Get coll_boy ID from code (uses SalesMan table)
+        if ($receipt->coll_boy_code) {
+            $collBoy = SalesMan::where('code', $receipt->coll_boy_code)->first();
+            $receiptData['coll_boy_id'] = $collBoy ? $collBoy->id : null;
+        }
+
         return response()->json([
             'success' => true,
-            'receipt' => $receipt
+            'receipt' => $receiptData
+        ]);
+    }
+
+    /**
+     * Get receipt details by ID for modification.
+     */
+    public function getDetails($id)
+    {
+        $receipt = CustomerReceipt::with(['items', 'adjustments'])
+            ->find($id);
+
+        if (!$receipt) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Receipt not found'
+            ], 404);
+        }
+
+        // Look up IDs from codes for Select2 dropdowns
+        $receiptData = $receipt->toArray();
+        
+        // Get salesman ID from code
+        if ($receipt->salesman_code) {
+            $salesman = SalesMan::where('code', $receipt->salesman_code)->first();
+            $receiptData['salesman_id'] = $salesman ? $salesman->id : null;
+        }
+        
+        // Get area ID from alter_code
+        if ($receipt->area_code) {
+            $area = Area::where('alter_code', $receipt->area_code)->first();
+            $receiptData['area_id'] = $area ? $area->id : null;
+        }
+        
+        // Get route ID from alter_code
+        if ($receipt->route_code) {
+            $route = Route::where('alter_code', $receipt->route_code)->first();
+            $receiptData['route_id'] = $route ? $route->id : null;
+        }
+        
+        // Get coll_boy ID from code (uses SalesMan table)
+        if ($receipt->coll_boy_code) {
+            $collBoy = SalesMan::where('code', $receipt->coll_boy_code)->first();
+            $receiptData['coll_boy_id'] = $collBoy ? $collBoy->id : null;
+        }
+
+        return response()->json([
+            'success' => true,
+            'receipt' => $receiptData
         ]);
     }
 
@@ -255,21 +334,43 @@ class CustomerReceiptController extends Controller
      */
     public function getReceipts(Request $request)
     {
-        $query = CustomerReceipt::with(['items']);
+        try {
+            $query = CustomerReceipt::with(['items']);
 
-        if ($request->filled('from_date')) {
-            $query->whereDate('receipt_date', '>=', $request->from_date);
+            if ($request->filled('from_date')) {
+                $query->whereDate('receipt_date', '>=', $request->from_date);
+            }
+            if ($request->filled('to_date')) {
+                $query->whereDate('receipt_date', '<=', $request->to_date);
+            }
+
+            $receipts = $query->orderByDesc('trn_no')->limit(100)->get();
+
+            // Format the receipts for proper JSON response
+            $formattedReceipts = $receipts->map(function ($receipt) {
+                return [
+                    'id' => $receipt->id,
+                    'trn_no' => $receipt->trn_no,
+                    'receipt_date' => $receipt->receipt_date ? $receipt->receipt_date->format('Y-m-d') : null,
+                    'salesman_name' => $receipt->salesman_name ?? '-',
+                    'total_cash' => floatval($receipt->total_cash ?? 0),
+                    'total_cheque' => floatval($receipt->total_cheque ?? 0),
+                    'items_count' => $receipt->items->count(),
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'receipts' => $formattedReceipts,
+                'count' => $receipts->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading receipts: ' . $e->getMessage(),
+                'receipts' => []
+            ], 500);
         }
-        if ($request->filled('to_date')) {
-            $query->whereDate('receipt_date', '<=', $request->to_date);
-        }
-
-        $receipts = $query->orderByDesc('trn_no')->limit(100)->get();
-
-        return response()->json([
-            'success' => true,
-            'receipts' => $receipts
-        ]);
     }
 
     /**

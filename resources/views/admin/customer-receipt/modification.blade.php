@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Receipt Modification')
+@section('title', 'Receipt from Customer')
 
 @section('content')
 <style>
@@ -47,8 +47,7 @@
     .customer-list-item { padding: 8px 12px; border-bottom: 1px solid #eee; cursor: pointer; }
     .customer-list-item:hover { background: #f0f7ff; }
     .customer-list-item.selected { background: #007bff; color: white; }
-
-
+    
     /* Adjustment Modal Styles */
     .adjustment-modal-backdrop {
         display: none;
@@ -62,7 +61,10 @@
         opacity: 0;
         transition: opacity 0.4s ease;
     }
-    .adjustment-modal-backdrop.show { display: block; opacity: 1; }
+    .adjustment-modal-backdrop.show {
+        display: block;
+        opacity: 1;
+    }
     .adjustment-modal {
         display: none;
         position: fixed;
@@ -75,12 +77,42 @@
         opacity: 0;
         transition: all 0.3s ease;
     }
-    .adjustment-modal.show { display: block; transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    .adjustment-modal-content { background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); overflow: hidden; }
-    .adjustment-modal-header { padding: 1rem 1.5rem; background: #0d6efd; color: white; display: flex; justify-content: space-between; align-items: center; }
-    .adjustment-modal-title { margin: 0; font-size: 1.2rem; font-weight: 600; }
-    .adjustment-modal-body { padding: 1rem; background: #fff; }
-    .adjustment-modal-footer { padding: 1rem 1.5rem; background: #f8f9fa; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px; }
+    .adjustment-modal.show {
+        display: block;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    .adjustment-modal-content {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
+    .adjustment-modal-header {
+        padding: 1rem 1.5rem;
+        background: #0d6efd;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .adjustment-modal-title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    .adjustment-modal-body {
+        padding: 1rem;
+        background: #fff;
+    }
+    .adjustment-modal-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
     .btn-close-adj { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
     
     /* Bank Details Modal Styles */
@@ -96,7 +128,10 @@
         opacity: 0;
         transition: opacity 0.3s ease;
     }
-    .bank-modal-backdrop.show { display: block; opacity: 1; }
+    .bank-modal-backdrop.show {
+        display: block;
+        opacity: 1;
+    }
     .bank-modal {
         display: none;
         position: fixed;
@@ -108,22 +143,71 @@
         opacity: 0;
         transition: all 0.3s ease;
     }
-    .bank-modal.show { display: block; transform: translate(-50%, -50%) scale(1); opacity: 1; }
-    .bank-modal-content { background: white; border-radius: 4px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); overflow: hidden; }
-    .bank-modal-header { padding: 8px 15px; background: #e9ecef; border-bottom: 1px solid #dee2e6; }
-    .bank-modal-title { margin: 0; font-size: 14px; font-weight: 600; }
-    .bank-modal-body { padding: 15px; background: #f8f9fa; }
-    .bank-modal-footer { padding: 10px 15px; background: #e9ecef; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px; }
-    .bank-field-group { display: flex; align-items: center; margin-bottom: 10px; }
-    .bank-field-group label { width: 80px; font-weight: 600; font-size: 12px; }
-    .bank-field-group input, .bank-field-group select { flex: 1; font-size: 12px; padding: 4px 8px; height: 28px; border: 1px solid #ced4da; border-radius: 0; }
+    .bank-modal.show {
+        display: block;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    .bank-modal-content {
+        background: white;
+        border-radius: 4px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
+    .bank-modal-header {
+        padding: 8px 15px;
+        background: #e9ecef;
+        border-bottom: 1px solid #dee2e6;
+    }
+    .bank-modal-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    .bank-modal-body {
+        padding: 15px;
+        background: #f8f9fa;
+    }
+    .bank-modal-footer {
+        padding: 10px 15px;
+        background: #e9ecef;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    .bank-field-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .bank-field-group label {
+        width: 80px;
+        font-weight: 600;
+        font-size: 12px;
+    }
+    .bank-field-group input, .bank-field-group select {
+        flex: 1;
+        font-size: 12px;
+        padding: 4px 8px;
+        height: 28px;
+        border: 1px solid #ced4da;
+        border-radius: 0;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Receipt Modification</h5>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.customer-receipt.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Receipts</a>
-        <a href="{{ route('admin.customer-receipt.transaction') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> New Receipt</a>
+        <button type="button" class="btn btn-info btn-sm" onclick="openLoadInvoicesModal()">
+            <i class="bi bi-file-earmark-text me-1"></i> Load Invoices
+        </button>
+        <a href="{{ route('admin.customer-receipt.transaction') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-circle me-1"></i> New Receipt
+        </a>
+        <a href="{{ route('admin.customer-receipt.index') }}" class="btn btn-secondary btn-sm">
+            <i class="bi bi-list"></i> All Receipts
+        </a>
     </div>
 </div>
 
@@ -131,40 +215,28 @@
     <div class="card-body compact-form">
         <form id="receiptForm" method="POST" autocomplete="off">
             @csrf
-            <input type="hidden" id="receiptId" value="">
-
-            <!-- Search Section -->
-            <div class="header-section mb-3">
-                <div class="row align-items-center">
-                    <div class="col-md-4">
-                        <div class="field-group">
-                            <input type="text" class="form-control" id="searchTrnNo" placeholder="Enter Trn No" style="width: 100px; background: #fff8dc;">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="searchReceipt()"><i class="bi bi-search"></i> Load</button>
-                            <button type="button" class="btn btn-sm btn-info" onclick="openLoadInvoiceModal()"><i class="bi bi-file-earmark-text"></i> Load Invoice</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Header Section -->
             <div class="header-section">
                 <div class="row g-2">
+                    <!-- Left Column -->
                     <div class="col-md-4">
                         <div class="field-group mb-2">
                             <label style="width: 60px;">Date :</label>
-                            <input type="date" class="form-control" name="receipt_date" id="receiptDate" style="width: 130px;">
-                            <input type="text" class="form-control readonly-field" id="dayName" readonly style="width: 80px;">
+                            <input type="date" class="form-control" name="receipt_date" id="receiptDate" value="{{ date('Y-m-d') }}" style="width: 130px;">
+                            <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 80px;">
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 60px;">Trn No. :</label>
-                            <input type="text" class="form-control readonly-field" name="trn_no" id="trnNo" readonly style="width: 80px;">
+                            <input type="text" class="form-control readonly-field" name="trn_no" id="trnNo" value="{{ $nextTrnNo }}" readonly style="width: 80px;">
                         </div>
                         <div class="field-group">
                             <label style="width: 60px;">Ledger :</label>
-                            <input type="text" class="form-control" name="ledger" id="ledger" style="width: 50px;">
+                            <input type="text" class="form-control" name="ledger" id="ledger" value="CL" style="width: 50px;">
                         </div>
                     </div>
                     
+                    <!-- Middle Column -->
                     <div class="col-md-4">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man</label>
@@ -215,6 +287,7 @@
                         </div>
                     </div>
                     
+                    <!-- Right Column -->
                     <div class="col-md-4">
                         <div class="d-flex justify-content-end gap-3 mb-2">
                             <div class="field-group">
@@ -225,6 +298,9 @@
                                 <label>TAG :</label>
                                 <input type="text" class="form-control" name="tag" id="tag" style="width: 100px;">
                             </div>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="copyParty()">Copy Party (Tab)</button>
                         </div>
                     </div>
                 </div>
@@ -245,7 +321,8 @@
                                 <th style="width: 50px;">Action</th>
                             </tr>
                         </thead>
-                        <tbody id="itemsTableBody"></tbody>
+                        <tbody id="itemsTableBody">
+                        </tbody>
                     </table>
                 </div>
                 <div class="text-center mt-2">
@@ -255,12 +332,19 @@
                 </div>
             </div>
 
+            <!-- TDS Display -->
             <div class="tds-display">TDS Amt. : <span id="tdsAmtDisplay">0.00</span></div>
 
+            <!-- Totals Row -->
             <div class="total-section mb-2">
                 <div class="row">
-                    <div class="col-md-6"><span class="total-label">Total:</span> <span class="ms-3">Cash: ( ) <strong id="totalCash">0.00</strong></span></div>
-                    <div class="col-md-6 text-end"><span>Cheque: ( ) <strong id="totalCheque">0.00</strong></span></div>
+                    <div class="col-md-6">
+                        <span class="total-label">Total:</span>
+                        <span class="ms-3">Cash: ( ) <strong id="totalCash">0.00</strong></span>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <span>Cheque: ( ) <strong id="totalCheque">0.00</strong></span>
+                    </div>
                 </div>
             </div>
 
@@ -309,13 +393,14 @@
                 </div>
             </div>
 
+            <!-- Action Buttons -->
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <div class="form-check me-3">
                     <input class="form-check-input" type="checkbox" name="currency_detail" id="currencyDetail">
                     <label class="form-check-label" for="currencyDetail">Currency Detail</label>
                 </div>
-                <button type="button" class="btn btn-success" onclick="updateReceipt()" id="btnUpdate" disabled>Save (End)</button>
-                <button type="button" class="btn btn-danger" onclick="deleteReceipt()" id="btnDelete" disabled>Delete</button>
+                <button type="button" class="btn btn-success" onclick="saveReceipt()">Save (End)</button>
+                <button type="button" class="btn btn-danger" onclick="deleteReceipt()">Delete</button>
                 <a href="{{ route('admin.customer-receipt.index') }}" class="btn btn-secondary">Exit (Esc)</a>
             </div>
         </form>
@@ -419,7 +504,8 @@
         </div>
         <div class="customer-modal-body">
             <input type="text" class="form-control mb-3" id="customerSearch" placeholder="Search by code or name..." onkeyup="filterCustomers()">
-            <div id="customerList" style="max-height: 300px; overflow-y: auto;"></div>
+            <div id="customerList" style="max-height: 300px; overflow-y: auto;">
+            </div>
         </div>
         <div class="customer-modal-footer">
             <button type="button" class="btn btn-secondary btn-sm" onclick="closeCustomerModal()">Cancel</button>
@@ -428,45 +514,48 @@
     </div>
 </div>
 
-<!-- Load Invoice Modal -->
-<div class="modal-backdrop" id="loadInvoiceModalBackdrop" onclick="closeLoadInvoiceModal()"></div>
-<div class="customer-modal" id="loadInvoiceModal">
+<!-- Load Invoices Modal -->
+<div class="modal-backdrop" id="loadInvoicesModalBackdrop" onclick="closeLoadInvoicesModal()"></div>
+<div class="customer-modal" id="loadInvoicesModal" style="max-width: 900px;">
     <div class="customer-modal-content">
-        <div class="customer-modal-header" style="background: #17a2b8;">
-            <h5 class="customer-modal-title"><i class="bi bi-file-earmark-text me-2"></i>Load Invoice</h5>
-            <button type="button" class="btn-close-modal" onclick="closeLoadInvoiceModal()">&times;</button>
+        <div class="customer-modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h5 class="customer-modal-title"><i class="bi bi-file-earmark-text me-2"></i>Load Past Receipts</h5>
+            <button type="button" class="btn-close-modal" onclick="closeLoadInvoicesModal()">&times;</button>
         </div>
-        <div class="customer-modal-body">
+        <div class="customer-modal-body" style="max-height: 500px;">
             <div class="row mb-3">
-                <div class="col-md-6">
-                    <input type="text" class="form-control" id="invoiceSearch" placeholder="Search by Trn No or Date..." onkeyup="filterInvoices()">
+                <div class="col-md-4">
+                    <input type="date" class="form-control form-control-sm" id="invoiceFilterFromDate" placeholder="From Date">
                 </div>
-                <div class="col-md-3">
-                    <input type="date" class="form-control" id="invoiceFromDate" placeholder="From Date">
+                <div class="col-md-4">
+                    <input type="date" class="form-control form-control-sm" id="invoiceFilterToDate" placeholder="To Date">
                 </div>
-                <div class="col-md-3">
-                    <input type="date" class="form-control" id="invoiceToDate" placeholder="To Date">
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="loadPastInvoices()">
+                        <i class="bi bi-search me-1"></i> Search
+                    </button>
                 </div>
             </div>
             <div style="max-height: 350px; overflow-y: auto;">
                 <table class="table table-bordered table-sm" style="font-size: 11px;">
                     <thead style="position: sticky; top: 0; background: #e9ecef; z-index: 5;">
                         <tr>
-                            <th style="width: 30px; text-align: center;"><input type="checkbox" id="selectAllInvoices" onchange="toggleSelectAllInvoices()"></th>
                             <th style="width: 80px;">Trn No</th>
                             <th style="width: 100px;">Date</th>
+                            <th>Salesman</th>
                             <th style="width: 100px;">Cash</th>
                             <th style="width: 100px;">Cheque</th>
-                            <th>Salesman</th>
+                            <th style="width: 80px;">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="invoiceListBody"></tbody>
+                    <tbody id="invoicesListBody">
+                        <tr><td colspan="6" class="text-center text-muted py-3">Click Search to load receipts</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
         <div class="customer-modal-footer">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeLoadInvoiceModal()">Cancel</button>
-            <button type="button" class="btn btn-primary btn-sm" onclick="loadSelectedInvoice()">Load Selected</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeLoadInvoicesModal()">Close</button>
         </div>
     </div>
 </div>
@@ -476,82 +565,36 @@ let customers = @json($customers);
 let itemRowCount = 0;
 let currentRowIndex = null;
 let selectedCustomer = null;
-let currentReceipt = null;
-let selectedRowCustomerId = null;
-
-// Outstanding pagination state
-let outstandingPage = 1;
-let outstandingHasMore = false;
-let outstandingLoading = false;
-let currentOutstandingCustomerId = null;
-
-// Adjustment Modal Variables
-let currentAdjustmentRow = null;
-let currentAdjustmentAmount = 0;
-let adjustmentInvoices = [];
-let rowAdjustments = {};
-
-// Bank Details Modal Variables
-let currentBankRow = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Build customer list for modal
     buildCustomerList();
     
-    // Initialize Select2 for dropdowns
-    $('#salesmanSelect').select2({ placeholder: 'Select Salesman', allowClear: true, width: '230px' });
-    $('#areaSelect').select2({ placeholder: 'Select Area', allowClear: true, width: '230px' });
-    $('#routeSelect').select2({ placeholder: 'Select Route', allowClear: true, width: '230px' });
-    $('#bankSelect').select2({ placeholder: 'Select Bank', allowClear: true, width: '150px' });
-    $('#collBoySelect').select2({ placeholder: 'Select', allowClear: true, width: '150px' });
-    
+    // Update day name on date change
     document.getElementById('receiptDate').addEventListener('change', function() {
         const date = new Date(this.value);
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         document.getElementById('dayName').value = days[date.getDay()];
     });
     
-    // Use jQuery for Select2 change events
-    $('#salesmanSelect').on('change', function() {
-        const selectedOption = $(this).find('option:selected');
-        document.getElementById('salesmanCode').value = selectedOption.data('code') || '';
+    // Dropdown change handlers
+    document.getElementById('salesmanSelect').addEventListener('change', function() {
+        document.getElementById('salesmanCode').value = this.options[this.selectedIndex].dataset.code || '';
     });
-    $('#areaSelect').on('change', function() {
-        const selectedOption = $(this).find('option:selected');
-        document.getElementById('areaCode').value = selectedOption.data('code') || '';
+    document.getElementById('areaSelect').addEventListener('change', function() {
+        document.getElementById('areaCode').value = this.options[this.selectedIndex].dataset.code || '';
     });
-    $('#routeSelect').on('change', function() {
-        const selectedOption = $(this).find('option:selected');
-        document.getElementById('routeCode').value = selectedOption.data('code') || '';
+    document.getElementById('routeSelect').addEventListener('change', function() {
+        document.getElementById('routeCode').value = this.options[this.selectedIndex].dataset.code || '';
     });
-    $('#collBoySelect').on('change', function() {
-        const selectedOption = $(this).find('option:selected');
-        document.getElementById('collBoyCode').value = selectedOption.data('code') || '';
+    document.getElementById('collBoySelect').addEventListener('change', function() {
+        document.getElementById('collBoyCode').value = this.options[this.selectedIndex].dataset.code || '';
     });
-    
-    // Setup infinite scroll for outstanding table
-    const outstandingContainer = document.getElementById('outstandingScrollContainer');
-    if (outstandingContainer) {
-        outstandingContainer.addEventListener('scroll', function() {
-            if (outstandingLoading || !outstandingHasMore || !currentOutstandingCustomerId) return;
-            const scrollTop = this.scrollTop;
-            const scrollHeight = this.scrollHeight;
-            const clientHeight = this.clientHeight;
-            if (scrollTop + clientHeight >= scrollHeight - 10) {
-                fetchCustomerOutstanding(currentOutstandingCustomerId, outstandingPage + 1, true);
-            }
-        });
-    }
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const trnNo = urlParams.get('trn_no');
-    if (trnNo) {
-        document.getElementById('searchTrnNo').value = trnNo;
-        searchReceipt();
-    }
 });
 
 function buildCustomerList() {
-    document.getElementById('customerList').innerHTML = customers.map(c => `
+    const container = document.getElementById('customerList');
+    container.innerHTML = customers.map(c => `
         <div class="customer-list-item" data-id="${c.id}" data-code="${c.code || ''}" data-name="${c.name}" onclick="selectCustomerItem(this)">
             <strong>${c.code || '-'}</strong> - ${c.name}
         </div>
@@ -589,117 +632,101 @@ function closeCustomerModal() {
 }
 
 function confirmCustomerSelection() {
-    if (!selectedCustomer) { alert('Please select a customer'); return; }
+    if (!selectedCustomer) {
+        alert('Please select a customer');
+        return;
+    }
+    
+    // Add new row with selected customer
     addItemRow(selectedCustomer);
+    
+    // Fetch outstanding invoices for this customer
     fetchCustomerOutstanding(selectedCustomer.id);
+    
     closeCustomerModal();
 }
 
-function searchReceipt() {
-    const trnNo = document.getElementById('searchTrnNo').value;
-    if (!trnNo) { alert('Please enter a transaction number'); return; }
+// Outstanding pagination state
+let outstandingPage = 1;
+let outstandingHasMore = false;
+let outstandingLoading = false;
+let currentOutstandingCustomerId = null;
+
+function fetchCustomerOutstanding(customerId, page = 1, append = false) {
+    if (outstandingLoading) return;
     
-    fetch(`{{ url('admin/customer-receipt/get-by-trn') }}/${trnNo}`)
+    outstandingLoading = true;
+    currentOutstandingCustomerId = customerId;
+    
+    if (!append) {
+        outstandingPage = 1;
+        document.getElementById('outstandingTableBody').innerHTML = '';
+    }
+    
+    fetch(`{{ url('admin/customer-receipt/customer-outstanding') }}/${customerId}?page=${page}`)
         .then(r => r.json())
         .then(data => {
-            if (data.success) { loadReceipt(data.receipt); }
-            else { alert(data.message || 'Receipt not found'); }
+            outstandingLoading = false;
+            if (data.success && data.outstanding) {
+                displayOutstandingInvoices(data.outstanding, append);
+                outstandingHasMore = data.has_more;
+                outstandingPage = data.current_page;
+                
+                // Update total from server (full total, not just displayed)
+                if (data.total_amount !== undefined) {
+                    document.getElementById('outstandingTotal').textContent = parseFloat(data.total_amount).toFixed(2);
+                }
+            }
         })
-        .catch(e => { console.error(e); alert('Error loading receipt'); });
+        .catch(e => {
+            outstandingLoading = false;
+            console.error('Error fetching outstanding:', e);
+        });
 }
 
-function loadReceipt(receipt) {
-    currentReceipt = receipt;
-    rowAdjustments = {};
+function displayOutstandingInvoices(invoices, append = false) {
+    const tbody = document.getElementById('outstandingTableBody');
     
-    document.getElementById('receiptId').value = receipt.id;
-    document.getElementById('trnNo').value = receipt.trn_no;
-    document.getElementById('receiptDate').value = receipt.receipt_date.split('T')[0];
-    document.getElementById('dayName').value = receipt.day_name || '';
-    document.getElementById('ledger').value = receipt.ledger || 'CL';
-    document.getElementById('salesmanCode').value = receipt.salesman_code || '';
-    document.getElementById('areaCode').value = receipt.area_code || '';
-    document.getElementById('routeCode').value = receipt.route_code || '';
-    document.getElementById('collBoyCode').value = receipt.coll_boy_code || '';
-    document.getElementById('dayValue').value = receipt.day_value || '';
-    document.getElementById('tag').value = receipt.tag || '';
-    document.getElementById('tdsAmtDisplay').textContent = parseFloat(receipt.tds_amount || 0).toFixed(2);
-    document.getElementById('totalCash').textContent = parseFloat(receipt.total_cash || 0).toFixed(2);
-    document.getElementById('totalCheque').textContent = parseFloat(receipt.total_cheque || 0).toFixed(2);
-    
-    // Set Select2 values properly
-    setSelect2ValueByCode('salesmanSelect', receipt.salesman_code);
-    setSelect2ValueByCode('areaSelect', receipt.area_code);
-    setSelect2ValueByCode('routeSelect', receipt.route_code);
-    setSelect2ValueByCode('collBoySelect', receipt.coll_boy_code);
-    
-    // Set bank select
-    if (receipt.bank_code) {
-        $('#bankSelect').val(receipt.bank_code).trigger('change');
+    if (!append) {
+        tbody.innerHTML = '';
     }
     
-    document.getElementById('itemsTableBody').innerHTML = '';
-    document.getElementById('outstandingTableBody').innerHTML = '';
-    document.getElementById('adjustedTableBody').innerHTML = '';
-    document.getElementById('outstandingTotal').textContent = '0.00';
-    document.getElementById('adjustedTotal').textContent = '0.00';
-    itemRowCount = 0;
-    
-    if (receipt.items && receipt.items.length > 0) {
-        receipt.items.forEach(item => addItemRowFromData(item));
-    }
-    
-    document.getElementById('btnUpdate').disabled = false;
-    document.getElementById('btnDelete').disabled = false;
-}
-
-// Helper function to set Select2 value by data-code attribute
-function setSelect2ValueByCode(selectId, code) {
-    if (!code) return;
-    const $select = $('#' + selectId);
-    const $option = $select.find('option').filter(function() {
-        return $(this).data('code') === code;
+    invoices.forEach(inv => {
+        const balance = parseFloat(inv.balance_amount) || 0;
+        
+        const row = document.createElement('tr');
+        row.style.height = '28px';
+        row.innerHTML = `
+            <td style="padding: 3px 5px;">${inv.invoice_no || '-'}</td>
+            <td style="padding: 3px 5px;">${inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
+            <td class="text-end" style="padding: 3px 5px;">${parseFloat(inv.net_amount || 0).toFixed(2)}</td>
+            <td class="text-end" style="padding: 3px 5px;">${balance.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
     });
-    if ($option.length) {
-        $select.val($option.val()).trigger('change');
-    }
 }
 
-function addItemRowFromData(item) {
-    itemRowCount++;
-    const tbody = document.getElementById('itemsTableBody');
-    const row = document.createElement('tr');
-    row.setAttribute('data-row', itemRowCount);
-    row.setAttribute('data-customer-id', item.customer_id || '');
-    row.onclick = function(e) {
-        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'INPUT') {
-            selectRow(this);
-        }
-    };
+// Setup infinite scroll for outstanding table
+document.addEventListener('DOMContentLoaded', function() {
+    const outstandingContainer = document.getElementById('outstandingScrollContainer');
     
-    const chequeDate = item.cheque_date ? item.cheque_date.split('T')[0] : '';
-    const chequeClosedOn = item.cheque_closed_on ? item.cheque_closed_on.split('T')[0] : '';
-    
-    row.innerHTML = `
-        <td><input type="text" class="form-control party-code readonly-field" value="${item.party_code || ''}" readonly></td>
-        <td><input type="text" class="form-control party-name readonly-field" value="${item.party_name || ''}" readonly>
-            <input type="hidden" class="customer-id" name="items[${itemRowCount}][customer_id]" value="${item.customer_id || ''}">
-        </td>
-        <td><input type="text" class="form-control cheque-no" name="items[${itemRowCount}][cheque_no]" value="${item.cheque_no || ''}" onchange="onChequeNoChange(this)">
-            <input type="hidden" class="cheque-bank-name" name="items[${itemRowCount}][cheque_bank_name]" value="${item.cheque_bank_name || ''}">
-            <input type="hidden" class="cheque-bank-area" name="items[${itemRowCount}][cheque_bank_area]" value="${item.cheque_bank_area || ''}">
-            <input type="hidden" class="cheque-closed-on" name="items[${itemRowCount}][cheque_closed_on]" value="${chequeClosedOn}">
-        </td>
-        <td><input type="date" class="form-control cheque-date" name="items[${itemRowCount}][cheque_date]" value="${chequeDate}"></td>
-        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="${item.amount || ''}" onchange="calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModalForRow(this.closest('tr'))"></td>
-        <td><input type="number" class="form-control text-end unadjusted" name="items[${itemRowCount}][unadjusted]" step="0.01" value="${item.unadjusted || ''}"></td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Remove"><i class="bi bi-trash"></i></button>
-        </td>
-    `;
-    tbody.appendChild(row);
-    if (item.party_code && parseFloat(item.amount) > 0) row.classList.add('row-complete');
-}
+    if (outstandingContainer) {
+        outstandingContainer.addEventListener('scroll', function() {
+            if (outstandingLoading || !outstandingHasMore || !currentOutstandingCustomerId) return;
+            
+            const scrollTop = this.scrollTop;
+            const scrollHeight = this.scrollHeight;
+            const clientHeight = this.clientHeight;
+            
+            // Load more when scrolled to bottom (with 10px threshold)
+            if (scrollTop + clientHeight >= scrollHeight - 10) {
+                fetchCustomerOutstanding(currentOutstandingCustomerId, outstandingPage + 1, true);
+            }
+        });
+    }
+});
+
+let selectedRowCustomerId = null;
 
 function addItemRow(customer = null) {
     itemRowCount++;
@@ -708,7 +735,7 @@ function addItemRow(customer = null) {
     row.setAttribute('data-row', itemRowCount);
     row.setAttribute('data-customer-id', customer?.id || '');
     row.onclick = function(e) {
-        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'INPUT') {
+        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
             selectRow(this);
         }
     };
@@ -730,27 +757,48 @@ function addItemRow(customer = null) {
         </td>
     `;
     tbody.appendChild(row);
+    
+    // Auto-select the newly added row
     selectRow(row);
 }
 
 function selectRow(row) {
+    // Remove selection from all rows
     document.querySelectorAll('#itemsTableBody tr').forEach(r => r.classList.remove('row-selected'));
+    
+    // Add selection to clicked row
     row.classList.add('row-selected');
+    
+    // Get customer ID from the row
     const customerId = row.getAttribute('data-customer-id');
+    
+    // Fetch outstanding only if customer changed
     if (customerId && customerId !== selectedRowCustomerId) {
         selectedRowCustomerId = customerId;
+        
+        // Clear existing outstanding data
         document.getElementById('outstandingTableBody').innerHTML = '';
         document.getElementById('outstandingTotal').textContent = '0.00';
+        
+        // Fetch new outstanding data
         fetchCustomerOutstanding(customerId);
     }
 }
 
-function removeRow(btn) { btn.closest('tr').remove(); calculateTotals(); }
+function removeRow(btn) {
+    const row = btn.closest('tr');
+    row.remove();
+    calculateTotals();
+}
 
 function updateRowStatus(row) {
     const code = row.querySelector('.party-code').value;
     const amount = parseFloat(row.querySelector('.amount').value) || 0;
-    row.classList.toggle('row-complete', code && amount > 0);
+    if (code && amount > 0) {
+        row.classList.add('row-complete');
+    } else {
+        row.classList.remove('row-complete');
+    }
 }
 
 function calculateTotals() {
@@ -758,243 +806,17 @@ function calculateTotals() {
     document.querySelectorAll('#itemsTableBody tr').forEach(row => {
         const amount = parseFloat(row.querySelector('.amount')?.value) || 0;
         const chequeNo = row.querySelector('.cheque-no')?.value;
-        if (chequeNo && chequeNo.trim() !== '') { totalCheque += amount; }
-        else { totalCash += amount; }
+        if (chequeNo && chequeNo.trim() !== '') {
+            totalCheque += amount;
+        } else {
+            totalCash += amount;
+        }
     });
     document.getElementById('totalCash').textContent = totalCash.toFixed(2);
     document.getElementById('totalCheque').textContent = totalCheque.toFixed(2);
 }
 
-// Outstanding functions
-function fetchCustomerOutstanding(customerId, page = 1, append = false) {
-    if (outstandingLoading) return;
-    outstandingLoading = true;
-    currentOutstandingCustomerId = customerId;
-    if (!append) {
-        outstandingPage = 1;
-        document.getElementById('outstandingTableBody').innerHTML = '';
-    }
-    fetch(`{{ url('admin/customer-receipt/customer-outstanding') }}/${customerId}?page=${page}`)
-        .then(r => r.json())
-        .then(data => {
-            outstandingLoading = false;
-            if (data.success && data.outstanding) {
-                displayOutstandingInvoices(data.outstanding, append);
-                outstandingHasMore = data.has_more;
-                outstandingPage = data.current_page;
-                if (data.total_amount !== undefined) {
-                    document.getElementById('outstandingTotal').textContent = parseFloat(data.total_amount).toFixed(2);
-                }
-            }
-        })
-        .catch(e => { outstandingLoading = false; console.error('Error fetching outstanding:', e); });
-}
-
-function displayOutstandingInvoices(invoices, append = false) {
-    const tbody = document.getElementById('outstandingTableBody');
-    if (!append) tbody.innerHTML = '';
-    invoices.forEach(inv => {
-        const balance = parseFloat(inv.balance_amount) || 0;
-        const row = document.createElement('tr');
-        row.style.height = '28px';
-        row.innerHTML = `
-            <td style="padding: 3px 5px;">${inv.invoice_no || '-'}</td>
-            <td style="padding: 3px 5px;">${inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
-            <td class="text-end" style="padding: 3px 5px;">${parseFloat(inv.net_amount || 0).toFixed(2)}</td>
-            <td class="text-end" style="padding: 3px 5px;">${balance.toFixed(2)}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
-
-// Adjustment Modal functions
-function openAdjustmentModalForRow(row) {
-    const amount = parseFloat(row.querySelector('.amount').value) || 0;
-    const customerId = row.getAttribute('data-customer-id');
-    if (amount <= 0 || !customerId) return;
-    currentAdjustmentRow = row;
-    currentAdjustmentAmount = amount;
-    fetch(`{{ url('admin/customer-receipt/customer-outstanding') }}/${customerId}?page=1&per_page=100`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.success && data.outstanding && data.outstanding.length > 0) {
-                adjustmentInvoices = data.outstanding;
-                showAdjustmentModal(data.outstanding, amount, row.getAttribute('data-row'));
-            }
-        })
-        .catch(e => console.error('Error fetching invoices:', e));
-}
-
-function showAdjustmentModal(invoices, receiptAmount, rowIndex) {
-    const tbody = document.getElementById('adjustmentTableBody');
-    const existingAdjustments = rowAdjustments[rowIndex] || {};
-    tbody.innerHTML = invoices.map((inv, index) => {
-        const balance = parseFloat(inv.balance_amount || 0);
-        const existingAdj = existingAdjustments[inv.id] || 0;
-        const currentBalance = balance - existingAdj;
-        return `
-            <tr>
-                <td style="text-align: center;">${index + 1}</td>
-                <td style="text-align: center;">${inv.invoice_no || '-'}</td>
-                <td style="text-align: center;">${inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
-                <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${balance.toFixed(2)}</td>
-                <td style="text-align: center;">
-                    <input type="number" class="form-control form-control-sm adj-input" id="adj_${inv.id}" data-invoice-id="${inv.id}" data-balance="${balance}" value="${existingAdj > 0 ? existingAdj.toFixed(2) : ''}" min="0" max="${balance}" step="0.01" onchange="updateAdjustmentBalances()" oninput="updateAdjustmentBalances()" style="width: 90px; height: 24px; padding: 2px 4px; font-size: 11px; text-align: right; border-radius: 0;">
-                </td>
-                <td style="text-align: right;" id="bal_${inv.id}"><span style="color: #28a745;">₹ ${currentBalance.toFixed(2)}</span></td>
-            </tr>
-        `;
-    }).join('');
-    document.getElementById('adjustmentAmountDisplay').textContent = `₹ ${receiptAmount.toFixed(2)}`;
-    document.getElementById('autoAdjustAmount').value = receiptAmount.toFixed(2);
-    updateAdjustmentBalances();
-    document.getElementById('adjustmentModalBackdrop').classList.add('show');
-    document.getElementById('adjustmentModal').classList.add('show');
-    document.addEventListener('keydown', handleAdjustmentEsc);
-}
-
-function handleAdjustmentEsc(e) { if (e.key === 'Escape') closeAdjustmentModal(); }
-
-function updateAdjustmentBalances() {
-    const inputs = document.querySelectorAll('.adj-input');
-    let totalAdjusted = 0;
-    inputs.forEach(input => {
-        let adjusted = parseFloat(input.value || 0);
-        const invoiceId = input.getAttribute('data-invoice-id');
-        const balance = parseFloat(input.getAttribute('data-balance'));
-        if (adjusted > balance) { input.value = balance.toFixed(2); adjusted = balance; }
-        totalAdjusted += adjusted;
-        const newBalance = balance - adjusted;
-        const balanceCell = document.getElementById(`bal_${invoiceId}`);
-        if (balanceCell) {
-            balanceCell.innerHTML = newBalance === 0 
-                ? `<span style="color: #28a745; font-weight: bold;">₹ ${newBalance.toFixed(2)}</span>`
-                : `<span style="color: #28a745;">₹ ${newBalance.toFixed(2)}</span>`;
-        }
-    });
-    const remaining = currentAdjustmentAmount - totalAdjusted;
-    const remainingEl = document.getElementById('adjustmentRemainingDisplay');
-    remainingEl.textContent = `₹ ${remaining.toFixed(2)}`;
-    remainingEl.style.color = remaining < 0 ? '#dc3545' : (remaining === 0 ? '#28a745' : '#ffc107');
-}
-
-function autoDistributeAmount() {
-    const totalAmount = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
-    if (totalAmount <= 0) { alert('Please enter a valid amount to distribute'); return; }
-    document.querySelectorAll('.adj-input').forEach(input => { input.value = ''; });
-    const inputs = Array.from(document.querySelectorAll('.adj-input'));
-    const transactions = inputs.map(input => ({ input: input, balance: parseFloat(input.getAttribute('data-balance')) })).filter(t => t.balance > 0);
-    let remainingAmount = totalAmount;
-    transactions.forEach(transaction => {
-        if (remainingAmount <= 0) return;
-        const adjustAmount = Math.min(remainingAmount, transaction.balance);
-        transaction.input.value = adjustAmount.toFixed(2);
-        remainingAmount -= adjustAmount;
-    });
-    updateAdjustmentBalances();
-}
-
-function saveAdjustmentData() {
-    if (!currentAdjustmentRow) return;
-    const rowIndex = currentAdjustmentRow.getAttribute('data-row');
-    const inputs = document.querySelectorAll('.adj-input');
-    let totalAdjusted = 0;
-    const adjustments = {};
-    inputs.forEach(input => {
-        const adjusted = parseFloat(input.value || 0);
-        if (adjusted > 0) {
-            const invoiceId = input.getAttribute('data-invoice-id');
-            adjustments[invoiceId] = adjusted;
-            totalAdjusted += adjusted;
-        }
-    });
-    rowAdjustments[rowIndex] = adjustments;
-    const unadjustedInput = currentAdjustmentRow.querySelector('.unadjusted');
-    const amountInput = currentAdjustmentRow.querySelector('.amount');
-    const amount = parseFloat(amountInput.value) || 0;
-    unadjustedInput.value = (amount - totalAdjusted).toFixed(2);
-    updateAdjustedTable();
-    closeAdjustmentModal();
-}
-
-function updateAdjustedTable() {
-    const tbody = document.getElementById('adjustedTableBody');
-    tbody.innerHTML = '';
-    let totalAdjusted = 0;
-    Object.keys(rowAdjustments).forEach(rowIndex => {
-        const rowAdj = rowAdjustments[rowIndex];
-        Object.keys(rowAdj).forEach(invoiceId => {
-            const adjusted = rowAdj[invoiceId];
-            if (adjusted > 0) {
-                const invoice = adjustmentInvoices.find(inv => inv.id == invoiceId);
-                if (invoice) {
-                    totalAdjusted += adjusted;
-                    const row = document.createElement('tr');
-                    row.style.height = '28px';
-                    row.innerHTML = `
-                        <td style="padding: 3px 5px;">${invoice.invoice_no || '-'}</td>
-                        <td style="padding: 3px 5px;">${invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
-                        <td class="text-end" style="padding: 3px 5px;">${adjusted.toFixed(2)}</td>
-                    `;
-                    tbody.appendChild(row);
-                }
-            }
-        });
-    });
-    document.getElementById('adjustedTotal').textContent = totalAdjusted.toFixed(2);
-}
-
-function closeAdjustmentModal() {
-    document.getElementById('adjustmentModalBackdrop').classList.remove('show');
-    document.getElementById('adjustmentModal').classList.remove('show');
-    document.removeEventListener('keydown', handleAdjustmentEsc);
-}
-
-// Bank Details Modal functions
-function onChequeNoChange(input) {
-    const chequeNo = input.value.trim();
-    if (chequeNo) {
-        currentBankRow = input.closest('tr');
-        const bankName = currentBankRow.querySelector('.cheque-bank-name')?.value || '';
-        const bankArea = currentBankRow.querySelector('.cheque-bank-area')?.value || '';
-        const closedOn = currentBankRow.querySelector('.cheque-closed-on')?.value || '';
-        document.getElementById('chequeBankName').value = bankName;
-        document.getElementById('chequeBankArea').value = bankArea;
-        document.getElementById('chequeClosedOn').value = closedOn;
-        openBankModal();
-    }
-}
-
-function openBankModal() {
-    document.getElementById('bankModalBackdrop').classList.add('show');
-    document.getElementById('bankModal').classList.add('show');
-    document.getElementById('chequeBankName').focus();
-    document.addEventListener('keydown', handleBankEsc);
-}
-
-function handleBankEsc(e) { if (e.key === 'Escape') closeBankModal(); }
-
-function closeBankModal() {
-    document.getElementById('bankModalBackdrop').classList.remove('show');
-    document.getElementById('bankModal').classList.remove('show');
-    document.removeEventListener('keydown', handleBankEsc);
-}
-
-function saveBankDetails() {
-    if (!currentBankRow) return;
-    const bankName = document.getElementById('chequeBankName').value;
-    const bankArea = document.getElementById('chequeBankArea').value;
-    const closedOn = document.getElementById('chequeClosedOn').value;
-    currentBankRow.querySelector('.cheque-bank-name').value = bankName;
-    currentBankRow.querySelector('.cheque-bank-area').value = bankArea;
-    currentBankRow.querySelector('.cheque-closed-on').value = closedOn;
-    closeBankModal();
-}
-
-// Update Receipt
-function updateReceipt() {
-    if (!currentReceipt) { alert('No receipt loaded'); return; }
-    
+function saveReceipt() {
     const items = [];
     document.querySelectorAll('#itemsTableBody tr').forEach(row => {
         const code = row.querySelector('.party-code')?.value;
@@ -1004,6 +826,8 @@ function updateReceipt() {
         const chequeDate = row.querySelector('.cheque-date')?.value;
         const amount = row.querySelector('.amount')?.value;
         const unadjusted = row.querySelector('.unadjusted')?.value;
+        
+        // Get bank details
         const chequeBankName = row.querySelector('.cheque-bank-name')?.value;
         const chequeBankArea = row.querySelector('.cheque-bank-area')?.value;
         const chequeClosedOn = row.querySelector('.cheque-closed-on')?.value;
@@ -1020,6 +844,8 @@ function updateReceipt() {
             });
         }
     });
+    
+    if (items.length === 0) { alert('Please add at least one item'); return; }
     
     // Collect all adjustments
     const adjustments = [];
@@ -1057,168 +883,502 @@ function updateReceipt() {
         adjustments: adjustments
     };
     
-    fetch(`{{ url('admin/customer-receipt') }}/${currentReceipt.id}`, {
-        method: 'PUT',
+    fetch('{{ route("admin.customer-receipt.store") }}', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
         body: JSON.stringify(data)
     })
     .then(r => r.json())
     .then(result => {
-        if (result.success) { alert('Receipt updated successfully!'); }
-        else { alert(result.message || 'Failed to update'); }
+        if (result.success) {
+            alert('Receipt saved successfully! Trn No: ' + result.trn_no);
+            window.location.href = '{{ route("admin.customer-receipt.index") }}';
+        } else {
+            alert(result.message || 'Failed to save receipt');
+        }
     })
     .catch(e => { console.error(e); alert('An error occurred'); });
 }
 
-function deleteReceipt() {
-    if (!currentReceipt) { alert('No receipt loaded'); return; }
-    if (!confirm(`Delete Receipt #${currentReceipt.trn_no}?`)) return;
+function deleteReceipt() { alert('No receipt loaded to delete'); }
+function copyParty() { alert('Copy Party feature'); }
+
+// Adjustment Modal Variables
+let currentAdjustmentRow = null;
+let currentAdjustmentAmount = 0;
+let adjustmentInvoices = [];
+let rowAdjustments = {}; // Store adjustments per row
+
+// Open Adjustment Modal when amount is entered
+function openAdjustmentModalForRow(row) {
+    const amount = parseFloat(row.querySelector('.amount').value) || 0;
+    const customerId = row.getAttribute('data-customer-id');
     
-    fetch(`{{ url('admin/customer-receipt') }}/${currentReceipt.id}`, {
-        method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
-    })
-    .then(r => r.json())
-    .then(result => {
-        if (result.success) { alert(result.message); window.location.href = '{{ route("admin.customer-receipt.index") }}'; }
-        else { alert(result.message || 'Failed to delete'); }
-    })
-    .catch(e => { console.error(e); alert('An error occurred'); });
-}
-
-function openReceiptsList() { window.location.href = '{{ route("admin.customer-receipt.index") }}'; }
-
-// Load Invoice Modal functions
-let allReceipts = [];
-
-function openLoadInvoiceModal() {
-    document.getElementById('loadInvoiceModalBackdrop').classList.add('show');
-    document.getElementById('loadInvoiceModal').classList.add('show');
-    document.getElementById('invoiceSearch').value = '';
-    document.getElementById('invoiceFromDate').value = '';
-    document.getElementById('invoiceToDate').value = '';
-    document.getElementById('selectAllInvoices').checked = false;
+    if (amount <= 0 || !customerId) return;
     
-    // Fetch receipts from server
-    fetchReceiptsList();
+    currentAdjustmentRow = row;
+    currentAdjustmentAmount = amount;
     
-    document.addEventListener('keydown', handleLoadInvoiceEsc);
-}
-
-function handleLoadInvoiceEsc(e) { if (e.key === 'Escape') closeLoadInvoiceModal(); }
-
-function closeLoadInvoiceModal() {
-    document.getElementById('loadInvoiceModalBackdrop').classList.remove('show');
-    document.getElementById('loadInvoiceModal').classList.remove('show');
-    document.removeEventListener('keydown', handleLoadInvoiceEsc);
-}
-
-function fetchReceiptsList() {
-    const fromDate = document.getElementById('invoiceFromDate').value;
-    const toDate = document.getElementById('invoiceToDate').value;
-    
-    let url = '{{ url("admin/customer-receipt/get-receipts") }}';
-    const params = new URLSearchParams();
-    if (fromDate) params.append('from_date', fromDate);
-    if (toDate) params.append('to_date', toDate);
-    if (params.toString()) url += '?' + params.toString();
-    
-    fetch(url)
+    // Fetch customer's outstanding invoices
+    fetch(`{{ url('admin/customer-receipt/customer-outstanding') }}/${customerId}?page=1&per_page=100`)
         .then(r => r.json())
         .then(data => {
-            if (data.success && data.receipts) {
-                allReceipts = data.receipts;
-                displayReceiptsList(data.receipts);
+            if (data.success && data.outstanding && data.outstanding.length > 0) {
+                adjustmentInvoices = data.outstanding;
+                showAdjustmentModal(data.outstanding, amount, row.getAttribute('data-row'));
             }
         })
-        .catch(e => {
-            console.error('Error fetching receipts:', e);
-            document.getElementById('invoiceListBody').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading receipts</td></tr>';
-        });
+        .catch(e => console.error('Error fetching invoices:', e));
 }
 
-function displayReceiptsList(receipts) {
-    const tbody = document.getElementById('invoiceListBody');
-    if (!receipts || receipts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No receipts found</td></tr>';
-        return;
-    }
+// Show Adjustment Modal
+function showAdjustmentModal(invoices, receiptAmount, rowIndex) {
+    const tbody = document.getElementById('adjustmentTableBody');
+    const existingAdjustments = rowAdjustments[rowIndex] || {};
     
-    tbody.innerHTML = receipts.map(receipt => {
-        const receiptDate = receipt.receipt_date ? new Date(receipt.receipt_date).toLocaleDateString('en-GB') : '-';
+    tbody.innerHTML = invoices.map((inv, index) => {
+        const billAmount = parseFloat(inv.net_amount || 0);
+        const balance = parseFloat(inv.balance_amount || 0);
+        const existingAdj = existingAdjustments[inv.id] || 0;
+        const currentBalance = balance - existingAdj;
+        
         return `
-            <tr data-receipt-id="${receipt.id}" data-trn-no="${receipt.trn_no}">
-                <td style="text-align: center;"><input type="radio" name="selectedReceipt" value="${receipt.id}" class="receipt-radio"></td>
-                <td>${receipt.trn_no || '-'}</td>
-                <td>${receiptDate}</td>
-                <td class="text-end">${parseFloat(receipt.total_cash || 0).toFixed(2)}</td>
-                <td class="text-end">${parseFloat(receipt.total_cheque || 0).toFixed(2)}</td>
-                <td>${receipt.salesman_name || '-'}</td>
+            <tr>
+                <td style="text-align: center;">${index + 1}</td>
+                <td style="text-align: center;">${inv.invoice_no || '-'}</td>
+                <td style="text-align: center;">${inv.invoice_date ? new Date(inv.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
+                <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${balance.toFixed(2)}</td>
+                <td style="text-align: center;">
+                    <input type="number" class="form-control form-control-sm adj-input" 
+                           id="adj_${inv.id}" 
+                           data-invoice-id="${inv.id}"
+                           data-balance="${balance}"
+                           value="${existingAdj > 0 ? existingAdj.toFixed(2) : ''}" 
+                           min="0" 
+                           max="${balance}"
+                           step="0.01"
+                           onchange="updateAdjustmentBalances()"
+                           oninput="updateAdjustmentBalances()"
+                           style="width: 90px; height: 24px; padding: 2px 4px; font-size: 11px; text-align: right; border-radius: 0;">
+                </td>
+                <td style="text-align: right;" id="bal_${inv.id}"><span style="color: #28a745;">₹ ${currentBalance.toFixed(2)}</span></td>
             </tr>
         `;
     }).join('');
+    
+    // Set amount display
+    document.getElementById('adjustmentAmountDisplay').textContent = `₹ ${receiptAmount.toFixed(2)}`;
+    document.getElementById('autoAdjustAmount').value = receiptAmount.toFixed(2);
+    
+    // Calculate initial remaining
+    updateAdjustmentBalances();
+    
+    // Show modal
+    document.getElementById('adjustmentModalBackdrop').classList.add('show');
+    document.getElementById('adjustmentModal').classList.add('show');
+    
+    // Add ESC key listener
+    document.addEventListener('keydown', handleAdjustmentEsc);
 }
 
-function filterInvoices() {
-    const searchText = document.getElementById('invoiceSearch').value.toLowerCase();
-    const fromDate = document.getElementById('invoiceFromDate').value;
-    const toDate = document.getElementById('invoiceToDate').value;
-    
-    let filtered = allReceipts;
-    
-    // Filter by search text
-    if (searchText) {
-        filtered = filtered.filter(receipt => {
-            const trnNo = (receipt.trn_no || '').toString().toLowerCase();
-            const salesmanName = (receipt.salesman_name || '').toLowerCase();
-            return trnNo.includes(searchText) || salesmanName.includes(searchText);
-        });
+// Handle ESC key
+function handleAdjustmentEsc(e) {
+    if (e.key === 'Escape') {
+        closeAdjustmentModal();
     }
-    
-    // Filter by date range
-    if (fromDate) {
-        filtered = filtered.filter(receipt => {
-            const receiptDate = receipt.receipt_date ? receipt.receipt_date.split('T')[0] : '';
-            return receiptDate >= fromDate;
-        });
-    }
-    if (toDate) {
-        filtered = filtered.filter(receipt => {
-            const receiptDate = receipt.receipt_date ? receipt.receipt_date.split('T')[0] : '';
-            return receiptDate <= toDate;
-        });
-    }
-    
-    displayReceiptsList(filtered);
 }
 
-function toggleSelectAllInvoices() {
-    const selectAll = document.getElementById('selectAllInvoices').checked;
-    document.querySelectorAll('.receipt-radio').forEach(radio => {
-        radio.checked = selectAll;
+// Update adjustment balances
+function updateAdjustmentBalances() {
+    const inputs = document.querySelectorAll('.adj-input');
+    let totalAdjusted = 0;
+    
+    inputs.forEach(input => {
+        let adjusted = parseFloat(input.value || 0);
+        const invoiceId = input.getAttribute('data-invoice-id');
+        const balance = parseFloat(input.getAttribute('data-balance'));
+        
+        // Prevent adjusting more than balance
+        if (adjusted > balance) {
+            input.value = balance.toFixed(2);
+            adjusted = balance;
+        }
+        
+        totalAdjusted += adjusted;
+        
+        // Calculate new balance
+        const newBalance = balance - adjusted;
+        const balanceCell = document.getElementById(`bal_${invoiceId}`);
+        if (balanceCell) {
+            if (newBalance === 0) {
+                balanceCell.innerHTML = `<span style="color: #28a745; font-weight: bold;">₹ ${newBalance.toFixed(2)}</span>`;
+            } else {
+                balanceCell.innerHTML = `<span style="color: #28a745;">₹ ${newBalance.toFixed(2)}</span>`;
+            }
+        }
     });
+    
+    // Update remaining
+    const remaining = currentAdjustmentAmount - totalAdjusted;
+    const remainingEl = document.getElementById('adjustmentRemainingDisplay');
+    remainingEl.textContent = `₹ ${remaining.toFixed(2)}`;
+    
+    if (remaining < 0) {
+        remainingEl.style.color = '#dc3545';
+    } else if (remaining === 0) {
+        remainingEl.style.color = '#28a745';
+    } else {
+        remainingEl.style.color = '#ffc107';
+    }
 }
 
-function loadSelectedInvoice() {
-    const selectedRadio = document.querySelector('.receipt-radio:checked');
-    if (!selectedRadio) {
-        alert('Please select a receipt to load');
+// Auto distribute amount
+function autoDistributeAmount() {
+    const totalAmount = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
+    
+    if (totalAmount <= 0) {
+        alert('Please enter a valid amount to distribute');
         return;
     }
     
-    const receiptId = selectedRadio.value;
-    const selectedReceipt = allReceipts.find(r => r.id == receiptId);
+    // Clear all existing adjustments
+    document.querySelectorAll('.adj-input').forEach(input => {
+        input.value = '';
+    });
     
-    if (selectedReceipt) {
-        // Set the transaction number in search field and load it
-        document.getElementById('searchTrnNo').value = selectedReceipt.trn_no;
-        closeLoadInvoiceModal();
-        searchReceipt();
+    // Get all inputs sorted by balance
+    const inputs = Array.from(document.querySelectorAll('.adj-input'));
+    const transactions = inputs.map(input => ({
+        input: input,
+        balance: parseFloat(input.getAttribute('data-balance'))
+    })).filter(t => t.balance > 0);
+    
+    let remainingAmount = totalAmount;
+    
+    // Distribute amount
+    transactions.forEach(transaction => {
+        if (remainingAmount <= 0) return;
+        
+        const adjustAmount = Math.min(remainingAmount, transaction.balance);
+        transaction.input.value = adjustAmount.toFixed(2);
+        remainingAmount -= adjustAmount;
+    });
+    
+    // Update balances
+    updateAdjustmentBalances();
+}
+
+// Save adjustment data
+function saveAdjustmentData() {
+    if (!currentAdjustmentRow) return;
+    
+    const rowIndex = currentAdjustmentRow.getAttribute('data-row');
+    const inputs = document.querySelectorAll('.adj-input');
+    let totalAdjusted = 0;
+    const adjustments = {};
+    
+    inputs.forEach(input => {
+        const adjusted = parseFloat(input.value || 0);
+        if (adjusted > 0) {
+            const invoiceId = input.getAttribute('data-invoice-id');
+            adjustments[invoiceId] = adjusted;
+            totalAdjusted += adjusted;
+        }
+    });
+    
+    // Store adjustments for this row
+    rowAdjustments[rowIndex] = adjustments;
+    
+    // Update unadjusted amount in the row
+    const unadjustedInput = currentAdjustmentRow.querySelector('.unadjusted');
+    const amountInput = currentAdjustmentRow.querySelector('.amount');
+    const amount = parseFloat(amountInput.value) || 0;
+    unadjustedInput.value = (amount - totalAdjusted).toFixed(2);
+    
+    // Update adjusted table display
+    updateAdjustedTable();
+    
+    closeAdjustmentModal();
+}
+
+// Update the Amt. Adjusted table
+function updateAdjustedTable() {
+    const tbody = document.getElementById('adjustedTableBody');
+    tbody.innerHTML = '';
+    let totalAdjusted = 0;
+    
+    // Collect all adjustments from all rows
+    Object.keys(rowAdjustments).forEach(rowIndex => {
+        const rowAdj = rowAdjustments[rowIndex];
+        Object.keys(rowAdj).forEach(invoiceId => {
+            const adjusted = rowAdj[invoiceId];
+            if (adjusted > 0) {
+                // Find invoice details
+                const invoice = adjustmentInvoices.find(inv => inv.id == invoiceId);
+                if (invoice) {
+                    totalAdjusted += adjusted;
+                    const row = document.createElement('tr');
+                    row.style.height = '28px';
+                    row.innerHTML = `
+                        <td style="padding: 3px 5px;">${invoice.invoice_no || '-'}</td>
+                        <td style="padding: 3px 5px;">${invoice.invoice_date ? new Date(invoice.invoice_date).toLocaleDateString('en-GB') : '-'}</td>
+                        <td class="text-end" style="padding: 3px 5px;">${adjusted.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            }
+        });
+    });
+    
+    document.getElementById('adjustedTotal').textContent = totalAdjusted.toFixed(2);
+}
+
+// Close adjustment modal
+function closeAdjustmentModal() {
+    document.getElementById('adjustmentModalBackdrop').classList.remove('show');
+    document.getElementById('adjustmentModal').classList.remove('show');
+    document.removeEventListener('keydown', handleAdjustmentEsc);
+}
+
+// Bank Details Modal Variables
+let currentBankRow = null;
+
+// Open Bank Details Modal when cheque number is entered
+function onChequeNoChange(input) {
+    const chequeNo = input.value.trim();
+    if (chequeNo) {
+        currentBankRow = input.closest('tr');
+        
+        // Pre-fill existing values if any
+        const bankName = currentBankRow.querySelector('.cheque-bank-name')?.value || '';
+        const bankArea = currentBankRow.querySelector('.cheque-bank-area')?.value || '';
+        const closedOn = currentBankRow.querySelector('.cheque-closed-on')?.value || '';
+        
+        document.getElementById('chequeBankName').value = bankName;
+        document.getElementById('chequeBankArea').value = bankArea;
+        document.getElementById('chequeClosedOn').value = closedOn;
+        
+        openBankModal();
     }
 }
 
-// Add event listeners for date filters
-document.getElementById('invoiceFromDate')?.addEventListener('change', filterInvoices);
-document.getElementById('invoiceToDate')?.addEventListener('change', filterInvoices);
+// Open Bank Modal
+function openBankModal() {
+    document.getElementById('bankModalBackdrop').classList.add('show');
+    document.getElementById('bankModal').classList.add('show');
+    document.getElementById('chequeBankName').focus();
+    
+    // Add ESC key listener
+    document.addEventListener('keydown', handleBankEsc);
+}
+
+// Handle ESC key for bank modal
+function handleBankEsc(e) {
+    if (e.key === 'Escape') {
+        closeBankModal();
+    }
+}
+
+// Close Bank Modal
+function closeBankModal() {
+    document.getElementById('bankModalBackdrop').classList.remove('show');
+    document.getElementById('bankModal').classList.remove('show');
+    document.removeEventListener('keydown', handleBankEsc);
+}
+
+// Save Bank Details
+function saveBankDetails() {
+    if (!currentBankRow) return;
+    
+    const bankName = document.getElementById('chequeBankName').value;
+    const bankArea = document.getElementById('chequeBankArea').value;
+    const closedOn = document.getElementById('chequeClosedOn').value;
+    
+    // Save to hidden fields in the row
+    currentBankRow.querySelector('.cheque-bank-name').value = bankName;
+    currentBankRow.querySelector('.cheque-bank-area').value = bankArea;
+    currentBankRow.querySelector('.cheque-closed-on').value = closedOn;
+    
+    closeBankModal();
+}
+
+// ==================== LOAD INVOICES MODAL ====================
+let currentReceiptId = null;
+
+function openLoadInvoicesModal() {
+    document.getElementById('loadInvoicesModalBackdrop').classList.add('show');
+    document.getElementById('loadInvoicesModal').classList.add('show');
+    // Set default dates (last 30 days)
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    document.getElementById('invoiceFilterToDate').value = today.toISOString().split('T')[0];
+    document.getElementById('invoiceFilterFromDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+}
+
+function closeLoadInvoicesModal() {
+    document.getElementById('loadInvoicesModalBackdrop').classList.remove('show');
+    document.getElementById('loadInvoicesModal').classList.remove('show');
+}
+
+function loadPastInvoices() {
+    const fromDate = document.getElementById('invoiceFilterFromDate').value;
+    const toDate = document.getElementById('invoiceFilterToDate').value;
+    
+    const tbody = document.getElementById('invoicesListBody');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
+    
+    let url = `{{ url('admin/customer-receipt/get-receipts') }}`;
+    let params = [];
+    if (fromDate) params.push(`from_date=${fromDate}`);
+    if (toDate) params.push(`to_date=${toDate}`);
+    if (params.length > 0) url += '?' + params.join('&');
+    
+    console.log('Fetching receipts from:', url);
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(r => {
+            console.log('Response status:', r.status);
+            if (!r.ok) {
+                throw new Error(`HTTP error! status: ${r.status}`);
+            }
+            return r.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            if (data.success && data.receipts && data.receipts.length > 0) {
+                tbody.innerHTML = data.receipts.map(r => `
+                    <tr>
+                        <td><strong>${r.trn_no || '-'}</strong></td>
+                        <td>${r.receipt_date || '-'}</td>
+                        <td>${r.salesman_name || '-'}</td>
+                        <td class="text-end">₹${parseFloat(r.total_cash || 0).toFixed(2)}</td>
+                        <td class="text-end">₹${parseFloat(r.total_cheque || 0).toFixed(2)}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="loadReceiptById(${r.id})">
+                                <i class="bi bi-download"></i> Load
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else if (data.success && (!data.receipts || data.receipts.length === 0)) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No receipts found for selected date range. Try expanding the date range.</td></tr>';
+            } else {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">${data.message || 'Error loading receipts'}</td></tr>`;
+            }
+        })
+        .catch(e => {
+            console.error('Error:', e);
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error loading receipts: ' + e.message + '</td></tr>';
+        });
+}
+
+function loadReceiptById(id) {
+    fetch(`{{ url('admin/customer-receipt/details') }}/${id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                closeLoadInvoicesModal();
+                populateFormWithReceipt(data.receipt);
+            } else {
+                alert(data.message || 'Error loading receipt');
+            }
+        })
+        .catch(e => {
+            console.error(e);
+            alert('Error loading receipt');
+        });
+}
+
+function populateFormWithReceipt(receipt) {
+    currentReceiptId = receipt.id;
+    
+    // Populate header fields
+    document.getElementById('trnNo').value = receipt.trn_no;
+    document.getElementById('receiptDate').value = receipt.receipt_date ? receipt.receipt_date.split('T')[0] : '';
+    document.getElementById('dayName').value = receipt.day_name || '';
+    document.getElementById('ledger').value = receipt.ledger || 'CL';
+    document.getElementById('salesmanCode').value = receipt.salesman_code || '';
+    document.getElementById('areaCode').value = receipt.area_code || '';
+    document.getElementById('routeCode').value = receipt.route_code || '';
+    document.getElementById('collBoyCode').value = receipt.coll_boy_code || '';
+    
+    // Set Select2/dropdown values using IDs
+    if (receipt.salesman_id) {
+        document.getElementById('salesmanSelect').value = receipt.salesman_id;
+    }
+    if (receipt.area_id) {
+        document.getElementById('areaSelect').value = receipt.area_id;
+    }
+    if (receipt.route_id) {
+        document.getElementById('routeSelect').value = receipt.route_id;
+    }
+    if (receipt.coll_boy_id) {
+        document.getElementById('collBoySelect').value = receipt.coll_boy_id;
+    }
+    if (receipt.bank_code) {
+        document.getElementById('bankSelect').value = receipt.bank_code;
+    }
+    
+    // Clear and populate items
+    document.getElementById('itemsTableBody').innerHTML = '';
+    itemRowCount = 0;
+    
+    if (receipt.items && receipt.items.length > 0) {
+        receipt.items.forEach(item => {
+            addItemRowFromData(item);
+        });
+    }
+    
+    // Update totals
+    calculateTotals();
+    
+    // Enable update button
+    document.getElementById('btnSave').textContent = 'Update';
+}
+
+function addItemRowFromData(item) {
+    itemRowCount++;
+    const tbody = document.getElementById('itemsTableBody');
+    const row = document.createElement('tr');
+    row.setAttribute('data-row', itemRowCount);
+    row.setAttribute('data-customer-id', item.customer_id || '');
+    row.onclick = function(e) {
+        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I' && e.target.tagName !== 'INPUT') {
+            selectRow(this);
+        }
+    };
+    
+    const chequeDate = item.cheque_date ? item.cheque_date.split('T')[0] : '';
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control party-code readonly-field" value="${item.party_code || ''}" readonly></td>
+        <td><input type="text" class="form-control party-name readonly-field" value="${item.party_name || ''}" readonly>
+            <input type="hidden" class="customer-id" name="items[${itemRowCount}][customer_id]" value="${item.customer_id || ''}">
+        </td>
+        <td><input type="text" class="form-control cheque-no" name="items[${itemRowCount}][cheque_no]" value="${item.cheque_no || ''}" onchange="onChequeNoChange(this)">
+            <input type="hidden" class="cheque-bank-name" name="items[${itemRowCount}][cheque_bank_name]" value="${item.cheque_bank_name || ''}">
+            <input type="hidden" class="cheque-bank-area" name="items[${itemRowCount}][cheque_bank_area]" value="${item.cheque_bank_area || ''}">
+            <input type="hidden" class="cheque-closed-on" name="items[${itemRowCount}][cheque_closed_on]" value="${item.cheque_closed_on || ''}">
+        </td>
+        <td><input type="date" class="form-control cheque-date" name="items[${itemRowCount}][cheque_date]" value="${chequeDate}"></td>
+        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="${item.amount || ''}" onchange="calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModal(this.closest('tr'))"></td>
+        <td><input type="number" class="form-control text-end unadjusted readonly-field" name="items[${itemRowCount}][unadjusted]" step="0.01" value="${item.unadjusted || ''}" readonly></td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Remove"><i class="bi bi-trash"></i></button>
+        </td>
+    `;
+    tbody.appendChild(row);
+    
+    // Mark row as complete if has data
+    if (item.party_code && parseFloat(item.amount) > 0) {
+        row.classList.add('row-complete');
+    }
+}
 </script>
 @endsection

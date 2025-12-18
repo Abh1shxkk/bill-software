@@ -583,6 +583,7 @@ Route::middleware(['admin'])->group(function () {
         Route::get('customer-receipt/get-by-trn/{trnNo}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getByTrnNo'])->name('customer-receipt.get-by-trn');
         Route::get('customer-receipt/next-trn-no', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getNextTrnNo'])->name('customer-receipt.next-trn-no');
         Route::get('customer-receipt/customer-outstanding/{customerId}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getCustomerOutstanding'])->name('customer-receipt.customer-outstanding');
+        Route::get('customer-receipt/details/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getDetails'])->name('customer-receipt.details');
         Route::post('customer-receipt', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'store'])->name('customer-receipt.store');
         Route::get('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'show'])->name('customer-receipt.show');
         Route::put('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'update'])->name('customer-receipt.update');
