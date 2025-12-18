@@ -280,6 +280,20 @@
                 <li><a class="dropdown-item" href="{{ route('admin.supplier-payment.index') }}">Payment List</a></li>
               </ul>
             </li>
+
+            <!-- Cheque Returned Unpaid -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.cheque-return.index') }}">
+                Cheque Returned Unpaid
+              </a>
+            </li>
+
+            <!-- Deposit Slip -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.deposit-slip.index') }}">
+                Deposit Slip
+              </a>
+            </li>
           </ul>
         </li>
       </ul>

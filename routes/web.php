@@ -589,6 +589,20 @@ Route::middleware(['admin'])->group(function () {
         Route::put('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'update'])->name('customer-receipt.update');
         Route::delete('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'destroy'])->name('customer-receipt.destroy');
 
+        // Cheque Return Unpaid Routes
+        Route::get('cheque-return', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'index'])->name('cheque-return.index');
+        Route::get('cheque-return/get-cheques', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'getCheques'])->name('cheque-return.get-cheques');
+        Route::post('cheque-return/return', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'returnCheque'])->name('cheque-return.return');
+        Route::post('cheque-return/cancel', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'cancelReturn'])->name('cheque-return.cancel');
+        Route::get('cheque-return/history', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'getHistory'])->name('cheque-return.history');
+
+        // Deposit Slip Routes
+        Route::get('deposit-slip', [\App\Http\Controllers\Admin\DepositSlipController::class, 'index'])->name('deposit-slip.index');
+        Route::get('deposit-slip/get-cheques', [\App\Http\Controllers\Admin\DepositSlipController::class, 'getCheques'])->name('deposit-slip.get-cheques');
+        Route::post('deposit-slip/store', [\App\Http\Controllers\Admin\DepositSlipController::class, 'store'])->name('deposit-slip.store');
+        Route::post('deposit-slip/unpost', [\App\Http\Controllers\Admin\DepositSlipController::class, 'unpost'])->name('deposit-slip.unpost');
+        Route::get('deposit-slip/summary', [\App\Http\Controllers\Admin\DepositSlipController::class, 'getSummary'])->name('deposit-slip.summary');
+
         // Supplier Payment Routes
         Route::get('supplier-payment', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'index'])->name('supplier-payment.index');
         Route::get('supplier-payment/transaction', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'transaction'])->name('supplier-payment.transaction');
