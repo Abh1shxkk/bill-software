@@ -135,6 +135,14 @@ class ClaimToSupplierController extends Controller
                 'gst_vno' => $request->gst_vno,
                 'tax_flag' => $request->tax_flag ?? 'Y',
                 'narration' => $request->narration,
+                // Additional Details
+                'blank_statement' => $request->blank_statement ?? 'Y',
+                'rate_type' => $request->rate_type ?? 'R',
+                'filter_from_date' => $request->filter_from_date,
+                'filter_to_date' => $request->filter_to_date,
+                'company_code' => $request->company_code,
+                'division' => $request->division ?? '00',
+                // Amount fields
                 'nt_amount' => $request->nt_amount ?? 0,
                 'sc_amount' => $request->sc_amount ?? 0,
                 'dis_amount' => $request->dis_amount ?? 0,
@@ -408,6 +416,14 @@ class ClaimToSupplierController extends Controller
                 'gst_vno' => $request->gst_vno,
                 'tax_flag' => $request->tax_flag ?? 'Y',
                 'narration' => $request->narration,
+                // Additional Details
+                'blank_statement' => $request->blank_statement ?? 'Y',
+                'rate_type' => $request->rate_type ?? 'R',
+                'filter_from_date' => $request->filter_from_date,
+                'filter_to_date' => $request->filter_to_date,
+                'company_code' => $request->company_code,
+                'division' => $request->division ?? '00',
+                // Amount fields
                 'nt_amount' => $request->nt_amount ?? 0,
                 'sc_amount' => $request->sc_amount ?? 0,
                 'dis_amount' => $request->dis_amount ?? 0,

@@ -80,6 +80,8 @@ Route::middleware(['admin'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         // Company routes - MUST be before resource route
         Route::post('companies/multiple-delete', [CompanyController::class, 'multipleDelete'])->name('companies.multiple-delete');
+        Route::get('companies/by-code/{code}', [CompanyController::class, 'getByCode'])->name('companies.by-code');
+        Route::get('companies/get-all', [CompanyController::class, 'getAll'])->name('companies.get-all');
         
         Route::resource('companies', CompanyController::class);
         

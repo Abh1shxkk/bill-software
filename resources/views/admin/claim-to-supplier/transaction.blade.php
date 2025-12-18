@@ -38,6 +38,28 @@
     }
     .item-modal-body { padding: 15px 20px; max-height: 60vh; overflow-y: auto; }
     .item-modal-footer { padding: 10px 20px; border-top: 1px solid #dee2e6; text-align: right; }
+    
+    /* Additional Details Modal Styles */
+    .additional-modal {
+        display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.7);
+        width: 450px; max-height: 90vh; background: #f0f0f0; border: 2px solid #999;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); z-index: 99999; opacity: 0; transition: all 0.3s ease;
+    }
+    .additional-modal.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    .additional-modal-body { padding: 15px 20px; }
+    .additional-modal .field-row { display: flex; align-items: center; margin-bottom: 10px; }
+    .additional-modal .field-row label { width: 180px; font-weight: 500; }
+    .additional-modal .field-row input, .additional-modal .field-row select { 
+        border: 1px solid #999; padding: 3px 6px; font-size: 12px; 
+    }
+    .additional-modal .field-row input[type="text"].small-input { width: 40px; text-align: center; }
+    .additional-modal .field-row input[type="date"] { width: 120px; }
+    .additional-modal .company-input { width: 120px; }
+    .additional-modal .company-name { flex: 1; margin-left: 5px; border: 1px solid #999; padding: 3px 6px; background: #fff; }
+    .additional-modal .ok-btn { 
+        background: #e0e0e0; border: 2px outset #ccc; padding: 3px 20px; cursor: pointer; font-weight: 500;
+    }
+    .additional-modal .ok-btn:hover { background: #d0d0d0; }
 </style>
 @endpush
 
@@ -99,11 +121,16 @@
                                             <input type="text" class="form-control" id="tax_flag" name="tax_flag" value="Y" maxlength="1" style="width: 50px;">
                                         </div>
                                     </div>
-                                    <div class="col-md-8">
+                                    <div class="col-md-5">
                                         <div class="field-group">
                                             <label style="width: 80px;">Narration:</label>
                                             <input type="text" class="form-control" id="narration" name="narration">
                                         </div>
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <button type="button" class="btn btn-info btn-sm" onclick="showAdditionalDetailsModal()">
+                                            <i class="bi bi-gear me-1"></i> Additional Details
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -134,6 +161,9 @@
                         <div class="text-center mt-2">
                             <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                                 <i class="fas fa-plus-circle"></i> Add Row
+                            </button>
+                            <button type="button" class="btn btn-sm btn-primary ms-2" onclick="showAddItemModal()">
+                                <i class="bi bi-plus-circle me-1"></i> Add Item
                             </button>
                         </div>
                     </div>
@@ -247,6 +277,166 @@ let rowIndex = 0;
 let allItems = [];
 let selectedItem = null;
 
+// Additional Details Modal Data
+let additionalDetails = {
+    blank_statement: 'Y',
+    rate_type: 'R', // P = Purchase Rate, S = Sale Rate, R = Rate Diff
+    from_date: '{{ date("Y-m-d") }}',
+    to_date: '{{ date("Y-m-d") }}',
+    company_code: '',
+    company_name: '',
+    division: '00'
+};
+
+// Load companies for dropdown
+let allCompanies = [];
+function loadCompanies() {
+    $.get("{{ route('admin.companies.index') }}", { _format: 'json' }, function(response) {
+        // Companies will be loaded when modal opens
+    });
+}
+
+// Show Additional Details Modal
+function showAdditionalDetailsModal() {
+    const isBlankY = additionalDetails.blank_statement === 'Y';
+    const disabledAttr = isBlankY ? 'disabled' : '';
+    const disabledStyle = isBlankY ? 'background: #ccc; cursor: not-allowed;' : '';
+    
+    const modalHTML = `
+        <div class="modal-backdrop-custom" id="additionalModalBackdrop" onclick="closeAdditionalDetailsModal()"></div>
+        <div class="additional-modal" id="additionalModal">
+            <div class="additional-modal-body">
+                <div class="field-row">
+                    <label>Blank statement [ Y/N ] :</label>
+                    <input type="text" id="add_blank_statement" class="small-input" value="${additionalDetails.blank_statement}" maxlength="1" style="background: #ffff00;" onkeyup="toggleAdditionalFields()">
+                </div>
+                <div class="field-row additional-field-row">
+                    <label>From P(urchase Rate) / S(ale Rate) / R(ate Diff.) :</label>
+                    <input type="text" id="add_rate_type" class="small-input additional-field" value="${additionalDetails.rate_type}" maxlength="1" ${disabledAttr} style="${disabledStyle}">
+                </div>
+                <div class="field-row additional-field-row">
+                    <label>From :</label>
+                    <input type="date" id="add_from_date" class="additional-field" value="${additionalDetails.from_date}" ${disabledAttr} style="${disabledStyle}">
+                    <label style="width: auto; margin-left: 15px; margin-right: 5px;">To :</label>
+                    <input type="date" id="add_to_date" class="additional-field" value="${additionalDetails.to_date}" ${disabledAttr} style="${disabledStyle}">
+                </div>
+                <div class="field-row additional-field-row">
+                    <label>Company :</label>
+                    <select id="add_company_select" class="additional-field" ${disabledAttr} style="flex: 1; padding: 3px 6px; font-size: 12px; border: 1px solid #999; ${disabledStyle}">
+                        <option value="">-- Select Company --</option>
+                    </select>
+                </div>
+                <div class="field-row additional-field-row">
+                    <label>Division :</label>
+                    <input type="text" id="add_division" class="additional-field" value="${additionalDetails.division}" style="width: 60px; ${disabledStyle}" ${disabledAttr}>
+                </div>
+                <div class="field-row" style="justify-content: flex-end; margin-top: 15px;">
+                    <button type="button" class="ok-btn" onclick="saveAdditionalDetails()">Ok</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#additionalModal, #additionalModalBackdrop').remove();
+    $('body').append(modalHTML);
+    
+    // Load companies into dropdown
+    loadCompaniesDropdown();
+    
+    setTimeout(() => { $('#additionalModalBackdrop, #additionalModal').addClass('show'); }, 10);
+}
+
+// Load companies into dropdown
+function loadCompaniesDropdown() {
+    $.ajax({
+        url: "{{ route('admin.companies.get-all') }}",
+        method: 'GET',
+        success: function(response) {
+            const companies = response.companies || response;
+            const $select = $('#add_company_select');
+            
+            $select.find('option:not(:first)').remove();
+            
+            companies.forEach(function(company) {
+                const selected = additionalDetails.company_code == company.id ? 'selected' : '';
+                $select.append(`<option value="${company.id}" data-name="${company.name}" ${selected}>${company.name}</option>`);
+            });
+        },
+        error: function() {
+            console.log('Failed to load companies');
+        }
+    });
+}
+
+// Toggle additional fields based on Blank Statement value
+function toggleAdditionalFields() {
+    const blankValue = $('#add_blank_statement').val().toUpperCase();
+    const isBlankY = blankValue === 'Y';
+    
+    if (isBlankY) {
+        // Disable all additional fields
+        $('.additional-field').prop('disabled', true).css({
+            'background': '#ccc',
+            'cursor': 'not-allowed'
+        });
+        // Clear values when disabled
+        $('#add_rate_type').val('R');
+        $('#add_from_date').val('{{ date("Y-m-d") }}');
+        $('#add_to_date').val('{{ date("Y-m-d") }}');
+        $('#add_company_select').val('');
+        $('#add_division').val('00');
+    } else {
+        // Enable all additional fields
+        $('.additional-field').prop('disabled', false).css({
+            'background': '#fff',
+            'cursor': 'pointer'
+        });
+    }
+}
+
+function closeAdditionalDetailsModal() {
+    $('#additionalModalBackdrop, #additionalModal').removeClass('show');
+    setTimeout(() => { $('#additionalModal, #additionalModalBackdrop').remove(); }, 300);
+}
+
+function saveAdditionalDetails() {
+    additionalDetails.blank_statement = $('#add_blank_statement').val().toUpperCase();
+    additionalDetails.rate_type = $('#add_rate_type').val().toUpperCase();
+    additionalDetails.from_date = $('#add_from_date').val();
+    additionalDetails.to_date = $('#add_to_date').val();
+    additionalDetails.company_code = $('#add_company_select').val();
+    additionalDetails.company_name = $('#add_company_select option:selected').data('name') || '';
+    additionalDetails.company_name = $('#add_company_name').val();
+    additionalDetails.division = $('#add_division').val();
+    
+    closeAdditionalDetailsModal();
+    console.log('Additional Details saved:', additionalDetails);
+}
+
+// Show Add Item Modal (with filters from Additional Details)
+function showAddItemModal() {
+    const supplierId = $('#supplier_id').val();
+    if (!supplierId) {
+        alert('Please select a supplier first');
+        return;
+    }
+    
+    // Build query params from additional details
+    let params = { supplier_id: supplierId };
+    if (additionalDetails.company_code) params.company_code = additionalDetails.company_code;
+    if (additionalDetails.division && additionalDetails.division !== '00') params.division = additionalDetails.division;
+    if (additionalDetails.from_date) params.from_date = additionalDetails.from_date;
+    if (additionalDetails.to_date) params.to_date = additionalDetails.to_date;
+    
+    // Load items with filters
+    $.get("{{ route('admin.items.get-all') }}", params, function(data) {
+        allItems = data.items || data;
+        showItemSelectionModal(allItems);
+    }).fail(function() {
+        alert('Failed to load items');
+    });
+}
+
 $(document).ready(function() {
     loadNextTransactionNumber();
     // Don't add row initially - start empty
@@ -266,21 +456,9 @@ function loadNextTransactionNumber() {
     });
 }
 
-// Add Row - Opens item selection modal
+// Add Row - Opens item selection modal (uses showAddItemModal)
 function addNewRow() {
-    const supplierId = $('#supplier_id').val();
-    if (!supplierId) {
-        alert('Please select a supplier first');
-        return;
-    }
-    
-    // Load all items and show selection modal
-    $.get("{{ route('admin.items.get-all') }}", function(data) {
-        allItems = data.items || data;
-        showItemSelectionModal(allItems);
-    }).fail(function() {
-        alert('Failed to load items');
-    });
+    showAddItemModal();
 }
 
 // Show item selection modal
@@ -557,6 +735,13 @@ function saveTransaction() {
         nt_amount: parseFloat($('#ntAmount').val()) || 0,
         tax_amount: parseFloat($('#taxAmount').val()) || 0,
         net_amount: parseFloat($('#invAmount').val()) || 0,
+        // Additional Details
+        blank_statement: additionalDetails.blank_statement,
+        rate_type: additionalDetails.rate_type,
+        filter_from_date: additionalDetails.from_date,
+        filter_to_date: additionalDetails.to_date,
+        company_code: additionalDetails.company_code,
+        division: additionalDetails.division,
         items: items
     };
     

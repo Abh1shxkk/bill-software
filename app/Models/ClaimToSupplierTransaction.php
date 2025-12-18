@@ -21,6 +21,14 @@ class ClaimToSupplierTransaction extends Model
         'gst_vno',
         'tax_flag',
         'narration',
+        // Additional Details fields
+        'blank_statement',
+        'rate_type',
+        'filter_from_date',
+        'filter_to_date',
+        'company_code',
+        'division',
+        // Amount fields
         'nt_amount',
         'sc_amount',
         'dis_amount',
@@ -38,6 +46,8 @@ class ClaimToSupplierTransaction extends Model
     protected $casts = [
         'claim_date' => 'date',
         'invoice_date' => 'date',
+        'filter_from_date' => 'date',
+        'filter_to_date' => 'date',
         'nt_amount' => 'decimal:2',
         'sc_amount' => 'decimal:2',
         'dis_amount' => 'decimal:2',
