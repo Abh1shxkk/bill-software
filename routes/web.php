@@ -558,6 +558,20 @@ Route::middleware(['admin'])->group(function () {
         Route::get('pending-order-item/get-items', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'getItems'])->name('pending-order-item.getItems');
         Route::post('pending-order-item', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'store'])->name('pending-order-item.store');
         Route::delete('pending-order-item/{id}', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'destroy'])->name('pending-order-item.destroy');
+
+        // Claim to Supplier Routes
+        Route::get('claim-to-supplier', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'index'])->name('claim-to-supplier.index');
+        Route::get('claim-to-supplier/transaction', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'transaction'])->name('claim-to-supplier.transaction');
+        Route::get('claim-to-supplier/modification', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'modification'])->name('claim-to-supplier.modification');
+        Route::get('claim-to-supplier/next-trn-no', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getNextTransactionNumber'])->name('claim-to-supplier.next-trn-no');
+        Route::get('claim-to-supplier/batches', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getBatches'])->name('claim-to-supplier.batches');
+        Route::post('claim-to-supplier/store', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'store'])->name('claim-to-supplier.store');
+        Route::get('claim-to-supplier/past-claims', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getPastClaims'])->name('claim-to-supplier.past-claims');
+        Route::get('claim-to-supplier/details/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getClaimDetails'])->name('claim-to-supplier.details');
+        Route::get('claim-to-supplier/get-by-claim-no/{claimNo}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getByClaimNo'])->name('claim-to-supplier.get-by-claim-no');
+        Route::put('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'update'])->name('claim-to-supplier.update');
+        Route::get('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'show'])->name('claim-to-supplier.show');
+        Route::delete('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'destroy'])->name('claim-to-supplier.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {
