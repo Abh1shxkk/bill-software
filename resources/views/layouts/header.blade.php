@@ -260,6 +260,16 @@
                 </li>
               </ul>
             </li>
+
+            <!-- Receipt from Customer -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Receipt from Customer</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ route('admin.customer-receipt.transaction') }}">Transaction</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.customer-receipt.modification') }}">Modification</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.customer-receipt.index') }}">Receipt List</a></li>
+              </ul>
+            </li>
           </ul>
         </li>
       </ul>
