@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 17, 2025 at 05:56 AM
+-- Generation Time: Dec 18, 2025 at 11:11 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `bill_software`
+-- Database: `billsoftware_db`
 --
 
 -- --------------------------------------------------------
@@ -152,7 +152,7 @@ INSERT INTO `batches` (`id`, `purchase_transaction_id`, `purchase_transaction_it
 (17, 72, 155, 29, '29', 'bisolong', 'abhi1', 'N', '2025-11-28', NULL, 7.00, 0.00, 7.00, 210.00, 200.00, 210.00, 170.00, 180.00, NULL, 'Y', 0.00, 0.000, 0.00, 1260.00, 6.000, 6.000, 0.000, 75.60, 75.60, 0.00, 151.20, 24.00, 1411.20, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-08 07:40:43', '2025-11-25 02:47:31'),
 (18, 73, 156, 29, '29', 'bisolong', 'abhi23', 'N', '2028-11-01', NULL, 16.00, 0.00, 16.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 3360.00, 6.000, 6.000, 0.000, 75.60, 75.60, 0.00, 151.20, 24.00, 1411.20, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-08 07:41:14', '2025-12-13 03:54:25'),
 (19, 74, 157, 29, '29', 'bisolong', 'abhi654', 'N', '2025-11-28', NULL, 8.00, 0.00, 8.00, 210.00, 200.00, 210.00, 170.00, 180.00, NULL, 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 100.80, 100.80, 0.00, 201.60, 24.00, 1881.60, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-08 07:42:19', '2025-11-25 00:58:45'),
-(20, 75, 158, 30, '30', 'ABAXIS-5 MG TAB.', 'batch2', 'N', '2025-11-01', NULL, 48.00, 0.00, 55.00, 160.00, 190.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 9280.00, 6.000, 6.000, 0.000, 960.00, 960.00, 0.00, 1920.00, 22.80, 17920.00, 160.00, 179.20, 160.00, 30.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-10 01:48:34', '2025-12-05 06:05:24'),
+(20, 75, 158, 30, '30', 'ABAXIS-5 MG TAB.', 'batch2', 'N', '2025-11-01', NULL, 90.00, 0.00, 55.00, 160.00, 190.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 9280.00, 6.000, 6.000, 0.000, 960.00, 960.00, 0.00, 1920.00, 22.80, 17920.00, 160.00, 179.20, 160.00, 30.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-10 01:48:34', '2025-11-17 02:24:26'),
 (21, 76, 159, 31, '31', 'ACAMPTAS-333 MG TAB.', 'batch243', 'N', '2025-11-28', NULL, 40.00, 0.00, 40.00, 120.00, 120.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 6000.00, 6.000, 6.000, 0.000, 360.00, 360.00, 0.00, 720.00, 14.40, 6720.00, 120.00, 134.40, 120.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 01:54:45', '2025-11-17 01:57:59'),
 (22, 77, 160, 29, '29', 'bisolong', 'batch7645', 'N', '2025-11-01', NULL, 8.00, 0.00, 8.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 378.00, 378.00, 0.00, 756.00, 24.00, 7056.00, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 02:03:15', '2025-12-03 02:48:49'),
 (23, 78, 161, 32, '32', 'ALLERCET-AX TAB.', 'batch9534', 'N', '2025-11-01', NULL, 18.00, 0.00, 18.00, 37.23, 41.14, 53.44, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 670.14, 6.000, 6.000, 0.000, 44.68, 44.68, 0.00, 89.36, 4.94, 833.96, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 02:06:29', '2025-12-03 02:47:27'),
@@ -163,7 +163,7 @@ INSERT INTO `batches` (`id`, `purchase_transaction_id`, `purchase_transaction_it
 (43, 84, 181, 30, '30', 'ABAXIS-5 MG TAB.', 'cbfgd33', 'N', '2025-11-28', NULL, 8.00, 0.00, 8.00, 160.00, 120.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1600.00, 6.000, 6.000, 0.000, 96.00, 96.00, 0.00, 192.00, 14.40, 1792.00, 160.00, 179.20, 160.00, -40.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-13 02:14:58', '2025-11-17 07:11:28'),
 (44, 85, 182, 18, '18', 'intas', 'fgdxcvfg34', 'N', '2025-11-28', NULL, 6.00, 0.00, 8.00, 120.00, 105.00, 110.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1200.00, 6.000, 6.000, 0.000, 72.00, 72.00, 0.00, 144.00, 12.60, 1344.00, 120.00, 134.40, 120.00, -15.00, '1', '1*10', 'ITC Limited', NULL, 'active', 0, NULL, NULL, '2025-11-13 02:15:49', '2025-12-16 08:02:52'),
 (45, 86, 183, 31, '31', 'ACAMPTAS-333 MG TAB.', 'ABCD34', 'N', '2025-11-28', NULL, 5.00, 0.00, 5.00, 120.00, 170.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 600.00, 6.000, 6.000, 0.000, 36.00, 36.00, 0.00, 72.00, 20.40, 672.00, 120.00, 134.40, 120.00, 50.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-13 02:22:11', '2025-11-13 02:22:11'),
-(50, 81, 188, 32, '32', 'ALLERCET-AX TAB.', 'fgbdfg45', 'N', NULL, NULL, 14.00, 0.00, 14.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 744.60, 6.000, 6.000, 0.000, 44.68, 44.68, 0.00, 89.36, 4.94, 833.96, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-13 03:56:15', '2025-11-20 03:49:41'),
+(50, 81, 188, 32, '32', 'ALLERCET-AX TAB.', 'fgbdfg45', 'N', NULL, NULL, 16.00, 0.00, 14.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 744.60, 6.000, 6.000, 0.000, 44.68, 44.68, 0.00, 89.36, 4.94, 833.96, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-13 03:56:15', '2025-11-17 01:13:49'),
 (51, 88, 189, 30, '30', 'ABAXIS-5 MG TAB.', 'nvghgfhf76', 'N', '2025-11-28', NULL, 10.00, 0.00, 10.00, 160.00, 120.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1600.00, 6.000, 6.000, 0.000, 96.00, 96.00, 0.00, 192.00, 14.40, 1792.00, 160.00, 179.20, 160.00, -40.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-13 08:04:39', '2025-11-13 08:04:39'),
 (52, 89, 190, 29, '29', 'bisolong', 'abhi65353', 'N', '2025-11-01', NULL, 7.00, 0.00, 10.00, 210.00, 170.00, 210.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 126.00, 126.00, 0.00, 252.00, 20.40, 2352.00, 210.00, 235.20, 210.00, -40.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-14 04:24:05', '2025-12-16 02:00:02'),
 (53, 90, 191, 32, '32', 'ALLERCET-AX TAB.', 'fgbdfg456', 'N', '2025-11-28', NULL, 15.00, 0.00, 15.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 335.07, 6.000, 6.000, 0.000, 20.10, 20.10, 0.00, 40.20, 4.94, 375.27, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-14 04:28:19', '2025-11-20 05:58:15'),
@@ -577,6 +577,89 @@ INSERT INTO `cash_bank_books` (`id`, `name`, `transaction_date`, `transaction_ty
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `claim_to_supplier_transactions`
+--
+
+CREATE TABLE `claim_to_supplier_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `claim_no` varchar(20) NOT NULL,
+  `series` varchar(10) NOT NULL DEFAULT 'CTS',
+  `claim_date` date NOT NULL,
+  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `supplier_name` varchar(255) DEFAULT NULL,
+  `invoice_no` varchar(50) DEFAULT NULL,
+  `invoice_date` date DEFAULT NULL,
+  `gst_vno` varchar(50) DEFAULT NULL,
+  `tax_flag` char(1) NOT NULL DEFAULT 'Y',
+  `narration` varchar(500) DEFAULT NULL,
+  `blank_statement` char(1) NOT NULL DEFAULT 'Y',
+  `rate_type` char(1) NOT NULL DEFAULT 'R',
+  `filter_from_date` date DEFAULT NULL,
+  `filter_to_date` date DEFAULT NULL,
+  `company_code` varchar(50) DEFAULT NULL,
+  `division` varchar(20) NOT NULL DEFAULT '00',
+  `nt_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sc_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `dis_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `scm_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `scm_percent` decimal(8,3) NOT NULL DEFAULT 0.000,
+  `tax_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tcs_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `dis1_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` varchar(20) NOT NULL DEFAULT 'active',
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `claim_to_supplier_transaction_items`
+--
+
+CREATE TABLE `claim_to_supplier_transaction_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `claim_to_supplier_transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
+  `batch_no` varchar(50) DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `qty` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `free_qty` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `pur_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `dis_percent` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `ft_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `ft_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `mrp` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `ws_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `s_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `spl_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `cgst_percent` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `sgst_percent` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `cess_percent` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `cgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `cess_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tax_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `hsn_code` varchar(20) DEFAULT NULL,
+  `packing` varchar(50) DEFAULT NULL,
+  `unit` varchar(20) DEFAULT NULL,
+  `company_name` varchar(255) DEFAULT NULL,
+  `row_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `companies`
 --
 
@@ -951,7 +1034,7 @@ CREATE TABLE `customers` (
 
 INSERT INTO `customers` (`id`, `name`, `code`, `tax_registration`, `pin_code`, `address2`, `address2_line2`, `address2_line3`, `address`, `address_line2`, `address_line3`, `city`, `country_code`, `country_name`, `telephone_office`, `telephone_residence`, `mobile`, `email`, `contact_person1`, `mobile_contact1`, `contact_person2`, `mobile_contact2`, `fax_number`, `opening_balance`, `balance_type`, `local_central`, `credit_days`, `birth_day`, `anniversary_day`, `status`, `flag`, `invoice_export`, `due_list_sequence`, `tan_number`, `msme_license`, `dl_number`, `dl_expiry`, `dl_number1`, `food_license`, `cst_number`, `tin_number`, `pan_number`, `sales_man_code`, `sales_man_name`, `area_code`, `area_name`, `route_code`, `route_name`, `state_code`, `state_name`, `business_type`, `description`, `order_required`, `aadhar_number`, `registration_date`, `end_date`, `day_value`, `gst_number`, `cst_registration`, `gst_name`, `state_code_gst`, `registration_status`, `created_date`, `modified_date`, `created_by`, `modified_by`, `is_deleted`, `deleted_at`, `bank`, `branch`, `closed_on`, `credit_limit`, `sale_rate_type`, `add_percent`, `tax_on_br_expiry`, `expiry_on`, `dis_after_scheme`, `expiry_rn_on`, `dis_on_excise`, `sale_pur_status`, `scm_type`, `net_rate`, `no_of_items_in_bill`, `invoice_print_order`, `sr_replacement`, `cash_sale`, `invoice_format`, `fixed_discount`, `gst_5_percent`, `gst_12_percent`, `gst_18_percent`, `gst_28_percent`, `gst_0_percent`, `ref`, `tds`, `add_charges_with_gst`, `tcs_applicable`, `be_incl`, `brk_expiry_msg_in_sale`, `series_lock`, `branch_trf`, `trnf_account`, `transport_code`, `transport_name`, `distance`, `expiry_repl_credit`, `max_os_amount`, `max_limit_on`, `max_inv_amount`, `max_no_os_inv`, `follow_conditions_strictly`, `credit_limit_days_lock`, `open_lock_once`, `expiry_lock_type`, `expiry_lock_value`, `no_of_expiries_per_month`) VALUES
 (1, 'amansingh', NULL, 'R', NULL, NULL, NULL, NULL, 'meerut', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 05:44:39', '2025-11-26 04:48:03', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
-(2, 'Mahesh Traders', 'dgffg', 'T', '35344', 'gdffdg', NULL, NULL, 'rtgert', NULL, NULL, 'meerut', NULL, NULL, '453453', '434534', '34534', 'admin@gmail.comm', 'dgsdfgd', '35353', 'fgdgfg', '345345', '234234', 0.12, 'C', 'C', NULL, '2025-10-17', '2025-10-17', '234234', '234234', 'Y', '8', NULL, NULL, '3234234', '2025-10-16', '234234234', '234234', '234342', '234234', '2342344', '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', 'efserfwser', 'Y', '234234234', '2000-01-27', '2000-01-25', 34, '234234234', NULL, 'dsfsdfsd', '09', 'R', '2025-10-15 05:45:15', '2025-10-15 06:38:47', NULL, NULL, 0, NULL, 'KOTAK', 'sfsrftwer', NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
+(2, 'Mahesh Traders', 'dgffg', 'T', '35344', 'gdffdg', NULL, NULL, 'rtgert', NULL, NULL, 'meerut', NULL, NULL, '453453', '434534', '34534', 'admin@gmail.comm', 'dgsdfgd', '35353', 'fgdgfg', '345345', '234234', 0.12, 'C', 'C', NULL, '2025-10-17', '2025-10-17', '234234', '234234', 'Y', '8', NULL, NULL, '3234234', '2025-10-16', '234234234', '234234', '234342', '234234', '2342344', '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', 'efserfwser', 'Y', '234234234', '2000-01-27', '2000-01-25', 34, '234234234', NULL, 'dsfsdfsd', '09', 'R', '2025-10-15 05:45:15', '2025-12-17 04:52:47', NULL, NULL, 0, NULL, 'KOTAK', 'sfsrftwer', NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (3, 'fdggdv', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:45:14', '2025-10-15 06:45:14', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (4, 'bcbcv', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:45:21', '2025-10-15 06:45:21', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (5, 'fgdfgdg', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:45:32', '2025-10-15 06:45:32', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
@@ -1063,6 +1146,106 @@ CREATE TABLE `customer_prescriptions` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customer_receipts`
+--
+
+CREATE TABLE `customer_receipts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `receipt_date` date NOT NULL,
+  `day_name` varchar(20) DEFAULT NULL,
+  `trn_no` int(11) DEFAULT NULL,
+  `ledger` varchar(10) NOT NULL DEFAULT 'CL',
+  `salesman_code` varchar(20) DEFAULT NULL,
+  `salesman_name` varchar(100) DEFAULT NULL,
+  `area_code` varchar(20) DEFAULT NULL,
+  `area_name` varchar(100) DEFAULT NULL,
+  `route_code` varchar(20) DEFAULT NULL,
+  `route_name` varchar(100) DEFAULT NULL,
+  `bank_code` varchar(20) DEFAULT NULL,
+  `bank_name` varchar(100) DEFAULT NULL,
+  `coll_boy_code` varchar(20) DEFAULT NULL,
+  `coll_boy_name` varchar(100) DEFAULT NULL,
+  `day_value` varchar(20) DEFAULT NULL,
+  `tag` varchar(50) DEFAULT NULL,
+  `total_cash` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_cheque` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `amt_outstanding` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `amt_adjusted` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tds_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `currency_detail` tinyint(1) NOT NULL DEFAULT 0,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `customer_receipts`
+--
+
+INSERT INTO `customer_receipts` (`id`, `receipt_date`, `day_name`, `trn_no`, `ledger`, `salesman_code`, `salesman_name`, `area_code`, `area_name`, `route_code`, `route_name`, `bank_code`, `bank_name`, `coll_boy_code`, `coll_boy_name`, `day_value`, `tag`, `total_cash`, `total_cheque`, `amt_outstanding`, `amt_adjusted`, `tds_amount`, `currency_detail`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, '2025-12-18', 'Thursday', 1, 'CL', NULL, NULL, NULL, 'fgdfgdf', NULL, 'ddfgduh', 'AXIS-001', 'AXIS BANK', NULL, NULL, NULL, NULL, 0.00, 100.00, 0.00, 0.00, 0.00, 0, NULL, '2025-12-18 02:25:31', '2025-12-18 02:25:31');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customer_receipt_adjustments`
+--
+
+CREATE TABLE `customer_receipt_adjustments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `customer_receipt_id` bigint(20) UNSIGNED NOT NULL,
+  `customer_receipt_item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `adjustment_type` enum('outstanding','adjusted') NOT NULL DEFAULT 'outstanding',
+  `reference_no` varchar(50) DEFAULT NULL,
+  `reference_date` date DEFAULT NULL,
+  `reference_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `adjusted_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `balance_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `customer_receipt_adjustments`
+--
+
+INSERT INTO `customer_receipt_adjustments` (`id`, `customer_receipt_id`, `customer_receipt_item_id`, `adjustment_type`, `reference_no`, `reference_date`, `reference_amount`, `adjusted_amount`, `balance_amount`, `created_at`, `updated_at`) VALUES
+(1, 1, NULL, 'outstanding', 'INV-000025', '2025-11-17', 624.96, 100.00, 524.96, '2025-12-18 02:25:31', '2025-12-18 02:25:31');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customer_receipt_items`
+--
+
+CREATE TABLE `customer_receipt_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `customer_receipt_id` bigint(20) UNSIGNED NOT NULL,
+  `party_code` varchar(20) DEFAULT NULL,
+  `party_name` varchar(255) DEFAULT NULL,
+  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `cheque_no` varchar(50) DEFAULT NULL,
+  `cheque_date` date DEFAULT NULL,
+  `cheque_bank_name` varchar(255) DEFAULT NULL,
+  `cheque_bank_area` varchar(255) DEFAULT NULL,
+  `cheque_closed_on` date DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `unadjusted` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `payment_type` enum('cash','cheque') NOT NULL DEFAULT 'cash',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `customer_receipt_items`
+--
+
+INSERT INTO `customer_receipt_items` (`id`, `customer_receipt_id`, `party_code`, `party_name`, `customer_id`, `cheque_no`, `cheque_date`, `cheque_bank_name`, `cheque_bank_area`, `cheque_closed_on`, `amount`, `unadjusted`, `payment_type`, `created_at`, `updated_at`) VALUES
+(1, 1, '123a', 'abhishek', 36, '2132122', '2025-12-18', 'AXIS BANK', 'Meerut', '2025-12-18', 100.00, 0.00, 'cheque', '2025-12-18 02:25:31', '2025-12-18 02:25:31');
 
 -- --------------------------------------------------------
 
@@ -1334,7 +1517,12 @@ INSERT INTO `expiry_ledger` (`id`, `item_id`, `batch_id`, `customer_id`, `suppli
 (73, 29, 52, NULL, NULL, '2025-12-15', 'STOR-001', 'IN', 'N/A', 5, 0, 6.00, '2025-11-01', 'Stock Transfer Outgoing Return - Mahesh Traders', '2025-12-15 06:55:58', '2025-12-15 06:55:58'),
 (74, 18, 44, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 1, 0, 7.00, '2025-11-28', 'Sample Issued - SI25120001', '2025-12-16 08:00:23', '2025-12-16 08:00:23'),
 (75, 18, 44, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 1, 0, 6.00, '2025-11-28', 'Sample Issued (Modified) - SI25120001', '2025-12-16 08:02:52', '2025-12-16 08:02:52'),
-(76, 83, 97, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 1, 0, 8.00, '2028-11-01', 'Sample Issued - SI25120002', '2025-12-16 08:07:52', '2025-12-16 08:07:52');
+(76, 83, 97, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 1, 0, 8.00, '2028-11-01', 'Sample Issued - SI25120002', '2025-12-16 08:07:52', '2025-12-16 08:07:52'),
+(77, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 1, 0, 50.00, '2025-11-01', 'Sample Received - SR25110001', '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
+(78, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 10, 0, 70.00, '2025-11-01', 'Sample Received - SR25110002', '2025-11-17 02:15:21', '2025-11-17 02:15:21'),
+(79, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 10, 0, 80.00, '2025-11-01', 'Sample Received - SR25110003', '2025-11-17 02:19:31', '2025-11-17 02:19:31'),
+(80, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 5, 0, 85.00, '2025-11-01', 'Sample Received (Modified) - SR25110003', '2025-11-17 02:19:56', '2025-11-17 02:19:56'),
+(81, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 5, 0, 90.00, '2025-11-01', 'Sample Received (Modified) - SR25110002', '2025-11-17 02:24:26', '2025-11-17 02:24:26');
 
 -- --------------------------------------------------------
 
@@ -1491,6 +1679,59 @@ INSERT INTO `general_reminders` (`id`, `name`, `code`, `due_date`, `status`, `cr
 (29, 'TDS Return', 'TR029', '2025-04-30', 'Urgent', '2025-10-29 01:17:46', '2025-10-29 01:17:46'),
 (30, 'Stock Verification', 'SV030', '2025-05-31', 'Pending', '2025-10-29 01:17:46', '2025-10-29 01:17:46'),
 (31, 'gfhfhhg bv', NULL, NULL, NULL, '2025-11-13 05:41:41', '2025-11-13 05:41:41');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `godown_breakage_expiry_transactions`
+--
+
+CREATE TABLE `godown_breakage_expiry_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `trn_no` varchar(50) NOT NULL,
+  `series` varchar(10) NOT NULL DEFAULT 'GBE',
+  `transaction_date` date NOT NULL,
+  `day_name` varchar(20) DEFAULT NULL,
+  `narration` text DEFAULT NULL,
+  `total_qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` varchar(20) NOT NULL DEFAULT 'completed',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `godown_breakage_expiry_transaction_items`
+--
+
+CREATE TABLE `godown_breakage_expiry_transaction_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `godown_breakage_expiry_transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED NOT NULL,
+  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_name` varchar(150) DEFAULT NULL,
+  `batch_no` varchar(50) DEFAULT NULL,
+  `expiry` varchar(20) DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `br_ex_type` varchar(20) NOT NULL DEFAULT 'BREAKAGE',
+  `qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `cost` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `packing` varchar(50) DEFAULT NULL,
+  `unit` varchar(10) DEFAULT NULL,
+  `company_name` varchar(100) DEFAULT NULL,
+  `location` varchar(100) DEFAULT NULL,
+  `mrp` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `s_rate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `p_rate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `row_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -2287,7 +2528,24 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (208, '2025_12_16_100002_create_stock_transfer_incoming_transaction_items_table', 129),
 (209, '2025_12_16_100003_create_stock_transfer_incoming_return_transactions_table', 130),
 (210, '2025_12_16_100004_create_stock_transfer_incoming_return_transaction_items_table', 131),
-(211, '2025_12_16_180001_create_sample_issued_transactions_table', 132);
+(211, '2025_12_16_180001_create_sample_issued_transactions_table', 132),
+(214, '2025_11_17_180001_create_sample_received_transactions_table', 133),
+(215, '2025_11_17_180002_create_sample_received_transaction_items_table', 134),
+(216, '2025_11_17_190001_create_godown_breakage_expiry_transactions_table', 135),
+(217, '2025_11_17_190002_create_godown_breakage_expiry_transaction_items_table', 135),
+(218, '2025_12_17_100001_create_quotations_table', 136),
+(219, '2025_12_17_100002_create_quotation_items_table', 137),
+(220, '2025_12_17_200001_create_pending_order_items_table', 138),
+(221, '2025_12_17_220001_create_claim_to_supplier_transactions_table', 139),
+(222, '2025_12_17_220002_create_claim_to_supplier_transaction_items_table', 140),
+(223, '2025_11_18_100000_add_additional_details_to_claim_to_supplier_transactions_table', 141),
+(224, '2025_12_18_100001_create_customer_receipts_table', 142),
+(225, '2025_12_18_100002_create_customer_receipt_items_table', 143),
+(226, '2025_12_18_100003_create_customer_receipt_adjustments_table', 144),
+(227, '2025_12_18_100004_add_bank_details_to_customer_receipt_items_table', 145),
+(228, '2025_12_18_200001_create_supplier_payments_table', 146),
+(229, '2025_12_18_200002_create_supplier_payment_items_table', 147),
+(230, '2025_12_18_200003_create_supplier_payment_adjustments_table', 148);
 
 -- --------------------------------------------------------
 
@@ -2315,6 +2573,33 @@ CREATE TABLE `pending_orders` (
 
 INSERT INTO `pending_orders` (`id`, `item_id`, `supplier_id`, `order_no`, `order_date`, `balance_qty`, `order_qty`, `free_qty`, `other_order`, `created_at`, `updated_at`) VALUES
 (140, 30, 11, '1', '2025-12-05', 126, 10, 0, 0.00, '2025-12-05 06:28:27', '2025-12-05 06:28:27');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pending_order_items`
+--
+
+CREATE TABLE `pending_order_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
+  `action_type` enum('I','D') NOT NULL DEFAULT 'I' COMMENT 'I=Insert, D=Delete',
+  `quantity` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `remarks` text DEFAULT NULL,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `pending_order_items`
+--
+
+INSERT INTO `pending_order_items` (`id`, `item_id`, `item_code`, `item_name`, `action_type`, `quantity`, `remarks`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(1, 30, '30', 'ABAXIS-5 MG TAB.', 'D', 10.00, NULL, 1, NULL, '2025-12-17 04:42:18', '2025-12-17 04:42:18');
 
 -- --------------------------------------------------------
 
@@ -2855,6 +3140,72 @@ INSERT INTO `purchase_transaction_items` (`id`, `purchase_transaction_id`, `item
 (217, 112, 31, '31', 'ACAMPTAS-333 MG TAB.', '4dec5', '2028-11-01', 20.00, 0.00, 120.00, 250.00, 170.00, 0.00, 0.00, 0.000, 2400.00, 6.000, 6.000, 0.000, 144.00, 144.00, 0.00, 288.00, 2688.00, 0.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 1, '2025-12-04 02:54:11', '2025-12-04 02:54:11'),
 (218, 112, 79, '79', 'ACEBOVIR TAB.', '4dec5', '2028-11-01', 20.00, 0.00, 115.85, 0.00, 131.40, 0.00, 0.00, 0.000, 2595.04, 6.000, 6.000, 0.000, 139.02, 139.02, 0.00, 278.04, 2595.04, 0.00, 0.00, '1', '1*10', 'BYJU\'S Classes Pvt Ltd', NULL, 2, '2025-12-04 02:54:11', '2025-12-04 02:54:11'),
 (219, 112, 83, '83', 'ACETAMIDE-250 MG TAB.', '4dec5', '2028-11-01', 21.00, 0.00, 29.23, 0.00, 32.48, 0.00, 0.00, 0.000, 644.53, 2.500, 2.500, 0.000, 15.35, 15.35, 0.00, 30.70, 644.53, 0.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 3, '2025-12-04 02:54:11', '2025-12-04 02:54:11');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotations`
+--
+
+CREATE TABLE `quotations` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `quotation_no` varchar(50) NOT NULL,
+  `series` varchar(10) NOT NULL DEFAULT 'QT',
+  `quotation_date` date NOT NULL,
+  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `discount_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `remarks` text DEFAULT NULL,
+  `terms` text DEFAULT NULL,
+  `net_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `status` enum('active','cancelled') NOT NULL DEFAULT 'active',
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `quotations`
+--
+
+INSERT INTO `quotations` (`id`, `quotation_no`, `series`, `quotation_date`, `customer_id`, `customer_name`, `discount_percent`, `remarks`, `terms`, `net_amount`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(1, 'QT000001', 'QT', '2025-12-17', 36, 'abhishek', 0.00, NULL, NULL, 1900.00, 'active', 1, NULL, '2025-12-17 04:06:15', '2025-12-17 04:06:15');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `quotation_items`
+--
+
+CREATE TABLE `quotation_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `quotation_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
+  `batch_no` varchar(50) DEFAULT NULL,
+  `expiry_date` varchar(20) DEFAULT NULL,
+  `packing` varchar(50) DEFAULT NULL,
+  `company_name` varchar(100) DEFAULT NULL,
+  `location` varchar(100) DEFAULT NULL,
+  `qty` decimal(10,3) NOT NULL DEFAULT 0.000,
+  `rate` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `mrp` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `unit` varchar(20) DEFAULT NULL,
+  `row_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `quotation_items`
+--
+
+INSERT INTO `quotation_items` (`id`, `quotation_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry_date`, `packing`, `company_name`, `location`, `qty`, `rate`, `mrp`, `amount`, `unit`, `row_order`, `created_at`, `updated_at`) VALUES
+(1, 1, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', '1*10', 'TCS', NULL, 10.000, 190.00, 250.00, 1900.00, '1', 0, '2025-12-17 04:06:15', '2025-12-17 04:06:15');
 
 -- --------------------------------------------------------
 
@@ -3955,7 +4306,7 @@ INSERT INTO `sale_transactions` (`id`, `invoice_no`, `series`, `sale_date`, `due
 (37, 'INV-000022', 'SB', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 1000.00, 0.00, 1000.00, 70.00, 0.00, 111.60, 1041.60, 0.000, 0.00, 0.00, 0.00, 1041.60, 'pending', 'completed', 4, NULL, '2025-11-17 04:10:39', '2025-11-17 04:10:39'),
 (38, 'INV-000023', 'SB', '2025-11-17', '2025-11-17', 3, 3, 'N', 'N', NULL, 205.70, 0.00, 205.70, 14.40, 0.00, 22.96, 214.26, 0.000, 0.00, 0.00, 0.00, 214.26, 'pending', 'completed', 1, NULL, '2025-11-17 04:43:59', '2025-11-17 04:43:59'),
 (39, 'INV-000024', 'SB', '2025-11-17', '2025-11-17', 4, 5, 'N', 'N', NULL, 205.70, 0.00, 205.70, 14.40, 0.00, 22.96, 214.26, 0.000, 0.00, 0.00, 0.00, 214.26, 'pending', 'completed', 1, NULL, '2025-11-17 04:45:46', '2025-11-17 04:45:46'),
-(40, 'INV-000025', 'SB', '2025-11-17', '2025-11-17', 36, 2, 'N', 'N', NULL, 600.00, 0.00, 600.00, 42.00, 0.00, 66.96, 624.96, 0.000, 0.00, 0.00, 0.00, 624.96, 'pending', 'completed', 1, NULL, '2025-11-17 06:41:36', '2025-11-17 06:41:36'),
+(40, 'INV-000025', 'SB', '2025-11-17', '2025-11-17', 36, 2, 'N', 'N', NULL, 600.00, 0.00, 600.00, 42.00, 0.00, 66.96, 624.96, 0.000, 0.00, 0.00, 0.00, 524.96, 'pending', 'completed', 1, NULL, '2025-11-17 06:41:36', '2025-11-17 06:41:36'),
 (41, 'INV-000026', 'SB', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 850.00, 0.00, 850.00, 59.50, 0.00, 94.86, 885.36, 0.000, 0.00, 0.00, 0.00, 885.36, 'pending', 'completed', 1, NULL, '2025-11-17 07:31:55', '2025-11-17 07:31:55'),
 (42, 'INV-000027', 'SB', '2025-11-20', '2025-11-20', 3, 2, 'N', 'N', NULL, 850.00, 0.00, 850.00, 59.50, 0.00, 94.86, 885.36, 0.000, 0.00, 0.00, 0.00, 885.36, 'pending', 'completed', 4, NULL, '2025-11-19 23:18:12', '2025-11-19 23:18:12'),
 (43, 'INV-000028', 'SB', '2025-11-21', '2025-11-21', 3, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 208.32, 'pending', 'completed', 4, NULL, '2025-11-21 05:48:02', '2025-11-21 05:48:02'),
@@ -4161,6 +4512,89 @@ INSERT INTO `sample_issued_transaction_items` (`id`, `sample_issued_transaction_
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `sample_received_transactions`
+--
+
+CREATE TABLE `sample_received_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `trn_no` varchar(50) NOT NULL,
+  `series` varchar(10) NOT NULL DEFAULT 'SR',
+  `transaction_date` date NOT NULL,
+  `day_name` varchar(20) DEFAULT NULL,
+  `party_type` varchar(20) DEFAULT NULL,
+  `party_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `party_name` varchar(100) DEFAULT NULL,
+  `gr_no` varchar(50) DEFAULT NULL,
+  `gr_date` date DEFAULT NULL,
+  `cases` int(11) NOT NULL DEFAULT 0,
+  `road_permit_no` varchar(50) DEFAULT NULL,
+  `truck_no` varchar(50) DEFAULT NULL,
+  `transport` varchar(100) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `on_field` varchar(10) DEFAULT NULL,
+  `rate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `tag` varchar(20) DEFAULT NULL,
+  `total_qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` enum('pending','completed','cancelled') NOT NULL DEFAULT 'completed',
+  `is_deleted` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sample_received_transactions`
+--
+
+INSERT INTO `sample_received_transactions` (`id`, `trn_no`, `series`, `transaction_date`, `day_name`, `party_type`, `party_id`, `party_name`, `gr_no`, `gr_date`, `cases`, `road_permit_no`, `truck_no`, `transport`, `remarks`, `on_field`, `rate`, `tag`, `total_qty`, `total_amount`, `net_amount`, `status`, `is_deleted`, `created_at`, `updated_at`) VALUES
+(1, 'SR25110001', 'SR', '2025-11-17', 'Monday', 'CUSTOMER', 36, 'abhishek', NULL, '2025-11-17', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 2.00, 231.14, 231.14, 'completed', 0, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
+(2, 'SR25110002', 'SR', '2025-11-17', 'Monday', 'CUSTOMER', 36, 'abhishek', NULL, '2025-11-17', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 5.00, 950.00, 950.00, 'completed', 0, '2025-11-17 02:15:21', '2025-11-17 02:24:26'),
+(3, 'SR25110003', 'SR', '2025-11-17', 'Monday', 'CUSTOMER', 1, 'amansingh', NULL, '2025-11-17', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 5.00, 950.00, 950.00, 'completed', 0, '2025-11-17 02:19:31', '2025-11-17 02:19:56');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sample_received_transaction_items`
+--
+
+CREATE TABLE `sample_received_transaction_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `sample_received_transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED NOT NULL,
+  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_name` varchar(150) DEFAULT NULL,
+  `batch_no` varchar(50) DEFAULT NULL,
+  `expiry` varchar(20) DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `free_qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `rate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `mrp` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `packing` varchar(50) DEFAULT NULL,
+  `unit` varchar(10) DEFAULT NULL,
+  `company_name` varchar(100) DEFAULT NULL,
+  `hsn_code` varchar(20) DEFAULT NULL,
+  `row_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sample_received_transaction_items`
+--
+
+INSERT INTO `sample_received_transaction_items` (`id`, `sample_received_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `expiry_date`, `qty`, `free_qty`, `rate`, `mrp`, `amount`, `packing`, `unit`, `company_name`, `hsn_code`, `row_order`, `created_at`, `updated_at`) VALUES
+(1, 1, 30, 20, '30', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', NULL, 1.00, 0.00, 190.00, 250.00, 190.00, '1*10', '1', 'TCS', '38220090', 1, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
+(2, 1, 32, 50, '32', 'ALLERCET-AX TAB.', 'fgbdfg45', NULL, NULL, 1.00, 0.00, 41.14, 53.44, 41.14, '1*10', '1', 'HDFC', '38220090', 2, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
+(5, 3, 30, 20, '30', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', NULL, 5.00, 0.00, 190.00, 250.00, 950.00, '1*10', '1', 'TCS', '38220090', 1, '2025-11-17 02:19:56', '2025-11-17 02:19:56'),
+(6, 2, 30, 20, '30', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', NULL, 5.00, 0.00, 190.00, 250.00, 950.00, '1*10', '1', 'TCS', '38220090', 1, '2025-11-17 02:24:26', '2025-11-17 02:24:26');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `sessions`
 --
 
@@ -4178,7 +4612,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('jlkhskAxAwzrAvSKGsH14IBSmZprBPym5J81cpqo', 4, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiMHoydmxGOUlrSlZucEV3RGR6MHRoVmVGeWpQNVRwQ3g2Z2p1NkxUayI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NTA6Imh0dHA6Ly9sb2NhbGhvc3QvYmlsbC1zb2Z0d2FyZS9hZG1pbi9zYW1wbGUtaXNzdWVkIjt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6NDt9', 1765892875);
+('bIttOwYImWTfoQRbys8giq96WsPvOYSnlobJ7W24', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoibkEyaU51WXc3N2hGcVdFUWxmbFNERGhhU1VKWFhyclpBYUc4TGlDNCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6ODQ6Imh0dHA6Ly9sb2NhbGhvc3QvYmlsbC1zb2Z0d2FyZS9hZG1pbi9zdXBwbGllci1wYXltZW50L3N1cHBsaWVyLW91dHN0YW5kaW5nLzExP3BhZ2U9MSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1766052612);
 
 -- --------------------------------------------------------
 
@@ -4428,7 +4862,11 @@ INSERT INTO `stock_ledgers` (`id`, `trans_no`, `item_id`, `batch_id`, `customer_
 (122, NULL, 83, 122, NULL, NULL, 'OUT', 10.00, 0.00, NULL, NULL, NULL, 32.48, 0.00, 0.00, 0.00, 'STOCK_TRANSFER_INCOMING_RETURN', 2, '2025-12-16', NULL, NULL, 4, '2025-12-16 04:49:53', '2025-12-16 04:49:53'),
 (124, NULL, 83, 97, NULL, NULL, 'OUT', 6.00, 0.00, NULL, NULL, NULL, 32.48, 0.00, 0.00, 0.00, 'STOCK_TRANSFER_INCOMING_RETURN', 3, '2025-12-16', NULL, NULL, 4, '2025-12-16 05:29:52', '2025-12-16 05:29:52'),
 (126, NULL, 18, 44, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'SI25120001', '2025-12-16', 105.00, 0.00, 0.00, 0.00, 'SAMPLE_ISSUED', 2, '2025-12-16', NULL, 'Sample Issued (Modified) - SI25120001', NULL, '2025-12-16 08:02:52', '2025-12-16 08:02:52'),
-(127, NULL, 83, 97, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'SI25120002', '2025-12-16', 32.48, 0.00, 0.00, 0.00, 'SAMPLE_ISSUED', 3, '2025-12-16', NULL, 'Sample Issued - SI25120002', NULL, '2025-12-16 08:07:52', '2025-12-16 08:07:52');
+(127, NULL, 83, 97, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'SI25120002', '2025-12-16', 32.48, 0.00, 0.00, 0.00, 'SAMPLE_ISSUED', 3, '2025-12-16', NULL, 'Sample Issued - SI25120002', NULL, '2025-12-16 08:07:52', '2025-12-16 08:07:52'),
+(128, NULL, 30, 20, NULL, NULL, 'IN', 1.00, 0.00, NULL, 'SR25110001', '2025-11-17', 190.00, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 1, '2025-11-17', NULL, 'Sample Received - SR25110001', NULL, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
+(129, NULL, 32, 50, NULL, NULL, 'IN', 1.00, 0.00, NULL, 'SR25110001', '2025-11-17', 41.14, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 1, '2025-11-17', NULL, 'Sample Received - SR25110001', NULL, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
+(132, NULL, 30, 20, NULL, NULL, 'IN', 5.00, 0.00, NULL, 'SR25110003', '2025-11-17', 190.00, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 3, '2025-11-17', NULL, 'Sample Received (Modified) - SR25110003', NULL, '2025-11-17 02:19:56', '2025-11-17 02:19:56'),
+(133, NULL, 30, 20, NULL, NULL, 'IN', 5.00, 0.00, NULL, 'SR25110002', '2025-11-17', 190.00, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 2, '2025-11-17', NULL, 'Sample Received (Modified) - SR25110002', NULL, '2025-11-17 02:24:26', '2025-11-17 02:24:26');
 
 -- --------------------------------------------------------
 
@@ -4886,6 +5324,75 @@ INSERT INTO `suppliers` (`supplier_id`, `name`, `code`, `address`, `telephone`, 
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `supplier_payments`
+--
+
+CREATE TABLE `supplier_payments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `payment_date` date NOT NULL,
+  `day_name` varchar(20) DEFAULT NULL,
+  `trn_no` int(11) DEFAULT NULL,
+  `ledger` varchar(10) NOT NULL DEFAULT 'SL',
+  `bank_code` varchar(20) DEFAULT NULL,
+  `bank_name` varchar(100) DEFAULT NULL,
+  `total_cash` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_cheque` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `amt_outstanding` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `amt_adjusted` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tds_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `currency_detail` tinyint(1) NOT NULL DEFAULT 0,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `supplier_payment_adjustments`
+--
+
+CREATE TABLE `supplier_payment_adjustments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `supplier_payment_id` bigint(20) UNSIGNED NOT NULL,
+  `supplier_payment_item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `adjustment_type` enum('outstanding','adjusted') NOT NULL DEFAULT 'outstanding',
+  `reference_no` varchar(50) DEFAULT NULL,
+  `reference_date` date DEFAULT NULL,
+  `reference_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `adjusted_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `balance_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `supplier_payment_items`
+--
+
+CREATE TABLE `supplier_payment_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `supplier_payment_id` bigint(20) UNSIGNED NOT NULL,
+  `party_code` varchar(20) DEFAULT NULL,
+  `party_name` varchar(255) DEFAULT NULL,
+  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `cheque_no` varchar(50) DEFAULT NULL,
+  `cheque_date` date DEFAULT NULL,
+  `cheque_bank_name` varchar(100) DEFAULT NULL,
+  `cheque_bank_area` varchar(100) DEFAULT NULL,
+  `cheque_closed_on` date DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `unadjusted` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `payment_type` enum('cash','cheque') NOT NULL DEFAULT 'cash',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `transport_masters`
 --
 
@@ -5047,6 +5554,25 @@ ALTER TABLE `cash_bank_books`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `claim_to_supplier_transactions`
+--
+ALTER TABLE `claim_to_supplier_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `claim_to_supplier_transactions_claim_no_unique` (`claim_no`),
+  ADD KEY `claim_to_supplier_transactions_claim_date_index` (`claim_date`),
+  ADD KEY `claim_to_supplier_transactions_supplier_id_index` (`supplier_id`),
+  ADD KEY `claim_to_supplier_transactions_status_index` (`status`);
+
+--
+-- Indexes for table `claim_to_supplier_transaction_items`
+--
+ALTER TABLE `claim_to_supplier_transaction_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cts_items_transaction_id_fk` (`claim_to_supplier_transaction_id`),
+  ADD KEY `claim_to_supplier_transaction_items_item_id_index` (`item_id`),
+  ADD KEY `claim_to_supplier_transaction_items_batch_id_index` (`batch_id`);
+
+--
 -- Indexes for table `companies`
 --
 ALTER TABLE `companies`
@@ -5131,6 +5657,28 @@ ALTER TABLE `customer_prescriptions`
   ADD PRIMARY KEY (`id`),
   ADD KEY `customer_prescriptions_customer_id_index` (`customer_id`),
   ADD KEY `customer_prescriptions_validity_date_index` (`validity_date`);
+
+--
+-- Indexes for table `customer_receipts`
+--
+ALTER TABLE `customer_receipts`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `customer_receipt_adjustments`
+--
+ALTER TABLE `customer_receipt_adjustments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_receipt_adjustments_customer_receipt_id_foreign` (`customer_receipt_id`),
+  ADD KEY `customer_receipt_adjustments_customer_receipt_item_id_foreign` (`customer_receipt_item_id`);
+
+--
+-- Indexes for table `customer_receipt_items`
+--
+ALTER TABLE `customer_receipt_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_receipt_items_customer_receipt_id_foreign` (`customer_receipt_id`),
+  ADD KEY `customer_receipt_items_customer_id_foreign` (`customer_id`);
 
 --
 -- Indexes for table `customer_special_rates`
@@ -5220,6 +5768,19 @@ ALTER TABLE `general_reminders`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `godown_breakage_expiry_transactions`
+--
+ALTER TABLE `godown_breakage_expiry_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `godown_breakage_expiry_transactions_trn_no_unique` (`trn_no`);
+
+--
+-- Indexes for table `godown_breakage_expiry_transaction_items`
+--
+ALTER TABLE `godown_breakage_expiry_transaction_items`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `godown_expiry`
 --
 ALTER TABLE `godown_expiry`
@@ -5281,6 +5842,14 @@ ALTER TABLE `pending_orders`
   ADD KEY `pending_orders_supplier_id_index` (`supplier_id`),
   ADD KEY `pending_orders_order_date_index` (`order_date`),
   ADD KEY `pending_orders_item_id_foreign` (`item_id`);
+
+--
+-- Indexes for table `pending_order_items`
+--
+ALTER TABLE `pending_order_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `pending_order_items_item_id_index` (`item_id`),
+  ADD KEY `pending_order_items_created_by_index` (`created_by`);
 
 --
 -- Indexes for table `personal_directories`
@@ -5366,6 +5935,25 @@ ALTER TABLE `purchase_transaction_items`
   ADD KEY `purchase_transaction_items_item_id_index` (`item_id`),
   ADD KEY `purchase_transaction_items_batch_no_index` (`batch_no`),
   ADD KEY `purchase_transaction_items_expiry_date_index` (`expiry_date`);
+
+--
+-- Indexes for table `quotations`
+--
+ALTER TABLE `quotations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `quotations_quotation_no_unique` (`quotation_no`),
+  ADD KEY `quotations_customer_id_index` (`customer_id`),
+  ADD KEY `quotations_created_by_index` (`created_by`),
+  ADD KEY `quotations_updated_by_index` (`updated_by`);
+
+--
+-- Indexes for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `quotation_items_quotation_id_index` (`quotation_id`),
+  ADD KEY `quotation_items_item_id_index` (`item_id`),
+  ADD KEY `quotation_items_batch_id_index` (`batch_id`);
 
 --
 -- Indexes for table `regional_managers`
@@ -5537,6 +6125,22 @@ ALTER TABLE `sample_issued_transaction_items`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `sample_received_transactions`
+--
+ALTER TABLE `sample_received_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `sample_received_transactions_trn_no_unique` (`trn_no`);
+
+--
+-- Indexes for table `sample_received_transaction_items`
+--
+ALTER TABLE `sample_received_transaction_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sr_trans_items_trans_id_fk` (`sample_received_transaction_id`),
+  ADD KEY `sr_trans_items_item_id_fk` (`item_id`),
+  ADD KEY `sr_trans_items_batch_id_fk` (`batch_id`);
+
+--
 -- Indexes for table `sessions`
 --
 ALTER TABLE `sessions`
@@ -5666,6 +6270,28 @@ ALTER TABLE `suppliers`
   ADD KEY `suppliers_updated_by_foreign` (`updated_by`);
 
 --
+-- Indexes for table `supplier_payments`
+--
+ALTER TABLE `supplier_payments`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `supplier_payment_adjustments`
+--
+ALTER TABLE `supplier_payment_adjustments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `supplier_payment_adjustments_supplier_payment_id_foreign` (`supplier_payment_id`),
+  ADD KEY `supplier_payment_adjustments_supplier_payment_item_id_foreign` (`supplier_payment_item_id`);
+
+--
+-- Indexes for table `supplier_payment_items`
+--
+ALTER TABLE `supplier_payment_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `supplier_payment_items_supplier_payment_id_foreign` (`supplier_payment_id`),
+  ADD KEY `supplier_payment_items_supplier_id_foreign` (`supplier_id`);
+
+--
 -- Indexes for table `transport_masters`
 --
 ALTER TABLE `transport_masters`
@@ -5724,6 +6350,18 @@ ALTER TABLE `breakage_expiry_transaction_items`
 --
 ALTER TABLE `cash_bank_books`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
+
+--
+-- AUTO_INCREMENT for table `claim_to_supplier_transactions`
+--
+ALTER TABLE `claim_to_supplier_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `claim_to_supplier_transaction_items`
+--
+ALTER TABLE `claim_to_supplier_transaction_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `companies`
@@ -5792,6 +6430,24 @@ ALTER TABLE `customer_prescriptions`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `customer_receipts`
+--
+ALTER TABLE `customer_receipts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `customer_receipt_adjustments`
+--
+ALTER TABLE `customer_receipt_adjustments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `customer_receipt_items`
+--
+ALTER TABLE `customer_receipt_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `customer_special_rates`
 --
 ALTER TABLE `customer_special_rates`
@@ -5825,7 +6481,7 @@ ALTER TABLE `divisional_managers`
 -- AUTO_INCREMENT for table `expiry_ledger`
 --
 ALTER TABLE `expiry_ledger`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -5856,6 +6512,18 @@ ALTER TABLE `general_notebooks`
 --
 ALTER TABLE `general_reminders`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+
+--
+-- AUTO_INCREMENT for table `godown_breakage_expiry_transactions`
+--
+ALTER TABLE `godown_breakage_expiry_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `godown_breakage_expiry_transaction_items`
+--
+ALTER TABLE `godown_breakage_expiry_transaction_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `godown_expiry`
@@ -5897,13 +6565,19 @@ ALTER TABLE `marketing_managers`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
 
 --
 -- AUTO_INCREMENT for table `pending_orders`
 --
 ALTER TABLE `pending_orders`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=141;
+
+--
+-- AUTO_INCREMENT for table `pending_order_items`
+--
+ALTER TABLE `pending_order_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `personal_directories`
@@ -5958,6 +6632,18 @@ ALTER TABLE `purchase_transactions`
 --
 ALTER TABLE `purchase_transaction_items`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
+
+--
+-- AUTO_INCREMENT for table `quotations`
+--
+ALTER TABLE `quotations`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `quotation_items`
+--
+ALTER TABLE `quotation_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `regional_managers`
@@ -6080,6 +6766,18 @@ ALTER TABLE `sample_issued_transaction_items`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
+-- AUTO_INCREMENT for table `sample_received_transactions`
+--
+ALTER TABLE `sample_received_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `sample_received_transaction_items`
+--
+ALTER TABLE `sample_received_transaction_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `states`
 --
 ALTER TABLE `states`
@@ -6101,7 +6799,7 @@ ALTER TABLE `stock_adjustment_items`
 -- AUTO_INCREMENT for table `stock_ledgers`
 --
 ALTER TABLE `stock_ledgers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=128;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_incoming_return_transactions`
@@ -6158,6 +6856,24 @@ ALTER TABLE `suppliers`
   MODIFY `supplier_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
 
 --
+-- AUTO_INCREMENT for table `supplier_payments`
+--
+ALTER TABLE `supplier_payments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `supplier_payment_adjustments`
+--
+ALTER TABLE `supplier_payment_adjustments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `supplier_payment_items`
+--
+ALTER TABLE `supplier_payment_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `transport_masters`
 --
 ALTER TABLE `transport_masters`
@@ -6197,6 +6913,12 @@ ALTER TABLE `breakage_expiry_transaction_items`
   ADD CONSTRAINT `be_trans_items_batch_id_fk` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `be_trans_items_be_trans_id_fk` FOREIGN KEY (`breakage_expiry_transaction_id`) REFERENCES `breakage_expiry_transactions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `be_trans_items_item_id_fk` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `claim_to_supplier_transaction_items`
+--
+ALTER TABLE `claim_to_supplier_transaction_items`
+  ADD CONSTRAINT `cts_items_transaction_id_fk` FOREIGN KEY (`claim_to_supplier_transaction_id`) REFERENCES `claim_to_supplier_transactions` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `credit_note_adjustments`
@@ -6246,6 +6968,20 @@ ALTER TABLE `customer_ledgers`
 --
 ALTER TABLE `customer_prescriptions`
   ADD CONSTRAINT `customer_prescriptions_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `customer_receipt_adjustments`
+--
+ALTER TABLE `customer_receipt_adjustments`
+  ADD CONSTRAINT `customer_receipt_adjustments_customer_receipt_id_foreign` FOREIGN KEY (`customer_receipt_id`) REFERENCES `customer_receipts` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `customer_receipt_adjustments_customer_receipt_item_id_foreign` FOREIGN KEY (`customer_receipt_item_id`) REFERENCES `customer_receipt_items` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `customer_receipt_items`
+--
+ALTER TABLE `customer_receipt_items`
+  ADD CONSTRAINT `customer_receipt_items_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `customer_receipt_items_customer_receipt_id_foreign` FOREIGN KEY (`customer_receipt_id`) REFERENCES `customer_receipts` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `customer_special_rates`
@@ -6439,6 +7175,14 @@ ALTER TABLE `sale_transaction_items`
   ADD CONSTRAINT `sale_transaction_items_sale_transaction_id_foreign` FOREIGN KEY (`sale_transaction_id`) REFERENCES `sale_transactions` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `sample_received_transaction_items`
+--
+ALTER TABLE `sample_received_transaction_items`
+  ADD CONSTRAINT `sr_trans_items_batch_id_fk` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `sr_trans_items_item_id_fk` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
+  ADD CONSTRAINT `sr_trans_items_trans_id_fk` FOREIGN KEY (`sample_received_transaction_id`) REFERENCES `sample_received_transactions` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `stock_adjustment_items`
 --
 ALTER TABLE `stock_adjustment_items`
@@ -6512,6 +7256,20 @@ ALTER TABLE `stock_transfer_outgoing_transaction_items`
 ALTER TABLE `suppliers`
   ADD CONSTRAINT `suppliers_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`),
   ADD CONSTRAINT `suppliers_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`user_id`);
+
+--
+-- Constraints for table `supplier_payment_adjustments`
+--
+ALTER TABLE `supplier_payment_adjustments`
+  ADD CONSTRAINT `supplier_payment_adjustments_supplier_payment_id_foreign` FOREIGN KEY (`supplier_payment_id`) REFERENCES `supplier_payments` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `supplier_payment_adjustments_supplier_payment_item_id_foreign` FOREIGN KEY (`supplier_payment_item_id`) REFERENCES `supplier_payment_items` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `supplier_payment_items`
+--
+ALTER TABLE `supplier_payment_items`
+  ADD CONSTRAINT `supplier_payment_items_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `supplier_payment_items_supplier_payment_id_foreign` FOREIGN KEY (`supplier_payment_id`) REFERENCES `supplier_payments` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

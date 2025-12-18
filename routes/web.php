@@ -587,6 +587,19 @@ Route::middleware(['admin'])->group(function () {
         Route::get('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'show'])->name('customer-receipt.show');
         Route::put('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'update'])->name('customer-receipt.update');
         Route::delete('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'destroy'])->name('customer-receipt.destroy');
+
+        // Supplier Payment Routes
+        Route::get('supplier-payment', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'index'])->name('supplier-payment.index');
+        Route::get('supplier-payment/transaction', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'transaction'])->name('supplier-payment.transaction');
+        Route::get('supplier-payment/modification', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'modification'])->name('supplier-payment.modification');
+        Route::get('supplier-payment/get-payments', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getPayments'])->name('supplier-payment.get-payments');
+        Route::get('supplier-payment/get-by-trn/{trnNo}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getByTrnNo'])->name('supplier-payment.get-by-trn');
+        Route::get('supplier-payment/next-trn-no', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getNextTrnNo'])->name('supplier-payment.next-trn-no');
+        Route::get('supplier-payment/supplier-outstanding/{supplierId}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getSupplierOutstanding'])->name('supplier-payment.supplier-outstanding');
+        Route::post('supplier-payment', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'store'])->name('supplier-payment.store');
+        Route::get('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'show'])->name('supplier-payment.show');
+        Route::put('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'update'])->name('supplier-payment.update');
+        Route::delete('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'destroy'])->name('supplier-payment.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {

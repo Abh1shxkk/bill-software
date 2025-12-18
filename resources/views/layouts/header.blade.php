@@ -270,6 +270,16 @@
                 <li><a class="dropdown-item" href="{{ route('admin.customer-receipt.index') }}">Receipt List</a></li>
               </ul>
             </li>
+
+            <!-- Payment to Supplier -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Payment to Supplier</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ route('admin.supplier-payment.transaction') }}">Transaction</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.supplier-payment.modification') }}">Modification</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.supplier-payment.index') }}">Payment List</a></li>
+              </ul>
+            </li>
           </ul>
         </li>
       </ul>
