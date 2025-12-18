@@ -20,6 +20,7 @@ class ChequeReturn extends Model
         'bank_name',
         'bank_area',
         'amount',
+        'bank_charges',
         'trn_no',
         'receipt_date',
         'deposit_date',
@@ -36,6 +37,7 @@ class ChequeReturn extends Model
         'return_date' => 'date',
         'status_date' => 'date',
         'amount' => 'decimal:2',
+        'bank_charges' => 'decimal:2',
     ];
 
     public function customerReceiptItem()

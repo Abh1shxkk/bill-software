@@ -210,6 +210,7 @@ class CustomerReceiptController extends Controller
                 foreach ($request->adjustments as $adj) {
                     CustomerReceiptAdjustment::create([
                         'customer_receipt_id' => $receipt->id,
+                        'sale_transaction_id' => $adj['sale_transaction_id'] ?? null,
                         'adjustment_type' => $adj['adjustment_type'] ?? 'outstanding',
                         'reference_no' => $adj['reference_no'] ?? null,
                         'reference_date' => $adj['reference_date'] ?? null,
@@ -577,6 +578,7 @@ class CustomerReceiptController extends Controller
                 foreach ($request->adjustments as $adj) {
                     CustomerReceiptAdjustment::create([
                         'customer_receipt_id' => $receipt->id,
+                        'sale_transaction_id' => $adj['sale_transaction_id'] ?? null,
                         'adjustment_type' => $adj['adjustment_type'] ?? 'outstanding',
                         'reference_no' => $adj['reference_no'] ?? null,
                         'reference_date' => $adj['reference_date'] ?? null,

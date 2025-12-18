@@ -110,12 +110,14 @@ class ChequeReturnController extends Controller
 
     /**
      * Mark a cheque as returned unpaid.
+     * This will restore all adjustments made from this payment.
      */
     public function returnCheque(Request $request)
     {
         $validated = $request->validate([
             'customer_receipt_item_id' => 'required|exists:customer_receipt_items,id',
-            'deposit_date' => 'nullable|date',
+            'return_date' => 'required|date',
+            'bank_charges' => 'nullable|numeric|min:0',
             'remarks' => 'nullable|string|max:500',
         ]);
 
@@ -136,6 +138,23 @@ class ChequeReturnController extends Controller
                 ], 400);
             }
 
+            // Get the receipt to find all adjustments
+            $receipt = $receiptItem->receipt;
+            
+            // Restore adjustments - increment balance_amount in sale_transactions
+            if ($receipt) {
+                $adjustments = \App\Models\CustomerReceiptAdjustment::where('customer_receipt_id', $receipt->id)->get();
+                
+                foreach ($adjustments as $adj) {
+                    if ($adj->sale_transaction_id) {
+                        // Restore the balance by adding back the adjusted amount
+                        DB::table('sale_transactions')
+                            ->where('id', $adj->sale_transaction_id)
+                            ->increment('balance_amount', floatval($adj->adjusted_amount));
+                    }
+                }
+            }
+
             // Create or update cheque return record
             $chequeReturn = ChequeReturn::updateOrCreate(
                 ['customer_receipt_item_id' => $receiptItem->id],
@@ -151,9 +170,9 @@ class ChequeReturnController extends Controller
                     'amount' => $receiptItem->amount,
                     'trn_no' => $receiptItem->receipt?->trn_no,
                     'receipt_date' => $receiptItem->receipt?->receipt_date,
-                    'deposit_date' => $validated['deposit_date'] ?? null,
+                    'return_date' => $validated['return_date'],
+                    'bank_charges' => $validated['bank_charges'] ?? 0,
                     'status' => 'returned',
-                    'return_date' => now(),
                     'status_date' => now(),
                     'remarks' => $validated['remarks'] ?? null,
                 ]
@@ -163,11 +182,12 @@ class ChequeReturnController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Cheque marked as returned unpaid successfully',
+                'message' => 'Cheque marked as returned. All adjustments have been restored.',
                 'cheque_return' => $chequeReturn
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Cheque Return Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error marking cheque as returned: ' . $e->getMessage()
@@ -177,6 +197,7 @@ class ChequeReturnController extends Controller
 
     /**
      * Cancel a cheque return.
+     * This will reverse all restored adjustments (deduct back from invoices).
      */
     public function cancelReturn(Request $request)
     {
@@ -196,6 +217,23 @@ class ChequeReturnController extends Controller
                 ], 400);
             }
 
+            // Get the receipt to find all adjustments
+            $receiptId = $chequeReturn->customer_receipt_id;
+            
+            // Reverse the restored adjustments - decrement balance_amount in sale_transactions
+            if ($receiptId) {
+                $adjustments = \App\Models\CustomerReceiptAdjustment::where('customer_receipt_id', $receiptId)->get();
+                
+                foreach ($adjustments as $adj) {
+                    if ($adj->sale_transaction_id) {
+                        // Reverse the restore by deducting the adjusted amount
+                        DB::table('sale_transactions')
+                            ->where('id', $adj->sale_transaction_id)
+                            ->decrement('balance_amount', floatval($adj->adjusted_amount));
+                    }
+                }
+            }
+
             $chequeReturn->update([
                 'status' => 'cancelled',
                 'status_date' => now(),
@@ -205,10 +243,11 @@ class ChequeReturnController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Cheque return cancelled successfully'
+                'message' => 'Cheque return cancelled. Adjustments have been reversed.'
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Cancel Cheque Return Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error cancelling return: ' . $e->getMessage()

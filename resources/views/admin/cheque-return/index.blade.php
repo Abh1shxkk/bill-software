@@ -98,38 +98,24 @@
                     </td>
                     <td>{{ $cheque['status_date'] }}</td>
                     <td class="text-end">
-                        @if($cheque['status'] === 'pending')
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-return-single" 
-                                    data-id="{{ $cheque['id'] }}" 
-                                    data-cheque-no="{{ $cheque['cheque_no'] }}"
-                                    data-customer="{{ $cheque['customer_name'] ?? '-' }}"
-                                    title="Mark as Returned Unpaid">
-                                <i class="bi bi-arrow-return-left"></i>
-                            </button>
-                        @elseif($cheque['status'] === 'returned')
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-return-single" 
-                                    data-id="{{ $cheque['id'] }}" 
-                                    data-cheque-no="{{ $cheque['cheque_no'] }}"
-                                    data-customer="{{ $cheque['customer_name'] ?? '-' }}"
-                                    title="Mark as Returned Unpaid"
-                                    disabled>
-                                <i class="bi bi-arrow-return-left"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-warning btn-cancel-single" 
-                                    data-id="{{ $cheque['cheque_return_id'] }}" 
-                                    data-cheque-no="{{ $cheque['cheque_no'] }}"
-                                    data-customer="{{ $cheque['customer_name'] ?? '-' }}"
-                                    title="Cancel Return">
-                                <i class="bi bi-x-circle"></i>
-                            </button>
-                        @else
-                            <button type="button" class="btn btn-sm btn-outline-danger" disabled title="Return">
-                                <i class="bi bi-arrow-return-left"></i>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-warning" disabled title="Cancel Return">
-                                <i class="bi bi-x-circle"></i>
-                            </button>
-                        @endif
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-return-single" 
+                                data-id="{{ $cheque['id'] }}" 
+                                data-cheque-no="{{ $cheque['cheque_no'] }}"
+                                data-customer="{{ $cheque['customer_name'] ?? '-' }}"
+                                data-amount="{{ number_format($cheque['amount'], 2) }}"
+                                title="Mark as Returned Unpaid"
+                                {{ $cheque['status'] !== 'pending' ? 'disabled' : '' }}>
+                            <i class="bi bi-arrow-return-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-warning btn-cancel-single" 
+                                data-id="{{ $cheque['cheque_return_id'] }}" 
+                                data-cheque-no="{{ $cheque['cheque_no'] }}"
+                                data-customer="{{ $cheque['customer_name'] ?? '-' }}"
+                                data-amount="{{ number_format($cheque['amount'], 2) }}"
+                                title="Cancel Return"
+                                {{ $cheque['status'] !== 'returned' ? 'disabled' : '' }}>
+                            <i class="bi bi-x-circle"></i>
+                        </button>
                     </td>
                 </tr>
                 @empty
@@ -149,53 +135,188 @@
     </div>
 </div>
 
-<!-- Return Confirmation Modal -->
-<div class="modal fade" id="returnChequeModal" tabindex="-1" aria-labelledby="returnChequeModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="returnChequeModalLabel">Confirm Return</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to mark this cheque as returned unpaid?</p>
-                <div class="alert alert-warning">
-                    <strong>Cheque No:</strong> <span id="return-cheque-no"></span><br>
-                    <strong>Customer:</strong> <span id="return-customer"></span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirm-return">
-                    <i class="bi bi-arrow-return-left me-1"></i> Mark as Returned
-                </button>
-            </div>
+<style>
+/* Custom Modal Styles */
+.custom-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+}
+.custom-modal-backdrop.show { display: block; }
+
+.custom-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 450px;
+    background: #f0f0f0;
+    border: 1px solid #999;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    z-index: 10001;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+.custom-modal.show { display: block; }
+
+.custom-modal-header {
+    padding: 10px 15px;
+    background: linear-gradient(to bottom, #f8f8f8, #e8e8e8);
+    border-bottom: 1px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.custom-modal-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
+    color: #333;
+}
+.custom-modal-close {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    line-height: 1;
+}
+.custom-modal-close:hover { color: #c00; }
+
+.custom-modal-body {
+    padding: 20px;
+    background: #f5f5f5;
+}
+
+.custom-modal-info {
+    background: #fffbcc;
+    border: 1px solid #e6d98c;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+.custom-modal-info strong { color: #333; }
+
+.custom-modal-form-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.custom-modal-form-row label {
+    width: 120px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+}
+.custom-modal-form-row input,
+.custom-modal-form-row select {
+    flex: 1;
+    padding: 5px 8px;
+    border: 1px solid #999;
+    font-size: 13px;
+    background: white;
+}
+
+.custom-modal-footer {
+    padding: 12px 15px;
+    background: #e8e8e8;
+    border-top: 1px solid #ccc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.custom-modal-btn {
+    padding: 6px 20px;
+    font-size: 13px;
+    border: 1px solid #666;
+    cursor: pointer;
+    background: linear-gradient(to bottom, #f8f8f8, #e0e0e0);
+}
+.custom-modal-btn:hover { background: linear-gradient(to bottom, #e8e8e8, #d0d0d0); }
+.custom-modal-btn-primary {
+    background: linear-gradient(to bottom, #4a9cd8, #2980b9);
+    color: white;
+    border-color: #2573a7;
+}
+.custom-modal-btn-primary:hover { background: linear-gradient(to bottom, #3a8cc8, #1970a9); }
+.custom-modal-btn-danger {
+    background: linear-gradient(to bottom, #e74c3c, #c0392b);
+    color: white;
+    border-color: #a93226;
+}
+.custom-modal-btn-danger:hover { background: linear-gradient(to bottom, #d74c3c, #b0392b); }
+</style>
+
+<!-- Return Modal Backdrop -->
+<div class="custom-modal-backdrop" id="returnModalBackdrop" onclick="closeReturnModal()"></div>
+
+<!-- Return Cheque Modal -->
+<div class="custom-modal" id="returnModal">
+    <div class="custom-modal-header">
+        <h5 class="custom-modal-title">Confirm Return</h5>
+        <button type="button" class="custom-modal-close" onclick="closeReturnModal()">&times;</button>
+    </div>
+    <div class="custom-modal-body">
+        <p style="margin-bottom: 15px; font-size: 13px;">Are you sure you want to mark this cheque as returned unpaid?</p>
+        
+        <div class="custom-modal-info">
+            <strong>Cheque No:</strong> <span id="return-cheque-no"></span><br>
+            <strong>Customer:</strong> <span id="return-customer"></span><br>
+            <strong>Amount:</strong> <span id="return-amount"></span>
         </div>
+        
+        <div class="custom-modal-form-row">
+            <label>Return Date :</label>
+            <input type="date" id="returnDate" value="{{ date('Y-m-d') }}">
+        </div>
+        
+        <div class="custom-modal-form-row">
+            <label>Bank Charges :</label>
+            <input type="number" id="bankCharges" step="0.01" value="0.00" min="0">
+        </div>
+    </div>
+    <div class="custom-modal-footer">
+        <button type="button" class="custom-modal-btn" onclick="closeReturnModal()">Cancel</button>
+        <button type="button" class="custom-modal-btn custom-modal-btn-danger" id="confirm-return">
+            <i class="bi bi-arrow-return-left me-1"></i> Mark as Returned
+        </button>
     </div>
 </div>
 
-<!-- Cancel Return Confirmation Modal -->
-<div class="modal fade" id="cancelReturnModal" tabindex="-1" aria-labelledby="cancelReturnModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="cancelReturnModalLabel">Confirm Cancel Return</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to cancel this cheque return?</p>
-                <div class="alert alert-info">
-                    <strong>Cheque No:</strong> <span id="cancel-cheque-no"></span><br>
-                    <strong>Customer:</strong> <span id="cancel-customer"></span>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-warning" id="confirm-cancel">
-                    <i class="bi bi-x-circle me-1"></i> Cancel Return
-                </button>
-            </div>
+<!-- Cancel Return Modal Backdrop -->
+<div class="custom-modal-backdrop" id="cancelModalBackdrop" onclick="closeCancelModal()"></div>
+
+<!-- Cancel Return Modal -->
+<div class="custom-modal" id="cancelModal">
+    <div class="custom-modal-header">
+        <h5 class="custom-modal-title">Cancel Return</h5>
+        <button type="button" class="custom-modal-close" onclick="closeCancelModal()">&times;</button>
+    </div>
+    <div class="custom-modal-body">
+        <div class="custom-modal-info">
+            <strong>Cheque No:</strong> <span id="cancel-cheque-no"></span><br>
+            <strong>Customer:</strong> <span id="cancel-customer"></span><br>
+            <strong>Amount:</strong> <span id="cancel-amount"></span>
         </div>
+        
+        <div style="background: #ffdddd; border: 1px solid #e6a0a0; padding: 12px; margin-bottom: 15px; font-size: 12px;">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            <strong>Warning!</strong> Cancelling return will reverse all restored adjustments - the balance amounts will be deducted again from sale invoices.
+        </div>
+        
+        <p style="text-align: center; font-size: 13px; margin: 0;">Are you sure you want to cancel this return?</p>
+    </div>
+    <div class="custom-modal-footer">
+        <button type="button" class="custom-modal-btn" onclick="closeCancelModal()">No</button>
+        <button type="button" class="custom-modal-btn custom-modal-btn-primary" id="confirm-cancel">
+            <i class="bi bi-check-circle me-1"></i> Yes, Cancel Return
+        </button>
     </div>
 </div>
 
@@ -291,6 +412,27 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentReturnId = null;
     let currentCancelId = null;
 
+    // Modal functions
+    window.openReturnModal = function() {
+        document.getElementById('returnModalBackdrop').classList.add('show');
+        document.getElementById('returnModal').classList.add('show');
+    };
+    
+    window.closeReturnModal = function() {
+        document.getElementById('returnModalBackdrop').classList.remove('show');
+        document.getElementById('returnModal').classList.remove('show');
+    };
+    
+    window.openCancelModal = function() {
+        document.getElementById('cancelModalBackdrop').classList.add('show');
+        document.getElementById('cancelModal').classList.add('show');
+    };
+    
+    window.closeCancelModal = function() {
+        document.getElementById('cancelModalBackdrop').classList.remove('show');
+        document.getElementById('cancelModal').classList.remove('show');
+    };
+
     document.addEventListener('click', function(e) {
         // Return button
         const returnBtn = e.target.closest('.btn-return-single');
@@ -298,9 +440,13 @@ document.addEventListener('DOMContentLoaded', function() {
             currentReturnId = returnBtn.getAttribute('data-id');
             document.getElementById('return-cheque-no').textContent = returnBtn.getAttribute('data-cheque-no');
             document.getElementById('return-customer').textContent = returnBtn.getAttribute('data-customer');
+            document.getElementById('return-amount').textContent = '₹ ' + (returnBtn.getAttribute('data-amount') || '0.00');
             
-            const modal = new bootstrap.Modal(document.getElementById('returnChequeModal'));
-            modal.show();
+            // Reset form fields
+            document.getElementById('returnDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('bankCharges').value = '0.00';
+            
+            openReturnModal();
         }
 
         // Cancel return button
@@ -309,15 +455,31 @@ document.addEventListener('DOMContentLoaded', function() {
             currentCancelId = cancelBtn.getAttribute('data-id');
             document.getElementById('cancel-cheque-no').textContent = cancelBtn.getAttribute('data-cheque-no');
             document.getElementById('cancel-customer').textContent = cancelBtn.getAttribute('data-customer');
+            document.getElementById('cancel-amount').textContent = '₹ ' + (cancelBtn.getAttribute('data-amount') || '0.00');
             
-            const modal = new bootstrap.Modal(document.getElementById('cancelReturnModal'));
-            modal.show();
+            openCancelModal();
+        }
+    });
+    
+    // ESC key to close modals
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeReturnModal();
+            closeCancelModal();
         }
     });
 
     // Confirm return
     document.getElementById('confirm-return').addEventListener('click', function() {
         const btn = this;
+        const returnDate = document.getElementById('returnDate').value;
+        const bankCharges = document.getElementById('bankCharges').value;
+        
+        if (!returnDate) {
+            alert('Please select a return date');
+            return;
+        }
+        
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
 
@@ -329,7 +491,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                customer_receipt_item_id: currentReturnId
+                customer_receipt_item_id: currentReturnId,
+                return_date: returnDate,
+                bank_charges: bankCharges
             })
         })
         .then(response => response.json())

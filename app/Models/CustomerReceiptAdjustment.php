@@ -12,6 +12,7 @@ class CustomerReceiptAdjustment extends Model
     protected $fillable = [
         'customer_receipt_id',
         'customer_receipt_item_id',
+        'sale_transaction_id',
         'adjustment_type',
         'reference_no',
         'reference_date',
