@@ -574,6 +574,19 @@ Route::middleware(['admin'])->group(function () {
         Route::put('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'update'])->name('claim-to-supplier.update');
         Route::get('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'show'])->name('claim-to-supplier.show');
         Route::delete('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'destroy'])->name('claim-to-supplier.destroy');
+
+        // Customer Receipt Routes
+        Route::get('customer-receipt', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'index'])->name('customer-receipt.index');
+        Route::get('customer-receipt/transaction', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'transaction'])->name('customer-receipt.transaction');
+        Route::get('customer-receipt/modification', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'modification'])->name('customer-receipt.modification');
+        Route::get('customer-receipt/get-receipts', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getReceipts'])->name('customer-receipt.get-receipts');
+        Route::get('customer-receipt/get-by-trn/{trnNo}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getByTrnNo'])->name('customer-receipt.get-by-trn');
+        Route::get('customer-receipt/next-trn-no', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getNextTrnNo'])->name('customer-receipt.next-trn-no');
+        Route::get('customer-receipt/customer-outstanding/{customerId}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getCustomerOutstanding'])->name('customer-receipt.customer-outstanding');
+        Route::post('customer-receipt', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'store'])->name('customer-receipt.store');
+        Route::get('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'show'])->name('customer-receipt.show');
+        Route::put('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'update'])->name('customer-receipt.update');
+        Route::delete('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'destroy'])->name('customer-receipt.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {
