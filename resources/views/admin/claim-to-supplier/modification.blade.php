@@ -1446,10 +1446,14 @@ $(document).ready(function() {
 });
 
 function loadClaimByNumber(claimNo) {
-    $.get("{{ url('admin/claim-to-supplier/by-claim-no') }}/" + claimNo, function(response) {
+    $.get("{{ url('admin/claim-to-supplier/get-by-claim-no') }}/" + claimNo, function(response) {
         if (response.success) {
             populateFormWithData(response.header, response.items);
+        } else {
+            alert('Claim not found: ' + claimNo);
         }
+    }).fail(function() {
+        alert('Error loading claim: ' + claimNo);
     });
 }
 </script>
