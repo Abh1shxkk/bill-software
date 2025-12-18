@@ -126,6 +126,14 @@
             </div>
             <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
                 <table class="table table-sm table-bordered mb-0" id="outstandingTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type</th>
+                            <th>Ref No</th>
+                            <th>Date</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
                     <tbody id="outstanding-body">
                         <tr>
                             <td colspan="4" class="text-center text-muted py-3">No outstanding items</td>
@@ -143,6 +151,14 @@
             </div>
             <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
                 <table class="table table-sm table-bordered mb-0" id="adjustedTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Type</th>
+                            <th>Ref No</th>
+                            <th>Date</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
                     <tbody id="adjusted-body">
                         <tr>
                             <td colspan="4" class="text-center text-muted py-3">No adjusted items</td>
@@ -179,12 +195,28 @@
 <style>
     .cheque-row.selected {
         background-color: #cfe2ff !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.5);
+        position: relative;
+        z-index: 1;
+    }
+    .cheque-row.selected td {
+        border-top: 2px solid #0d6efd !important;
+        border-bottom: 2px solid #0d6efd !important;
+    }
+    .cheque-row.selected td:first-child {
+        border-left: 2px solid #0d6efd !important;
+    }
+    .cheque-row.selected td:last-child {
+        border-right: 2px solid #0d6efd !important;
     }
     .cheque-row:hover {
         background-color: #e9ecef;
     }
     .table-success {
         background-color: #d1e7dd !important;
+    }
+    .table-success.selected {
+        background-color: #b6d4fe !important;
     }
 </style>
 @endpush
@@ -230,8 +262,83 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('selected_trn').textContent = selectedCheque.trn_no || '-';
             document.getElementById('selected_date').textContent = selectedCheque.cheque_date || '-';
             document.getElementById('selected_bank').textContent = selectedCheque.bank_name || '-';
+            
+            // Display adjustment details
+            displayAdjustments(selectedCheque);
         });
     });
+
+    // Function to display adjustments for selected cheque
+    function displayAdjustments(cheque) {
+        const outstandingBody = document.getElementById('outstanding-body');
+        const adjustedBody = document.getElementById('adjusted-body');
+        
+        let outstandingHtml = '';
+        let adjustedHtml = '';
+        let outstandingTotal = 0;
+        let adjustedTotal = 0;
+        
+        const adjustments = cheque.adjustments || [];
+        
+        if (adjustments.length > 0) {
+            adjustments.forEach(function(adj) {
+                // Outstanding items (balance amount > 0)
+                if (adj.balance_amount > 0) {
+                    outstandingTotal += adj.balance_amount;
+                    outstandingHtml += `
+                        <tr>
+                            <td>${adj.adjustment_type || '-'}</td>
+                            <td>${adj.reference_no || '-'}</td>
+                            <td>${adj.reference_date || '-'}</td>
+                            <td class="text-end">${parseFloat(adj.balance_amount).toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+                
+                // Adjusted items (adjusted amount > 0)
+                if (adj.adjusted_amount > 0) {
+                    adjustedTotal += adj.adjusted_amount;
+                    adjustedHtml += `
+                        <tr>
+                            <td>${adj.adjustment_type || '-'}</td>
+                            <td>${adj.reference_no || '-'}</td>
+                            <td>${adj.reference_date || '-'}</td>
+                            <td class="text-end">${parseFloat(adj.adjusted_amount).toFixed(2)}</td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+        
+        // If unadjusted amount exists, show it in outstanding
+        if (cheque.unadjusted && cheque.unadjusted > 0) {
+            outstandingTotal += cheque.unadjusted;
+            outstandingHtml += `
+                <tr>
+                    <td>Unadjusted</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td class="text-end">${parseFloat(cheque.unadjusted).toFixed(2)}</td>
+                </tr>
+            `;
+        }
+        
+        // Update outstanding section
+        if (outstandingHtml) {
+            outstandingBody.innerHTML = outstandingHtml;
+        } else {
+            outstandingBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No outstanding items</td></tr>';
+        }
+        document.getElementById('outstanding_total').textContent = outstandingTotal.toFixed(2);
+        
+        // Update adjusted section
+        if (adjustedHtml) {
+            adjustedBody.innerHTML = adjustedHtml;
+        } else {
+            adjustedBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No adjusted items</td></tr>';
+        }
+        document.getElementById('adjusted_total').textContent = adjustedTotal.toFixed(2);
+    }
 
     // Post cheque
     document.getElementById('btn-post').addEventListener('click', function() {
