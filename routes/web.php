@@ -615,6 +615,46 @@ Route::middleware(['admin'])->group(function () {
         Route::get('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'show'])->name('supplier-payment.show');
         Route::put('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'update'])->name('supplier-payment.update');
         Route::delete('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'destroy'])->name('supplier-payment.destroy');
+
+        // Voucher Entry Routes
+        Route::get('voucher-entry', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'index'])->name('voucher-entry.index');
+        Route::get('voucher-entry/transaction', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'transaction'])->name('voucher-entry.transaction');
+        Route::get('voucher-entry/modification', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'modification'])->name('voucher-entry.modification');
+        Route::get('voucher-entry/get-vouchers', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getVouchers'])->name('voucher-entry.get-vouchers');
+        Route::get('voucher-entry/get-by-voucher-no/{voucherNo}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getByVoucherNo'])->name('voucher-entry.get-by-voucher-no');
+        Route::get('voucher-entry/next-voucher-no', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getNextVoucherNo'])->name('voucher-entry.next-voucher-no');
+        Route::get('voucher-entry/get-accounts', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getAccounts'])->name('voucher-entry.get-accounts');
+        Route::post('voucher-entry', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'store'])->name('voucher-entry.store');
+        Route::get('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'show'])->name('voucher-entry.show');
+        Route::put('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'update'])->name('voucher-entry.update');
+        Route::post('voucher-entry/{id}/cancel', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'cancel'])->name('voucher-entry.cancel');
+        Route::delete('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'destroy'])->name('voucher-entry.destroy');
+
+        // Voucher Purchase (Input GST) Routes
+        Route::get('voucher-purchase', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'index'])->name('voucher-purchase.index');
+        Route::get('voucher-purchase/transaction', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'transaction'])->name('voucher-purchase.transaction');
+        Route::get('voucher-purchase/modification', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'modification'])->name('voucher-purchase.modification');
+        Route::get('voucher-purchase/get-vouchers', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'getVouchers'])->name('voucher-purchase.get-vouchers');
+        Route::get('voucher-purchase/get-by-voucher-no/{voucherNo}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'getByVoucherNo'])->name('voucher-purchase.get-by-voucher-no');
+        Route::get('voucher-purchase/next-voucher-no', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'getNextVoucherNo'])->name('voucher-purchase.next-voucher-no');
+        Route::get('voucher-purchase/supplier/{supplierId}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'getSupplierDetails'])->name('voucher-purchase.supplier-details');
+        Route::get('voucher-purchase/hsn/{hsnCode}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'getHsnDetails'])->name('voucher-purchase.hsn-details');
+        Route::post('voucher-purchase', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'store'])->name('voucher-purchase.store');
+        Route::get('voucher-purchase/{id}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'show'])->name('voucher-purchase.show');
+        Route::put('voucher-purchase/{id}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'update'])->name('voucher-purchase.update');
+        Route::post('voucher-purchase/{id}/reverse', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'reverse'])->name('voucher-purchase.reverse');
+        Route::delete('voucher-purchase/{id}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'destroy'])->name('voucher-purchase.destroy');
+
+        // Voucher Income (Output GST) Routes
+        Route::get('voucher-income', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'index'])->name('voucher-income.index');
+        Route::get('voucher-income/transaction', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'transaction'])->name('voucher-income.transaction');
+        Route::get('voucher-income/modification', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'modification'])->name('voucher-income.modification');
+        Route::get('voucher-income/get-by-voucher-no/{voucherNo}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'getByVoucherNo'])->name('voucher-income.get-by-voucher-no');
+        Route::post('voucher-income', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'store'])->name('voucher-income.store');
+        Route::get('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'show'])->name('voucher-income.show');
+        Route::put('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'update'])->name('voucher-income.update');
+        Route::post('voucher-income/{id}/reverse', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'reverse'])->name('voucher-income.reverse');
+        Route::delete('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'destroy'])->name('voucher-income.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {
