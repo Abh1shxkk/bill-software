@@ -12,6 +12,7 @@ class SaleTransaction extends Model
     protected $fillable = [
         'invoice_no',
         'series',
+        'voucher_type',
         'sale_date',
         'due_date',
         'customer_id',

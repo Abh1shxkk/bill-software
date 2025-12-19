@@ -292,6 +292,19 @@ class CustomerReceiptController extends Controller
             ], 404);
         }
 
+        // Check if any cheque in this receipt is marked as returned
+        $returnedCheque = \App\Models\ChequeReturn::where('customer_receipt_id', $receipt->id)
+            ->where('status', 'returned')
+            ->first();
+
+        if ($returnedCheque) {
+            return response()->json([
+                'success' => false,
+                'is_returned' => true,
+                'message' => 'This receipt cannot be modified. Cheque No. "' . $returnedCheque->cheque_no . '" is marked as Returned. Please cancel the return first from Cheque Return module.'
+            ], 403);
+        }
+
         // Convert to array
         $receiptData = $receipt->toArray();
         
@@ -343,6 +356,19 @@ class CustomerReceiptController extends Controller
                 'success' => false,
                 'message' => 'Receipt not found'
             ], 404);
+        }
+
+        // Check if any cheque in this receipt is marked as returned
+        $returnedCheque = \App\Models\ChequeReturn::where('customer_receipt_id', $receipt->id)
+            ->where('status', 'returned')
+            ->first();
+
+        if ($returnedCheque) {
+            return response()->json([
+                'success' => false,
+                'is_returned' => true,
+                'message' => 'This receipt cannot be modified. Cheque No. "' . $returnedCheque->cheque_no . '" is marked as Returned. Please cancel the return first from Cheque Return module.'
+            ], 403);
         }
 
         // Look up IDs from codes for Select2 dropdowns
@@ -397,6 +423,11 @@ class CustomerReceiptController extends Controller
 
             // Format the receipts for proper JSON response
             $formattedReceipts = $receipts->map(function ($receipt) {
+                // Check if this receipt has any returned cheques
+                $hasReturnedCheque = \App\Models\ChequeReturn::where('customer_receipt_id', $receipt->id)
+                    ->where('status', 'returned')
+                    ->exists();
+
                 return [
                     'id' => $receipt->id,
                     'trn_no' => $receipt->trn_no,
@@ -405,6 +436,7 @@ class CustomerReceiptController extends Controller
                     'total_cash' => floatval($receipt->total_cash ?? 0),
                     'total_cheque' => floatval($receipt->total_cheque ?? 0),
                     'items_count' => $receipt->items->count(),
+                    'has_returned_cheque' => $hasReturnedCheque,
                 ];
             });
 

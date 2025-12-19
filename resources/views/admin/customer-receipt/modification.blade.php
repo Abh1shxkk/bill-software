@@ -1258,16 +1258,17 @@ function loadPastInvoices() {
         .then(data => {
             if (data.success && data.receipts && data.receipts.length > 0) {
                 tbody.innerHTML = data.receipts.map(r => `
-                    <tr>
+                    <tr${r.has_returned_cheque ? ' style="background-color: #ffe6e6;"' : ''}>
                         <td><strong>${r.trn_no || '-'}</strong></td>
                         <td>${r.receipt_date || '-'}</td>
                         <td>${r.salesman_name || '-'}</td>
                         <td class="text-end">₹${parseFloat(r.total_cash || 0).toFixed(2)}</td>
                         <td class="text-end">₹${parseFloat(r.total_cheque || 0).toFixed(2)}</td>
                         <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="loadReceiptById(${r.id})">
-                                <i class="bi bi-download"></i> Load
-                            </button>
+                            ${r.has_returned_cheque 
+                                ? '<span class="badge bg-danger" title="Cheque Returned - Cannot Modify"><i class="bi bi-exclamation-triangle me-1"></i>Returned</span>'
+                                : `<button type="button" class="btn btn-sm btn-primary" onclick="loadReceiptById(${r.id})"><i class="bi bi-download"></i> Load</button>`
+                            }
                         </td>
                     </tr>
                 `).join('');
@@ -1290,6 +1291,10 @@ function loadReceiptById(id) {
             if (data.success) {
                 closeLoadInvoicesModal();
                 populateFormWithReceipt(data.receipt);
+            } else if (data.is_returned) {
+                // Show special warning for returned cheques
+                closeLoadInvoicesModal();
+                showReturnedChequeWarning(data.message);
             } else {
                 alert(data.message || 'Error loading receipt');
             }
@@ -1298,6 +1303,37 @@ function loadReceiptById(id) {
             console.error(e);
             alert('Error loading receipt');
         });
+}
+
+// Show warning for returned cheque
+function showReturnedChequeWarning(message) {
+    // Create modal HTML
+    const modalHTML = `
+        <div id="returnedWarningBackdrop" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 99998;"></div>
+        <div id="returnedWarningModal" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 450px; background: white; border-radius: 8px; box-shadow: 0 5px 30px rgba(0,0,0,0.4); z-index: 99999; overflow: hidden;">
+            <div style="background: #dc3545; color: white; padding: 15px 20px; display: flex; align-items: center; gap: 10px;">
+                <i class="bi bi-exclamation-triangle-fill" style="font-size: 24px;"></i>
+                <h5 style="margin: 0; font-size: 16px;">Cannot Modify Receipt</h5>
+            </div>
+            <div style="padding: 20px;">
+                <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+                    <i class="bi bi-info-circle" style="color: #856404; margin-right: 8px;"></i>
+                    <strong style="color: #856404;">Cheque Returned!</strong>
+                </div>
+                <p style="font-size: 14px; color: #333; margin: 0;">${message}</p>
+            </div>
+            <div style="background: #f8f9fa; padding: 12px 20px; display: flex; justify-content: flex-end;">
+                <button onclick="closeReturnedWarning()" style="padding: 8px 25px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">OK</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function closeReturnedWarning() {
+    document.getElementById('returnedWarningBackdrop')?.remove();
+    document.getElementById('returnedWarningModal')?.remove();
 }
 
 function populateFormWithReceipt(receipt) {

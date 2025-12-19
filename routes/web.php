@@ -615,6 +615,18 @@ Route::middleware(['admin'])->group(function () {
         Route::get('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'show'])->name('supplier-payment.show');
         Route::put('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'update'])->name('supplier-payment.update');
         Route::delete('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'destroy'])->name('supplier-payment.destroy');
+
+        // Sale Voucher Routes (HSN based sale without stock)
+        Route::get('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'index'])->name('sale-voucher.index');
+        Route::get('sale-voucher/transaction', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'transaction'])->name('sale-voucher.transaction');
+        Route::get('sale-voucher/modification', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'modification'])->name('sale-voucher.modification');
+        Route::get('sale-voucher/get-vouchers', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getVouchers'])->name('sale-voucher.get-vouchers');
+        Route::get('sale-voucher/search', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'searchVoucher'])->name('sale-voucher.search');
+        Route::get('sale-voucher/{id}/details', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getDetails'])->name('sale-voucher.details');
+        Route::post('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'store'])->name('sale-voucher.store');
+        Route::put('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'update'])->name('sale-voucher.update');
+        Route::get('sale-voucher/hsn-codes', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getHsnCodes'])->name('sale-voucher.hsn-codes');
+        Route::delete('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'destroy'])->name('sale-voucher.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {
