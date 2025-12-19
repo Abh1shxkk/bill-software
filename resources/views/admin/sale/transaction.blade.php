@@ -1121,6 +1121,7 @@ let currentSelectedRowIndex = null;
 let pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
 let selectedChallanId = null; // Store selected challan ID for loading
+let pendingBarcodeRowIndex = null; // 🔥 Store row index when barcode is entered for batch selection
 
 // Load items on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -1240,22 +1241,21 @@ function updateDayName() {
 // Check if Choose Items button should be enabled
 function checkChooseItemsButtonState() {
     const customerId = document.getElementById('customerSelect')?.value;
-    const salesmanId = document.getElementById('salesmanSelect')?.value;
     const chooseItemsBtn = document.getElementById('chooseItemsBtn');
     
     if (chooseItemsBtn) {
-        if (customerId && salesmanId) {
-            // Both selected - enable button (visual only)
+        if (customerId) {
+            // Customer selected - enable button (visual only)
             chooseItemsBtn.classList.remove('btn-secondary', 'btn-warning');
             chooseItemsBtn.classList.add('btn-info');
             chooseItemsBtn.style.opacity = '1';
             chooseItemsBtn.title = 'Click to choose items';
         } else {
-            // Not both selected - show as warning (but keep clickable for validation message)
+            // Customer not selected - show as warning (but keep clickable for validation message)
             chooseItemsBtn.classList.remove('btn-info');
             chooseItemsBtn.classList.add('btn-warning');
             chooseItemsBtn.style.opacity = '0.7';
-            chooseItemsBtn.title = 'Please select Customer and Sales Man first';
+            chooseItemsBtn.title = 'Please select Customer first';
         }
     }
 }
@@ -1270,13 +1270,7 @@ function openChooseItemsModal() {
         return;
     }
     
-    // Validate: Salesman must be selected
-    const salesmanId = document.getElementById('salesmanSelect')?.value;
-    if (!salesmanId) {
-        showAlert('Please select Sales Man first!\n\nSales Man selection is required before choosing items.', 'warning', 'Sales Man Required');
-        document.getElementById('salesmanSelect').focus();
-        return;
-    }
+    // Note: Salesman is optional - no validation required
     
     // Check for pending challans first
     checkPendingChallans(customerId);
@@ -1646,7 +1640,9 @@ function closeBatchSelectionModal() {
     modal.classList.remove('show');
     backdrop.classList.remove('show');
     pendingItemSelection = null;
+    pendingBarcodeRowIndex = null; // 🔥 Clear barcode row index when modal is closed
 }
+
 
 // Load batches for item
 function loadBatchesForItem(itemId) {
@@ -1874,6 +1870,9 @@ function filterBatchesInModal() {
 }
 
 // Select batch from modal (called when batch row is double-clicked or confirm button is clicked)
+// 🔥 MODIFIED: Now handles both cases:
+// 1. Barcode entry - populates existing row (pendingBarcodeRowIndex is set)
+// 2. Choose Items modal - adds new row (pendingBarcodeRowIndex is null)
 function selectBatchFromModal(batch) {
     if (!pendingItemSelection) return;
     
@@ -1888,8 +1887,19 @@ function selectBatchFromModal(batch) {
     console.log('✅ Selected batch:', selectedBatch);
     console.log('📦 Batch ID:', selectedBatch.id);
     
-    // Add item to table with batch
-    addItemToTable(pendingItemSelection, selectedBatch);
+    // 🔥 Check if this is from barcode entry (existing row) or Choose Items modal (new row)
+    if (pendingBarcodeRowIndex !== null) {
+        // 🔥 CASE 1: From barcode entry - populate the existing row
+        console.log('📱 Populating existing row from barcode entry, row index:', pendingBarcodeRowIndex);
+        populateRowWithItemAndBatch(pendingBarcodeRowIndex, pendingItemSelection, selectedBatch);
+        
+        // Clear the pending barcode row index
+        pendingBarcodeRowIndex = null;
+    } else {
+        // 🔥 CASE 2: From Choose Items modal - add item to table (creates new row or uses empty row)
+        console.log('➕ Adding new item from Choose Items modal');
+        addItemToTable(pendingItemSelection, selectedBatch);
+    }
     
     // Close batch modal
     closeBatchSelectionModal();
@@ -1897,6 +1907,103 @@ function selectBatchFromModal(batch) {
     // Clear selected batch
     window.selectedBatch = null;
 }
+
+// 🔥 NEW FUNCTION: Populate an existing row with item and batch data (for barcode entry)
+function populateRowWithItemAndBatch(rowIndex, item, batch) {
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (!row) {
+        console.error('Row not found for index:', rowIndex);
+        return;
+    }
+    
+    console.log('🔄 Populating row', rowIndex, 'with item:', item.name, 'batch:', batch.batch_no);
+    
+    // Use batch's sale rate if available, otherwise use item's sale rate
+    const rate = parseFloat(batch.avg_s_rate || batch.s_rate || item.s_rate || 0);
+    
+    // Format expiry date for display
+    let expiryDisplay = '';
+    if (batch.expiry_display) {
+        expiryDisplay = batch.expiry_display;
+    } else if (batch.expiry_date) {
+        try {
+            const date = new Date(batch.expiry_date);
+            expiryDisplay = date.toLocaleDateString('en-GB', { month: '2-digit', year: '2-digit' }).replace('/', '/');
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    // Get input fields
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    const nameInput = row.querySelector('input[name*="[item_name]"]');
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expiryInput = row.querySelector('input[name*="[expiry]"]');
+    const rateInput = row.querySelector('input[name*="[rate]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    
+    // Populate fields
+    if (codeInput) codeInput.value = item.bar_code || '';
+    if (nameInput) nameInput.value = item.name || '';
+    if (batchInput) batchInput.value = batch.batch_no || '';
+    if (expiryInput) expiryInput.value = expiryDisplay;
+    if (rateInput) rateInput.value = rate.toFixed(2);
+    if (mrpInput) mrpInput.value = parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2);
+    
+    // Store item data in row attributes
+    row.setAttribute('data-item-id', item.id);
+    row.setAttribute('data-hsn-code', item.hsn_code || '');
+    row.setAttribute('data-cgst', item.cgst_percent || 0);
+    row.setAttribute('data-sgst', item.sgst_percent || 0);
+    row.setAttribute('data-cess', item.cess_percent || 0);
+    row.setAttribute('data-packing', item.packing || '');
+    row.setAttribute('data-unit', item.unit || '');
+    row.setAttribute('data-company', item.company_name || item.company || '');
+    row.setAttribute('data-case-qty', item.case_qty || 0);
+    row.setAttribute('data-box-qty', item.box_qty || 0);
+    
+    // Store batch purchase details
+    row.setAttribute('data-batch-purchase-rate', batch.avg_pur_rate || batch.pur_rate || 0);
+    row.setAttribute('data-batch-cost-gst', batch.avg_cost_gst || batch.cost_gst || 0);
+    row.setAttribute('data-batch-supplier', batch.supplier_name || '');
+    row.setAttribute('data-batch-purchase-date', batch.purchase_date_display || batch.purchase_date || '');
+    
+    // 🔥 IMPORTANT: Store batch ID for quantity reduction (must be number)
+    const batchId = batch.id ? parseInt(batch.id) : '';
+    row.setAttribute('data-batch-id', batchId);
+    console.log('🔑 Batch ID stored in row:', batchId);
+    
+    // Calculate row amount
+    calculateRowAmount(rowIndex);
+    
+    // Update row color
+    updateRowColor(rowIndex);
+    
+    // Select the row
+    selectRow(rowIndex);
+    
+    // Update calculation section
+    updateCalculationSection(rowIndex);
+    
+    // Update detailed summary
+    updateDetailedSummary(rowIndex);
+    
+    // Calculate totals
+    calculateTotal();
+    calculateSummary();
+    
+    // Focus on qty field for immediate entry
+    setTimeout(() => {
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+    
+    console.log('✅ Row populated successfully');
+}
+
 
 // Find first empty row that can be reused
 function findFirstEmptyRow() {
@@ -2303,57 +2410,52 @@ function moveToNextRow(currentRowIndex) {
 }
 
 // Fetch item details when code is entered/changed
+// 🔥 MODIFIED: Now opens batch selection modal first, then populates row after batch selection
 function fetchItemDetailsForRow(itemCode, rowIndex) {
     const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.item) {
-                // Update row with item data
-                const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-                if (row) {
-                    // Update item name if empty
-                    const nameInput = row.querySelector('input[name*="[item_name]"]');
-                    if (nameInput && !nameInput.value.trim()) {
-                        nameInput.value = data.item.name || '';
-                    }
-                    
-                    // Update MRP if empty
-                    const mrpInput = row.querySelector('input[name*="[mrp]"]');
-                    if (mrpInput) {
-                        mrpInput.value = parseFloat(data.item.mrp || 0).toFixed(2);
-                    }
-                    
-                    // Update row attributes
-                    row.setAttribute('data-hsn-code', data.item.hsn_code || '');
-                    row.setAttribute('data-cgst', data.item.cgst_percent || 0);
-                    row.setAttribute('data-sgst', data.item.sgst_percent || 0);
-                    row.setAttribute('data-cess', data.item.cess_percent || 0);
-                    row.setAttribute('data-packing', data.item.packing || '');
-                    row.setAttribute('data-unit', data.item.unit || '1');
-                    row.setAttribute('data-company', data.item.company_name || data.item.company || '');
-                    row.setAttribute('data-case-qty', data.item.case_qty || 0);
-                    row.setAttribute('data-box-qty', data.item.box_qty || 0);
-                    
-                    // Update sale rate if empty
-                    const rateInput = row.querySelector('input[name*="[rate]"]');
-                    if (rateInput && (!rateInput.value || parseFloat(rateInput.value) === 0)) {
-                        rateInput.value = parseFloat(data.item.s_rate || 0).toFixed(2);
-                        calculateRowAmount(rowIndex);
-                    }
-                }
+                console.log('📱 Barcode scanned! Item found:', data.item.name);
+                console.log('🔢 Item ID:', data.item.id);
                 
-                // Update detailed summary
-                updateDetailedSummary(rowIndex);
+                // 🔥 Store the row index for later population after batch selection
+                pendingBarcodeRowIndex = rowIndex;
                 
-                // Update calculation section
-                updateCalculationSection(rowIndex);
+                // 🔥 Store item data for batch selection (similar to pendingItemSelection)
+                // Create item object matching the format expected by openBatchSelectionModal
+                const itemForBatch = {
+                    id: data.item.id,
+                    name: data.item.name,
+                    packing: data.item.packing,
+                    bar_code: itemCode,
+                    hsn_code: data.item.hsn_code,
+                    s_rate: data.item.s_rate,
+                    mrp: data.item.mrp,
+                    cgst_percent: data.item.cgst_percent,
+                    sgst_percent: data.item.sgst_percent,
+                    cess_percent: data.item.cess_percent,
+                    case_qty: data.item.case_qty,
+                    box_qty: data.item.box_qty,
+                    unit: data.item.unit || '1',
+                    company_name: data.item.company_name || data.item.company || ''
+                };
+                
+                // 🔥 Store item for batch selection
+                pendingItemSelection = itemForBatch;
+                
+                // 🔥 Open batch selection modal
+                openBatchSelectionModal(itemForBatch);
+                
             } else {
-                console.log('Item not found:', itemCode);
+                console.log('❌ Item not found for barcode:', itemCode);
+                showToast(`Item not found for barcode: ${itemCode}`, 'error', 'Item Not Found');
             }
         })
         .catch(error => {
             console.error('Error fetching item:', error);
+            showToast('Error fetching item details', 'error', 'Error');
         });
 }
 
