@@ -386,6 +386,122 @@
             </li>
           </ul>
         </li>
+
+        <!-- Reports Menu -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Reports
+          </a>
+          <ul class="dropdown-menu">
+            <!-- Sales Reports -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.reports.sales') }}">Sales Reports</a>
+            </li>
+
+            <!-- Purchase Reports -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.reports.purchase') }}">Purchase Reports</a>
+            </li>
+
+            <!-- Inventory Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Inventory Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Stock Report</a></li>
+                <li><a class="dropdown-item" href="#">Stock Ledger</a></li>
+                <li><a class="dropdown-item" href="#">Stock Valuation</a></li>
+                <li><a class="dropdown-item" href="#">Reorder Level Report</a></li>
+              </ul>
+            </li>
+
+            <!-- Management Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Management Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Profit & Loss</a></li>
+                <li><a class="dropdown-item" href="#">Balance Sheet</a></li>
+                <li><a class="dropdown-item" href="#">Trial Balance</a></li>
+              </ul>
+            </li>
+
+            <!-- Misc. Transaction Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Misc. Transaction Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Stock Transfer Report</a></li>
+                <li><a class="dropdown-item" href="#">Sample Report</a></li>
+                <li><a class="dropdown-item" href="#">Adjustment Report</a></li>
+              </ul>
+            </li>
+
+            <li><hr class="dropdown-divider"></li>
+
+            <!-- Breakage/Expiry Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Breakage/Expiry Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Breakage Report</a></li>
+                <li><a class="dropdown-item" href="#">Expiry Report</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.batches.expiry-report') }}">Batch Expiry Report</a></li>
+              </ul>
+            </li>
+
+            <!-- Receipt / Payment Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Receipt / Payment Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Receipt Report</a></li>
+                <li><a class="dropdown-item" href="#">Payment Report</a></li>
+                <li><a class="dropdown-item" href="#">Outstanding Report</a></li>
+              </ul>
+            </li>
+
+            <!-- Financial Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Financial Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Day Book</a></li>
+                <li><a class="dropdown-item" href="#">Cash Book</a></li>
+                <li><a class="dropdown-item" href="#">Bank Book</a></li>
+                <li><a class="dropdown-item" href="#">Ledger Report</a></li>
+              </ul>
+            </li>
+
+            <li><hr class="dropdown-divider"></li>
+
+            <!-- Other Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Other Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Customer List</a></li>
+                <li><a class="dropdown-item" href="#">Supplier List</a></li>
+                <li><a class="dropdown-item" href="#">Item List</a></li>
+              </ul>
+            </li>
+
+            <!-- Label Generation -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Label Generation</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">Item Labels</a></li>
+                <li><a class="dropdown-item" href="#">Barcode Labels</a></li>
+              </ul>
+            </li>
+
+            <li><hr class="dropdown-divider"></li>
+
+            <!-- GST Reports -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">GST Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#">GSTR-1</a></li>
+                <li><a class="dropdown-item" href="#">GSTR-2</a></li>
+                <li><a class="dropdown-item" href="#">GSTR-3B</a></li>
+                <li><a class="dropdown-item" href="#">HSN Summary</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
       </ul>
       <li class="nav-item d-none d-sm-inline">
         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown"
