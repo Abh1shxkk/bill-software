@@ -726,6 +726,16 @@ Route::middleware(['admin'])->group(function () {
         Route::post('bank-transaction', [\App\Http\Controllers\Admin\BankTransactionController::class, 'store'])->name('bank-transaction.store');
         Route::get('bank-transaction/{id}', [\App\Http\Controllers\Admin\BankTransactionController::class, 'show'])->name('bank-transaction.show');
         Route::delete('bank-transaction/{id}', [\App\Http\Controllers\Admin\BankTransactionController::class, 'destroy'])->name('bank-transaction.destroy');
+
+        // Sale Return Replacement Routes
+        Route::get('sale-return-replacement', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'index'])->name('sale-return-replacement.index');
+        Route::get('sale-return-replacement/transaction', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'transaction'])->name('sale-return-replacement.transaction');
+        Route::get('sale-return-replacement/modification', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'modification'])->name('sale-return-replacement.modification');
+        Route::get('sale-return-replacement/get/{trnNo}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'getByTrnNo'])->name('sale-return-replacement.get');
+        Route::post('sale-return-replacement', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'store'])->name('sale-return-replacement.store');
+        Route::get('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'show'])->name('sale-return-replacement.show');
+        Route::put('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'update'])->name('sale-return-replacement.update');
+        Route::delete('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'destroy'])->name('sale-return-replacement.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {

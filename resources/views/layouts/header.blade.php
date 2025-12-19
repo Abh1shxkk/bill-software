@@ -159,6 +159,16 @@
                     <li><a class="dropdown-item" href="{{ route('admin.replacement-received.index') }}">Replacement Received Invoice</a></li>
                   </ul>
                 </li>
+
+                <!-- Sale Return Replacement (RG) -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sale Return Replacement</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-return-replacement.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-return-replacement.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-return-replacement.index') }}">Invoice</a></li>
+                  </ul>
+                </li>
                 
                 <!-- Stock Adjustment -->
                 <li class="dropdown-submenu">
