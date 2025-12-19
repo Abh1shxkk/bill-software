@@ -562,7 +562,7 @@
                 <div class="header-row">
                     <div class="field-group">
                         <label>Series:</label>
-                        <select class="form-control" name="series" id="seriesSelect" style="width: 60px;" onchange="updateInvoiceType()">
+                        <select class="form-control no-select2" name="series" id="seriesSelect" style="width: 100px; padding: 2px 4px; font-weight: 600;" onchange="updateInvoiceType()">
                             <option value="SB" selected>SB</option>
                             <option value="S2">S2</option>
                         </select>
