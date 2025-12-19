@@ -258,6 +258,16 @@
                     <li><a class="dropdown-item" href="{{ route('admin.claim-to-supplier.index') }}">Claim Invoices</a></li>
                   </ul>
                 </li>
+
+                <!-- Sale Voucher (HSN) -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sale Voucher (HSN)</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-voucher.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-voucher.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-voucher.index') }}">Invoice</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
 

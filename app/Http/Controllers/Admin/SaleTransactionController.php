@@ -1023,7 +1023,10 @@ class SaleTransactionController extends Controller
      */
     private function generateInvoiceNo()
     {
-        $lastTransaction = SaleTransaction::orderBy('id', 'desc')->first();
+        // Only consider invoices with proper INV-XXXXXX format
+        $lastTransaction = SaleTransaction::where('invoice_no', 'LIKE', 'INV-%')
+            ->orderByRaw('CAST(SUBSTRING(invoice_no, 5) AS UNSIGNED) DESC')
+            ->first();
         $nextNumber = $lastTransaction ? (intval(preg_replace('/[^0-9]/', '', $lastTransaction->invoice_no)) + 1) : 1;
         return 'INV-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
