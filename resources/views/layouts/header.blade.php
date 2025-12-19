@@ -304,6 +304,29 @@
                 Deposit Slip
               </a>
             </li>
+
+            <li><hr class="dropdown-divider"></li>
+
+            <!-- Voucher Entry -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.voucher-entry.transaction') }}">
+                Voucher Entry
+              </a>
+            </li>
+
+            <!-- Voucher Purchase (Input GST) -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.voucher-purchase.transaction') }}">
+                Voucher Purchase (Input GST)
+              </a>
+            </li>
+
+            <!-- Voucher Income (Output GST) -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.voucher-income.transaction') }}">
+                Voucher Income (Output GST)
+              </a>
+            </li>
           </ul>
         </li>
       </ul>
