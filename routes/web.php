@@ -54,6 +54,8 @@ use App\Http\Controllers\Admin\SampleIssuedController;
 use App\Http\Controllers\Admin\SampleReceivedController;
 use App\Http\Controllers\Admin\GodownBreakageExpiryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\PurchaseReportController;
 use App\Http\Controllers\ProfileController;
 
 // Auth routes
@@ -178,6 +180,18 @@ Route::middleware(['admin'])->group(function () {
         Route::get('batches/{batch}/stock-ledger', [BatchController::class, 'stockLedger'])->name('batches.stock-ledger');
         Route::get('batches/expiry/report', [BatchController::class, 'expiryReport'])->name('batches.expiry-report');
         Route::get('api/item-batches/{itemId}', [BatchController::class, 'getItemBatches'])->name('api.item-batches');
+        
+        // Sales Reports
+        Route::get('reports/sales', [SalesReportController::class, 'index'])->name('reports.sales');
+        Route::get('reports/sales/export-csv', [SalesReportController::class, 'exportCsv'])->name('reports.sales.export-csv');
+        Route::get('reports/sales/export-pdf', [SalesReportController::class, 'exportPdf'])->name('reports.sales.export-pdf');
+        Route::get('reports/sales/chart-data', [SalesReportController::class, 'getChartData'])->name('reports.sales.chart-data');
+        
+        // Purchase Reports
+        Route::get('reports/purchase', [PurchaseReportController::class, 'index'])->name('reports.purchase');
+        Route::get('reports/purchase/export-csv', [PurchaseReportController::class, 'exportCsv'])->name('reports.purchase.export-csv');
+        Route::get('reports/purchase/export-pdf', [PurchaseReportController::class, 'exportPdf'])->name('reports.purchase.export-pdf');
+        
         Route::get('api/verify-batch-supplier', [PurchaseReturnController::class, 'verifyBatchSupplier'])->name('api.verify-batch-supplier');
         Route::get('api/party-details/{type}/{id}', [ItemController::class, 'getPartyDetails'])->name('api.party-details');
         
