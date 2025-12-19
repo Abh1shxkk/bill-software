@@ -50,11 +50,11 @@ class VoucherIncomeController extends Controller
         
         $generalLedgers = GeneralLedger::orderBy('account_name')->get();
         $cashBankBooks = CashBankBook::orderBy('name')->get();
-        $SaleLedgers = SaleLedger::orderBy('ledger_name')->get();
+        $salesLedgers = SaleLedger::orderBy('ledger_name')->get();
         $nextVoucherNo = IncomeVoucher::getNextVoucherNo();
 
         return view('admin.voucher-income.transaction', compact(
-            'customers', 'hsnCodes', 'generalLedgers', 'cashBankBooks', 'SaleLedgers', 'nextVoucherNo'
+            'customers', 'hsnCodes', 'generalLedgers', 'cashBankBooks', 'salesLedgers', 'nextVoucherNo'
         ));
     }
 
@@ -153,8 +153,8 @@ class VoucherIncomeController extends Controller
         });
         $generalLedgers = GeneralLedger::orderBy('account_name')->get();
         $cashBankBooks = CashBankBook::orderBy('name')->get();
-        $SaleLedgers = SaleLedger::orderBy('ledger_name')->get();
-        return view('admin.voucher-income.modification', compact('customers', 'hsnCodes', 'generalLedgers', 'cashBankBooks', 'SaleLedgers'));
+        $salesLedgers = SaleLedger::orderBy('ledger_name')->get();
+        return view('admin.voucher-income.modification', compact('customers', 'hsnCodes', 'generalLedgers', 'cashBankBooks', 'salesLedgers'));
     }
 
     public function getByVoucherNo($voucherNo)
