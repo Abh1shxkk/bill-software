@@ -709,6 +709,23 @@ Route::middleware(['admin'])->group(function () {
         Route::get('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'show'])->name('purchase-return-voucher.show');
         Route::put('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'update'])->name('purchase-return-voucher.update');
         Route::delete('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'destroy'])->name('purchase-return-voucher.destroy');
+
+        // Multi Voucher Routes
+        Route::get('multi-voucher', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'index'])->name('multi-voucher.index');
+        Route::get('multi-voucher/transaction', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'transaction'])->name('multi-voucher.transaction');
+        Route::get('multi-voucher/modification', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'modification'])->name('multi-voucher.modification');
+        Route::get('multi-voucher/get/{voucherNo}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'getByVoucherNo'])->name('multi-voucher.get');
+        Route::post('multi-voucher', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'store'])->name('multi-voucher.store');
+        Route::get('multi-voucher/{id}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'show'])->name('multi-voucher.show');
+        Route::put('multi-voucher/{id}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'update'])->name('multi-voucher.update');
+        Route::delete('multi-voucher/{id}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'destroy'])->name('multi-voucher.destroy');
+
+        // Bank Transaction Routes
+        Route::get('bank-transaction', [\App\Http\Controllers\Admin\BankTransactionController::class, 'index'])->name('bank-transaction.index');
+        Route::get('bank-transaction/transaction', [\App\Http\Controllers\Admin\BankTransactionController::class, 'transaction'])->name('bank-transaction.transaction');
+        Route::post('bank-transaction', [\App\Http\Controllers\Admin\BankTransactionController::class, 'store'])->name('bank-transaction.store');
+        Route::get('bank-transaction/{id}', [\App\Http\Controllers\Admin\BankTransactionController::class, 'show'])->name('bank-transaction.show');
+        Route::delete('bank-transaction/{id}', [\App\Http\Controllers\Admin\BankTransactionController::class, 'destroy'])->name('bank-transaction.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {

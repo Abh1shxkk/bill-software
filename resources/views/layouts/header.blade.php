@@ -335,8 +335,18 @@
               </a>
             </li>
 
+            
             <li><hr class="dropdown-divider"></li>
-
+            
+            <!-- Voucher Entry -->
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Voucher Entry</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ route('admin.voucher-entry.transaction') }}">Transaction</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.voucher-entry.modification') }}">Modification</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.voucher-entry.index') }}">Invoice</a></li>
+              </ul>
+            </li>
             <!-- Voucher Purchase (Input GST) -->
             <li>
               <a class="dropdown-item" href="{{ route('admin.voucher-purchase.transaction') }}">
