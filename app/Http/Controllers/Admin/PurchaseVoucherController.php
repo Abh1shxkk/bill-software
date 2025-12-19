@@ -3,46 +3,43 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\SaleTransaction;
-use App\Models\SaleTransactionItem;
-use App\Models\Customer;
-use App\Models\SalesMan;
+use App\Models\PurchaseTransaction;
+use App\Models\PurchaseTransactionItem;
+use App\Models\Supplier;
 use App\Models\HsnCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class SaleVoucherController extends Controller
+class PurchaseVoucherController extends Controller
 {
     /**
      * Display a listing of vouchers.
      */
     public function index(Request $request)
     {
-        $query = SaleTransaction::with(['customer', 'salesman', 'items'])
+        $query = PurchaseTransaction::with(['supplier', 'items'])
             ->where('voucher_type', 'voucher');
 
-        // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('invoice_no', 'like', "%{$search}%")
-                  ->orWhereHas('customer', function($q2) use ($search) {
+                $q->where('bill_no', 'like', "%{$search}%")
+                  ->orWhereHas('supplier', function($q2) use ($search) {
                       $q2->where('name', 'like', "%{$search}%");
                   });
             });
         }
 
-        // Date filter
         if ($request->filled('from_date')) {
-            $query->whereDate('sale_date', '>=', $request->from_date);
+            $query->whereDate('bill_date', '>=', $request->from_date);
         }
         if ($request->filled('to_date')) {
-            $query->whereDate('sale_date', '<=', $request->to_date);
+            $query->whereDate('bill_date', '<=', $request->to_date);
         }
 
         $vouchers = $query->orderByDesc('id')->paginate(15);
         
-        return view('admin.sale-voucher.index', compact('vouchers'));
+        return view('admin.purchase-voucher.index', compact('vouchers'));
     }
 
     /**
@@ -50,11 +47,11 @@ class SaleVoucherController extends Controller
      */
     public function show($id)
     {
-        $voucher = SaleTransaction::with(['customer', 'salesman', 'items'])
+        $voucher = PurchaseTransaction::with(['supplier', 'items'])
             ->where('voucher_type', 'voucher')
             ->findOrFail($id);
         
-        return view('admin.sale-voucher.show', compact('voucher'));
+        return view('admin.purchase-voucher.show', compact('voucher'));
     }
 
     /**
@@ -62,29 +59,29 @@ class SaleVoucherController extends Controller
      */
     public function transaction()
     {
-        $customers = Customer::orderBy('name')->get();
-        $salesmen = SalesMan::orderBy('name')->get();
+        $suppliers = Supplier::orderBy('name')->get();
         $hsnCodes = HsnCode::orderBy('hsn_code')->get();
         
-        // Get next invoice number - same format as Sale module (INV-XXXXXX)
-        $nextInvoiceNo = $this->generateInvoiceNo();
+        // Get next trn_no (same sequence as Purchase module - padded format)
+        $lastTransaction = PurchaseTransaction::orderBy('id', 'desc')->first();
+        $lastTrnNo = $lastTransaction ? intval($lastTransaction->trn_no) : 0;
+        $nextTrnNo = str_pad($lastTrnNo + 1, 6, '0', STR_PAD_LEFT);  // Format: 000044
+        $nextBillNo = $nextTrnNo;  // Default bill no same as trn_no
 
-        return view('admin.sale-voucher.transaction', compact(
-            'customers', 'salesmen', 'hsnCodes', 'nextInvoiceNo'
+        return view('admin.purchase-voucher.transaction', compact(
+            'suppliers', 'hsnCodes', 'nextTrnNo', 'nextBillNo'
         ));
     }
 
     /**
-     * Generate next invoice number matching Sale module format
+     * Generate next bill number - same sequence as Purchase module
      */
-    private function generateInvoiceNo()
+    private function generateBillNo()
     {
-        // Only consider invoices with proper INV-XXXXXX format
-        $lastTransaction = SaleTransaction::where('invoice_no', 'LIKE', 'INV-%')
-            ->orderByRaw('CAST(SUBSTRING(invoice_no, 5) AS UNSIGNED) DESC')
-            ->first();
-        $nextNumber = $lastTransaction ? (intval(preg_replace('/[^0-9]/', '', $lastTransaction->invoice_no)) + 1) : 1;
-        return 'INV-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        // Use the same sequence as main Purchase module (trn_no)
+        $lastTransaction = PurchaseTransaction::orderBy('id', 'desc')->first();
+        $nextNumber = $lastTransaction ? (intval($lastTransaction->trn_no) + 1) : 1;
+        return str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -93,14 +90,9 @@ class SaleVoucherController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'sale_date' => 'required|date',
-            'due_date' => 'nullable|date',
-            'customer_id' => 'required|exists:customers,id',
-            'salesman_id' => 'nullable|exists:sales_men,id',
-            'remarks' => 'nullable|string',
+            'bill_date' => 'required|date',
+            'supplier_id' => 'required|exists:suppliers,supplier_id',
             'items' => 'required|array|min:1',
-            'items.*.hsn_code' => 'required|string',
-            'items.*.amount' => 'required|numeric|min:0',
         ]);
 
         try {
@@ -110,62 +102,62 @@ class SaleVoucherController extends Controller
             $grossAmount = 0;
             $totalCgst = 0;
             $totalSgst = 0;
-            $totalTax = 0;
-            $netAmount = 0;
 
             foreach ($request->items as $item) {
-                $grossAmount += floatval($item['gross_amount'] ?? $item['amount'] ?? 0);
+                $grossAmount += floatval($item['amount'] ?? 0);
                 $totalCgst += floatval($item['cgst_amount'] ?? 0);
                 $totalSgst += floatval($item['sgst_amount'] ?? 0);
             }
 
             $totalTax = $totalCgst + $totalSgst;
             $netAmount = $grossAmount + $totalTax;
-
-            // Round off
-            $roundOff = round($netAmount) - $netAmount;
             $netAmount = round($netAmount);
 
-            // Get next invoice number - same format as Sale module (INV-XXXXXX)
-            $invoiceNo = $this->generateInvoiceNo();
+            // Get next trn_no (same sequence as Purchase module - padded format)
+            $lastTransaction = PurchaseTransaction::orderBy('id', 'desc')->first();
+            $lastTrnNo = $lastTransaction ? intval($lastTransaction->trn_no) : 0;
+            $nextTrnNo = $lastTrnNo + 1;
+            $paddedTrnNo = str_pad($nextTrnNo, 6, '0', STR_PAD_LEFT);  // Format: 000044
+            
+            // Use user-provided bill_no
+            $billNo = $request->bill_no ?: $paddedTrnNo;
 
-            // Create voucher transaction with same format as Sale
-            $voucher = SaleTransaction::create([
-                'invoice_no' => $invoiceNo,
-                'series' => 'S2',
+            // Create voucher
+            $voucher = PurchaseTransaction::create([
+                'trn_no' => $paddedTrnNo,
+                'bill_no' => $billNo,
+                'bill_date' => $validated['bill_date'],
+                'receive_date' => $validated['bill_date'],
+                'supplier_id' => $validated['supplier_id'],
                 'voucher_type' => 'voucher',
-                'sale_date' => $validated['sale_date'],
-                'due_date' => $validated['due_date'] ?? $validated['sale_date'],
-                'customer_id' => $validated['customer_id'],
-                'salesman_id' => $validated['salesman_id'],
-                'remarks' => $validated['remarks'],
                 'nt_amount' => $grossAmount,
-                'ft_amount' => $grossAmount,
                 'tax_amount' => $totalTax,
                 'net_amount' => $netAmount,
-                'balance_amount' => $netAmount,
-                'payment_status' => 'unpaid',
+                'remarks' => $request->remarks,
                 'status' => 'completed',
                 'created_by' => auth()->id(),
             ]);
 
-            // Create voucher items
+            // Create items
             $rowOrder = 1;
             foreach ($request->items as $item) {
-                SaleTransactionItem::create([
-                    'sale_transaction_id' => $voucher->id,
-                    'hsn_code' => $item['hsn_code'],
-                    'hsn_description' => $item['hsn_description'] ?? null,
-                    'qty' => $item['qty'] ?? 1,
+                if (empty($item['hsn_code']) && empty($item['amount'])) continue;
+                
+                PurchaseTransactionItem::create([
+                    'purchase_transaction_id' => $voucher->id,
+                    'item_code' => $item['hsn_code'] ?? 'HSN',  // Use HSN code as item code for voucher
+                    'item_name' => 'HSN-' . ($item['hsn_code'] ?? 'Item'),  // Generic item name for voucher
+                    'hsn_code' => $item['hsn_code'] ?? null,
+                    'qty' => $item['qty'] ?? 0,
+                    'pur_rate' => $item['amount'] ?? 0,  // Amount as purchase rate
                     'amount' => $item['amount'] ?? 0,
-                    'gross_amount' => $item['gross_amount'] ?? $item['amount'] ?? 0,
                     'gst_percent' => $item['gst_percent'] ?? 0,
                     'cgst_percent' => $item['cgst_percent'] ?? 0,
                     'cgst_amount' => $item['cgst_amount'] ?? 0,
                     'sgst_percent' => $item['sgst_percent'] ?? 0,
                     'sgst_amount' => $item['sgst_amount'] ?? 0,
                     'tax_amount' => ($item['cgst_amount'] ?? 0) + ($item['sgst_amount'] ?? 0),
-                    'net_amount' => ($item['gross_amount'] ?? $item['amount'] ?? 0) + ($item['cgst_amount'] ?? 0) + ($item['sgst_amount'] ?? 0),
+                    'net_amount' => ($item['amount'] ?? 0) + ($item['cgst_amount'] ?? 0) + ($item['sgst_amount'] ?? 0),
                     'row_order' => $rowOrder++,
                 ]);
             }
@@ -174,9 +166,9 @@ class SaleVoucherController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Sale Voucher saved successfully',
+                'message' => 'Purchase Voucher saved successfully',
                 'voucher_id' => $voucher->id,
-                'invoice_no' => $voucher->invoice_no
+                'bill_no' => $voucher->bill_no
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -188,29 +180,15 @@ class SaleVoucherController extends Controller
     }
 
     /**
-     * Get all HSN codes for modal.
-     */
-    public function getHsnCodes()
-    {
-        $hsnCodes = HsnCode::orderBy('hsn_code')->get();
-        
-        return response()->json([
-            'success' => true,
-            'hsn_codes' => $hsnCodes
-        ]);
-    }
-
-    /**
      * Show modification page.
      */
     public function modification()
     {
-        $customers = Customer::orderBy('name')->get();
-        $salesmen = SalesMan::orderBy('name')->get();
+        $suppliers = Supplier::orderBy('name')->get();
         $hsnCodes = HsnCode::orderBy('hsn_code')->get();
         
-        return view('admin.sale-voucher.modification', compact(
-            'customers', 'salesmen', 'hsnCodes'
+        return view('admin.purchase-voucher.modification', compact(
+            'suppliers', 'hsnCodes'
         ));
     }
 
@@ -219,7 +197,7 @@ class SaleVoucherController extends Controller
      */
     public function getVouchers()
     {
-        $vouchers = SaleTransaction::with('customer')
+        $vouchers = PurchaseTransaction::with('supplier')
             ->where('voucher_type', 'voucher')
             ->orderByDesc('id')
             ->limit(100)
@@ -227,9 +205,9 @@ class SaleVoucherController extends Controller
             ->map(function($v) {
                 return [
                     'id' => $v->id,
-                    'invoice_no' => $v->invoice_no,
-                    'sale_date' => $v->sale_date ? $v->sale_date->format('d/m/Y') : '',
-                    'customer_name' => $v->customer?->name ?? '-',
+                    'bill_no' => $v->bill_no,
+                    'bill_date' => $v->bill_date ? $v->bill_date->format('d/m/Y') : '',
+                    'supplier_name' => $v->supplier?->name ?? '-',
                     'net_amount' => $v->net_amount,
                 ];
             });
@@ -246,7 +224,7 @@ class SaleVoucherController extends Controller
     public function getDetails($id)
     {
         try {
-            $voucher = SaleTransaction::with('items')
+            $voucher = PurchaseTransaction::with('items')
                 ->where('voucher_type', 'voucher')
                 ->findOrFail($id);
 
@@ -254,13 +232,10 @@ class SaleVoucherController extends Controller
                 'success' => true,
                 'voucher' => [
                     'id' => $voucher->id,
-                    'invoice_no' => $voucher->invoice_no,
-                    'sale_date' => $voucher->sale_date ? $voucher->sale_date->format('Y-m-d') : '',
-                    'due_date' => $voucher->due_date ? $voucher->due_date->format('Y-m-d') : '',
-                    'customer_id' => $voucher->customer_id,
-                    'salesman_id' => $voucher->salesman_id,
+                    'bill_no' => $voucher->bill_no,
+                    'bill_date' => $voucher->bill_date ? $voucher->bill_date->format('Y-m-d') : '',
+                    'supplier_id' => $voucher->supplier_id,
                     'remarks' => $voucher->remarks,
-                    'cash_flag' => $voucher->cash_flag,
                     'items' => $voucher->items->map(function($item) {
                         return [
                             'hsn_code' => $item->hsn_code,
@@ -284,15 +259,15 @@ class SaleVoucherController extends Controller
     }
 
     /**
-     * Search voucher by invoice number.
+     * Search voucher by bill number.
      */
     public function searchVoucher(Request $request)
     {
-        $invoiceNo = $request->input('invoice_no');
+        $billNo = $request->input('bill_no');
         
-        $voucher = SaleTransaction::with('items')
+        $voucher = PurchaseTransaction::with('items')
             ->where('voucher_type', 'voucher')
-            ->where('invoice_no', $invoiceNo)
+            ->where('bill_no', $billNo)
             ->first();
 
         if (!$voucher) {
@@ -306,13 +281,10 @@ class SaleVoucherController extends Controller
             'success' => true,
             'voucher' => [
                 'id' => $voucher->id,
-                'invoice_no' => $voucher->invoice_no,
-                'sale_date' => $voucher->sale_date ? $voucher->sale_date->format('Y-m-d') : '',
-                'due_date' => $voucher->due_date ? $voucher->due_date->format('Y-m-d') : '',
-                'customer_id' => $voucher->customer_id,
-                'salesman_id' => $voucher->salesman_id,
+                'bill_no' => $voucher->bill_no,
+                'bill_date' => $voucher->bill_date ? $voucher->bill_date->format('Y-m-d') : '',
+                'supplier_id' => $voucher->supplier_id,
                 'remarks' => $voucher->remarks,
-                'cash_flag' => $voucher->cash_flag,
                 'items' => $voucher->items->map(function($item) {
                     return [
                         'hsn_code' => $item->hsn_code,
@@ -335,18 +307,15 @@ class SaleVoucherController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'sale_date' => 'required|date',
-            'due_date' => 'nullable|date',
-            'customer_id' => 'required|exists:customers,id',
-            'salesman_id' => 'nullable|exists:sales_men,id',
-            'remarks' => 'nullable|string',
+            'bill_date' => 'required|date',
+            'supplier_id' => 'required|exists:suppliers,supplier_id',
             'items' => 'required|array|min:1',
         ]);
 
         try {
             DB::beginTransaction();
 
-            $voucher = SaleTransaction::where('voucher_type', 'voucher')->findOrFail($id);
+            $voucher = PurchaseTransaction::where('voucher_type', 'voucher')->findOrFail($id);
 
             // Calculate totals
             $grossAmount = 0;
@@ -354,48 +323,44 @@ class SaleVoucherController extends Controller
             $totalSgst = 0;
 
             foreach ($request->items as $item) {
-                $grossAmount += floatval($item['gross_amount'] ?? $item['amount'] ?? 0);
+                $grossAmount += floatval($item['amount'] ?? 0);
                 $totalCgst += floatval($item['cgst_amount'] ?? 0);
                 $totalSgst += floatval($item['sgst_amount'] ?? 0);
             }
 
             $totalTax = $totalCgst + $totalSgst;
-            $netAmount = $grossAmount + $totalTax;
-            $roundOff = round($netAmount) - $netAmount;
-            $netAmount = round($netAmount);
+            $netAmount = round($grossAmount + $totalTax);
 
-            // Update voucher
             $voucher->update([
-                'sale_date' => $validated['sale_date'],
-                'due_date' => $validated['due_date'] ?? $validated['sale_date'],
-                'customer_id' => $validated['customer_id'],
-                'salesman_id' => $validated['salesman_id'],
-                'remarks' => $validated['remarks'],
+                'bill_date' => $validated['bill_date'],
+                'supplier_id' => $validated['supplier_id'],
+                'remarks' => $request->remarks,
                 'nt_amount' => $grossAmount,
-                'ft_amount' => $grossAmount,
                 'tax_amount' => $totalTax,
                 'net_amount' => $netAmount,
-                'balance_amount' => $netAmount,
             ]);
 
-            // Delete old items and create new
             $voucher->items()->delete();
 
             $rowOrder = 1;
             foreach ($request->items as $item) {
-                SaleTransactionItem::create([
-                    'sale_transaction_id' => $voucher->id,
-                    'hsn_code' => $item['hsn_code'],
+                if (empty($item['hsn_code']) && empty($item['amount'])) continue;
+                
+                PurchaseTransactionItem::create([
+                    'purchase_transaction_id' => $voucher->id,
+                    'item_code' => $item['hsn_code'] ?? 'HSN',
+                    'item_name' => 'HSN-' . ($item['hsn_code'] ?? 'Item'),
+                    'hsn_code' => $item['hsn_code'] ?? null,
                     'qty' => $item['qty'] ?? 0,
+                    'pur_rate' => $item['amount'] ?? 0,
                     'amount' => $item['amount'] ?? 0,
-                    'gross_amount' => $item['gross_amount'] ?? $item['amount'] ?? 0,
                     'gst_percent' => $item['gst_percent'] ?? 0,
                     'cgst_percent' => $item['cgst_percent'] ?? 0,
                     'cgst_amount' => $item['cgst_amount'] ?? 0,
                     'sgst_percent' => $item['sgst_percent'] ?? 0,
                     'sgst_amount' => $item['sgst_amount'] ?? 0,
                     'tax_amount' => ($item['cgst_amount'] ?? 0) + ($item['sgst_amount'] ?? 0),
-                    'net_amount' => ($item['gross_amount'] ?? $item['amount'] ?? 0) + ($item['cgst_amount'] ?? 0) + ($item['sgst_amount'] ?? 0),
+                    'net_amount' => ($item['amount'] ?? 0) + ($item['cgst_amount'] ?? 0) + ($item['sgst_amount'] ?? 0),
                     'row_order' => $rowOrder++,
                 ]);
             }
@@ -421,7 +386,7 @@ class SaleVoucherController extends Controller
     public function destroy($id)
     {
         try {
-            $voucher = SaleTransaction::where('voucher_type', 'voucher')->findOrFail($id);
+            $voucher = PurchaseTransaction::where('voucher_type', 'voucher')->findOrFail($id);
             $voucher->items()->delete();
             $voucher->delete();
 
@@ -435,5 +400,18 @@ class SaleVoucherController extends Controller
                 'message' => 'Error deleting voucher: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Get HSN codes.
+     */
+    public function getHsnCodes()
+    {
+        $hsnCodes = HsnCode::orderBy('hsn_code')->get();
+        
+        return response()->json([
+            'success' => true,
+            'hsn_codes' => $hsnCodes
+        ]);
     }
 }
