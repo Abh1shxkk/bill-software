@@ -13,6 +13,7 @@ class PurchaseTransaction extends Model
         'trn_no',
         'bill_date',
         'bill_no',
+        'voucher_type',
         'supplier_id',
         'receive_date',
         'due_date',

@@ -662,7 +662,53 @@ Route::middleware(['admin'])->group(function () {
         Route::put('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'update'])->name('voucher-income.update');
         Route::delete('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'destroy'])->name('voucher-income.destroy');
         Route::get('voucher-income-list', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'getVouchers'])->name('voucher-income.get-vouchers');
-        Route::get('voucher-income-search', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'searchVoucher'])->name('voucher-income.search');
+        // Sale Voucher Routes
+        Route::get('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'index'])->name('sale-voucher.index');
+        Route::get('sale-voucher/transaction', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'transaction'])->name('sale-voucher.transaction');
+        Route::get('sale-voucher/modification', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'modification'])->name('sale-voucher.modification');
+        Route::get('sale-voucher/get-vouchers', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getVouchers'])->name('sale-voucher.get-vouchers');
+        Route::get('sale-voucher/search', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'searchVoucher'])->name('sale-voucher.search');
+        Route::get('sale-voucher/{id}/details', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getDetails'])->name('sale-voucher.details');
+        Route::post('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'store'])->name('sale-voucher.store');
+        Route::get('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'show'])->name('sale-voucher.show');
+        Route::put('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'update'])->name('sale-voucher.update');
+        Route::delete('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'destroy'])->name('sale-voucher.destroy');
+
+        // Purchase Voucher Routes
+        Route::get('purchase-voucher', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'index'])->name('purchase-voucher.index');
+        Route::get('purchase-voucher/transaction', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'transaction'])->name('purchase-voucher.transaction');
+        Route::get('purchase-voucher/modification', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'modification'])->name('purchase-voucher.modification');
+        Route::get('purchase-voucher/get-vouchers', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'getVouchers'])->name('purchase-voucher.get-vouchers');
+        Route::get('purchase-voucher/search', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'searchVoucher'])->name('purchase-voucher.search');
+        Route::get('purchase-voucher/{id}/details', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'getDetails'])->name('purchase-voucher.details');
+        Route::post('purchase-voucher', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'store'])->name('purchase-voucher.store');
+        Route::get('purchase-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'show'])->name('purchase-voucher.show');
+        Route::put('purchase-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'update'])->name('purchase-voucher.update');
+        Route::delete('purchase-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'destroy'])->name('purchase-voucher.destroy');
+
+        // Sale Return Voucher Routes
+        Route::get('sale-return-voucher', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'index'])->name('sale-return-voucher.index');
+        Route::get('sale-return-voucher/transaction', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'transaction'])->name('sale-return-voucher.transaction');
+        Route::get('sale-return-voucher/modification', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'modification'])->name('sale-return-voucher.modification');
+        Route::get('sale-return-voucher/get-vouchers', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'getVouchers'])->name('sale-return-voucher.get-vouchers');
+        Route::get('sale-return-voucher/search', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'searchVoucher'])->name('sale-return-voucher.search');
+        Route::get('sale-return-voucher/{id}/details', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'getDetails'])->name('sale-return-voucher.details');
+        Route::post('sale-return-voucher', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'store'])->name('sale-return-voucher.store');
+        Route::get('sale-return-voucher/{id}', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'show'])->name('sale-return-voucher.show');
+        Route::put('sale-return-voucher/{id}', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'update'])->name('sale-return-voucher.update');
+        Route::delete('sale-return-voucher/{id}', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'destroy'])->name('sale-return-voucher.destroy');
+
+        // Purchase Return Voucher Routes
+        Route::get('purchase-return-voucher', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'index'])->name('purchase-return-voucher.index');
+        Route::get('purchase-return-voucher/transaction', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'transaction'])->name('purchase-return-voucher.transaction');
+        Route::get('purchase-return-voucher/modification', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'modification'])->name('purchase-return-voucher.modification');
+        Route::get('purchase-return-voucher/get-vouchers', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'getVouchers'])->name('purchase-return-voucher.get-vouchers');
+        Route::get('purchase-return-voucher/search', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'searchVoucher'])->name('purchase-return-voucher.search');
+        Route::get('purchase-return-voucher/{id}/details', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'getDetails'])->name('purchase-return-voucher.details');
+        Route::post('purchase-return-voucher', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'store'])->name('purchase-return-voucher.store');
+        Route::get('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'show'])->name('purchase-return-voucher.show');
+        Route::put('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'update'])->name('purchase-return-voucher.update');
+        Route::delete('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'destroy'])->name('purchase-return-voucher.destroy');
     });
     // Profile settings page
     Route::get('/profile', function () {

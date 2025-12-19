@@ -12,6 +12,8 @@ class SaleReturnTransaction extends Model
     protected $fillable = [
         'sr_no',
         'series',
+        'voucher_type',
+        'invoice_no',
         'return_date',
         'customer_id',
         'customer_name',
@@ -40,6 +42,7 @@ class SaleReturnTransaction extends Model
         'cl_qty',
         'location',
         'hs_amount',
+        'balance_amount',
         'remarks',
         'status',
         'created_by',

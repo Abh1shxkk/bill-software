@@ -268,6 +268,36 @@
                     <li><a class="dropdown-item" href="{{ route('admin.sale-voucher.index') }}">Invoice</a></li>
                   </ul>
                 </li>
+
+                <!-- Purchase Voucher (HSN) -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Purchase Voucher (HSN)</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.purchase-voucher.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.purchase-voucher.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.purchase-voucher.index') }}">Invoice</a></li>
+                  </ul>
+                </li>
+
+                <!-- Sale Return Voucher (HSN) -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sale Return Voucher (HSN)</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-return-voucher.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-return-voucher.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.sale-return-voucher.index') }}">Invoice</a></li>
+                  </ul>
+                </li>
+
+                <!-- Purchase Return Voucher (HSN) -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Purchase Return Voucher (HSN)</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.purchase-return-voucher.transaction') }}">Transaction</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.purchase-return-voucher.modification') }}">Modification</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.purchase-return-voucher.index') }}">Invoice</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
 
@@ -515,27 +545,80 @@
       });
     }
 
-    // Function to check if submenu should open upward
+    // Function to position submenu using fixed positioning to break out of scrollable parents
     function adjustSubmenuPosition(submenu, submenuDropdown) {
       if (!submenuDropdown) return;
       
-      // Reset position first
-      submenu.classList.remove('dropup');
-      submenuDropdown.style.top = '';
-      submenuDropdown.style.bottom = '';
-      
-      // Get positions
       const rect = submenu.getBoundingClientRect();
-      const menuHeight = submenuDropdown.offsetHeight || 200;
+      const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - rect.top;
       
-      // If not enough space below, open upward
-      if (spaceBelow < menuHeight) {
-        submenu.classList.add('dropup');
-        submenuDropdown.style.top = 'auto';
-        submenuDropdown.style.bottom = '0';
+      // Temporarily show to get dimensions if needed
+      submenuDropdown.style.display = 'block';
+      submenuDropdown.style.visibility = 'hidden';
+      const menuWidth = submenuDropdown.offsetWidth || 220;
+      const menuHeight = submenuDropdown.scrollHeight; // Use scrollHeight to get full height
+      submenuDropdown.style.visibility = '';
+      submenuDropdown.style.display = '';
+
+      // Set fixed positioning to break out of any scrollable container
+      submenuDropdown.style.position = 'fixed';
+      submenuDropdown.style.zIndex = '9999';
+      
+      // Calculate Left Position (Next Container)
+      // Default: Place to the right of the parent item
+      let left = rect.right;
+      
+      // If no space on right, place to the left
+      if (left + menuWidth > viewportWidth) {
+          left = rect.left - menuWidth;
       }
+      submenuDropdown.style.left = left + 'px';
+
+      // Calculate Top Position
+      const headerHeight = 60; // Approximate header height
+      
+      // Strategy:
+      // 1. Try aligning top with parent (Standard)
+      // 2. If it overflows bottom, try aligning bottom to viewport bottom (Shift Up)
+      // 3. If shifting up makes it go above header (Too Tall), then Center it & Scroll.
+      
+      let top = rect.top;
+      
+      // Check if it fits below
+      if (top + menuHeight > viewportHeight) {
+          // Calculate shift up position (align bottom to viewport bottom)
+          const bottomEdge = viewportHeight - 10;
+          let shiftedTop = bottomEdge - menuHeight;
+          
+          if (shiftedTop < headerHeight + 5) {
+             // Case 3: Too tall to fit normally. CENTER IT.
+             let centeredTop = (viewportHeight - menuHeight) / 2;
+             
+             if (centeredTop < headerHeight + 5) {
+                 // Even centered it's too tall/high, clamp to header
+                 centeredTop = headerHeight + 5;
+                 submenuDropdown.style.maxHeight = (viewportHeight - centeredTop - 10) + 'px';
+                 submenuDropdown.style.overflowY = 'auto';
+             } else {
+                 submenuDropdown.style.maxHeight = 'none';
+                 submenuDropdown.style.overflowY = 'visible';
+             }
+             top = centeredTop;
+          } else {
+             // Case 2: Fits if shifted up
+             top = shiftedTop;
+             submenuDropdown.style.maxHeight = 'none';
+             submenuDropdown.style.overflowY = 'visible';
+          }
+      } else {
+          // Case 1: Fits normally
+          submenuDropdown.style.maxHeight = 'none';
+          submenuDropdown.style.overflowY = 'visible';
+      }
+      
+      submenuDropdown.style.top = top + 'px';
+      submenuDropdown.style.bottom = 'auto';
     }
 
     // Submenu functionality for nested dropdowns with Delay
