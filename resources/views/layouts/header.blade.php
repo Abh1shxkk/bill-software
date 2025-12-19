@@ -337,13 +337,6 @@
 
             <li><hr class="dropdown-divider"></li>
 
-            <!-- Voucher Entry -->
-            <li>
-              <a class="dropdown-item" href="{{ route('admin.voucher-entry.transaction') }}">
-                Voucher Entry
-              </a>
-            </li>
-
             <!-- Voucher Purchase (Input GST) -->
             <li>
               <a class="dropdown-item" href="{{ route('admin.voucher-purchase.transaction') }}">
@@ -355,6 +348,20 @@
             <li>
               <a class="dropdown-item" href="{{ route('admin.voucher-income.transaction') }}">
                 Voucher Income (Output GST)
+              </a>
+            </li>
+
+            <!-- Multi Voucher Entry -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.multi-voucher.transaction') }}">
+                Multi Voucher Entry
+              </a>
+            </li>
+
+            <!-- Cash Deposited / Withdrawn from Bank -->
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.bank-transaction.transaction') }}">
+                Cash Deposited / Withdrawn
               </a>
             </li>
           </ul>
