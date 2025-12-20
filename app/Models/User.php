@@ -24,6 +24,13 @@ class User extends Authenticatable
         'password',
         'role',
         'profile_picture',
+        'address',
+        'telephone',
+        'tin_no',
+        'gst_no',
+        'dl_no',
+        'dl_no_1',
+        'licensed_to',
     ];
 
     protected $primaryKey = 'user_id';

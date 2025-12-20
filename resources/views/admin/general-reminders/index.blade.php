@@ -3,23 +3,56 @@
 @section('title', 'General Reminders')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-bell me-2"></i> General Reminders</h4>
-    <div class="text-muted small">Manage your reminders</div>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-bell me-2"></i> General Reminders</h4>
+      <div class="text-muted small">Manage your reminders</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.general-reminders.create'),
+        'tableBodyId' => 'reminder-table-body',
+        'checkboxClass' => 'general-reminders-checkbox'
+    ])
   </div>
   <div class="d-flex gap-2">
     <button type="button" id="delete-selected-general-reminders-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteGeneralReminders()">
       <i class="bi bi-trash me-2"></i>Delete Selected (<span id="selected-general-reminders-count">0</span>)
     </button>
-    <a href="{{ route('admin.general-reminders.create') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle"></i> Add New Reminder
-    </a>
   </div>
 </div>
 
-<div class="card shadow-sm">
-  <div class="table-responsive" id="reminder-table-wrapper" style="position: relative;">
+<div class="card shadow-sm border-0 rounded">
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="GET" action="{{ route('admin.general-reminders.index') }}" class="row g-3" id="general-reminders-filter-form">
+        <div class="col-md-3">
+          <label for="gr_search_field" class="form-label">Search By</label>
+          <select class="form-select" id="gr_search_field" name="search_field">
+            <option value="all" {{ request('search_field', 'all') == 'all' ? 'selected' : '' }}>All Fields</option>
+            <option value="name" {{ request('search_field') == 'name' ? 'selected' : '' }}>Name</option>
+            <option value="code" {{ request('search_field') == 'code' ? 'selected' : '' }}>Code</option>
+            <option value="status" {{ request('search_field') == 'status' ? 'selected' : '' }}>Status</option>
+          </select>
+        </div>
+        <div class="col-md-7">
+          <label for="gr_search" class="form-label">Search</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="gr_search" name="search" value="{{ request('search') }}" placeholder="Type to search..." autocomplete="off">
+            <button class="btn btn-outline-secondary" type="button" id="gr-clear-search" title="Clear search">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="table-responsive" id="reminder-table-wrapper" style="position: relative; min-height: 400px;">
+    <div id="gr-search-loading" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 999; align-items: center; justify-content: center;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
     <table class="table align-middle mb-0" id="reminder-table">
       <thead class="table-light">
         <tr>
@@ -200,7 +233,86 @@ document.addEventListener('DOMContentLoaded', function () {
 
   initInfiniteScroll();
 
-  window.performGeneralRemindersSearch = function() { window.location.reload(); };
+  // ========== SEARCH FUNCTIONALITY ==========
+  let searchTimeout;
+  const filterForm = document.getElementById('general-reminders-filter-form');
+  const searchInput = document.getElementById('gr_search');
+  const searchFieldSelect = document.getElementById('gr_search_field');
+  const clearSearchBtn = document.getElementById('gr-clear-search');
+
+  // AJAX search function
+  window.performGeneralRemindersSearch = function() {
+    if (!filterForm) return;
+    
+    const formData = new FormData(filterForm);
+    const params = new URLSearchParams(formData);
+    
+    // Show loading spinner
+    const loadingSpinner = document.getElementById('gr-search-loading');
+    if (loadingSpinner) loadingSpinner.style.display = 'flex';
+    if (searchInput) searchInput.style.opacity = '0.6';
+    
+    fetch(`{{ route('admin.general-reminders.index') }}?${params.toString()}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const newRows = doc.querySelectorAll('#reminder-table-body tr');
+      const realRows = Array.from(newRows).filter(tr => !tr.querySelector('td[colspan]'));
+      
+      tbody.innerHTML = '';
+      if (realRows.length) {
+        realRows.forEach(tr => tbody.appendChild(tr));
+      } else {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No reminders found</td></tr>';
+      }
+      
+      // Update footer
+      const newFooter = doc.querySelector('.card-footer');
+      const currentFooter = document.querySelector('.card-footer');
+      if (newFooter && currentFooter) {
+        currentFooter.innerHTML = newFooter.innerHTML;
+        initInfiniteScroll();
+      }
+      
+      // Reattach events
+      window.reattachGeneralRemindersEventListeners();
+      window.updateGeneralRemindersSelectedCount();
+    })
+    .catch(error => console.error('Search error:', error))
+    .finally(() => {
+      // Hide loading spinner
+      const loadingSpinner = document.getElementById('gr-search-loading');
+      if (loadingSpinner) loadingSpinner.style.display = 'none';
+      if (searchInput) searchInput.style.opacity = '1';
+    });
+  };
+
+  // Search input with debounce
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(window.performGeneralRemindersSearch, 300);
+    });
+  }
+
+  // Clear search button
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', function() {
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        window.performGeneralRemindersSearch();
+      }
+    });
+  }
+
+  // Trigger search on field change
+  if (searchFieldSelect) {
+    searchFieldSelect.addEventListener('change', window.performGeneralRemindersSearch);
+  }
 
   let generalRemindersPageElements = {
     selectAllCheckbox: document.getElementById('select-all-general-reminders'),

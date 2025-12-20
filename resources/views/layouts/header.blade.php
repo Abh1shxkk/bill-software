@@ -502,8 +502,46 @@
             </li>
           </ul>
         </li>
+
+        <!-- Administration Menu -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+            Administration
+          </a>
+          <ul class="dropdown-menu">
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.administration.hotkeys.index') }}">
+                <i class="bi bi-keyboard me-2"></i>Hotkey Management
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{{ route('profile.settings') }}">
+                <i class="bi bi-gear me-2"></i>Settings
+              </a>
+            </li>
+          </ul>
+        </li>
       </ul>
-      <li class="nav-item d-none d-sm-inline">
+      
+      <!-- Right Side Icons -->
+      <ul class="navbar-nav align-items-center">
+        <!-- Keyboard Shortcuts Button -->
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)" onclick="if(typeof createHelpPanel === 'function') createHelpPanel();" title="Keyboard Shortcuts (F1)" style="padding: 0.5rem 0.75rem;">
+            <i class="bi bi-keyboard" style="font-size: 1.2rem;"></i>
+          </a>
+        </li>
+        
+        <!-- Calculator Button -->
+        <li class="nav-item">
+          <a class="nav-link" href="javascript:void(0)" onclick="openHeaderCalculator();" title="Calculator (Ctrl+Shift+K)" style="padding: 0.5rem 0.75rem;">
+            <i class="bi bi-calculator" style="font-size: 1.2rem;"></i>
+          </a>
+        </li>
+        
+        <!-- Profile Dropdown -->
+        <li class="nav-item d-none d-sm-inline">
         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown"
           aria-expanded="false">
           <img
@@ -859,5 +897,166 @@
         closeAllSubmenus();
       }
     });
+  });
+
+  // ========== GLOBAL CALCULATOR ==========
+  let headerCalcExpression = '';
+  
+  function openHeaderCalculator() {
+    // Check if calculator already exists
+    if (document.getElementById('header-calculator-modal')) {
+      document.getElementById('header-calculator-modal').style.display = 'block';
+      return;
+    }
+    
+    // Create calculator modal
+    const calcModal = document.createElement('div');
+    calcModal.id = 'header-calculator-modal';
+    calcModal.innerHTML = `
+      <style>
+        #header-calculator-modal {
+          position: fixed;
+          top: 60px;
+          right: 20px;
+          z-index: 10001;
+          animation: calcSlideDown 0.2s ease-out;
+        }
+        @keyframes calcSlideDown {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .header-calc-container {
+          background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+          border-radius: 12px;
+          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+          overflow: hidden;
+          width: 260px;
+        }
+        .header-calc-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 10px 14px;
+          background: rgba(255,255,255,0.1);
+          color: white;
+        }
+        .header-calc-header h6 { margin: 0; font-size: 0.85rem; font-weight: 600; }
+        .header-calc-body { padding: 12px; }
+        .header-calc-display {
+          width: 100%;
+          background: #0f172a;
+          border: none;
+          color: #22d3ee;
+          font-size: 1.6rem;
+          font-family: 'Consolas', monospace;
+          text-align: right;
+          padding: 12px;
+          border-radius: 8px;
+          margin-bottom: 10px;
+          font-weight: 600;
+        }
+        .header-calc-buttons {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 6px;
+        }
+        .header-calc-btn {
+          padding: 12px;
+          font-size: 1.1rem;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+          background: #334155;
+          color: white;
+          font-weight: 600;
+        }
+        .header-calc-btn:hover { background: #475569; transform: scale(1.05); }
+        .header-calc-btn:active { transform: scale(0.95); }
+        .header-calc-btn.op { background: #6366f1; }
+        .header-calc-btn.op:hover { background: #4f46e5; }
+        .header-calc-btn.clear { background: #ef4444; }
+        .header-calc-btn.clear:hover { background: #dc2626; }
+        .header-calc-btn.equals { background: #10b981; }
+        .header-calc-btn.equals:hover { background: #059669; }
+        .header-calc-btn.zero { grid-column: span 2; }
+      </style>
+      <div class="header-calc-container">
+        <div class="header-calc-header">
+          <h6><i class="bi bi-calculator me-2"></i>Calculator</h6>
+          <button type="button" class="btn-close btn-close-white btn-sm" onclick="closeHeaderCalculator()"></button>
+        </div>
+        <div class="header-calc-body">
+          <input type="text" id="header-calc-display" class="header-calc-display" readonly value="0">
+          <div class="header-calc-buttons">
+            <button class="header-calc-btn clear" onclick="headerCalcClear()">C</button>
+            <button class="header-calc-btn op" onclick="headerCalcBackspace()">⌫</button>
+            <button class="header-calc-btn op" onclick="headerCalcInput('%')">%</button>
+            <button class="header-calc-btn op" onclick="headerCalcInput('/')">÷</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('7')">7</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('8')">8</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('9')">9</button>
+            <button class="header-calc-btn op" onclick="headerCalcInput('*')">×</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('4')">4</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('5')">5</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('6')">6</button>
+            <button class="header-calc-btn op" onclick="headerCalcInput('-')">−</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('1')">1</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('2')">2</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('3')">3</button>
+            <button class="header-calc-btn op" onclick="headerCalcInput('+')">+</button>
+            <button class="header-calc-btn zero" onclick="headerCalcInput('0')">0</button>
+            <button class="header-calc-btn" onclick="headerCalcInput('.')">.</button>
+            <button class="header-calc-btn equals" onclick="headerCalcEquals()">=</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(calcModal);
+  }
+  
+  function closeHeaderCalculator() {
+    const modal = document.getElementById('header-calculator-modal');
+    if (modal) modal.style.display = 'none';
+  }
+  
+  function headerCalcInput(val) {
+    if (headerCalcExpression === '0' && val !== '.') headerCalcExpression = val;
+    else headerCalcExpression += val;
+    document.getElementById('header-calc-display').value = headerCalcExpression || '0';
+  }
+  
+  function headerCalcClear() {
+    headerCalcExpression = '';
+    document.getElementById('header-calc-display').value = '0';
+  }
+  
+  function headerCalcBackspace() {
+    headerCalcExpression = headerCalcExpression.slice(0, -1);
+    document.getElementById('header-calc-display').value = headerCalcExpression || '0';
+  }
+  
+  function headerCalcEquals() {
+    try {
+      let result = eval(headerCalcExpression);
+      result = Math.round(result * 100) / 100;
+      document.getElementById('header-calc-display').value = result;
+      headerCalcExpression = result.toString();
+    } catch (e) {
+      document.getElementById('header-calc-display').value = 'Error';
+      headerCalcExpression = '';
+    }
+  }
+  
+  // Close modals on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeHeaderCalculator();
+      // Also close the shortcuts panel from keyboard-shortcuts.js
+      const shortcutPanel = document.getElementById('shortcut-help-panel');
+      const shortcutBackdrop = document.getElementById('shortcut-help-backdrop');
+      if (shortcutPanel) shortcutPanel.remove();
+      if (shortcutBackdrop) shortcutBackdrop.remove();
+    }
   });
 </script>

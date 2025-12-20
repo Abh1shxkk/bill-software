@@ -2275,6 +2275,13 @@
             }
         });
     </script>
+    
+    <!-- Global Keyboard Shortcuts (EasySol-style) - Press F1 for help -->
+    @include('layouts.partials.keyboard-shortcuts-config')
+    <script src="{{ asset('js/keyboard-shortcuts.js') }}"></script>
+    
+    <!-- Transaction Shortcuts - End key to save -->
+    @include('layouts.partials.transaction-shortcuts')
 </body>
 
 </html>

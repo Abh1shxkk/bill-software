@@ -101,6 +101,42 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Category-wise sales distribution (for pie chart)
+        // Note: items table has 'category' column (string), not category_id
+        $categorySales = DB::table('sale_transaction_items')
+            ->join('items', 'sale_transaction_items.item_id', '=', 'items.id')
+            ->select(
+                DB::raw('COALESCE(NULLIF(items.category, ""), "Uncategorized") as category'),
+                DB::raw('SUM(sale_transaction_items.net_amount) as total_amount')
+            )
+            ->groupBy('items.category')
+            ->orderBy('total_amount', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Salesman performance (for bar chart)
+        $salesmanPerformance = DB::table('sale_transactions')
+            ->join('sales_men', 'sale_transactions.salesman_id', '=', 'sales_men.id')
+            ->select(
+                'sales_men.name',
+                DB::raw('COUNT(*) as total_sales'),
+                DB::raw('SUM(sale_transactions.net_amount) as total_amount')
+            )
+            ->whereMonth('sale_transactions.sale_date', Carbon::now()->month)
+            ->whereYear('sale_transactions.sale_date', Carbon::now()->year)
+            ->groupBy('sales_men.id', 'sales_men.name')
+            ->orderBy('total_amount', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Today's quick stats
+        $todayStats = [
+            'sales' => SaleTransaction::whereDate('sale_date', Carbon::today())->count(),
+            'sales_amount' => SaleTransaction::whereDate('sale_date', Carbon::today())->sum('net_amount'),
+            'purchases' => PurchaseTransaction::whereDate('bill_date', Carbon::today())->count(),
+            'purchases_amount' => PurchaseTransaction::whereDate('bill_date', Carbon::today())->sum('net_amount'),
+        ];
+
         return view('admin.dashboard', compact(
             'totalCustomers',
             'totalSuppliers',
@@ -118,7 +154,10 @@ class DashboardController extends Controller
             'recentActivities',
             'monthlyComparison',
             'paymentStatus',
-            'lowStockItems'
+            'lowStockItems',
+            'categorySales',
+            'salesmanPerformance',
+            'todayStats'
         ));
     }
 

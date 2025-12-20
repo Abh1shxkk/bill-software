@@ -750,6 +750,21 @@ Route::middleware(['admin'])->group(function () {
         Route::get('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'show'])->name('sale-return-replacement.show');
         Route::put('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'update'])->name('sale-return-replacement.update');
         Route::delete('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'destroy'])->name('sale-return-replacement.destroy');
+        
+        // =============== ADMINISTRATION ===============
+        Route::prefix('administration')->name('administration.')->group(function () {
+            // Hotkeys Management
+            Route::get('hotkeys', [\App\Http\Controllers\Admin\HotkeyController::class, 'index'])->name('hotkeys.index');
+            Route::get('hotkeys/data', [\App\Http\Controllers\Admin\HotkeyController::class, 'getData'])->name('hotkeys.data');
+            Route::get('hotkeys/{hotkey}/edit', [\App\Http\Controllers\Admin\HotkeyController::class, 'edit'])->name('hotkeys.edit');
+            Route::put('hotkeys/{hotkey}', [\App\Http\Controllers\Admin\HotkeyController::class, 'update'])->name('hotkeys.update');
+            Route::post('hotkeys/{hotkey}/toggle-status', [\App\Http\Controllers\Admin\HotkeyController::class, 'toggleStatus'])->name('hotkeys.toggle-status');
+            Route::post('hotkeys/check-key', [\App\Http\Controllers\Admin\HotkeyController::class, 'checkKey'])->name('hotkeys.check-key');
+            Route::post('hotkeys/reset-to-default', [\App\Http\Controllers\Admin\HotkeyController::class, 'resetToDefault'])->name('hotkeys.reset-to-default');
+        });
+        
+        // Hotkeys JSON API (for keyboard-shortcuts.js)
+        Route::get('api/hotkeys', [\App\Http\Controllers\Admin\HotkeyController::class, 'getHotkeysJson'])->name('api.hotkeys');
     });
     // Profile settings page
     Route::get('/profile', function () {

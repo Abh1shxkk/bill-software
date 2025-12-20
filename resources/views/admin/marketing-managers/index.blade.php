@@ -6,15 +6,19 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">Marketing Managers Management</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="mb-0">Marketing Managers Management</h2>
+                    @include('layouts.partials.module-shortcuts', [
+                        'createRoute' => route('admin.marketing-managers.create'),
+                        'tableBodyId' => 'marketingManagersTableBody',
+                        'checkboxClass' => 'marketing-managers-checkbox'
+                    ])
+                </div>
                 <div class="d-flex gap-2">
                     <button type="button" id="delete-selected-marketing-managers-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteMarketingManagers()">
                         <i class="bi bi-trash me-2"></i>Delete Selected (<span id="selected-marketing-managers-count">0</span>)
                     </button>
-                    <a href="{{ route('admin.marketing-managers.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Add New Marketing Manager
-                    </a>
                 </div>
             </div>
 

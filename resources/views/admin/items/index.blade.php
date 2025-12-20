@@ -1,10 +1,22 @@
 @extends('layouts.admin')
 @section('title','Items')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-box-seam me-2"></i> Items</h4>
-    <div class="text-muted small">Manage your item/master list</div>
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-start gap-3">
+    <div style="min-width: 100px;">
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-box-seam me-2"></i> Items</h4>
+      <div class="text-muted small">Manage your item/master list</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.items.create'),
+        'tableBodyId' => 'item-table-body',
+        'checkboxClass' => 'item-checkbox',
+        'extraShortcuts' => [
+            ['key' => 'F5', 'label' => 'Batches', 'action' => 'batches'],
+            ['key' => 'F10', 'label' => 'Stock Ledger', 'action' => 'stock-ledger'],
+            ['key' => 'F7', 'label' => 'Pending Orders', 'action' => 'pending-orders'],
+        ]
+    ])
   </div>
   <div>
     <button type="button" id="delete-selected-btn" class="btn btn-danger d-none" onclick="confirmMultipleDelete()">
@@ -47,7 +59,7 @@
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-    <table class="table table-hover align-middle mb-0">
+    <table class="table align-middle mb-0">
       <thead class="table-light">
         <tr>
           <th>
@@ -639,6 +651,9 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // Initialize count on page load
   updateSelectedCount();
+  
+  // Note: Keyboard shortcuts (F9, F3, Delete, F5, F10, F7, Arrow keys) and row selection
+  // are handled globally by module-shortcuts.blade.php partial
 });
 
 // Multiple delete confirmation function (global scope for onclick)

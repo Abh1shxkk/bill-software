@@ -61,10 +61,28 @@
     margin: 0;
   }
 </style>
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-people me-2"></i> Customers</h4>
-    <div class="text-muted small">Manage your customer database</div>
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-start gap-3">
+    <div style="min-width: 150px;">
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-people me-2"></i> Customers</h4>
+      <div class="text-muted small">Manage your customer database</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.customers.create'),
+        'tableBodyId' => 'customer-table-body',
+        'checkboxClass' => 'customer-checkbox',
+        'extraShortcuts' => [
+            ['key' => 'F5', 'label' => 'Due List', 'action' => 'dues'],
+            ['key' => 'F10', 'label' => 'Ledger', 'action' => 'ledger'],
+            ['key' => 'F6', 'label' => 'Remarks', 'action' => 'remarks'],
+            ['key' => 'F7', 'label' => 'Note Book', 'action' => 'notebook'],
+            ['key' => 'F8', 'label' => 'Pending Challans', 'action' => 'pending-challans'],
+            ['key' => 'F11', 'label' => 'Expiry Ledger', 'action' => 'expiry-ledger'],
+            ['key' => 'F4', 'label' => 'Spl. Rates', 'action' => 'special-rates'],
+            ['key' => 'F12', 'label' => 'Excise', 'action' => 'excise'],
+            ['key' => 'F2', 'label' => 'List Of Bills', 'action' => 'bills'],
+        ]
+    ])
   </div>
   <div>
     <button type="button" id="delete-selected-customers-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteCustomers()">

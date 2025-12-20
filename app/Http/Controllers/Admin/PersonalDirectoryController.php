@@ -14,7 +14,25 @@ class PersonalDirectoryController extends Controller
 
     public function index(Request $request)
     {
-        $entries = PersonalDirectory::orderBy('id', 'desc')->paginate(10);
+        $query = PersonalDirectory::query();
+        
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $searchField = $request->search_field ?? 'all';
+            
+            if ($searchField === 'all') {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('mobile', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%");
+                });
+            } else {
+                $query->where($searchField, 'like', "%{$search}%");
+            }
+        }
+        
+        $entries = $query->orderBy('id', 'desc')->paginate(10);
         
         // Handle AJAX requests for infinite scroll
         if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {

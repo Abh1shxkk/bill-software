@@ -15,6 +15,13 @@ class ProfileController extends Controller
             'username' => 'required|string|max:255|unique:users,username,'.$user->user_id.',user_id',
             'email' => 'required|email|max:255|unique:users,email,'.$user->user_id.',user_id',
             'profile_picture' => 'nullable|image|max:2048',
+            'address' => 'nullable|string|max:500',
+            'telephone' => 'nullable|string|max:50',
+            'tin_no' => 'nullable|string|max:50',
+            'gst_no' => 'nullable|string|max:50',
+            'dl_no' => 'nullable|string|max:50',
+            'dl_no_1' => 'nullable|string|max:50',
+            'licensed_to' => 'nullable|string|max:255',
         ]);
 
         if ($request->hasFile('profile_picture')) {

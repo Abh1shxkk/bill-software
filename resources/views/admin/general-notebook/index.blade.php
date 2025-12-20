@@ -5,19 +5,53 @@
 @section('content')
 <div class="container-fluid">
     <div class="row mb-4">
-        <div class="col-md-8">
-            <h2 class="mb-0">
-                <i class="bi bi-notebook me-2"></i>General Notebook
-            </h2>
+        <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <h2 class="mb-0">
+                    <i class="bi bi-notebook me-2"></i>General Notebook
+                </h2>
+                @include('layouts.partials.module-shortcuts', [
+                    'createRoute' => route('admin.general-notebook.create'),
+                    'tableBodyId' => 'notebook-table-body',
+                    'checkboxClass' => 'general-notebook-checkbox'
+                ])
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" id="delete-selected-general-notebook-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteGeneralNotebook()">
+                    <i class="bi bi-trash me-2"></i>Delete Selected (<span id="selected-general-notebook-count">0</span>)
+                </button>
+            </div>
         </div>
-        <div class="col-md-4 text-end">
-            <button type="button" id="delete-selected-general-notebook-btn" class="btn btn-danger d-none me-2" onclick="confirmMultipleDeleteGeneralNotebook()">
-                <i class="bi bi-trash me-2"></i>Delete Selected (<span id="selected-general-notebook-count">0</span>)
-            </button>
-            <a href="{{ route('admin.general-notebook.create') }}" class="btn btn-primary">
-                <i class="bi bi-plus-circle me-2"></i>Add New Note
-            </a>
-        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded mb-4">
+      <div class="card-body">
+        <form method="GET" action="{{ route('admin.general-notebook.index') }}" class="row g-3" id="general-notebook-filter-form">
+          <div class="col-md-3">
+            <label for="gn_search_field" class="form-label">Search By</label>
+            <select class="form-select" id="gn_search_field" name="search_field">
+              <option value="all" {{ request('search_field', 'all') == 'all' ? 'selected' : '' }}>All Fields</option>
+              <option value="title" {{ request('search_field') == 'title' ? 'selected' : '' }}>Title</option>
+              <option value="content" {{ request('search_field') == 'content' ? 'selected' : '' }}>Content</option>
+            </select>
+          </div>
+          <div class="col-md-7">
+            <label for="gn_search" class="form-label">Search</label>
+            <div class="input-group">
+              <input type="text" class="form-control" id="gn_search" name="search" value="{{ request('search') }}" placeholder="Type to search..." autocomplete="off">
+              <button class="btn btn-outline-secondary" type="button" id="gn-clear-search" title="Clear search">
+                <i class="bi bi-x-circle"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="gn-search-loading" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 999;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
     </div>
 
     @if ($notebooks->count() > 0)
@@ -40,7 +74,7 @@
                         <th style="width: 10%">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="notebook-table-body">
                     @foreach ($notebooks as $notebook)
                         <tr>
                             <td>
@@ -87,7 +121,79 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  window.performGeneralNotebookSearch = function() { window.location.reload(); };
+  // ========== SEARCH FUNCTIONALITY ==========
+  let searchTimeout;
+  const filterForm = document.getElementById('general-notebook-filter-form');
+  const searchInput = document.getElementById('gn_search');
+  const searchFieldSelect = document.getElementById('gn_search_field');
+  const clearSearchBtn = document.getElementById('gn-clear-search');
+  const tbody = document.getElementById('notebook-table-body');
+
+  // AJAX search function
+  window.performGeneralNotebookSearch = function() {
+    if (!filterForm) return;
+    
+    // Show loading spinner
+    const loadingSpinner = document.getElementById('gn-search-loading');
+    if (loadingSpinner) loadingSpinner.style.display = 'flex';
+    
+    const formData = new FormData(filterForm);
+    const params = new URLSearchParams(formData);
+    
+    fetch(`{{ route('admin.general-notebook.index') }}?${params.toString()}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const newRows = doc.querySelectorAll('#notebook-table-body tr');
+      const realRows = Array.from(newRows).filter(tr => !tr.querySelector('td[colspan]'));
+      
+      if (tbody) {
+        tbody.innerHTML = '';
+        if (realRows.length) {
+          realRows.forEach(tr => tbody.appendChild(tr));
+        } else {
+          tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No notes found</td></tr>';
+        }
+      }
+      
+      // Reattach events
+      document.querySelectorAll('.general-notebook-checkbox').forEach(cb => cb.addEventListener('change', window.updateGeneralNotebookSelectedCount));
+      window.updateGeneralNotebookSelectedCount();
+    })
+    .catch(error => console.error('Search error:', error))
+    .finally(() => {
+      // Hide loading spinner
+      if (loadingSpinner) loadingSpinner.style.display = 'none';
+    });
+  };
+
+  // Search input with debounce
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(window.performGeneralNotebookSearch, 300);
+    });
+  }
+
+  // Clear search button
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', function() {
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        window.performGeneralNotebookSearch();
+      }
+    });
+  }
+
+  // Trigger search on field change
+  if (searchFieldSelect) {
+    searchFieldSelect.addEventListener('change', window.performGeneralNotebookSearch);
+  }
+
   let generalNotebookPageElements = {
     selectAllCheckbox: document.getElementById('select-all-general-notebook'),
     deleteSelectedBtn: document.getElementById('delete-selected-general-notebook-btn'),

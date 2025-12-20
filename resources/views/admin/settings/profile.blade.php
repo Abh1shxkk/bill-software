@@ -71,6 +71,61 @@
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
                                     </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Telephone</label>
+                                        <input type="text" class="form-control @error('telephone') is-invalid @enderror" name="telephone" value="{{ old('telephone', $user->telephone) }}" placeholder="Enter phone number">
+                                        @error('telephone')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Address</label>
+                                        <textarea class="form-control @error('address') is-invalid @enderror" name="address" rows="2" placeholder="Enter address">{{ old('address', $user->address) }}</textarea>
+                                        @error('address')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <h6 class="text-muted border-bottom pb-2"><i class="bi bi-building me-2"></i>Business Information</h6>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">TIN No.</label>
+                                        <input type="text" class="form-control @error('tin_no') is-invalid @enderror" name="tin_no" value="{{ old('tin_no', $user->tin_no) }}" placeholder="Enter TIN number">
+                                        @error('tin_no')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">GST No.</label>
+                                        <input type="text" class="form-control @error('gst_no') is-invalid @enderror" name="gst_no" value="{{ old('gst_no', $user->gst_no) }}" placeholder="Enter GST number">
+                                        @error('gst_no')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">DL No.</label>
+                                        <input type="text" class="form-control @error('dl_no') is-invalid @enderror" name="dl_no" value="{{ old('dl_no', $user->dl_no) }}" placeholder="Enter Drug License number">
+                                        @error('dl_no')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">DL No. 1</label>
+                                        <input type="text" class="form-control @error('dl_no_1') is-invalid @enderror" name="dl_no_1" value="{{ old('dl_no_1', $user->dl_no_1) }}" placeholder="Enter second Drug License number">
+                                        @error('dl_no_1')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Licensed To</label>
+                                        <input type="text" class="form-control @error('licensed_to') is-invalid @enderror" name="licensed_to" value="{{ old('licensed_to', $user->licensed_to) }}" placeholder="Enter licensed to name (e.g., Business/Person name)">
+                                        @error('licensed_to')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
 
                                 <div class="d-flex justify-content-end">

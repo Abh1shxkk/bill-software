@@ -12,9 +12,32 @@ class GeneralNotebookController extends Controller
 {
     use CrudNotificationTrait;
 
-    public function index()
+    public function index(Request $request)
     {
-        $notebooks = GeneralNotebook::paginate(15);
+        $query = GeneralNotebook::query();
+        
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $searchField = $request->search_field ?? 'all';
+            
+            if ($searchField === 'all') {
+                $query->where(function($q) use ($search) {
+                    $q->where('title', 'like', "%{$search}%")
+                      ->orWhere('content', 'like', "%{$search}%");
+                });
+            } else {
+                $query->where($searchField, 'like', "%{$search}%");
+            }
+        }
+        
+        $notebooks = $query->orderBy('id', 'desc')->paginate(15);
+        
+        // Handle AJAX requests for infinite scroll
+        if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return view('admin.general-notebook.index', compact('notebooks'))->render();
+        }
+        
         return view('admin.general-notebook.index', compact('notebooks'));
     }
 

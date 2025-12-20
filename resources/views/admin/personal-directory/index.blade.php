@@ -156,23 +156,56 @@
   }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-person-lines-fill me-2"></i> Personal Directory</h4>
-    <div class="text-muted small">Manage your personal directory entries</div>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-person-lines-fill me-2"></i> Personal Directory</h4>
+      <div class="text-muted small">Manage your personal directory entries</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.personal-directory.create'),
+        'tableBodyId' => 'personal-directory-table-body',
+        'checkboxClass' => 'personal-directory-checkbox'
+    ])
   </div>
   <div class="d-flex gap-2">
     <button type="button" id="delete-selected-personal-directory-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeletePersonalDirectory()">
       <i class="bi bi-trash me-2"></i>Delete Selected (<span id="selected-personal-directory-count">0</span>)
     </button>
-    <a href="{{ route('admin.personal-directory.create') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle"></i> Add New Entry
-    </a>
   </div>
 </div>
 
-<div class="card shadow-sm">
-  <div class="table-responsive" id="personal-directory-table-wrapper" style="position: relative;">
+<div class="card shadow-sm border-0 rounded">
+  <div class="card mb-4">
+    <div class="card-body">
+      <form method="GET" action="{{ route('admin.personal-directory.index') }}" class="row g-3" id="personal-directory-filter-form">
+        <div class="col-md-3">
+          <label for="pd_search_field" class="form-label">Search By</label>
+          <select class="form-select" id="pd_search_field" name="search_field">
+            <option value="all" {{ request('search_field', 'all') == 'all' ? 'selected' : '' }}>All Fields</option>
+            <option value="name" {{ request('search_field') == 'name' ? 'selected' : '' }}>Name</option>
+            <option value="mobile" {{ request('search_field') == 'mobile' ? 'selected' : '' }}>Mobile</option>
+            <option value="email" {{ request('search_field') == 'email' ? 'selected' : '' }}>Email</option>
+          </select>
+        </div>
+        <div class="col-md-7">
+          <label for="pd_search" class="form-label">Search</label>
+          <div class="input-group">
+            <input type="text" class="form-control" id="pd_search" name="search" value="{{ request('search') }}" placeholder="Type to search..." autocomplete="off">
+            <button class="btn btn-outline-secondary" type="button" id="pd-clear-search" title="Clear search">
+              <i class="bi bi-x-circle"></i>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="table-responsive" id="personal-directory-table-wrapper" style="position: relative; min-height: 400px;">
+    <div id="pd-search-loading" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 999; align-items: center; justify-content: center;">
+      <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
     <table class="table align-middle mb-0" id="personal-directory-table">
       <thead class="table-light">
         <tr>
@@ -394,11 +427,86 @@ document.addEventListener('DOMContentLoaded', function () {
 
   initInfiniteScroll();
 
-  // Expose globally for callbacks
+  // ========== SEARCH FUNCTIONALITY ==========
+  let searchTimeout;
+  const filterForm = document.getElementById('personal-directory-filter-form');
+  const searchInput = document.getElementById('pd_search');
+  const searchFieldSelect = document.getElementById('pd_search_field');
+  const clearSearchBtn = document.getElementById('pd-clear-search');
+
+  // AJAX search function
   window.performPersonalDirectorySearch = function() {
-    // Reload page for now
-    window.location.reload();
+    if (!filterForm) return;
+    
+    const formData = new FormData(filterForm);
+    const params = new URLSearchParams(formData);
+    
+    // Show loading spinner
+    const loadingSpinner = document.getElementById('pd-search-loading');
+    if (loadingSpinner) loadingSpinner.style.display = 'flex';
+    if (searchInput) searchInput.style.opacity = '0.6';
+    
+    fetch(`{{ route('admin.personal-directory.index') }}?${params.toString()}`, {
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.text())
+    .then(html => {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const newRows = doc.querySelectorAll('#personal-directory-table-body tr');
+      const realRows = Array.from(newRows).filter(tr => !tr.querySelector('td[colspan]'));
+      
+      tbody.innerHTML = '';
+      if (realRows.length) {
+        realRows.forEach(tr => tbody.appendChild(tr));
+      } else {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No entries found</td></tr>';
+      }
+      
+      // Update footer
+      const newFooter = doc.querySelector('.card-footer');
+      const currentFooter = document.querySelector('.card-footer');
+      if (newFooter && currentFooter) {
+        currentFooter.innerHTML = newFooter.innerHTML;
+        initInfiniteScroll();
+      }
+      
+      // Reattach events
+      window.reattachPersonalDirectoryEventListeners();
+      window.updatePersonalDirectorySelectedCount();
+    })
+    .catch(error => console.error('Search error:', error))
+    .finally(() => {
+      // Hide loading spinner
+      const loadingSpinner = document.getElementById('pd-search-loading');
+      if (loadingSpinner) loadingSpinner.style.display = 'none';
+      if (searchInput) searchInput.style.opacity = '1';
+    });
   };
+
+  // Search input with debounce
+  if (searchInput) {
+    searchInput.addEventListener('keyup', function() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(window.performPersonalDirectorySearch, 300);
+    });
+  }
+
+  // Clear search button
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', function() {
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        window.performPersonalDirectorySearch();
+      }
+    });
+  }
+
+  // Trigger search on field change
+  if (searchFieldSelect) {
+    searchFieldSelect.addEventListener('change', window.performPersonalDirectorySearch);
+  }
 
   // Multiple delete selection management
   let personalDirectoryPageElements = {

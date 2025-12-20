@@ -46,10 +46,17 @@
     font-size: 22px;
   }
 </style>
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Companies</h4>
-    <div class="text-muted small">Manage your company database</div>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Companies</h4>
+      <div class="text-muted small">Manage your company database</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.companies.create'),
+        'tableBodyId' => 'company-table-body',
+        'checkboxClass' => 'company-checkbox'
+    ])
   </div>
   <div>
     <button type="button" id="delete-selected-companies-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteCompanies()">

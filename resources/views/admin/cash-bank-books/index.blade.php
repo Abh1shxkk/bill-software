@@ -1,18 +1,22 @@
 @extends('layouts.admin')
 @section('title','Cash / Bank Books')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cash-stack me-2"></i> Cash / Bank Books</h4>
-    <div class="text-muted small">Manage cash and bank book entries</div>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cash-stack me-2"></i> Cash / Bank Books</h4>
+      <div class="text-muted small">Manage cash and bank book entries</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.cash-bank-books.create'),
+        'tableBodyId' => 'cashbook-table-body',
+        'checkboxClass' => 'cash-bank-books-checkbox'
+    ])
   </div>
   <div class="d-flex gap-2">
     <button type="button" id="delete-selected-cash-bank-books-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteCashBankBooks()">
       <i class="bi bi-trash me-1"></i> Delete Selected (<span id="selected-cash-bank-books-count">0</span>)
     </button>
-    <a href="{{ route('admin.cash-bank-books.create') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle me-1"></i> Add Entry
-    </a>
   </div>
 </div>
 
