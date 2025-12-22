@@ -2320,8 +2320,8 @@
     <!-- Global Keyboard Shortcuts (EasySol-style) - Press F1 for help -->
     @include('layouts.partials.keyboard-shortcuts-config')
     @include('layouts.partials.index-shortcuts-config')
-    <script src="{{ asset('js/keyboard-shortcuts.js') }}"></script>
-    <script src="{{ asset('js/index-shortcuts.js') }}"></script>
+    @include('layouts.partials.keyboard-shortcuts-inline')
+    @include('layouts.partials.index-shortcuts-inline')
     
     <!-- Transaction Shortcuts - End key to save -->
     @include('layouts.partials.transaction-shortcuts')
