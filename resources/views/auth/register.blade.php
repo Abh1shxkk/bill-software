@@ -4,424 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account - Billing Software</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            /* Premium Dark Theme Palette */
+            --bg-color: #030014;
+            --surface-color: #0f0c29;
+            --surface-hover: #1a1640;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.5);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --input-bg: rgba(255, 255, 255, 0.03);
+            
+            /* Gradients */
+            --mesh-1: #4f46e5;
+            --mesh-2: #818cf8;
+            --mesh-3: #c084fc;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
         }
 
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            --dark-bg: #0f0c29;
-            --darker-bg: #0a0819;
-            --card-bg: rgba(255, 255, 255, 0.08);
-            --card-border: rgba(255, 255, 255, 0.18);
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.7);
-            --input-bg: rgba(255, 255, 255, 0.05);
-            --input-border: rgba(255, 255, 255, 0.15);
-            --accent-color: #667eea;
-            --accent-hover: #5568d3;
-            --success-color: #10b981;
-            --error-color: #ef4444;
-        }
-        
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--dark-bg);
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            padding: 1rem 0;
             overflow: hidden;
         }
 
-        /* Interactive Mouse Background Effect */
-        .mouse-glow {
-            position: fixed;
-            width: 600px;
-            height: 600px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.15) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 1;
-            transform: translate(-50%, -50%);
-            transition: all 0.3s ease-out;
-            filter: blur(40px);
-        }
-
-        /* Animated Background Elements */
-        .bg-animation {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* Split Layout */
+        .auth-container {
+            display: flex;
             width: 100%;
             height: 100%;
-            z-index: 0;
-            overflow: hidden;
         }
 
-        .bg-animation .shape {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.15;
-            animation: float 20s infinite ease-in-out;
-        }
-
-        .bg-animation .shape-1 {
-            width: 500px;
-            height: 500px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            top: -10%;
-            left: -10%;
-            animation-delay: 0s;
-        }
-
-        .bg-animation .shape-2 {
-            width: 400px;
-            height: 400px;
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            bottom: -10%;
-            right: -10%;
-            animation-delay: 5s;
-        }
-
-        .bg-animation .shape-3 {
-            width: 350px;
-            height: 350px;
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            animation-delay: 10s;
-        }
-
-        /* Floating Particles */
-        .particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .particle {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background: rgba(102, 126, 234, 0.6);
-            border-radius: 50%;
-            animation: particleFloat 15s infinite ease-in-out;
-        }
-
-        .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 12s; }
-        .particle:nth-child(2) { left: 20%; animation-delay: 2s; animation-duration: 14s; }
-        .particle:nth-child(3) { left: 30%; animation-delay: 4s; animation-duration: 13s; }
-        .particle:nth-child(4) { left: 40%; animation-delay: 1s; animation-duration: 16s; }
-        .particle:nth-child(5) { left: 50%; animation-delay: 3s; animation-duration: 11s; }
-        .particle:nth-child(6) { left: 60%; animation-delay: 5s; animation-duration: 15s; }
-        .particle:nth-child(7) { left: 70%; animation-delay: 2.5s; animation-duration: 12s; }
-        .particle:nth-child(8) { left: 80%; animation-delay: 1.5s; animation-duration: 14s; }
-        .particle:nth-child(9) { left: 90%; animation-delay: 4.5s; animation-duration: 13s; }
-        .particle:nth-child(10) { left: 95%; animation-delay: 0.5s; animation-duration: 16s; }
-
-        @keyframes particleFloat {
-            0%, 100% {
-                transform: translateY(100vh) scale(0);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-                transform: translateY(90vh) scale(1);
-            }
-            90% {
-                opacity: 1;
-                transform: translateY(10vh) scale(1);
-            }
-            100% {
-                transform: translateY(-10vh) scale(0);
-                opacity: 0;
-            }
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translate(0, 0) scale(1);
-            }
-            33% {
-                transform: translate(30px, -50px) scale(1.1);
-            }
-            66% {
-                transform: translate(-20px, 20px) scale(0.9);
-            }
-        }
-
-        /* Main Container */
-        .register-container {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            max-width: 1200px;
-            padding: 2rem;
-        }
-
-        .register-wrapper {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
-            border: 1px solid var(--card-border);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            animation: slideUp 0.6s ease-out;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Left Panel - Branding */
-        .brand-panel {
-            padding: 2.5rem;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        /* Right Panel - Form (Swapped for Register) */
+        .auth-form-side {
+            width: 50%;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: center;
+            padding: 4rem;
             position: relative;
-            overflow: hidden;
+            background: var(--bg-color);
+            z-index: 10;
+            overflow-y: auto; /* Handle smaller screens */
         }
 
-        .brand-panel::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
-            animation: rotate 30s linear infinite;
+        .form-content {
+            width: 100%;
+            max-width: 480px; /* Slightly wider for 2-col layout */
         }
 
-        @keyframes rotate {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
+        .logo-area {
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .brand-content {
-            position: relative;
-            z-index: 1;
-        }
-
-        .brand-logo {
-            width: 70px;
-            height: 70px;
-            background: var(--primary-gradient);
-            border-radius: 20px;
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--mesh-1), var(--mesh-3));
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-            animation: pulse 3s ease-in-out infinite;
-            position: relative;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px var(--accent-glow);
         }
 
-        .brand-logo::after {
-            content: '';
-            position: absolute;
-            inset: -3px;
-            border-radius: 23px;
-            background: var(--primary-gradient);
-            z-index: -1;
-            opacity: 0;
-            animation: logoPulse 3s ease-in-out infinite;
-        }
-
-        @keyframes logoPulse {
-            0%, 100% {
-                opacity: 0;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.3;
-                transform: scale(1.1);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-            }
-            50% {
-                transform: scale(1.05);
-                box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
-            }
-        }
-
-        .brand-logo i {
-            font-size: 2rem;
-            color: white;
-        }
-
-        .brand-title {
-            font-size: 2rem;
+        .logo-text {
+            font-size: 1.5rem;
             font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 0.75rem;
-            line-height: 1.2;
-            background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+            background: linear-gradient(to right, #fff, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
-        .brand-subtitle {
-            font-size: 1rem;
-            color: var(--text-secondary);
-            margin-bottom: 2rem;
-            line-height: 1.6;
-        }
-
-        .feature-list {
-            list-style: none;
-            padding: 0;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            cursor: default;
-        }
-
-        .feature-item:hover {
-            transform: translateX(10px);
-            color: var(--text-primary);
-        }
-
-        .feature-item:hover i {
-            background: rgba(102, 126, 234, 0.4);
-            transform: scale(1.1);
-        }
-
-        .feature-item i {
-            width: 36px;
-            height: 36px;
-            background: rgba(102, 126, 234, 0.2);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            color: var(--accent-color);
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        /* Right Panel - Register Form */
-        .form-panel {
-            padding: 2.5rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .form-header {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-title {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--text-primary);
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
             margin-bottom: 0.5rem;
-            animation: fadeInDown 0.6s ease-out 0.2s both;
+            letter-spacing: -0.02em;
         }
 
-        .form-subtitle {
-            font-size: 1rem;
+        .subtitle {
             color: var(--text-secondary);
-            animation: fadeInDown 0.6s ease-out 0.3s both;
+            margin-bottom: 2.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
         }
 
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Premium Input Fields */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
         }
 
         .form-group {
-            margin-bottom: 1.25rem;
-            animation: fadeInUp 0.5s ease-out both;
+            position: relative;
+            margin-bottom: 1.5rem;
         }
 
-        .form-group:nth-child(1) { animation-delay: 0.1s; }
-        .form-group:nth-child(2) { animation-delay: 0.15s; }
-        .form-group:nth-child(3) { animation-delay: 0.2s; }
-        .form-group:nth-child(4) { animation-delay: 0.25s; }
-        .form-group:nth-child(5) { animation-delay: 0.3s; }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(15px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .form-label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+        .form-group.full-width {
+            grid-column: span 2;
         }
 
         .input-wrapper {
             position: relative;
+        }
+
+        .custom-input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1rem 1rem 3rem;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Fix for Autofill */
+        .custom-input:-webkit-autofill,
+        .custom-input:-webkit-autofill:hover, 
+        .custom-input:-webkit-autofill:focus, 
+        .custom-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px var(--bg-color) inset !important;
+            -webkit-text-fill-color: var(--text-primary) !important;
+            transition: background-color 5000s ease-in-out 0s;
+            caret-color: var(--text-primary);
+        }
+
+        .custom-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.05);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
         .input-icon {
@@ -431,24 +165,39 @@
             transform: translateY(-50%);
             color: var(--text-secondary);
             font-size: 1rem;
-            transition: all 0.3s ease;
+            transition: color 0.3s;
+            z-index: 2;
+        }
+
+        .custom-input:focus + .input-icon {
+            color: var(--accent-primary);
+        }
+
+        .form-label {
+            position: absolute;
+            left: 3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            padding: 0 0.2rem;
+            font-size: 0.95rem;
             z-index: 1;
         }
 
-        .form-control {
-            width: 100%;
-            padding: 0.875rem 1rem 0.875rem 2.75rem;
-            background: var(--input-bg);
-            border: 2px solid var(--input-border);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            outline: none;
-        }
-
-        .form-control.has-toggle {
-            padding-right: 3rem;
+        /* Floating label logic */
+        .custom-input:focus ~ .form-label,
+        .custom-input:not(:placeholder-shown) ~ .form-label,
+        .custom-input:-webkit-autofill ~ .form-label {
+            top: 0;
+            left: 0.8rem;
+            transform: translateY(-50%) scale(0.85);
+            color: var(--accent-primary);
+            background: var(--bg-color);
+            padding: 0 0.4rem;
+            z-index: 2;
         }
 
         .password-toggle {
@@ -460,604 +209,325 @@
             border: none;
             color: var(--text-secondary);
             cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            padding: 0.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
+            transition: color 0.3s;
+            z-index: 2;
         }
 
         .password-toggle:hover {
-            color: var(--accent-color);
-            transform: translateY(-50%) scale(1.1);
+            color: var(--text-primary);
         }
 
-        .password-toggle:focus {
-            outline: none;
-            color: var(--accent-color);
-        }
-
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-
-        .form-control:hover {
-            border-color: rgba(102, 126, 234, 0.5);
-            background: rgba(255, 255, 255, 0.07);
-        }
-
-        .form-control:focus {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15), 0 0 20px rgba(102, 126, 234, 0.1);
-        }
-
-        .input-wrapper.focused .input-icon {
-            color: var(--accent-color);
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .row-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-
-        /* Button Styles with Animations */
-        .btn-register {
+        /* Action Buttons */
+        .btn-primary {
             width: 100%;
-            padding: 1rem;
-            background: var(--primary-gradient);
-            border: none;
-            border-radius: 12px;
+            background: linear-gradient(135deg, var(--mesh-1), var(--accent-primary));
             color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
             position: relative;
             overflow: hidden;
-            margin-top: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 1rem;
         }
 
-        .btn-register::before {
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px var(--accent-primary);
+        }
+
+        /* Shimmer Effect */
+        .btn-primary::after {
             content: '';
             position: absolute;
             top: 0;
             left: -100%;
-            width: 100%;
+            width: 50%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.6s ease;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+            transform: skewX(-20deg);
+            transition: 0.5s;
         }
 
-        .btn-register::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: var(--secondary-gradient);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            z-index: -1;
+        .btn-primary:hover::after {
+            left: 150%;
+            transition: 1s;
         }
 
-        .btn-register:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5), 0 0 40px rgba(102, 126, 234, 0.2);
-        }
-
-        .btn-register:hover::before {
-            left: 100%;
-        }
-
-        .btn-register:hover::after {
-            opacity: 0.3;
-        }
-
-        .btn-register:active {
-            transform: translateY(-1px) scale(0.98);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        /* Ripple Effect */
-        .btn-register .ripple {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
-            transform: scale(0);
-            animation: ripple 0.6s linear;
-            pointer-events: none;
-        }
-
-        @keyframes ripple {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-
-        .btn-register .btn-text {
-            position: relative;
-            z-index: 1;
+        /* Extra Links */
+        .auth-footer {
+            margin-top: 2rem;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
             gap: 0.5rem;
         }
 
-        .btn-register .btn-text i {
-            transition: transform 0.3s ease;
-        }
-
-        .btn-register:hover .btn-text i {
-            transform: translateX(5px);
-        }
-
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 1.5rem 0;
+        .link {
             color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--input-border), transparent);
-        }
-
-        .divider span {
-            padding: 0 1rem;
-        }
-
-        .login-text {
-            text-align: center;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            animation: fadeInUp 0.5s ease-out 0.4s both;
-        }
-
-        .login-link {
-            color: var(--accent-color);
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            transition: color 0.3s;
+        }
+
+        .link:hover {
+            color: var(--text-primary);
+        }
+
+        .link.highlight {
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+
+        .link.highlight:hover {
+            text-decoration: underline;
+        }
+
+        /* Left Panel - Visual (Swapped) */
+        .auth-visual-side {
+            width: 50%;
             position: relative;
+            background: #000;
+            overflow: hidden;
         }
 
-        .login-link::after {
-            content: '';
+        /* Interactive Mesh Gradient Background */
+        .mesh-gradient {
             position: absolute;
-            bottom: -2px;
+            top: 0;
             left: 0;
-            width: 0;
-            height: 2px;
-            background: var(--primary-gradient);
-            transition: width 0.3s ease;
-        }
-
-        .login-link:hover {
-            color: var(--accent-hover);
-        }
-
-        .login-link:hover::after {
             width: 100%;
+            height: 100%;
+            background: radial-gradient(at 100% 100%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                        radial-gradient(at 0% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                        radial-gradient(at 0% 100%, hsla(339,49%,30%,1) 0, transparent 50%);
+            filter: blur(80px);
+            opacity: 0.6;
+            animation: gradient-shift 10s ease infinite;
         }
 
-        .error-message {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-            display: flex;
-            align-items: center;
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-
-        .error-message i {
-            margin-right: 0.5rem;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .register-wrapper {
-                grid-template-columns: 1fr;
-            }
-
-            .brand-panel {
-                display: none;
-            }
-
-            .form-panel {
-                padding: 3rem 2rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .register-container {
-                padding: 1rem;
-            }
-
-            .form-panel {
-                padding: 2rem 1.5rem;
-            }
-
-            .form-title {
-                font-size: 1.5rem;
-            }
-
-            .row-group {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Loading State */
-        .btn-register.loading {
-            pointer-events: none;
-            opacity: 0.8;
-        }
-
-        .btn-register.loading .btn-text {
-            opacity: 0;
-        }
-
-        .btn-register.loading::after {
-            content: '';
+        .orb {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.5;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: var(--mesh-1);
+            top: -10%;
+            left: -10%;
+            animation-delay: 0s;
+        }
+
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: var(--mesh-3);
+            bottom: 10%;
+            right: 10%;
+            animation-delay: -5s;
+        }
+
+        .glass-card {
+            position: absolute;
             top: 50%;
             left: 50%;
-            margin-left: -10px;
-            margin-top: -10px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            padding: 3rem;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            color: white;
+            text-align: center;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .glass-card h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        /* Success State */
-        .btn-register.success {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        .glass-card p {
+            color: #94a3b8;
+            line-height: 1.6;
         }
 
-        .btn-register.success .btn-text i {
-            animation: checkmark 0.5s ease-in-out;
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(30px, -50px); }
+            66% { transform: translate(-20px, 20px); }
         }
 
-        @keyframes checkmark {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.3); }
-            100% { transform: scale(1); }
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Error Message */
+        .error-msg {
+            background: rgba(2EF, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .auth-form-side { width: 100%; padding: 2rem; }
+            .auth-visual-side { display: none; }
+            .form-grid { grid-template-columns: 1fr; gap: 0; }
+            .form-group.full-width { grid-column: span 1; }
         }
     </style>
 </head>
 <body>
-    <!-- Mouse Glow Effect -->
-    <div class="mouse-glow" id="mouseGlow"></div>
-
-    <!-- Animated Background -->
-    <div class="bg-animation">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
-
-    <!-- Floating Particles -->
-    <div class="particles">
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-        <div class="particle"></div>
-    </div>
-
-    <!-- Register Container -->
-    <div class="register-container">
-        <div class="register-wrapper">
-            <!-- Left Panel - Branding -->
-            <div class="brand-panel">
-                <div class="brand-content">
-                    <div class="brand-logo">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <h1 class="brand-title">Join Our Platform</h1>
-                    <p class="brand-subtitle">Create your account and unlock the full potential of our comprehensive billing and invoice management system.</p>
-                    
-                    <ul class="feature-list">
-                        <li class="feature-item">
-                            <i class="fas fa-rocket"></i>
-                            <span>Quick and easy setup</span>
-                        </li>
-                        <li class="feature-item">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Bank-level security</span>
-                        </li>
-                        <li class="feature-item">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Advanced analytics dashboard</span>
-                        </li>
-                        <li class="feature-item">
-                            <i class="fas fa-headset"></i>
-                            <span>24/7 customer support</span>
-                        </li>
-                        <li class="feature-item">
-                            <i class="fas fa-infinity"></i>
-                            <span>Unlimited transactions</span>
-                        </li>
-                    </ul>
-                </div>
+    <div class="auth-container">
+        <!-- Visual Side (Left for Register) -->
+        <div class="auth-visual-side">
+            <div class="mesh-gradient"></div>
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            
+            <div class="glass-card">
+                <h2>Join the Future</h2>
+                <p>Start managing your business with the most advanced tools available. Quick setup, powerful results.</p>
             </div>
+        </div>
 
-            <!-- Right Panel - Register Form -->
-            <div class="form-panel">
-                <div class="form-header">
-                    <h2 class="form-title">Create Account</h2>
-                    <p class="form-subtitle">Fill in your details to get started</p>
+        <!-- Form Side -->
+        <div class="auth-form-side">
+            <div class="form-content">
+                <div class="logo-area">
+                    <div class="logo-icon">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <span class="logo-text">BillSuite</span>
                 </div>
 
-                <form method="POST" action="{{ url('/register') }}" id="registerForm">
+                <h1>Create Account</h1>
+                <p class="subtitle">Join thousands of businesses growing with us.</p>
+
+                <form method="POST" action="{{ route('register') }}">
                     @csrf
                     
-                    <div class="row-group">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label class="form-label">Full Name</label>
                             <div class="input-wrapper">
                                 <input 
                                     type="text" 
                                     name="full_name" 
-                                    value="{{ old('full_name') }}" 
-                                    class="form-control" 
-                                    placeholder="Enter your full name" 
+                                    class="custom-input" 
+                                    placeholder=" "
+                                    value="{{ old('full_name') }}"
                                     required
-                                    autocomplete="name"
                                 >
+                                <label class="form-label">Full Name</label>
                                 <i class="fas fa-user input-icon"></i>
                             </div>
                             @error('full_name')
-                                <div class="error-message">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    {{ $message }}
-                                </div>
+                                <div class="error-msg">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Username</label>
                             <div class="input-wrapper">
                                 <input 
                                     type="text" 
                                     name="username" 
-                                    value="{{ old('username') }}" 
-                                    class="form-control" 
-                                    placeholder="Choose a username" 
+                                    class="custom-input" 
+                                    placeholder=" "
+                                    value="{{ old('username') }}"
                                     required
-                                    autocomplete="username"
                                 >
+                                <label class="form-label">Username</label>
                                 <i class="fas fa-at input-icon"></i>
                             </div>
                             @error('username')
-                                <div class="error-message">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    {{ $message }}
-                                </div>
+                                <div class="error-msg">{{ $message }}</div>
                             @enderror
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Email Address</label>
-                        <div class="input-wrapper">
-                            <input 
-                                type="email" 
-                                name="email" 
-                                value="{{ old('email') }}" 
-                                class="form-control" 
-                                placeholder="Enter your email address" 
-                                required
-                                autocomplete="email"
-                            >
-                            <i class="fas fa-envelope input-icon"></i>
-                        </div>
-                        @error('email')
-                            <div class="error-message">
-                                <i class="fas fa-exclamation-circle"></i>
-                                {{ $message }}
+                        <div class="form-group full-width">
+                            <div class="input-wrapper">
+                                <input 
+                                    type="email" 
+                                    name="email" 
+                                    class="custom-input" 
+                                    placeholder=" "
+                                    value="{{ old('email') }}"
+                                    required
+                                >
+                                <label class="form-label">Email Address</label>
+                                <i class="fas fa-envelope input-icon"></i>
                             </div>
-                        @enderror
-                    </div>
-                    
-                    <div class="row-group">
+                            @error('email')
+                                <div class="error-msg">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                         <div class="form-group">
-                            <label class="form-label">Password</label>
                             <div class="input-wrapper">
                                 <input 
                                     type="password" 
                                     name="password" 
-                                    id="passwordInput"
-                                    class="form-control has-toggle" 
-                                    placeholder="Create a password" 
+                                    id="password"
+                                    class="custom-input" 
+                                    placeholder=" "
                                     required
-                                    autocomplete="new-password"
                                 >
+                                <label class="form-label">Password</label>
                                 <i class="fas fa-lock input-icon"></i>
-                                <button type="button" class="password-toggle" data-target="passwordInput" aria-label="Toggle password visibility">
-                                    <i class="fas fa-eye"></i>
-                                </button>
                             </div>
                             @error('password')
-                                <div class="error-message">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                    {{ $message }}
-                                </div>
+                                <div class="error-msg">{{ $message }}</div>
                             @enderror
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Confirm Password</label>
                             <div class="input-wrapper">
                                 <input 
                                     type="password" 
                                     name="password_confirmation" 
-                                    id="confirmPasswordInput"
-                                    class="form-control has-toggle" 
-                                    placeholder="Confirm password" 
+                                    class="custom-input" 
+                                    placeholder=" "
                                     required
-                                    autocomplete="new-password"
                                 >
+                                <label class="form-label">Confirm Pass</label>
                                 <i class="fas fa-lock input-icon"></i>
-                                <button type="button" class="password-toggle" data-target="confirmPasswordInput" aria-label="Toggle password visibility">
-                                    <i class="fas fa-eye"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
-                    
-                    <button type="submit" class="btn-register" id="registerBtn">
-                        <span class="btn-text">
-                            Create Account
-                            <i class="fas fa-arrow-right"></i>
-                        </span>
+
+                    <button type="submit" class="btn-primary">
+                        Get Started
+                        <i class="fas fa-arrow-right" style="margin-left: 0.5rem; font-size: 0.9em;"></i>
                     </button>
-                    
-                    <div class="divider">
-                        <span>OR</span>
+
+                    <div class="auth-footer">
+                        <span style="color: var(--text-secondary)">Already have an account?</span>
+                        <a href="{{ route('login') }}" class="link highlight">Sign in</a>
                     </div>
-                    
-                    <p class="login-text">
-                        Already have an account? 
-                        <a href="{{ route('login') }}" class="login-link">Sign in here</a>
-                    </p>
                 </form>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Mouse Glow Effect
-        const mouseGlow = document.getElementById('mouseGlow');
-        let mouseX = 0, mouseY = 0;
-        let glowX = 0, glowY = 0;
-
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
-
-        function animateGlow() {
-            const dx = mouseX - glowX;
-            const dy = mouseY - glowY;
-            
-            glowX += dx * 0.1;
-            glowY += dy * 0.1;
-            
-            mouseGlow.style.left = glowX + 'px';
-            mouseGlow.style.top = glowY + 'px';
-            
-            requestAnimationFrame(animateGlow);
-        }
-        animateGlow();
-
-        // Password toggle functionality
-        document.querySelectorAll('.password-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function() {
-                const targetId = this.getAttribute('data-target');
-                const input = document.getElementById(targetId);
-                const icon = this.querySelector('i');
-                
-                if (input.getAttribute('type') === 'password') {
-                    input.setAttribute('type', 'text');
-                    icon.classList.remove('fa-eye');
-                    icon.classList.add('fa-eye-slash');
-                } else {
-                    input.setAttribute('type', 'password');
-                    icon.classList.remove('fa-eye-slash');
-                    icon.classList.add('fa-eye');
-                }
-            });
-        });
-
-        // Ripple effect on button
-        const registerBtn = document.getElementById('registerBtn');
-        registerBtn.addEventListener('click', function(e) {
-            const rect = this.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            const ripple = document.createElement('span');
-            ripple.classList.add('ripple');
-            ripple.style.left = x + 'px';
-            ripple.style.top = y + 'px';
-            
-            this.appendChild(ripple);
-            
-            setTimeout(() => ripple.remove(), 600);
-        });
-
-        // Form submission with loading state
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
-            const btn = document.getElementById('registerBtn');
-            btn.classList.add('loading');
-        });
-
-        // Add smooth focus transitions with hover effects
-        document.querySelectorAll('.form-control').forEach(input => {
-            const wrapper = input.closest('.input-wrapper');
-            
-            input.addEventListener('focus', function() {
-                wrapper.classList.add('focused');
-            });
-            
-            input.addEventListener('blur', function() {
-                wrapper.classList.remove('focused');
-            });
-        });
-
-        // Interactive hover effect on brand panel features
-        document.querySelectorAll('.feature-item').forEach((item, index) => {
-            item.style.animationDelay = `${0.5 + index * 0.1}s`;
-        });
-
-        // Add entrance animation to form groups
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.form-group').forEach(group => {
-            observer.observe(group);
-        });
-    </script>
 </body>
 </html>

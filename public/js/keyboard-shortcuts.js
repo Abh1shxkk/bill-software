@@ -61,7 +61,7 @@
      */
     function buildDynamicHelpContent() {
         let html = '';
-        
+
         // Custom colors for categories
         const categoryColors = {
             'masters': '#eab308',
@@ -72,22 +72,23 @@
             'ledgers': '#ec4899',
             'managers': '#14b8a6',
             'utilities': '#6b7280',
-            'breakage': '#f97316'
+            'breakage': '#f97316',
+            'index': '#0ea5e9'
         };
 
         // If using database hotkeys, build from categoryHotkeys
         if (IS_DYNAMIC && Object.keys(CATEGORY_HOTKEYS).length > 0) {
             for (const [catKey, hotkeys] of Object.entries(CATEGORY_HOTKEYS)) {
                 if (!hotkeys || hotkeys.length === 0) continue;
-                
+
                 const catConfig = CATEGORIES[catKey] || { name: catKey, icon: 'bi-folder', color: 'text-secondary' };
                 const color = categoryColors[catKey] || '#6b7280';
-                
+
                 html += `
                     <div class="shortcut-category">
                         <h6 style="color: ${color}"><i class="${catConfig.icon} me-1"></i>${catConfig.name}</h6>
                 `;
-                
+
                 for (const hotkey of hotkeys) {
                     html += `
                         <div class="shortcut-item">
@@ -96,7 +97,7 @@
                         </div>
                     `;
                 }
-                
+
                 html += '</div>';
             }
         } else {
@@ -107,16 +108,16 @@
                 if (!grouped[cat]) grouped[cat] = [];
                 grouped[cat].push({ key, name: data.description });
             }
-            
+
             for (const [catKey, hotkeys] of Object.entries(grouped)) {
                 const catConfig = CATEGORIES[catKey] || { name: catKey, icon: 'bi-folder', color: 'text-secondary' };
                 const color = categoryColors[catKey] || '#6b7280';
-                
+
                 html += `
                     <div class="shortcut-category">
                         <h6 style="color: ${color}"><i class="${catConfig.icon} me-1"></i>${catConfig.name}</h6>
                 `;
-                
+
                 for (const hotkey of hotkeys) {
                     html += `
                         <div class="shortcut-item">
@@ -125,7 +126,7 @@
                         </div>
                     `;
                 }
-                
+
                 html += '</div>';
             }
         }
@@ -157,6 +158,65 @@
     }
 
     /**
+     * Build index shortcuts content from INDEX_SHORTCUTS_CONFIG
+     */
+    function buildIndexShortcutsContent() {
+        const indexConfig = window.INDEX_SHORTCUTS_CONFIG;
+        if (!indexConfig) return '';
+
+        let html = '';
+        const categoryColors = { 'index': '#0ea5e9' };
+
+        // Check if index shortcuts exist
+        const indexCategoryHotkeys = indexConfig.categoryHotkeys || {};
+        const indexShortcuts = indexConfig.shortcuts || {};
+
+        if (indexConfig.isDynamic && Object.keys(indexCategoryHotkeys).length > 0) {
+            for (const [catKey, hotkeys] of Object.entries(indexCategoryHotkeys)) {
+                if (!hotkeys || hotkeys.length === 0) continue;
+
+                const catConfig = indexConfig.categories?.[catKey] || { name: 'Index Page Actions', icon: 'bi-list-ul' };
+                const color = categoryColors[catKey] || '#0ea5e9';
+
+                html += `
+                    <div class="shortcut-category index-shortcut">
+                        <h6 style="color: ${color}"><i class="${catConfig.icon} me-1"></i>${catConfig.name}</h6>
+                `;
+
+                for (const hotkey of hotkeys) {
+                    html += `
+                        <div class="shortcut-item">
+                            <span class="keys">${formatKeyForDisplay(hotkey.key)}</span>
+                            <span class="module-name">${hotkey.name}</span>
+                        </div>
+                    `;
+                }
+
+                html += '</div>';
+            }
+        } else if (Object.keys(indexShortcuts).length > 0) {
+            // Static fallback
+            html += `
+                <div class="shortcut-category index-shortcut">
+                    <h6 style="color: #0ea5e9"><i class="bi-list-ul me-1"></i>Index Page Actions</h6>
+            `;
+
+            for (const [key, data] of Object.entries(indexShortcuts)) {
+                html += `
+                    <div class="shortcut-item">
+                        <span class="keys">${formatKeyForDisplay(key)}</span>
+                        <span class="module-name">${data.description}</span>
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+        }
+
+        return html;
+    }
+
+    /**
      * Create and show the floating shortcut help panel
      */
     function createHelpPanel() {
@@ -177,22 +237,49 @@
 
         const panel = document.createElement('div');
         panel.id = 'shortcut-help-panel';
-        
+
         const dynamicSource = IS_DYNAMIC ? ' (Database)' : ' (Static)';
-        
+        const indexContent = buildIndexShortcutsContent();
+        const hasIndexShortcuts = indexContent.length > 0;
+
         panel.innerHTML = `
             <div class="shortcut-help-header">
                 <h5><i class="bi bi-keyboard me-2"></i>Keyboard Shortcuts${dynamicSource}</h5>
                 <button type="button" class="btn-close btn-close-white" onclick="document.getElementById('shortcut-help-panel').remove(); document.getElementById('shortcut-help-backdrop')?.remove(); window._shortcutHelpVisible = false;"></button>
             </div>
-            <div class="shortcut-help-body">
+            <div class="shortcut-tabs">
+                <button class="shortcut-tab active" data-tab="global" onclick="window._switchShortcutTab('global')">
+                    <i class="bi bi-globe me-1"></i>Global Navigation
+                </button>
+                <button class="shortcut-tab" data-tab="index" onclick="window._switchShortcutTab('index')">
+                    <i class="bi bi-list-ul me-1"></i>Index Page Actions
+                </button>
+            </div>
+            <div id="shortcut-tab-global" class="shortcut-help-body shortcut-tab-content active">
                 ${buildDynamicHelpContent()}
+            </div>
+            <div id="shortcut-tab-index" class="shortcut-help-body shortcut-tab-content" style="display: none;">
+                ${hasIndexShortcuts ? indexContent : '<div class="text-center py-4 text-muted"><i class="bi bi-info-circle me-2"></i>No index shortcuts configured. Add them from the database.</div>'}
             </div>
         `;
 
         document.body.appendChild(panel);
         helpPanelVisible = true;
         window._shortcutHelpVisible = true;
+
+        // Tab switching function
+        window._switchShortcutTab = function (tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.shortcut-tab').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            // Update tab contents
+            document.querySelectorAll('.shortcut-tab-content').forEach(content => {
+                const isActive = content.id === 'shortcut-tab-' + tabName;
+                content.style.display = isActive ? 'grid' : 'none';
+                content.classList.toggle('active', isActive);
+            });
+        };
     }
 
     /**
@@ -432,12 +519,52 @@
                 opacity: 1;
             }
 
+            .shortcut-tabs {
+                display: flex;
+                background: #e2e8f0;
+                padding: 0;
+                border-bottom: 2px solid #cbd5e1;
+            }
+
+            .shortcut-tab {
+                flex: 1;
+                background: transparent;
+                border: none;
+                padding: 12px 16px;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #64748b;
+                cursor: pointer;
+                transition: all 0.2s;
+                border-bottom: 3px solid transparent;
+                margin-bottom: -2px;
+            }
+
+            .shortcut-tab:hover {
+                color: #475569;
+                background: #f1f5f9;
+            }
+
+            .shortcut-tab.active {
+                color: #4f46e5;
+                background: #f1f5f9;
+                border-bottom-color: #4f46e5;
+            }
+
+            .shortcut-tab i {
+                opacity: 0.7;
+            }
+
+            .shortcut-tab.active i {
+                opacity: 1;
+            }
+
             .shortcut-help-body {
                 display: grid;
                 grid-template-columns: repeat(5, 1fr);
                 gap: 10px;
                 padding: 15px;
-                max-height: calc(75vh - 55px);
+                max-height: calc(75vh - 100px);
                 overflow-y: auto;
                 background: #f1f5f9;
             }
@@ -590,7 +717,7 @@
         showHelp: createHelpPanel,
         isDashboard: isDashboardPage,
         isDynamic: IS_DYNAMIC,
-        refresh: function() {
+        refresh: function () {
             // Reload page to get fresh shortcuts from database
             window.location.reload();
         }
