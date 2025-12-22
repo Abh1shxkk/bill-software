@@ -942,7 +942,7 @@
             <div class="sidebar-header">
                 <div class="brand d-flex align-items-center small">
                     <i class="bi bi-ui-checks-grid me-2 text-info"></i>
-                    <span class="label">InvoiceLab</span>
+                    <span class="label">Medi BillSuite</span>
                 </div>
             </div>
 

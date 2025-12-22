@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Support - {{ $settings['company_name'] ?? 'InvoiceLab' }}</title>
+    <title>Support - {{ $settings['company_name'] ?? 'Medi BillSuite' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -229,7 +229,7 @@
                 </ol>
             </nav>
             <h1><i class="bi bi-headset me-2"></i>{{ $settings['support_page_title'] ?? 'Support Center' }}</h1>
-            <p>{{ $settings['support_page_subtitle'] ?? 'We\'re here to help you succeed with InvoiceLab' }}</p>
+            <p>{{ $settings['support_page_subtitle'] ?? 'We\'re here to help you succeed with Medi BillSuite' }}</p>
         </div>
     </div>
 
@@ -244,7 +244,7 @@
                     </div>
                     <h3>{{ $settings['support_email_title'] ?? 'Email Support' }}</h3>
                     <p>{{ $settings['support_email_text'] ?? 'Send us your queries and we\'ll respond within 24 hours' }}</p>
-                    <a href="mailto:{{ $settings['company_email'] ?? 'support@invoicelab.com' }}" class="btn-support">
+                    <a href="mailto:{{ $settings['company_email'] ?? 'support@medibillsuite.com' }}" class="btn-support">
                         <i class="bi bi-send me-1"></i> Send Email
                     </a>
                     <br>
@@ -410,7 +410,7 @@
                                 <i class="bi bi-envelope"></i>
                                 <div>
                                     <div class="small opacity-75">Email</div>
-                                    <span>{{ $settings['company_email'] ?? 'support@invoicelab.com' }}</span>
+                                    <span>{{ $settings['company_email'] ?? 'support@medibillsuite.com' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -445,7 +445,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container text-center">
-            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'InvoiceLab' }}. All rights reserved. | 
+            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'Medi BillSuite' }}. All rights reserved. | 
                 <a href="{{ route('pages.privacy') }}">Privacy</a> · 
                 <a href="{{ route('pages.terms') }}">Terms</a> · 
                 <a href="{{ route('pages.support') }}">Support</a>

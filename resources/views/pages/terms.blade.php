@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Terms of Service - {{ $settings['company_name'] ?? 'InvoiceLab' }}</title>
+    <title>Terms of Service - {{ $settings['company_name'] ?? 'Medi BillSuite' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -154,15 +154,15 @@
 
                 <div class="content-card">
                     <h2><i class="bi bi-hand-thumbs-up me-2"></i>{{ $settings['terms_acceptance_title'] ?? 'Acceptance of Terms' }}</h2>
-                    <p>{{ $settings['terms_acceptance_text'] ?? 'By accessing and using InvoiceLab billing and inventory management software, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.' }}</p>
+                    <p>{{ $settings['terms_acceptance_text'] ?? 'By accessing and using Medi BillSuite billing and inventory management software, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.' }}</p>
                     <div class="highlight-box">
-                        <strong>Important:</strong> {{ $settings['terms_acceptance_note'] ?? 'These terms constitute a legally binding agreement between you and InvoiceLab.' }}
+                        <strong>Important:</strong> {{ $settings['terms_acceptance_note'] ?? 'These terms constitute a legally binding agreement between you and Medi BillSuite.' }}
                     </div>
                 </div>
 
                 <div class="content-card">
                     <h2><i class="bi bi-laptop me-2"></i>{{ $settings['terms_use_title'] ?? 'Use of Service' }}</h2>
-                    <p>{{ $settings['terms_use_intro'] ?? 'InvoiceLab provides a comprehensive billing and inventory management solution. You agree to use the service only for:' }}</p>
+                    <p>{{ $settings['terms_use_intro'] ?? 'Medi BillSuite provides a comprehensive billing and inventory management solution. You agree to use the service only for:' }}</p>
                     <ul>
                         <li>{{ $settings['terms_use_item1'] ?? 'Legitimate business purposes related to billing, invoicing, and inventory management' }}</li>
                         <li>{{ $settings['terms_use_item2'] ?? 'Recording accurate business transactions and maintaining proper records' }}</li>
@@ -199,7 +199,7 @@
 
                 <div class="content-card">
                     <h2><i class="bi bi-database me-2"></i>{{ $settings['terms_data_title'] ?? 'Data Ownership' }}</h2>
-                    <p>{{ $settings['terms_data_intro'] ?? 'You retain ownership of all business data you enter into InvoiceLab, including:' }}</p>
+                    <p>{{ $settings['terms_data_intro'] ?? 'You retain ownership of all business data you enter into Medi BillSuite, including:' }}</p>
                     <ul>
                         <li>{{ $settings['terms_data_item1'] ?? 'Customer and supplier information' }}</li>
                         <li>{{ $settings['terms_data_item2'] ?? 'Product and inventory data' }}</li>
@@ -224,7 +224,7 @@
                     <h2><i class="bi bi-exclamation-triangle me-2"></i>{{ $settings['terms_liability_title'] ?? 'Limitation of Liability' }}</h2>
                     <p>{{ $settings['terms_liability_intro'] ?? 'To the maximum extent permitted by law:' }}</p>
                     <ul>
-                        <li>{{ $settings['terms_liability_item1'] ?? 'InvoiceLab is provided "as is" without warranties of any kind' }}</li>
+                        <li>{{ $settings['terms_liability_item1'] ?? 'Medi BillSuite is provided "as is" without warranties of any kind' }}</li>
                         <li>{{ $settings['terms_liability_item2'] ?? 'We are not liable for any indirect, incidental, or consequential damages' }}</li>
                         <li>{{ $settings['terms_liability_item3'] ?? 'Our total liability shall not exceed the amount paid by you in the past 12 months' }}</li>
                         <li>{{ $settings['terms_liability_item4'] ?? 'We are not responsible for data loss due to circumstances beyond our control' }}</li>
@@ -251,8 +251,8 @@
                     <h2><i class="bi bi-envelope me-2"></i>{{ $settings['terms_contact_title'] ?? 'Contact Information' }}</h2>
                     <p>{{ $settings['terms_contact_text'] ?? 'For questions about these Terms of Service, contact us at:' }}</p>
                     <p class="mb-0">
-                        <strong>Email:</strong> {{ $settings['legal_email'] ?? 'legal@invoicelab.com' }}<br>
-                        <strong>Support:</strong> {{ $settings['company_email'] ?? 'support@invoicelab.com' }}
+                        <strong>Email:</strong> {{ $settings['legal_email'] ?? 'legal@medibillsuite.com' }}<br>
+                        <strong>Support:</strong> {{ $settings['company_email'] ?? 'support@medibillsuite.com' }}
                     </p>
                 </div>
 
@@ -268,7 +268,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container text-center">
-            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'InvoiceLab' }}. All rights reserved. | 
+            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'Medi BillSuite' }}. All rights reserved. | 
                 <a href="{{ route('pages.privacy') }}">Privacy</a> · 
                 <a href="{{ route('pages.terms') }}">Terms</a> · 
                 <a href="{{ route('pages.support') }}">Support</a>

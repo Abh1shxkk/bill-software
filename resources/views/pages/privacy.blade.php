@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Privacy Policy - {{ $settings['company_name'] ?? 'InvoiceLab' }}</title>
+    <title>Privacy Policy - {{ $settings['company_name'] ?? 'Medi BillSuite' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -143,7 +143,7 @@
 
                 <div class="content-card">
                     <h2><i class="bi bi-info-circle me-2"></i>{{ $settings['privacy_intro_title'] ?? 'Introduction' }}</h2>
-                    <p>{{ $settings['privacy_intro_text'] ?? 'InvoiceLab ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our billing and inventory management software.' }}</p>
+                    <p>{{ $settings['privacy_intro_text'] ?? 'Medi BillSuite ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our billing and inventory management software.' }}</p>
                 </div>
 
                 <div class="content-card">
@@ -208,7 +208,7 @@
                     <h2><i class="bi bi-envelope me-2"></i>{{ $settings['privacy_contact_title'] ?? 'Contact Us' }}</h2>
                     <p>{{ $settings['privacy_contact_text'] ?? 'If you have any questions about this Privacy Policy, please contact us at:' }}</p>
                     <p class="mb-0">
-                        <strong>Email:</strong> {{ $settings['legal_email'] ?? $settings['company_email'] ?? 'legal@invoicelab.com' }}<br>
+                        <strong>Email:</strong> {{ $settings['legal_email'] ?? $settings['company_email'] ?? 'legal@medibillsuite.com' }}<br>
                         <strong>Address:</strong> {{ $settings['company_address'] ?? 'Your Business Address Here' }}
                     </p>
                 </div>
@@ -225,7 +225,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container text-center">
-            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'InvoiceLab' }}. All rights reserved. | 
+            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'Medi BillSuite' }}. All rights reserved. | 
                 <a href="{{ route('pages.privacy') }}">Privacy</a> · 
                 <a href="{{ route('pages.terms') }}">Terms</a> · 
                 <a href="{{ route('pages.support') }}">Support</a>

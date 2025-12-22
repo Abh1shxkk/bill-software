@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentation - {{ $settings['company_name'] ?? 'InvoiceLab' }}</title>
+    <title>Documentation - {{ $settings['company_name'] ?? 'Medi BillSuite' }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
@@ -330,7 +330,7 @@
                 </ol>
             </nav>
             <h1><i class="bi bi-book me-2"></i>Documentation</h1>
-            <p>Complete guide to using {{ $settings['company_name'] ?? 'InvoiceLab' }} billing software</p>
+            <p>Complete guide to using {{ $settings['company_name'] ?? 'Medi BillSuite' }} billing software</p>
         </div>
     </div>
 
@@ -364,7 +364,7 @@
                 <!-- Getting Started -->
                 <div class="doc-card" id="getting-started">
                     <h2><i class="bi bi-rocket me-2"></i>Getting Started</h2>
-                    <p>Welcome to {{ $settings['company_name'] ?? 'InvoiceLab' }} - a comprehensive billing and inventory management solution designed for pharmacies and retail businesses.</p>
+                    <p>Welcome to {{ $settings['company_name'] ?? 'Medi BillSuite' }} - a comprehensive billing and inventory management solution designed for pharmacies and retail businesses.</p>
                     
                     <div class="feature-grid">
                         <div class="feature-item">
@@ -623,7 +623,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container text-center">
-            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'InvoiceLab' }}. All rights reserved. | 
+            <p class="mb-0">© {{ $settings['copyright_year'] ?? '2025' }} {{ $settings['company_name'] ?? 'Medi BillSuite' }}. All rights reserved. | 
                 <a href="{{ route('pages.privacy') }}">Privacy</a> · 
                 <a href="{{ route('pages.terms') }}">Terms</a> · 
                 <a href="{{ route('pages.support') }}">Support</a>

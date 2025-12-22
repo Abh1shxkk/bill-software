@@ -404,7 +404,7 @@
                     <div class="logo-icon">
                         <i class="fas fa-cube"></i>
                     </div>
-                    <span class="logo-text">BillSuite</span>
+                    <span class="logo-text">Medi BillSuite</span>
                 </div>
 
                 <h1>Welcome back</h1>
