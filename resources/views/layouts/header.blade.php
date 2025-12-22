@@ -514,6 +514,11 @@
                 <i class="bi bi-keyboard me-2"></i>Hotkey Management
               </a>
             </li>
+            <li>
+              <a class="dropdown-item" href="{{ route('admin.page-settings.index') }}">
+                <i class="bi bi-file-earmark-text me-2"></i>Page Content Settings
+              </a>
+            </li>
             <li><hr class="dropdown-divider"></li>
             <li>
               <a class="dropdown-item" href="{{ route('profile.settings') }}">
@@ -1048,8 +1053,75 @@
     }
   }
   
-  // Close modals on Escape
+  // Calculator keyboard support - use capture phase to intercept before other handlers
   document.addEventListener('keydown', function(e) {
+    // Check if calculator is visible
+    const calcModal = document.getElementById('header-calculator-modal');
+    
+    // Calculator is visible if it exists AND display is NOT 'none' (including empty string which means visible)
+    const isCalcVisible = calcModal && calcModal.style.display !== 'none';
+    
+    if (isCalcVisible) {
+      const key = e.key;
+      
+      // Numbers 0-9
+      if (/^[0-9]$/.test(key)) {
+        e.preventDefault();
+        e.stopPropagation();
+        headerCalcInput(key);
+        return;
+      }
+      
+      // Operators
+      if (key === '+' || key === '-' || key === '*' || key === '/' || key === '%') {
+        e.preventDefault();
+        e.stopPropagation();
+        headerCalcInput(key);
+        return;
+      }
+      
+      // Decimal point
+      if (key === '.' || key === ',') {
+        e.preventDefault();
+        e.stopPropagation();
+        headerCalcInput('.');
+        return;
+      }
+      
+      // Enter or = for equals
+      if (key === 'Enter' || key === '=') {
+        e.preventDefault();
+        e.stopPropagation();
+        headerCalcEquals();
+        return;
+      }
+      
+      // Backspace for delete
+      if (key === 'Backspace') {
+        e.preventDefault();
+        e.stopPropagation();
+        headerCalcBackspace();
+        return;
+      }
+      
+      // C or Delete for clear
+      if (key === 'c' || key === 'C' || key === 'Delete') {
+        e.preventDefault();
+        e.stopPropagation();
+        headerCalcClear();
+        return;
+      }
+      
+      // Escape to close calculator
+      if (key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeHeaderCalculator();
+        return;
+      }
+    }
+    
+    // If calculator not visible, handle Escape for other modals
     if (e.key === 'Escape') {
       closeHeaderCalculator();
       // Also close the shortcuts panel from keyboard-shortcuts.js
@@ -1058,5 +1130,5 @@
       if (shortcutPanel) shortcutPanel.remove();
       if (shortcutBackdrop) shortcutBackdrop.remove();
     }
-  });
+  }, true); // Use capture phase to intercept before other handlers
 </script>

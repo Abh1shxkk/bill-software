@@ -762,6 +762,10 @@ Route::middleware(['admin'])->group(function () {
             Route::post('hotkeys/check-key', [\App\Http\Controllers\Admin\HotkeyController::class, 'checkKey'])->name('hotkeys.check-key');
             Route::post('hotkeys/reset-to-default', [\App\Http\Controllers\Admin\HotkeyController::class, 'resetToDefault'])->name('hotkeys.reset-to-default');
         });
+
+        // Page Content Settings
+        Route::get('page-settings', [\App\Http\Controllers\Admin\PageSettingController::class, 'index'])->name('page-settings.index');
+        Route::put('page-settings', [\App\Http\Controllers\Admin\PageSettingController::class, 'update'])->name('page-settings.update');
         
         // Hotkeys JSON API (for keyboard-shortcuts.js)
         Route::get('api/hotkeys', [\App\Http\Controllers\Admin\HotkeyController::class, 'getHotkeysJson'])->name('api.hotkeys');
@@ -780,3 +784,8 @@ Route::middleware(['user'])->group(function () {
     Route::view('/user/dashboard', 'user.dashboard');
 });
 
+// Static Pages (accessible to all)
+Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacy'])->name('pages.privacy');
+Route::get('/terms', [\App\Http\Controllers\PagesController::class, 'terms'])->name('pages.terms');
+Route::get('/support', [\App\Http\Controllers\PagesController::class, 'support'])->name('pages.support');
+Route::get('/documentation', [\App\Http\Controllers\PagesController::class, 'documentation'])->name('pages.documentation');
