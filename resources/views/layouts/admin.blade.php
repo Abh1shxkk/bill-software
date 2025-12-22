@@ -33,8 +33,8 @@
                 "sidebar main"
                 "sidebar footer";
             height: 100vh;
-            transition: grid-template-columns 0.3s ease;
             position: relative;
+            contain: layout style;
         }
 
         .sidebar {
@@ -44,20 +44,77 @@
             top: 0;
             left: 0;
             height: 100vh;
-            overflow: hidden; /* Changed to hidden to control scroll in nav section */
-            transition: width 0.3s ease, transform .25s ease;
-            will-change: transform, width;
+            overflow: hidden;
             width: 260px;
             grid-area: sidebar;
             z-index: 1030;
             display: flex;
             flex-direction: column;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: width;
+            contain: layout style;
+        }
+
+        /* Premium Floating Collapse Button */
+        .sidebar-collapse-btn {
+            position: fixed;
+            top: 16px;
+            left: 242px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            transition: left 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .sidebar-collapse-btn:hover {
+            background: #2c3e50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar-collapse-btn:hover svg {
+            stroke: #ffffff;
+        }
+
+        .sidebar-collapse-btn:active {
+            transform: scale(0.92);
+        }
+
+        .sidebar-collapse-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: #2c3e50;
+            stroke-width: 2.5;
+            fill: none;
+            transition: transform 0.25s ease;
+        }
+
+        .collapsed .sidebar-collapse-btn {
+            left: 54px;
+        }
+
+        .collapsed .sidebar-collapse-btn svg {
+            transform: rotate(180deg);
+        }
+
+        /* Hide on mobile */
+        @media (max-width: 991.98px) {
+            .sidebar-collapse-btn {
+                display: none !important;
+            }
         }
 
         .sidebar a {
             color: #cfe0ff;
             text-decoration: none;
-            transition: all 0.2s ease;
         }
 
         .sidebar .nav-link:hover {
@@ -84,6 +141,9 @@
             grid-area: main;
             z-index: 10;
             position: relative;
+            contain: layout style;
+            transform: translateZ(0);
+            will-change: scroll-position;
         }
 
         /* Sidebar header with toggle button */
@@ -99,7 +159,6 @@
         .brand {
             font-weight: 600;
             letter-spacing: .3px;
-            transition: opacity 0.3s ease;
             display: flex;
             align-items: center;
         }
@@ -110,7 +169,6 @@
             color: #fff;
             padding: 0.375rem 0.5rem;
             border-radius: 0.375rem;
-            transition: all 0.3s ease;
             cursor: pointer;
             flex-shrink: 0;
         }
@@ -120,7 +178,7 @@
         }
 
         .sidebar-toggle-inside i {
-            transition: transform 0.3s ease;
+            transition: transform 0.15s ease-out;
         }
 
         .sidebar-header {
@@ -170,10 +228,9 @@
             z-index: 1001; /* Even higher for dropdown */
         }
 
-        /* Label transitions */
+        /* Label - no transitions */
         .label {
             opacity: 1;
-            transition: opacity 0.2s ease;
             display: inline-block;
             white-space: nowrap;
         }
@@ -184,7 +241,6 @@
             top: 14px;
             left: 14px;
             z-index: 1030;
-            transition: all 0.3s ease;
         }
 
         /* MOBILE FIXES - CRITICAL */
@@ -220,10 +276,11 @@
                 transform: translateX(-100%);
                 height: 100vh !important;
                 height: 100dvh !important;
-                /* Dynamic viewport height for mobile browsers */
-                overflow: hidden; /* Keep consistent with desktop */
+                overflow: hidden;
                 display: flex;
                 flex-direction: column;
+                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                will-change: transform;
             }
 
             .sidebar.show {
@@ -243,7 +300,6 @@
                 width: 100%;
                 padding: 1rem 1rem 1rem 1rem !important;
                 -webkit-overflow-scrolling: touch;
-                /* Smooth scrolling on iOS */
             }
 
             .sidebar-backdrop {
@@ -254,7 +310,7 @@
                 z-index: 1028;
                 opacity: 0;
                 visibility: hidden;
-                transition: opacity .25s ease;
+                transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
                 top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
@@ -686,15 +742,14 @@
             }
         }
 
-        /* Smooth icon transitions */
+        /* No transitions for instant response */
         .sidebar i {
-            transition: margin 0.3s ease;
+            /* No transition */
         }
 
-        /* Button styling improvements */
+        /* Button styling */
         [data-bs-toggle="collapse"] {
             border: none;
-            transition: all 0.2s ease;
         }
 
         [data-bs-toggle="collapse"]:hover {
@@ -707,7 +762,6 @@
             color: #cfe0ff;
             font-weight: 700;
             line-height: 1;
-            transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
         .sidebar [data-bs-toggle="collapse"][aria-expanded="true"]::after {
@@ -788,6 +842,83 @@
             padding-top: 11px !important;
             padding-bottom: 11px !important;
         }
+
+        /* Instant sidebar collapse - no animation for smooth feel */
+        /* Smoother sidebar dropdown menus */
+        .sidebar .collapse,
+        .sidebar .collapsing {
+            transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar .collapsing {
+            overflow: hidden;
+        }
+
+        /* Smooth sidebar collapse/expand with GPU acceleration */
+        .app {
+            transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            will-change: width;
+        }
+        
+        .sidebar .label {
+            transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar .nav-link,
+        .sidebar .btn {
+            transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar-toggle-inside i {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* GPU accelerated collapse button - smooth slide */
+        .sidebar-collapse-btn {
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 0.15s ease-out,
+                        background 0.15s ease-out !important;
+            will-change: left;
+        }
+        
+        .sidebar-collapse-btn svg {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* Smooth content area adjustment */
+        .content {
+            transition: none !important;
+            contain: layout paint;
+        }
+        
+        /* PEAK OPTIMIZATION: Freeze content during sidebar animation */
+        body.sidebar-animating .content {
+            pointer-events: none !important;
+            will-change: auto !important;
+        }
+        
+        body.sidebar-animating .content * {
+            animation: none !important;
+            transition: none !important;
+            will-change: auto !important;
+        }
+        
+        /* Force GPU layer for content */
+        body.sidebar-animating .content {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        
+        /* Profile section smooth transition */
+        .sidebar .profile .btn {
+            transition: justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
     </style>
     @stack('styles')
     @vite(['resources/js/app.js'])
@@ -797,6 +928,14 @@
 
 <body>
     <div id="sidebarBackdrop" class="sidebar-backdrop d-lg-none"></div>
+    
+    <!-- Premium Floating Collapse Button - Outside sidebar for proper layering -->
+    <button class="sidebar-collapse-btn d-none d-lg-flex" id="sidebarCollapseBtn" title="Toggle Sidebar">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+    </button>
+    
     <div class="app">
         @include('layouts.header')
         <aside class="sidebar p-3 position-relative">
@@ -1245,35 +1384,43 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Global scroll to top button handler
+        // Global scroll to top button handler - OPTIMIZED with throttle
         document.addEventListener('DOMContentLoaded', function() {
             const scrollBtn = document.getElementById('scrollToTop');
             const contentDiv = document.querySelector('.content');
             
-            if (scrollBtn && contentDiv) {
-                contentDiv.addEventListener('scroll', function() {
-                    const y = contentDiv.scrollTop;
-                    if (y > 200) {
-                        scrollBtn.classList.add('show');
-                        scrollBtn.classList.remove('hide');
-                    } else {
-                        scrollBtn.classList.add('hide');
-                        scrollBtn.classList.remove('show');
+            // Throttle function for scroll performance
+            function throttle(fn, wait) {
+                let lastTime = 0;
+                return function(...args) {
+                    const now = Date.now();
+                    if (now - lastTime >= wait) {
+                        lastTime = now;
+                        fn.apply(this, args);
                     }
-                });
+                };
+            }
+            
+            function handleScroll(y) {
+                if (y > 200) {
+                    scrollBtn.classList.add('show');
+                    scrollBtn.classList.remove('hide');
+                } else {
+                    scrollBtn.classList.add('hide');
+                    scrollBtn.classList.remove('show');
+                }
+            }
+            
+            if (scrollBtn && contentDiv) {
+                contentDiv.addEventListener('scroll', throttle(function() {
+                    handleScroll(contentDiv.scrollTop);
+                }, 100), { passive: true });
             }
             
             if (scrollBtn) {
-                window.addEventListener('scroll', function() {
-                    const y = window.scrollY || document.documentElement.scrollTop;
-                    if (y > 200) {
-                        scrollBtn.classList.add('show');
-                        scrollBtn.classList.remove('hide');
-                    } else {
-                        scrollBtn.classList.add('hide');
-                        scrollBtn.classList.remove('show');
-                    }
-                });
+                window.addEventListener('scroll', throttle(function() {
+                    handleScroll(window.scrollY || document.documentElement.scrollTop);
+                }, 100), { passive: true });
             }
         });
 
@@ -1283,12 +1430,24 @@
             const backdrop = document.getElementById('sidebarBackdrop');
             const desktopBtn = document.getElementById('desktopSidebarToggle');
             const headerBtn = document.getElementById('headerSidebarToggle');
+            const collapseBtn = document.getElementById('sidebarCollapseBtn');
 
             // --- MOBILE TOGGLE ---
             function toggleSidebar() {
                 sidebar.classList.toggle('show');
                 backdrop.classList.toggle('show');
             }
+            
+            // PEAK OPTIMIZATION: Freeze content during sidebar animation
+            function toggleSidebarWithFreeze() {
+                document.body.classList.add('sidebar-animating');
+                document.body.classList.toggle('collapsed');
+                // Remove animating class after transition completes
+                setTimeout(() => {
+                    document.body.classList.remove('sidebar-animating');
+                }, 350);
+            }
+            
             if (btn && backdrop) {
                 btn.addEventListener('click', toggleSidebar);
                 backdrop.addEventListener('click', toggleSidebar);
@@ -1297,9 +1456,8 @@
                 headerBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     if (window.innerWidth >= 992) {
-                        // Desktop: collapse/expand sidebar
-                        document.body.classList.toggle('collapsed');
-                        localStorage.setItem('sidebarCollapsed', document.body.classList.contains('collapsed') ? 'true' : 'false');
+                        // Desktop: collapse/expand sidebar with freeze
+                        toggleSidebarWithFreeze();
                     } else {
                         // Mobile: slide sidebar
                         toggleSidebar();
@@ -1307,17 +1465,23 @@
                 });
             }
 
+            // --- FLOATING COLLAPSE BUTTON ---
+            if (collapseBtn) {
+                collapseBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    toggleSidebarWithFreeze();
+                });
+            }
+
             // --- DESKTOP COLLAPSE ---
             if (desktopBtn) {
                 desktopBtn.addEventListener('click', e => {
                     e.preventDefault();
-                    document.body.classList.toggle('collapsed');
-                    localStorage.setItem('sidebarCollapsed', document.body.classList.contains('collapsed') ? 'true' : 'false');
+                    toggleSidebarWithFreeze();
                 });
-                if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                    document.body.classList.add('collapsed');
-                }
             }
+            
+            // Sidebar always starts OPEN - no localStorage restore
 
             // --- SET ACTIVE MENU ON PAGE LOAD ---
             (function () {
@@ -1601,74 +1765,78 @@
         });
     </script>
 
-    <!-- Global Select2 Initialization for All Dropdowns -->
+    <!-- Global Select2 Initialization for All Dropdowns - OPTIMIZED -->
     <script>
         $(document).ready(function () {
-            // Initialize Select2 on all existing select elements
-            initializeSelect2();
+            // Defer Select2 initialization to not block page load
+            requestIdleCallback ? requestIdleCallback(initializeSelect2) : setTimeout(initializeSelect2, 100);
 
             // Function to initialize Select2 on select elements
             function initializeSelect2(container) {
                 const selectElements = container ? $(container).find('select:not(.select2-hidden-accessible)') : $('select:not(.select2-hidden-accessible)');
 
-                selectElements.each(function () {
-                    const $select = $(this);
+                // Process in batches to avoid blocking
+                const batchSize = 10;
+                let index = 0;
+                
+                function processBatch() {
+                    const batch = selectElements.slice(index, index + batchSize);
+                    if (batch.length === 0) return;
+                    
+                    batch.each(function () {
+                        const $select = $(this);
+                        if ($select.hasClass('no-select2') || $select.data('select2')) return;
 
-                    // Skip if already initialized or explicitly marked to skip
-                    if ($select.hasClass('no-select2') || $select.data('select2')) {
-                        return;
-                    }
+                        const placeholder = $select.data('placeholder') || $select.find('option:first').text() || 'Select an option';
+                        const allowClear = $select.data('allow-clear') !== false;
+                        const minimumResultsForSearch = $select.data('minimum-results-for-search') || 0;
 
-                    // Get custom options from data attributes
-                    const placeholder = $select.data('placeholder') || $select.find('option:first').text() || 'Select an option';
-                    const allowClear = $select.data('allow-clear') !== false; // Default true
-                    const minimumResultsForSearch = $select.data('minimum-results-for-search') || 0; // Show search by default
-
-                    // Initialize Select2 with Bootstrap 5 theme
-                    $select.select2({
-                        theme: 'bootstrap-5',
-                        width: '100%',
-                        placeholder: placeholder,
-                        allowClear: allowClear,
-                        minimumResultsForSearch: minimumResultsForSearch,
-                        dropdownAutoWidth: true,
-                        language: {
-                            noResults: function () {
-                                return "No results found";
-                            },
-                            searching: function () {
-                                return "Searching...";
-                            }
-                        }
-                    });
-                });
-            }
-
-            // Watch for dynamically added select elements using MutationObserver
-            const observer = new MutationObserver(function (mutations) {
-                mutations.forEach(function (mutation) {
-                    if (mutation.addedNodes.length) {
-                        mutation.addedNodes.forEach(function (node) {
-                            if (node.nodeType === 1) { // Element node
-                                // Check if the added node is a select or contains select elements
-                                if (node.tagName === 'SELECT') {
-                                    initializeSelect2($(node).parent());
-                                } else if ($(node).find('select').length > 0) {
-                                    initializeSelect2(node);
-                                }
+                        $select.select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            placeholder: placeholder,
+                            allowClear: allowClear,
+                            minimumResultsForSearch: minimumResultsForSearch,
+                            dropdownAutoWidth: true,
+                            language: {
+                                noResults: () => "No results found",
+                                searching: () => "Searching..."
                             }
                         });
+                    });
+                    
+                    index += batchSize;
+                    if (index < selectElements.length) {
+                        requestAnimationFrame(processBatch);
                     }
-                });
+                }
+                
+                processBatch();
+            }
+
+            // Debounced MutationObserver for dynamic selects
+            let mutationTimeout;
+            const observer = new MutationObserver(function (mutations) {
+                clearTimeout(mutationTimeout);
+                mutationTimeout = setTimeout(() => {
+                    mutations.forEach(function (mutation) {
+                        if (mutation.addedNodes.length) {
+                            mutation.addedNodes.forEach(function (node) {
+                                if (node.nodeType === 1) {
+                                    if (node.tagName === 'SELECT') {
+                                        initializeSelect2($(node).parent());
+                                    } else if ($(node).find('select').length > 0) {
+                                        initializeSelect2(node);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }, 50);
             });
 
-            // Start observing the document body for changes
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            observer.observe(document.body, { childList: true, subtree: true });
 
-            // Re-initialize Select2 when Bootstrap modals are shown
             $(document).on('shown.bs.modal', function (e) {
                 initializeSelect2(e.target);
             });

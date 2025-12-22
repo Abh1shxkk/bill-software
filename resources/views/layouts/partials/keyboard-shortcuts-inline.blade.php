@@ -1,4 +1,4 @@
-{{-- Keyboard Shortcuts Inline Script - No external JS file needed --}}
+ nnnnnnnnn{{-- Keyboard Shortcuts Inline Script - No external JS file needed --}}
 <script>
 /**
  * EasySol-style Global Keyboard Shortcuts
@@ -441,16 +441,16 @@
                 left: 260px;
                 right: 10px;
                 transform: translateY(-50%);
-                background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%);
+                background: #f8fafc;
                 color: #1e293b;
                 border-radius: 16px;
-                box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35), 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
                 z-index: 100000;
                 width: calc(100vw - 280px);
                 max-width: none;
                 max-height: 85vh;
                 overflow: hidden;
-                border: 1px solid rgba(255, 255, 255, 0.5);
+                border: 1px solid #e2e8f0;
                 margin-left: 5px;
             }
 
@@ -530,15 +530,16 @@
                 max-height: calc(85vh - 130px);
                 overflow-y: auto;
                 overflow-x: hidden;
-                background: linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%);
+                background: #f1f5f9;
+                will-change: scroll-position;
             }
 
             .shortcut-category {
-                background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+                background: #ffffff;
                 border-radius: 10px;
                 padding: 12px 14px;
                 border: 1px solid #e2e8f0;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.04);
             }
 
             .shortcut-category h6 {
@@ -619,9 +620,7 @@
                 left: 260px;
                 width: calc(100vw - 260px);
                 height: calc(100vh - 50px);
-                background: rgba(0, 0, 0, 0.35);
-                backdrop-filter: blur(4px);
-                -webkit-backdrop-filter: blur(4px);
+                background: rgba(0, 0, 0, 0.5);
                 z-index: 99999;
             }
 

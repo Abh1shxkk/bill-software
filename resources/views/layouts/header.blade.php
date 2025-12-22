@@ -1,9 +1,6 @@
 <nav id="appHeader" class="navbar navbar-expand-lg navbar-light app-header"
   style="background-color: white; border-bottom: 1px solid #dee2e6;">
   <div class="container-fluid">
-    <button class="btn btn-outline-dark me-2" id="headerSidebarToggle" aria-label="Toggle sidebar">
-      <i class="bi bi-list"></i>
-    </button>
     
 
     <div class="collapse navbar-collapse" id="topbarNav">
