@@ -2273,6 +2273,47 @@
             } else {
                 console.warn('Global confirm multiple delete button not found');
             }
+            
+            // Enter key to confirm delete when modal is open
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    // Check if globalMultipleDeleteModal is open
+                    const multiDeleteModal = document.getElementById('globalMultipleDeleteModal');
+                    if (multiDeleteModal && multiDeleteModal.classList.contains('show')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const confirmBtn = document.getElementById('global-confirm-multiple-delete');
+                        if (confirmBtn && !confirmBtn.disabled) {
+                            confirmBtn.click();
+                        }
+                        return;
+                    }
+                    
+                    // Check if single delete modal (globalDeleteModal) is open
+                    const singleDeleteModal = document.getElementById('globalDeleteModal');
+                    if (singleDeleteModal && singleDeleteModal.classList.contains('show')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const confirmBtn = document.getElementById('globalDeleteConfirm');
+                        if (confirmBtn && !confirmBtn.disabled) {
+                            confirmBtn.click();
+                        }
+                        return;
+                    }
+                    
+                    // Check if deleteModal is open
+                    const deleteModal = document.getElementById('deleteModal');
+                    if (deleteModal && deleteModal.classList.contains('show')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const confirmBtn = document.getElementById('confirmDeleteBtn');
+                        if (confirmBtn && !confirmBtn.disabled) {
+                            confirmBtn.click();
+                        }
+                        return;
+                    }
+                }
+            });
         });
     </script>
     

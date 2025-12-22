@@ -101,8 +101,9 @@
       <span class="shortcut-btn" onclick="moduleShortcut('F9')"><kbd>F9</kbd> New</span>
       <span class="shortcut-btn" onclick="moduleShortcut('F3')"><kbd>F3</kbd> Edit</span>
       <span class="shortcut-btn" onclick="moduleShortcut('Delete')"><kbd>Del</kbd> Delete</span>
+      <span class="shortcut-btn" onclick="moduleShortcut('F8')"><kbd>F8</kbd> Del Multi</span>
       @foreach($extraShortcuts as $index => $shortcut)
-        @if($index < 4)
+        @if($index < 3)
           <span class="shortcut-btn" onclick="moduleShortcut('{{ $shortcut['key'] }}')">
             <kbd>{{ $shortcut['key'] }}</kbd> {{ $shortcut['label'] }}
           </span>
@@ -111,7 +112,7 @@
     </div>
     <div class="module-shortcuts-row">
       @foreach($extraShortcuts as $index => $shortcut)
-        @if($index >= 4)
+        @if($index >= 3)
           <span class="shortcut-btn" onclick="moduleShortcut('{{ $shortcut['key'] }}')">
             <kbd>{{ $shortcut['key'] }}</kbd> {{ $shortcut['label'] }}
           </span>
@@ -125,6 +126,7 @@
       <span class="shortcut-btn" onclick="moduleShortcut('F9')"><kbd>F9</kbd> New</span>
       <span class="shortcut-btn" onclick="moduleShortcut('F3')"><kbd>F3</kbd> Edit</span>
       <span class="shortcut-btn" onclick="moduleShortcut('Delete')"><kbd>Del</kbd> Delete</span>
+      <span class="shortcut-btn" onclick="moduleShortcut('F8')"><kbd>F8</kbd> Del Multi</span>
       @if(isset($extraShortcuts))
         @foreach($extraShortcuts as $shortcut)
           <span class="shortcut-btn" onclick="moduleShortcut('{{ $shortcut['key'] }}')">
@@ -150,15 +152,21 @@
   
   // Select a specific row (only visual selection, no checkbox tick)
   function selectRow(row) {
-    const tbody = document.getElementById(moduleConfig.tableBodyId);
-    if (!tbody || !row) return;
+    if (!row) return;
     
-    // Remove selection from all rows (only visual class, don't touch checkboxes)
+    // Find tbody - try specific ID first, then parent
+    let tbody = document.getElementById(moduleConfig.tableBodyId);
+    if (!tbody) {
+      tbody = row.closest('tbody');
+    }
+    if (!tbody) return;
+    
+    // Remove selection from all rows in this tbody
     tbody.querySelectorAll('tr.row-selected').forEach(r => {
       r.classList.remove('row-selected');
     });
     
-    // Select the new row (only visual, no checkbox)
+    // Select the new row
     row.classList.add('row-selected');
     
     // Scroll row into view
@@ -167,25 +175,56 @@
   
   // Get selected row
   function getSelectedRow() {
-    const tbody = document.getElementById(moduleConfig.tableBodyId);
+    // Try specific tbody first
+    let tbody = document.getElementById(moduleConfig.tableBodyId);
+    
+    // Fallback to any table tbody
+    if (!tbody) {
+      tbody = document.querySelector('table tbody');
+    }
+    
     if (!tbody) return null;
     
-    // Check for click-selected row
+    // Check for row-selected class first
     const clickSelected = tbody.querySelector('tr.row-selected');
-    if (clickSelected) return clickSelected;
+    if (clickSelected) {
+      return clickSelected;
+    }
     
     // Check for checked checkbox
-    const checkedBox = document.querySelector('.' + moduleConfig.checkboxClass + ':checked');
-    if (checkedBox) return checkedBox.closest('tr');
+    if (moduleConfig.checkboxClass) {
+      const checkedBox = document.querySelector('.' + moduleConfig.checkboxClass + ':checked');
+      if (checkedBox) {
+        return checkedBox.closest('tr');
+      }
+    }
     
     return null;
   }
   
   // Get all data rows (excluding empty state row)
   function getAllRows() {
-    const tbody = document.getElementById(moduleConfig.tableBodyId);
+    // Try specific tbody first
+    let tbody = document.getElementById(moduleConfig.tableBodyId);
+    
+    // Fallback to any table tbody
+    if (!tbody) {
+      tbody = document.querySelector('table tbody');
+    }
+    
     if (!tbody) return [];
-    return Array.from(tbody.querySelectorAll('tr')).filter(tr => !tr.querySelector('td[colspan]'));
+    
+    // Get all rows and filter out empty state rows
+    const allRows = Array.from(tbody.querySelectorAll('tr'));
+    return allRows.filter(tr => {
+      const tds = tr.querySelectorAll('td');
+      // If row has only 1 td with colspan, it's an empty state row
+      if (tds.length === 1 && tds[0].hasAttribute('colspan')) {
+        return false;
+      }
+      // Valid data row must have at least one td
+      return tds.length > 0;
+    });
   }
   
   // Show toast notification
@@ -209,75 +248,147 @@
     document.dispatchEvent(event);
   };
   
-  // Keyboard shortcut handler
+  // Keyboard shortcut handler - use capture phase to run before other handlers
   document.addEventListener('keydown', function(e) {
     const activeEl = document.activeElement;
     const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
     
     // Arrow Up/Down navigation (not when typing)
     if (!isTyping && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-      e.preventDefault();
       const rows = getAllRows();
-      if (rows.length === 0) return;
+      if (rows.length === 0) {
+        showToast('No rows available');
+        return;
+      }
+      
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation(); // Stop other handlers from running
       
       const currentRow = getSelectedRow();
-      let currentIndex = currentRow ? rows.indexOf(currentRow) : -1;
+      let currentIndex = -1;
+      
+      // Find current row index in the rows array
+      if (currentRow) {
+        currentIndex = rows.findIndex(r => r === currentRow);
+      }
+      
+      // If no row is selected or current row not found, select first row on ArrowDown, last on ArrowUp
+      if (currentIndex === -1) {
+        if (e.key === 'ArrowDown') {
+          selectRow(rows[0]);
+        } else {
+          selectRow(rows[rows.length - 1]);
+        }
+        return;
+      }
       
       if (e.key === 'ArrowUp') {
-        // Move up - if at first row, scroll to top of page (to show filters)
+        // Move up
         if (currentIndex > 0) {
-          currentIndex--;
-          selectRow(rows[currentIndex]);
-        } else if (currentIndex === 0) {
-          // Already at first row - scroll to very top to show header/filters
-          const contentDiv = document.querySelector('.content');
-          if (contentDiv) {
-            contentDiv.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-      } else {
-        // Arrow Down
-        if (currentIndex < rows.length - 1) {
-          // Not at last row, just move down
-          currentIndex++;
-          selectRow(rows[currentIndex]);
+          selectRow(rows[currentIndex - 1]);
         } else {
-          // At last row - check if there's a sentinel for load more
+          // Already at first row - scroll to top to show filters
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      } else if (e.key === 'ArrowDown') {
+        // Move down
+        if (currentIndex < rows.length - 1) {
+          selectRow(rows[currentIndex + 1]);
+        } else {
+          // At last row - check for load more sentinel
           const sentinel = document.querySelector('[id$="-sentinel"]');
           if (sentinel && sentinel.getAttribute('data-next-url')) {
-            // Trigger load more by scrolling sentinel into view
             sentinel.scrollIntoView({ behavior: 'smooth' });
-            
-            // Wait for new rows to load, then select the next one
             const currentRowCount = rows.length;
             let checkCount = 0;
             const checkForNewRows = setInterval(() => {
               checkCount++;
               const newRows = getAllRows();
               if (newRows.length > currentRowCount) {
-                // New rows loaded, select the first new row
                 selectRow(newRows[currentRowCount]);
                 clearInterval(checkForNewRows);
               } else if (checkCount > 20) {
-                // Timeout after 2 seconds, stay at current row
                 clearInterval(checkForNewRows);
               }
             }, 100);
           }
-          // If no more rows to load, stay at last row (no wrap)
         }
       }
       return;
     }
     
     // Allow F-keys even when typing
-    if (isTyping && !e.key.startsWith('F') && e.key !== 'Escape' && e.key !== 'Delete') {
+    if (isTyping && !e.key.startsWith('F') && e.key !== 'Escape' && e.key !== 'Delete' && e.key !== 'Enter') {
       return;
     }
     
-    const selectedRow = getSelectedRow();
+    // Enter key - Toggle checkbox of selected row
+    if (e.key === 'Enter' && !isTyping) {
+      e.preventDefault();
+      e.stopPropagation();
+      const selectedRow = getSelectedRow();
+      if (selectedRow) {
+        const checkbox = selectedRow.querySelector('.' + moduleConfig.checkboxClass);
+        if (checkbox) {
+          checkbox.checked = !checkbox.checked;
+          // Trigger change event for any listeners
+          checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+          
+          // Update selected count if function exists
+          const updateFnName = 'update' + moduleConfig.checkboxClass.replace(/-/g, '').replace('checkbox', '') + 'SelectedCount';
+          // Try common update function names
+          if (typeof window.updateItemsSelectedCount === 'function') {
+            window.updateItemsSelectedCount();
+          } else if (typeof window.updateSuppliersSelectedCount === 'function') {
+            window.updateSuppliersSelectedCount();
+          } else if (typeof window.updateCustomersSelectedCount === 'function') {
+            window.updateCustomersSelectedCount();
+          } else if (typeof window.updateCompaniesSelectedCount === 'function') {
+            window.updateCompaniesSelectedCount();
+          }
+          
+          const checkedCount = document.querySelectorAll('.' + moduleConfig.checkboxClass + ':checked').length;
+          showToast(checkbox.checked ? `Selected (${checkedCount} total)` : `Deselected (${checkedCount} total)`);
+        }
+      } else {
+        showToast('No row selected - Use Arrow keys to select');
+      }
+      return;
+    }
+    
+    // F8 - Delete Multiple (selected checkboxes)
+    if (e.key === 'F8') {
+      e.preventDefault();
+      e.stopPropagation();
+      const checkedBoxes = document.querySelectorAll('.' + moduleConfig.checkboxClass + ':checked');
+      if (checkedBoxes.length === 0) {
+        showToast('No items selected - Use Enter to select rows');
+        return;
+      }
+      
+      // Find and click the delete selected button
+      const deleteSelectedBtn = document.querySelector('#delete-selected-btn, #delete-selected-items-btn, #delete-selected-suppliers-btn, #delete-selected-customers-btn, [id*="delete-selected"]');
+      if (deleteSelectedBtn && !deleteSelectedBtn.classList.contains('d-none')) {
+        showToast(`Deleting ${checkedBoxes.length} selected items...`);
+        deleteSelectedBtn.click();
+      } else {
+        // Try to trigger the confirmMultipleDelete function directly
+        if (typeof window.confirmMultipleDelete === 'function') {
+          showToast(`Deleting ${checkedBoxes.length} selected items...`);
+          window.confirmMultipleDelete();
+        } else if (typeof window.confirmMultipleDeleteSuppliers === 'function') {
+          showToast(`Deleting ${checkedBoxes.length} selected suppliers...`);
+          window.confirmMultipleDeleteSuppliers();
+        } else if (typeof window.confirmMultipleDeleteCustomers === 'function') {
+          showToast(`Deleting ${checkedBoxes.length} selected customers...`);
+          window.confirmMultipleDeleteCustomers();
+        } else {
+          showToast(`${checkedBoxes.length} items selected - Delete button not found`);
+        }
+      }
+      return;
+    }
     
     // F9 - New
     if (e.key === 'F9' && moduleConfig.createRoute) {
@@ -290,14 +401,17 @@
     // F3 - Edit
     if (e.key === 'F3') {
       e.preventDefault();
+      const selectedRow = getSelectedRow();
       if (selectedRow) {
         const editBtn = selectedRow.querySelector('a[title="Edit"], a[href*="edit"]');
         if (editBtn) {
           showToast('Opening Edit Form...');
           window.location.href = editBtn.href;
+        } else {
+          showToast('Edit option not available');
         }
       } else {
-        showToast('Select a row first');
+        showToast('No row selected - Use Arrow keys to select');
       }
       return;
     }
@@ -305,14 +419,17 @@
     // Delete key
     if (e.key === 'Delete' && !isTyping) {
       e.preventDefault();
+      const selectedRow = getSelectedRow();
       if (selectedRow) {
         const deleteBtn = selectedRow.querySelector('button.ajax-delete, button[type="submit"][class*="danger"]');
         if (deleteBtn) {
           showToast('Confirming delete...');
           deleteBtn.click();
+        } else {
+          showToast('Delete option not available');
         }
       } else {
-        showToast('Select a row first');
+        showToast('No row selected - Use Arrow keys to select');
       }
       return;
     }
@@ -321,6 +438,7 @@
     moduleConfig.extraShortcuts.forEach(function(shortcut) {
       if (e.key === shortcut.key) {
         e.preventDefault();
+        const selectedRow = getSelectedRow();
         if (selectedRow) {
           // Find button with matching title or href
           const btn = selectedRow.querySelector(`a[title*="${shortcut.label}"], a[href*="${shortcut.action}"]`);
@@ -331,11 +449,11 @@
             showToast(`${shortcut.label} - Feature coming soon`);
           }
         } else {
-          showToast('Select a row first');
+          showToast('No row selected - Use Arrow keys to select');
         }
       }
     });
-  });
+  }, true); // Use capture phase to run before other handlers
   
   // Row click selection (no auto-select on load)
   document.addEventListener('DOMContentLoaded', function() {
