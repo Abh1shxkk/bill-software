@@ -2,448 +2,665 @@
 
 @section('title', 'Breakage/Expiry Dump - Modification')
 
+@push('styles')
+<style>
+    .bsi-form { font-size: 11px; }
+    .bsi-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; }
+    .bsi-form input, .bsi-form select { font-size: 11px; padding: 2px 6px; height: 26px; }
+    .header-section { background: #fff; border: 1px solid #ccc; padding: 8px; margin-bottom: 6px; border-radius: 4px; }
+    .field-group { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
+    .readonly-field { background-color: #e9ecef !important; }
+    
+    /* Table Styles - Brown Header */
+    .items-table { font-size: 8px; margin-bottom: 0; border-collapse: collapse; width: 100%; }
+    .items-table th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; padding: 3px 2px; border: 1px solid #5a3a1a; white-space: nowrap; font-size: 8px; }
+    .items-table td { padding: 1px; border: 1px solid #ccc; background: #fffacd; }
+    .items-table input, .items-table select { font-size: 8px; padding: 1px 2px; height: 18px; border: 1px solid #aaa; width: 100%; }
+    .items-table .row-selected td { background: #cce5ff !important; }
+    
+    /* Summary Row - Pink */
+    .summary-section { background: #ffcccc; padding: 8px; border: 1px solid #cc9999; margin-bottom: 6px; border-radius: 3px; }
+    .summary-section label { font-weight: bold; font-size: 11px; }
+    .summary-section input { height: 24px; font-size: 11px; }
+    
+    /* Footer Section - Gray */
+    .footer-section { background: #d4d4d4; padding: 8px; border: 1px solid #999; border-radius: 3px; }
+    .footer-section label { font-size: 10px; margin-bottom: 1px; }
+    .footer-section input { height: 22px; font-size: 10px; }
+    
+    /* First Footer Section - Purple */
+    .first-footer-section { background: #e6d9f5; padding: 8px; border: 1px solid #b399d9; border-radius: 3px; }
+    .first-footer-section label { font-size: 10px; margin-bottom: 1px; }
+    .first-footer-section input { height: 22px; font-size: 10px; }
+    
+    /* Action Buttons */
+    .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+    .action-buttons .btn { min-width: 100px; }
+    
+    /* Modal Styles */
+    .modal-backdrop-custom { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; }
+    .modal-backdrop-custom.show { display: block; }
+    .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 800px; background: #fff; border-radius: 6px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 1055; }
+    .custom-modal.show { display: block; }
+    .modal-header-custom { padding: 10px 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 6px 6px 0 0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header-custom.batch { background: #ffc107; color: #000; }
+    .modal-body-custom { padding: 12px; max-height: 400px; overflow-y: auto; }
+    .modal-footer-custom { padding: 8px 12px; border-top: 1px solid #ddd; text-align: right; }
+    .item-row:hover, .batch-row:hover { background: #e3f2fd !important; cursor: pointer; }
+    .item-row.selected, .batch-row.selected { background: #007bff !important; color: #fff !important; }
+</style>
+@endpush
+
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Breakage/Expiry Dump - Modification</h5>
-            <div class="text-muted small">Modify dump transaction</div>
-        </div>
+<div class="bsi-form">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h6 class="mb-0"><i class="bi bi-trash me-1"></i> Breakage/Expiry Dump - Modification</h6>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-info btn-sm text-white" onclick="showLoadDumpModal()">
+            <button type="button" class="btn btn-outline-info btn-sm py-0" onclick="showLoadDumpModal()">
                 <i class="bi bi-folder-open me-1"></i> Load Dump
             </button>
-            <a href="{{ route('admin.breakage-supplier.unused-dump-transaction') }}" class="btn btn-primary btn-sm">
+            <a href="{{ route('admin.breakage-supplier.unused-dump-transaction') }}" class="btn btn-outline-secondary btn-sm py-0">
                 <i class="bi bi-plus-circle me-1"></i> New
             </a>
         </div>
     </div>
 
-    <form id="dumpForm" method="POST" autocomplete="off">
+    <form id="dumpForm" autocomplete="off">
         @csrf
         <input type="hidden" id="transaction_id" name="transaction_id">
         @method('PUT')
 
         <!-- Header Section -->
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body p-3">
-                <div class="row g-3">
-                    <div class="col-md-2">
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold mb-1">Date</label>
-                            <input type="date" id="transaction_date" name="transaction_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" onchange="updateDayName()">
-                        </div>
-                         <div class="mb-2">
-                            <label class="form-label small fw-bold mb-1">Day</label>
-                            <input type="text" id="day_name" name="day_name" class="form-control form-control-sm bg-light text-center" value="{{ date('l') }}" readonly>
-                        </div>
-                        <div class="mb-0">
-                            <label class="form-label small fw-bold mb-1">Trn.No</label>
-                            <input type="text" id="trn_no" name="trn_no" class="form-control form-control-sm bg-light" readonly>
-                        </div>
-                    </div>
-                    <div class="col-md-10">
-                        <div class="card bg-light border-0 h-100">
-                             <div class="card-body p-3">
-                                <label class="form-label small fw-bold mb-1">Narration</label>
-                                <textarea id="narration" name="narration" class="form-control form-control-sm" rows="3" placeholder="Enter narration or remarks..."></textarea>
-                            </div>
+        <div class="header-section">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <div class="field-group"><label style="width:40px;">Date:</label><input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()"></div>
+                    <div class="field-group"><label style="width:40px;"></label><input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width:85px;"></div>
+                    <div class="field-group"><label style="width:40px;">Trn.No:</label><input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="" readonly style="width:60px;"></div>
+                </div>
+                <div class="col-md-10">
+                    <div class="row g-2">
+                        <div class="col-md-12">
+                            <label class="form-label small fw-bold mb-1">Narration</label>
+                            <textarea id="narration" name="narration" class="form-control form-control-sm" rows="3" placeholder="Enter narration or remarks..."></textarea>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Items Table -->
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 350px;">
-                    <table class="table table-bordered table-sm table-hover mb-0" style="font-size: 12px;">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th style="width:70px;">Code</th>
-                                <th>Item Name</th>
-                                <th style="width:100px;">Batch</th>
-                                <th style="width:80px;">Exp.</th>
-                                <th style="width:60px;" class="text-end">Qty</th>
-                                <th style="width:60px;" class="text-end">F.Qty</th>
-                                <th style="width:80px;" class="text-end">Rate</th>
-                                <th style="width:60px;" class="text-end">Dis%</th>
-                                <th style="width:60px;" class="text-end">Scm%</th>
-                                <th style="width:80px;">Type</th>
-                                <th style="width:100px;" class="text-end">Amount</th>
-                                <th style="width:40px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="itemsTableBody"></tbody>
-                    </table>
-                </div>
-                <div class="p-1 border-top bg-light text-center small">
-                     <a href="javascript:void(0)" onclick="showAddItemModal()" class="text-decoration-none fw-bold text-primary"><i class="bi bi-plus-circle me-1"></i> Add Item (F2)</a>
-                </div>
+        <!-- Items Table Section -->
+        <div class="bg-white border rounded p-2 mb-2">
+            <div class="table-responsive">
+                <table class="items-table" id="itemsTable" style="table-layout: fixed; width: 100%;">
+                    <thead style="position: sticky; top: 0; z-index: 10;">
+                        <tr>
+                            <th style="width:45px;">Code</th>
+                            <th style="width:100px;">Item Name</th>
+                            <th style="width:45px;">Batch</th>
+                            <th style="width:35px;">Exp</th>
+                            <th style="width:30px;">Qty</th>
+                            <th style="width:30px;">F.Q</th>
+                            <th style="width:45px;">Rate</th>
+                            <th style="width:35px;">Dis%</th>
+                            <th style="width:35px;">Scm%</th>
+                            <th style="width:50px;">Br/Ex</th>
+                            <th style="width:55px;">Amount</th>
+                            <th style="width:20px;">X</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody"></tbody>
+                </table>
+            </div>
+            <div class="text-center mt-2 border-top pt-2">
+                <button type="button" class="btn btn-link text-decoration-none fw-bold text-primary p-0" onclick="showItemModal()">
+                    <i class="bi bi-plus-circle me-1"></i> Add Item (F2)
+                </button>
             </div>
         </div>
 
-        <!-- Comprehensive Footer (Consistent 3-Section) -->
-        <div class="fixed-bottom-footer" style="padding-bottom: 60px;">
-            <!-- SECTION 1: Taxes & Rates -->
-            <div class="card border-0 rounded-0 mb-1" style="background-color: #f0f0f0; border-top: 1px solid #ddd !important;">
-                <div class="card-body p-1">
-                    <div class="row g-1 align-items-center">
-                        <div class="col-md-5 d-flex gap-2">
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 100px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">SC %</span>
-                                <input type="number" id="footer_scm_percent" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 100px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Excise</span>
-                                <input type="number" id="footer_excise" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 100px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Tax %</span>
-                                <input type="number" id="footer_tax_percent" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                        </div>
-                        <div class="col-md-7 d-flex justify-content-end gap-2">
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Pack</span>
-                                <input type="text" id="footer_pack_1" class="form-control px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                           <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 fw-bold bg-white border-end-0">MRP</span>
-                                <input type="number" id="footer_mrp" class="form-control text-end px-1 fw-bold border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">P.Rate</span>
-                                <input type="number" id="footer_p_rate" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">S.Rate</span>
-                                <input type="number" id="footer_s_rate" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Section 2 - Gray (SC%, EXCISE, TAX%, etc.) -->
+        <div class="footer-section mb-2">
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center gap-1 me-2"><label>SC %</label><input type="number" id="footer_sc_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>EXCISE</label><input type="number" id="footer_excise" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>TAX %</label><input type="number" id="footer_tax_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>HSN</label><input type="text" id="footer_hsn" class="form-control readonly-field" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-3"><label>Pack</label><input type="text" id="footer_pack2" class="form-control readonly-field" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-1"><label>Disallow</label><input type="text" id="footer_disallow" class="form-control readonly-field text-center" value="N" readonly style="width:30px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>MRP</label><input type="number" id="footer_mrp" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
             </div>
+            <div class="d-flex align-items-center mt-1">
+                <div class="d-flex align-items-center gap-1 me-2"><label>P.RATE</label><input type="number" id="footer_prate" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label>S.RATE</label><input type="number" id="footer_srate" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+            </div>
+        </div>
 
-            <!-- SECTION 2: Item Details (Blue Panel) -->
-            <div class="card border-0 rounded-0 mb-1" style="background-color: #dbeafe; border-top: 1px solid #bfdbfe !important;">
-                <div class="card-body p-1">
-                    <div class="row g-1 align-items-center">
-                        <div class="col-md-5 d-flex gap-2">
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Pack</span>
-                                <input type="text" id="footer_pack_2" class="form-control px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 140px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Comp:</span>
-                                <input type="text" id="footer_company" class="form-control px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 80px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Unit</span>
-                                <input type="text" id="footer_unit" class="form-control px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 90px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Stock</span>
-                                <input type="number" id="footer_balance" class="form-control text-end px-1 border-start-0 text-primary fw-bold" readonly tabindex="-1">
-                            </div>
-                        </div>
-                        <div class="col-md-7 d-flex justify-content-end gap-1 flex-wrap">
-                            <div class="d-flex align-items-center gap-1">
-                                <label class="small fw-bold mb-0">N.T Amt.</label>
-                                <input type="number" id="footer_row_nt_amt" class="form-control form-control-sm text-end" style="width: 80px;" readonly tabindex="-1">
-                            </div>
-                             <div class="d-flex align-items-center gap-1">
-                                <label class="small fw-bold mb-0">Net Amt.</label>
-                                <input type="number" id="footer_row_net_amt" class="form-control form-control-sm text-end fw-bold bg-white" style="width: 80px;" readonly tabindex="-1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Section 1 - Pink Summary (N.T AMT, SC, DIS. AMT, etc.) -->
+        <div class="summary-section mb-2">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">N.T AMT</label><input type="number" id="total_nt_amt" name="total_nt_amt" class="form-control readonly-field text-end fw-bold" readonly style="width:90px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">SC</label><input type="number" id="total_sc" name="total_sc" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">DIS. AMT</label><input type="number" id="total_dis_amt" name="total_dis_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Scm. AMT</label><input type="number" id="total_scm_amt" name="total_scm_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Half.Scm.</label><input type="number" id="total_half_scm" name="total_half_scm" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Tax</label><input type="number" id="total_tax" name="total_tax" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">NET LOSS</label><input type="number" id="total_inv_amt" name="total_inv_amt" class="form-control text-end fw-bold" readonly style="width:100px;"></div>
             </div>
+        </div>
 
-            <!-- SECTION 3: Totals (Pink Panel) -->
-            <div class="card border-0 rounded-0" style="background-color: #ffcccc; border-top: 2px solid #ff9999 !important;">
-                <div class="card-body p-2">
-                    <div class="row g-2 align-items-center justify-content-end">
-                        <div class="col-12 d-flex justify-content-end gap-2 flex-wrap">
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 140px;">
-                                <span class="input-group-text px-1 fw-bold bg-white border-end-0">N.T AMT</span>
-                                <input type="number" id="total_nt_amt" name="total_nt_amt" class="form-control text-end px-1 bg-white border-start-0 fw-bold" readonly tabindex="-1">
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 130px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Scm. AMT</span>
-                                <input type="number" id="total_scm_amt" name="total_scm_amt" class="form-control text-end px-1 bg-white border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Tax</span>
-                                <input type="number" id="total_tax" name="total_tax" class="form-control text-end px-1 bg-white border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 180px;">
-                                <span class="input-group-text px-1 fw-bold bg-danger text-white border-danger">NET LOSS</span>
-                                <input type="number" id="total_inv_amt" name="total_inv_amt" class="form-control text-end px-1 fw-bold border-danger text-danger bg-white" style="font-size: 1.25em;" readonly tabindex="-1">
-                            </div>
-                        </div>
-                        <div class="col-12 text-center mt-2 d-flex justify-content-center gap-3">
-                             <button type="button" class="btn btn-success btn-sm px-4" onclick="updateTransaction()" id="updateBtn" disabled>
-                                <i class="bi bi-check-lg me-1"></i> Update
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm px-4" onclick="cancelTransaction()">
-                                <i class="bi bi-x-lg me-1"></i> Cancel
-                            </button>
-                            <button type="button" class="btn btn-danger btn-sm px-4" onclick="deleteSelectedItem()">
-                                <i class="bi bi-trash me-1"></i> Remove
-                            </button>
-                        </div>
-                    </div>
-                </div>
+        <!-- Section 3 - Purple Header (Pack, Comp, N.T Amt, etc.) -->
+        <div class="first-footer-section mb-2">
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center gap-1 me-2"><label>Pack</label><input type="text" id="footer_pack" class="form-control readonly-field" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Comp :</label><input type="text" id="footer_comp" class="form-control readonly-field" readonly style="width:100px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>N.T Amt.</label><input type="number" id="footer_nt_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>DIS. Amt.</label><input type="number" id="footer_dis_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Net Amt.</label><input type="number" id="footer_net_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>P.Scm.</label><input type="number" id="footer_pscm" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>S.Scm.</label><input type="number" id="footer_sscm" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
+                <div class="d-flex align-items-center gap-1"><label>+</label></div>
             </div>
+            <div class="d-flex align-items-center mt-1">
+                <div class="d-flex align-items-center gap-1 me-2"><label>Unit</label><input type="text" id="footer_unit" class="form-control readonly-field" readonly style="width:50px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Bal.</label><input type="number" id="footer_bal" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Srlno.</label><input type="text" id="footer_srlno" class="form-control readonly-field" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Half Scm.</label><input type="number" id="footer_half_scm" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Scm.Amt.</label><input type="number" id="footer_scm_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Tax Amt.</label><input type="number" id="footer_tax_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label>+</label></div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button type="button" class="btn btn-success btn-sm" onclick="updateTransaction()" id="updateBtn" disabled><i class="bi bi-check-lg me-1"></i> Update</button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedItem()"><i class="bi bi-trash me-1"></i> Delete Item</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="cancelModification()"><i class="bi bi-x-lg me-1"></i> Cancel</button>
         </div>
     </form>
 </div>
 
-@push('styles')
-<style>
-    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.02); cursor: pointer; }
-    .row-selected { background-color: #e8f0fe !important; }
-    .row-selected td { background-color: #e8f0fe !important; }
-    .fixed-bottom-footer { position: fixed; bottom: 0; left: 250px; right: 0; z-index: 1030; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-    @media (max-width: 992px) { .fixed-bottom-footer { left: 0; } }
-    .fixed-bottom-footer .input-group-text { font-size: 11px; padding: 0.25rem 0.5rem; }
-    .fixed-bottom-footer .form-control { font-size: 11px; padding: 0.25rem 0.5rem; }
-     /* Modal Styles */
-    .modal-backdrop-custom { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; }
-    .modal-backdrop-custom.show { display: block; }
-    .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 800px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1055; background-clip: padding-box; outline: 0; }
-    .custom-modal.show { display: block; }
-    .custom-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1rem; border-bottom: 1px solid #dee2e6; border-top-left-radius: 8px; border-top-right-radius: 8px; background-color: #f8f9fa; }
-    .custom-modal-body { position: relative; flex: 1 1 auto; padding: 1rem; max-height: 70vh; overflow-y: auto; }
-    .custom-modal-footer { display: flex; flex-wrap: wrap; flex-shrink: 0; align-items: center; justify-content: flex-end; padding: 0.75rem; border-top: 1px solid #dee2e6; border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; background-color: #f8f9fa; }
-</style>
-@endpush
+<!-- Load Dump Modal -->
+<div class="modal-backdrop-custom" id="dumpModalBackdrop" onclick="closeDumpModal()"></div>
+<div class="custom-modal" id="dumpModal">
+    <div class="modal-header-custom" style="background: #17a2b8;">
+        <h6 class="mb-0"><i class="bi bi-folder-open me-1"></i> Load Dump Transaction</h6>
+        <button type="button" class="btn btn-sm btn-light" onclick="closeDumpModal()">&times;</button>
+    </div>
+    <div class="modal-body-custom">
+        <input type="text" id="dumpSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by Trn No..." onkeyup="searchDumps()">
+        <div class="table-responsive" style="max-height: 300px;">
+            <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 11px;">
+                <thead class="table-light sticky-top"><tr><th>Trn No</th><th>Date</th><th class="text-end">Amount</th></tr></thead>
+                <tbody id="dumpsListBody"><tr><td colspan="3" class="text-center py-3">Loading...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer-custom">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeDumpModal()">Close</button>
+    </div>
+</div>
+
+<!-- Item Selection Modal -->
+<div class="modal-backdrop-custom" id="itemModalBackdrop" onclick="closeItemModal()"></div>
+<div class="custom-modal" id="itemModal">
+    <div class="modal-header-custom">
+        <h6 class="mb-0"><i class="bi bi-search me-1"></i> Select Item</h6>
+        <button type="button" class="btn btn-sm btn-light" onclick="closeItemModal()">&times;</button>
+    </div>
+    <div class="modal-body-custom">
+        <input type="text" id="itemSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by code or name..." onkeyup="filterItems()">
+        <div class="table-responsive" style="max-height: 300px;">
+            <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 11px;">
+                <thead class="table-light sticky-top"><tr><th>Code</th><th>Item Name</th><th>Pack</th><th>Company</th></tr></thead>
+                <tbody id="itemsListBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer-custom">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
+    </div>
+</div>
+
+<!-- Batch Selection Modal -->
+<div class="modal-backdrop-custom" id="batchModalBackdrop" onclick="closeBatchModal()"></div>
+<div class="custom-modal" id="batchModal">
+    <div class="modal-header-custom batch">
+        <h6 class="mb-0"><i class="bi bi-box me-1"></i> Select Batch</h6>
+        <button type="button" class="btn btn-sm btn-dark" onclick="closeBatchModal()">&times;</button>
+    </div>
+    <div class="modal-body-custom">
+        <div class="mb-2 p-2 bg-light rounded"><strong id="selectedItemName">-</strong></div>
+        <div class="table-responsive" style="max-height: 280px;">
+            <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 11px;">
+                <thead class="table-warning sticky-top"><tr><th>Batch</th><th>Expiry</th><th>Qty</th><th>MRP</th><th>P.Rate</th><th>S.Rate</th></tr></thead>
+                <tbody id="batchesListBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer-custom">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
+    </div>
+</div>
+@endsection
 
 @push('scripts')
 <script>
-let rowIndex = 0, allItems = [], selectedRowIndex = null, currentTransactionId = null;
-document.addEventListener('DOMContentLoaded', function() { loadItems(); });
-function updateDayName() { const d = new Date(document.getElementById('transaction_date').value); document.getElementById('day_name').value = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()]; }
-function loadItems() { fetch('{{ route("admin.breakage-supplier.get-items") }}').then(r => r.json()).then(data => { allItems = data || []; }); }
+let rowIndex = 0, allItems = [], selectedRowIndex = null, selectedItem = null, currentTransactionId = null;
 
+document.addEventListener('DOMContentLoaded', function() {
+    loadItems();
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F2') { e.preventDefault(); showItemModal(); }
+        if (e.key === 'Escape') { closeItemModal(); closeBatchModal(); closeDumpModal(); }
+    });
+});
+
+function updateDayName() {
+    const d = new Date(document.getElementById('transaction_date').value);
+    document.getElementById('day_name').value = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+}
+
+function loadItems() {
+    fetch('{{ route("admin.breakage-supplier.get-items") }}')
+        .then(r => r.json())
+        .then(data => { allItems = data || []; })
+        .catch(e => console.error('Error loading items:', e));
+}
+
+// Dump Modal
 function showLoadDumpModal() {
-     const html = `
-        <div class="modal-backdrop-custom show" id="dumpModalBackdrop" onclick="closeDumpModal()"></div>
-        <div class="custom-modal show" id="dumpModal">
-            <div class="custom-modal-header"><h5 class="custom-modal-title m-0 fs-6">Load Dump Transaction</h5><button type="button" class="btn-close" onclick="closeDumpModal()"></button></div>
-            <div class="custom-modal-body">
-                <input type="text" id="dumpSearchInput" class="form-control mb-3" placeholder="Search..." onkeyup="searchDumps()">
-                <div class="table-responsive"><table class="table table-hover table-bordered table-sm mb-0 small"><tbody id="dumpsListBody"></tbody></table></div>
-            </div>
-            <div class="custom-modal-footer"><button type="button" class="btn btn-secondary btn-sm" onclick="closeDumpModal()">Close</button></div>
-        </div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
+    document.getElementById('dumpModalBackdrop').classList.add('show');
+    document.getElementById('dumpModal').classList.add('show');
+    document.getElementById('dumpSearchInput').value = '';
     loadDumps();
 }
-function loadDumps(search = '') {
-    // Assuming a route for dump list
-    fetch(`{{ route('admin.breakage-supplier.get-dump-past-invoices') }}?search=${encodeURIComponent(search)}`).then(r => r.json()).then(dumps => {
-        const tbody = document.getElementById('dumpsListBody');
-         if (!dumps.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-muted">No transactions found</td></tr>'; return; }
-         tbody.innerHTML = dumps.map(d => `
-            <tr style="cursor: pointer;" onclick="loadDump(${d.id})">
-                <td><strong>${d.trn_no || d.id}</strong></td>
-                <td>${d.transaction_date}</td>
-                <td class="text-end">${parseFloat(d.amount || 0).toFixed(2)}</td>
-            </tr>`).join('');
-    });
+
+function closeDumpModal() {
+    document.getElementById('dumpModalBackdrop').classList.remove('show');
+    document.getElementById('dumpModal').classList.remove('show');
 }
-function searchDumps() { loadDumps(document.getElementById('dumpSearchInput').value); }
-function closeDumpModal() { document.getElementById('dumpModal')?.remove(); document.getElementById('dumpModalBackdrop')?.remove(); }
+
+function loadDumps(search = '') {
+    fetch(`{{ route('admin.breakage-supplier.get-dump-past-invoices') }}?search=${encodeURIComponent(search)}`)
+        .then(r => r.json())
+        .then(dumps => {
+            const tbody = document.getElementById('dumpsListBody');
+            if (!dumps.length) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-muted">No dump transactions found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = dumps.map(dump => `
+                <tr class="invoice-row" onclick="loadDump(${dump.id})">
+                    <td><strong>${dump.trn_no}</strong></td>
+                    <td>${dump.transaction_date ? new Date(dump.transaction_date).toLocaleDateString() : '-'}</td>
+                    <td class="text-end">${parseFloat(dump.total_inv_amt || 0).toFixed(2)}</td>
+                </tr>
+            `).join('');
+        })
+        .catch(() => {
+            document.getElementById('dumpsListBody').innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Error loading dumps</td></tr>';
+        });
+}
+
+function searchDumps() {
+    loadDumps(document.getElementById('dumpSearchInput').value);
+}
 
 function loadDump(id) {
-    fetch(`{{ url('admin/breakage-supplier/unused-dump') }}/${id}`).then(r => r.json()).then(data => { populateForm(data); closeDumpModal(); })
-    .catch(console.error);
+    fetch(`{{ url('admin/breakage-supplier/unused-dump') }}/${id}`)
+        .then(r => r.json())
+        .then(data => {
+            populateForm(data);
+            closeDumpModal();
+        })
+        .catch(e => {
+            console.error(e);
+            alert('Error loading dump transaction');
+        });
 }
 
 function populateForm(data) {
     currentTransactionId = data.id;
     document.getElementById('transaction_id').value = data.id;
     document.getElementById('trn_no').value = data.trn_no;
-    document.getElementById('transaction_date').value = data.transaction_date;
+    document.getElementById('transaction_date').value = data.transaction_date ? data.transaction_date.split('T')[0] : '';
+    updateDayName();
     document.getElementById('narration').value = data.narration || '';
-    document.getElementById('total_nt_amt').value = data.total_nt_amt || 0;
-    document.getElementById('total_scm_amt').value = data.total_scm_amt || 0;
-    document.getElementById('total_tax').value = data.total_tax || 0;
-    document.getElementById('total_inv_amt').value = data.total_inv_amt || 0;
-
+    
+    // Clear and populate items
     document.getElementById('itemsTableBody').innerHTML = '';
     rowIndex = 0;
-    if (data.items) data.items.forEach(item => addItemRowFromData(item));
+    
+    if (data.items && data.items.length) {
+        data.items.forEach(item => {
+            addItemRowFromData(item);
+        });
+    }
+    
+    calculateTotals();
     document.getElementById('updateBtn').disabled = false;
-    updateDayName();
 }
 
 function addItemRowFromData(item) {
+    const tbody = document.getElementById('itemsTableBody');
     const idx = rowIndex++;
-    const row = document.createElement('tr');
-    row.id = `row-${idx}`; row.dataset.rowIndex = idx;
-    row.onclick = function(e) { if (!['BUTTON','INPUT','SELECT'].includes(e.target.tagName)) selectRow(idx); };
     
-    row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][code]" value="${item.item_code}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][name]" value="${item.item_name}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][batch]" value="${item.batch_no}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][expiry]" value="${item.expiry}" readonly></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][qty]" value="${item.qty}" min="0" onchange="calcRow(${idx})" style="width:60px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][free_qty]" value="${item.free_qty}" min="0" style="width:60px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][rate]" value="${item.rate}" step="0.01" onchange="calcRow(${idx})" style="width:80px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][dis_percent]" value="${item.dis_percent}" step="0.01" onchange="calcRow(${idx})" style="width:60px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][scm_percent]" value="${item.scm_percent}" step="0.01" onchange="calcRow(${idx})" style="width:60px;"></td>
-        <td><select class="form-select form-select-sm py-0" name="items[${idx}][br_ex_type]" style="width:80px;"><option value="BREAKAGE" ${item.br_ex_type==='BREAKAGE'?'selected':''}>Brk</option><option value="EXPIRY" ${item.br_ex_type==='EXPIRY'?'selected':''}>Exp</option></select></td>
-        <td><input type="number" class="form-control form-control-sm text-end border-0 bg-transparent fw-bold py-0" name="items[${idx}][amount]" value="${item.amount}" readonly></td>
-         <td class="text-center"><button type="button" class="btn btn-sm text-danger p-0" onclick="removeRow(${idx})"><i class="bi bi-trash"></i></button></td>
-        
-        <input type="hidden" name="items[${idx}][item_id]" value="${item.item_id}">
-        <input type="hidden" name="items[${idx}][batch_id]" value="${item.batch_id||''}">
-        <input type="hidden" name="items[${idx}][packing]" value="${item.packing||''}">
-        <input type="hidden" name="items[${idx}][unit]" value="${item.unit||''}">
-        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name||''}">
-        <input type="hidden" name="items[${idx}][mrp]" value="${item.mrp}">
-        <input type="hidden" name="items[${idx}][p_rate]" value="${item.p_rate}">
-        <input type="hidden" name="items[${idx}][s_rate]" value="${item.s_rate}">
-        <input type="hidden" name="items[${idx}][cl_qty]" value="${item.cl_qty||0}">
-        <input type="hidden" name="items[${idx}][cgst_percent]" value="${item.cgst_percent||0}">
-        <input type="hidden" name="items[${idx}][sgst_percent]" value="${item.sgst_percent||0}">
-        <input type="hidden" name="items[${idx}][tax_amount]" class="row-tax-amt" value="${item.tax_amount||0}">
-        <input type="hidden" name="items[${idx}][dis_amount]" class="row-dis-amt" value="${item.dis_amount||0}">
-        <input type="hidden" name="items[${idx}][scm_amount]" class="row-scm-amt" value="${item.scm_amount||0}">
+    const tr = document.createElement('tr');
+    tr.id = `row_${idx}`;
+    tr.onclick = function() { selectRow(idx); };
+    tr.innerHTML = `
+        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"></td>
+        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
+        <td><input type="text" name="items[${idx}][batch_no]" value="${item.batch_no || ''}" readonly class="readonly-field"></td>
+        <td><input type="text" name="items[${idx}][expiry]" value="${item.expiry_date || ''}" readonly class="readonly-field"></td>
+        <td><input type="number" name="items[${idx}][qty]" value="${item.qty || ''}" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][free_qty]" value="${item.free_qty || 0}" min="0" class="text-end"></td>
+        <td><input type="number" name="items[${idx}][rate]" value="${parseFloat(item.rate || 0).toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][dis_percent]" value="${item.dis_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][scm_percent]" value="${item.scm_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B" ${item.br_ex === 'B' ? 'selected' : ''}>Brk</option><option value="E" ${item.br_ex === 'E' ? 'selected' : ''}>Exp</option></select></td>
+        <td><input type="number" name="items[${idx}][amount]" value="${parseFloat(item.amount || 0).toFixed(2)}" step="0.01" class="text-end readonly-field" readonly></td>
+        <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
+        <input type="hidden" name="items[${idx}][id]" value="${item.id || ''}">
+        <input type="hidden" name="items[${idx}][item_id]" value="${item.item_id || ''}">
+        <input type="hidden" name="items[${idx}][batch_id]" value="${item.batch_id || ''}">
+        <input type="hidden" name="items[${idx}][mrp]" value="${item.mrp || 0}">
+        <input type="hidden" name="items[${idx}][purchase_rate]" value="${item.purchase_rate || 0}">
+        <input type="hidden" name="items[${idx}][sale_rate]" value="${item.sale_rate || 0}">
+        <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
+        <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
+        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
+        <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
+        <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
+        <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
     `;
-    document.getElementById('itemsTableBody').appendChild(row);
-    selectRow(idx); calcRow(idx);
+    tbody.appendChild(tr);
 }
 
-// Reuse modal functions from Transaction
-function showAddItemModal() {
-     const html = `
-        <div class="modal-backdrop-custom show" id="itemModalBackdrop" onclick="closeItemModal()"></div>
-        <div class="custom-modal show" id="itemModal">
-            <div class="custom-modal-header"><h5 class="custom-modal-title m-0 fs-6">Select Item</h5><button type="button" class="btn-close" onclick="closeItemModal()"></button></div>
-            <div class="custom-modal-body">
-                <input type="text" id="itemSearchInput" class="form-control mb-3" placeholder="Search..." onkeyup="filterItemsList()">
-                <div class="table-responsive"><table class="table table-hover table-bordered table-sm mb-0 small"><tbody id="itemsListBody"></tbody></table></div>
-            </div>
-            <div class="custom-modal-footer"><button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button></div>
-        </div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
-    document.getElementById('itemSearchInput').focus();
-    renderItemsList();
+// Item Modal
+function showItemModal() {
+    document.getElementById('itemModalBackdrop').classList.add('show');
+    document.getElementById('itemModal').classList.add('show');
+    document.getElementById('itemSearchInput').value = '';
+    renderItemsList(allItems);
+    setTimeout(() => document.getElementById('itemSearchInput').focus(), 100);
 }
-function filterItemsList() { renderItemsList(document.getElementById('itemSearchInput').value); }
-function renderItemsList(filter = '') {
-    const filtered = filter ? allItems.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) : allItems;
-    document.getElementById('itemsListBody').innerHTML = filtered.slice(0,50).map(i => `<tr style="cursor:pointer;" onclick="selectItem(${i.id})"><td>${i.id}</td><td>${i.name}</td><td>${i.packing||'-'}</td><td>${parseFloat(i.mrp||0).toFixed(2)}</td></tr>`).join('');
+
+function closeItemModal() {
+    document.getElementById('itemModalBackdrop').classList.remove('show');
+    document.getElementById('itemModal').classList.remove('show');
 }
-function selectItem(id) { const item = allItems.find(i => i.id === id); if (item) { addItemRowFromData({item_id: item.id, item_code: item.id, item_name: item.name, packing: item.packing, unit: item.unit, company_name: item.company_name, mrp: item.mrp, p_rate: item.p_rate, tax_percent: (item.cgst||0)+(item.sgst||0)}); closeItemModal(); } }
-function closeItemModal() { document.getElementById('itemModal')?.remove(); document.getElementById('itemModalBackdrop')?.remove(); }
+
+function filterItems() {
+    const search = document.getElementById('itemSearchInput').value.toLowerCase();
+    const filtered = allItems.filter(item => 
+        (item.item_code && item.item_code.toLowerCase().includes(search)) ||
+        (item.item_name && item.item_name.toLowerCase().includes(search))
+    );
+    renderItemsList(filtered);
+}
+
+function renderItemsList(items) {
+    const tbody = document.getElementById('itemsListBody');
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No items found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = items.slice(0, 100).map(item => `
+        <tr class="item-row" onclick="selectItem(${item.id})">
+            <td>${item.item_code || ''}</td>
+            <td>${item.item_name || ''}</td>
+            <td>${item.packing || ''}</td>
+            <td>${item.company_name || ''}</td>
+        </tr>
+    `).join('');
+}
+
+function selectItem(itemId) {
+    selectedItem = allItems.find(i => i.id === itemId);
+    if (!selectedItem) return;
+    closeItemModal();
+    document.getElementById('selectedItemName').textContent = `${selectedItem.item_code} - ${selectedItem.item_name}`;
+    loadBatches(itemId);
+}
+
+function loadBatches(itemId) {
+    fetch(`{{ url('admin/breakage-supplier/get-batches') }}/${itemId}`)
+        .then(r => r.json())
+        .then(batches => {
+            document.getElementById('batchModalBackdrop').classList.add('show');
+            document.getElementById('batchModal').classList.add('show');
+            renderBatchesList(batches);
+        })
+        .catch(e => {
+            console.error('Error loading batches:', e);
+            addItemRow(selectedItem, null);
+        });
+}
+
+function renderBatchesList(batches) {
+    const tbody = document.getElementById('batchesListBody');
+    if (!batches.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No batches found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = batches.map(batch => `
+        <tr class="batch-row" onclick="selectBatch(${JSON.stringify(batch).replace(/"/g, '&quot;')})">
+            <td>${batch.batch_no || ''}</td>
+            <td>${batch.expiry_date || ''}</td>
+            <td class="text-end">${batch.quantity || 0}</td>
+            <td class="text-end">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
+            <td class="text-end">${parseFloat(batch.purchase_rate || 0).toFixed(2)}</td>
+            <td class="text-end">${parseFloat(batch.sale_rate || 0).toFixed(2)}</td>
+        </tr>
+    `).join('');
+}
+
+function closeBatchModal() {
+    document.getElementById('batchModalBackdrop').classList.remove('show');
+    document.getElementById('batchModal').classList.remove('show');
+}
+
+function selectBatch(batch) {
+    closeBatchModal();
+    addItemRow(selectedItem, batch);
+}
+
+function addItemRow(item, batch) {
+    const tbody = document.getElementById('itemsTableBody');
+    const idx = rowIndex++;
+    const rate = batch ? parseFloat(batch.purchase_rate || 0) : 0;
+    
+    const tr = document.createElement('tr');
+    tr.id = `row_${idx}`;
+    tr.onclick = function() { selectRow(idx); };
+    tr.innerHTML = `
+        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"></td>
+        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
+        <td><input type="text" name="items[${idx}][batch_no]" value="${batch?.batch_no || ''}" readonly class="readonly-field"></td>
+        <td><input type="text" name="items[${idx}][expiry]" value="${batch?.expiry_date || ''}" readonly class="readonly-field"></td>
+        <td><input type="number" name="items[${idx}][qty]" value="1" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][free_qty]" value="0" min="0" class="text-end"></td>
+        <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B">Brk</option><option value="E">Exp</option></select></td>
+        <td><input type="number" name="items[${idx}][amount]" value="0" step="0.01" class="text-end readonly-field" readonly></td>
+        <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
+        <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
+        <input type="hidden" name="items[${idx}][batch_id]" value="${batch?.id || ''}">
+        <input type="hidden" name="items[${idx}][mrp]" value="${batch?.mrp || 0}">
+        <input type="hidden" name="items[${idx}][purchase_rate]" value="${batch?.purchase_rate || 0}">
+        <input type="hidden" name="items[${idx}][sale_rate]" value="${batch?.sale_rate || 0}">
+        <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
+        <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
+        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
+        <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
+        <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
+        <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
+    `;
+    tbody.appendChild(tr);
+    selectRow(idx);
+    calculateRowAmount(idx);
+}
 
 function selectRow(idx) {
     document.querySelectorAll('#itemsTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
-    const row = document.getElementById(`row-${idx}`);
-    if (row) { row.classList.add('row-selected'); selectedRowIndex = idx; updateFooter(row); }
-}
-
-function updateFooter(row) {
-    if (!row) {
-        ['footer_pack_1','footer_mrp','footer_p_rate','footer_s_rate','footer_pack_2',
-         'footer_company','footer_unit','footer_balance','footer_scm_percent','footer_excise',
-         'footer_tax_percent','footer_row_nt_amt','footer_row_net_amt'
-        ].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
-        return;
+    const row = document.getElementById(`row_${idx}`);
+    if (row) {
+        row.classList.add('row-selected');
+        selectedRowIndex = idx;
+        updateFooterFromRow(row);
     }
-    const get = n => row.querySelector(`input[name*="[${n}]"]`)?.value || '';
-    
-    document.getElementById('footer_pack_1').value = get('packing');
-    document.getElementById('footer_mrp').value = get('mrp');
-    document.getElementById('footer_p_rate').value = get('p_rate');
-    document.getElementById('footer_s_rate').value = get('s_rate');
-    document.getElementById('footer_pack_2').value = get('packing');
-    document.getElementById('footer_company').value = get('company_name');
-    document.getElementById('footer_unit').value = get('unit');
-    document.getElementById('footer_balance').value = get('cl_qty');
-
-    const scmP = parseFloat(get('scm_percent')||0);
-    document.getElementById('footer_scm_percent').value = scmP;
-    
-    const cgst = parseFloat(get('cgst_percent')||0);
-    const sgst = parseFloat(get('sgst_percent')||0);
-    document.getElementById('footer_tax_percent').value = (cgst+sgst).toFixed(2);
-
-    const qty = parseFloat(get('qty')||0);
-    const rate = parseFloat(get('rate')||0);
-    const gross = qty * rate;
-    const dis = parseFloat(row.querySelector('.row-dis-amt')?.value||0);
-    const tax = parseFloat(row.querySelector('.row-tax-amt')?.value||0);
-    
-    document.getElementById('footer_row_nt_amt').value = (gross - dis).toFixed(2);
-    document.getElementById('footer_row_net_amt').value = (gross - dis + tax).toFixed(2);
 }
 
-function calcRow(idx) {
-    const row = document.getElementById(`row-${idx}`); if (!row) return;
+function updateFooterFromRow(row) {
+    const getValue = (name) => row.querySelector(`input[name*="[${name}]"]`)?.value || '';
+    
+    // Update Gray Section (Section 2)
+    const cgst = parseFloat(getValue('cgst')) || 0;
+    const sgst = parseFloat(getValue('sgst')) || 0;
+    const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
+    
+    document.getElementById('footer_sc_percent').value = scmPercent.toFixed(2);
+    document.getElementById('footer_excise').value = '0.00';
+    document.getElementById('footer_tax_percent').value = (cgst + sgst).toFixed(2);
+    document.getElementById('footer_hsn').value = getValue('hsn_code');
+    document.getElementById('footer_pack2').value = getValue('packing');
+    document.getElementById('footer_mrp').value = getValue('mrp');
+    document.getElementById('footer_prate').value = getValue('purchase_rate');
+    document.getElementById('footer_srate').value = getValue('sale_rate');
+    
+    // Update Purple Section (Section 3)
+    document.getElementById('footer_pack').value = getValue('packing');
+    document.getElementById('footer_comp').value = getValue('company_name');
+    document.getElementById('footer_unit').value = getValue('unit');
+    
+    const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+    const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
+    const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
+    
+    const ntAmt = qty * rate;
+    const disAmt = ntAmt * disPercent / 100;
+    const netAmt = ntAmt - disAmt;
+    const taxAmt = netAmt * (cgst + sgst) / 100;
+    
+    document.getElementById('footer_nt_amt').value = ntAmt.toFixed(2);
+    document.getElementById('footer_dis_amt').value = disAmt.toFixed(2);
+    document.getElementById('footer_net_amt').value = netAmt.toFixed(2);
+    document.getElementById('footer_pscm').value = '0.00';
+    document.getElementById('footer_sscm').value = '0.00';
+    document.getElementById('footer_bal').value = '0';
+    document.getElementById('footer_srlno').value = '';
+    document.getElementById('footer_half_scm').value = '0.00';
+    document.getElementById('footer_scm_amt').value = '0.00';
+    document.getElementById('footer_tax_amt').value = taxAmt.toFixed(2);
+}
+
+function calculateRowAmount(idx) {
+    const row = document.getElementById(`row_${idx}`);
+    if (!row) return;
+    
     const qty = parseFloat(row.querySelector('input[name*="[qty]"]').value) || 0;
     const rate = parseFloat(row.querySelector('input[name*="[rate]"]').value) || 0;
-    const disP = parseFloat(row.querySelector('input[name*="[dis_percent]"]').value) || 0;
-    const scmP = parseFloat(row.querySelector('input[name*="[scm_percent]"]').value) || 0;
+    const amount = qty * rate;
     
-    const gross = qty * rate;
-    const disAmt = gross * disP / 100;
-    const scmAmt = gross * scmP / 100;
-    const taxable = gross - disAmt - scmAmt;
-    const taxAmt = 0; // Dump tax logic simplification
-
-    row.querySelector('.row-dis-amt').value = disAmt;
-    row.querySelector('.row-scm-amt').value = scmAmt;
-    row.querySelector('.row-tax-amt').value = taxAmt;
-    row.querySelector('input[name*="[amount]"]').value = (taxable + taxAmt).toFixed(2);
+    row.querySelector('input[name*="[amount]"]').value = amount.toFixed(2);
     
-    if (selectedRowIndex === idx) updateFooter(row);
-    calcTotals();
+    if (selectedRowIndex === idx) {
+        updateFooterFromRow(row);
+    }
+    calculateTotals();
 }
 
-function removeRow(idx) { document.getElementById(`row-${idx}`)?.remove(); calcTotals(); }
-function deleteSelectedItem() { if (selectedRowIndex !== null) { removeRow(selectedRowIndex); selectedRowIndex = null; } else alert('Select a row first'); }
-
-function calcTotals() {
-    let nt = 0, scm = 0, inv = 0;
+function calculateTotals() {
+    let totalNtAmt = 0;
+    let totalDisAmt = 0;
+    let totalScmAmt = 0;
+    let totalTax = 0;
+    
     document.querySelectorAll('#itemsTableBody tr').forEach(row => {
-        const qty = parseFloat(row.querySelector('input[name*="[qty]"]').value) || 0;
-        const rate = parseFloat(row.querySelector('input[name*="[rate]"]').value) || 0;
-        const d = parseFloat(row.querySelector('.row-dis-amt')?.value) || 0;
-        const s = parseFloat(row.querySelector('.row-scm-amt')?.value) || 0;
+        const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+        const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
+        const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
+        const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
+        const cgst = parseFloat(row.querySelector('input[name*="[cgst]"]')?.value) || 0;
+        const sgst = parseFloat(row.querySelector('input[name*="[sgst]"]')?.value) || 0;
         
-        nt += (qty * rate) - d - s;
-        scm += s;
-        inv += (qty * rate) - d - s;
+        const ntAmt = qty * rate;
+        const disAmt = ntAmt * disPercent / 100;
+        const scmAmt = ntAmt * scmPercent / 100;
+        const taxableAmt = ntAmt - disAmt - scmAmt;
+        const taxAmt = taxableAmt * (cgst + sgst) / 100;
+        
+        totalNtAmt += ntAmt;
+        totalDisAmt += disAmt;
+        totalScmAmt += scmAmt;
+        totalTax += taxAmt;
     });
     
-    document.getElementById('total_nt_amt').value = nt.toFixed(2);
-    document.getElementById('total_scm_amt').value = scm.toFixed(2);
-    document.getElementById('total_inv_amt').value = inv.toFixed(2);
+    const invAmt = totalNtAmt - totalDisAmt - totalScmAmt + totalTax;
+    
+    document.getElementById('total_nt_amt').value = totalNtAmt.toFixed(2);
+    document.getElementById('total_sc').value = '0.00';
+    document.getElementById('total_dis_amt').value = totalDisAmt.toFixed(2);
+    document.getElementById('total_scm_amt').value = totalScmAmt.toFixed(2);
+    document.getElementById('total_half_scm').value = '0.00';
+    document.getElementById('total_tax').value = totalTax.toFixed(2);
+    document.getElementById('total_inv_amt').value = invAmt.toFixed(2);
+}
+
+function removeRow(idx) {
+    document.getElementById(`row_${idx}`)?.remove();
+    calculateTotals();
+}
+
+function deleteSelectedItem() {
+    if (selectedRowIndex !== null) {
+        removeRow(selectedRowIndex);
+        selectedRowIndex = null;
+    } else {
+        alert('Please select an item first');
+    }
 }
 
 function updateTransaction() {
-     if (!currentTransactionId) { alert('No transaction loaded'); return; }
-     if (!document.querySelectorAll('#itemsTableBody tr').length) { alert('Add at least one item'); return; }
-     const formData = new FormData(document.getElementById('dumpForm'));
-     formData.append('_method', 'PUT');
-     fetch(`{{ url('admin/breakage-supplier/unused-dump') }}/${currentTransactionId}`, {
-        method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-    }).then(r => r.json()).then(data => {
-        if (data.success) { alert('Updated successfully'); window.location.href = '{{ route("admin.breakage-supplier.unused-dump-transaction") }}'; }
-        else alert('Error: ' + data.message);
-    }).catch(() => alert('Error updating transaction'));
+    if (!currentTransactionId) {
+        alert('Please load a dump transaction first');
+        return;
+    }
+    
+    const formData = new FormData(document.getElementById('dumpForm'));
+    
+    fetch(`{{ url('admin/breakage-supplier/unused-dump') }}/${currentTransactionId}`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Dump transaction updated successfully');
+            window.location.href = '{{ route("admin.breakage-supplier.unused-dump-modification") }}';
+        } else {
+            alert('Error: ' + (data.message || 'Failed to update'));
+        }
+    })
+    .catch(e => {
+        console.error(e);
+        alert('Error updating dump transaction');
+    });
 }
 
-function cancelTransaction() { window.location.href = '{{ route("admin.breakage-supplier.unused-dump-modification") }}'; }
+function cancelModification() {
+    if (confirm('Discard changes?')) {
+        window.location.href = '{{ route("admin.breakage-supplier.unused-dump-modification") }}';
+    }
+}
 </script>
 @endpush
-@endsection

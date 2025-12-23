@@ -515,8 +515,15 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         // Breakage/Expiry to Supplier Routes - Received & Unused Dump
         Route::get('breakage-supplier/received-transaction', [BreakageSupplierController::class, 'receivedTransaction'])->name('breakage-supplier.received-transaction');
         Route::get('breakage-supplier/received-modification', [BreakageSupplierController::class, 'receivedModification'])->name('breakage-supplier.received-modification');
+        Route::get('breakage-supplier/get-received-past-invoices', [BreakageSupplierController::class, 'getReceivedPastInvoices'])->name('breakage-supplier.get-received-past-invoices');
+        Route::get('breakage-supplier/received/{id}', [BreakageSupplierController::class, 'showReceived'])->name('breakage-supplier.show-received');
+        Route::put('breakage-supplier/received/{id}', [BreakageSupplierController::class, 'updateReceived'])->name('breakage-supplier.update-received');
         Route::get('breakage-supplier/unused-dump-transaction', [BreakageSupplierController::class, 'unusedDumpTransaction'])->name('breakage-supplier.unused-dump-transaction');
+        Route::post('breakage-supplier/unused-dump-transaction', [BreakageSupplierController::class, 'storeUnusedDump'])->name('breakage-supplier.store-unused-dump');
         Route::get('breakage-supplier/unused-dump-modification', [BreakageSupplierController::class, 'unusedDumpModification'])->name('breakage-supplier.unused-dump-modification');
+        Route::get('breakage-supplier/get-dump-past-invoices', [BreakageSupplierController::class, 'getDumpPastInvoices'])->name('breakage-supplier.get-dump-past-invoices');
+        Route::get('breakage-supplier/unused-dump/{id}', [BreakageSupplierController::class, 'showUnusedDump'])->name('breakage-supplier.show-unused-dump');
+        Route::put('breakage-supplier/unused-dump/{id}', [BreakageSupplierController::class, 'updateUnusedDump'])->name('breakage-supplier.update-unused-dump');
         
         Route::get('/api/countries', [CustomerController::class, 'getCountries'])->name('api.countries');
         Route::get('/api/states/{country}', [CustomerController::class, 'getStates'])->name('api.states');
