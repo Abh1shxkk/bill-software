@@ -410,6 +410,13 @@
                 <h1>Welcome back</h1>
                 <p class="subtitle">Please enter your details to sign in.</p>
 
+                @if(session('error'))
+                    <div class="error-msg">
+                        <i class="fas fa-exclamation-circle"></i>
+                        {{ session('error') }}
+                    </div>
+                @endif
+
                 <form method="POST" action="{{ route('login.perform') }}">
                     @csrf
                     

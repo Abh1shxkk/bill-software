@@ -3,6 +3,21 @@
 @section('title','Admin Dashboard')
 
 @section('content')
+{{-- Flash Messages --}}
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endif
+
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>{{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+@endif
+
 <div class="dashboard-container">
     <!-- Welcome Banner -->
     <div class="card mb-3" style="background: #6366f1; color: white; border: none; border-radius: 12px;">
@@ -21,6 +36,15 @@
                 </div>
                 <div class="text-end d-none d-md-block">
                     <div class="small opacity-75">{{ now()->format('l, F j, Y') }}</div>
+                    @if(!$user->isAdmin())
+                    <span class="badge bg-light text-dark mt-1">
+                        <i class="bi bi-person-badge me-1"></i>User Account
+                    </span>
+                    @else
+                    <span class="badge bg-warning text-dark mt-1">
+                        <i class="bi bi-shield-check me-1"></i>Administrator
+                    </span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -34,30 +58,46 @@
                 <small class="text-muted"><kbd>F1</kbd> for full list</small>
             </div>
             <div class="d-flex gap-2 overflow-auto pb-2" style="scrollbar-width: none;">
+                @if(auth()->user()->hasPermission('sale', 'view'))
                 <a href="{{ route('admin.sale.transaction') }}" class="btn btn-primary btn-sm px-3">
                     <i class="bi bi-cart-check me-1"></i>Sale
                 </a>
+                @endif
+                @if(auth()->user()->hasPermission('purchase', 'view'))
                 <a href="{{ route('admin.purchase.transaction') }}" class="btn btn-info btn-sm px-3 text-white">
                     <i class="bi bi-box-seam me-1"></i>Purchase
                 </a>
+                @endif
+                @if(auth()->user()->hasPermission('sale-return', 'view'))
                 <a href="{{ route('admin.sale-return.transaction') }}" class="btn btn-warning btn-sm px-3">
                     <i class="bi bi-arrow-return-left me-1"></i>Sale Return
                 </a>
+                @endif
+                @if(auth()->user()->hasPermission('customer-receipt', 'view'))
                 <a href="{{ route('admin.customer-receipt.transaction') }}" class="btn btn-success btn-sm px-3">
                     <i class="bi bi-cash-stack me-1"></i>Receipt
                 </a>
+                @endif
+                @if(auth()->user()->hasPermission('supplier-payment', 'view'))
                 <a href="{{ route('admin.supplier-payment.transaction') }}" class="btn btn-danger btn-sm px-3">
                     <i class="bi bi-wallet2 me-1"></i>Payment
                 </a>
+                @endif
+                @if(auth()->user()->hasPermission('items', 'view'))
                 <a href="{{ route('admin.items.index') }}" class="btn btn-secondary btn-sm px-3">
                     <i class="bi bi-archive me-1"></i>Items
                 </a>
+                @endif
+                @if(auth()->user()->hasPermission('customers', 'view'))
                 <a href="{{ route('admin.customers.index') }}" class="btn btn-outline-primary btn-sm px-3">
                     <i class="bi bi-people me-1"></i>Customers
                 </a>
+                @endif
+                @if(auth()->user()->hasPermission('suppliers', 'view'))
                 <a href="{{ route('admin.suppliers.index') }}" class="btn btn-outline-secondary btn-sm px-3">
                     <i class="bi bi-truck me-1"></i>Suppliers
                 </a>
+                @endif
             </div>
         </div>
     </div>

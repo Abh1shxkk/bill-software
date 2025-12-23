@@ -226,6 +226,21 @@
             inset: auto auto 50px 0 !important;
             transition: all 0.3s ease;
             z-index: 1001; /* Even higher for dropdown */
+            background: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .profile .dropdown-menu .dropdown-item {
+            color: #e2e8f0 !important;
+        }
+
+        .profile .dropdown-menu .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
+        }
+
+        .profile .dropdown-menu .dropdown-divider {
+            border-color: rgba(255, 255, 255, 0.1) !important;
         }
 
         /* Label - no transitions */
@@ -919,6 +934,172 @@
             transition: justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1),
                         padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
+
+        /* ============================================
+           GLOBAL MODAL BACKDROP FIX - CRITICAL
+           This ensures ALL modal backdrops cover ENTIRE screen
+           Including Bootstrap modals AND custom modals
+           ============================================ */
+        
+        /* Force Bootstrap modal and backdrop to be fixed to viewport */
+        .modal,
+        .modal-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            min-width: 100vw !important;
+            min-height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+        }
+
+        .modal-backdrop {
+            z-index: 1040 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 1 !important;
+        }
+
+        .modal {
+            z-index: 1050 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            display: none;
+        }
+
+        .modal.show {
+            display: block !important;
+        }
+
+        /* ============================================
+           CUSTOM MODAL BACKDROP FIX
+           For pending-orders-backdrop, alert-modal-backdrop, etc.
+           ============================================ */
+        .pending-orders-backdrop,
+        .alert-modal-backdrop,
+        .choose-items-backdrop,
+        [class*="-backdrop"]:not(#sidebarBackdrop) {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            min-width: 100vw !important;
+            min-height: 100vh !important;
+            z-index: 1040 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .pending-orders-backdrop.show,
+        .alert-modal-backdrop.show,
+        .choose-items-backdrop.show,
+        [class*="-backdrop"].show:not(#sidebarBackdrop) {
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        /* ============================================
+           CUSTOM MODALS - CENTER IN CONTENT AREA
+           (Excluding global delete modals which stay screen-centered)
+           ============================================ */
+        
+        /* Custom modals centered in content area (sidebar width = 260px) */
+        .pending-orders-modal,
+        .alert-modal,
+        .choose-items-modal {
+            position: fixed !important;
+            z-index: 1050 !important;
+            top: 50% !important;
+            left: calc(260px + (100vw - 260px) / 2) !important;
+            transform: translate(-50%, -50%) !important;
+        }
+
+        /* When sidebar is collapsed (72px width) */
+        .collapsed .pending-orders-modal,
+        .collapsed .alert-modal,
+        .collapsed .choose-items-modal {
+            left: calc(72px + (100vw - 72px) / 2) !important;
+        }
+
+        /* Mobile - full screen center (no sidebar) */
+        @media (max-width: 991.98px) {
+            .pending-orders-modal,
+            .alert-modal,
+            .choose-items-modal {
+                left: 50% !important;
+            }
+        }
+
+        /* Global Delete Modal - stays centered on full screen */
+        #globalMultipleDeleteModal,
+        #globalDeleteModal,
+        [id*="DeleteModal"],
+        [id*="deleteModal"] {
+            position: fixed !important;
+            z-index: 1055 !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+        }
+
+        /* Ensure modal dialog is properly centered */
+        .modal-dialog {
+            margin: 1.75rem auto !important;
+            max-height: calc(100vh - 3.5rem) !important;
+            position: relative !important;
+        }
+
+        .modal-content {
+            max-height: calc(100vh - 3.5rem) !important;
+            overflow: hidden !important;
+        }
+
+        .modal-body {
+            overflow-y: auto !important;
+            max-height: calc(100vh - 200px) !important;
+        }
+
+        /* When ANY modal is open, LOCK everything */
+        body.modal-open,
+        body.custom-modal-open {
+            overflow: hidden !important;
+            padding-right: 0 !important;
+            height: 100vh !important;
+            position: fixed !important;
+            width: 100% !important;
+        }
+
+        body.modal-open .app,
+        body.custom-modal-open .app {
+            overflow: hidden !important;
+            height: 100vh !important;
+        }
+
+        body.modal-open .content,
+        body.custom-modal-open .content {
+            overflow: hidden !important;
+        }
+
+        /* Prevent any parent from clipping the modal */
+        .app, .content, .sidebar, main {
+            contain: layout style !important;
+        }
+
+        /* When modal open, ensure nothing clips it */
+        body.modal-open .app,
+        body.modal-open .content,
+        body.modal-open main {
+            overflow: visible !important;
+            contain: none !important;
+        }
     </style>
     @stack('styles')
     @vite(['resources/js/app.js'])
@@ -947,385 +1128,7 @@
             </div>
 
             <div class="sidebar-nav-container">
-                <nav class="nav flex-column small">
-                <a class="nav-link text-white d-flex align-items-center px-2" href="{{ route('admin.dashboard') }}">
-                    <i class="bi bi-speedometer2 me-2"></i><span class="label">Dashboard</span>
-                </a>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCompanies" aria-expanded="false"
-                        style="background:transparent;">
-                        <i class="bi bi-buildings me-2"></i> <span class="label">Companies</span>
-                    </button>
-                    <div class="collapse" id="menuCompanies"><a class="nav-link ms-3 d-flex align-items-center"
-                            href="{{ route('admin.companies.create') }}">
-                            <span class="label">Add Company</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.companies.index') }}">
-                            <span class="label">All Companies</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCustomers" style="background:transparent;">
-                        <i class="bi bi-people me-2"></i> <span class="label">Customers</span>
-                    </button>
-                    <div class="collapse" id="menuCustomers"><a class="nav-link ms-3 d-flex align-items-center"
-                            href="{{ route('admin.customers.create') }}">
-                            <span class="label">Add Customer</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.customers.index') }}">
-                            <span class="label">All Customers</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuItems" style="background:transparent;">
-                        <i class="bi bi-box-seam me-2"></i> <span class="label">Items</span>
-                    </button>
-                    <div class="collapse" id="menuItems"><a class="nav-link ms-3 d-flex align-items-center"
-                            href="{{ route('admin.items.create') }}">
-                            <span class="label">Add Item</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.items.index') }}">
-                            <span class="label">All Items</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuSuppliers" style="background:transparent;">
-                        <i class="bi bi-truck me-2"></i> <span class="label">Suppliers</span>
-                    </button>
-                    <div class="collapse" id="menuSuppliers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.suppliers.create') }}">
-                            <span class="label">Add Supplier</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.suppliers.index') }}">
-                            <span class="label">All Suppliers</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuHsnCodes" style="background:transparent;">
-                        <i class="bi bi-upc-scan me-2"></i> <span class="label">HSN Master</span>
-                    </button>
-                    <div class="collapse" id="menuHsnCodes">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.hsn-codes.create') }}">
-                            <span class="label">Add HSN Code</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.hsn-codes.index') }}">
-                            <span class="label">All HSN Codes</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                
-                <div class="mt-2">
-                    <a class="nav-link text-white d-flex align-items-center px-2" href="{{ route('admin.all-ledger.index') }}">
-                        <i class="bi bi-journal-check me-2"></i><span class="label">All Ledger</span>
-                    </a>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralLedger" style="background:transparent;">
-                        <i class="bi bi-journal-text me-2"></i> <span class="label">General Ledger</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralLedger">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-ledger.create') }}">
-                            <span class="label">Add Account</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-ledger.index') }}">
-                            <span class="label">All Accounts</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCashBank" style="background:transparent;">
-                        <i class="bi bi-cash-stack me-2"></i> <span class="label">Cash / Bank Books</span>
-                    </button>
-                    <div class="collapse" id="menuCashBank">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.cash-bank-books.create') }}">
-                            <span class="label">Add Transaction</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.cash-bank-books.index') }}">
-                            <span class="label">All Transactions</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuSaleLedger" style="background:transparent;">
-                        <i class="bi bi-cart-check me-2"></i> <span class="label">Sale Ledger</span>
-                    </button>
-                    <div class="collapse" id="menuSaleLedger">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sale-ledger.create') }}">
-                            <span class="label">Add Sale Entry</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sale-ledger.index') }}">
-                            <span class="label">All Sale Entries</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuPurchaseLedger" style="background:transparent;">
-                        <i class="bi bi-bag-check me-2"></i> <span class="label">Purchase Ledger</span>
-                    </button>
-                    <div class="collapse" id="menuPurchaseLedger">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.purchase-ledger.create') }}">
-                            <span class="label">Add Purchase Entry</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.purchase-ledger.index') }}">
-                            <span class="label">All Purchase Entries</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuSalesMen" style="background:transparent;">
-                        <i class="bi bi-person-badge me-2"></i> <span class="label">Sales Man</span>
-                    </button>
-                    <div class="collapse" id="menuSalesMen">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sales-men.create') }}">
-                            <span class="label">Add Sales Man</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sales-men.index') }}">
-                            <span class="label">All Sales Men</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuAreas" style="background:transparent;">
-                        <i class="bi bi-geo-alt me-2"></i> <span class="label">Area</span>
-                    </button>
-                    <div class="collapse" id="menuAreas">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.areas.create') }}">
-                            <span class="label">Add Area</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.areas.index') }}">
-                            <span class="label">All Areas</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuRoutes" style="background:transparent;">
-                        <i class="bi bi-signpost me-2"></i> <span class="label">Route</span>
-                    </button>
-                    <div class="collapse" id="menuRoutes">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.routes.create') }}">
-                            <span class="label">Add Route</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.routes.index') }}">
-                            <span class="label">All Routes</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuStates" style="background:transparent;">
-                        <i class="bi bi-map me-2"></i> <span class="label">State</span>
-                    </button>
-                    <div class="collapse" id="menuStates">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.states.create') }}">
-                            <span class="label">Add State</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.states.index') }}">
-                            <span class="label">All States</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuAreaManagers" style="background:transparent;">
-                        <i class="bi bi-person-workspace me-2"></i> <span class="label">Area Mgr.</span>
-                    </button>
-                    <div class="collapse" id="menuAreaManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.area-managers.create') }}">
-                            <span class="label">Add Area Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.area-managers.index') }}">
-                            <span class="label">All Area Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuRegionalManagers" style="background:transparent;">
-                        <i class="bi bi-people-fill me-2"></i> <span class="label">Regn.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuRegionalManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.regional-managers.create') }}">
-                            <span class="label">Add Regional Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.regional-managers.index') }}">
-                            <span class="label">All Regional Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuMarketingManagers" style="background:transparent;">
-                        <i class="bi bi-megaphone me-2"></i> <span class="label">Mkt.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuMarketingManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.marketing-managers.create') }}">
-                            <span class="label">Add Marketing Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.marketing-managers.index') }}">
-                            <span class="label">All Marketing Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralManagers" style="background:transparent;">
-                        <i class="bi bi-person-badge me-2"></i> <span class="label">Gen.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-managers.create') }}">
-                            <span class="label">Add General Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-managers.index') }}">
-                            <span class="label">All General Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuDivisionalManagers" style="background:transparent;">
-                        <i class="bi bi-diagram-3 me-2"></i> <span class="label">D.c.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuDivisionalManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.divisional-managers.create') }}">
-                            <span class="label">Add Divisional Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.divisional-managers.index') }}">
-                            <span class="label">All Divisional Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCountryManagers" style="background:transparent;">
-                        <i class="bi bi-globe me-2"></i> <span class="label">C.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuCountryManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.country-managers.create') }}">
-                            <span class="label">Add Country Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.country-managers.index') }}">
-                            <span class="label">All Country Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuPersonalDirectory" style="background:transparent;">
-                        <i class="bi bi-person-lines-fill me-2"></i> <span class="label">Personal Directory</span>
-                    </button>
-                    <div class="collapse" id="menuPersonalDirectory">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.personal-directory.create') }}">
-                            <span class="label">Add Entry</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.personal-directory.index') }}">
-                            <span class="label">All Entries</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralReminders" style="background:transparent;">
-                        <i class="bi bi-bell me-2"></i> <span class="label">General Reminders</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralReminders">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-reminders.create') }}">
-                            <span class="label">Add Reminder</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-reminders.index') }}">
-                            <span class="label">All Reminders</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralNotebook" style="background:transparent;">
-                        <i class="bi bi-journal-text me-2"></i> <span class="label">General NoteBook</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralNotebook">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-notebook.create') }}">
-                            <span class="label">Add Note</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-notebook.index') }}">
-                            <span class="label">All Notes</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuItemCategory" style="background:transparent;">
-                        <i class="bi bi-tag me-2"></i> <span class="label">Item Category</span>
-                    </button>
-                    <div class="collapse" id="menuItemCategory">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.item-category.create') }}">
-                            <span class="label">Add Category</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.item-category.index') }}">
-                            <span class="label">All Categories</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuTransportMaster" style="background:transparent;">
-                        <i class="bi bi-truck me-2"></i> <span class="label">Transport Master</span>
-                    </button>
-                    <div class="collapse" id="menuTransportMaster">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.transport-master.create') }}">
-                            <span class="label">Add Transport</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.transport-master.index') }}">
-                            <span class="label">All Transports</span>
-                        </a>
-                    </div>
-                </div>
-
-                </nav>
+                @include('layouts.partials.sidebar-nav')
             </div>
 
             <div class="profile">
@@ -1383,6 +1186,95 @@
             }
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        // GLOBAL FIX: Move ALL modals and backdrops to body level (Bootstrap + Custom)
+        (function() {
+            // Selectors for all types of modals and backdrops
+            const modalSelectors = '.modal, .pending-orders-modal, .alert-modal, .choose-items-modal, [id$="Modal"]';
+            const backdropSelectors = '.modal-backdrop, .pending-orders-backdrop, .alert-modal-backdrop, .choose-items-backdrop, [id$="Backdrop"]';
+
+            function moveModalsToBody() {
+                // Move all modals to body
+                document.querySelectorAll(modalSelectors).forEach(function(modal) {
+                    if (modal.parentElement && modal.parentElement !== document.body) {
+                        document.body.appendChild(modal);
+                    }
+                });
+                // Move all backdrops to body
+                document.querySelectorAll(backdropSelectors).forEach(function(backdrop) {
+                    if (backdrop.parentElement && backdrop.parentElement !== document.body) {
+                        document.body.appendChild(backdrop);
+                    }
+                });
+            }
+
+            // Run on DOMContentLoaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', moveModalsToBody);
+            } else {
+                moveModalsToBody();
+            }
+
+            // Also run after a short delay to catch dynamically loaded content
+            setTimeout(moveModalsToBody, 500);
+            setTimeout(moveModalsToBody, 1000);
+            setTimeout(moveModalsToBody, 2000);
+
+            // Watch for new modals being added anywhere in the DOM
+            const observer = new MutationObserver(function(mutations) {
+                let shouldMove = false;
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) {
+                            if (node.classList && (node.classList.contains('modal') || node.classList.contains('modal-backdrop'))) {
+                                shouldMove = true;
+                            }
+                            // Also check children
+                            if (node.querySelectorAll) {
+                                if (node.querySelectorAll('.modal, .modal-backdrop').length > 0) {
+                                    shouldMove = true;
+                                }
+                            }
+                        }
+                    });
+                });
+                if (shouldMove) {
+                    setTimeout(moveModalsToBody, 0);
+                }
+            });
+
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+
+            // Also hook into Bootstrap modal events
+            document.addEventListener('show.bs.modal', function(e) {
+                setTimeout(moveModalsToBody, 0);
+            });
+        })();
+
+        // FIX: Move modals to body level when they open for proper backdrop coverage
+        document.addEventListener('DOMContentLoaded', function() {
+            // Move all modals to body level on page load
+            document.querySelectorAll('.modal').forEach(function(modal) {
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+            });
+
+            // Also handle dynamically created modals
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1 && node.classList && node.classList.contains('modal')) {
+                            if (node.parentElement !== document.body) {
+                                document.body.appendChild(node);
+                            }
+                        }
+                    });
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
 
         // Global scroll to top button handler - OPTIMIZED with throttle
         document.addEventListener('DOMContentLoaded', function() {
@@ -2076,6 +1968,11 @@
 
             @if(session('crud_info'))
                 crudNotification.showToast('info', 'Info', '{{ session('crud_info') }}');
+            @endif
+
+            // Access Denied toast for permission errors
+            @if(session('access_denied'))
+                crudNotification.showToast('error', 'Access Denied', 'You do not have permission to access "{{ session('access_denied') }}" module. Please contact your administrator.');
             @endif
 
             // Specific CRUD operation messages

@@ -56,6 +56,7 @@ use App\Http\Controllers\Admin\GodownBreakageExpiryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\PurchaseReportController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
 
 // Auth routes
@@ -66,20 +67,30 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.pe
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/', function () {
-    // Redirect logged-in users to their dashboard
+    // All logged-in users go to admin dashboard
     if (auth()->check()) {
-        $role = auth()->user()->role;
-        return $role === 'admin' 
-            ? redirect('/admin/dashboard') 
-            : redirect('/user/dashboard');
+        return redirect('/admin/dashboard');
     }
     return view('auth.login');
 });
 
 // Admin
-Route::middleware(['admin'])->group(function () {
+Route::middleware(['admin', 'module.access'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::prefix('admin')->name('admin.')->group(function () {
+        // User Management Routes (Admin Only - handled by module.access middleware)
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
+        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('users/{user}/permissions', [UserController::class, 'permissions'])->name('users.permissions');
+        Route::put('users/{user}/permissions', [UserController::class, 'updatePermissions'])->name('users.permissions.update');
+        Route::post('users/multiple-delete', [UserController::class, 'multipleDelete'])->name('users.multiple-delete');
+        
         // Company routes - MUST be before resource route
         Route::post('companies/multiple-delete', [CompanyController::class, 'multipleDelete'])->name('companies.multiple-delete');
         Route::get('companies/by-code/{code}', [CompanyController::class, 'getByCode'])->name('companies.by-code');
@@ -183,6 +194,22 @@ Route::middleware(['admin'])->group(function () {
         
         // Sales Reports
         Route::get('reports/sales', [SalesReportController::class, 'index'])->name('reports.sales');
+        Route::get('reports/sales/sales-book', [SalesReportController::class, 'salesBook'])->name('reports.sales.sales-book');
+        Route::get('reports/sales/sales-book-party-wise', [SalesReportController::class, 'salesBookPartyWise'])->name('reports.sales.sales-book-party-wise');
+        Route::get('reports/sales/day-sales-summary-item-wise', [SalesReportController::class, 'daySalesSummaryItemWise'])->name('reports.sales.day-sales-summary-item-wise');
+        Route::get('reports/sales/sales-summary', [SalesReportController::class, 'salesSummary'])->name('reports.sales.sales-summary');
+        Route::get('reports/sales/sales-bills-printing', [SalesReportController::class, 'salesBillsPrinting'])->name('reports.sales.sales-bills-printing');
+        Route::get('reports/sales/sale-sheet', [SalesReportController::class, 'saleSheet'])->name('reports.sales.sale-sheet');
+        Route::get('reports/sales/dispatch-sheet', [SalesReportController::class, 'dispatchSheet'])->name('reports.sales.dispatch-sheet');
+        Route::get('reports/sales/sale-return-book-item-wise', [SalesReportController::class, 'saleReturnBookItemWise'])->name('reports.sales.sale-return-book-item-wise');
+        Route::get('reports/sales/local-central-sale-register', [SalesReportController::class, 'localCentralSaleRegister'])->name('reports.sales.local-central-sale-register');
+        Route::get('reports/sales/sale-challan-reports', [SalesReportController::class, 'saleChallanReports'])->name('reports.sales.sale-challan-reports');
+        Route::get('reports/sales/sale-challan-book', [SalesReportController::class, 'saleChallanBook'])->name('reports.sales.sale-challan-book');
+        Route::get('reports/sales/pending-challans', [SalesReportController::class, 'pendingChallans'])->name('reports.sales.pending-challans');
+        Route::get('reports/sales/sales-stock-summary', [SalesReportController::class, 'salesStockSummary'])->name('reports.sales.sales-stock-summary');
+        Route::get('reports/sales/customer-visit-status', [SalesReportController::class, 'customerVisitStatus'])->name('reports.sales.customer-visit-status');
+        Route::get('reports/sales/shortage-report', [SalesReportController::class, 'shortageReport'])->name('reports.sales.shortage-report');
+        Route::get('reports/sales/sale-return-list', [SalesReportController::class, 'saleReturnList'])->name('reports.sales.sale-return-list');
         Route::get('reports/sales/export-csv', [SalesReportController::class, 'exportCsv'])->name('reports.sales.export-csv');
         Route::get('reports/sales/export-pdf', [SalesReportController::class, 'exportPdf'])->name('reports.sales.export-pdf');
         Route::get('reports/sales/chart-data', [SalesReportController::class, 'getChartData'])->name('reports.sales.chart-data');
@@ -472,9 +499,19 @@ Route::middleware(['admin'])->group(function () {
         Route::get('purchase-challan/{id}/show', [PurchaseChallanTransactionController::class, 'show'])->name('purchase-challan.show');
         Route::post('purchase-challan/{id}/mark-invoiced', [PurchaseChallanTransactionController::class, 'markAsInvoiced'])->name('purchase-challan.mark-invoiced');
         
-        // Breakage/Expiry to Supplier Routes
+        // Breakage/Expiry to Supplier Routes - Issued
+        Route::get('breakage-supplier/issued', [BreakageSupplierController::class, 'issuedIndex'])->name('breakage-supplier.issued-index');
         Route::get('breakage-supplier/issued-transaction', [BreakageSupplierController::class, 'issuedTransaction'])->name('breakage-supplier.issued-transaction');
+        Route::post('breakage-supplier/issued', [BreakageSupplierController::class, 'storeIssued'])->name('breakage-supplier.store-issued');
         Route::get('breakage-supplier/issued-modification', [BreakageSupplierController::class, 'issuedModification'])->name('breakage-supplier.issued-modification');
+        Route::get('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'showIssued'])->name('breakage-supplier.show-issued');
+        Route::put('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'updateIssued'])->name('breakage-supplier.update-issued');
+        Route::delete('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'destroyIssued'])->name('breakage-supplier.destroy-issued');
+        Route::get('breakage-supplier/get-items', [BreakageSupplierController::class, 'getItems'])->name('breakage-supplier.get-items');
+        Route::get('breakage-supplier/get-issued-past-invoices', [BreakageSupplierController::class, 'getIssuedPastInvoices'])->name('breakage-supplier.get-issued-past-invoices');
+        Route::get('breakage-supplier/next-trn-no', [BreakageSupplierController::class, 'getNextTrnNo'])->name('breakage-supplier.next-trn-no');
+        
+        // Breakage/Expiry to Supplier Routes - Received & Unused Dump
         Route::get('breakage-supplier/received-transaction', [BreakageSupplierController::class, 'receivedTransaction'])->name('breakage-supplier.received-transaction');
         Route::get('breakage-supplier/received-modification', [BreakageSupplierController::class, 'receivedModification'])->name('breakage-supplier.received-modification');
         Route::get('breakage-supplier/unused-dump-transaction', [BreakageSupplierController::class, 'unusedDumpTransaction'])->name('breakage-supplier.unused-dump-transaction');
@@ -777,11 +814,6 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
     Route::get('/password/change', [ProfileController::class, 'showChangePassword'])->name('password.change.form');
     Route::post('/password/change', [ProfileController::class, 'changePassword'])->name('password.change');
-});
-
-// User
-Route::middleware(['user'])->group(function () {
-    Route::view('/user/dashboard', 'user.dashboard');
 });
 
 // Static Pages (accessible to all)

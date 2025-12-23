@@ -391,8 +391,39 @@
           </a>
           <ul class="dropdown-menu">
             <!-- Sales Reports -->
-            <li>
-              <a class="dropdown-item" href="{{ route('admin.reports.sales') }}">Sales Reports</a>
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sale</a>
+              <ul class="dropdown-menu">
+                <!-- Sales Book Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sales Book</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book') }}">Date Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book') }}?group=series">Series Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book') }}?group=salesman">Salesman Wise</a></li>
+                  </ul>
+                </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book-party-wise') }}">Sale Book Party Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.day-sales-summary-item-wise') }}">Day Sales Summary - Item Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-summary') }}">Sales Summary</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-bills-printing') }}">Sales Bills Printing</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sale-sheet') }}">Sale Sheet</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.dispatch-sheet') }}">Dispatch Sheet</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sale-return-book-item-wise') }}">Sale / Return Book Item Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.local-central-sale-register') }}">Local / Central Sale Register</a></li>
+                <!-- Sale Challan Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sale Challan Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sale-challan-book') }}">Sale Challan Book</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.pending-challans') }}">Pending Challans</a></li>
+                  </ul>
+                </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-stock-summary') }}">Sales Stock Summary</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-visit-status') }}">Customer Visit Status</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.shortage-report') }}">Shortage Report</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sale-return-list') }}">Sale Return List</a></li>
+              </ul>
             </li>
 
             <!-- Purchase Reports -->

@@ -11,30 +11,34 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
-        // Redirect if already logged in
+        // Redirect if already logged in - all users go to admin dashboard
         if (Auth::check()) {
-            $role = auth()->user()->role;
-            return $role === 'admin' 
-                ? redirect('/admin/dashboard') 
-                : redirect('/user/dashboard');
+            return redirect('/admin/dashboard');
         }
-        
+
         return view('auth.login');
     }
 
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'username' => ['required','string'],
-            'password' => ['required','string'],
+            'username' => ['required', 'string'],
+            'password' => ['required', 'string'],
         ]);
 
         if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']])) {
+            $user = Auth::user();
+
+            // Check if user is active
+            if (isset($user->is_active) && !$user->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                return back()->withErrors(['username' => 'Your account has been deactivated. Please contact administrator.'])->onlyInput('username');
+            }
+
             $request->session()->regenerate();
-            $role = auth()->user()->role;
-            return $role === 'admin'
-                ? redirect()->intended('/admin/dashboard')
-                : redirect()->intended('/user/dashboard');
+            // All users go to admin dashboard
+            return redirect()->intended('/admin/dashboard');
         }
 
         return back()->withErrors(['username' => 'Invalid credentials'])->onlyInput('username');
@@ -44,22 +48,19 @@ class AuthController extends Controller
     {
         // Redirect if already logged in
         if (Auth::check()) {
-            $role = auth()->user()->role;
-            return $role === 'admin' 
-                ? redirect('/admin/dashboard') 
-                : redirect('/user/dashboard');
+            return redirect('/admin/dashboard');
         }
-        
+
         return view('auth.register');
     }
 
     public function register(Request $request)
     {
         $data = $request->validate([
-            'full_name' => ['required','string','max:255'],
-            'username' => ['required','string','max:50','unique:users,username'],
-            'email' => ['required','email','max:255','unique:users,email'],
-            'password' => ['required','string','min:6','confirmed'],
+            'full_name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:50', 'unique:users,username'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
         $user = User::create([
@@ -68,10 +69,12 @@ class AuthController extends Controller
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => 'user',
+            'is_active' => true,
         ]);
 
         Auth::login($user);
-        return $user->role === 'admin' ? redirect('/admin/dashboard') : redirect('/user/dashboard');
+        // All users go to admin dashboard
+        return redirect('/admin/dashboard');
     }
 
     public function logout(Request $request)

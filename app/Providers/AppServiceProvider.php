@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Str;
 use App\Models\StockLedger;
 use App\Models\Batch;
@@ -50,5 +51,14 @@ class AppServiceProvider extends ServiceProvider
         // Register observers for automatic data sync
         StockLedger::observe(StockLedgerObserver::class);
         Batch::observe(BatchObserver::class);
+
+        // Register Blade directives for permission checking
+        Blade::if('canaccess', function ($module, $action = 'view') {
+            return auth()->check() && auth()->user()->hasPermission($module, $action);
+        });
+
+        Blade::if('isadmin', function () {
+            return auth()->check() && auth()->user()->isAdmin();
+        });
     }
 }
