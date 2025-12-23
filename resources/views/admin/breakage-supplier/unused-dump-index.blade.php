@@ -1,18 +1,18 @@
 @extends('layouts.admin')
-@section('title','Issued Transactions')
+@section('title','Unused Dump Transactions')
 @section('content')
 <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
   <div class="d-flex align-items-start gap-3">
     <div style="min-width: 100px;">
-      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-box-arrow-up me-2"></i> Issued Transactions</h4>
-      <div class="text-muted small">Breakage/Expiry to Supplier</div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-trash me-2"></i> Unused Dump Transactions</h4>
+      <div class="text-muted small">Breakage/Expiry Dump List</div>
     </div>
   </div>
   <div class="d-flex gap-2">
-    <a href="{{ route('admin.breakage-supplier.issued-transaction') }}" class="btn btn-primary btn-sm">
+    <a href="{{ route('admin.breakage-supplier.unused-dump-transaction') }}" class="btn btn-primary btn-sm">
       <i class="bi bi-plus-circle me-1"></i> New Transaction
     </a>
-    <a href="{{ route('admin.breakage-supplier.issued-modification') }}" class="btn btn-warning btn-sm">
+    <a href="{{ route('admin.breakage-supplier.unused-dump-modification') }}" class="btn btn-warning btn-sm">
       <i class="bi bi-pencil me-1"></i> Modification
     </a>
   </div>
@@ -20,12 +20,11 @@
 <div class="card shadow-sm border-0 rounded">
   <div class="card mb-4">
     <div class="card-body">
-      <form method="GET" action="{{ route('admin.breakage-supplier.issued-index') }}" class="row g-3" id="filter-form">
+      <form method="GET" action="{{ route('admin.breakage-supplier.unused-dump-index') }}" class="row g-3" id="filter-form">
         <div class="col-md-2">
           <label for="filter_by" class="form-label">Filter By</label>
           <select class="form-select" id="filter_by" name="filter_by">
             <option value="trn_no" {{ request('filter_by', 'trn_no') == 'trn_no' ? 'selected' : '' }}>Trn No</option>
-            <option value="supplier" {{ request('filter_by') == 'supplier' ? 'selected' : '' }}>Supplier</option>
             <option value="narration" {{ request('filter_by') == 'narration' ? 'selected' : '' }}>Narration</option>
           </select>
         </div>
@@ -66,11 +65,9 @@
           <th>#</th>
           <th>Trn No</th>
           <th>Date</th>
-          <th>Supplier</th>
-          <th>Type</th>
-          <th>Brk</th>
-          <th>Exp</th>
-          <th class="text-end">Amount</th>
+          <th>Narration</th>
+          <th>Items</th>
+          <th class="text-end">Net Loss</th>
           <th>Status</th>
           <th class="text-end">Actions</th>
         </tr>
@@ -80,34 +77,26 @@
         <tr>
           <td>{{ ($transactions->currentPage() - 1) * $transactions->perPage() + $loop->iteration }}</td>
           <td><strong>{{ $transaction->trn_no }}</strong></td>
-          <td>{{ $transaction->transaction_date ? $transaction->transaction_date->format('d-m-Y') : '-' }}</td>
-          <td>{{ $transaction->supplier_name ?? '-' }}</td>
-          <td>
-            @if($transaction->note_type == 'R')
-              <span class="badge bg-info">Repl</span>
-            @else
-              <span class="badge bg-warning text-dark">Credit</span>
-            @endif
-          </td>
-          <td class="text-center">{{ $transaction->brk_count ?? 0 }}</td>
-          <td class="text-center">{{ $transaction->exp_count ?? 0 }}</td>
-          <td class="text-end">₹{{ number_format($transaction->total_inv_amt ?? 0, 2) }}</td>
+          <td>{{ $transaction->transaction_date ? \Carbon\Carbon::parse($transaction->transaction_date)->format('d-m-Y') : '-' }}</td>
+          <td>{{ Str::limit($transaction->narration ?? '-', 50) }}</td>
+          <td><span class="badge bg-info text-white">{{ $transaction->items_count ?? $transaction->items->count() }}</span></td>
+          <td class="text-end text-danger fw-bold">₹{{ number_format($transaction->total_inv_amt ?? 0, 2) }}</td>
           <td>
             @if($transaction->status == 'completed')
               <span class="badge bg-success">Completed</span>
             @elseif($transaction->status == 'cancelled')
               <span class="badge bg-danger">Cancelled</span>
             @else
-              <span class="badge bg-secondary">{{ ucfirst($transaction->status) }}</span>
+              <span class="badge bg-secondary">{{ ucfirst($transaction->status ?? 'Pending') }}</span>
             @endif
           </td>
           <td class="text-end">
-            <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.breakage-supplier.show-issued', $transaction->id) }}" title="View"><i class="bi bi-eye"></i></a>
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="cancelTransaction({{ $transaction->id }})" title="Cancel"><i class="bi bi-x-circle"></i></button>
+            <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.breakage-supplier.show-unused-dump', $transaction->id) }}" title="View"><i class="bi bi-eye"></i></a>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTransaction({{ $transaction->id }})" title="Delete"><i class="bi bi-trash"></i></button>
           </td>
         </tr>
         @empty
-        <tr><td colspan="10" class="text-center text-muted">No transactions found</td></tr>
+        <tr><td colspan="8" class="text-center text-muted">No dump transactions found</td></tr>
         @endforelse
       </tbody>
     </table>
@@ -151,7 +140,7 @@ function performSearch() {
     
     if(pageElements.searchInput) pageElements.searchInput.style.opacity = '0.6';
     
-    fetch(`{{ route('admin.breakage-supplier.issued-index') }}?${params.toString()}`, {
+    fetch(`{{ route('admin.breakage-supplier.unused-dump-index') }}?${params.toString()}`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(response => response.text())
@@ -173,7 +162,7 @@ function performSearch() {
     .catch(error => {
         console.error('Error:', error);
         if (pageElements.tbody) {
-            pageElements.tbody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data</td></tr>';
+            pageElements.tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading data</td></tr>';
         }
     })
     .finally(() => {
@@ -253,9 +242,9 @@ function initInfiniteScroll() {
     observer.observe(sentinel);
 }
 
-function cancelTransaction(id) {
-    if (confirm('Are you sure you want to cancel this transaction?')) {
-        fetch(`{{ url('admin/breakage-supplier/issued') }}/${id}`, {
+function deleteTransaction(id) {
+    if (confirm('Are you sure you want to delete this dump transaction?')) {
+        fetch(`{{ url('admin/breakage-supplier/unused-dump') }}/${id}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -273,7 +262,7 @@ function cancelTransaction(id) {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error cancelling transaction');
+            alert('Error deleting transaction');
         });
     }
 }
@@ -309,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
     if(pageElements.clearFiltersBtn) {
         pageElements.clearFiltersBtn.addEventListener('click', function() {
-            window.location.href = '{{ route("admin.breakage-supplier.issued-index") }}';
+            window.location.href = '{{ route("admin.breakage-supplier.unused-dump-index") }}';
         });
     }
 

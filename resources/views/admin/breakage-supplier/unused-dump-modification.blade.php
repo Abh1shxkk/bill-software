@@ -481,7 +481,7 @@ function addItemRow(item, batch) {
         <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
         <td><input type="text" name="items[${idx}][batch_no]" value="${batch?.batch_no || ''}" readonly class="readonly-field"></td>
         <td><input type="text" name="items[${idx}][expiry]" value="${batch?.expiry_date || ''}" readonly class="readonly-field"></td>
-        <td><input type="number" name="items[${idx}][qty]" value="1" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][qty]" value="0" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][free_qty]" value="0" min="0" class="text-end"></td>
         <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>

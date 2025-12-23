@@ -77,6 +77,7 @@
                 <li><a class="dropdown-item" href="{{ route('admin.breakage-supplier.received-modification') }}">Received - Modification</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.breakage-supplier.unused-dump-transaction') }}">Unused Dump - Transaction</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.breakage-supplier.unused-dump-modification') }}">Unused Dump - Modification</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.breakage-supplier.unused-dump-index') }}">Unused Dump - View All</a></li>
               </ul>
             </li>
 

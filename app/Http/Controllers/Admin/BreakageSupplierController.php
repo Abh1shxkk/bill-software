@@ -635,9 +635,47 @@ class BreakageSupplierController extends Controller
         ]);
     }
 
+    /**
+     * Display index of unused dump transactions
+     */
+    public function unusedDumpIndex(Request $request)
+    {
+        $query = BreakageSupplierUnusedDumpTransaction::query()->with('items');
+
+        if ($request->filled('search') && $request->filled('filter_by')) {
+            $searchTerm = $request->search;
+            $filterBy = $request->filter_by;
+
+            switch ($filterBy) {
+                case 'trn_no':
+                    $query->where('trn_no', 'LIKE', "%{$searchTerm}%");
+                    break;
+                case 'narration':
+                    $query->where('narration', 'LIKE', "%{$searchTerm}%");
+                    break;
+            }
+        }
+
+        if ($request->filled('from_date')) {
+            $query->whereDate('transaction_date', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('transaction_date', '<=', $request->to_date);
+        }
+
+        $transactions = $query->withCount('items')->orderBy('id', 'desc')->paginate(10)->withQueryString();
+
+        return view('admin.breakage-supplier.unused-dump-index', compact('transactions'));
+    }
+
     public function unusedDumpTransaction()
     {
-        return view('admin.breakage-supplier.unused-dump-transaction');
+        // Get next transaction number
+        $lastTrn = BreakageSupplierUnusedDumpTransaction::orderBy('id', 'desc')->first();
+        $trnNo = $lastTrn ? (int)$lastTrn->trn_no + 1 : 1;
+        
+        return view('admin.breakage-supplier.unused-dump-transaction', compact('trnNo'));
     }
 
     public function unusedDumpModification()
@@ -819,6 +857,28 @@ class BreakageSupplierController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error updating transaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete unused dump transaction
+     */
+    public function destroyUnusedDump($id)
+    {
+        try {
+            $transaction = BreakageSupplierUnusedDumpTransaction::findOrFail($id);
+            $transaction->items()->delete();
+            $transaction->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting transaction: ' . $e->getMessage()
             ], 500);
         }
     }
