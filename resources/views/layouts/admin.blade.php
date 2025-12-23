@@ -388,7 +388,12 @@
             }
 
             .collapsed .sidebar-header .brand {
-                display: none;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .collapsed .sidebar .sidebar-logo {
+                height: 24px !important;
             }
 
             /* Fix Invoice Items Table Alignment - PC & Mobile */
@@ -1121,9 +1126,9 @@
         @include('layouts.header')
         <aside class="sidebar p-3 position-relative">
             <div class="sidebar-header">
-                <div class="brand d-flex align-items-center small">
-                    <i class="bi bi-ui-checks-grid me-2 text-info"></i>
-                    <span class="label">Medi BillSuite</span>
+                <div class="brand d-flex align-items-center">
+                    <img src="{{ asset('images/m-logo-01.svg') }}" alt="Medi BillSuite" style="height: 32px;" class="sidebar-logo">
+                    <span class="label ms-2">Medi-BillSuite</span>
                 </div>
             </div>
 
