@@ -33,6 +33,7 @@ return new class extends Migration
             $table->decimal('total_tax', 15, 2)->default(0);
             $table->decimal('total_inv_amt', 15, 2)->default(0);
             $table->decimal('total_qty', 15, 2)->default(0);
+            $table->decimal('cases', 15, 2)->default(0)->nullable();
             $table->string('status', 20)->default('completed');
             $table->boolean('is_deleted')->default(0);
             $table->unsignedBigInteger('created_by')->nullable();

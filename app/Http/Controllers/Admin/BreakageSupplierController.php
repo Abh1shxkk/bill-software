@@ -379,7 +379,7 @@ class BreakageSupplierController extends Controller
     public function getItems()
     {
         try {
-            $items = Item::select('id', 'name', 'packing', 'mrp', 's_rate', 'pur_rate', 'cost', 'company_short_name', 'hsn_code', 'unit', 'cgst', 'sgst')
+            $items = Item::select('id', 'name', 'packing', 'mrp', 's_rate', 'pur_rate', 'cost', 'company_short_name', 'hsn_code', 'unit', 'cgst_percent', 'sgst_percent')
                 ->where(function($query) {
                     $query->where('is_deleted', 0)
                           ->orWhere('is_deleted', '0')
@@ -390,20 +390,54 @@ class BreakageSupplierController extends Controller
                 ->map(function ($item) {
                     return [
                         'id' => $item->id,
-                        'name' => $item->name,
+                        'item_code' => $item->name ?? '',
+                        'item_name' => $item->name,
                         'packing' => $item->packing,
                         'mrp' => $item->mrp ?? 0,
-                        's_rate' => $item->s_rate ?? 0,
-                        'p_rate' => $item->pur_rate ?? $item->cost ?? 0,
+                        'sale_rate' => $item->s_rate ?? 0,
+                        'purchase_rate' => $item->pur_rate ?? $item->cost ?? 0,
                         'company_name' => $item->company_short_name ?? '',
                         'hsn_code' => $item->hsn_code ?? '',
                         'unit' => $item->unit ?? '',
-                        'cgst' => $item->cgst ?? 0,
-                        'sgst' => $item->sgst ?? 0,
+                        'cgst' => $item->cgst_percent ?? 0,
+                        'sgst' => $item->sgst_percent ?? 0,
                     ];
                 });
 
             return response()->json($items);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get batches for a specific item
+     */
+    public function getBatches($itemId)
+    {
+        try {
+            $batches = Batch::where('item_id', $itemId)
+                ->where('qty', '>', 0)
+                ->where(function($query) {
+                    $query->where('is_deleted', 0)
+                          ->orWhere('is_deleted', '0')
+                          ->orWhereNull('is_deleted');
+                })
+                ->orderBy('expiry_date', 'asc')
+                ->get()
+                ->map(function ($batch) {
+                    return [
+                        'id' => $batch->id,
+                        'batch_no' => $batch->batch_no ?? '',
+                        'expiry_date' => $batch->expiry_date ? \Carbon\Carbon::parse($batch->expiry_date)->format('m/y') : '',
+                        'quantity' => $batch->qty ?? 0,
+                        'mrp' => $batch->mrp ?? 0,
+                        'purchase_rate' => $batch->pur_rate ?? 0,
+                        'sale_rate' => $batch->s_rate ?? 0,
+                    ];
+                });
+
+            return response()->json($batches);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

@@ -1183,6 +1183,29 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // Initialize Select2 globally for all select elements
+        $(document).ready(function() {
+            // Initialize Select2 on all select elements
+            $('select').not('.no-select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Select an option',
+                allowClear: true
+            });
+            
+            // Re-initialize Select2 when new content is added dynamically
+            $(document).on('DOMNodeInserted', function(e) {
+                if ($(e.target).is('select') || $(e.target).find('select').length) {
+                    $(e.target).find('select').not('.no-select2, .select2-hidden-accessible').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Select an option',
+                        allowClear: true
+                    });
+                }
+            });
+        });
+        
         // Global function for smooth scroll to top
         function scrollToTopNow() {
             const contentDiv = document.querySelector('.content');

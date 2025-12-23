@@ -508,6 +508,7 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::put('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'updateIssued'])->name('breakage-supplier.update-issued');
         Route::delete('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'destroyIssued'])->name('breakage-supplier.destroy-issued');
         Route::get('breakage-supplier/get-items', [BreakageSupplierController::class, 'getItems'])->name('breakage-supplier.get-items');
+        Route::get('breakage-supplier/get-batches/{itemId}', [BreakageSupplierController::class, 'getBatches'])->name('breakage-supplier.get-batches');
         Route::get('breakage-supplier/get-issued-past-invoices', [BreakageSupplierController::class, 'getIssuedPastInvoices'])->name('breakage-supplier.get-issued-past-invoices');
         Route::get('breakage-supplier/next-trn-no', [BreakageSupplierController::class, 'getNextTrnNo'])->name('breakage-supplier.next-trn-no');
         

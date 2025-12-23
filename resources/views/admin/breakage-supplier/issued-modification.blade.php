@@ -13,10 +13,10 @@
     .readonly-field { background-color: #e9ecef !important; }
     
     /* Table Styles - Brown Header */
-    .items-table { font-size: 10px; margin-bottom: 0; border-collapse: collapse; width: 100%; }
-    .items-table th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; padding: 6px 4px; border: 1px solid #5a3a1a; white-space: nowrap; }
-    .items-table td { padding: 2px; border: 1px solid #ccc; background: #fffacd; }
-    .items-table input, .items-table select { font-size: 10px; padding: 1px 3px; height: 22px; border: 1px solid #aaa; width: 100%; }
+    .items-table { font-size: 8px; margin-bottom: 0; border-collapse: collapse; width: 100%; }
+    .items-table th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; padding: 3px 2px; border: 1px solid #5a3a1a; white-space: nowrap; font-size: 8px; }
+    .items-table td { padding: 1px; border: 1px solid #ccc; background: #fffacd; }
+    .items-table input, .items-table select { font-size: 8px; padding: 1px 2px; height: 18px; border: 1px solid #aaa; width: 100%; }
     .items-table .row-selected td { background: #cce5ff !important; }
     
     /* Summary Row - Pink */
@@ -28,6 +28,11 @@
     .footer-section { background: #d4d4d4; padding: 8px; border: 1px solid #999; border-radius: 3px; }
     .footer-section label { font-size: 10px; margin-bottom: 1px; }
     .footer-section input { height: 22px; font-size: 10px; }
+    
+    /* First Footer Section - Purple */
+    .first-footer-section { background: #e6d9f5; padding: 8px; border: 1px solid #b399d9; border-radius: 3px; }
+    .first-footer-section label { font-size: 10px; margin-bottom: 1px; }
+    .first-footer-section input { height: 22px; font-size: 10px; }
     .gst-box { background: #ffe6e6; border: 1px solid #cc9999; padding: 4px 6px; display: inline-flex; align-items: center; gap: 4px; border-radius: 3px; }
     .gst-box label { color: #dc3545; font-weight: bold; font-size: 10px; margin: 0; }
     .gst-box input { width: 45px; height: 20px; font-size: 10px; }
@@ -95,22 +100,22 @@
 
         <!-- Items Table Section -->
         <div class="bg-white border rounded p-2 mb-2">
-            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
-                <table class="items-table" id="itemsTable">
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto; overflow-x: hidden;">
+                <table class="items-table" id="itemsTable" style="table-layout: fixed; width: 100%;">
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
-                            <th style="width:70px;">Item Code</th>
-                            <th style="width:200px;">Item Name</th>
-                            <th style="width:80px;">Batch</th>
-                            <th style="width:70px;">Exp</th>
-                            <th style="width:50px;">Qty</th>
-                            <th style="width:50px;">F.Qty</th>
-                            <th style="width:70px;">Rate</th>
-                            <th style="width:50px;">Dis.%</th>
-                            <th style="width:50px;">Scm.%</th>
-                            <th style="width:70px;">Br/Ex</th>
-                            <th style="width:80px;">Amount</th>
-                            <th style="width:30px;">X</th>
+                            <th style="width:45px;">Code</th>
+                            <th style="width:100px;">Item Name</th>
+                            <th style="width:45px;">Batch</th>
+                            <th style="width:35px;">Exp</th>
+                            <th style="width:30px;">Qty</th>
+                            <th style="width:30px;">F.Q</th>
+                            <th style="width:45px;">Rate</th>
+                            <th style="width:35px;">Dis%</th>
+                            <th style="width:35px;">Scm%</th>
+                            <th style="width:50px;">Br/Ex</th>
+                            <th style="width:55px;">Amount</th>
+                            <th style="width:20px;">X</th>
                         </tr>
                     </thead>
                     <tbody id="itemsTableBody"></tbody>
@@ -123,56 +128,60 @@
             </div>
         </div>
 
-        <!-- Footer Section - Gray -->
-        <div class="footer-section mb-2">
-            <div class="row g-1 align-items-center">
-                <div class="col-md-6">
-                    <div class="d-flex gap-2 flex-wrap align-items-center">
-                        <div class="d-flex align-items-center gap-1"><label>SC%:</label><input type="number" id="footer_sc_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>EXCISE:</label><input type="number" id="footer_excise" class="form-control readonly-field text-end" readonly style="width:55px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>TAX%:</label><input type="number" id="footer_tax_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Pack:</label><input type="text" id="footer_pack" class="form-control readonly-field" readonly style="width:60px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Unit:</label><input type="text" id="footer_unit" class="form-control readonly-field" readonly style="width:40px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Comp:</label><input type="text" id="footer_comp" class="form-control readonly-field" readonly style="width:80px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Bal:</label><input type="number" id="footer_bal" class="form-control readonly-field text-end" readonly style="width:55px;"></div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="d-flex gap-2 flex-wrap align-items-center justify-content-end">
-                        <div class="gst-box"><label>CGST%:</label><input type="number" id="footer_cgst" class="form-control text-end" readonly></div>
-                        <div class="gst-box"><label>SGST%:</label><input type="number" id="footer_sgst" class="form-control text-end" readonly></div>
-                        <div class="d-flex align-items-center gap-1"><label>MRP:</label><input type="number" id="footer_mrp" class="form-control readonly-field text-end" readonly style="width:65px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>P.RATE:</label><input type="number" id="footer_prate" class="form-control readonly-field text-end" readonly style="width:65px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>S.RATE:</label><input type="number" id="footer_srate" class="form-control readonly-field text-end" readonly style="width:65px;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="row g-1 mt-1 align-items-center">
-                <div class="col-md-12">
-                    <div class="d-flex gap-2 flex-wrap align-items-center justify-content-end">
-                        <div class="d-flex align-items-center gap-1"><label>N.T Amt:</label><input type="number" id="footer_nt_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>DIS. Amt:</label><input type="number" id="footer_dis_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Net Amt:</label><input type="number" id="footer_net_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Half Scm:</label><input type="number" id="footer_half_scm" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Scm.Amt:</label><input type="number" id="footer_scm_amt" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>Tax Amt:</label><input type="number" id="footer_tax_amt" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>P.Scm:</label><input type="number" id="footer_pscm" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
-                        <div class="d-flex align-items-center gap-1"><label>S.Scm:</label><input type="number" id="footer_sscm" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
-                    </div>
-                </div>
+        <!-- Section 1 - Pink Summary (N.T AMT, SC, DIS. AMT, etc.) -->
+        <div class="summary-section mb-2">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">N.T AMT</label><input type="number" id="total_nt_amt" name="total_nt_amt" class="form-control readonly-field text-end fw-bold" readonly style="width:90px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">SC</label><input type="number" id="total_sc" name="total_sc" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">DIS. AMT</label><input type="number" id="total_dis_amt" name="total_dis_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Scm. AMT</label><input type="number" id="total_scm_amt" name="total_scm_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Half.Scm.</label><input type="number" id="total_half_scm" name="total_half_scm" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Tax</label><input type="number" id="total_tax" name="total_tax" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label class="fw-bold">INV. AMT</label><input type="number" id="total_inv_amt" name="total_inv_amt" class="form-control text-end fw-bold" readonly style="width:100px;"></div>
             </div>
         </div>
 
-        <!-- Summary Section - Pink -->
-        <div class="summary-section">
-            <div class="d-flex gap-3 flex-wrap align-items-center justify-content-end">
-                <div class="d-flex align-items-center gap-1"><label>N.T AMT:</label><input type="number" id="total_nt_amt" name="total_nt_amt" class="form-control readonly-field text-end fw-bold" readonly style="width:90px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>SC:</label><input type="number" id="total_sc" name="total_sc" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>DIS. AMT:</label><input type="number" id="total_dis_amt" name="total_dis_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>Scm. AMT:</label><input type="number" id="total_scm_amt" name="total_scm_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>Half Scm.:</label><input type="number" id="total_half_scm" name="total_half_scm" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>Tax:</label><input type="number" id="total_tax" name="total_tax" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label class="text-danger fw-bold">INV. AMT:</label><input type="number" id="total_inv_amt" name="total_inv_amt" class="form-control text-end fw-bold text-danger" readonly style="width:100px; border-color:#dc3545;"></div>
+        <!-- Section 2 - Gray (SC%, EXCISE, TAX%, CGST, SGST, etc.) -->
+        <div class="footer-section mb-2">
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center gap-1 me-2"><label>SC %</label><input type="number" id="footer_sc_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>EXCISE</label><input type="number" id="footer_excise" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
+                <div class="gst-box me-2"><label class="text-danger">CGST(%):</label><input type="number" id="footer_cgst" class="form-control text-end" readonly style="width:50px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>HSN</label><input type="text" id="footer_hsn" class="form-control readonly-field" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-3"><label>Pack</label><input type="text" id="footer_pack2" class="form-control readonly-field" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-1"><label>Disallow</label><input type="text" id="footer_disallow" class="form-control readonly-field text-center" value="N" readonly style="width:30px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>MRP</label><input type="number" id="footer_mrp" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+            </div>
+            <div class="d-flex align-items-center mt-1">
+                <div class="d-flex align-items-center gap-1 me-2"><label>TAX %</label><input type="number" id="footer_tax_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
+                <div class="gst-box me-2"><label class="text-danger">CGST Amt:</label><input type="number" id="footer_cgst_amt" class="form-control text-end" readonly style="width:60px;"></div>
+                <div class="gst-box me-2"><label class="text-danger">SGST(%):</label><input type="number" id="footer_sgst" class="form-control text-end" readonly style="width:50px;"></div>
+                <div class="gst-box me-2"><label class="text-danger">SGST Amt:</label><input type="number" id="footer_sgst_amt" class="form-control text-end" readonly style="width:60px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>P.RATE</label><input type="number" id="footer_prate" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label>S.RATE</label><input type="number" id="footer_srate" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+            </div>
+        </div>
+
+        <!-- Section 3 - Purple Header (Pack, Comp, N.T Amt, etc.) -->
+        <div class="first-footer-section mb-2">
+            <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center gap-1 me-2"><label>Pack</label><input type="text" id="footer_pack" class="form-control readonly-field" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Comp :</label><input type="text" id="footer_comp" class="form-control readonly-field" readonly style="width:100px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>N.T Amt.</label><input type="number" id="footer_nt_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>DIS. Amt.</label><input type="number" id="footer_dis_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Net Amt.</label><input type="number" id="footer_net_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>P.Scm.</label><input type="number" id="footer_pscm" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>S.Scm.</label><input type="number" id="footer_sscm" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
+                <div class="d-flex align-items-center gap-1"><label>+</label></div>
+            </div>
+            <div class="d-flex align-items-center mt-1">
+                <div class="d-flex align-items-center gap-1 me-2"><label>Unit</label><input type="text" id="footer_unit" class="form-control readonly-field" readonly style="width:50px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Bal.</label><input type="number" id="footer_bal" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Srlno.</label><input type="text" id="footer_srlno" class="form-control readonly-field" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Half Scm.</label><input type="number" id="footer_half_scm" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Scm.Amt.</label><input type="number" id="footer_scm_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1 me-2"><label>Tax Amt.</label><input type="number" id="footer_tax_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+                <div class="d-flex align-items-center gap-1"><label>+</label></div>
             </div>
         </div>
 
@@ -371,12 +380,12 @@ function addItemRowFromData(item) {
         <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
         <td><input type="text" name="items[${idx}][batch_no]" value="${item.batch_no || ''}" readonly class="readonly-field"></td>
         <td><input type="text" name="items[${idx}][expiry]" value="${item.expiry_date || ''}" readonly class="readonly-field"></td>
-        <td><input type="number" name="items[${idx}][qty]" value="${item.qty || 1}" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
+        <td><input type="number" name="items[${idx}][qty]" value="${item.qty || ''}" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][free_qty]" value="${item.free_qty || 0}" min="0" class="text-end"></td>
         <td><input type="number" name="items[${idx}][rate]" value="${parseFloat(item.rate || 0).toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][dis_percent]" value="${item.dis_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][scm_percent]" value="${item.scm_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B" ${item.br_ex === 'B' ? 'selected' : ''}>Brk</option><option value="E" ${item.br_ex === 'E' ? 'selected' : ''}>Exp</option><option value="D" ${item.br_ex === 'D' ? 'selected' : ''}>Dis</option><option value="R" ${item.br_ex === 'R' ? 'selected' : ''}>Rpl</option></select></td>
+        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B" ${item.br_ex === 'B' ? 'selected' : ''}>Brk</option><option value="E" ${item.br_ex === 'E' ? 'selected' : ''}>Exp</option></select></td>
         <td><input type="number" name="items[${idx}][amount]" value="${parseFloat(item.amount || 0).toFixed(2)}" step="0.01" class="text-end readonly-field" readonly></td>
         <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
         <input type="hidden" name="items[${idx}][id]" value="${item.id || ''}">
@@ -390,6 +399,7 @@ function addItemRowFromData(item) {
         <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
         <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
         <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
+        <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
     `;
     tbody.appendChild(tr);
 }
