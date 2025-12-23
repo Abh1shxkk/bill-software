@@ -416,10 +416,8 @@
         <div class="auth-form-side">
             <div class="form-content">
                 <div class="logo-area">
-                    <div class="logo-icon">
-                        <i class="fas fa-cube"></i>
-                    </div>
-                    <span class="logo-text">Medi BillSuite</span>
+                    <img src="{{ asset('images/m-white-logo-01.svg') }}" alt="Medi BillSuite" style="height: 40px;">
+                    <span class="logo-text">Medi-BillSuite</span>
                 </div>
 
                 <h1>Create Account</h1>
