@@ -3,486 +3,596 @@
 @section('title', 'Purchase Return Br.Expiry Adjustment - Modification')
 
 @section('content')
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Purchase Return Br.Expiry Adjustment - Modification</h5>
-            <div class="text-muted small">Modify adjustment transaction</div>
-        </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-info btn-sm text-white" onclick="showLoadInvoiceModal()">
-                <i class="bi bi-folder-open me-1"></i> Load Invoices
-            </button>
-            <a href="{{ route('admin.breakage-supplier.received-transaction') }}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-1"></i> New
-            </a>
-        </div>
+<div class="classic-form-container">
+    <!-- Title Header -->
+    <div class="form-title-header">
+        <h4 class="mb-0 fst-italic">Purchase Return Br.Expiry Adjustment - Modification</h4>
+    </div>
+
+    <div class="d-flex justify-content-end mb-2 gap-2">
+        <button type="button" class="btn btn-sm btn-classic" onclick="showLoadInvoiceModal()">
+            <i class="bi bi-folder-open me-1"></i> Load Invoices
+        </button>
+        <a href="{{ route('admin.breakage-supplier.received-transaction') }}" class="btn btn-sm btn-classic">
+            <i class="bi bi-plus-circle me-1"></i> New
+        </a>
     </div>
 
     <form id="receivedForm" method="POST" autocomplete="off">
         @csrf
         <input type="hidden" id="transaction_id" name="transaction_id">
         @method('PUT')
-
+        
         <!-- Header Section -->
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body p-3">
-                <div class="row g-3">
-                    <div class="col-md-2">
-                         <div class="mb-2">
-                            <label class="form-label small fw-bold mb-1">Date</label>
-                            <input type="date" id="transaction_date" name="transaction_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
-                        </div>
-                        <div class="mb-0">
-                            <label class="form-label small fw-bold mb-1">Supplier</label>
-                             <input type="text" id="supplier_name" name="supplier_name" class="form-control form-control-sm" placeholder="Supplier Name" readonly>
-                        </div>
-                    </div>
-
-                    <div class="col-md-10">
-                        <div class="card bg-light border-0 h-100">
-                            <div class="card-body p-3">
-                                <div class="row g-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label small fw-bold mb-1">Party Trn No.</label>
-                                        <input type="text" id="party_trn_no" name="party_trn_no" class="form-control form-control-sm">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-bold mb-1">Party Date</label>
-                                        <input type="date" id="party_date" name="party_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-bold mb-1">Claim [Y/N]</label>
-                                        <select id="claim_flag" name="claim_flag" class="form-select form-select-sm">
-                                            <option value="Y">Yes</option>
-                                            <option value="N">No</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-bold mb-1">Claim Amt</label>
-                                        <input type="number" id="claim_amount" name="claim_amount" class="form-control form-control-sm text-end" value="0.00">
-                                    </div>
-                                     <div class="col-md-3 d-flex align-items-center pt-3">
-                                        <div class="form-check">
-                                            <input type="checkbox" id="received_debit_note" name="received_debit_note" class="form-check-input">
-                                            <label class="form-check-label small fw-bold" for="received_debit_note">Debit Note Processing</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row g-3 mt-1">
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-bold mb-1">O/S Amount</label>
-                                        <input type="number" id="os_amount" name="os_amount" class="form-control form-control-sm text-end" value="0.00" readonly>
-                                    </div>
-                                     <div class="col-md-10">
-                                        <label class="form-label small fw-bold mb-1">Remarks</label>
-                                        <input type="text" id="remarks" name="remarks" class="form-control form-control-sm">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        <div class="form-section">
+            <div class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label mb-0">Date</label>
+                    <input type="date" id="transaction_date" name="transaction_date" class="form-control form-control-sm classic-input" value="{{ date('Y-m-d') }}" style="width: 130px;">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label mb-0">Trn.No.</label>
+                    <input type="text" id="trn_no" name="trn_no" class="form-control form-control-sm classic-input" style="width: 80px;" readonly>
+                </div>
+                <div class="col-auto">
+                    <input type="text" id="trn_no_suffix" class="form-control form-control-sm classic-input" style="width: 60px;" readonly>
+                </div>
+                <div class="col-auto ms-3">
+                    <label class="form-label mb-0">Supplier</label>
+                    <input type="text" id="supplier_code" name="supplier_code" class="form-control form-control-sm classic-input" style="width: 60px;" readonly>
+                </div>
+                <div class="col">
+                    <input type="text" id="supplier_name" name="supplier_name" class="form-control form-control-sm classic-input" placeholder="Supplier Name" readonly>
+                </div>
+            </div>
+            
+            <div class="row g-2 align-items-end mt-2">
+                <div class="col-auto">
+                    <label class="form-label mb-0">Party Trn No.</label>
+                    <input type="text" id="party_trn_no" name="party_trn_no" class="form-control form-control-sm classic-input" style="width: 140px;">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label mb-0">Date</label>
+                    <input type="date" id="party_date" name="party_date" class="form-control form-control-sm classic-input" value="{{ date('Y-m-d') }}" style="width: 130px;">
                 </div>
             </div>
         </div>
 
-        <!-- Items Table -->
-        <div class="card shadow-sm border-0 mb-3">
-            <div class="card-body p-0">
-                <div class="table-responsive" style="max-height: 350px;">
-                    <table class="table table-bordered table-sm table-hover mb-0" style="font-size: 12px;">
-                        <thead class="table-light sticky-top">
-                            <tr>
-                                <th style="width:70px;">Code</th>
-                                <th>Item Name</th>
-                                <th style="width:100px;">Batch</th>
-                                <th style="width:80px;">Exp.</th>
-                                <th style="width:60px;" class="text-end">Qty</th>
-                                <th style="width:60px;" class="text-end">Free</th>
-                                <th style="width:80px;" class="text-end">Rate</th>
-                                <th style="width:60px;" class="text-end">Dis%</th>
-                                <th style="width:60px;" class="text-end">Tax%</th>
-                                <th style="width:100px;" class="text-end">Amount</th>
-                                <th style="width:40px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="itemsTableBody"></tbody>
+        <!-- Second Row - O/S Amount, Claim, Debit Note -->
+        <div class="form-section highlight-section">
+            <div class="row g-2 align-items-center">
+                <div class="col-auto">
+                    <label class="form-label mb-0">O/S.Amount</label>
+                    <input type="number" id="os_amount" name="os_amount" class="form-control form-control-sm classic-input text-end" value="0.00" style="width: 120px;" readonly>
+                </div>
+                <div class="col-auto ms-3">
+                    <label class="form-label mb-0">Claim [ Y / N ]</label>
+                    <input type="text" id="claim_flag" name="claim_flag" class="form-control form-control-sm classic-input text-center" value="Y" style="width: 40px;" maxlength="1">
+                </div>
+                <div class="col-auto">
+                    <div class="form-check">
+                        <input type="checkbox" id="received_debit_note" name="received_debit_note" class="form-check-input">
+                        <label class="form-check-label" for="received_debit_note">Received as Debit Note</label>
+                    </div>
+                </div>
+                <div class="col-auto ms-3">
+                    <label class="form-label mb-0">Claim Amount</label>
+                    <input type="number" id="claim_amount" name="claim_amount" class="form-control form-control-sm classic-input text-end" value="0.00" style="width: 100px;">
+                </div>
+            </div>
+            <div class="row mt-1">
+                <div class="col-auto">
+                    <span class="text-danger fw-bold small">Trn.No.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- HSN Table Section -->
+        <div class="form-section p-0">
+            <div class="d-flex justify-content-between align-items-center px-2 py-1 bg-light border-bottom">
+                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateHSN()">
+                    <u>G</u>enerate HSN
+                </button>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-danger me-1" onclick="deleteSelectedRow()">
+                        <u>D</u>elete Row
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllRows()">
+                        Clear <u>A</u>ll
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-responsive" style="max-height: 200px;">
+                <table class="table table-bordered table-sm mb-0 classic-table">
+                    <thead>
+                        <tr class="table-header-dark">
+                            <th style="width: 120px;">HSN Code</th>
+                            <th style="width: 120px;" class="text-end">Amount</th>
+                            <th style="width: 80px;" class="text-end">GST%</th>
+                            <th style="width: 80px;" class="text-end">IGST %</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hsnTableBody">
+                        <tr class="hsn-row" data-row="0">
+                            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent" name="hsn[0][code]"></td>
+                            <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][amount]" value="0.00"></td>
+                            <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][gst_percent]" value="0.00"></td>
+                            <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][igst_percent]" value="0.00"></td>
+                            <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][tax_amount]" value="0.00" readonly></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer Totals Section -->
+        <div class="form-section footer-section">
+            <div class="row">
+                <div class="col-md-4">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td class="fw-bold" style="width: 100px;">Gross Amt.</td>
+                            <td><input type="number" id="gross_amt" name="gross_amt" class="form-control form-control-sm classic-input text-end" value="0.00" readonly></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Total GST</td>
+                            <td><input type="number" id="total_gst" name="total_gst" class="form-control form-control-sm classic-input text-end" value="0.00" readonly></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Net Amt.</td>
+                            <td><input type="number" id="net_amt" name="net_amt" class="form-control form-control-sm classic-input text-end" value="0.00" readonly></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Round Off</td>
+                            <td><input type="number" id="round_off" name="round_off" class="form-control form-control-sm classic-input text-end" value="0.00" step="0.01" onchange="calcTotals()"></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Amount</td>
+                            <td><input type="number" id="amount" name="amount" class="form-control form-control-sm classic-input text-end fw-bold" value="0.00" readonly></td>
+                        </tr>
                     </table>
                 </div>
-                 <div class="p-1 border-top bg-light text-center small">
-                    <a href="javascript:void(0)" onclick="showAddItemModal()" class="text-decoration-none fw-bold text-primary"><i class="bi bi-plus-circle me-1"></i> Add Item (F2)</a>
+                <div class="col-md-4"></div>
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center justify-content-end mb-2">
+                        <input type="number" id="final_amount" class="form-control form-control-sm classic-input text-end fw-bold" value="0.00" style="width: 150px;" readonly>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-2">
+                <div class="col-12">
+                    <label class="form-label mb-0 fw-bold">Remarks</label>
+                    <input type="text" id="remarks" name="remarks" class="form-control form-control-sm classic-input">
                 </div>
             </div>
         </div>
 
-        <!-- Comprehensive Footer (Consistent 3-Section) -->
-        <div class="fixed-bottom-footer" style="padding-bottom: 60px;">
-            <!-- SECTION 1: Taxes & Rates -->
-            <div class="card border-0 rounded-0 mb-1" style="background-color: #f0f0f0; border-top: 1px solid #ddd !important;">
-                <div class="card-body p-1">
-                    <div class="row g-1 align-items-center">
-                        <div class="col-md-5 d-flex gap-2">
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 100px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">SC %</span>
-                                <input type="number" id="footer_scm_percent" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 100px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Tax %</span>
-                                <input type="number" id="footer_tax_percent" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="border border-danger bg-danger-subtle p-1 d-flex gap-2 rounded align-items-center" style="height: 31px;">
-                                <div class="d-flex align-items-center gap-1">
-                                    <span class="text-danger fw-bold small" style="font-size: 11px;">CGST(%):</span>
-                                    <input type="number" id="footer_cgst_percent" class="form-control form-control-sm py-0 text-end border-danger text-danger bg-white" style="height: 20px; width: 45px; font-size: 11px;" readonly tabindex="-1">
-                                </div>
-                                <div class="d-flex align-items-center gap-1">
-                                    <span class="text-danger fw-bold small" style="font-size: 11px;">SGST(%):</span>
-                                    <input type="number" id="footer_sgst_percent" class="form-control form-control-sm py-0 text-end border-danger text-danger bg-white" style="height: 20px; width: 45px; font-size: 11px;" readonly tabindex="-1">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-7 d-flex justify-content-end gap-2">
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Pack</span>
-                                <input type="text" id="footer_pack_1" class="form-control px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="d-flex align-items-center gap-1 bg-white border rounded px-2" style="height: 31px;">
-                                <label class="small m-0" for="footer_disallow">Disallow</label>
-                                <input type="text" id="footer_disallow_val" class="form-control form-control-sm border-0 py-0 text-center fw-bold" value="N" style="width: 20px; height: 20px;" readonly>
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 fw-bold bg-white border-end-0">MRP</span>
-                                <input type="number" id="footer_mrp" class="form-control text-end px-1 fw-bold border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">P.Rate</span>
-                                <input type="number" id="footer_p_rate" class="form-control text-end px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECTION 2: Item Details (Blue Panel) -->
-            <div class="card border-0 rounded-0 mb-1" style="background-color: #dbeafe; border-top: 1px solid #bfdbfe !important;">
-                <div class="card-body p-1">
-                    <div class="row g-1 align-items-center">
-                        <div class="col-md-4 d-flex gap-2">
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 140px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Comp:</span>
-                                <input type="text" id="footer_company" class="form-control px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 80px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Unit</span>
-                                <input type="text" id="footer_unit" class="form-control px-1 border-start-0" readonly tabindex="-1">
-                            </div>
-                        </div>
-                        <div class="col-md-8 d-flex justify-content-end gap-1 flex-wrap">
-                            <div class="d-flex align-items-center gap-1">
-                                <label class="small fw-bold mb-0">N.T Amt.</label>
-                                <input type="number" id="footer_row_nt_amt" class="form-control form-control-sm text-end" style="width: 80px;" readonly tabindex="-1">
-                            </div>
-                            <div class="d-flex align-items-center gap-1">
-                                <label class="small fw-bold mb-0">DIS. Amt.</label>
-                                <input type="number" id="footer_row_dis_amt" class="form-control form-control-sm text-end" style="width: 70px;" readonly tabindex="-1">
-                            </div>
-                            <div class="d-flex align-items-center gap-1">
-                                <label class="small fw-bold mb-0">Tax Amt.</label>
-                                <input type="number" id="footer_row_tax_amt" class="form-control form-control-sm text-end" style="width: 70px;" readonly tabindex="-1">
-                            </div>
-                            <div class="vr mx-1"></div>
-                            <div class="d-flex align-items-center gap-1">
-                                <label class="small fw-bold mb-0">Net Amt.</label>
-                                <input type="number" id="footer_row_net_amt" class="form-control form-control-sm text-end fw-bold bg-white" style="width: 90px;" readonly tabindex="-1">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECTION 3: Totals (Pink Panel) -->
-            <div class="card border-0 rounded-0" style="background-color: #ffcccc; border-top: 2px solid #ff9999 !important;">
-                <div class="card-body p-2">
-                    <div class="row g-2 align-items-center justify-content-end">
-                        <div class="col-12 d-flex justify-content-end gap-2 flex-wrap">
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 140px;">
-                                <span class="input-group-text px-1 fw-bold bg-white border-end-0">Gross</span>
-                                <input type="number" id="total_gross_amt" name="gross_amt" class="form-control text-end px-1 bg-white border-start-0" readonly tabindex="-1">
-                            </div>
-                            <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Total Tax</span>
-                                <input type="number" id="total_tax_amt" name="total_tax" class="form-control text-end px-1 bg-white border-start-0" readonly tabindex="-1">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 120px;">
-                                <span class="input-group-text px-1 bg-white border-end-0">Round Off</span>
-                                <input type="number" id="round_off" name="round_off" class="form-control text-end px-1 bg-white border-start-0" value="0.00" step="0.01" onchange="calcTotals()">
-                            </div>
-                             <div class="input-group input-group-sm flex-nowrap" style="width: 180px;">
-                                <span class="input-group-text px-1 fw-bold bg-danger text-white border-danger">NET AMT</span>
-                                <input type="number" id="total_net_amt" name="amount" class="form-control text-end px-1 fw-bold border-danger text-danger bg-white" style="font-size: 1.25em;" readonly tabindex="-1">
-                            </div>
-                        </div>
-                        <div class="col-12 text-center mt-2 d-flex justify-content-center gap-3">
-                            <button type="button" class="btn btn-success btn-sm px-4" onclick="updateTransaction()" id="updateBtn" disabled>
-                                <i class="bi bi-check-lg me-1"></i> Update
-                            </button>
-                            <button type="button" class="btn btn-secondary btn-sm px-4" onclick="cancelTransaction()">
-                                <i class="bi bi-x-lg me-1"></i> Cancel
-                            </button>
-                             <button type="button" class="btn btn-danger btn-sm px-4" onclick="deleteSelectedItem()">
-                                <i class="bi bi-trash me-1"></i> Remove
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Action Buttons -->
+        <div class="form-section text-end">
+            <button type="button" class="btn btn-secondary px-4 me-2" onclick="updateTransaction()" id="updateBtn" disabled>Ok</button>
+            <button type="button" class="btn btn-secondary px-4" onclick="cancelTransaction()">Close</button>
         </div>
     </form>
 </div>
 
+<!-- Load Invoice Modal -->
+<div class="modal-backdrop-custom" id="invoiceModalBackdrop" onclick="closeInvoiceModal()"></div>
+<div class="custom-modal" id="invoiceModal">
+    <div class="custom-modal-header">
+        <h5 class="custom-modal-title m-0 fs-6">Load Invoice</h5>
+        <button type="button" class="btn-close" onclick="closeInvoiceModal()"></button>
+    </div>
+    <div class="custom-modal-body">
+        <input type="text" id="invoiceSearchInput" class="form-control mb-3" placeholder="Search..." onkeyup="searchInvoices()">
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered table-sm mb-0 small">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Date</th>
+                        <th>Supplier</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="invoicesListBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="custom-modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeInvoiceModal()">Close</button>
+    </div>
+</div>
+
 @push('styles')
 <style>
-    /* ... (Same styles as Received Transaction) ... */
-    .table-hover tbody tr:hover { background-color: rgba(0,0,0,0.02); cursor: pointer; }
-    .row-selected { background-color: #e8f0fe !important; }
-    .row-selected td { background-color: #e8f0fe !important; }
-    .fixed-bottom-footer { position: fixed; bottom: 0; left: 250px; right: 0; z-index: 1030; background: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-    @media (max-width: 992px) { .fixed-bottom-footer { left: 0; } }
-    .fixed-bottom-footer .input-group-text { font-size: 11px; padding: 0.25rem 0.5rem; }
-    .fixed-bottom-footer .form-control { font-size: 11px; padding: 0.25rem 0.5rem; }
-     /* Modal Styles */
-    .modal-backdrop-custom { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1050; }
-    .modal-backdrop-custom.show { display: block; }
-    .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 800px; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); z-index: 1055; background-clip: padding-box; outline: 0; }
-    .custom-modal.show { display: block; }
-    .custom-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1rem; border-bottom: 1px solid #dee2e6; border-top-left-radius: 8px; border-top-right-radius: 8px; background-color: #f8f9fa; }
-    .custom-modal-body { position: relative; flex: 1 1 auto; padding: 1rem; max-height: 70vh; overflow-y: auto; }
-    .custom-modal-footer { display: flex; flex-wrap: wrap; flex-shrink: 0; align-items: center; justify-content: flex-end; padding: 0.75rem; border-top: 1px solid #dee2e6; border-bottom-right-radius: 8px; border-bottom-left-radius: 8px; background-color: #f8f9fa; }
+.classic-form-container {
+    background: linear-gradient(to bottom, #c5d9c5 0%, #a8c8a8 100%);
+    min-height: calc(100vh - 60px);
+    padding: 15px;
+}
+
+.form-title-header {
+    background: linear-gradient(to bottom, #e8f0e8 0%, #d0e0d0 100%);
+    border: 2px solid #8a9a8a;
+    padding: 8px 15px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.form-title-header h4 {
+    color: #2a4a2a;
+    font-family: 'Times New Roman', serif;
+    font-size: 1.6rem;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+}
+
+.form-section {
+    background: #d8e8d8;
+    border: 1px solid #8a9a8a;
+    padding: 10px;
+    margin-bottom: 8px;
+}
+
+.highlight-section {
+    background: #e8f0e8;
+    border: 2px solid #6a8a6a;
+}
+
+.classic-input {
+    background: #fffff8 !important;
+    border: 1px solid #8a9a8a !important;
+    border-radius: 0 !important;
+    font-size: 12px;
+}
+
+.classic-input:focus {
+    background: #ffffd0 !important;
+    border-color: #4a6a4a !important;
+    box-shadow: none !important;
+}
+
+.btn-classic {
+    background: linear-gradient(to bottom, #e0e0e0 0%, #c0c0c0 100%);
+    border: 1px solid #808080;
+    color: #000;
+    border-radius: 0;
+    font-size: 12px;
+}
+
+.btn-classic:hover {
+    background: linear-gradient(to bottom, #d0d0d0 0%, #b0b0b0 100%);
+    color: #000;
+}
+
+.classic-table {
+    font-size: 12px;
+    background: #e0ece0;
+}
+
+.classic-table th, .classic-table td {
+    border: 1px solid #6a8a6a !important;
+    padding: 4px 6px;
+    vertical-align: middle;
+}
+
+.table-header-dark {
+    background: linear-gradient(to bottom, #2a5a2a 0%, #1a4a1a 100%);
+    color: #fff;
+}
+
+.table-header-dark th {
+    font-weight: normal;
+    border-color: #1a3a1a !important;
+}
+
+.classic-table tbody tr {
+    background: #c8dcc8;
+}
+
+.classic-table tbody tr:nth-child(even) {
+    background: #d8e8d8;
+}
+
+.classic-table tbody tr:hover {
+    background: #b8d0b8;
+}
+
+.classic-table tbody tr.selected {
+    background: #a0c8a0 !important;
+}
+
+.footer-section {
+    background: #d0e0d0;
+}
+
+.form-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #2a4a2a;
+}
+
+.btn-secondary {
+    background: linear-gradient(to bottom, #e0e0e0 0%, #c0c0c0 100%);
+    border: 1px solid #808080;
+    color: #000;
+    border-radius: 0;
+    font-size: 12px;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(to bottom, #d0d0d0 0%, #b0b0b0 100%);
+    border-color: #606060;
+    color: #000;
+}
+
+.btn-outline-secondary, .btn-outline-danger {
+    border-radius: 0;
+    font-size: 11px;
+}
+
+.form-check-input {
+    border-radius: 0;
+}
+
+.hsn-row input {
+    background: transparent !important;
+}
+
+.hsn-row input:focus {
+    background: #ffffd0 !important;
+}
+
+/* Modal Styles */
+.modal-backdrop-custom {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1050;
+}
+
+.modal-backdrop-custom.show {
+    display: block;
+}
+
+.custom-modal {
+    display: none;
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%; max-width: 700px;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    z-index: 1055;
+}
+
+.custom-modal.show {
+    display: block;
+}
+
+.custom-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
+
+.custom-modal-body {
+    padding: 15px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.custom-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 15px;
+    border-top: 1px solid #dee2e6;
+    background: #f8f9fa;
+}
 </style>
 @endpush
 
 <script>
-let rowIndex = 0, allItems = [], selectedRowIndex = null, currentTransactionId = null;
-document.addEventListener('DOMContentLoaded', function() { loadItems(); });
+let hsnRowIndex = 1;
+let selectedHsnRow = null;
+let currentTransactionId = null;
 
-function loadItems() { fetch('{{ route("admin.breakage-supplier.get-items") }}').then(r => r.json()).then(data => { allItems = data || []; }); }
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.hsn-row').forEach(row => {
+        row.addEventListener('click', function() { selectHsnRow(this); });
+    });
+    document.querySelectorAll('#hsnTableBody input').forEach(input => {
+        input.addEventListener('change', calcTotals);
+    });
+});
 
-// ==== LOAD INVOICES ====
 function showLoadInvoiceModal() {
-    // ... same logic ...
-    const html = `
-        <div class="modal-backdrop-custom show" id="invoiceModalBackdrop" onclick="closeInvoiceModal()"></div>
-        <div class="custom-modal show" id="invoiceModal">
-            <div class="custom-modal-header"><h5 class="custom-modal-title m-0 fs-6">Load Invoice</h5><button type="button" class="btn-close" onclick="closeInvoiceModal()"></button></div>
-            <div class="custom-modal-body">
-                <input type="text" id="invoiceSearchInput" class="form-control mb-3" placeholder="Search..." onkeyup="searchInvoices()">
-                <div class="table-responsive"><table class="table table-hover table-bordered table-sm mb-0 small"><tbody id="invoicesListBody"></tbody></table></div>
-            </div>
-            <div class="custom-modal-footer"><button type="button" class="btn btn-secondary btn-sm" onclick="closeInvoiceModal()">Close</button></div>
-        </div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
+    document.getElementById('invoiceModalBackdrop').classList.add('show');
+    document.getElementById('invoiceModal').classList.add('show');
     loadInvoices();
 }
 
-function loadInvoices(search = '') {
-    // Using a new endpoint for received past invoices: get-received-past-invoices
-    fetch(`{{ route('admin.breakage-supplier.get-received-past-invoices') }}?search=${encodeURIComponent(search)}`).then(r => r.json()).then(invoices => {
-        const tbody = document.getElementById('invoicesListBody');
-         if (!invoices.length) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">No invoices found</td></tr>'; return; }
-         tbody.innerHTML = invoices.map(inv => `
-            <tr style="cursor: pointer;" onclick="loadInvoice(${inv.id})">
-                <td><strong>${inv.id}</strong></td>
-                <td>${inv.transaction_date}</td>
-                <td>${inv.supplier_name || '-'}</td>
-                <td class="text-end">${parseFloat(inv.amount || 0).toFixed(2)}</td>
-            </tr>`).join('');
-    });
+function closeInvoiceModal() {
+    document.getElementById('invoiceModalBackdrop').classList.remove('show');
+    document.getElementById('invoiceModal').classList.remove('show');
 }
-function searchInvoices() { loadInvoices(document.getElementById('invoiceSearchInput').value); }
-function closeInvoiceModal() { document.getElementById('invoiceModal')?.remove(); document.getElementById('invoiceModalBackdrop')?.remove(); }
+
+function loadInvoices(search = '') {
+    fetch(`{{ route('admin.breakage-supplier.get-received-past-invoices') }}?search=${encodeURIComponent(search)}`)
+        .then(r => r.json())
+        .then(invoices => {
+            const tbody = document.getElementById('invoicesListBody');
+            if (!invoices.length) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">No invoices found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = invoices.map(inv => `
+                <tr style="cursor: pointer;" onclick="loadInvoice(${inv.id})">
+                    <td><strong>${inv.id}</strong></td>
+                    <td>${inv.transaction_date}</td>
+                    <td>${inv.supplier_name || '-'}</td>
+                    <td class="text-end">${parseFloat(inv.amount || 0).toFixed(2)}</td>
+                </tr>`).join('');
+        });
+}
+
+function searchInvoices() {
+    loadInvoices(document.getElementById('invoiceSearchInput').value);
+}
 
 function loadInvoice(id) {
-    fetch(`{{ url('admin/breakage-supplier/received') }}/${id}`).then(r => r.json()).then(data => { populateForm(data); closeInvoiceModal(); })
-    .catch(console.error);
+    fetch(`{{ url('admin/breakage-supplier/received') }}/${id}`)
+        .then(r => r.json())
+        .then(data => {
+            populateForm(data);
+            closeInvoiceModal();
+        })
+        .catch(console.error);
 }
 
 function populateForm(data) {
     currentTransactionId = data.id;
     document.getElementById('transaction_id').value = data.id;
     document.getElementById('transaction_date').value = data.transaction_date;
+    document.getElementById('trn_no').value = data.id;
     document.getElementById('supplier_name').value = data.supplier_name || '';
     document.getElementById('party_trn_no').value = data.party_trn_no || '';
-    document.getElementById('party_date').value = data.party_date;
-    document.getElementById('claim_flag').value = data.claim_flag || 'N';
+    document.getElementById('party_date').value = data.party_date || data.transaction_date;
+    document.getElementById('claim_flag').value = data.claim_flag || 'Y';
     document.getElementById('claim_amount').value = data.claim_amount || 0;
     document.getElementById('received_debit_note').checked = !!data.received_debit_note;
     document.getElementById('os_amount').value = data.os_amount || 0;
     document.getElementById('remarks').value = data.remarks || '';
     document.getElementById('round_off').value = data.round_off || 0;
-    document.getElementById('total_gross_amt').value = data.gross_amt || 0;
-    document.getElementById('total_tax_amt').value = data.total_gst || 0;
-    document.getElementById('total_net_amt').value = data.amount || 0;
-
-    document.getElementById('itemsTableBody').innerHTML = '';
-    rowIndex = 0;
-    if (data.items) data.items.forEach(item => addItemRowFromData(item));
+    document.getElementById('gross_amt').value = data.gross_amt || 0;
+    document.getElementById('total_gst').value = data.total_gst || 0;
+    document.getElementById('amount').value = data.amount || 0;
+    document.getElementById('final_amount').value = data.amount || 0;
+    document.getElementById('net_amt').value = (parseFloat(data.gross_amt || 0) + parseFloat(data.total_gst || 0)).toFixed(2);
+    
     document.getElementById('updateBtn').disabled = false;
 }
 
-// ==== ITEM LOGIC ====
-function addItemRowFromData(item) {
-    const idx = rowIndex++;
-    const row = document.createElement('tr');
-    row.id = `row-${idx}`; row.dataset.rowIndex = idx;
-    row.onclick = function(e) { if (!['BUTTON','INPUT','SELECT'].includes(e.target.tagName)) selectRow(idx); };
-    
-    row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][code]" value="${item.item_id || item.code}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][name]" value="${item.item_name || item.name}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][batch]" value="${item.batch_no || '-'}"></td>
-        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent py-0" name="items[${idx}][expiry]" value="${item.expiry || ''}"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][qty]" value="${item.qty || 1}" min="0" onchange="calcRow(${idx})" style="width:60px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][free_qty]" value="${item.free_qty || 0}" min="0" style="width:60px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][rate]" value="${item.rate || 0}" step="0.01" onchange="calcRow(${idx})" style="width:80px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][dis_percent]" value="${item.dis_percent || 0}" step="0.01" onchange="calcRow(${idx})" style="width:60px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end py-1" name="items[${idx}][tax_percent]" value="${item.tax_percent || 0}" step="0.01" onchange="calcRow(${idx})" style="width:60px;"></td>
-        <td><input type="number" class="form-control form-control-sm text-end border-0 bg-transparent fw-bold py-0" name="items[${idx}][amount]" value="${item.amount || 0}" readonly></td>
-        <td class="text-center"><button type="button" class="btn btn-sm text-danger p-0" onclick="removeRow(${idx})"><i class="bi bi-trash"></i></button></td>
-        
-        <input type="hidden" name="items[${idx}][item_id]" value="${item.item_id || item.code}">
-        <input type="hidden" name="items[${idx}][packing]" value="${item.packing||''}">
-        <input type="hidden" name="items[${idx}][unit]" value="${item.unit||''}">
-        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name||''}">
-        <input type="hidden" name="items[${idx}][mrp]" value="${item.mrp || 0}">
-        <input type="hidden" name="items[${idx}][p_rate]" value="${item.p_rate || 0}">
-        <input type="hidden" name="items[${idx}][cgst_percent]" value="${item.cgst_percent||0}">
-        <input type="hidden" name="items[${idx}][sgst_percent]" value="${item.sgst_percent||0}">
-        <input type="hidden" name="items[${idx}][tax_amount]" class="row-tax-amt" value="${item.tax_amount||0}">
-        <input type="hidden" name="items[${idx}][dis_amount]" class="row-dis-amt" value="${item.dis_amount||0}">
+function selectHsnRow(row) {
+    document.querySelectorAll('.hsn-row').forEach(r => r.classList.remove('selected'));
+    row.classList.add('selected');
+    selectedHsnRow = row;
+}
+
+function generateHSN() {
+    const tbody = document.getElementById('hsnTableBody');
+    const newRow = document.createElement('tr');
+    newRow.className = 'hsn-row';
+    newRow.dataset.row = hsnRowIndex;
+    newRow.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm border-0 bg-transparent" name="hsn[${hsnRowIndex}][code]"></td>
+        <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[${hsnRowIndex}][amount]" value="0.00" onchange="calcTotals()"></td>
+        <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[${hsnRowIndex}][gst_percent]" value="0.00" onchange="calcRowTax(${hsnRowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[${hsnRowIndex}][igst_percent]" value="0.00" onchange="calcRowTax(${hsnRowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[${hsnRowIndex}][tax_amount]" value="0.00" readonly></td>
     `;
-    document.getElementById('itemsTableBody').appendChild(row);
-    selectRow(idx); calcRow(idx);
+    newRow.addEventListener('click', function() { selectHsnRow(this); });
+    tbody.appendChild(newRow);
+    hsnRowIndex++;
 }
 
-// ... Reuse Item Selection Modal Logic from Transaction ...
-function showAddItemModal() {
-     if (!currentTransactionId) { alert('Warning: No transaction selected, adding new item anyway.'); }
-     // ... modal html ...
-      const html = `
-        <div class="modal-backdrop-custom show" id="itemModalBackdrop" onclick="closeItemModal()"></div>
-        <div class="custom-modal show" id="itemModal">
-            <div class="custom-modal-header"><h5 class="custom-modal-title m-0 fs-6">Select Item</h5><button type="button" class="btn-close" onclick="closeItemModal()"></button></div>
-            <div class="custom-modal-body">
-                <input type="text" id="itemSearchInput" class="form-control mb-3" placeholder="Search..." onkeyup="filterItemsList()">
-                <div class="table-responsive"><table class="table table-hover table-bordered table-sm mb-0 small"><tbody id="itemsListBody"></tbody></table></div>
-            </div>
-            <div class="custom-modal-footer"><button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button></div>
-        </div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
-    document.getElementById('itemSearchInput').focus();
-    renderItemsList();
-}
-function filterItemsList() { renderItemsList(document.getElementById('itemSearchInput').value); }
-function renderItemsList(filter = '') {
-    const filtered = filter ? allItems.filter(i => i.name.toLowerCase().includes(filter.toLowerCase())) : allItems;
-    document.getElementById('itemsListBody').innerHTML = filtered.slice(0,50).map(i => `<tr style="cursor:pointer;" onclick="selectItem(${i.id})"><td>${i.id}</td><td>${i.name}</td><td>${i.packing||'-'}</td><td>${parseFloat(i.mrp||0).toFixed(2)}</td></tr>`).join('');
-}
-function selectItem(id) { const item = allItems.find(i => i.id === id); if (item) { addItemRowFromData({item_id: item.id, item_name: item.name, packing: item.packing, unit: item.unit, company_name: item.company_name, mrp: item.mrp, p_rate: item.p_rate, tax_percent: (item.cgst||0)+(item.sgst||0)}); closeItemModal(); } }
-function closeItemModal() { document.getElementById('itemModal')?.remove(); document.getElementById('itemModalBackdrop')?.remove(); }
-
-function selectRow(idx) {
-    document.querySelectorAll('#itemsTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
-    const row = document.getElementById(`row-${idx}`);
-    if (row) { row.classList.add('row-selected'); selectedRowIndex = idx; updateFooter(row); }
-}
-
-function updateFooter(row) {
-    if (!row) {
-        ['footer_pack_1','footer_mrp','footer_p_rate','footer_company','footer_unit',
-         'footer_cgst_percent','footer_sgst_percent','footer_tax_percent','footer_row_nt_amt',
-         'footer_row_dis_amt','footer_row_tax_amt','footer_row_net_amt'
-        ].forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
-        return;
-    }
-    const get = n => row.querySelector(`input[name*="[${n}]"]`)?.value || '';
-    
-    document.getElementById('footer_pack_1').value = get('packing');
-    document.getElementById('footer_mrp').value = get('mrp');
-    document.getElementById('footer_p_rate').value = get('p_rate');
-    document.getElementById('footer_company').value = get('company_name');
-    document.getElementById('footer_unit').value = get('unit');
-
-    const cgst = parseFloat(get('cgst_percent')||0);
-    const sgst = parseFloat(get('sgst_percent')||0);
-    document.getElementById('footer_cgst_percent').value = cgst;
-    document.getElementById('footer_sgst_percent').value = sgst;
-    document.getElementById('footer_tax_percent').value = (cgst+sgst).toFixed(2);
-    
-    const qty = parseFloat(get('qty')||0);
-    const rate = parseFloat(get('rate')||0);
-    const gross = qty * rate;
-    const dis = parseFloat(row.querySelector('.row-dis-amt')?.value||0);
-    const tax = parseFloat(row.querySelector('.row-tax-amt')?.value||0);
-    
-    document.getElementById('footer_row_nt_amt').value = (gross - dis).toFixed(2);
-    document.getElementById('footer_row_dis_amt').value = dis.toFixed(2);
-    document.getElementById('footer_row_tax_amt').value = tax.toFixed(2);
-    document.getElementById('footer_row_net_amt').value = (gross - dis + tax).toFixed(2);
-}
-
-function calcRow(idx) {
-    const row = document.getElementById(`row-${idx}`); if (!row) return;
-    const qty = parseFloat(row.querySelector('input[name*="[qty]"]').value) || 0;
-    const rate = parseFloat(row.querySelector('input[name*="[rate]"]').value) || 0;
-    const disP = parseFloat(row.querySelector('input[name*="[dis_percent]"]').value) || 0;
-    const taxP = parseFloat(row.querySelector('input[name*="[tax_percent]"]').value) || 0;
-    
-    const gross = qty * rate;
-    const disAmt = gross * disP / 100;
-    const taxable = gross - disAmt;
-    const taxAmt = taxable * taxP / 100;
-    
-    row.querySelector('.row-dis-amt').value = disAmt;
-    row.querySelector('.row-tax-amt').value = taxAmt;
-    row.querySelector('input[name*="[amount]"]').value = (taxable + taxAmt).toFixed(2);
-    
-    if (selectedRowIndex === idx) updateFooter(row);
+function calcRowTax(idx) {
+    const row = document.querySelector(`.hsn-row[data-row="${idx}"]`);
+    if (!row) return;
+    const amount = parseFloat(row.querySelector('input[name*="[amount]"]').value) || 0;
+    const gstP = parseFloat(row.querySelector('input[name*="[gst_percent]"]').value) || 0;
+    const igstP = parseFloat(row.querySelector('input[name*="[igst_percent]"]').value) || 0;
+    const taxAmt = amount * (gstP + igstP) / 100;
+    row.querySelector('input[name*="[tax_amount]"]').value = taxAmt.toFixed(2);
     calcTotals();
 }
 
-function removeRow(idx) { document.getElementById(`row-${idx}`)?.remove(); calcTotals(); }
-function deleteSelectedItem() { if (selectedRowIndex !== null) { removeRow(selectedRowIndex); selectedRowIndex = null; } else alert('Select a row first'); }
+function deleteSelectedRow() {
+    if (selectedHsnRow && document.querySelectorAll('.hsn-row').length > 1) {
+        selectedHsnRow.remove();
+        selectedHsnRow = null;
+        calcTotals();
+    } else {
+        alert('Cannot delete the last row');
+    }
+}
+
+function clearAllRows() {
+    if (confirm('Clear all rows?')) {
+        const tbody = document.getElementById('hsnTableBody');
+        tbody.innerHTML = `
+            <tr class="hsn-row" data-row="0">
+                <td><input type="text" class="form-control form-control-sm border-0 bg-transparent" name="hsn[0][code]"></td>
+                <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][amount]" value="0.00" onchange="calcTotals()"></td>
+                <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][gst_percent]" value="0.00" onchange="calcRowTax(0)"></td>
+                <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][igst_percent]" value="0.00" onchange="calcRowTax(0)"></td>
+                <td><input type="number" class="form-control form-control-sm border-0 bg-transparent text-end" name="hsn[0][tax_amount]" value="0.00" readonly></td>
+            </tr>
+        `;
+        hsnRowIndex = 1;
+        selectedHsnRow = null;
+        calcTotals();
+    }
+}
 
 function calcTotals() {
-    let grossAll = 0, taxAll = 0;
-    document.querySelectorAll('#itemsTableBody tr').forEach(row => {
-        const qty = parseFloat(row.querySelector('input[name*="[qty]"]').value) || 0;
-        const rate = parseFloat(row.querySelector('input[name*="[rate]"]').value) || 0;
-        const dis = parseFloat(row.querySelector('.row-dis-amt')?.value) || 0;
-        const tax = parseFloat(row.querySelector('.row-tax-amt')?.value) || 0;
-        grossAll += (qty * rate) - dis;
-        taxAll += tax;
+    let grossAmt = 0, totalGst = 0;
+    document.querySelectorAll('.hsn-row').forEach(row => {
+        const amount = parseFloat(row.querySelector('input[name*="[amount]"]').value) || 0;
+        const taxAmt = parseFloat(row.querySelector('input[name*="[tax_amount]"]').value) || 0;
+        grossAmt += amount;
+        totalGst += taxAmt;
     });
+    const roundOff = parseFloat(document.getElementById('round_off').value) || 0;
+    const netAmt = grossAmt + totalGst;
+    const finalAmt = netAmt + roundOff;
     
-    const round = parseFloat(document.getElementById('round_off').value) || 0;
-    document.getElementById('total_gross_amt').value = grossAll.toFixed(2);
-    document.getElementById('total_tax_amt').value = taxAll.toFixed(2);
-    document.getElementById('total_net_amt').value = (grossAll + taxAll + round).toFixed(2);
+    document.getElementById('gross_amt').value = grossAmt.toFixed(2);
+    document.getElementById('total_gst').value = totalGst.toFixed(2);
+    document.getElementById('net_amt').value = netAmt.toFixed(2);
+    document.getElementById('amount').value = finalAmt.toFixed(2);
+    document.getElementById('final_amount').value = finalAmt.toFixed(2);
 }
 
 function updateTransaction() {
-     if (!currentTransactionId) { alert('No transaction loaded'); return; }
-     if (!document.querySelectorAll('#itemsTableBody tr').length) { alert('Add at least one item'); return; }
-     const formData = new FormData(document.getElementById('receivedForm'));
-     formData.append('_method', 'PUT');
-     fetch(`{{ url('admin/breakage-supplier/received') }}/${currentTransactionId}`, {
-        method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-    }).then(r => r.json()).then(data => {
-        if (data.success) { alert('Updated successfully'); window.location.href = '{{ route("admin.breakage-supplier.received-transaction") }}'; }
-        else alert('Error: ' + data.message);
-    }).catch(() => alert('Error updating transaction'));
+    if (!currentTransactionId) {
+        alert('Please load an invoice first');
+        return;
+    }
+    const formData = new FormData(document.getElementById('receivedForm'));
+    fetch(`{{ url('admin/breakage-supplier/received') }}/${currentTransactionId}`, {
+        method: 'POST',
+        body: formData,
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Transaction updated successfully!');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(() => alert('Error updating transaction'));
 }
 
-function cancelTransaction() { window.location.href = '{{ route("admin.breakage-supplier.received-transaction") }}'; }
+function cancelTransaction() {
+    window.location.href = '{{ route("admin.breakage-supplier.received-transaction") }}';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'F2') {
+        e.preventDefault();
+        generateHSN();
+    }
+});
 </script>
 @endsection
