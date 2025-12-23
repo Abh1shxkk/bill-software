@@ -13,16 +13,23 @@
     .readonly-field { background-color: #e9ecef !important; }
     
     /* Items Table (Sale transaction style) */
-    .table-compact { font-size: 8px; margin-bottom: 0; }
-    .table-compact th, .table-compact td { padding: 0; vertical-align: middle; }
+    .table-compact { font-size: 11px; margin-bottom: 0; }
+    .table-compact th, .table-compact td { padding: 3px; vertical-align: middle; }
     .table-compact td { background: #fffacd; }
-    .table-compact input, .table-compact select { font-size: 8px; padding: 0 1px; height: 18px; border: 1px solid #aaa; width: 100%; box-sizing: border-box; min-width: 0; max-width: 100%; border-radius: 0 !important; }
-    #itemsTable thead th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; border: 1px solid #5a3a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 1px; }
-    #itemsTable td { border: 1px solid #ccc; overflow: hidden; }
-    .table-compact input[type="text"], .table-compact input[readonly] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .table-compact input, .table-compact select { font-size: 11px; padding: 2px 4px; height: 24px; border: 1px solid #aaa; width: 100%; box-sizing: border-box; min-width: 0; max-width: 100%; border-radius: 0 !important; }
+    #itemsTable thead th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; border: 1px solid #5a3a1a; white-space: nowrap; padding: 4px 3px; font-size: 11px; }
+    #itemsTable td { border: 1px solid #ccc; }
+    .table-compact input[type="text"], .table-compact input[readonly] { text-overflow: ellipsis; white-space: nowrap; }
     #itemsTableBody .row-selected td { background: #cce5ff !important; }
-    #itemsTableContainer { overflow-x: hidden !important; }
-    #itemsTable { width: 100% !important; table-layout: fixed; }
+    #itemsTableContainer { overflow-x: auto !important; overflow-y: auto; }
+    #itemsTable { width: 100% !important; table-layout: fixed; min-width: 900px; }
+    
+    /* Items Table - Brown Header */
+    .items-table { font-size: 11px; margin-bottom: 0; border-collapse: collapse; width: 100%; }
+    .items-table th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; padding: 4px 3px; border: 1px solid #5a3a1a; white-space: nowrap; font-size: 11px; }
+    .items-table td { padding: 3px; border: 1px solid #ccc; background: #fffacd; }
+    .items-table input, .items-table select { font-size: 11px; padding: 2px 4px; height: 24px; border: 1px solid #aaa; width: 100%; }
+    .items-table .row-selected td { background: #cce5ff !important; }
     
     /* Summary Row - Pink */
     .summary-section { background: #ffcccc; padding: 8px; border: 1px solid #cc9999; margin-bottom: 6px; border-radius: 3px; }
@@ -99,22 +106,22 @@
 
         <!-- Items Table Section -->
         <div class="bg-white border rounded p-2 mb-2">
-            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;" id="itemsTableContainer">
-                <table class="table table-bordered table-compact mb-0" id="itemsTable" style="table-layout: fixed; width: 100%;">
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto; overflow-x: auto;" id="itemsTableContainer">
+                <table class="items-table" id="itemsTable" style="table-layout: fixed; width: 100%; min-width: 900px;">
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
-                            <th style="width: 40px;">Code</th>
-                            <th style="width: 140px;">Item Name</th>
-                            <th style="width: 55px;">Batch</th>
-                            <th style="width: 45px;">Exp</th>
-                            <th style="width: 40px;">Qty</th>
-                            <th style="width: 40px;">F.Q</th>
-                            <th style="width: 50px;">Rate</th>
-                            <th style="width: 40px;">Dis%</th>
-                            <th style="width: 40px;">Scm%</th>
-                            <th style="width: 45px;">Br/Ex</th>
-                            <th style="width: 55px;">Amount</th>
-                            <th style="width: 24px;">X</th>
+                            <th style="width: 50px;">Code</th>
+                            <th style="width: 150px;">Item Name</th>
+                            <th style="width: 70px;">Batch</th>
+                            <th style="width: 60px;">Exp</th>
+                            <th style="width: 45px;">Qty</th>
+                            <th style="width: 45px;">F.Q</th>
+                            <th style="width: 60px;">Rate</th>
+                            <th style="width: 50px;">Dis%</th>
+                            <th style="width: 50px;">Scm%</th>
+                            <th style="width: 55px;">Br/Ex</th>
+                            <th style="width: 70px;">Amount</th>
+                            <th style="width: 30px;">X</th>
                         </tr>
                     </thead>
                     <tbody id="itemsTableBody"></tbody>
