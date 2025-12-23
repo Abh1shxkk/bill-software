@@ -45,7 +45,7 @@ class BreakageSupplierController extends Controller
             $query->whereDate('transaction_date', '<=', $request->to_date);
         }
 
-        $transactions = $query->orderBy('id', 'desc')->paginate(15)->withQueryString();
+        $transactions = $query->orderBy('id', 'desc')->paginate(10)->withQueryString();
 
         return view('admin.breakage-supplier.issued-index', compact('transactions'));
     }
@@ -120,6 +120,30 @@ class BreakageSupplierController extends Controller
                     }
                 }
 
+                // Get CGST/SGST from form (field name is 'cgst' and 'sgst')
+                $cgstPercent = $item['cgst_percent'] ?? $item['cgst'] ?? 0;
+                $sgstPercent = $item['sgst_percent'] ?? $item['sgst'] ?? 0;
+                
+                // Calculate amounts
+                $qty = floatval($item['qty'] ?? 0);
+                $rate = floatval($item['rate'] ?? 0);
+                $disPercent = floatval($item['dis_percent'] ?? 0);
+                
+                $ntAmt = $qty * $rate;
+                $disAmt = ($ntAmt * $disPercent) / 100;
+                $netAmt = $ntAmt - $disAmt;
+                $cgstAmt = ($netAmt * floatval($cgstPercent)) / 100;
+                $sgstAmt = ($netAmt * floatval($sgstPercent)) / 100;
+                $taxAmt = $cgstAmt + $sgstAmt;
+                
+                // Map br_ex to br_ex_type
+                $brExType = 'BREAKAGE';
+                if (isset($item['br_ex'])) {
+                    $brExType = ($item['br_ex'] === 'E') ? 'EXPIRY' : 'BREAKAGE';
+                } elseif (isset($item['br_ex_type'])) {
+                    $brExType = $item['br_ex_type'];
+                }
+
                 BreakageSupplierIssuedTransactionItem::create([
                     'transaction_id' => $transaction->id,
                     'item_id' => $item['item_id'],
@@ -129,32 +153,32 @@ class BreakageSupplierController extends Controller
                     'batch_no' => $item['batch'] ?? $item['batch_no'] ?? '',
                     'expiry' => $expiryInput,
                     'expiry_date' => $expiryDate,
-                    'qty' => $item['qty'] ?? 0,
+                    'qty' => $qty,
                     'free_qty' => $item['free_qty'] ?? 0,
-                    'rate' => $item['rate'] ?? 0,
-                    'dis_percent' => $item['dis_percent'] ?? 0,
+                    'rate' => $rate,
+                    'dis_percent' => $disPercent,
                     'scm_percent' => $item['scm_percent'] ?? 0,
-                    'br_ex_type' => $item['br_ex_type'] ?? 'BREAKAGE',
-                    'amount' => $item['amount'] ?? 0,
-                    'nt_amt' => $item['nt_amt'] ?? 0,
-                    'dis_amt' => $item['dis_amt'] ?? 0,
+                    'br_ex_type' => $brExType,
+                    'amount' => $item['amount'] ?? $ntAmt,
+                    'nt_amt' => $ntAmt,
+                    'dis_amt' => $disAmt,
                     'scm_amt' => $item['scm_amt'] ?? 0,
                     'half_scm' => $item['half_scm'] ?? 0,
-                    'tax_amt' => $item['tax_amt'] ?? 0,
-                    'net_amt' => $item['net_amt'] ?? 0,
+                    'tax_amt' => $taxAmt,
+                    'net_amt' => $netAmt,
                     'packing' => $item['packing'] ?? '',
                     'unit' => $item['unit'] ?? '',
                     'company_name' => $item['company_name'] ?? '',
                     'mrp' => $item['mrp'] ?? 0,
-                    'p_rate' => $item['p_rate'] ?? 0,
-                    's_rate' => $item['s_rate'] ?? 0,
+                    'p_rate' => $item['purchase_rate'] ?? $item['p_rate'] ?? 0,
+                    's_rate' => $item['sale_rate'] ?? $item['s_rate'] ?? 0,
                     'hsn_code' => $item['hsn_code'] ?? '',
-                    'cgst_percent' => $item['cgst_percent'] ?? 0,
-                    'sgst_percent' => $item['sgst_percent'] ?? 0,
-                    'cgst_amt' => $item['cgst_amt'] ?? 0,
-                    'sgst_amt' => $item['sgst_amt'] ?? 0,
+                    'cgst_percent' => $cgstPercent,
+                    'sgst_percent' => $sgstPercent,
+                    'cgst_amt' => $cgstAmt,
+                    'sgst_amt' => $sgstAmt,
                     'sc_percent' => $item['sc_percent'] ?? 0,
-                    'tax_percent' => $item['tax_percent'] ?? 0,
+                    'tax_percent' => floatval($cgstPercent) + floatval($sgstPercent),
                     'row_order' => $rowOrder++,
                 ]);
             }
@@ -194,13 +218,35 @@ class BreakageSupplierController extends Controller
      */
     public function showIssued($id)
     {
-        $transaction = BreakageSupplierIssuedTransaction::with('items')->findOrFail($id);
-        
-        if (request()->wantsJson() || request()->ajax()) {
+        try {
+            $transaction = BreakageSupplierIssuedTransaction::with(['items' => function($query) {
+                $query->with('item:id,cgst_percent,sgst_percent,hsn_code,packing,unit,company_short_name');
+            }])->findOrFail($id);
+            
+            // Enrich items with data from item table
+            if ($transaction->items) {
+                $transaction->items->transform(function($item) {
+                    if ($item->item) {
+                        $item->cgst_percent = $item->cgst_percent ?? $item->item->cgst_percent ?? 0;
+                        $item->sgst_percent = $item->sgst_percent ?? $item->item->sgst_percent ?? 0;
+                        $item->hsn_code = $item->hsn_code ?? $item->item->hsn_code ?? '';
+                        $item->packing = $item->packing ?? $item->item->packing ?? '';
+                        $item->unit = $item->unit ?? $item->item->unit ?? '';
+                        $item->company_name = $item->company_name ?? $item->item->company_short_name ?? '';
+                    }
+                    return $item;
+                });
+            }
+            
+            // Always return JSON for this endpoint since it's used by AJAX
             return response()->json($transaction);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading transaction: ' . $e->getMessage()
+            ], 500);
         }
-        
-        return view('admin.breakage-supplier.issued-show', compact('transaction'));
     }
 
     /**
@@ -284,6 +330,30 @@ class BreakageSupplierController extends Controller
                     }
                 }
 
+                // Get CGST/SGST from form (field name is 'cgst' and 'sgst')
+                $cgstPercent = $item['cgst_percent'] ?? $item['cgst'] ?? 0;
+                $sgstPercent = $item['sgst_percent'] ?? $item['sgst'] ?? 0;
+                
+                // Calculate amounts
+                $qty = floatval($item['qty'] ?? 0);
+                $rate = floatval($item['rate'] ?? 0);
+                $disPercent = floatval($item['dis_percent'] ?? 0);
+                
+                $ntAmt = $qty * $rate;
+                $disAmt = ($ntAmt * $disPercent) / 100;
+                $netAmt = $ntAmt - $disAmt;
+                $cgstAmt = ($netAmt * floatval($cgstPercent)) / 100;
+                $sgstAmt = ($netAmt * floatval($sgstPercent)) / 100;
+                $taxAmt = $cgstAmt + $sgstAmt;
+                
+                // Map br_ex to br_ex_type
+                $brExType = 'BREAKAGE';
+                if (isset($item['br_ex'])) {
+                    $brExType = ($item['br_ex'] === 'E') ? 'EXPIRY' : 'BREAKAGE';
+                } elseif (isset($item['br_ex_type'])) {
+                    $brExType = $item['br_ex_type'];
+                }
+
                 BreakageSupplierIssuedTransactionItem::create([
                     'transaction_id' => $transaction->id,
                     'item_id' => $item['item_id'],
@@ -293,32 +363,32 @@ class BreakageSupplierController extends Controller
                     'batch_no' => $item['batch'] ?? $item['batch_no'] ?? '',
                     'expiry' => $expiryInput,
                     'expiry_date' => $expiryDate,
-                    'qty' => $item['qty'] ?? 0,
+                    'qty' => $qty,
                     'free_qty' => $item['free_qty'] ?? 0,
-                    'rate' => $item['rate'] ?? 0,
-                    'dis_percent' => $item['dis_percent'] ?? 0,
+                    'rate' => $rate,
+                    'dis_percent' => $disPercent,
                     'scm_percent' => $item['scm_percent'] ?? 0,
-                    'br_ex_type' => $item['br_ex_type'] ?? 'BREAKAGE',
-                    'amount' => $item['amount'] ?? 0,
-                    'nt_amt' => $item['nt_amt'] ?? 0,
-                    'dis_amt' => $item['dis_amt'] ?? 0,
+                    'br_ex_type' => $brExType,
+                    'amount' => $item['amount'] ?? $ntAmt,
+                    'nt_amt' => $ntAmt,
+                    'dis_amt' => $disAmt,
                     'scm_amt' => $item['scm_amt'] ?? 0,
                     'half_scm' => $item['half_scm'] ?? 0,
-                    'tax_amt' => $item['tax_amt'] ?? 0,
-                    'net_amt' => $item['net_amt'] ?? 0,
+                    'tax_amt' => $taxAmt,
+                    'net_amt' => $netAmt,
                     'packing' => $item['packing'] ?? '',
                     'unit' => $item['unit'] ?? '',
                     'company_name' => $item['company_name'] ?? '',
                     'mrp' => $item['mrp'] ?? 0,
-                    'p_rate' => $item['p_rate'] ?? 0,
-                    's_rate' => $item['s_rate'] ?? 0,
+                    'p_rate' => $item['purchase_rate'] ?? $item['p_rate'] ?? 0,
+                    's_rate' => $item['sale_rate'] ?? $item['s_rate'] ?? 0,
                     'hsn_code' => $item['hsn_code'] ?? '',
-                    'cgst_percent' => $item['cgst_percent'] ?? 0,
-                    'sgst_percent' => $item['sgst_percent'] ?? 0,
-                    'cgst_amt' => $item['cgst_amt'] ?? 0,
-                    'sgst_amt' => $item['sgst_amt'] ?? 0,
+                    'cgst_percent' => $cgstPercent,
+                    'sgst_percent' => $sgstPercent,
+                    'cgst_amt' => $cgstAmt,
+                    'sgst_amt' => $sgstAmt,
                     'sc_percent' => $item['sc_percent'] ?? 0,
-                    'tax_percent' => $item['tax_percent'] ?? 0,
+                    'tax_percent' => floatval($cgstPercent) + floatval($sgstPercent),
                     'row_order' => $rowOrder++,
                 ]);
             }

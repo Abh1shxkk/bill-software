@@ -12,12 +12,17 @@
     .inner-card { background: #e8f4f8; border: 1px solid #b8d4e0; padding: 8px; border-radius: 3px; }
     .readonly-field { background-color: #e9ecef !important; }
     
-    /* Table Styles - Brown Header */
-    .items-table { font-size: 8px; margin-bottom: 0; border-collapse: collapse; width: 100%; }
-    .items-table th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; padding: 3px 2px; border: 1px solid #5a3a1a; white-space: nowrap; font-size: 8px; }
-    .items-table td { padding: 1px; border: 1px solid #ccc; background: #fffacd; }
-    .items-table input, .items-table select { font-size: 8px; padding: 1px 2px; height: 18px; border: 1px solid #aaa; width: 100%; }
-    .items-table .row-selected td { background: #cce5ff !important; }
+    /* Items Table (Sale transaction style) */
+    .table-compact { font-size: 8px; margin-bottom: 0; }
+    .table-compact th, .table-compact td { padding: 0; vertical-align: middle; }
+    .table-compact td { background: #fffacd; }
+    .table-compact input, .table-compact select { font-size: 8px; padding: 0 1px; height: 18px; border: 1px solid #aaa; width: 100%; box-sizing: border-box; min-width: 0; max-width: 100%; border-radius: 0 !important; }
+    #itemsTable thead th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; border: 1px solid #5a3a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 2px 1px; }
+    #itemsTable td { border: 1px solid #ccc; overflow: hidden; }
+    .table-compact input[type="text"], .table-compact input[readonly] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #itemsTableBody .row-selected td { background: #cce5ff !important; }
+    #itemsTableContainer { overflow-x: hidden !important; }
+    #itemsTable { width: 100% !important; table-layout: fixed; }
     
     /* Summary Row - Pink */
     .summary-section { background: #ffcccc; padding: 8px; border: 1px solid #cc9999; margin-bottom: 6px; border-radius: 3px; }
@@ -94,22 +99,22 @@
 
         <!-- Items Table Section -->
         <div class="bg-white border rounded p-2 mb-2">
-            <div class="table-responsive" style="max-height: 280px; overflow-y: auto; overflow-x: hidden;">
-                <table class="items-table" id="itemsTable" style="table-layout: fixed; width: 100%;">
+            <div class="table-responsive" style="max-height: 280px; overflow-y: auto;" id="itemsTableContainer">
+                <table class="table table-bordered table-compact mb-0" id="itemsTable" style="table-layout: fixed; width: 100%;">
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
-                            <th style="width:45px;">Code</th>
-                            <th style="width:100px;">Item Name</th>
-                            <th style="width:45px;">Batch</th>
-                            <th style="width:35px;">Exp</th>
-                            <th style="width:30px;">Qty</th>
-                            <th style="width:30px;">F.Q</th>
-                            <th style="width:45px;">Rate</th>
-                            <th style="width:35px;">Dis%</th>
-                            <th style="width:35px;">Scm%</th>
-                            <th style="width:50px;">Br/Ex</th>
-                            <th style="width:55px;">Amount</th>
-                            <th style="width:20px;">X</th>
+                            <th style="width: 40px;">Code</th>
+                            <th style="width: 140px;">Item Name</th>
+                            <th style="width: 55px;">Batch</th>
+                            <th style="width: 45px;">Exp</th>
+                            <th style="width: 40px;">Qty</th>
+                            <th style="width: 40px;">F.Q</th>
+                            <th style="width: 50px;">Rate</th>
+                            <th style="width: 40px;">Dis%</th>
+                            <th style="width: 40px;">Scm%</th>
+                            <th style="width: 45px;">Br/Ex</th>
+                            <th style="width: 55px;">Amount</th>
+                            <th style="width: 24px;">X</th>
                         </tr>
                     </thead>
                     <tbody id="itemsTableBody"></tbody>
@@ -356,6 +361,9 @@ function addItemRow(item, batch) {
     const idx = rowIndex++;
     const rate = batch ? parseFloat(batch.purchase_rate || 0) : 0;
     
+    console.log('Adding item row - Item:', item);
+    console.log('CGST:', item.cgst, 'SGST:', item.sgst);
+    
     const tr = document.createElement('tr');
     tr.id = `row_${idx}`;
     tr.onclick = function() { selectRow(idx); };
@@ -371,18 +379,20 @@ function addItemRow(item, batch) {
         <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B">Brk</option><option value="E">Exp</option></select></td>
         <td><input type="number" name="items[${idx}][amount]" value="0" step="0.01" class="text-end readonly-field" readonly></td>
-        <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
-        <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
-        <input type="hidden" name="items[${idx}][batch_id]" value="${batch?.id || ''}">
-        <input type="hidden" name="items[${idx}][mrp]" value="${batch?.mrp || 0}">
-        <input type="hidden" name="items[${idx}][purchase_rate]" value="${batch?.purchase_rate || 0}">
-        <input type="hidden" name="items[${idx}][sale_rate]" value="${batch?.sale_rate || 0}">
-        <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
-        <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
-        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
-        <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
-        <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
-        <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
+        <td>
+            <button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button>
+            <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
+            <input type="hidden" name="items[${idx}][batch_id]" value="${batch?.id || ''}">
+            <input type="hidden" name="items[${idx}][mrp]" value="${batch?.mrp || 0}">
+            <input type="hidden" name="items[${idx}][purchase_rate]" value="${batch?.purchase_rate || 0}">
+            <input type="hidden" name="items[${idx}][sale_rate]" value="${batch?.sale_rate || 0}">
+            <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
+            <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
+            <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
+            <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
+            <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
+            <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
+        </td>
     `;
     tbody.appendChild(tr);
     selectRow(idx);
@@ -401,38 +411,65 @@ function selectRow(idx) {
 
 function updateFooterFromRow(row) {
     const getValue = (name) => row.querySelector(`input[name*="[${name}]"]`)?.value || '';
+    const getHiddenValue = (name) => row.querySelector(`input[type="hidden"][name*="[${name}]"]`)?.value || '';
+    
+    const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+    const rate = parseFloat(getValue('rate')) || 0;
     const amount = parseFloat(getValue('amount')) || 0;
-    const cgstPercent = parseFloat(getValue('cgst')) || 0;
-    const sgstPercent = parseFloat(getValue('sgst')) || 0;
+    const cgstPercent = parseFloat(getHiddenValue('cgst')) || 0;
+    const sgstPercent = parseFloat(getHiddenValue('sgst')) || 0;
     const disPercent = parseFloat(getValue('dis_percent')) || 0;
+    const scmPercent = parseFloat(getValue('scm_percent')) || 0;
+    
+    console.log('Footer update - CGST:', cgstPercent, 'SGST:', sgstPercent);
+    
+    // Calculate N.T Amount (qty * rate)
+    const ntAmount = qty * rate;
     
     // Calculate discount amount
-    const disAmount = (amount * disPercent) / 100;
+    const disAmount = (ntAmount * disPercent) / 100;
+    
+    // Calculate scheme amount
+    const scmAmount = (ntAmount * scmPercent) / 100;
     
     // Calculate net amount after discount
-    const netAmount = amount - disAmount;
+    const netAmount = ntAmount - disAmount;
     
-    // Calculate CGST and SGST amounts
-    const cgstAmount = (amount * cgstPercent) / 100;
-    const sgstAmount = (amount * sgstPercent) / 100;
+    // Calculate CGST and SGST amounts based on net amount
+    const cgstAmount = (netAmount * cgstPercent) / 100;
+    const sgstAmount = (netAmount * sgstPercent) / 100;
     const totalTaxPercent = cgstPercent + sgstPercent;
+    const totalTaxAmount = cgstAmount + sgstAmount;
     
-    document.getElementById('footer_mrp').value = getValue('mrp');
-    document.getElementById('footer_prate').value = getValue('purchase_rate');
-    document.getElementById('footer_srate').value = getValue('sale_rate');
+    // Section 2 - Gray (Tax details)
+    document.getElementById('footer_mrp').value = getHiddenValue('mrp');
+    document.getElementById('footer_prate').value = getHiddenValue('purchase_rate');
+    document.getElementById('footer_srate').value = getHiddenValue('sale_rate');
     document.getElementById('footer_cgst').value = cgstPercent.toFixed(2);
     document.getElementById('footer_sgst').value = sgstPercent.toFixed(2);
     document.getElementById('footer_cgst_amt').value = cgstAmount.toFixed(2);
     document.getElementById('footer_sgst_amt').value = sgstAmount.toFixed(2);
     document.getElementById('footer_tax_percent').value = totalTaxPercent.toFixed(2);
-    document.getElementById('footer_comp').value = getValue('company_name');
-    document.getElementById('footer_pack').value = getValue('packing');
-    document.getElementById('footer_pack2').value = getValue('packing');
-    document.getElementById('footer_unit').value = getValue('unit');
-    document.getElementById('footer_hsn').value = getValue('hsn_code');
-    document.getElementById('footer_nt_amt').value = amount.toFixed(2);
+    document.getElementById('footer_hsn').value = getHiddenValue('hsn_code');
+    document.getElementById('footer_pack2').value = getHiddenValue('packing');
+    document.getElementById('footer_sc_percent').value = scmPercent.toFixed(2);
+    document.getElementById('footer_excise').value = '0.00';
+    document.getElementById('footer_disallow').value = 'N';
+    
+    // Section 3 - Purple (Item details)
+    document.getElementById('footer_comp').value = getHiddenValue('company_name');
+    document.getElementById('footer_pack').value = getHiddenValue('packing');
+    document.getElementById('footer_unit').value = getHiddenValue('unit');
+    document.getElementById('footer_nt_amt').value = ntAmount.toFixed(2);
     document.getElementById('footer_dis_amt').value = disAmount.toFixed(2);
     document.getElementById('footer_net_amt').value = netAmount.toFixed(2);
+    document.getElementById('footer_scm_amt').value = scmAmount.toFixed(2);
+    document.getElementById('footer_tax_amt').value = totalTaxAmount.toFixed(2);
+    document.getElementById('footer_pscm').value = '0.00';
+    document.getElementById('footer_sscm').value = '0.00';
+    document.getElementById('footer_half_scm').value = '0.00';
+    document.getElementById('footer_bal').value = '0.00';
+    document.getElementById('footer_srlno').value = '';
 }
 
 function removeRow(idx) {
@@ -460,27 +497,59 @@ function calculateRowAmount(idx) {
 }
 
 function calculateTotals() {
-    let totalNtAmt = 0, totalDisAmt = 0, totalScmAmt = 0, totalTax = 0;
+    let totalNtAmt = 0, totalDisAmt = 0, totalScmAmt = 0, totalTax = 0, totalSc = 0;
     let brkCount = 0, expCount = 0, disCount = 0, rplCount = 0;
     
     document.querySelectorAll('#itemsTableBody tr').forEach(row => {
+        const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+        const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
         const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
+        const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
+        const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
         const brEx = row.querySelector('select[name*="[br_ex]"]')?.value || 'B';
         
-        totalNtAmt += amount;
+        const cgstPercent = parseFloat(row.querySelector('input[type="hidden"][name*="[cgst]"]')?.value) || 0;
+        const sgstPercent = parseFloat(row.querySelector('input[type="hidden"][name*="[sgst]"]')?.value) || 0;
         
+        // Calculate N.T Amount
+        const ntAmt = qty * rate;
+        totalNtAmt += ntAmt;
+        
+        // Calculate discount amount
+        const disAmt = (ntAmt * disPercent) / 100;
+        totalDisAmt += disAmt;
+        
+        // Calculate scheme amount
+        const scmAmt = (ntAmt * scmPercent) / 100;
+        totalScmAmt += scmAmt;
+        
+        // Calculate net amount after discount
+        const netAmt = ntAmt - disAmt;
+        
+        // Calculate tax on net amount
+        const taxAmt = (netAmt * (cgstPercent + sgstPercent)) / 100;
+        totalTax += taxAmt;
+        
+        // Count by type
         if (brEx === 'B') brkCount++;
         else if (brEx === 'E') expCount++;
         else if (brEx === 'D') disCount++;
         else if (brEx === 'R') rplCount++;
     });
     
+    // Calculate invoice amount (net amount + tax)
+    const totalInvAmt = totalNtAmt - totalDisAmt + totalTax;
+    
+    // Update Section 1 - Pink (Summary)
     document.getElementById('total_nt_amt').value = totalNtAmt.toFixed(2);
+    document.getElementById('total_sc').value = totalSc.toFixed(2);
     document.getElementById('total_dis_amt').value = totalDisAmt.toFixed(2);
     document.getElementById('total_scm_amt').value = totalScmAmt.toFixed(2);
+    document.getElementById('total_half_scm').value = '0.00';
     document.getElementById('total_tax').value = totalTax.toFixed(2);
-    document.getElementById('total_inv_amt').value = totalNtAmt.toFixed(2);
+    document.getElementById('total_inv_amt').value = totalInvAmt.toFixed(2);
     
+    // Update counts
     document.getElementById('brk_count').value = brkCount;
     document.getElementById('exp_count').value = expCount;
     document.getElementById('dis_count').value = disCount;
