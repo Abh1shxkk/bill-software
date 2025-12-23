@@ -27,6 +27,7 @@ class PurchaseTransaction extends Model
         'less_amount',
         'tax_amount',
         'net_amount',
+        'balance_amount',
         'scm_percent',
         'tcs_amount',
         'dis1_amount',

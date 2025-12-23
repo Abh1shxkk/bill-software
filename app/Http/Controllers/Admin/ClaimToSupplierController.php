@@ -263,7 +263,10 @@ class ClaimToSupplierController extends Controller
             $supplierId = $request->get('supplier_id');
 
             $query = ClaimToSupplierTransaction::with('supplier:supplier_id,name')
-                ->where('status', '!=', 'deleted')
+                ->where(function($q) {
+                    $q->whereNull('status')
+                      ->orWhere('status', '!=', 'deleted');
+                })
                 ->orderBy('id', 'desc');
 
             if ($date) {
@@ -283,9 +286,12 @@ class ClaimToSupplierController extends Controller
                     'id' => $trn->id,
                     'claim_no' => $trn->claim_no,
                     'claim_date' => $trn->claim_date ? $trn->claim_date->format('d-M-y') : '',
+                    'supplier_id' => $trn->supplier_id,
                     'supplier_name' => $trn->supplier ? $trn->supplier->name : ($trn->supplier_name ?? ''),
                     'time' => $trn->created_at ? $trn->created_at->format('H:i') : '',
                     'amount' => number_format($trn->net_amount ?? 0, 2, '.', ''),
+                    'net_amount' => $trn->net_amount ?? 0,
+                    'balance_amount' => $trn->balance_amount ?? $trn->net_amount ?? 0,
                     'status' => $trn->status ?? 'active',
                 ];
             });

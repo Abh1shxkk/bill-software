@@ -11,9 +11,16 @@ class BreakageSupplierReceivedTransaction extends Model
 
     protected $fillable = [
         'trn_no',
+        'series',
         'transaction_date',
         'supplier_id',
         'supplier_name',
+        'party_trn_no',
+        'party_date',
+        'claim_transaction_id',
+        'claim_flag',
+        'received_as_debit_note',
+        'claim_amount',
         'narration',
         'note_type',
         'tax_flag',
@@ -30,16 +37,27 @@ class BreakageSupplierReceivedTransaction extends Model
         'total_half_scm',
         'total_tax',
         'total_inv_amt',
+        'gross_amt',
+        'total_gst',
+        'net_amt',
+        'round_off',
+        'final_amount',
+        'remarks',
+        'is_deleted',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
         'transaction_date' => 'date',
+        'party_date' => 'date',
+        'received_as_debit_note' => 'boolean',
+        'is_deleted' => 'boolean',
         'dis_count' => 'integer',
         'rpl_count' => 'integer',
         'brk_count' => 'integer',
         'exp_count' => 'integer',
+        'claim_amount' => 'decimal:2',
         'total_nt_amt' => 'decimal:2',
         'total_sc' => 'decimal:2',
         'total_dis_amt' => 'decimal:2',
@@ -47,7 +65,17 @@ class BreakageSupplierReceivedTransaction extends Model
         'total_half_scm' => 'decimal:2',
         'total_tax' => 'decimal:2',
         'total_inv_amt' => 'decimal:2',
+        'gross_amt' => 'decimal:2',
+        'total_gst' => 'decimal:2',
+        'net_amt' => 'decimal:2',
+        'round_off' => 'decimal:2',
+        'final_amount' => 'decimal:2',
     ];
+    
+    public function scopeActive($query)
+    {
+        return $query->where('is_deleted', 0)->whereNull('deleted_at');
+    }
 
     public function items()
     {
@@ -57,6 +85,11 @@ class BreakageSupplierReceivedTransaction extends Model
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+    
+    public function claimTransaction()
+    {
+        return $this->belongsTo(ClaimToSupplierTransaction::class, 'claim_transaction_id');
     }
 
     public function creator()

@@ -10,35 +10,37 @@
     .header-section { background: #fff; border: 1px solid #ccc; padding: 8px; margin-bottom: 6px; border-radius: 4px; }
     .field-group { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
     .readonly-field { background-color: #e9ecef !important; }
+    .inner-card { background: #e8f4f8; border: 1px solid #b8d4e0; padding: 8px; border-radius: 3px; }
     
-    /* Table Styles - Brown Header */
-    .items-table { font-size: 8px; margin-bottom: 0; border-collapse: collapse; width: 100%; }
-    .items-table th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; padding: 3px 2px; border: 1px solid #5a3a1a; white-space: nowrap; font-size: 8px; }
-    .items-table td { padding: 1px; border: 1px solid #ccc; background: #fffacd; }
-    .items-table input, .items-table select { font-size: 8px; padding: 1px 2px; height: 18px; border: 1px solid #aaa; width: 100%; }
-    .items-table .row-selected td { background: #cce5ff !important; }
+    /* Claim Section */
+    .claim-section { background: #fff; border: 1px solid #ccc; padding: 8px; margin-bottom: 6px; border-radius: 4px; }
     
-    /* Summary Row - Pink */
+    /* HSN Table Styles - Brown Header (matching issued-transaction) */
+    .hsn-table { font-size: 11px; margin-bottom: 0; border-collapse: collapse; width: 100%; }
+    .hsn-table th { background: linear-gradient(180deg, #8B4513 0%, #654321 100%); color: #fff; font-weight: 600; text-align: center; padding: 4px 3px; border: 1px solid #5a3a1a; white-space: nowrap; font-size: 11px; }
+    .hsn-table td { padding: 3px; border: 1px solid #ccc; background: #fffacd; }
+    .hsn-table input { font-size: 11px; padding: 2px 4px; height: 24px; border: 1px solid #aaa; width: 100%; }
+    .hsn-table .row-selected td { background: #cce5ff !important; }
+    
+    /* Summary Section - Pink */
     .summary-section { background: #ffcccc; padding: 8px; border: 1px solid #cc9999; margin-bottom: 6px; border-radius: 3px; }
     .summary-section label { font-weight: bold; font-size: 11px; }
     .summary-section input { height: 24px; font-size: 11px; }
     
-    /* Footer Section - Gray */
-    .footer-section { background: #d4d4d4; padding: 8px; border: 1px solid #999; border-radius: 3px; }
-    .footer-section label { font-size: 10px; margin-bottom: 1px; }
-    .footer-section input { height: 22px; font-size: 10px; }
-    
-    /* First Footer Section - Purple */
-    .first-footer-section { background: #e6d9f5; padding: 8px; border: 1px solid #b399d9; border-radius: 3px; }
-    .first-footer-section label { font-size: 10px; margin-bottom: 1px; }
-    .first-footer-section input { height: 22px; font-size: 10px; }
-    .gst-box { background: #ffe6e6; border: 1px solid #cc9999; padding: 4px 6px; display: inline-flex; align-items: center; gap: 4px; border-radius: 3px; }
-    .gst-box label { color: #dc3545; font-weight: bold; font-size: 10px; margin: 0; }
-    .gst-box input { width: 45px; height: 20px; font-size: 10px; }
-    
     /* Action Buttons */
     .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
-    .action-buttons .btn { min-width: 100px; }
+    .action-buttons .btn { min-width: 80px; }
+    
+    /* Modal Styles */
+    .modal-backdrop-custom { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; }
+    .modal-backdrop-custom.show { display: block; }
+    .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 700px; background: #fff; border-radius: 6px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 1055; }
+    .custom-modal.show { display: block; }
+    .modal-header-custom { padding: 10px 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 6px 6px 0 0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-body-custom { padding: 12px; max-height: 400px; overflow-y: auto; }
+    .modal-footer-custom { padding: 8px 12px; border-top: 1px solid #ddd; text-align: right; }
+    .claim-row:hover { background: #e3f2fd !important; cursor: pointer; }
+    .claim-row.selected { background: #007bff !important; color: #fff !important; }
 </style>
 @endpush
 
@@ -46,460 +48,841 @@
 <div class="bsi-form">
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0"><i class="bi bi-arrow-return-left me-1"></i> Purchase Return Br.Expiry Adjustment</h6>
-        <a href="{{ route('admin.breakage-supplier.received-modification') }}" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-list"></i> View All</a>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-info btn-sm py-0" onclick="showClaimModal()">
+                <i class="bi bi-file-earmark-text me-1"></i> Load Claim
+            </button>
+            <a href="{{ route('admin.breakage-supplier.received-modification') }}" class="btn btn-outline-secondary btn-sm py-0">
+                <i class="bi bi-list"></i> Modification
+            </a>
+        </div>
     </div>
 
     <form id="receivedForm" autocomplete="off">
         @csrf
-        <!-- Header Section -->
+        <input type="hidden" id="claim_transaction_id" name="claim_transaction_id" value="">
+        
+        <!-- Header Section Row 1 -->
         <div class="header-section">
             <div class="row g-2">
                 <div class="col-md-2">
-                    <div class="field-group"><label style="width:40px;">Date:</label><input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()"></div>
-                    <div class="field-group"><label style="width:40px;"></label><input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width:85px;"></div>
-                    <div class="field-group"><label style="width:40px;">Trn.No:</label><input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="" readonly style="width:60px;"></div>
+                    <div class="field-group">
+                        <label style="width:35px;">Date</label>
+                        <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}">
+                    </div>
+                    <div class="field-group">
+                        <label style="width:35px;">Trn.No.</label>
+                        <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="{{ $trnNo ?? '' }}" readonly style="width:80px;">
+                    </div>
                 </div>
                 <div class="col-md-10">
-                    <div class="row g-2">
-                        <div class="col-md-12">
-                            <div class="field-group"><label style="width:55px;">Supplier:</label><input type="text" id="supplier_name" name="supplier_name" class="form-control" placeholder="Supplier Name"></div>
+                    <div class="inner-card">
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <div class="field-group">
+                                    <label style="width:55px;">Supplier</label>
+                                    <select id="supplier_id" name="supplier_id" class="form-control" onchange="updateSupplierName()">
+                                        <option value="">Select Supplier</option>
+                                        @foreach($suppliers ?? [] as $s)
+                                        <option value="{{ $s->supplier_id }}" data-name="{{ $s->name }}">{{ $s->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="hidden" id="supplier_name" name="supplier_name" value="">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label style="width:70px;">Party Trn No.</label>
+                                    <input type="text" id="party_trn_no" name="party_trn_no" class="form-control">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label style="width:55px;">Party Date</label>
+                                    <input type="date" id="party_date" name="party_date" class="form-control">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Items Table Section -->
+        <!-- Claim Section Row 2 -->
+        <div class="claim-section">
+            <div class="inner-card">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-2">
+                        <div class="field-group">
+                            <label style="width:65px;">O/S.Amount</label>
+                            <input type="number" id="os_amount" name="os_amount" class="form-control readonly-field text-end" value="0.00" readonly step="0.01">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="field-group">
+                            <label style="width:70px;">Claim [Y/N]</label>
+                            <input type="text" id="claim_flag" name="claim_flag" class="form-control text-center" value="Y" maxlength="1" style="width:30px;">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" id="received_as_debit_note" name="received_as_debit_note">
+                            <label class="form-check-label" for="received_as_debit_note">Received as Debit Note</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="field-group">
+                            <label style="width:75px;">Claim Amount</label>
+                            <input type="number" id="claim_amount" name="claim_amount" class="form-control text-end" value="0.00" step="0.01" onchange="calculateFromClaimAmount()">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="field-group">
+                            <label style="width:55px; color:red;">Claim Trn.</label>
+                            <input type="text" id="claim_trn_no" name="claim_trn_no" class="form-control readonly-field" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HSN Table Section -->
         <div class="bg-white border rounded p-2 mb-2">
-            <div class="table-responsive">
-                <table class="items-table" id="itemsTable" style="table-layout: fixed; width: 100%;">
+            <div class="d-flex justify-content-between mb-2">
+                <button type="button" class="btn btn-info btn-sm" onclick="showHsnModal()">
+                    <i class="bi bi-plus-circle me-1"></i> Add HSN Code
+                </button>
+                <div>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedRow()">Delete Row</button>
+                    <button type="button" class="btn btn-warning btn-sm" onclick="clearAllRows()">Clear All</button>
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                <table class="hsn-table" id="hsnTable" style="table-layout: fixed; width: 100%;">
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr>
-                            <th style="width:45px;">Code</th>
-                            <th style="width:100px;">Item Name</th>
-                            <th style="width:45px;">Batch</th>
-                            <th style="width:35px;">Exp</th>
-                            <th style="width:30px;">Qty</th>
-                            <th style="width:30px;">F.Q</th>
-                            <th style="width:45px;">Rate</th>
-                            <th style="width:35px;">Dis%</th>
-                            <th style="width:35px;">Scm%</th>
-                            <th style="width:50px;">Br/Ex</th>
-                            <th style="width:55px;">Amount</th>
-                            <th style="width:20px;">X</th>
+                            <th style="width:120px;">HSN Code</th>
+                            <th style="width:100px;">Amount</th>
+                            <th style="width:80px;">GST%</th>
+                            <th style="width:80px;">IGST %</th>
+                            <th style="width:100px;">GST Amount</th>
+                            <th style="width:60px;">Qty.</th>
                         </tr>
                     </thead>
-                    <tbody id="itemsTableBody"></tbody>
+                    <tbody id="hsnTableBody">
+                        <!-- HSN rows will be added dynamically -->
+                    </tbody>
                 </table>
             </div>
-            <div class="text-center mt-2 border-top pt-2">
-                <button type="button" class="btn btn-link text-decoration-none fw-bold text-primary p-0" onclick="showItemModal()">
-                    <i class="bi bi-plus-circle me-1"></i> Add Item (F2)
-                </button>
-            </div>
         </div>
 
-        <!-- Section 2 - Gray (SC%, EXCISE, TAX%, CGST, SGST, etc.) -->
-        <div class="footer-section mb-2">
-            <div class="d-flex align-items-center">
-                <div class="d-flex align-items-center gap-1 me-2"><label>SC %</label><input type="number" id="footer_sc_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>EXCISE</label><input type="number" id="footer_excise" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
-                <div class="gst-box me-2"><label class="text-danger">CGST(%):</label><input type="number" id="footer_cgst" class="form-control text-end" readonly style="width:50px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>HSN</label><input type="text" id="footer_hsn" class="form-control readonly-field" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1 me-3"><label>Pack</label><input type="text" id="footer_pack2" class="form-control readonly-field" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1 me-1"><label>Disallow</label><input type="text" id="footer_disallow" class="form-control readonly-field text-center" value="N" readonly style="width:30px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>MRP</label><input type="number" id="footer_mrp" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <div class="field-group">
+                        <label>Gross Amt.</label>
+                        <input type="number" id="gross_amt" name="gross_amt" class="form-control readonly-field text-end" value="0.00" readonly>
+                    </div>
+                </div>
+                <div class="col-md-6"></div>
+                <div class="col-md-2">
+                    <div class="field-group">
+                        <input type="number" id="total_gst_amt" name="total_gst_amt" class="form-control readonly-field text-end" value="0.00" readonly>
+                    </div>
+                </div>
             </div>
-            <div class="d-flex align-items-center mt-1">
-                <div class="d-flex align-items-center gap-1 me-2"><label>TAX %</label><input type="number" id="footer_tax_percent" class="form-control readonly-field text-end" readonly style="width:50px;"></div>
-                <div class="gst-box me-2"><label class="text-danger">CGST Amt:</label><input type="number" id="footer_cgst_amt" class="form-control text-end" readonly style="width:60px;"></div>
-                <div class="gst-box me-2"><label class="text-danger">SGST(%):</label><input type="number" id="footer_sgst" class="form-control text-end" readonly style="width:50px;"></div>
-                <div class="gst-box me-2"><label class="text-danger">SGST Amt:</label><input type="number" id="footer_sgst_amt" class="form-control text-end" readonly style="width:60px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>P.RATE</label><input type="number" id="footer_prate" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>S.RATE</label><input type="number" id="footer_srate" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-2">
+                    <div class="field-group">
+                        <label>Total GST</label>
+                        <input type="number" id="total_gst" name="total_gst" class="form-control readonly-field text-end" value="0.00" readonly>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <!-- Section 1 - Pink Summary (N.T AMT, SC, DIS. AMT, etc.) -->
-        <div class="summary-section mb-2">
-            <div class="d-flex gap-2 flex-wrap align-items-center">
-                <div class="d-flex align-items-center gap-1"><label class="fw-bold">N.T AMT</label><input type="number" id="total_nt_amt" name="total_nt_amt" class="form-control readonly-field text-end fw-bold" readonly style="width:90px;"></div>
-                <div class="d-flex align-items-center gap-1"><label class="fw-bold">SC</label><input type="number" id="total_sc" name="total_sc" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label class="fw-bold">DIS. AMT</label><input type="number" id="total_dis_amt" name="total_dis_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Scm. AMT</label><input type="number" id="total_scm_amt" name="total_scm_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Half.Scm.</label><input type="number" id="total_half_scm" name="total_half_scm" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label class="fw-bold">Tax</label><input type="number" id="total_tax" name="total_tax" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label class="fw-bold">INV. AMT</label><input type="number" id="total_inv_amt" name="total_inv_amt" class="form-control text-end fw-bold" readonly style="width:100px;"></div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-2">
+                    <div class="field-group">
+                        <label>Net Amt.</label>
+                        <input type="number" id="net_amt" name="net_amt" class="form-control readonly-field text-end fw-bold" value="0.00" readonly>
+                    </div>
+                </div>
             </div>
-        </div>
-
-        <!-- Section 3 - Purple Header (Pack, Comp, N.T Amt, etc.) -->
-        <div class="first-footer-section mb-2">
-            <div class="d-flex align-items-center">
-                <div class="d-flex align-items-center gap-1 me-2"><label>Pack</label><input type="text" id="footer_pack" class="form-control readonly-field" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>Comp :</label><input type="text" id="footer_comp" class="form-control readonly-field" readonly style="width:100px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>N.T Amt.</label><input type="number" id="footer_nt_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>DIS. Amt.</label><input type="number" id="footer_dis_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>Net Amt.</label><input type="number" id="footer_net_amt" class="form-control readonly-field text-end" readonly style="width:80px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>P.Scm.</label><input type="number" id="footer_pscm" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>S.Scm.</label><input type="number" id="footer_sscm" class="form-control readonly-field text-end" readonly style="width:60px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>+</label></div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-2">
+                    <div class="field-group">
+                        <label>Round Off</label>
+                        <input type="number" id="round_off" name="round_off" class="form-control text-end" value="0.00" step="0.01">
+                    </div>
+                </div>
             </div>
-            <div class="d-flex align-items-center mt-1">
-                <div class="d-flex align-items-center gap-1 me-2"><label>Unit</label><input type="text" id="footer_unit" class="form-control readonly-field" readonly style="width:50px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>Bal.</label><input type="number" id="footer_bal" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>Srlno.</label><input type="text" id="footer_srlno" class="form-control readonly-field" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>Half Scm.</label><input type="number" id="footer_half_scm" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>Scm.Amt.</label><input type="number" id="footer_scm_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1 me-2"><label>Tax Amt.</label><input type="number" id="footer_tax_amt" class="form-control readonly-field text-end" readonly style="width:70px;"></div>
-                <div class="d-flex align-items-center gap-1"><label>+</label></div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-2">
+                    <div class="field-group">
+                        <label>Amount</label>
+                        <input type="number" id="final_amount" name="final_amount" class="form-control readonly-field text-end fw-bold text-success" value="0.00" readonly>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-8">
+                    <div class="field-group">
+                        <label>Remarks</label>
+                        <input type="text" id="remarks" name="remarks" class="form-control" placeholder="Enter remarks...">
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Action Buttons -->
         <div class="action-buttons">
-            <button type="button" class="btn btn-success btn-sm" onclick="saveTransaction()"><i class="bi bi-check-lg me-1"></i> Save (End)</button>
-            <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedItem()"><i class="bi bi-trash me-1"></i> Delete Item</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="cancelTransaction()"><i class="bi bi-x-lg me-1"></i> Cancel</button>
+            <button type="button" class="btn btn-success btn-sm" onclick="saveTransaction()">
+                <i class="bi bi-check-lg me-1"></i> Ok
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="cancelTransaction()">
+                <i class="bi bi-x-lg me-1"></i> Close
+            </button>
         </div>
     </form>
 </div>
 
-<!-- Item Selection Modal -->
-<div class="modal-backdrop-custom" id="itemModalBackdrop" onclick="closeItemModal()"></div>
-<div class="custom-modal" id="itemModal">
+<!-- Load Claim Modal -->
+<div class="modal-backdrop-custom" id="claimModalBackdrop" onclick="closeClaimModal()"></div>
+<div class="custom-modal" id="claimModal">
     <div class="modal-header-custom">
-        <h6 class="mb-0"><i class="bi bi-search me-1"></i> Select Item</h6>
-        <button type="button" class="btn btn-sm btn-light" onclick="closeItemModal()">&times;</button>
+        <h6 class="mb-0"><i class="bi bi-file-earmark-text me-1"></i> Load Claim to Supplier Transaction</h6>
+        <button type="button" class="btn btn-sm btn-light" onclick="closeClaimModal()">&times;</button>
     </div>
     <div class="modal-body-custom">
-        <input type="text" id="itemSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by code or name..." onkeyup="filterItems()">
+        <input type="text" id="claimSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by Claim No or Supplier..." onkeyup="filterClaims()">
         <div class="table-responsive" style="max-height: 300px;">
             <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 11px;">
-                <thead class="table-light sticky-top"><tr><th>Code</th><th>Item Name</th><th>Pack</th><th>Company</th></tr></thead>
-                <tbody id="itemsListBody"></tbody>
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>Claim No</th>
+                        <th>Date</th>
+                        <th>Supplier</th>
+                        <th class="text-end">Net Amount</th>
+                        <th class="text-end">Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="claimsListBody"></tbody>
             </table>
         </div>
     </div>
     <div class="modal-footer-custom">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeClaimModal()">Close</button>
     </div>
 </div>
 
-<!-- Batch Selection Modal -->
-<div class="modal-backdrop-custom" id="batchModalBackdrop" onclick="closeBatchModal()"></div>
-<div class="custom-modal" id="batchModal">
-    <div class="modal-header-custom batch">
-        <h6 class="mb-0"><i class="bi bi-box me-1"></i> Select Batch</h6>
-        <button type="button" class="btn btn-sm btn-dark" onclick="closeBatchModal()">&times;</button>
+<!-- Adjustment Modal -->
+<div class="modal-backdrop-custom" id="adjustBackdrop"></div>
+<div class="custom-modal" id="adjustModal" style="max-width: 800px;">
+    <div class="modal-header-custom" style="background: #6f42c1;">
+        <h6 class="mb-0"><i class="bi bi-credit-card me-1"></i> Purchase Adjustment</h6>
+        <button type="button" class="btn btn-sm btn-light" onclick="closeAdjustModal()">&times;</button>
     </div>
     <div class="modal-body-custom">
-        <div class="mb-2 p-2 bg-light rounded"><strong id="selectedItemName">-</strong></div>
-        <div class="table-responsive" style="max-height: 280px;">
+        <div class="table-responsive" style="max-height: 300px;">
+            <table class="table table-sm table-bordered mb-0" style="font-size: 11px;">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th>SR.</th>
+                        <th>TRANS NO.</th>
+                        <th>DATE</th>
+                        <th class="text-end">BILL AMT.</th>
+                        <th class="text-end">BALANCE</th>
+                        <th class="text-end">ADJUST AMT.</th>
+                    </tr>
+                </thead>
+                <tbody id="adjustTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer-custom" style="background: #f0f0f0;">
+        <div class="d-flex justify-content-between align-items-center w-100">
+            <div>
+                <span class="text-muted small">ESC to close</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <span>Total: <strong class="text-success" id="adjustTotalDisplay">₹0.00</strong></span>
+                <span>Adjusted: <strong class="text-primary" id="adjustedDisplay">₹0.00</strong></span>
+                <span>Balance: <strong class="text-danger" id="adjustBalanceDisplay">₹0.00</strong></span>
+            </div>
+            <div>
+                <button type="button" class="btn btn-success btn-sm" onclick="saveWithAdjustments()">
+                    <i class="bi bi-check-circle me-1"></i> Save
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeAdjustModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HSN Code Selection Modal -->
+<div class="modal-backdrop-custom" id="hsnModalBackdrop" onclick="closeHsnModal()"></div>
+<div class="custom-modal" id="hsnModal">
+    <div class="modal-header-custom" style="background: linear-gradient(135deg, #28a745, #20c997);">
+        <h6 class="mb-0"><i class="bi bi-grid me-1"></i> Select HSN Code</h6>
+        <button type="button" class="btn btn-sm btn-light" onclick="closeHsnModal()">&times;</button>
+    </div>
+    <div class="modal-body-custom">
+        <input type="text" id="hsnSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by HSN Code or Name..." onkeyup="filterHsnCodes()">
+        <div class="table-responsive" style="max-height: 300px;">
             <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 11px;">
-                <thead class="table-warning sticky-top"><tr><th>Batch</th><th>Expiry</th><th>Qty</th><th>MRP</th><th>P.Rate</th><th>S.Rate</th></tr></thead>
-                <tbody id="batchesListBody"></tbody>
+                <thead class="table-success sticky-top">
+                    <tr>
+                        <th>HSN Code</th>
+                        <th>Name</th>
+                        <th class="text-end">CGST%</th>
+                        <th class="text-end">SGST%</th>
+                        <th class="text-end">Total GST%</th>
+                    </tr>
+                </thead>
+                <tbody id="hsnListBody"></tbody>
             </table>
         </div>
     </div>
     <div class="modal-footer-custom">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeHsnModal()">Close</button>
     </div>
 </div>
 
-@push('styles')
-<style>
-    /* Modal Styles */
-    .modal-backdrop-custom { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1050; }
-    .modal-backdrop-custom.show { display: block; }
-    .custom-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 800px; background: #fff; border-radius: 6px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); z-index: 1055; }
-    .custom-modal.show { display: block; }
-    .modal-header-custom { padding: 10px 15px; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-radius: 6px 6px 0 0; display: flex; justify-content: space-between; align-items: center; }
-    .modal-header-custom.batch { background: #ffc107; color: #000; }
-    .modal-body-custom { padding: 12px; max-height: 400px; overflow-y: auto; }
-    .modal-footer-custom { padding: 8px 12px; border-top: 1px solid #ddd; text-align: right; }
-    .item-row:hover, .batch-row:hover { background: #e3f2fd !important; cursor: pointer; }
-    .item-row.selected, .batch-row.selected { background: #007bff !important; color: #fff !important; }
-</style>
-@endpush
+@endsection
 
 @push('scripts')
 <script>
-let rowIndex = 0, allItems = [], selectedRowIndex = null, selectedItem = null;
+let allClaims = [];
+let allHsnCodes = [];
+let hsnRowIndex = 0;
+let selectedHsnRowIndex = null;
+let pendingTransactionData = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadItems();
+    loadClaims();
+    loadHsnCodes();
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'F2') { e.preventDefault(); showItemModal(); }
-        if (e.key === 'Escape') { closeItemModal(); closeBatchModal(); }
+        if (e.key === 'Escape') { closeClaimModal(); closeAdjustModal(); closeHsnModal(); }
     });
 });
 
-function updateDayName() {
-    const d = new Date(document.getElementById('transaction_date').value);
-    document.getElementById('day_name').value = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][d.getDay()];
+// Update supplier name from dropdown
+function updateSupplierName() {
+    const select = document.getElementById('supplier_id');
+    const selectedOption = select.options[select.selectedIndex];
+    document.getElementById('supplier_name').value = selectedOption ? selectedOption.dataset.name || '' : '';
 }
 
-function loadItems() {
-    fetch('{{ route("admin.breakage-supplier.get-items") }}')
+// Load Claim to Supplier Transactions
+function loadClaims() {
+    fetch('{{ route("admin.claim-to-supplier.past-claims") }}')
         .then(r => r.json())
-        .then(data => { allItems = data || []; })
-        .catch(e => console.error('Error loading items:', e));
-}
-
-// Item Modal
-function showItemModal() {
-    document.getElementById('itemModalBackdrop').classList.add('show');
-    document.getElementById('itemModal').classList.add('show');
-    document.getElementById('itemSearchInput').value = '';
-    renderItemsList(allItems);
-    setTimeout(() => document.getElementById('itemSearchInput').focus(), 100);
-}
-
-function closeItemModal() {
-    document.getElementById('itemModalBackdrop').classList.remove('show');
-    document.getElementById('itemModal').classList.remove('show');
-}
-
-function filterItems() {
-    const search = document.getElementById('itemSearchInput').value.toLowerCase();
-    const filtered = allItems.filter(item => 
-        (item.item_code && item.item_code.toLowerCase().includes(search)) ||
-        (item.item_name && item.item_name.toLowerCase().includes(search))
-    );
-    renderItemsList(filtered);
-}
-
-function renderItemsList(items) {
-    const tbody = document.getElementById('itemsListBody');
-    if (!items.length) {
-        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No items found</td></tr>';
-        return;
-    }
-    tbody.innerHTML = items.slice(0, 100).map(item => `
-        <tr class="item-row" onclick="selectItem(${item.id})">
-            <td>${item.item_code || ''}</td>
-            <td>${item.item_name || ''}</td>
-            <td>${item.packing || ''}</td>
-            <td>${item.company_name || ''}</td>
-        </tr>
-    `).join('');
-}
-
-function selectItem(itemId) {
-    selectedItem = allItems.find(i => i.id === itemId);
-    if (!selectedItem) return;
-    closeItemModal();
-    document.getElementById('selectedItemName').textContent = `${selectedItem.item_code} - ${selectedItem.item_name}`;
-    loadBatches(itemId);
-}
-
-function loadBatches(itemId) {
-    fetch(`{{ url('admin/breakage-supplier/get-batches') }}/${itemId}`)
-        .then(r => r.json())
-        .then(batches => {
-            document.getElementById('batchModalBackdrop').classList.add('show');
-            document.getElementById('batchModal').classList.add('show');
-            renderBatchesList(batches);
+        .then(data => {
+            console.log('Claims API Response:', data);
+            // API returns {success: true, transactions: [...]}
+            if (data.success && data.transactions) {
+                allClaims = data.transactions;
+            } else {
+                allClaims = [];
+            }
+            renderClaimsList(allClaims);
         })
-        .catch(e => {
-            console.error('Error loading batches:', e);
-            addItemRow(selectedItem, null);
-        });
+        .catch(e => console.error('Error loading claims:', e));
 }
 
-function renderBatchesList(batches) {
-    const tbody = document.getElementById('batchesListBody');
-    if (!batches.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No batches found</td></tr>';
+function showClaimModal() {
+    document.getElementById('claimModalBackdrop').classList.add('show');
+    document.getElementById('claimModal').classList.add('show');
+    document.getElementById('claimSearchInput').value = '';
+    renderClaimsList(allClaims);
+    setTimeout(() => document.getElementById('claimSearchInput').focus(), 100);
+}
+
+function closeClaimModal() {
+    document.getElementById('claimModalBackdrop').classList.remove('show');
+    document.getElementById('claimModal').classList.remove('show');
+}
+
+function filterClaims() {
+    const search = document.getElementById('claimSearchInput').value.toLowerCase();
+    const filtered = allClaims.filter(c => 
+        (c.claim_no && c.claim_no.toLowerCase().includes(search)) ||
+        (c.supplier_name && c.supplier_name.toLowerCase().includes(search))
+    );
+    renderClaimsList(filtered);
+}
+
+function renderClaimsList(claims) {
+    const tbody = document.getElementById('claimsListBody');
+    if (!claims || !claims.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No claims found</td></tr>';
         return;
     }
-    tbody.innerHTML = batches.map(batch => `
-        <tr class="batch-row" onclick="selectBatch(${JSON.stringify(batch).replace(/"/g, '&quot;')})">
-            <td>${batch.batch_no || ''}</td>
-            <td>${batch.expiry_date || ''}</td>
-            <td class="text-end">${batch.quantity || 0}</td>
-            <td class="text-end">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(batch.purchase_rate || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(batch.sale_rate || 0).toFixed(2)}</td>
+    tbody.innerHTML = claims.map(c => `
+        <tr class="claim-row" onclick="selectClaim(${c.id})">
+            <td><strong>${c.claim_no || ''}</strong></td>
+            <td>${c.claim_date || ''}</td>
+            <td>${c.supplier_name || ''}</td>
+            <td class="text-end">₹${parseFloat(c.net_amount || c.amount || 0).toFixed(2)}</td>
+            <td class="text-end text-primary">₹${parseFloat(c.balance_amount || c.net_amount || c.amount || 0).toFixed(2)}</td>
         </tr>
     `).join('');
 }
 
-function closeBatchModal() {
-    document.getElementById('batchModalBackdrop').classList.remove('show');
-    document.getElementById('batchModal').classList.remove('show');
-}
-
-function selectBatch(batch) {
-    closeBatchModal();
-    addItemRow(selectedItem, batch);
-}
-
-function addItemRow(item, batch) {
-    const tbody = document.getElementById('itemsTableBody');
-    const idx = rowIndex++;
-    const rate = batch ? parseFloat(batch.purchase_rate || 0) : 0;
+function selectClaim(claimId) {
+    const claim = allClaims.find(c => c.id === claimId);
+    if (!claim) return;
     
-    const tr = document.createElement('tr');
-    tr.id = `row_${idx}`;
-    tr.onclick = function() { selectRow(idx); };
-    tr.innerHTML = `
-        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][batch_no]" value="${batch?.batch_no || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][expiry]" value="${batch?.expiry_date || ''}" readonly class="readonly-field"></td>
-        <td><input type="number" name="items[${idx}][qty]" value="1" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][free_qty]" value="0" min="0" class="text-end"></td>
-        <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B">Brk</option><option value="E">Exp</option></select></td>
-        <td><input type="number" name="items[${idx}][amount]" value="0" step="0.01" class="text-end readonly-field" readonly></td>
-        <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
-        <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
-        <input type="hidden" name="items[${idx}][batch_id]" value="${batch?.id || ''}">
-        <input type="hidden" name="items[${idx}][mrp]" value="${batch?.mrp || 0}">
-        <input type="hidden" name="items[${idx}][purchase_rate]" value="${batch?.purchase_rate || 0}">
-        <input type="hidden" name="items[${idx}][sale_rate]" value="${batch?.sale_rate || 0}">
-        <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
-        <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
-        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
-        <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
-        <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
-        <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
-    `;
-    tbody.appendChild(tr);
-    selectRow(idx);
-    calculateRowAmount(idx);
-}
-
-function selectRow(idx) {
-    document.querySelectorAll('#itemsTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
-    const row = document.getElementById(`row_${idx}`);
-    if (row) {
-        row.classList.add('row-selected');
-        selectedRowIndex = idx;
-        updateFooterFromRow(row);
+    console.log('selectClaim - claim:', claim);
+    
+    closeClaimModal();
+    
+    // Populate form fields
+    document.getElementById('claim_transaction_id').value = claim.id;
+    
+    // Set supplier dropdown value - convert to string for comparison
+    const supplierSelect = document.getElementById('supplier_id');
+    const supplierIdStr = String(claim.supplier_id || '');
+    console.log('Setting supplier_id dropdown to:', supplierIdStr);
+    
+    // Find and select the matching option
+    let found = false;
+    for (let i = 0; i < supplierSelect.options.length; i++) {
+        if (String(supplierSelect.options[i].value) === supplierIdStr) {
+            supplierSelect.selectedIndex = i;
+            found = true;
+            break;
+        }
     }
-}
-
-function updateFooterFromRow(row) {
-    const getValue = (name) => row.querySelector(`input[name*="[${name}]"]`)?.value || '';
+    console.log('Dropdown value after set:', supplierSelect.value, 'Found:', found);
+    document.getElementById('supplier_name').value = claim.supplier_name || '';
     
-    // Update Gray Section (Section 2)
-    const cgst = parseFloat(getValue('cgst')) || 0;
-    const sgst = parseFloat(getValue('sgst')) || 0;
-    const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
+    document.getElementById('claim_trn_no').value = claim.claim_no || '';
     
-    document.getElementById('footer_sc_percent').value = scmPercent.toFixed(2);
-    document.getElementById('footer_excise').value = '0.00';
-    document.getElementById('footer_cgst').value = cgst.toFixed(2);
-    document.getElementById('footer_sgst').value = sgst.toFixed(2);
-    document.getElementById('footer_cgst_amt').value = '0.00';
-    document.getElementById('footer_sgst_amt').value = '0.00';
-    document.getElementById('footer_tax_percent').value = (cgst + sgst).toFixed(2);
-    document.getElementById('footer_hsn').value = getValue('hsn_code');
-    document.getElementById('footer_pack2').value = getValue('packing');
-    document.getElementById('footer_mrp').value = getValue('mrp');
-    document.getElementById('footer_prate').value = getValue('purchase_rate');
-    document.getElementById('footer_srate').value = getValue('sale_rate');
+    const netAmount = parseFloat(claim.net_amount || claim.amount || 0);
+    document.getElementById('os_amount').value = netAmount.toFixed(2);
+    document.getElementById('claim_amount').value = netAmount.toFixed(2);
     
-    // Update Purple Section (Section 3)
-    document.getElementById('footer_pack').value = getValue('packing');
-    document.getElementById('footer_comp').value = getValue('company_name');
-    document.getElementById('footer_unit').value = getValue('unit');
-    
-    const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
-    const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
-    const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
-    
-    const ntAmt = qty * rate;
-    const disAmt = ntAmt * disPercent / 100;
-    const netAmt = ntAmt - disAmt;
-    const taxAmt = netAmt * (cgst + sgst) / 100;
-    
-    document.getElementById('footer_nt_amt').value = ntAmt.toFixed(2);
-    document.getElementById('footer_dis_amt').value = disAmt.toFixed(2);
-    document.getElementById('footer_net_amt').value = netAmt.toFixed(2);
-    document.getElementById('footer_pscm').value = '0.00';
-    document.getElementById('footer_sscm').value = '0.00';
-    document.getElementById('footer_bal').value = '0';
-    document.getElementById('footer_srlno').value = '';
-    document.getElementById('footer_half_scm').value = '0.00';
-    document.getElementById('footer_scm_amt').value = '0.00';
-    document.getElementById('footer_tax_amt').value = taxAmt.toFixed(2);
-}
-
-function calculateRowAmount(idx) {
-    const row = document.getElementById(`row_${idx}`);
-    if (!row) return;
-    
-    const qty = parseFloat(row.querySelector('input[name*="[qty]"]').value) || 0;
-    const rate = parseFloat(row.querySelector('input[name*="[rate]"]').value) || 0;
-    const amount = qty * rate;
-    
-    row.querySelector('input[name*="[amount]"]').value = amount.toFixed(2);
-    
-    if (selectedRowIndex === idx) {
-        updateFooterFromRow(row);
+    // Load HSN data from claim items if available
+    if (claim.items && claim.items.length > 0) {
+        loadHSNFromClaim(claim.items);
     }
+    
+    calculateFromClaimAmount();
+}
+
+function loadHSNFromClaim(items) {
+    // Group items by HSN code
+    const hsnGroups = {};
+    items.forEach(item => {
+        const hsn = item.hsn_code || 'NO-HSN';
+        if (!hsnGroups[hsn]) {
+            hsnGroups[hsn] = {
+                hsn_code: hsn,
+                amount: 0,
+                gst_percent: (parseFloat(item.cgst_percent || 0) + parseFloat(item.sgst_percent || 0)),
+                igst_percent: 0,
+                qty: 0
+            };
+        }
+        hsnGroups[hsn].amount += parseFloat(item.ft_amount || 0);
+        hsnGroups[hsn].qty += parseFloat(item.qty || 0);
+    });
+    
+    // Clear and populate HSN table
+    clearAllRows();
+    Object.values(hsnGroups).forEach(hsn => {
+        addHSNRowWithData(hsn);
+    });
+    
     calculateTotals();
 }
 
-function calculateTotals() {
-    let totalNtAmt = 0;
-    let totalDisAmt = 0;
-    let totalScmAmt = 0;
-    let totalTax = 0;
+// HSN Table Functions
+function addHSNRowWithData(data) {
+    const tbody = document.getElementById('hsnTableBody');
+    const idx = hsnRowIndex++;
     
-    document.querySelectorAll('#itemsTableBody tr').forEach(row => {
-        const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
-        const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
-        const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
-        const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
-        const cgst = parseFloat(row.querySelector('input[name*="[cgst]"]')?.value) || 0;
-        const sgst = parseFloat(row.querySelector('input[name*="[sgst]"]')?.value) || 0;
-        
-        const ntAmt = qty * rate;
-        const disAmt = ntAmt * disPercent / 100;
-        const scmAmt = ntAmt * scmPercent / 100;
-        const taxableAmt = ntAmt - disAmt - scmAmt;
-        const taxAmt = taxableAmt * (cgst + sgst) / 100;
-        
-        totalNtAmt += ntAmt;
-        totalDisAmt += disAmt;
-        totalScmAmt += scmAmt;
-        totalTax += taxAmt;
-    });
+    const gstAmount = (parseFloat(data.amount) * parseFloat(data.gst_percent) / 100).toFixed(2);
     
-    const invAmt = totalNtAmt - totalDisAmt - totalScmAmt + totalTax;
-    
-    document.getElementById('total_nt_amt').value = totalNtAmt.toFixed(2);
-    document.getElementById('total_sc').value = '0.00';
-    document.getElementById('total_dis_amt').value = totalDisAmt.toFixed(2);
-    document.getElementById('total_scm_amt').value = totalScmAmt.toFixed(2);
-    document.getElementById('total_half_scm').value = '0.00';
-    document.getElementById('total_tax').value = totalTax.toFixed(2);
-    document.getElementById('total_inv_amt').value = invAmt.toFixed(2);
+    const tr = document.createElement('tr');
+    tr.id = `hsn_row_${idx}`;
+    tr.onclick = function() { selectHsnRow(idx); };
+    tr.innerHTML = `
+        <td><input type="text" name="hsn[${idx}][hsn_code]" class="form-control readonly-field" value="${data.hsn_code || ''}" readonly></td>
+        <td><input type="number" name="hsn[${idx}][amount]" class="form-control text-end" value="${parseFloat(data.amount || 0).toFixed(2)}" step="0.01" onchange="calculateRowGST(${idx}); validateAmount();"></td>
+        <td><input type="number" name="hsn[${idx}][gst_percent]" class="form-control text-end readonly-field" value="${parseFloat(data.gst_percent || 0).toFixed(2)}" readonly></td>
+        <td><input type="number" name="hsn[${idx}][igst_percent]" class="form-control text-end readonly-field" value="${parseFloat(data.igst_percent || 0).toFixed(2)}" readonly></td>
+        <td><input type="number" name="hsn[${idx}][gst_amount]" class="form-control text-end readonly-field" value="${gstAmount}" readonly></td>
+        <td><input type="number" name="hsn[${idx}][qty]" class="form-control text-end" value="${parseInt(data.qty || 1)}" step="1"></td>
+    `;
+    tbody.appendChild(tr);
+    selectHsnRow(idx);
+    calculateTotals();
+    validateAmount();
 }
 
-function removeRow(idx) {
-    document.getElementById(`row_${idx}`)?.remove();
-}
-
-function deleteSelectedItem() {
-    if (selectedRowIndex !== null) {
-        removeRow(selectedRowIndex);
-        selectedRowIndex = null;
-    } else {
-        alert('Please select an item first');
+function selectHsnRow(idx) {
+    document.querySelectorAll('#hsnTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
+    const row = document.getElementById(`hsn_row_${idx}`);
+    if (row) {
+        row.classList.add('row-selected');
+        selectedHsnRowIndex = idx;
     }
 }
 
+function calculateRowGST(idx) {
+    const row = document.getElementById(`hsn_row_${idx}`);
+    if (!row) return;
+    
+    const amount = parseFloat(row.querySelector('input[name*="[amount]"]').value) || 0;
+    const gstPercent = parseFloat(row.querySelector('input[name*="[gst_percent]"]').value) || 0;
+    const igstPercent = parseFloat(row.querySelector('input[name*="[igst_percent]"]').value) || 0;
+    
+    const gstAmount = amount * (gstPercent + igstPercent) / 100;
+    row.querySelector('input[name*="[gst_amount]"]').value = gstAmount.toFixed(2);
+    
+    calculateTotals();
+}
+
+function deleteSelectedRow() {
+    if (selectedHsnRowIndex !== null) {
+        document.getElementById(`hsn_row_${selectedHsnRowIndex}`)?.remove();
+        selectedHsnRowIndex = null;
+        calculateTotals();
+    } else {
+        alert('Please select a row first');
+    }
+}
+
+function clearAllRows() {
+    document.getElementById('hsnTableBody').innerHTML = '';
+    hsnRowIndex = 0;
+    selectedHsnRowIndex = null;
+    calculateTotals();
+}
+
+// HSN Modal Functions
+function loadHsnCodes() {
+    fetch('{{ route("admin.sale-voucher.hsn-codes") }}')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.hsn_codes) {
+                allHsnCodes = data.hsn_codes;
+            }
+        })
+        .catch(e => console.error('Error loading HSN codes:', e));
+}
+
+function showHsnModal() {
+    document.getElementById('hsnModalBackdrop').classList.add('show');
+    document.getElementById('hsnModal').classList.add('show');
+    document.getElementById('hsnSearchInput').value = '';
+    renderHsnList(allHsnCodes);
+    setTimeout(() => document.getElementById('hsnSearchInput').focus(), 100);
+}
+
+function closeHsnModal() {
+    document.getElementById('hsnModalBackdrop').classList.remove('show');
+    document.getElementById('hsnModal').classList.remove('show');
+}
+
+function filterHsnCodes() {
+    const search = document.getElementById('hsnSearchInput').value.toLowerCase();
+    const filtered = allHsnCodes.filter(h => 
+        (h.hsn_code && h.hsn_code.toLowerCase().includes(search)) ||
+        (h.name && h.name.toLowerCase().includes(search))
+    );
+    renderHsnList(filtered);
+}
+
+function renderHsnList(hsnCodes) {
+    const tbody = document.getElementById('hsnListBody');
+    if (!hsnCodes || !hsnCodes.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No HSN codes found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = hsnCodes.map(h => `
+        <tr class="claim-row" onclick="selectHsnCode(${h.id})" style="cursor:pointer;">
+            <td><strong>${h.hsn_code || ''}</strong></td>
+            <td>${h.name || ''}</td>
+            <td class="text-end">${parseFloat(h.cgst_percent || 0).toFixed(2)}</td>
+            <td class="text-end">${parseFloat(h.sgst_percent || 0).toFixed(2)}</td>
+            <td class="text-end">${parseFloat(h.total_gst_percent || 0).toFixed(2)}</td>
+        </tr>
+    `).join('');
+}
+
+function selectHsnCode(hsnId) {
+    const hsn = allHsnCodes.find(h => h.id === hsnId);
+    if (!hsn) return;
+    
+    closeHsnModal();
+    
+    // Add HSN row with selected code
+    addHSNRowWithData({
+        hsn_code: hsn.hsn_code,
+        amount: 0,
+        gst_percent: parseFloat(hsn.total_gst_percent || 0),
+        igst_percent: 0,
+        qty: 1
+    });
+}
+
+// Validation Function
+function validateAmount() {
+    const osAmount = parseFloat(document.getElementById('os_amount').value) || 0;
+    const claimAmount = parseFloat(document.getElementById('claim_amount').value) || 0;
+    const finalAmount = parseFloat(document.getElementById('final_amount').value) || 0;
+    
+    // Calculate reference amount (O/S Amount)
+    const referenceAmount = osAmount;
+    
+    // Check if final amount exceeds O/S Amount
+    if (referenceAmount > 0 && finalAmount > referenceAmount) {
+        document.getElementById('final_amount').style.color = 'red';
+        return false;
+    } else {
+        document.getElementById('final_amount').style.color = '#28a745';
+        return true;
+    }
+}
+
+function calculateFromClaimAmount() {
+    calculateTotals();
+    validateAmount();
+}
+
+function calculateTotals() {
+    let grossAmt = 0;
+    let totalGst = 0;
+    
+    const hsnRows = document.querySelectorAll('#hsnTableBody tr');
+    
+    // If HSN codes are added, calculate from HSN table
+    if (hsnRows.length > 0) {
+        hsnRows.forEach(row => {
+            const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
+            const gstAmount = parseFloat(row.querySelector('input[name*="[gst_amount]"]')?.value) || 0;
+            grossAmt += amount;
+            totalGst += gstAmount;
+        });
+    } else {
+        // No HSN - use Claim Amount, if no Claim Amount use O/S Amount
+        const claimAmount = parseFloat(document.getElementById('claim_amount').value) || 0;
+        const osAmount = parseFloat(document.getElementById('os_amount').value) || 0;
+        grossAmt = claimAmount > 0 ? claimAmount : osAmount;
+    }
+    
+    const netAmt = grossAmt + totalGst;
+    const roundOff = parseFloat(document.getElementById('round_off').value) || 0;
+    const finalAmount = netAmt + roundOff;
+    
+    document.getElementById('gross_amt').value = grossAmt.toFixed(2);
+    document.getElementById('total_gst').value = totalGst.toFixed(2);
+    document.getElementById('total_gst_amt').value = totalGst.toFixed(2);
+    document.getElementById('net_amt').value = netAmt.toFixed(2);
+    document.getElementById('final_amount').value = finalAmount.toFixed(2);
+    
+    validateAmount();
+}
+
+// Save Transaction
 function saveTransaction() {
-    const formData = new FormData(document.getElementById('receivedForm'));
-    alert('Save functionality - Ready for implementation');
+    const supplierId = document.getElementById('supplier_id').value;
+    if (!supplierId) {
+        alert('Please select a supplier or load a claim first');
+        return;
+    }
+    
+    const finalAmount = parseFloat(document.getElementById('final_amount').value) || 0;
+    if (finalAmount <= 0) {
+        alert('Amount must be greater than 0');
+        return;
+    }
+    
+    // Validate: Final amount should not exceed O/S Amount
+    const osAmount = parseFloat(document.getElementById('os_amount').value) || 0;
+    if (osAmount > 0 && finalAmount > osAmount) {
+        alert('Final Amount (₹' + finalAmount.toFixed(2) + ') cannot exceed O/S Amount (₹' + osAmount.toFixed(2) + ')');
+        return;
+    }
+    
+    const hsnItems = [];
+    document.querySelectorAll('#hsnTableBody tr').forEach(row => {
+        hsnItems.push({
+            hsn_code: row.querySelector('input[name*="[hsn_code]"]')?.value || '',
+            amount: parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0,
+            gst_percent: parseFloat(row.querySelector('input[name*="[gst_percent]"]')?.value) || 0,
+            igst_percent: parseFloat(row.querySelector('input[name*="[igst_percent]"]')?.value) || 0,
+            gst_amount: parseFloat(row.querySelector('input[name*="[gst_amount]"]')?.value) || 0,
+            qty: parseInt(row.querySelector('input[name*="[qty]"]')?.value) || 0
+        });
+    });
+    
+    pendingTransactionData = {
+        claim_transaction_id: document.getElementById('claim_transaction_id').value,
+        transaction_date: document.getElementById('transaction_date').value,
+        supplier_id: supplierId,
+        supplier_name: document.getElementById('supplier_name').value,
+        party_trn_no: document.getElementById('party_trn_no').value,
+        party_date: document.getElementById('party_date').value,
+        claim_flag: document.getElementById('claim_flag').value,
+        received_as_debit_note: document.getElementById('received_as_debit_note').checked,
+        claim_amount: parseFloat(document.getElementById('claim_amount').value) || 0,
+        gross_amt: parseFloat(document.getElementById('gross_amt').value) || 0,
+        total_gst: parseFloat(document.getElementById('total_gst').value) || 0,
+        net_amt: parseFloat(document.getElementById('net_amt').value) || 0,
+        round_off: parseFloat(document.getElementById('round_off').value) || 0,
+        final_amount: finalAmount,
+        remarks: document.getElementById('remarks').value,
+        hsn_items: hsnItems
+    };
+    
+    showAdjustModal();
+}
+
+// Adjustment Modal Functions
+function showAdjustModal() {
+    const supplierId = pendingTransactionData.supplier_id;
+    const totalAmount = pendingTransactionData.final_amount;
+    
+    console.log('showAdjustModal - supplierId:', supplierId, 'totalAmount:', totalAmount);
+    
+    const url = `{{ url('admin/breakage-supplier/supplier-purchases') }}/${supplierId}`;
+    console.log('Fetching URL:', url);
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            console.log('API Response:', data);
+            if (data.success) {
+                renderAdjustTable(data.purchases, totalAmount);
+                document.getElementById('adjustBackdrop').classList.add('show');
+                document.getElementById('adjustModal').classList.add('show');
+            } else {
+                console.error('API returned success:false', data.message);
+                submitTransaction([]);
+            }
+        })
+        .catch(e => {
+            console.error('Error:', e);
+            submitTransaction([]);
+        });
+}
+
+function renderAdjustTable(purchases, totalAmount) {
+    const tbody = document.getElementById('adjustTableBody');
+    
+    if (!purchases.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No purchases found for this supplier</td></tr>';
+    } else {
+        tbody.innerHTML = purchases.map((p, i) => `
+            <tr data-purchase-id="${p.id}" data-original-balance="${parseFloat(p.balance_amount || 0)}">
+                <td class="text-center">${i + 1}</td>
+                <td><strong>${p.purchase_no || ''}</strong></td>
+                <td>${p.purchase_date || ''}</td>
+                <td class="text-end">₹${parseFloat(p.total_amount || 0).toFixed(2)}</td>
+                <td class="text-end text-primary fw-bold balance-cell" data-original="${parseFloat(p.balance_amount || 0)}">${parseFloat(p.balance_amount || 0).toFixed(2)}</td>
+                <td>
+                    <input type="number" class="form-control form-control-sm text-end adjust-input" 
+                           data-purchase-id="${p.id}" data-max="${parseFloat(p.balance_amount || 0)}"
+                           step="0.01" min="0" value="0" oninput="updateRowBalance(this)" onchange="updateRowBalance(this)">
+                </td>
+            </tr>
+        `).join('');
+    }
+    
+    document.getElementById('adjustTotalDisplay').textContent = '₹' + totalAmount.toFixed(2);
+    document.getElementById('adjustedDisplay').textContent = '₹0.00';
+    document.getElementById('adjustBalanceDisplay').textContent = '₹' + totalAmount.toFixed(2);
+}
+
+// Update row balance instantly when adjustment amount changes
+function updateRowBalance(input) {
+    const row = input.closest('tr');
+    const balanceCell = row.querySelector('.balance-cell');
+    const originalBalance = parseFloat(input.dataset.max) || 0;
+    const adjustAmount = parseFloat(input.value) || 0;
+    
+    // Validate amount doesn't exceed original balance
+    if (adjustAmount > originalBalance) {
+        input.value = originalBalance;
+        input.classList.add('is-invalid');
+    } else {
+        input.classList.remove('is-invalid');
+    }
+    
+    // Update balance cell instantly
+    const newBalance = originalBalance - Math.min(adjustAmount, originalBalance);
+    balanceCell.textContent = newBalance.toFixed(2);
+    
+    // Update totals
+    updateAdjustTotals();
+}
+
+function updateAdjustTotals() {
+    const totalAmount = pendingTransactionData.final_amount;
+    let totalAdjusted = 0;
+    
+    document.querySelectorAll('.adjust-input').forEach(input => {
+        const amount = parseFloat(input.value) || 0;
+        const max = parseFloat(input.dataset.max) || 0;
+        if (amount > max) {
+            input.value = max;
+        }
+        totalAdjusted += Math.min(amount, max);
+    });
+    
+    document.getElementById('adjustedDisplay').textContent = '₹' + totalAdjusted.toFixed(2);
+    document.getElementById('adjustBalanceDisplay').textContent = '₹' + (totalAmount - totalAdjusted).toFixed(2);
+}
+
+function closeAdjustModal() {
+    document.getElementById('adjustBackdrop').classList.remove('show');
+    document.getElementById('adjustModal').classList.remove('show');
+}
+
+function saveWithAdjustments() {
+    const adjustments = [];
+    document.querySelectorAll('.adjust-input').forEach(input => {
+        const amount = parseFloat(input.value) || 0;
+        if (amount > 0) {
+            adjustments.push({
+                purchase_id: input.dataset.purchaseId,
+                amount: amount
+            });
+        }
+    });
+    
+    closeAdjustModal();
+    submitTransaction(adjustments);
+}
+
+function submitTransaction(adjustments) {
+    pendingTransactionData.adjustments = adjustments;
+    
+    fetch('{{ route("admin.breakage-supplier.store-received") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(pendingTransactionData)
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert('Transaction saved successfully! Trn No: ' + result.trn_no);
+            window.location.reload();
+        } else {
+            alert('Error: ' + (result.message || 'Failed to save'));
+        }
+    })
+    .catch(e => {
+        console.error('Error:', e);
+        alert('Error saving transaction');
+    });
 }
 
 function cancelTransaction() {
@@ -507,6 +890,7 @@ function cancelTransaction() {
         window.location.href = '{{ route("admin.breakage-supplier.received-modification") }}';
     }
 }
+
+document.getElementById('round_off')?.addEventListener('change', calculateTotals);
 </script>
 @endpush
-@endsection

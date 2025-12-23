@@ -514,10 +514,15 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         
         // Breakage/Expiry to Supplier Routes - Received & Unused Dump
         Route::get('breakage-supplier/received-transaction', [BreakageSupplierController::class, 'receivedTransaction'])->name('breakage-supplier.received-transaction');
+        Route::post('breakage-supplier/store-received', [BreakageSupplierController::class, 'storeReceived'])->name('breakage-supplier.store-received');
         Route::get('breakage-supplier/received-modification', [BreakageSupplierController::class, 'receivedModification'])->name('breakage-supplier.received-modification');
         Route::get('breakage-supplier/get-received-past-invoices', [BreakageSupplierController::class, 'getReceivedPastInvoices'])->name('breakage-supplier.get-received-past-invoices');
+        Route::get('breakage-supplier/received-details/{id}', [BreakageSupplierController::class, 'getReceivedDetails'])->name('breakage-supplier.received-details');
         Route::get('breakage-supplier/received/{id}', [BreakageSupplierController::class, 'showReceived'])->name('breakage-supplier.show-received');
-        Route::put('breakage-supplier/received/{id}', [BreakageSupplierController::class, 'updateReceived'])->name('breakage-supplier.update-received');
+        Route::post('breakage-supplier/update-received/{id}', [BreakageSupplierController::class, 'updateReceived'])->name('breakage-supplier.update-received');
+        Route::put('breakage-supplier/received/{id}', [BreakageSupplierController::class, 'updateReceived'])->name('breakage-supplier.put-received');
+        Route::delete('breakage-supplier/delete-received/{id}', [BreakageSupplierController::class, 'deleteReceived'])->name('breakage-supplier.delete-received');
+        Route::get('breakage-supplier/supplier-purchases/{supplierId}', [BreakageSupplierController::class, 'getSupplierPurchases'])->name('breakage-supplier.supplier-purchases');
         Route::get('breakage-supplier/unused-dump-index', [BreakageSupplierController::class, 'unusedDumpIndex'])->name('breakage-supplier.unused-dump-index');
         Route::get('breakage-supplier/unused-dump-transaction', [BreakageSupplierController::class, 'unusedDumpTransaction'])->name('breakage-supplier.unused-dump-transaction');
         Route::post('breakage-supplier/unused-dump-transaction', [BreakageSupplierController::class, 'storeUnusedDump'])->name('breakage-supplier.store-unused-dump');

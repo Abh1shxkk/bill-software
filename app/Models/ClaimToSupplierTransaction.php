@@ -36,6 +36,7 @@ class ClaimToSupplierTransaction extends Model
         'scm_percent',
         'tax_amount',
         'net_amount',
+        'balance_amount',
         'tcs_amount',
         'dis1_amount',
         'status',

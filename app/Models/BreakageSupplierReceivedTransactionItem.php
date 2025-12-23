@@ -26,6 +26,9 @@ class BreakageSupplierReceivedTransactionItem extends Model
         'sale_rate',
         'cgst',
         'sgst',
+        'gst_percent',
+        'igst_percent',
+        'gst_amount',
         'company_name',
         'packing',
         'unit',
@@ -44,6 +47,9 @@ class BreakageSupplierReceivedTransactionItem extends Model
         'sale_rate' => 'decimal:2',
         'cgst' => 'decimal:2',
         'sgst' => 'decimal:2',
+        'gst_percent' => 'decimal:2',
+        'igst_percent' => 'decimal:2',
+        'gst_amount' => 'decimal:2',
     ];
 
     public function transaction()

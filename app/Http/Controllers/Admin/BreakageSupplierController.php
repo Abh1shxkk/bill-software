@@ -530,7 +530,159 @@ class BreakageSupplierController extends Controller
     // Keep existing methods for other transaction types
     public function receivedTransaction()
     {
-        return view('admin.breakage-supplier.received-transaction');
+        // Get next transaction number
+        $lastTrn = BreakageSupplierReceivedTransaction::orderBy('id', 'desc')->first();
+        $trnNo = $lastTrn ? (int)$lastTrn->trn_no + 1 : 1;
+        
+        // Get suppliers list
+        $suppliers = Supplier::where('is_deleted', 0)->orderBy('name')->get();
+        
+        return view('admin.breakage-supplier.received-transaction', compact('trnNo', 'suppliers'));
+    }
+
+    /**
+     * Store received transaction
+     */
+    public function storeReceived(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            
+            // Get next transaction number
+            $lastTrn = BreakageSupplierReceivedTransaction::orderBy('id', 'desc')->first();
+            $trnNo = $lastTrn ? (int)$lastTrn->trn_no + 1 : 1;
+            
+            // Create transaction
+            $transaction = BreakageSupplierReceivedTransaction::create([
+                'trn_no' => $trnNo,
+                'series' => 'BSR',
+                'transaction_date' => $request->transaction_date,
+                'supplier_id' => $request->supplier_id,
+                'supplier_name' => $request->supplier_name,
+                'party_trn_no' => $request->party_trn_no,
+                'party_date' => $request->party_date,
+                'claim_transaction_id' => $request->claim_transaction_id,
+                'claim_flag' => $request->claim_flag ?? 'N',
+                'received_as_debit_note' => $request->received_as_debit_note ? 1 : 0,
+                'claim_amount' => $request->claim_amount ?? 0,
+                'gross_amt' => $request->gross_amt ?? 0,
+                'total_gst' => $request->total_gst ?? 0,
+                'net_amt' => $request->net_amt ?? 0,
+                'round_off' => $request->round_off ?? 0,
+                'final_amount' => $request->final_amount ?? 0,
+                'remarks' => $request->remarks,
+                'is_deleted' => 0,
+            ]);
+            
+            // Save HSN items if any
+            if ($request->has('hsn_items') && is_array($request->hsn_items)) {
+                foreach ($request->hsn_items as $item) {
+                    BreakageSupplierReceivedTransactionItem::create([
+                        'transaction_id' => $transaction->id,
+                        'hsn_code' => $item['hsn_code'] ?? '',
+                        'amount' => $item['amount'] ?? 0,
+                        'gst_percent' => $item['gst_percent'] ?? 0,
+                        'igst_percent' => $item['igst_percent'] ?? 0,
+                        'gst_amount' => $item['gst_amount'] ?? 0,
+                        'qty' => $item['qty'] ?? 0,
+                    ]);
+                }
+            }
+            
+            // Process adjustments if any (against Purchase Transactions)
+            if ($request->has('adjustments') && is_array($request->adjustments)) {
+                foreach ($request->adjustments as $adjustment) {
+                    // Update purchase balance
+                    $purchase = \App\Models\PurchaseTransaction::find($adjustment['purchase_id']);
+                    if ($purchase) {
+                        $totalAmount = $purchase->inv_amount ?? $purchase->net_amount ?? 0;
+                        $currentBalance = $purchase->balance_amount ?? $totalAmount;
+                        $newBalance = $currentBalance - $adjustment['amount'];
+                        $purchase->balance_amount = max(0, $newBalance);
+                        $purchase->save();
+                        
+                        // Store adjustment record
+                        \App\Models\BreakageSupplierReceivedAdjustment::create([
+                            'received_transaction_id' => $transaction->id,
+                            'purchase_transaction_id' => $purchase->id,
+                            'adjusted_amount' => $adjustment['amount'],
+                        ]);
+                    }
+                }
+            }
+            
+            // Update claim balance if exists
+            if ($request->claim_transaction_id) {
+                $claim = \App\Models\ClaimToSupplierTransaction::find($request->claim_transaction_id);
+                if ($claim) {
+                    $netAmount = $claim->net_amount ?? 0;
+                    $currentBalance = $claim->balance_amount ?? $netAmount;
+                    $newBalance = $currentBalance - $request->final_amount;
+                    $claim->balance_amount = max(0, $newBalance);
+                    $claim->save();
+                }
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction saved successfully!',
+                'trn_no' => $trnNo,
+                'id' => $transaction->id
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get supplier purchases for adjustment
+     */
+    public function getSupplierPurchases($supplierId)
+    {
+        try {
+            \Log::info('getSupplierPurchases called with supplierId: ' . $supplierId);
+            
+            $purchases = \App\Models\PurchaseTransaction::where('supplier_id', $supplierId)
+            ->orderBy('bill_date', 'desc')
+            ->limit(50)
+            ->get()
+            ->map(function($p) {
+                // Calculate balance - use balance_amount if set, otherwise net_amount or inv_amount
+                $totalAmount = $p->inv_amount ?? $p->net_amount ?? 0;
+                $balanceAmount = $p->balance_amount ?? $totalAmount;
+                
+                return [
+                    'id' => $p->id,
+                    'purchase_no' => $p->bill_no ?? $p->trn_no ?? '',
+                    'purchase_date' => $p->bill_date ? $p->bill_date->format('d-M-y') : '',
+                    'total_amount' => $totalAmount,
+                    'balance_amount' => $balanceAmount,
+                ];
+            })
+            ->filter(function($p) {
+                // Only show purchases with balance > 0
+                return floatval($p['balance_amount']) > 0;
+            })
+            ->values();
+            
+            return response()->json([
+                'success' => true,
+                'purchases' => $purchases
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function receivedModification()
@@ -540,15 +692,12 @@ class BreakageSupplierController extends Controller
 
     /**
      * Get past invoices for received modification Load Invoice modal
-     * Note: This is a placeholder - update when received transaction model is created
      */
     public function getReceivedPastInvoices(Request $request)
     {
         $search = $request->search;
         
-        // Using issued transactions as placeholder since received model doesn't exist yet
-        // Replace with actual received transaction model when available
-        $query = BreakageSupplierIssuedTransaction::active()
+        $query = BreakageSupplierReceivedTransaction::query()
             ->orderBy('id', 'desc')
             ->limit(50);
         
@@ -556,71 +705,107 @@ class BreakageSupplierController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('trn_no', 'LIKE', "%{$search}%")
                   ->orWhere('supplier_name', 'LIKE', "%{$search}%")
-                  ->orWhere('narration', 'LIKE', "%{$search}%");
+                  ->orWhere('remarks', 'LIKE', "%{$search}%");
             });
         }
         
         $invoices = $query->get()->map(function($inv) {
             return [
                 'id' => $inv->id,
+                'trn_no' => $inv->trn_no,
                 'transaction_date' => $inv->transaction_date,
                 'supplier_name' => $inv->supplier_name,
-                'amount' => $inv->total_inv_amt,
+                'final_amount' => $inv->final_amount,
             ];
         });
         
-        return response()->json($invoices);
+        return response()->json([
+            'success' => true,
+            'invoices' => $invoices
+        ]);
     }
 
     /**
-     * Show received transaction details
+     * Get received transaction details with items and adjustments
+     */
+    public function getReceivedDetails($id)
+    {
+        try {
+            $transaction = BreakageSupplierReceivedTransaction::with(['items'])->findOrFail($id);
+            
+            // Get claim transaction details
+            $claimTrnNo = '';
+            if ($transaction->claim_transaction_id) {
+                $claim = \App\Models\ClaimToSupplierTransaction::find($transaction->claim_transaction_id);
+                $claimTrnNo = $claim ? $claim->trn_no : '';
+            }
+            
+            // Get adjustments
+            $adjustments = \App\Models\BreakageSupplierReceivedAdjustment::where('received_transaction_id', $id)
+                ->get()
+                ->map(function($adj) {
+                    $purchase = \App\Models\PurchaseTransaction::find($adj->purchase_transaction_id);
+                    return [
+                        'id' => $adj->id,
+                        'purchase_transaction_id' => $adj->purchase_transaction_id,
+                        'bill_no' => $purchase ? $purchase->bill_no : '',
+                        'bill_date' => $purchase ? $purchase->bill_date : '',
+                        'adjusted_amount' => $adj->adjusted_amount,
+                    ];
+                });
+            
+            $data = [
+                'success' => true,
+                'transaction' => [
+                    'id' => $transaction->id,
+                    'trn_no' => $transaction->trn_no,
+                    'transaction_date' => $transaction->transaction_date,
+                    'supplier_id' => $transaction->supplier_id,
+                    'supplier_name' => $transaction->supplier_name,
+                    'party_trn_no' => $transaction->party_trn_no ?? '',
+                    'party_date' => $transaction->party_date ?? '',
+                    'claim_transaction_id' => $transaction->claim_transaction_id,
+                    'claim_trn_no' => $claimTrnNo,
+                    'os_amount' => $transaction->os_amount ?? 0,
+                    'claim_flag' => $transaction->claim_flag ?? 'Y',
+                    'received_as_debit_note' => $transaction->received_as_debit_note ?? false,
+                    'claim_amount' => $transaction->claim_amount ?? 0,
+                    'gross_amt' => $transaction->gross_amt ?? 0,
+                    'total_gst' => $transaction->total_gst ?? 0,
+                    'net_amt' => $transaction->net_amt ?? 0,
+                    'round_off' => $transaction->round_off ?? 0,
+                    'final_amount' => $transaction->final_amount ?? 0,
+                    'remarks' => $transaction->remarks ?? '',
+                    'items' => $transaction->items->map(function($item) {
+                        return [
+                            'id' => $item->id,
+                            'hsn_code' => $item->hsn_code,
+                            'amount' => $item->amount,
+                            'gst_percent' => $item->gst_percent,
+                            'igst_percent' => $item->igst_percent ?? 0,
+                            'gst_amount' => $item->gst_amount,
+                            'qty' => $item->qty,
+                        ];
+                    }),
+                    'adjustments' => $adjustments,
+                ]
+            ];
+            
+            return response()->json($data);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading transaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Show received transaction details (for compatibility)
      */
     public function showReceived($id)
     {
-        // Using issued transaction as placeholder
-        $transaction = BreakageSupplierIssuedTransaction::with('items')->findOrFail($id);
-        
-        $data = [
-            'id' => $transaction->id,
-            'transaction_date' => $transaction->transaction_date,
-            'supplier_name' => $transaction->supplier_name,
-            'party_trn_no' => $transaction->gst_vno ?? '',
-            'party_date' => $transaction->transaction_date,
-            'claim_flag' => 'N',
-            'claim_amount' => 0,
-            'received_debit_note' => false,
-            'os_amount' => 0,
-            'remarks' => $transaction->narration ?? '',
-            'round_off' => 0,
-            'gross_amt' => $transaction->total_nt_amt ?? 0,
-            'total_gst' => $transaction->total_tax ?? 0,
-            'amount' => $transaction->total_inv_amt ?? 0,
-            'items' => $transaction->items->map(function($item) {
-                return [
-                    'item_id' => $item->item_id,
-                    'item_name' => $item->item_name,
-                    'batch_no' => $item->batch_no,
-                    'expiry' => $item->expiry,
-                    'qty' => $item->qty,
-                    'free_qty' => $item->free_qty ?? 0,
-                    'rate' => $item->rate,
-                    'dis_percent' => $item->dis_percent ?? 0,
-                    'tax_percent' => $item->tax_percent ?? 0,
-                    'amount' => $item->amount ?? 0,
-                    'packing' => $item->packing ?? '',
-                    'unit' => $item->unit ?? '',
-                    'company_name' => $item->company_name ?? '',
-                    'mrp' => $item->mrp ?? 0,
-                    'p_rate' => $item->p_rate ?? 0,
-                    'cgst_percent' => $item->cgst_percent ?? 0,
-                    'sgst_percent' => $item->sgst_percent ?? 0,
-                    'tax_amount' => $item->tax_amt ?? 0,
-                    'dis_amount' => $item->dis_amt ?? 0,
-                ];
-            }),
-        ];
-        
-        return response()->json($data);
+        return $this->getReceivedDetails($id);
     }
 
     /**
@@ -628,11 +813,113 @@ class BreakageSupplierController extends Controller
      */
     public function updateReceived(Request $request, $id)
     {
-        // Placeholder - implement when received transaction model is created
-        return response()->json([
-            'success' => true,
-            'message' => 'Transaction updated successfully!'
-        ]);
+        try {
+            DB::beginTransaction();
+            
+            $transaction = BreakageSupplierReceivedTransaction::findOrFail($id);
+            
+            $transaction->update([
+                'transaction_date' => $request->transaction_date,
+                'party_trn_no' => $request->party_trn_no,
+                'party_date' => $request->party_date,
+                'claim_flag' => $request->claim_flag ?? 'Y',
+                'received_as_debit_note' => $request->received_as_debit_note ?? false,
+                'claim_amount' => $request->claim_amount ?? 0,
+                'gross_amt' => $request->gross_amt ?? 0,
+                'total_gst' => $request->total_gst ?? 0,
+                'net_amt' => $request->net_amt ?? 0,
+                'round_off' => $request->round_off ?? 0,
+                'final_amount' => $request->final_amount ?? 0,
+                'remarks' => $request->remarks,
+            ]);
+            
+            // Update HSN items
+            if ($request->has('hsn_items')) {
+                // Delete existing items
+                $transaction->items()->delete();
+                
+                // Create new items
+                foreach ($request->hsn_items as $item) {
+                    if (!empty($item['hsn_code'])) {
+                        BreakageSupplierReceivedTransactionItem::create([
+                            'transaction_id' => $transaction->id,
+                            'hsn_code' => $item['hsn_code'],
+                            'amount' => $item['amount'] ?? 0,
+                            'gst_percent' => $item['gst_percent'] ?? 0,
+                            'igst_percent' => $item['igst_percent'] ?? 0,
+                            'gst_amount' => $item['gst_amount'] ?? 0,
+                            'qty' => $item['qty'] ?? 0,
+                        ]);
+                    }
+                }
+            }
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction updated successfully!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating transaction: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete received transaction
+     */
+    public function deleteReceived($id)
+    {
+        try {
+            DB::beginTransaction();
+            
+            $transaction = BreakageSupplierReceivedTransaction::findOrFail($id);
+            
+            // Reverse purchase adjustments
+            $adjustments = \App\Models\BreakageSupplierReceivedAdjustment::where('received_transaction_id', $id)->get();
+            
+            foreach ($adjustments as $adj) {
+                // Restore balance to purchase transaction
+                $purchase = \App\Models\PurchaseTransaction::find($adj->purchase_transaction_id);
+                if ($purchase) {
+                    $purchase->balance_amount = ($purchase->balance_amount ?? 0) + $adj->adjusted_amount;
+                    $purchase->save();
+                }
+                $adj->delete();
+            }
+            
+            // Restore claim balance if exists
+            if ($transaction->claim_transaction_id) {
+                $claim = \App\Models\ClaimToSupplierTransaction::find($transaction->claim_transaction_id);
+                if ($claim) {
+                    $claim->balance_amount = ($claim->balance_amount ?? 0) + ($transaction->final_amount ?? 0);
+                    $claim->save();
+                }
+            }
+            
+            // Delete HSN items
+            $transaction->items()->delete();
+            
+            // Delete transaction
+            $transaction->delete();
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Transaction deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting transaction: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
