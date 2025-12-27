@@ -195,6 +195,11 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         // Sales Reports
         Route::get('reports/sales', [SalesReportController::class, 'index'])->name('reports.sales');
         Route::get('reports/sales/sales-book', [SalesReportController::class, 'salesBook'])->name('reports.sales.sales-book');
+        Route::get('reports/sales/sales-book-gstr', [SalesReportController::class, 'salesBookGstr'])->name('reports.sales.sales-book-gstr');
+        Route::get('reports/sales/sales-book-extra-charges', [SalesReportController::class, 'salesBookExtraCharges'])->name('reports.sales.sales-book-extra-charges');
+        Route::get('reports/sales/sales-book-tcs', [SalesReportController::class, 'salesBookTcs'])->name('reports.sales.sales-book-tcs');
+        Route::get('reports/sales/tcs-eligibility', [SalesReportController::class, 'tcsEligibility'])->name('reports.sales.tcs-eligibility');
+        Route::get('reports/sales/tds-input', [SalesReportController::class, 'tdsInput'])->name('reports.sales.tds-input');
         Route::get('reports/sales/sales-book-party-wise', [SalesReportController::class, 'salesBookPartyWise'])->name('reports.sales.sales-book-party-wise');
         Route::get('reports/sales/day-sales-summary-item-wise', [SalesReportController::class, 'daySalesSummaryItemWise'])->name('reports.sales.day-sales-summary-item-wise');
         Route::get('reports/sales/sales-summary', [SalesReportController::class, 'salesSummary'])->name('reports.sales.sales-summary');
@@ -210,6 +215,74 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/sales/customer-visit-status', [SalesReportController::class, 'customerVisitStatus'])->name('reports.sales.customer-visit-status');
         Route::get('reports/sales/shortage-report', [SalesReportController::class, 'shortageReport'])->name('reports.sales.shortage-report');
         Route::get('reports/sales/sale-return-list', [SalesReportController::class, 'saleReturnList'])->name('reports.sales.sale-return-list');
+        
+        // Miscellaneous Sales Analysis Reports
+        // Salesman Wise Sales Sub-Options
+        Route::get('reports/sales/salesman-wise-sales', [SalesReportController::class, 'salesmanWiseSales'])->name('reports.sales.salesman-wise-sales');
+        Route::get('reports/sales/salesman-wise-sales/all-salesman', [SalesReportController::class, 'salesmanWiseSalesAllSalesman'])->name('reports.sales.salesman-wise-sales.all-salesman');
+        Route::get('reports/sales/salesman-wise-sales/bill-wise', [SalesReportController::class, 'salesmanWiseSalesBillWise'])->name('reports.sales.salesman-wise-sales.bill-wise');
+        Route::get('reports/sales/salesman-wise-sales/customer-wise', [SalesReportController::class, 'salesmanWiseSalesCustomerWise'])->name('reports.sales.salesman-wise-sales.customer-wise');
+        Route::get('reports/sales/salesman-wise-sales/item-wise', [SalesReportController::class, 'salesmanWiseSalesItemWise'])->name('reports.sales.salesman-wise-sales.item-wise');
+        Route::get('reports/sales/salesman-wise-sales/company-wise', [SalesReportController::class, 'salesmanWiseSalesCompanyWise'])->name('reports.sales.salesman-wise-sales.company-wise');
+        Route::get('reports/sales/salesman-wise-sales/area-wise', [SalesReportController::class, 'salesmanWiseSalesAreaWise'])->name('reports.sales.salesman-wise-sales.area-wise');
+        Route::get('reports/sales/salesman-wise-sales/route-wise', [SalesReportController::class, 'salesmanWiseSalesRouteWise'])->name('reports.sales.salesman-wise-sales.route-wise');
+        Route::get('reports/sales/salesman-wise-sales/state-wise', [SalesReportController::class, 'salesmanWiseSalesStateWise'])->name('reports.sales.salesman-wise-sales.state-wise');
+        Route::get('reports/sales/salesman-wise-sales/salesman-wise', [SalesReportController::class, 'salesmanWiseSalesSalesmanWise'])->name('reports.sales.salesman-wise-sales.salesman-wise');
+        Route::get('reports/sales/salesman-wise-sales/salesman-item-wise', [SalesReportController::class, 'salesmanWiseSalesSalesmanItemWise'])->name('reports.sales.salesman-wise-sales.salesman-item-wise');
+        Route::get('reports/sales/salesman-wise-sales/item-invoice-wise', [SalesReportController::class, 'salesmanWiseSalesItemInvoiceWise'])->name('reports.sales.salesman-wise-sales.item-invoice-wise');
+        Route::get('reports/sales/salesman-wise-sales/invoice-item-wise', [SalesReportController::class, 'salesmanWiseSalesInvoiceItemWise'])->name('reports.sales.salesman-wise-sales.invoice-item-wise');
+        Route::get('reports/sales/salesman-wise-sales/month-wise-summary', [SalesReportController::class, 'salesmanWiseSalesMonthWiseSummary'])->name('reports.sales.salesman-wise-sales.month-wise-summary');
+        Route::get('reports/sales/salesman-wise-sales/sale-book', [SalesReportController::class, 'salesmanWiseSalesSaleBook'])->name('reports.sales.salesman-wise-sales.sale-book');
+        Route::get('reports/sales/salesman-wise-sales/monthly-target', [SalesReportController::class, 'salesmanWiseSalesMonthlyTarget'])->name('reports.sales.salesman-wise-sales.monthly-target');
+        
+        Route::get('reports/sales/area-wise-sale', [SalesReportController::class, 'areaWiseSale'])->name('reports.sales.area-wise-sale');
+        
+        // Area Wise Sales - Separate Routes
+        Route::get('reports/sales/area-wise-sales/all-area', [SalesReportController::class, 'areaWiseSalesAllArea'])->name('reports.sales.area-wise-sales.all-area');
+        Route::get('reports/sales/area-wise-sales/bill-wise', [SalesReportController::class, 'areaWiseSalesBillWise'])->name('reports.sales.area-wise-sales.bill-wise');
+        Route::get('reports/sales/area-wise-sales/customer-wise', [SalesReportController::class, 'areaWiseSalesCustomerWise'])->name('reports.sales.area-wise-sales.customer-wise');
+        Route::get('reports/sales/area-wise-sales/item-wise', [SalesReportController::class, 'areaWiseSalesItemWise'])->name('reports.sales.area-wise-sales.item-wise');
+        Route::get('reports/sales/area-wise-sales/company-wise', [SalesReportController::class, 'areaWiseSalesCompanyWise'])->name('reports.sales.area-wise-sales.company-wise');
+        Route::get('reports/sales/area-wise-sales/salesman-wise', [SalesReportController::class, 'areaWiseSalesSalesmanWise'])->name('reports.sales.area-wise-sales.salesman-wise');
+        Route::get('reports/sales/area-wise-sales/route-wise', [SalesReportController::class, 'areaWiseSalesRouteWise'])->name('reports.sales.area-wise-sales.route-wise');
+        Route::get('reports/sales/area-wise-sales/state-wise', [SalesReportController::class, 'areaWiseSalesStateWise'])->name('reports.sales.area-wise-sales.state-wise');
+        Route::get('reports/sales/area-wise-sales/item-invoice-wise', [SalesReportController::class, 'areaWiseSalesItemInvoiceWise'])->name('reports.sales.area-wise-sales.item-invoice-wise');
+        Route::get('reports/sales/area-wise-sales/invoice-item-wise', [SalesReportController::class, 'areaWiseSalesInvoiceItemWise'])->name('reports.sales.area-wise-sales.invoice-item-wise');
+        Route::get('reports/sales/area-wise-sales/sale-book', [SalesReportController::class, 'areaWiseSalesSaleBook'])->name('reports.sales.area-wise-sales.sale-book');
+        Route::get('reports/sales/area-wise-sales/month-wise/area-wise', [SalesReportController::class, 'areaWiseSalesMonthWiseAreaWise'])->name('reports.sales.area-wise-sales.month-wise.area-wise');
+        Route::get('reports/sales/area-wise-sales/month-wise/area-item-wise', [SalesReportController::class, 'areaWiseSalesMonthWiseAreaItemWise'])->name('reports.sales.area-wise-sales.month-wise.area-item-wise');
+        
+        Route::get('reports/sales/route-wise-sale', [SalesReportController::class, 'routeWiseSale'])->name('reports.sales.route-wise-sale');
+        
+        // Route Wise Sale - Separate Routes
+        Route::get('reports/sales/route-wise-sale/all-route', [SalesReportController::class, 'routeWiseSaleAllRoute'])->name('reports.sales.route-wise-sale.all-route');
+        Route::get('reports/sales/route-wise-sale/bill-wise', [SalesReportController::class, 'routeWiseSaleBillWise'])->name('reports.sales.route-wise-sale.bill-wise');
+        Route::get('reports/sales/route-wise-sale/customer-wise', [SalesReportController::class, 'routeWiseSaleCustomerWise'])->name('reports.sales.route-wise-sale.customer-wise');
+        Route::get('reports/sales/route-wise-sale/item-wise', [SalesReportController::class, 'routeWiseSaleItemWise'])->name('reports.sales.route-wise-sale.item-wise');
+        Route::get('reports/sales/route-wise-sale/company-wise', [SalesReportController::class, 'routeWiseSaleCompanyWise'])->name('reports.sales.route-wise-sale.company-wise');
+        Route::get('reports/sales/route-wise-sale/salesman-wise', [SalesReportController::class, 'routeWiseSaleSalesmanWise'])->name('reports.sales.route-wise-sale.salesman-wise');
+        Route::get('reports/sales/route-wise-sale/area-wise', [SalesReportController::class, 'routeWiseSaleAreaWise'])->name('reports.sales.route-wise-sale.area-wise');
+        Route::get('reports/sales/route-wise-sale/state-wise', [SalesReportController::class, 'routeWiseSaleStateWise'])->name('reports.sales.route-wise-sale.state-wise');
+        Route::get('reports/sales/route-wise-sale/item-invoice-wise', [SalesReportController::class, 'routeWiseSaleItemInvoiceWise'])->name('reports.sales.route-wise-sale.item-invoice-wise');
+        Route::get('reports/sales/route-wise-sale/invoice-item-wise', [SalesReportController::class, 'routeWiseSaleInvoiceItemWise'])->name('reports.sales.route-wise-sale.invoice-item-wise');
+        Route::get('reports/sales/route-wise-sale/sale-book', [SalesReportController::class, 'routeWiseSaleSaleBook'])->name('reports.sales.route-wise-sale.sale-book');
+        Route::get('reports/sales/route-wise-sale/month-wise/route-wise', [SalesReportController::class, 'routeWiseSaleMonthWiseRouteWise'])->name('reports.sales.route-wise-sale.month-wise.route-wise');
+        Route::get('reports/sales/route-wise-sale/month-wise/route-item-wise', [SalesReportController::class, 'routeWiseSaleMonthWiseRouteItemWise'])->name('reports.sales.route-wise-sale.month-wise.route-item-wise');
+        
+        Route::get('reports/sales/state-wise-sale', [SalesReportController::class, 'stateWiseSale'])->name('reports.sales.state-wise-sale');
+        Route::get('reports/sales/customer-wise-sale', [SalesReportController::class, 'customerWiseSale'])->name('reports.sales.customer-wise-sale');
+        Route::get('reports/sales/company-wise-sales', [SalesReportController::class, 'companyWiseSales'])->name('reports.sales.company-wise-sales');
+        Route::get('reports/sales/item-wise-sales', [SalesReportController::class, 'itemWiseSales'])->name('reports.sales.item-wise-sales');
+        Route::get('reports/sales/discount-wise-sales', [SalesReportController::class, 'discountWiseSales'])->name('reports.sales.discount-wise-sales');
+        
+        // Other Sales Reports
+        Route::get('reports/sales/salesman-level-sale', [SalesReportController::class, 'salesmanLevelSale'])->name('reports.sales.salesman-level-sale');
+        Route::get('reports/sales/scheme-issued', [SalesReportController::class, 'schemeIssued'])->name('reports.sales.scheme-issued');
+        Route::get('reports/sales/mrp-wise-sales', [SalesReportController::class, 'mrpWiseSales'])->name('reports.sales.mrp-wise-sales');
+        Route::get('reports/sales/display-amount-report', [SalesReportController::class, 'displayAmountReport'])->name('reports.sales.display-amount-report');
+        Route::get('reports/sales/cancelled-invoices', [SalesReportController::class, 'cancelledInvoices'])->name('reports.sales.cancelled-invoices');
+        Route::get('reports/sales/missing-invoices', [SalesReportController::class, 'missingInvoices'])->name('reports.sales.missing-invoices');
+        
         Route::get('reports/sales/export-csv', [SalesReportController::class, 'exportCsv'])->name('reports.sales.export-csv');
         Route::get('reports/sales/export-pdf', [SalesReportController::class, 'exportPdf'])->name('reports.sales.export-pdf');
         Route::get('reports/sales/chart-data', [SalesReportController::class, 'getChartData'])->name('reports.sales.chart-data');

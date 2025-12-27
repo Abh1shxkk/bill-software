@@ -17,9 +17,9 @@
     .summary-section { background: #ffcccc; padding: 5px 10px; }
     .footer-section { background: #ffe4b5; padding: 8px; }
     .row-selected { background-color: #d4edff !important; border: 2px solid #007bff !important; }
+    .row-selected td { background-color: #d4edff !important; }
     .row-complete { background-color: #d4edda !important; }
-    .batch-modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1050; }
-    .batch-modal-backdrop.show { display: block; }
+    .row-h-modal-backdrop.show { display: block; }
     .batch-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 800px; z-index: 1055; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); }
     .batch-modal.show { display: block; }
     .modal-header-custom { padding: 1rem; background: #17a2b8; color: white; display: flex; justify-content: space-between; align-items: center; }

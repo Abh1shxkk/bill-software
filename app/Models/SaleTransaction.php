@@ -84,7 +84,7 @@ class SaleTransaction extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by', 'user_id');
     }
 
     /**
@@ -92,6 +92,6 @@ class SaleTransaction extends Model
      */
     public function updater()
     {
-        return $this->belongsTo(User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by', 'user_id');
     }
 }

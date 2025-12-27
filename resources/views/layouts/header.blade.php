@@ -394,15 +394,18 @@
           <ul class="dropdown-menu">
             <!-- Sales Reports -->
             <li class="dropdown-submenu">
-              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sale</a>
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sales Reports</a>
               <ul class="dropdown-menu">
-                <!-- Sales Book Submenu -->
+                <!-- Sales Book Submenu - Level 3 -->
                 <li class="dropdown-submenu">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sales Book</a>
                   <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book') }}">Date Wise</a></li>
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book') }}?group=series">Series Wise</a></li>
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book') }}?group=salesman">Salesman Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book') }}">Sale Book</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book-gstr') }}">Sale Book GSTR</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book-extra-charges') }}">Sale Book Extra Charges</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book-tcs') }}">Sale Book With TCS</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.tcs-eligibility') }}">TCS Eligible Customers/Suppliers</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.tds-input') }}">TDS INPUT</a></li>
                   </ul>
                 </li>
                 <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sales-book-party-wise') }}">Sale Book Party Wise</a></li>
@@ -425,12 +428,219 @@
                 <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-visit-status') }}">Customer Visit Status</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.reports.sales.shortage-report') }}">Shortage Report</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.reports.sales.sale-return-list') }}">Sale Return List</a></li>
+                <!-- Miscellaneous Sales Analysis -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Miscellaneous Sales Analysis</a>
+                  <ul class="dropdown-menu">
+                    <!-- Sales Man Wise Sales Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sales Man Wise Sales</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.all-salesman') }}">All Sales Man</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.bill-wise') }}">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.customer-wise') }}">Customer Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.item-wise') }}">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.company-wise') }}">Company Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.area-wise') }}">Area Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.route-wise') }}">Route Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.state-wise') }}">State Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.item-invoice-wise') }}">Item - Invoice Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.invoice-item-wise') }}">Invoice - Item Wise</a></li>
+                        <!-- Month Wise Submenu -->
+                        <li class="dropdown-submenu">
+                          <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Month Wise</a>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.month-wise-summary') }}">Month Wise Summary</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.salesman-wise') }}">Salesman Wise</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.salesman-item-wise') }}">Salesman / Item Wise</a></li>
+                          </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.sale-book') }}">Sale Book</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-wise-sales.monthly-target') }}">Monthly Target</a></li>
+                      </ul>
+                    </li>
+                    <!-- Area Wise Sale Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Area Wise Sale</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.all-area') }}">All Area</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.bill-wise') }}">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.customer-wise') }}">Customer Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.item-wise') }}">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.company-wise') }}">Company Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.salesman-wise') }}">Sales Man Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.route-wise') }}">Route Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.state-wise') }}">State Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.item-invoice-wise') }}">Item - Invoice Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.invoice-item-wise') }}">Invoice - Item Wise</a></li>
+                        <!-- Month Wise Submenu -->
+                        <li class="dropdown-submenu">
+                          <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Month Wise</a>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.month-wise.area-wise') }}">Area Wise</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.month-wise.area-item-wise') }}">Area Item Wise</a></li>
+                          </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.area-wise-sales.sale-book') }}">Sale Book</a></li>
+                      </ul>
+                    </li>
+                    <!-- Route Wise Sale Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Route Wise Sale</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.all-route') }}">All Route</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.bill-wise') }}">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.customer-wise') }}">Customer Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.item-wise') }}">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.company-wise') }}">Company Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.salesman-wise') }}">Sales Man Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.area-wise') }}">Area Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.state-wise') }}">State Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.item-invoice-wise') }}">Item - Invoice Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.invoice-item-wise') }}">Invoice - Item Wise</a></li>
+                        <!-- Month Wise Submenu -->
+                        <li class="dropdown-submenu">
+                          <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Month Wise</a>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.month-wise.route-wise') }}">Route Wise</a></li>
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.month-wise.route-item-wise') }}">Route / Item Wise</a></li>
+                          </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.route-wise-sale.sale-book') }}">Sale Book</a></li>
+                      </ul>
+                    </li>
+                    <!-- State Wise Sale Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">State Wise Sale</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=all">All State</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=bill_wise">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=customer_wise">Customer Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=item_wise">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=company_wise">Company Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=salesman_wise">Sales Man Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=area_wise">Area Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=route_wise">Route Wise</a></li>
+                        <li><a class="dropdown-item disabled" href="#">Item - Invoice Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=invoice_item_wise">Invoice - Item Wsie</a></li>
+                        <!-- Month Wise Submenu -->
+                        <li class="dropdown-submenu">
+                          <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Month Wise</a>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.state-wise-sale') }}?report_type=month_wise">Month Wise Summary</a></li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <!-- Customer Wise Sale Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Customer Wise Sale</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=all">All Customer</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=bill_wise">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=item_wise">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=company_wise">Company Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=item_invoice_wise">Item  - Invoice Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=invoice_item_wise">Invoice - Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=quantity_wise_summary">Quantity wise Summary</a></li>
+                        <!-- Month Wise Submenu -->
+                        <li class="dropdown-submenu">
+                          <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Month Wise</a>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=month_wise">Month Wise Summary</a></li>
+                          </ul>
+                        </li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=party_billwise_volume_discount">Party BillWise Volume Discount</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.customer-wise-sale') }}?report_type=sale_with_area">Sale With Area</a></li>
+                      </ul>
+                    </li>
+                    <!-- Company Wise Sales Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Company Wise Sales</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=all">All Company</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=bill_wise">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=item_wise">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=salesman_wise">Sales Man Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=area_wise">Area Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=route_wise">Route Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=customer_wise">Customer Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=customer_item_invoice_wise">Customer - Item Invoice Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=customer_item_wise">Customer - Item Wise</a></li>
+                        <!-- Month Wise Submenu -->
+                        <li class="dropdown-submenu">
+                          <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Month Wise</a>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ route('admin.reports.sales.company-wise-sales') }}?report_type=month_wise">Month Wise Summary</a></li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <!-- Item Wise Sales Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Item Wise Sales</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=all">All Item Sale</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=all_summary">All Item Summary</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=bill_wise">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=salesman_wise">Sales Man Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=area_wise">Area Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=area_wise_matrix">Area Wise (Matrix)</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=route_wise">Route Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=state_wise">State Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=customer_wise">Customer Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.item-wise-sales') }}?report_type=below_cost_item_sale">Below Cost Item Sale</a></li>
+                      </ul>
+                    </li>
+                    <!-- Discount Wise Sales Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Discount Wise Sales</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.discount-wise-sales') }}?report_type=all">All Discount</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.discount-wise-sales') }}?report_type=item_wise">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.discount-wise-sales') }}?report_type=item_invoice_wise">Item Wise - Invoice Wise</a></li>
+                      </ul>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <!-- Sales Man and other Level Sale -->
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.salesman-level-sale') }}">Sales Man and other Level Sale</a></li>
+                    <!-- Scheme Issued Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Scheme Issued</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.scheme-issued') }}?report_type=free_scheme">Free Scheme Issued</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.scheme-issued') }}?report_type=half_scheme">Half Scheme Issued</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.scheme-issued') }}?report_type=item_wise_less">Item Wise Less</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.scheme-issued') }}?report_type=free_issues_without_qty">Free Issues WithOut Qty.</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.sales.scheme-issued') }}?report_type=invalid_free_scheme">Invalid Free Scheme Issued</a></li>
+                      </ul>
+                    </li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.mrp-wise-sales') }}">MRP Wise Sales</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.display-amount-report') }}">Display Amount Report</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.cancelled-invoices') }}">List of Cancelled Invoices</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.missing-invoices') }}">List of Missing Invoices</a></li>
+                  </ul>
+                </li>
+                <!-- Other Reports - Empty for now, will add later -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Other Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item text-muted" href="#">Coming Soon...</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
 
             <!-- Purchase Reports -->
-            <li>
-              <a class="dropdown-item" href="{{ route('admin.reports.purchase') }}">Purchase Reports</a>
+            <li class="dropdown-submenu">
+              <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Purchase Reports</a>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase') }}">Purchase Book</a></li>
+                <li><a class="dropdown-item" href="#">Purchase Book Party Wise</a></li>
+                <li><a class="dropdown-item" href="#">Purchase Summary</a></li>
+                <li><a class="dropdown-item" href="#">Purchase Return List</a></li>
+              </ul>
             </li>
 
             <!-- Inventory Reports -->
