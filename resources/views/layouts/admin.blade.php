@@ -1127,7 +1127,7 @@
         <aside class="sidebar p-3 position-relative">
             <div class="sidebar-header">
                 <div class="brand d-flex align-items-center">
-                    <img src="{{ asset('images/m-logo-01.svg') }}" alt="Medi BillSuite" style="height: 32px;" class="sidebar-logo">
+                    <img src="{{ asset('https://res.cloudinary.com/dz8p5iadt/image/upload/v1766408873/m-logo-01_hdqtci.svg') }}" alt="Medi BillSuite" style="height: 32px;" class="sidebar-logo">
                     <span class="label ms-2">Medi-BillSuite</span>
                 </div>
             </div>

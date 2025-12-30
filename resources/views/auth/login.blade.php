@@ -401,7 +401,7 @@
         <div class="auth-form-side">
             <div class="form-content">
                 <div class="logo-area">
-                    <img src="{{ asset('images/m-white-logo-01.svg') }}" alt="Medi BillSuite" style="height: 40px;">
+                    <img src="{{ asset('https://res.cloudinary.com/dz8p5iadt/image/upload/v1766408874/m-white-logo-01_mxmf6y.svg') }}" alt="Medi BillSuite" style="height: 40px;">
                     <span class="logo-text">Medi-BillSuite</span>
                 </div>
 
