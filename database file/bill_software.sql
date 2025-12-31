@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 18, 2025 at 11:11 AM
+-- Generation Time: Dec 31, 2025 at 11:00 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,7 +18,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `billsoftware_db`
+-- Database: `bill_software`
 --
 
 -- --------------------------------------------------------
@@ -91,6 +91,27 @@ INSERT INTO `area_managers` (`id`, `code`, `name`, `email`, `mobile`, `address`,
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `bank_transactions`
+--
+
+CREATE TABLE `bank_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `transaction_date` date NOT NULL,
+  `transaction_no` int(11) NOT NULL,
+  `transaction_type` varchar(1) NOT NULL DEFAULT 'D',
+  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `cheque_no` varchar(50) DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `narration` text DEFAULT NULL,
+  `status` varchar(20) NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `batches`
 --
 
@@ -152,21 +173,21 @@ INSERT INTO `batches` (`id`, `purchase_transaction_id`, `purchase_transaction_it
 (17, 72, 155, 29, '29', 'bisolong', 'abhi1', 'N', '2025-11-28', NULL, 7.00, 0.00, 7.00, 210.00, 200.00, 210.00, 170.00, 180.00, NULL, 'Y', 0.00, 0.000, 0.00, 1260.00, 6.000, 6.000, 0.000, 75.60, 75.60, 0.00, 151.20, 24.00, 1411.20, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-08 07:40:43', '2025-11-25 02:47:31'),
 (18, 73, 156, 29, '29', 'bisolong', 'abhi23', 'N', '2028-11-01', NULL, 16.00, 0.00, 16.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 3360.00, 6.000, 6.000, 0.000, 75.60, 75.60, 0.00, 151.20, 24.00, 1411.20, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-08 07:41:14', '2025-12-13 03:54:25'),
 (19, 74, 157, 29, '29', 'bisolong', 'abhi654', 'N', '2025-11-28', NULL, 8.00, 0.00, 8.00, 210.00, 200.00, 210.00, 170.00, 180.00, NULL, 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 100.80, 100.80, 0.00, 201.60, 24.00, 1881.60, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-08 07:42:19', '2025-11-25 00:58:45'),
-(20, 75, 158, 30, '30', 'ABAXIS-5 MG TAB.', 'batch2', 'N', '2025-11-01', NULL, 90.00, 0.00, 55.00, 160.00, 190.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 9280.00, 6.000, 6.000, 0.000, 960.00, 960.00, 0.00, 1920.00, 22.80, 17920.00, 160.00, 179.20, 160.00, 30.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-10 01:48:34', '2025-11-17 02:24:26'),
+(20, 75, 158, 30, '30', 'ABAXIS-5 MG TAB.', 'batch2', 'N', '2025-11-01', NULL, 48.00, 0.00, 55.00, 160.00, 190.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 9280.00, 6.000, 6.000, 0.000, 960.00, 960.00, 0.00, 1920.00, 22.80, 17920.00, 160.00, 179.20, 160.00, 30.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-10 01:48:34', '2025-12-05 06:05:24'),
 (21, 76, 159, 31, '31', 'ACAMPTAS-333 MG TAB.', 'batch243', 'N', '2025-11-28', NULL, 40.00, 0.00, 40.00, 120.00, 120.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 6000.00, 6.000, 6.000, 0.000, 360.00, 360.00, 0.00, 720.00, 14.40, 6720.00, 120.00, 134.40, 120.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 01:54:45', '2025-11-17 01:57:59'),
-(22, 77, 160, 29, '29', 'bisolong', 'batch7645', 'N', '2025-11-01', NULL, 8.00, 0.00, 8.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 378.00, 378.00, 0.00, 756.00, 24.00, 7056.00, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 02:03:15', '2025-12-03 02:48:49'),
+(22, 77, 160, 29, '29', 'bisolong', 'batch7645', 'N', '2025-11-01', NULL, 8.00, 0.00, 8.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 378.00, 378.00, 0.00, 756.00, 24.00, 7056.00, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 02:03:15', '2025-12-30 02:58:30'),
 (23, 78, 161, 32, '32', 'ALLERCET-AX TAB.', 'batch9534', 'N', '2025-11-01', NULL, 18.00, 0.00, 18.00, 37.23, 41.14, 53.44, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 670.14, 6.000, 6.000, 0.000, 44.68, 44.68, 0.00, 89.36, 4.94, 833.96, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 02:06:29', '2025-12-03 02:47:27'),
-(24, 79, 162, 29, '29', 'bisolong', 'raviagency1', 'N', '2025-11-01', NULL, 6.00, 0.00, 6.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1260.00, 6.000, 6.000, 0.000, 100.80, 100.80, 0.00, 201.60, 24.00, 1881.60, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 02:27:35', '2025-12-03 02:49:28'),
+(24, 79, 162, 29, '29', 'bisolong', 'raviagency1', 'N', '2025-11-01', NULL, 3.00, 0.00, 5.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1260.00, 6.000, 6.000, 0.000, 100.80, 100.80, 0.00, 201.60, 24.00, 1881.60, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 02:27:35', '2025-12-22 12:29:32'),
 (25, 80, 163, 29, '29', 'bisolong', 'xdfxdf3434', 'N', NULL, NULL, 6.00, 0.00, 6.00, 210.00, 200.00, 210.00, 170.00, 180.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1260.00, 6.000, 6.000, 0.000, 151.20, 151.20, 0.00, 302.40, 24.00, 2822.40, 210.00, 235.20, 210.00, -10.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-10 06:45:59', '2025-12-13 05:14:45'),
-(41, 82, 179, 31, '31', 'ACAMPTAS-333 MG TAB.', '12NOV', 'N', '2025-11-01', NULL, 7.00, 0.00, 8.00, 120.00, 0.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 960.00, 6.000, 6.000, 0.000, 57.60, 57.60, 0.00, 115.20, 0.00, 1075.20, 120.00, 134.40, 120.00, -120.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-12 07:49:58', '2025-12-05 06:05:24'),
+(41, 82, 179, 31, '31', 'ACAMPTAS-333 MG TAB.', '12NOV', 'N', '2025-11-01', NULL, 6.00, 0.00, 8.00, 120.00, 0.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 960.00, 6.000, 6.000, 0.000, 57.60, 57.60, 0.00, 115.20, 0.00, 1075.20, 120.00, 134.40, 120.00, -120.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-12 07:49:58', '2025-12-30 02:12:27'),
 (42, 83, 180, 31, '31', 'ACAMPTAS-333 MG TAB.', 'ABCD34', 'N', '2025-11-01', NULL, 7.00, 0.00, 7.00, 120.00, 170.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 840.00, 6.000, 6.000, 0.000, 50.40, 50.40, 0.00, 100.80, 20.40, 940.80, 120.00, 134.40, 120.00, 50.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-12 07:59:42', '2025-12-03 01:38:26'),
 (43, 84, 181, 30, '30', 'ABAXIS-5 MG TAB.', 'cbfgd33', 'N', '2025-11-28', NULL, 8.00, 0.00, 8.00, 160.00, 120.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1600.00, 6.000, 6.000, 0.000, 96.00, 96.00, 0.00, 192.00, 14.40, 1792.00, 160.00, 179.20, 160.00, -40.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-13 02:14:58', '2025-11-17 07:11:28'),
-(44, 85, 182, 18, '18', 'intas', 'fgdxcvfg34', 'N', '2025-11-28', NULL, 6.00, 0.00, 8.00, 120.00, 105.00, 110.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1200.00, 6.000, 6.000, 0.000, 72.00, 72.00, 0.00, 144.00, 12.60, 1344.00, 120.00, 134.40, 120.00, -15.00, '1', '1*10', 'ITC Limited', NULL, 'active', 0, NULL, NULL, '2025-11-13 02:15:49', '2025-12-16 08:02:52'),
+(44, 85, 182, 18, '18', 'intas', 'fgdxcvfg34', 'N', '2025-11-28', NULL, 4.00, 0.00, 8.00, 120.00, 105.00, 110.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1200.00, 6.000, 6.000, 0.000, 72.00, 72.00, 0.00, 144.00, 12.60, 1344.00, 120.00, 134.40, 120.00, -15.00, '1', '1*10', 'ITC Limited', NULL, 'active', 0, NULL, NULL, '2025-11-13 02:15:49', '2025-12-17 05:14:50'),
 (45, 86, 183, 31, '31', 'ACAMPTAS-333 MG TAB.', 'ABCD34', 'N', '2025-11-28', NULL, 5.00, 0.00, 5.00, 120.00, 170.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 600.00, 6.000, 6.000, 0.000, 36.00, 36.00, 0.00, 72.00, 20.40, 672.00, 120.00, 134.40, 120.00, 50.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-13 02:22:11', '2025-11-13 02:22:11'),
-(50, 81, 188, 32, '32', 'ALLERCET-AX TAB.', 'fgbdfg45', 'N', NULL, NULL, 16.00, 0.00, 14.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 744.60, 6.000, 6.000, 0.000, 44.68, 44.68, 0.00, 89.36, 4.94, 833.96, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-13 03:56:15', '2025-11-17 01:13:49'),
+(50, 81, 188, 32, '32', 'ALLERCET-AX TAB.', 'fgbdfg45', 'N', NULL, NULL, 14.00, 0.00, 14.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 744.60, 6.000, 6.000, 0.000, 44.68, 44.68, 0.00, 89.36, 4.94, 833.96, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-13 03:56:15', '2025-11-20 03:49:41'),
 (51, 88, 189, 30, '30', 'ABAXIS-5 MG TAB.', 'nvghgfhf76', 'N', '2025-11-28', NULL, 10.00, 0.00, 10.00, 160.00, 120.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1600.00, 6.000, 6.000, 0.000, 96.00, 96.00, 0.00, 192.00, 14.40, 1792.00, 160.00, 179.20, 160.00, -40.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-11-13 08:04:39', '2025-11-13 08:04:39'),
-(52, 89, 190, 29, '29', 'bisolong', 'abhi65353', 'N', '2025-11-01', NULL, 7.00, 0.00, 10.00, 210.00, 170.00, 210.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 126.00, 126.00, 0.00, 252.00, 20.40, 2352.00, 210.00, 235.20, 210.00, -40.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-14 04:24:05', '2025-12-16 02:00:02'),
-(53, 90, 191, 32, '32', 'ALLERCET-AX TAB.', 'fgbdfg456', 'N', '2025-11-28', NULL, 15.00, 0.00, 15.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 335.07, 6.000, 6.000, 0.000, 20.10, 20.10, 0.00, 40.20, 4.94, 375.27, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-14 04:28:19', '2025-11-20 05:58:15'),
+(52, 89, 190, 29, '29', 'bisolong', 'abhi65353', 'N', '2025-11-01', NULL, 7.00, 0.00, 10.00, 210.00, 170.00, 210.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 1680.00, 6.000, 6.000, 0.000, 126.00, 126.00, 0.00, 252.00, 20.40, 2352.00, 210.00, 235.20, 210.00, -40.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-14 04:24:05', '2025-12-30 01:06:21'),
+(53, 90, 191, 32, '32', 'ALLERCET-AX TAB.', 'fgbdfg456', 'N', '2025-11-28', NULL, 4.00, 0.00, 4.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 335.07, 6.000, 6.000, 0.000, 20.10, 20.10, 0.00, 40.20, 4.94, 375.27, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-14 04:28:19', '2025-12-23 06:30:41'),
 (54, 91, 192, 29, '29', 'bisolong', 'abhi653534', 'N', '2025-11-28', NULL, 7.00, 0.00, 7.00, 210.00, 170.00, 210.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1050.00, 6.000, 6.000, 0.000, 63.00, 63.00, 0.00, 126.00, 20.40, 1176.00, 210.00, 235.20, 210.00, -40.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-14 06:16:24', '2025-11-20 03:54:01'),
 (55, 92, 193, 29, '29', 'bisolong', 'abhi15nov', 'N', '2025-11-28', NULL, 0.00, 0.00, 0.00, 210.00, 170.00, 210.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 2100.00, 6.000, 6.000, 0.000, 126.00, 126.00, 0.00, 252.00, 20.40, 2352.00, 210.00, 235.20, 210.00, -40.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-15 01:02:02', '2025-11-15 01:03:32'),
 (56, 93, 194, 29, '29', 'bisolong', 'abhi15nov1', 'N', '2025-11-28', NULL, 0.00, 0.00, 0.00, 210.00, 170.00, 210.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 2100.00, 6.000, 6.000, 0.000, 126.00, 126.00, 0.00, 252.00, 20.40, 2352.00, 210.00, 235.20, 210.00, -40.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-11-15 01:06:08', '2025-11-15 01:06:58'),
@@ -210,11 +231,11 @@ INSERT INTO `batches` (`id`, `purchase_transaction_id`, `purchase_transaction_it
 (94, 105, 209, 29, '29', 'bisolong', 'a24nov32424', 'N', '2028-11-01', NULL, 21.00, 0.00, 21.00, 240.00, 180.00, 250.00, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 5040.00, 6.000, 6.000, 0.000, 288.00, 288.00, 0.00, 576.00, 21.60, 5376.00, 240.00, 268.80, 240.00, -60.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-01 04:13:54', '2025-12-03 02:48:17'),
 (95, 106, 210, 29, '29', 'bisolong', '1dec1', 'N', '2028-11-01', NULL, 10.00, 0.00, 10.00, 240.00, 180.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 2400.00, 6.000, 6.000, 0.000, 144.00, 144.00, 0.00, 288.00, 21.60, 2688.00, 240.00, 268.80, 240.00, -60.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-01 07:42:06', '2025-12-01 07:42:06'),
 (96, 107, 211, 32, '32', 'ALLERCET-AX TAB.', '2dec', 'N', '2028-11-01', NULL, 10.00, 0.00, 10.00, 37.23, 41.14, 53.44, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 372.30, 6.000, 6.000, 0.000, 22.34, 22.34, 0.00, 44.68, 4.94, 416.98, 37.23, 41.70, 37.23, 3.91, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-02 03:21:03', '2025-12-02 03:21:03'),
-(97, 108, 212, 83, '83', 'ACETAMIDE-250 MG TAB.', '3dec', 'N', '2028-11-01', NULL, 8.00, 0.00, 9.00, 29.23, 32.48, 42.63, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 292.30, 2.500, 2.500, 0.000, 7.31, 7.31, 0.00, 14.62, 1.62, 306.92, 29.23, 30.69, 29.23, 3.25, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-02 22:54:57', '2025-12-16 08:07:52'),
-(98, 109, 213, 83, '83', 'ACETAMIDE-250 MG TAB.', '3dec1', 'N', '2028-11-01', NULL, 100.00, 0.00, 100.00, 29.23, 32.48, 42.63, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 2923.00, 2.500, 2.500, 0.000, 73.08, 73.08, 0.00, 146.16, 1.62, 3069.16, 29.23, 30.69, 29.23, 3.25, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-02 22:55:57', '2025-12-03 00:00:08'),
+(97, 108, 212, 83, '83', 'ACETAMIDE-250 MG TAB.', '3dec', 'N', '2028-11-01', NULL, 1.00, 0.00, 9.00, 29.23, 32.48, 42.63, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 292.30, 2.500, 2.500, 0.000, 7.31, 7.31, 0.00, 14.62, 1.62, 306.92, 29.23, 30.69, 29.23, 3.25, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-02 22:54:57', '2025-12-17 05:30:14'),
+(98, 109, 213, 83, '83', 'ACETAMIDE-250 MG TAB.', '3dec1', 'N', '2028-11-01', NULL, 99.00, 0.00, 100.00, 29.23, 32.48, 42.63, 0.00, 0.00, '0+0', 'Y', 0.00, 0.000, 0.00, 2923.00, 2.500, 2.500, 0.000, 73.08, 73.08, 0.00, 146.16, 1.62, 3069.16, 29.23, 30.69, 29.23, 3.25, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-02 22:55:57', '2025-12-23 06:30:54'),
 (99, 110, 214, 83, '83', 'ACETAMIDE-250 MG TAB.', '3dec2', 'N', '2028-11-01', NULL, 10.00, 0.00, 10.00, 29.23, 32.48, 42.63, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 584.60, 2.500, 2.500, 0.000, 14.62, 14.62, 0.00, 29.24, 1.62, 613.84, 29.23, 30.69, 29.23, 3.25, '1', '1*10', 'HDFC Bank Ltd', NULL, 'active', 0, NULL, NULL, '2025-12-03 00:01:59', '2025-12-03 04:55:45'),
 (100, 111, 215, 30, '30', 'ABAXIS-5 MG TAB.', '3dec', 'N', '2028-11-01', NULL, 20.00, 0.00, 20.00, 160.00, 120.00, 250.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 3200.00, 6.000, 6.000, 0.000, 192.00, 192.00, 0.00, 384.00, 14.40, 3584.00, 160.00, 179.20, 160.00, -40.00, '1', '1*10', 'Tata Consultancy Services', NULL, 'active', 0, NULL, NULL, '2025-12-03 01:35:32', '2025-12-03 01:35:32'),
-(102, NULL, NULL, 83, '83', 'ACETAMIDE-250 MG TAB.', '4dec', '4dec', '2028-11-30', NULL, 100.00, 0.00, 100.00, 29.23, 32.48, 42.63, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 2923.00, 2.500, 2.500, 0.000, 73.08, 73.08, 0.00, 146.16, 0.00, 3069.16, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'HDFC', NULL, 'active', 0, NULL, 'Created from Purchase Challan: PC000001', '2025-12-04 00:51:41', '2025-12-04 00:51:41'),
+(102, 117, 223, 83, '83', 'ACETAMIDE-250 MG TAB.', '4dec', '4dec', '2028-11-30', NULL, 101.00, 0.00, 100.00, 29.23, 32.48, 42.63, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 2923.00, 2.500, 2.500, 0.000, 73.08, 73.08, 0.00, 146.16, 0.00, 3069.16, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'HDFC', NULL, 'active', 0, NULL, 'Created from Purchase Challan: PC000001', '2025-12-04 00:51:41', '2025-12-23 06:30:21'),
 (103, NULL, NULL, 83, '83', 'ACETAMIDE-250 MG TAB.', '4dec11', '4dec11', '2028-11-30', NULL, 100.00, 0.00, 100.00, 29.23, 0.00, 0.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1461.50, 2.500, 2.500, 0.000, 36.54, 36.54, 0.00, 73.08, 0.00, 1534.58, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'HDFC', NULL, 'active', 0, NULL, 'Created from Purchase Challan: PC000002', '2025-12-04 02:27:33', '2025-12-04 02:35:25'),
 (104, NULL, NULL, 31, '31', 'ACAMPTAS-333 MG TAB.', '4dec11', '4dec11', '2028-11-30', NULL, 20.00, 0.00, 20.00, 120.00, 0.00, 0.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1200.00, 6.000, 6.000, 0.000, 72.00, 72.00, 0.00, 144.00, 0.00, 1344.00, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'HDFC', NULL, 'active', 0, NULL, 'Created from Purchase Challan: PC000002', '2025-12-04 02:27:33', '2025-12-04 02:35:25'),
 (105, NULL, NULL, 79, '79', 'ACEBOVIR TAB.', '4dec11', '4dec11', '2028-11-30', NULL, 20.00, 0.00, 20.00, 115.85, 0.00, 0.00, 0.00, 0.00, NULL, 'Y', 0.00, 0.000, 0.00, 1158.50, 6.000, 6.000, 0.000, 69.51, 69.51, 0.00, 139.02, 0.00, 1297.52, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'BYJUS', NULL, 'active', 0, NULL, 'Created from Purchase Challan: PC000002', '2025-12-04 02:27:33', '2025-12-04 02:35:25'),
@@ -442,6 +463,306 @@ INSERT INTO `breakage_expiry_transaction_items` (`id`, `breakage_expiry_transact
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `breakage_supplier_issued_transactions`
+--
+
+CREATE TABLE `breakage_supplier_issued_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `trn_no` varchar(50) NOT NULL,
+  `series` varchar(10) NOT NULL DEFAULT 'BSI',
+  `transaction_date` date NOT NULL,
+  `day_name` varchar(20) DEFAULT NULL,
+  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `supplier_name` varchar(255) DEFAULT NULL,
+  `note_type` varchar(1) NOT NULL DEFAULT 'C' COMMENT 'R=Replacement, C=Credit',
+  `tax_flag` varchar(1) NOT NULL DEFAULT 'N',
+  `inc_flag` varchar(1) NOT NULL DEFAULT 'N',
+  `gst_vno` varchar(50) DEFAULT NULL,
+  `dis_count` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `rpl_count` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `brk_count` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `exp_count` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `narration` varchar(500) DEFAULT NULL,
+  `total_nt_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_sc` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_dis_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_scm_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_half_scm` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_tax` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_inv_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_qty` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `cases` decimal(15,2) DEFAULT 0.00,
+  `status` varchar(20) NOT NULL DEFAULT 'completed',
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `breakage_supplier_issued_transactions`
+--
+
+INSERT INTO `breakage_supplier_issued_transactions` (`id`, `trn_no`, `series`, `transaction_date`, `day_name`, `supplier_id`, `supplier_name`, `note_type`, `tax_flag`, `inc_flag`, `gst_vno`, `dis_count`, `rpl_count`, `brk_count`, `exp_count`, `narration`, `total_nt_amt`, `total_sc`, `total_dis_amt`, `total_scm_amt`, `total_half_scm`, `total_tax`, `total_inv_amt`, `total_qty`, `cases`, `status`, `is_deleted`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(1, '1', 'BSI', '2025-12-23', 'Tuesday', 11, 'Mahesh Traders', 'C', 'N', 'N', NULL, 0.00, 0.00, 0.00, 0.00, NULL, 210.00, 0.00, 0.00, 0.00, 0.00, 0.00, 210.00, 0.00, 0.00, 'completed', 0, NULL, NULL, '2025-12-23 03:51:07', '2025-12-23 03:51:07'),
+(2, '2', 'BSI', '2025-12-23', 'Tuesday', 11, 'Mahesh Traders', 'C', 'N', 'N', NULL, 0.00, 0.00, 0.00, 0.00, NULL, 420.00, 0.00, 0.00, 0.00, 0.00, 21.00, 441.00, 0.00, 0.00, 'completed', 0, NULL, NULL, '2025-12-23 04:38:08', '2025-12-23 04:43:35');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `breakage_supplier_issued_transaction_items`
+--
+
+CREATE TABLE `breakage_supplier_issued_transaction_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED NOT NULL,
+  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
+  `batch_no` varchar(100) DEFAULT NULL,
+  `expiry` varchar(20) DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `qty` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `free_qty` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `dis_percent` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `scm_percent` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `br_ex_type` varchar(20) NOT NULL DEFAULT 'BREAKAGE' COMMENT 'BREAKAGE or EXPIRY',
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `nt_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `dis_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `scm_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `half_scm` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tax_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `packing` varchar(50) DEFAULT NULL,
+  `unit` varchar(20) DEFAULT NULL,
+  `company_name` varchar(100) DEFAULT NULL,
+  `mrp` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `p_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `s_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `hsn_code` varchar(20) DEFAULT NULL,
+  `cgst_percent` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `sgst_percent` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `cgst_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sgst_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sc_percent` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `tax_percent` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `row_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `breakage_supplier_issued_transaction_items`
+--
+
+INSERT INTO `breakage_supplier_issued_transaction_items` (`id`, `transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `expiry_date`, `qty`, `free_qty`, `rate`, `dis_percent`, `scm_percent`, `br_ex_type`, `amount`, `nt_amt`, `dis_amt`, `scm_amt`, `half_scm`, `tax_amt`, `net_amt`, `packing`, `unit`, `company_name`, `mrp`, `p_rate`, `s_rate`, `hsn_code`, `cgst_percent`, `sgst_percent`, `cgst_amt`, `sgst_amt`, `sc_percent`, `tax_percent`, `row_order`, `created_at`, `updated_at`) VALUES
+(1, 1, 29, 22, 'bisolong', 'bisolong', 'batch7645', '11/25', '2025-11-25', 1.00, 0.00, 210.00, 0.00, 0.00, 'BREAKAGE', 210.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '1*10', '1', 'HDFC', 210.00, 0.00, 0.00, '29339900', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 1, '2025-12-23 03:51:07', '2025-12-23 03:51:07'),
+(3, 2, 29, 17, 'bisolong', 'bisolong', 'abhi1', '11/25', '2025-11-25', 2.00, 0.00, 210.00, 0.00, 0.00, 'EXPIRY', 420.00, 420.00, 0.00, 0.00, 0.00, 21.00, 420.00, '1*10', '1', 'HDFC', 210.00, 210.00, 200.00, '29339900', 2.50, 2.50, 10.50, 10.50, 0.00, 5.00, 1, '2025-12-23 04:43:35', '2025-12-23 04:43:35');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `breakage_supplier_received_adjustments`
+--
+
+CREATE TABLE `breakage_supplier_received_adjustments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `received_transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `purchase_transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `adjusted_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `breakage_supplier_received_adjustments`
+--
+
+INSERT INTO `breakage_supplier_received_adjustments` (`id`, `received_transaction_id`, `purchase_transaction_id`, `adjusted_amount`, `created_at`, `updated_at`) VALUES
+(1, 2, 112, 560.00, '2025-12-23 07:22:32', '2025-12-23 07:22:32');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `breakage_supplier_received_transactions`
+--
+
+CREATE TABLE `breakage_supplier_received_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `trn_no` varchar(255) NOT NULL,
+  `series` varchar(255) DEFAULT NULL,
+  `transaction_date` date NOT NULL,
+  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `supplier_name` varchar(255) DEFAULT NULL,
+  `party_trn_no` varchar(255) DEFAULT NULL,
+  `party_date` date DEFAULT NULL,
+  `claim_transaction_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `claim_flag` char(1) NOT NULL DEFAULT 'N',
+  `received_as_debit_note` tinyint(1) NOT NULL DEFAULT 0,
+  `claim_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `narration` text DEFAULT NULL,
+  `note_type` enum('C','R') NOT NULL DEFAULT 'C' COMMENT 'C=Credit, R=Replace',
+  `tax_flag` char(1) NOT NULL DEFAULT 'N',
+  `inc_flag` char(1) NOT NULL DEFAULT 'N',
+  `gst_vno` varchar(255) DEFAULT NULL,
+  `dis_count` int(11) NOT NULL DEFAULT 0,
+  `rpl_count` int(11) NOT NULL DEFAULT 0,
+  `brk_count` int(11) NOT NULL DEFAULT 0,
+  `exp_count` int(11) NOT NULL DEFAULT 0,
+  `total_nt_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_sc` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_dis_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_scm_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_half_scm` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_tax` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_inv_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `gross_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_gst` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `net_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `round_off` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `final_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `remarks` text DEFAULT NULL,
+  `is_deleted` tinyint(1) NOT NULL DEFAULT 0,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `breakage_supplier_received_transactions`
+--
+
+INSERT INTO `breakage_supplier_received_transactions` (`id`, `trn_no`, `series`, `transaction_date`, `supplier_id`, `supplier_name`, `party_trn_no`, `party_date`, `claim_transaction_id`, `claim_flag`, `received_as_debit_note`, `claim_amount`, `narration`, `note_type`, `tax_flag`, `inc_flag`, `gst_vno`, `dis_count`, `rpl_count`, `brk_count`, `exp_count`, `total_nt_amt`, `total_sc`, `total_dis_amt`, `total_scm_amt`, `total_half_scm`, `total_tax`, `total_inv_amt`, `gross_amt`, `total_gst`, `net_amt`, `round_off`, `final_amount`, `remarks`, `is_deleted`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(2, '1', 'BSR', '2025-12-23', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 0, 0.00, NULL, 'C', 'N', 'N', NULL, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 500.00, 60.00, 560.00, 0.00, 560.00, NULL, 0, NULL, NULL, '2025-12-23 07:22:32', '2025-12-23 07:22:32', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `breakage_supplier_received_transaction_items`
+--
+
+CREATE TABLE `breakage_supplier_received_transaction_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(255) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
+  `batch_no` varchar(255) DEFAULT NULL,
+  `expiry_date` varchar(255) DEFAULT NULL,
+  `qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `free_qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `rate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `dis_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `scm_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `br_ex` enum('B','E') NOT NULL DEFAULT 'B' COMMENT 'B=Breakage, E=Expiry',
+  `amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `mrp` decimal(10,2) DEFAULT NULL,
+  `purchase_rate` decimal(10,2) DEFAULT NULL,
+  `sale_rate` decimal(10,2) DEFAULT NULL,
+  `cgst` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `sgst` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `gst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `igst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `gst_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `company_name` varchar(255) DEFAULT NULL,
+  `packing` varchar(255) DEFAULT NULL,
+  `unit` varchar(255) DEFAULT NULL,
+  `hsn_code` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `breakage_supplier_received_transaction_items`
+--
+
+INSERT INTO `breakage_supplier_received_transaction_items` (`id`, `transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry_date`, `qty`, `free_qty`, `rate`, `dis_percent`, `scm_percent`, `br_ex`, `amount`, `mrp`, `purchase_rate`, `sale_rate`, `cgst`, `sgst`, `gst_percent`, `igst_percent`, `gst_amount`, `company_name`, `packing`, `unit`, `hsn_code`, `created_at`, `updated_at`) VALUES
+(3, 2, NULL, NULL, NULL, NULL, NULL, NULL, 1.00, 0.00, 0.00, 0.00, 0.00, 'B', 500.00, NULL, NULL, NULL, 0.00, 0.00, 12.00, 0.00, 60.00, NULL, NULL, NULL, '21061000', '2025-12-23 07:39:47', '2025-12-23 07:39:47');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `breakage_supplier_unused_dump_transactions`
+--
+
+CREATE TABLE `breakage_supplier_unused_dump_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `trn_no` varchar(255) NOT NULL,
+  `transaction_date` date NOT NULL,
+  `narration` text DEFAULT NULL,
+  `total_nt_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_sc` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_dis_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_scm_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_half_scm` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_tax` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `total_inv_amt` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `created_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `breakage_supplier_unused_dump_transactions`
+--
+
+INSERT INTO `breakage_supplier_unused_dump_transactions` (`id`, `trn_no`, `transaction_date`, `narration`, `total_nt_amt`, `total_sc`, `total_dis_amt`, `total_scm_amt`, `total_half_scm`, `total_tax`, `total_inv_amt`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'UDUMP-000001', '2025-12-23', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 105.00, 2205.00, 1, 1, '2025-12-23 05:50:23', '2025-12-23 05:50:59', NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `breakage_supplier_unused_dump_transaction_items`
+--
+
+CREATE TABLE `breakage_supplier_unused_dump_transaction_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED NOT NULL,
+  `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `item_code` varchar(255) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
+  `batch_no` varchar(255) DEFAULT NULL,
+  `expiry_date` varchar(255) DEFAULT NULL,
+  `qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `free_qty` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `rate` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `dis_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `scm_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `br_ex` enum('B','E') NOT NULL DEFAULT 'B' COMMENT 'B=Breakage, E=Expiry',
+  `amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `mrp` decimal(10,2) DEFAULT NULL,
+  `purchase_rate` decimal(10,2) DEFAULT NULL,
+  `sale_rate` decimal(10,2) DEFAULT NULL,
+  `cgst` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `sgst` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `company_name` varchar(255) DEFAULT NULL,
+  `packing` varchar(255) DEFAULT NULL,
+  `unit` varchar(255) DEFAULT NULL,
+  `hsn_code` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `breakage_supplier_unused_dump_transaction_items`
+--
+
+INSERT INTO `breakage_supplier_unused_dump_transaction_items` (`id`, `transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry_date`, `qty`, `free_qty`, `rate`, `dis_percent`, `scm_percent`, `br_ex`, `amount`, `mrp`, `purchase_rate`, `sale_rate`, `cgst`, `sgst`, `company_name`, `packing`, `unit`, `hsn_code`, `created_at`, `updated_at`) VALUES
+(2, 1, 29, 22, 'bisolong', 'bisolong', 'batch7645', '11/25', 10.00, 0.00, 210.00, 0.00, 0.00, 'B', 2100.00, 210.00, 210.00, 200.00, 2.50, 2.50, 'HDFC', '1*10', '1', '29339900', '2025-12-23 05:50:59', '2025-12-23 05:50:59');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `cache`
 --
 
@@ -577,6 +898,46 @@ INSERT INTO `cash_bank_books` (`id`, `name`, `transaction_date`, `transaction_ty
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `cheque_returns`
+--
+
+CREATE TABLE `cheque_returns` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `customer_receipt_item_id` bigint(20) UNSIGNED NOT NULL,
+  `customer_receipt_id` bigint(20) UNSIGNED NOT NULL,
+  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `customer_code` varchar(20) DEFAULT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `cheque_no` varchar(50) DEFAULT NULL,
+  `cheque_date` date DEFAULT NULL,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `bank_area` varchar(255) DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `bank_charges` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `trn_no` int(11) DEFAULT NULL,
+  `receipt_date` date DEFAULT NULL,
+  `deposit_date` date DEFAULT NULL,
+  `status` enum('pending','returned','cancelled') NOT NULL DEFAULT 'pending',
+  `return_date` date DEFAULT NULL,
+  `status_date` date DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cheque_returns`
+--
+
+INSERT INTO `cheque_returns` (`id`, `customer_receipt_item_id`, `customer_receipt_id`, `customer_id`, `customer_code`, `customer_name`, `cheque_no`, `cheque_date`, `bank_name`, `bank_area`, `amount`, `bank_charges`, `trn_no`, `receipt_date`, `deposit_date`, `status`, `return_date`, `status_date`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, 9, 7, 2, 'dgffg', 'Mahesh Traders', '45', '2025-12-18', 'BANK_001', 'meerut', 100.00, 0.00, 7, '2025-12-18', NULL, 'returned', '2025-12-18', '2025-12-18', NULL, '2025-12-18 07:58:23', '2025-12-18 07:58:23'),
+(2, 10, 8, 2, 'dgffg', 'Mahesh Traders', '565656', '2025-12-19', 'BANK_001', 'meerut', 100.00, 0.00, 8, '2025-12-19', NULL, 'cancelled', '2025-12-19', '2025-12-19', NULL, '2025-12-18 23:05:56', '2025-12-18 23:06:13'),
+(5, 13, 9, 2, 'dgffg', 'Mahesh Traders', '44456456', '2025-12-19', 'BANK_001', 'meerut', 100.00, 0.00, 9, '2025-12-19', NULL, 'cancelled', '2025-12-19', '2025-12-19', NULL, '2025-12-18 23:28:03', '2025-12-18 23:29:10'),
+(6, 12, 6, 2, 'dgffg', 'Mahesh Traders', 'gjgyj', '2025-12-18', 'BANK_001', 'meerut', 100.00, 0.00, 6, '2025-12-18', NULL, 'cancelled', '2025-12-29', '2025-12-29', NULL, '2025-12-29 01:31:38', '2025-12-29 01:33:12');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `claim_to_supplier_transactions`
 --
 
@@ -605,6 +966,7 @@ CREATE TABLE `claim_to_supplier_transactions` (
   `scm_percent` decimal(8,3) NOT NULL DEFAULT 0.000,
   `tax_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `net_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `balance_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `tcs_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `dis1_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `status` varchar(20) NOT NULL DEFAULT 'active',
@@ -614,6 +976,15 @@ CREATE TABLE `claim_to_supplier_transactions` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `claim_to_supplier_transactions`
+--
+
+INSERT INTO `claim_to_supplier_transactions` (`id`, `claim_no`, `series`, `claim_date`, `supplier_id`, `supplier_name`, `invoice_no`, `invoice_date`, `gst_vno`, `tax_flag`, `narration`, `blank_statement`, `rate_type`, `filter_from_date`, `filter_to_date`, `company_code`, `division`, `nt_amount`, `sc_amount`, `dis_amount`, `scm_amount`, `scm_percent`, `tax_amount`, `net_amount`, `balance_amount`, `tcs_amount`, `dis1_amount`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`, `deleted_at`) VALUES
+(1, 'CTS0001', 'CTS', '2025-12-18', 19, 'Delta Agencies', NULL, '2025-12-18', NULL, 'Y', NULL, 'Y', 'R', '2025-12-18', '2025-12-18', NULL, '00', 1000.00, 0.00, 0.00, 0.00, 0.000, 46.00, 920.00, 920.00, 0.00, 0.00, 'active', 1, NULL, '2025-12-18 02:20:00', '2025-12-18 02:20:00', NULL),
+(2, 'CTS0002', 'CTS', '2025-12-23', 19, 'Delta Agencies', NULL, NULL, NULL, 'Y', NULL, 'Y', 'R', '2025-12-23', '2025-12-23', NULL, '00', 1000.00, 0.00, 0.00, 0.00, 0.000, 50.00, 1000.00, 1000.00, 0.00, 0.00, 'active', 1, NULL, '2025-12-23 06:50:18', '2025-12-23 06:50:18', NULL),
+(3, 'CTS0003', 'CTS', '2025-12-30', 19, 'Delta Agencies', NULL, NULL, NULL, 'Y', NULL, 'Y', 'R', '2025-12-30', '2025-12-30', NULL, '00', 100.00, 0.00, 0.00, 0.00, 0.000, 12.00, 100.00, 0.00, 0.00, 0.00, 'active', 1, NULL, '2025-12-30 04:50:46', '2025-12-30 04:50:46', NULL);
 
 -- --------------------------------------------------------
 
@@ -656,6 +1027,16 @@ CREATE TABLE `claim_to_supplier_transaction_items` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `claim_to_supplier_transaction_items`
+--
+
+INSERT INTO `claim_to_supplier_transaction_items` (`id`, `claim_to_supplier_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry_date`, `qty`, `free_qty`, `pur_rate`, `dis_percent`, `ft_rate`, `ft_amount`, `mrp`, `ws_rate`, `s_rate`, `spl_rate`, `cgst_percent`, `sgst_percent`, `cess_percent`, `cgst_amount`, `sgst_amount`, `cess_amount`, `tax_amount`, `net_amount`, `hsn_code`, `packing`, `unit`, `company_name`, `row_order`, `created_at`, `updated_at`) VALUES
+(1, 1, 29, NULL, '29', 'bisolong', 'sdfsdf', '2025-11-28', 10.00, 0.00, 100.00, 8.00, 0.00, 1000.00, 0.00, 0.00, 0.00, 0.00, 2.50, 2.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', '', '', '', 0, '2025-12-18 02:20:00', '2025-12-18 02:20:00'),
+(2, 1, 32, NULL, '32', 'ALLERCET-AX TAB.', 'ffffthgf', '2025-11-28', 10.00, 0.00, 50.00, 8.00, 0.00, 500.00, 0.00, 0.00, 0.00, 0.00, 2.50, 2.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '', '', '', '', 1, '2025-12-18 02:20:00', '2025-12-18 02:20:00'),
+(3, 2, 29, NULL, '29', 'bisolong', 'fdgdg', '2025-11-28', 10.00, 0.00, 100.00, 0.00, 0.00, 1000.00, 0.00, 0.00, 180.00, 0.00, 2.50, 2.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '29339900', '1*10', '1', 'HDFC', 0, '2025-12-23 06:50:18', '2025-12-23 06:50:18'),
+(4, 3, 30, NULL, '30', 'ABAXIS-5 MG TAB.', 'fddff', '2025-11-28', 1.00, 0.00, 100.00, 0.00, 0.00, 100.00, 0.00, 0.00, 120.00, 0.00, 6.00, 6.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '38220090', '1*10', '1', 'TCS', 0, '2025-12-30 04:50:46', '2025-12-30 04:50:46');
 
 -- --------------------------------------------------------
 
@@ -1034,7 +1415,7 @@ CREATE TABLE `customers` (
 
 INSERT INTO `customers` (`id`, `name`, `code`, `tax_registration`, `pin_code`, `address2`, `address2_line2`, `address2_line3`, `address`, `address_line2`, `address_line3`, `city`, `country_code`, `country_name`, `telephone_office`, `telephone_residence`, `mobile`, `email`, `contact_person1`, `mobile_contact1`, `contact_person2`, `mobile_contact2`, `fax_number`, `opening_balance`, `balance_type`, `local_central`, `credit_days`, `birth_day`, `anniversary_day`, `status`, `flag`, `invoice_export`, `due_list_sequence`, `tan_number`, `msme_license`, `dl_number`, `dl_expiry`, `dl_number1`, `food_license`, `cst_number`, `tin_number`, `pan_number`, `sales_man_code`, `sales_man_name`, `area_code`, `area_name`, `route_code`, `route_name`, `state_code`, `state_name`, `business_type`, `description`, `order_required`, `aadhar_number`, `registration_date`, `end_date`, `day_value`, `gst_number`, `cst_registration`, `gst_name`, `state_code_gst`, `registration_status`, `created_date`, `modified_date`, `created_by`, `modified_by`, `is_deleted`, `deleted_at`, `bank`, `branch`, `closed_on`, `credit_limit`, `sale_rate_type`, `add_percent`, `tax_on_br_expiry`, `expiry_on`, `dis_after_scheme`, `expiry_rn_on`, `dis_on_excise`, `sale_pur_status`, `scm_type`, `net_rate`, `no_of_items_in_bill`, `invoice_print_order`, `sr_replacement`, `cash_sale`, `invoice_format`, `fixed_discount`, `gst_5_percent`, `gst_12_percent`, `gst_18_percent`, `gst_28_percent`, `gst_0_percent`, `ref`, `tds`, `add_charges_with_gst`, `tcs_applicable`, `be_incl`, `brk_expiry_msg_in_sale`, `series_lock`, `branch_trf`, `trnf_account`, `transport_code`, `transport_name`, `distance`, `expiry_repl_credit`, `max_os_amount`, `max_limit_on`, `max_inv_amount`, `max_no_os_inv`, `follow_conditions_strictly`, `credit_limit_days_lock`, `open_lock_once`, `expiry_lock_type`, `expiry_lock_value`, `no_of_expiries_per_month`) VALUES
 (1, 'amansingh', NULL, 'R', NULL, NULL, NULL, NULL, 'meerut', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 05:44:39', '2025-11-26 04:48:03', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
-(2, 'Mahesh Traders', 'dgffg', 'T', '35344', 'gdffdg', NULL, NULL, 'rtgert', NULL, NULL, 'meerut', NULL, NULL, '453453', '434534', '34534', 'admin@gmail.comm', 'dgsdfgd', '35353', 'fgdgfg', '345345', '234234', 0.12, 'C', 'C', NULL, '2025-10-17', '2025-10-17', '234234', '234234', 'Y', '8', NULL, NULL, '3234234', '2025-10-16', '234234234', '234234', '234342', '234234', '2342344', '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', 'efserfwser', 'Y', '234234234', '2000-01-27', '2000-01-25', 34, '234234234', NULL, 'dsfsdfsd', '09', 'R', '2025-10-15 05:45:15', '2025-12-17 04:52:47', NULL, NULL, 0, NULL, 'KOTAK', 'sfsrftwer', NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
+(2, 'Mahesh Traders', 'dgffg', 'T', '35344', 'gdffdg', NULL, NULL, 'rtgert', NULL, NULL, 'meerut', NULL, NULL, '453453', '434534', '34534', 'admin@gmail.comm', 'dgsdfgd', '35353', 'fgdgfg', '345345', '234234', 0.12, 'C', 'C', NULL, '2025-10-17', '2025-10-17', '234234', '234234', 'Y', '8', NULL, NULL, '3234234', '2025-10-16', '234234234', '234234', '234342', '234234', '2342344', '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', 'efserfwser', 'Y', '234234234', '2000-01-27', '2000-01-25', 34, '234234234', NULL, 'dsfsdfsd', '09', 'R', '2025-10-15 05:45:15', '2025-10-15 06:38:47', NULL, NULL, 0, NULL, 'KOTAK', 'sfsrftwer', NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (3, 'fdggdv', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:45:14', '2025-10-15 06:45:14', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (4, 'bcbcv', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:45:21', '2025-10-15 06:45:21', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (5, 'fgdfgdg', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:45:32', '2025-10-15 06:45:32', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
@@ -1047,7 +1428,8 @@ INSERT INTO `customers` (`id`, `name`, `code`, `tax_registration`, `pin_code`, `
 (12, 'dfgdfgdfg', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:46:30', '2025-10-15 06:46:30', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (13, 'dfgdfgd', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:46:40', '2025-10-15 06:46:40', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
 (14, 'dfgdfgdf', NULL, 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-10-15 06:46:50', '2025-10-15 06:46:50', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
-(36, 'abhishek', '123a', 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-11-17 06:40:51', '2025-11-17 06:40:51', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0);
+(36, 'abhishek', '123a', 'R', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-11-17 06:40:51', '2025-11-17 06:40:51', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0),
+(37, 'mohit sharma', NULL, 'R', NULL, NULL, NULL, NULL, 'First Floor Office No. 11 S2S Aspire, Garh Road, Meerut City, Next to Shorab Gate', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'D', 'L', NULL, NULL, NULL, NULL, NULL, 'N', '0', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '00', NULL, '00', NULL, '00', NULL, '00', NULL, 'R', NULL, 'N', NULL, '2000-01-01', '2000-01-01', 0, NULL, NULL, NULL, '09', 'U', '2025-12-18 04:36:58', '2025-12-18 04:36:58', NULL, NULL, 0, NULL, NULL, NULL, NULL, 0.00, '1', 0.00, 'N', 'M', 'Y', 'M', 'Y', 'S', 'F', 'N', 0, NULL, 'N', 'N', 0, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 'N', 'N', 'N', 'N', 'Y', NULL, NULL, NULL, '00', '0', NULL, 'C', 0.00, 'D', 0.00, 0, 'N', 0, 'N', 'A', 0.00, 0);
 
 -- --------------------------------------------------------
 
@@ -1160,14 +1542,18 @@ CREATE TABLE `customer_receipts` (
   `trn_no` int(11) DEFAULT NULL,
   `ledger` varchar(10) NOT NULL DEFAULT 'CL',
   `salesman_code` varchar(20) DEFAULT NULL,
+  `salesman_id` bigint(20) UNSIGNED DEFAULT NULL,
   `salesman_name` varchar(100) DEFAULT NULL,
   `area_code` varchar(20) DEFAULT NULL,
+  `area_id` bigint(20) UNSIGNED DEFAULT NULL,
   `area_name` varchar(100) DEFAULT NULL,
   `route_code` varchar(20) DEFAULT NULL,
+  `route_id` bigint(20) UNSIGNED DEFAULT NULL,
   `route_name` varchar(100) DEFAULT NULL,
   `bank_code` varchar(20) DEFAULT NULL,
   `bank_name` varchar(100) DEFAULT NULL,
   `coll_boy_code` varchar(20) DEFAULT NULL,
+  `coll_boy_id` bigint(20) UNSIGNED DEFAULT NULL,
   `coll_boy_name` varchar(100) DEFAULT NULL,
   `day_value` varchar(20) DEFAULT NULL,
   `tag` varchar(50) DEFAULT NULL,
@@ -1186,8 +1572,16 @@ CREATE TABLE `customer_receipts` (
 -- Dumping data for table `customer_receipts`
 --
 
-INSERT INTO `customer_receipts` (`id`, `receipt_date`, `day_name`, `trn_no`, `ledger`, `salesman_code`, `salesman_name`, `area_code`, `area_name`, `route_code`, `route_name`, `bank_code`, `bank_name`, `coll_boy_code`, `coll_boy_name`, `day_value`, `tag`, `total_cash`, `total_cheque`, `amt_outstanding`, `amt_adjusted`, `tds_amount`, `currency_detail`, `remarks`, `created_at`, `updated_at`) VALUES
-(1, '2025-12-18', 'Thursday', 1, 'CL', NULL, NULL, NULL, 'fgdfgdf', NULL, 'ddfgduh', 'AXIS-001', 'AXIS BANK', NULL, NULL, NULL, NULL, 0.00, 100.00, 0.00, 0.00, 0.00, 0, NULL, '2025-12-18 02:25:31', '2025-12-18 02:25:31');
+INSERT INTO `customer_receipts` (`id`, `receipt_date`, `day_name`, `trn_no`, `ledger`, `salesman_code`, `salesman_id`, `salesman_name`, `area_code`, `area_id`, `area_name`, `route_code`, `route_id`, `route_name`, `bank_code`, `bank_name`, `coll_boy_code`, `coll_boy_id`, `coll_boy_name`, `day_value`, `tag`, `total_cash`, `total_cheque`, `amt_outstanding`, `amt_adjusted`, `tds_amount`, `currency_detail`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, '2025-12-18', 'Thursday', 1, 'CL', NULL, NULL, NULL, NULL, NULL, 'fgdfgdf', NULL, NULL, 'ddfgduh', 'CODE-002', 'BANK_002', NULL, NULL, NULL, NULL, NULL, 0.00, 100.00, 0.00, 0.00, 0.00, 0, NULL, '2025-12-18 04:04:20', '2025-12-18 04:04:20'),
+(2, '2025-12-18', 'Thursday', 2, 'CL', NULL, NULL, NULL, NULL, NULL, 'fgdfgdf', NULL, NULL, 'ddfgduh', 'CODE-002', 'BANK_002', NULL, NULL, NULL, NULL, NULL, 0.00, 100.00, 0.00, 0.00, 0.00, 0, NULL, '2025-12-18 05:08:15', '2025-12-18 05:08:15'),
+(3, '2025-12-18', 'Thursday', 3, 'CL', 'SM007', 8, 'Arjun Gupta', NULL, 58, 'fgdfgdf', NULL, 15, 'dfgfg', 'CODE-003', 'BANK_003', NULL, NULL, NULL, NULL, NULL, 0.00, 100.00, 0.00, 100.00, 0.00, 0, NULL, '2025-12-18 05:50:29', '2025-12-18 05:50:29'),
+(4, '2025-12-18', 'Thursday', 4, 'CL', 'SM007', 8, 'Arjun Gupta', NULL, 58, 'fgdfgdf', NULL, 15, 'dfgfg', 'CODE-003', 'BANK_003', NULL, NULL, NULL, NULL, NULL, 0.00, 110.00, 0.00, 110.00, 0.00, 0, NULL, '2025-12-18 06:03:39', '2025-12-18 06:03:39'),
+(5, '2025-12-18', 'Thursday', 5, 'CL', 'SM003', 4, 'Amit Patel', NULL, 79, 'cvxxcv', 'DNR002', 2, 'Delhi North Route', 'CODE-001', 'BANK_001', 'SM007', 8, 'Arjun Gupta', NULL, NULL, 0.00, 110.00, 0.00, 110.00, 0.00, 0, NULL, '2025-12-18 06:09:49', '2025-12-18 06:11:07'),
+(6, '2025-12-18', 'Thursday', 6, 'CL', 'SM007', 8, 'Arjun Gupta', NULL, 79, 'cvxxcv', NULL, 12, 'ddfgduh', 'CODE-002', 'BANK_002', '34534', 11, 'dfgdfg', NULL, NULL, 0.00, 100.00, 0.00, 0.00, 0.00, 0, NULL, '2025-12-18 06:13:14', '2025-12-18 06:37:59'),
+(7, '2025-12-18', 'Thursday', 7, 'CL', 'SM007', 8, 'Arjun Gupta', NULL, 75, 'cvxcvvcx', 'DNR002', 2, 'Delhi North Route', 'CODE-001', 'BANK_001', 'SM003', 4, 'Amit Patel', NULL, NULL, 0.00, 100.00, 0.00, 100.00, 0.00, 0, NULL, '2025-12-18 06:57:34', '2025-12-18 06:57:34'),
+(8, '2025-12-19', 'Friday', 8, 'CL', 'SM007', 8, 'Arjun Gupta', NULL, 79, 'cvxxcv', 'DNR002', 2, 'Delhi North Route', 'CODE-001', 'BANK_001', 'SM007', 8, 'Arjun Gupta', NULL, NULL, 0.00, 100.00, 0.00, 100.00, 0.00, 0, NULL, '2025-12-18 22:59:59', '2025-12-18 22:59:59'),
+(9, '2025-12-19', 'Friday', 9, 'CL', 'SM007', 8, 'Arjun Gupta', NULL, 75, 'cvxcvvcx', NULL, 12, 'ddfgduh', 'CODE-001', 'BANK_001', 'SM007', 8, 'Arjun Gupta', NULL, NULL, 0.00, 100.00, 0.00, 100.00, 0.00, 0, NULL, '2025-12-18 23:27:33', '2025-12-18 23:27:33');
 
 -- --------------------------------------------------------
 
@@ -1199,6 +1593,7 @@ CREATE TABLE `customer_receipt_adjustments` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `customer_receipt_id` bigint(20) UNSIGNED NOT NULL,
   `customer_receipt_item_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `sale_transaction_id` bigint(20) UNSIGNED DEFAULT NULL,
   `adjustment_type` enum('outstanding','adjusted') NOT NULL DEFAULT 'outstanding',
   `reference_no` varchar(50) DEFAULT NULL,
   `reference_date` date DEFAULT NULL,
@@ -1213,8 +1608,15 @@ CREATE TABLE `customer_receipt_adjustments` (
 -- Dumping data for table `customer_receipt_adjustments`
 --
 
-INSERT INTO `customer_receipt_adjustments` (`id`, `customer_receipt_id`, `customer_receipt_item_id`, `adjustment_type`, `reference_no`, `reference_date`, `reference_amount`, `adjusted_amount`, `balance_amount`, `created_at`, `updated_at`) VALUES
-(1, 1, NULL, 'outstanding', 'INV-000025', '2025-11-17', 624.96, 100.00, 524.96, '2025-12-18 02:25:31', '2025-12-18 02:25:31');
+INSERT INTO `customer_receipt_adjustments` (`id`, `customer_receipt_id`, `customer_receipt_item_id`, `sale_transaction_id`, `adjustment_type`, `reference_no`, `reference_date`, `reference_amount`, `adjusted_amount`, `balance_amount`, `created_at`, `updated_at`) VALUES
+(1, 1, NULL, NULL, 'outstanding', 'INV-000025', '2025-11-17', 624.96, 100.00, 524.96, '2025-12-18 04:04:20', '2025-12-18 04:04:20'),
+(2, 2, NULL, NULL, 'outstanding', 'INV-000025', '2025-11-17', 524.96, 100.00, 424.96, '2025-12-18 05:08:15', '2025-12-18 05:08:15'),
+(3, 3, NULL, NULL, 'outstanding', 'INV-000051', '2025-12-18', 230.38, 100.00, 130.38, '2025-12-18 05:50:29', '2025-12-18 05:50:29'),
+(4, 4, NULL, NULL, 'outstanding', 'INV-000051', '2025-12-18', 130.38, 110.00, 20.38, '2025-12-18 06:03:40', '2025-12-18 06:03:40'),
+(6, 5, NULL, NULL, 'outstanding', 'INV-000013', '2025-11-15', 295.81, 110.00, 185.81, '2025-12-18 06:11:08', '2025-12-18 06:11:08'),
+(8, 7, NULL, NULL, 'outstanding', 'INV-000013', '2025-11-15', 285.81, 100.00, 185.81, '2025-12-18 06:57:34', '2025-12-18 06:57:34'),
+(9, 8, NULL, 64, 'outstanding', 'INV-000049', '2025-12-03', 638.40, 100.00, 538.40, '2025-12-18 22:59:59', '2025-12-18 22:59:59'),
+(10, 9, NULL, 64, 'outstanding', 'INV-000049', '2025-12-03', 538.40, 100.00, 438.40, '2025-12-18 23:27:33', '2025-12-18 23:27:33');
 
 -- --------------------------------------------------------
 
@@ -1245,7 +1647,15 @@ CREATE TABLE `customer_receipt_items` (
 --
 
 INSERT INTO `customer_receipt_items` (`id`, `customer_receipt_id`, `party_code`, `party_name`, `customer_id`, `cheque_no`, `cheque_date`, `cheque_bank_name`, `cheque_bank_area`, `cheque_closed_on`, `amount`, `unadjusted`, `payment_type`, `created_at`, `updated_at`) VALUES
-(1, 1, '123a', 'abhishek', 36, '2132122', '2025-12-18', 'AXIS BANK', 'Meerut', '2025-12-18', 100.00, 0.00, 'cheque', '2025-12-18 02:25:31', '2025-12-18 02:25:31');
+(1, 1, '123a', 'abhishek', 36, 'fghfb 56', '2025-12-18', 'PUNJAB NATIONAL BANK', 'meerut', '2025-12-17', 100.00, 0.00, 'cheque', '2025-12-18 04:04:20', '2025-12-18 04:04:20'),
+(2, 2, '123a', 'abhishek', 36, 'vgcfgh', '2025-12-18', 'BANK_001', 'meerut', '2025-12-18', 100.00, 0.00, 'cheque', '2025-12-18 05:08:15', '2025-12-18 05:08:15'),
+(3, 3, 'dgffg', 'Mahesh Traders', 2, 'fghdf', '2025-12-18', 'BANK_001', 'meerut', '2025-12-18', 100.00, 0.00, 'cheque', '2025-12-18 05:50:29', '2025-12-18 05:50:29'),
+(4, 4, 'dgffg', 'Mahesh Traders', 2, 'fghdf', '2025-12-18', 'BANK_001', 'meerut', '2025-12-18', 110.00, 0.00, 'cheque', '2025-12-18 06:03:40', '2025-12-18 06:03:40'),
+(6, 5, 'dgffg', 'Mahesh Traders', 2, '456456', '2025-12-18', NULL, 'meerut', '2025-12-18', 110.00, 0.00, 'cheque', '2025-12-18 06:11:08', '2025-12-18 06:11:08'),
+(9, 7, 'dgffg', 'Mahesh Traders', 2, '45', '2025-12-18', 'BANK_001', 'meerut', '2025-12-18', 100.00, 0.00, 'cheque', '2025-12-18 06:57:34', '2025-12-18 06:57:34'),
+(10, 8, 'dgffg', 'Mahesh Traders', 2, '565656', '2025-12-19', 'BANK_001', 'meerut', '2025-12-19', 100.00, 0.00, 'cheque', '2025-12-18 22:59:59', '2025-12-18 22:59:59'),
+(12, 6, 'dgffg', 'Mahesh Traders', 2, 'gjgyj', '2025-12-18', 'BANK_001', 'meerut', '2025-12-18', 100.00, 0.00, 'cheque', '2025-12-18 23:08:14', '2025-12-18 23:08:14'),
+(13, 9, 'dgffg', 'Mahesh Traders', 2, '44456456', '2025-12-19', 'BANK_001', 'meerut', '2025-12-19', 100.00, 0.00, 'cheque', '2025-12-18 23:27:33', '2025-12-18 23:27:33');
 
 -- --------------------------------------------------------
 
@@ -1387,6 +1797,41 @@ INSERT INTO `debit_note_items` (`id`, `debit_note_id`, `hsn_code`, `amount`, `gs
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `deposit_slips`
+--
+
+CREATE TABLE `deposit_slips` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `slip_no` int(11) NOT NULL,
+  `deposit_date` date NOT NULL,
+  `clearing_date` date DEFAULT NULL,
+  `payin_slip_date` date DEFAULT NULL,
+  `bank_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `customer_code` varchar(255) DEFAULT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `cheque_no` varchar(255) NOT NULL,
+  `cheque_date` date DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` enum('pending','posted') NOT NULL DEFAULT 'pending',
+  `posted_date` date DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `deposit_slips`
+--
+
+INSERT INTO `deposit_slips` (`id`, `slip_no`, `deposit_date`, `clearing_date`, `payin_slip_date`, `bank_id`, `bank_name`, `customer_id`, `customer_code`, `customer_name`, `cheque_no`, `cheque_date`, `amount`, `status`, `posted_date`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, 1, '2025-12-27', '2025-12-27', '2025-12-27', NULL, 'Select Bank', 2, 'dgffg', 'Mahesh Traders', '565656', '2025-12-19', 100.00, 'posted', '2025-12-27', NULL, '2025-12-27 07:55:25', '2025-12-27 07:55:25'),
+(2, 2, '2025-12-27', '2025-12-27', '2025-12-27', NULL, 'Select Bank', 2, 'dgffg', 'Mahesh Traders', '44456456', '2025-12-19', 100.00, 'posted', '2025-12-27', NULL, '2025-12-27 07:55:40', '2025-12-27 07:55:40');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `divisional_managers`
 --
 
@@ -1489,7 +1934,6 @@ INSERT INTO `expiry_ledger` (`id`, `item_id`, `batch_id`, `customer_id`, `suppli
 (44, 29, 18, 1, NULL, '2025-11-26', 'SR0037-2', 'SALE_RETURN', 'amansingh', 1, 0, 16.00, '2025-11-28', 'Sale Return - ', '2025-11-26 03:59:19', '2025-11-26 03:59:19'),
 (45, 29, 18, 1, NULL, '2025-11-26', 'SR0038-2', 'SALE_RETURN', 'amansingh', 1, 0, 17.00, '2025-11-28', 'Sale Return - ', '2025-11-26 04:00:45', '2025-11-26 04:00:45'),
 (46, 29, 18, 1, NULL, '2025-11-26', 'SR0039-2', 'SALE_RETURN', 'amansingh', 1, 0, 18.00, '2025-11-28', 'Sale Return - ', '2025-11-26 04:03:06', '2025-11-26 04:03:06'),
-(47, 29, 22, NULL, NULL, '2025-11-27', NULL, 'OUT', 'N/A', 1, 0, 14.00, '2025-11-28', NULL, '2025-11-27 01:16:31', '2025-11-27 01:16:31'),
 (48, 29, 52, 1, NULL, '2025-12-01', 'SR0040', 'IN', 'amansingh', 1, 0, 8.00, '2025-11-28', 'Sale Return - SR0040', '2025-12-01 04:32:16', '2025-12-01 04:32:16'),
 (49, 29, 89, 1, NULL, '2025-12-01', 'SR0041', 'IN', 'amansingh', 1, 0, 7.00, '2028-11-01', 'Sale Return - SR0041', '2025-12-01 07:50:39', '2025-12-01 07:50:39'),
 (50, 29, 89, 1, NULL, '2025-12-01', 'SR0042', 'IN', 'amansingh', 1, 0, 9.00, '2028-11-01', 'Sale Return - SR0042', '2025-12-01 07:52:47', '2025-12-01 07:52:47'),
@@ -1515,14 +1959,13 @@ INSERT INTO `expiry_ledger` (`id`, `item_id`, `batch_id`, `customer_id`, `suppli
 (71, 29, 120, NULL, NULL, '2025-12-15', 'STO-005', 'OUT', 'N/A', 10, 0, -10.00, '2028-11-01', 'Stock Transfer Outgoing - Mahesh Traders', '2025-12-15 05:21:39', '2025-12-15 05:21:39'),
 (72, 29, 52, NULL, NULL, '2025-12-15', 'STO-006', 'OUT', 'N/A', 1, 0, 1.00, '2025-11-01', 'Stock Transfer Outgoing - Mahesh Traders', '2025-12-15 06:00:54', '2025-12-15 06:00:54'),
 (73, 29, 52, NULL, NULL, '2025-12-15', 'STOR-001', 'IN', 'N/A', 5, 0, 6.00, '2025-11-01', 'Stock Transfer Outgoing Return - Mahesh Traders', '2025-12-15 06:55:58', '2025-12-15 06:55:58'),
-(74, 18, 44, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 1, 0, 7.00, '2025-11-28', 'Sample Issued - SI25120001', '2025-12-16 08:00:23', '2025-12-16 08:00:23'),
-(75, 18, 44, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 1, 0, 6.00, '2025-11-28', 'Sample Issued (Modified) - SI25120001', '2025-12-16 08:02:52', '2025-12-16 08:02:52'),
-(76, 83, 97, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 1, 0, 8.00, '2028-11-01', 'Sample Issued - SI25120002', '2025-12-16 08:07:52', '2025-12-16 08:07:52'),
-(77, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 1, 0, 50.00, '2025-11-01', 'Sample Received - SR25110001', '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
-(78, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 10, 0, 70.00, '2025-11-01', 'Sample Received - SR25110002', '2025-11-17 02:15:21', '2025-11-17 02:15:21'),
-(79, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 10, 0, 80.00, '2025-11-01', 'Sample Received - SR25110003', '2025-11-17 02:19:31', '2025-11-17 02:19:31'),
-(80, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 5, 0, 85.00, '2025-11-01', 'Sample Received (Modified) - SR25110003', '2025-11-17 02:19:56', '2025-11-17 02:19:56'),
-(81, 30, 20, NULL, NULL, '2025-11-17', NULL, 'IN', 'N/A', 5, 0, 90.00, '2025-11-01', 'Sample Received (Modified) - SR25110002', '2025-11-17 02:24:26', '2025-11-17 02:24:26');
+(88, 18, 44, NULL, NULL, '2025-12-17', NULL, 'OUT', 'N/A', 1, 0, 4.00, '2025-11-28', 'Godown BREAKAGE (Modified) - GBE2512001', '2025-12-17 05:14:50', '2025-12-17 05:14:50'),
+(91, 83, 97, NULL, NULL, '2025-12-16', NULL, 'OUT', 'N/A', 2, 0, 1.00, '2028-11-01', 'Sample Issued (Modified) - SI25120002', '2025-12-17 05:30:14', '2025-12-17 05:30:14'),
+(94, 29, 22, NULL, NULL, '2025-12-17', NULL, 'IN', 'N/A', 2, 0, 10.00, '2025-11-01', 'Sample Received (Modified) - SR25120001', '2025-12-17 05:31:41', '2025-12-17 05:31:41'),
+(95, 83, 102, NULL, NULL, '2025-12-23', 'STOR-002', 'IN', 'N/A', 1, 0, 101.00, '2028-11-30', 'Stock Transfer Outgoing Return - bcbcv', '2025-12-23 06:30:21', '2025-12-23 06:30:21'),
+(96, 83, 98, NULL, NULL, '2025-12-23', NULL, 'OUT', 'N/A', 1, 0, 99.00, '2028-11-01', 'Godown BREAKAGE - GBE2512002', '2025-12-23 06:30:54', '2025-12-23 06:30:54'),
+(97, 31, 41, NULL, NULL, '2025-12-30', NULL, 'OUT', 'N/A', 1, 0, 6.00, '2025-11-01', 'Sample Issued - SI25120003', '2025-12-30 02:12:27', '2025-12-30 02:12:27'),
+(98, 29, 22, NULL, NULL, '2025-12-30', NULL, 'OUT', 'N/A', 2, 0, 8.00, '2025-11-01', 'Godown BREAKAGE - GBE2512003', '2025-12-30 02:58:30', '2025-12-30 02:58:30');
 
 -- --------------------------------------------------------
 
@@ -1701,6 +2144,15 @@ CREATE TABLE `godown_breakage_expiry_transactions` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `godown_breakage_expiry_transactions`
+--
+
+INSERT INTO `godown_breakage_expiry_transactions` (`id`, `trn_no`, `series`, `transaction_date`, `day_name`, `narration`, `total_qty`, `total_amount`, `status`, `is_deleted`, `created_at`, `updated_at`) VALUES
+(1, 'GBE2512001', 'GBE', '2025-12-17', 'Wednesday', NULL, 2.00, 330.00, 'completed', 0, '2025-12-17 05:00:15', '2025-12-17 05:00:15'),
+(2, 'GBE2512002', 'GBE', '2025-12-23', 'Tuesday', NULL, 1.00, 29.23, 'completed', 0, '2025-12-23 06:30:54', '2025-12-23 06:30:54'),
+(3, 'GBE2512003', 'GBE', '2025-12-30', 'Tuesday', '564564565', 2.00, 420.00, 'completed', 0, '2025-12-30 02:58:30', '2025-12-30 02:58:30');
+
 -- --------------------------------------------------------
 
 --
@@ -1733,6 +2185,16 @@ CREATE TABLE `godown_breakage_expiry_transaction_items` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `godown_breakage_expiry_transaction_items`
+--
+
+INSERT INTO `godown_breakage_expiry_transaction_items` (`id`, `godown_breakage_expiry_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `expiry_date`, `br_ex_type`, `qty`, `cost`, `amount`, `packing`, `unit`, `company_name`, `location`, `mrp`, `s_rate`, `p_rate`, `row_order`, `created_at`, `updated_at`) VALUES
+(5, 1, 29, 24, '29', 'bisolong', 'raviagency1', '11/2025', NULL, 'BREAKAGE', 1.00, 210.00, 210.00, '1*10', '1', '', '', 0.00, 0.00, 210.00, 1, '2025-12-17 05:14:50', '2025-12-17 05:14:50'),
+(6, 1, 18, 44, '18', 'intas', 'fgdxcvfg34', '11/2025', NULL, 'BREAKAGE', 1.00, 120.00, 120.00, '1*10', '1', '', '', 0.00, 0.00, 120.00, 2, '2025-12-17 05:14:50', '2025-12-17 05:14:50'),
+(7, 2, 83, 98, '83', 'ACETAMIDE-250 MG TAB.', '3dec1', '11/2028', NULL, 'BREAKAGE', 1.00, 29.23, 29.23, '1*10', '1', 'HDFC', '', 42.63, 32.48, 29.23, 1, '2025-12-23 06:30:54', '2025-12-23 06:30:54'),
+(8, 3, 29, 22, '29', 'bisolong', 'batch7645', '11/2025', NULL, 'BREAKAGE', 2.00, 210.00, 420.00, '1*10', '1', 'HDFC', '', 210.00, 180.00, 210.00, 1, '2025-12-30 02:58:30', '2025-12-30 02:58:30');
+
 -- --------------------------------------------------------
 
 --
@@ -1751,6 +2213,112 @@ CREATE TABLE `godown_expiry` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `hotkeys`
+--
+
+CREATE TABLE `hotkeys` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `key_combination` varchar(50) NOT NULL,
+  `module_name` varchar(100) NOT NULL,
+  `route_name` varchar(150) NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `scope` enum('global','index') NOT NULL DEFAULT 'global',
+  `description` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `is_system` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `hotkeys`
+--
+
+INSERT INTO `hotkeys` (`id`, `key_combination`, `module_name`, `route_name`, `category`, `scope`, `description`, `is_active`, `is_system`, `created_at`, `updated_at`) VALUES
+(1, 'ctrl+f12', 'Items', 'admin.items.index', 'masters', 'global', 'Open Item Master', 1, 1, '2025-12-20 05:28:30', '2025-12-20 07:00:50'),
+(2, 'ctrl+f11', 'Customers', 'admin.customers.index', 'masters', 'global', 'Open Customer Master', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(3, 'ctrl+f9', 'Suppliers', 'admin.suppliers.index', 'masters', 'global', 'Open Supplier Master', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(4, 'ctrl+shift+c', 'Companies', 'admin.companies.index', 'masters', 'global', 'Open Companies', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(5, 'ctrl+shift+s', 'Salesmen', 'admin.sales-men.index', 'masters', 'global', 'Open Salesmen', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(6, 'ctrl+h', 'HSN Codes', 'admin.hsn-codes.index', 'masters', 'global', 'Open HSN Codes', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(7, 'alt+a', 'Areas', 'admin.areas.index', 'masters', 'global', 'Open Areas', 1, 1, '2025-12-20 05:28:30', '2025-12-21 23:25:07'),
+(8, 'alt+r', 'Routes', 'admin.routes.index', 'masters', 'global', 'Open Routes', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(9, 'alt+t', 'States', 'admin.states.index', 'masters', 'global', 'Open States', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(10, 'alt+c', 'Item Categories', 'admin.item-category.index', 'masters', 'global', 'Open Item Categories', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(11, 'alt+x', 'Transport Master', 'admin.transport-master.index', 'masters', 'global', 'Open Transport Master', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(12, 'ctrl+f1', 'Sale Transaction', 'admin.sale.transaction', 'transactions', 'global', 'Open Sale Transaction', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(13, 'shift+ctrl+f1', 'Sale Modification', 'admin.sale.modification', 'transactions', 'global', 'Open Sale Modification', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(14, 'ctrl+f2', 'Purchase Transaction', 'admin.purchase.transaction', 'transactions', 'global', 'Open Purchase Transaction', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(15, 'shift+ctrl+f2', 'Purchase Modification', 'admin.purchase.modification', 'transactions', 'global', 'Open Purchase Modification', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(16, 'ctrl+f3', 'Sale Return', 'admin.sale-return.transaction', 'transactions', 'global', 'Open Sale Return Transaction', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(17, 'shift+ctrl+f3', 'Sale Return Modification', 'admin.sale-return.modification', 'transactions', 'global', 'Open Sale Return Modification', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(18, 'ctrl+f8', 'Purchase Return', 'admin.purchase-return.transaction', 'transactions', 'global', 'Open Purchase Return Transaction', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(19, 'shift+ctrl+f8', 'Purchase Return Modification', 'admin.purchase-return.modification', 'transactions', 'global', 'Open Purchase Return Modification', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(20, 'ctrl+e', 'Breakage/Expiry', 'admin.breakage-expiry.transaction', 'transactions', 'global', 'Open Breakage/Expiry from Customer', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(21, 'ctrl+q', 'Sale Challan', 'admin.sale-challan.transaction', 'transactions', 'global', 'Open Sale Challan', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(22, 'ctrl+shift+q', 'Quotation', 'admin.quotation.transaction', 'transactions', 'global', 'Open Quotation', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(23, 'ctrl+shift+p', 'Purchase Challan', 'admin.purchase-challan.transaction', 'transactions', 'global', 'Open Purchase Challan', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(24, 'ctrl+f5', 'Customer Receipt', 'admin.customer-receipt.transaction', 'receipts', 'global', 'Open Customer Receipt Transaction', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(25, 'shift+ctrl+f5', 'Customer Receipt Modification', 'admin.customer-receipt.modification', 'receipts', 'global', 'Open Customer Receipt Modification', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(26, 'ctrl+f7', 'Supplier Payment', 'admin.supplier-payment.transaction', 'receipts', 'global', 'Open Supplier Payment Transaction', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(27, 'shift+ctrl+f7', 'Supplier Payment Modification', 'admin.supplier-payment.modification', 'receipts', 'global', 'Open Supplier Payment Modification', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(28, 'alt+q', 'Cheque Return', 'admin.cheque-return.index', 'receipts', 'global', 'Open Cheque Return', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(29, 'alt+d', 'Deposit Slip', 'admin.deposit-slip.index', 'receipts', 'global', 'Open Deposit Slip', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(30, 'ctrl+f6', 'Credit Note', 'admin.credit-note.transaction', 'notes', 'global', 'Open Credit Note', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(31, 'ctrl+f10', 'Debit Note', 'admin.debit-note.transaction', 'notes', 'global', 'Open Debit Note', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(32, 'alt+n', 'Replacement Note', 'admin.replacement-note.transaction', 'notes', 'global', 'Open Replacement Note', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(33, 'alt+y', 'Replacement Received', 'admin.replacement-received.transaction', 'notes', 'global', 'Open Replacement Received', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(34, 'ctrl+shift+v', 'Voucher Entry', 'admin.voucher-entry.transaction', 'notes', 'global', 'Open Voucher Entry', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(35, 'ctrl+m', 'Multi Voucher', 'admin.multi-voucher.transaction', 'notes', 'global', 'Open Multi Voucher', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(36, 'alt+u', 'Voucher Purchase', 'admin.voucher-purchase.transaction', 'notes', 'global', 'Open Voucher Purchase (Input GST)', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(37, 'alt+i', 'Voucher Income', 'admin.voucher-income.transaction', 'notes', 'global', 'Open Voucher Income (Output GST)', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(38, 'alt+v', 'Sale Voucher', 'admin.sale-voucher.transaction', 'notes', 'global', 'Open Sale Voucher (HSN)', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(39, 'alt+f', 'Purchase Voucher', 'admin.purchase-voucher.transaction', 'notes', 'global', 'Open Purchase Voucher (HSN)', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(40, 'ctrl+f4', 'Stock Adjustment', 'admin.stock-adjustment.transaction', 'stock', 'global', 'Open Stock Adjustment', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(41, 'ctrl+shift+o', 'Stock Transfer Outgoing', 'admin.stock-transfer-outgoing.transaction', 'stock', 'global', 'Open Stock Transfer Outgoing', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(42, 'alt+o', 'ST Outgoing Return', 'admin.stock-transfer-outgoing-return.transaction', 'stock', 'global', 'Open Stock Transfer Outgoing Return', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(43, 'alt+shift+t', 'Stock Transfer Incoming', 'admin.stock-transfer-incoming.transaction', 'stock', 'global', 'Open Stock Transfer Incoming', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(44, 'alt+j', 'ST Incoming Return', 'admin.stock-transfer-incoming-return.transaction', 'stock', 'global', 'Open Stock Transfer Incoming Return', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(45, 'alt+g', 'Godown Breakage/Expiry', 'admin.godown-breakage-expiry.transaction', 'stock', 'global', 'Open Godown Breakage/Expiry', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(46, 'alt+shift+i', 'Sample Issued', 'admin.sample-issued.transaction', 'stock', 'global', 'Open Sample Issued', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(47, 'alt+shift+r', 'Sample Received', 'admin.sample-received.transaction', 'stock', 'global', 'Open Sample Received', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(48, 'alt+w', 'Claim to Supplier', 'admin.claim-to-supplier.transaction', 'stock', 'global', 'Open Claim to Supplier', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(49, 'alt+7', 'Breakage Supplier Issued', 'admin.breakage-supplier.issued-transaction', 'stock', 'global', 'Open Breakage Supplier Issued', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(50, 'alt+8', 'Breakage Supplier Received', 'admin.breakage-supplier.received-transaction', 'stock', 'global', 'Open Breakage Supplier Received', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(51, 'alt+9', 'Breakage Supplier Dump', 'admin.breakage-supplier.dump-transaction', 'stock', 'global', 'Open Breakage Supplier Dump', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(52, 'shift+insert', 'General Ledger', 'admin.general-ledger.index', 'ledgers', 'global', 'Open General Ledger', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(53, 'ctrl+insert', 'Cash/Bank Books', 'admin.cash-bank-books.index', 'ledgers', 'global', 'Open Cash/Bank Books', 1, 1, '2025-12-20 05:28:30', '2025-12-21 23:24:05'),
+(54, 'ctrl+shift+a', 'All Ledgers', 'admin.all-ledger.index', 'ledgers', 'global', 'Open All A/C Ledgers', 1, 1, '2025-12-20 05:28:30', '2025-12-21 23:23:30'),
+(55, 'alt+l', 'Sale Ledger', 'admin.sale-ledger.index', 'ledgers', 'global', 'Open Sale Ledger', 1, 1, '2025-12-20 05:28:30', '2025-12-20 06:41:03'),
+(56, 'alt+k', 'Purchase Ledger', 'admin.purchase-ledger.index', 'ledgers', 'global', 'Open Purchase Ledger', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(57, 'alt+1', 'Area Managers', 'admin.area-managers.index', 'managers', 'global', 'Open Area Managers', 1, 1, '2025-12-20 05:28:30', '2025-12-20 06:34:58'),
+(58, 'alt+2', 'Regional Managers', 'admin.regional-managers.index', 'managers', 'global', 'Open Regional Managers', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(59, 'alt+3', 'Marketing Managers', 'admin.marketing-managers.index', 'managers', 'global', 'Open Marketing Managers', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(60, 'alt+4', 'General Managers', 'admin.general-managers.index', 'managers', 'global', 'Open General Managers', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(61, 'alt+5', 'Divisional Managers', 'admin.divisional-managers.index', 'managers', 'global', 'Open Divisional Managers', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(62, 'alt+6', 'Country Managers', 'admin.country-managers.index', 'managers', 'global', 'Open Country Managers', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(63, 'ctrl+d', 'Dashboard', 'admin.dashboard', 'utilities', 'global', 'Go to Dashboard', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(64, 'ctrl+n', 'General Notebook', 'admin.general-notebook.index', 'utilities', 'global', 'Open General Notebook', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(65, 'alt+backspace', 'Personal Directory', 'admin.personal-directory.index', 'utilities', 'global', 'Open Personal Directory', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(66, 'shift+delete', 'General Reminders', 'admin.general-reminders.index', 'utilities', 'global', 'Open General Reminders', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(67, 'alt+m', 'Pending Orders', 'admin.pending-orders.index', 'utilities', 'global', 'Open Pending Orders', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(68, 'alt+s', 'Sales Report', 'admin.reports.sale', 'utilities', 'global', 'Open Sales Report', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(69, 'alt+p', 'Purchase Report', 'admin.reports.purchase', 'utilities', 'global', 'Open Purchase Report', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(70, 'ctrl+shift+k', 'Calculator', '#calculator', 'utilities', 'global', 'Open Calculator', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(71, 'f9', 'Add New (Index)', '#add-new', 'index', 'index', 'Add new record from index page', 1, 1, '2025-12-20 05:28:30', '2025-12-20 07:13:46'),
+(72, 'f3', 'Edit Selected (Index)', '#edit', 'index', 'index', 'Edit selected record from index page', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(73, 'delete', 'Delete Selected (Index)', '#delete', 'index', 'index', 'Delete selected record from index page', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(74, 'arrowup', 'Previous Row (Index)', '#prev-row', 'index', 'index', 'Select previous row in table', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(75, 'arrowdown', 'Next Row (Index)', '#next-row', 'index', 'index', 'Select next row in table', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(76, 'end', 'Save/Submit Form', '#save', 'index', 'index', 'Save/Submit form (create/edit/transaction pages)', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(77, 'enter', 'Next Field', '#next-field', 'index', 'index', 'Move to next form field', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(78, 'shift+enter', 'Previous Field', '#prev-field', 'index', 'index', 'Move to previous form field', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(79, 'escape', 'Go Back', '#back', 'index', 'index', 'Go back to previous page', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30'),
+(80, 'f1', 'Shortcuts Help', '#help', 'index', 'index', 'Show keyboard shortcuts help panel', 1, 1, '2025-12-20 05:28:30', '2025-12-20 05:28:30');
 
 -- --------------------------------------------------------
 
@@ -2101,6 +2669,86 @@ INSERT INTO `hsn_codes` (`id`, `name`, `hsn_code`, `cgst_percent`, `sgst_percent
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `income_vouchers`
+--
+
+CREATE TABLE `income_vouchers` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `voucher_date` date NOT NULL,
+  `voucher_no` int(11) NOT NULL,
+  `local_inter` varchar(1) NOT NULL DEFAULT 'L',
+  `description` text DEFAULT NULL,
+  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `gst_no` varchar(50) DEFAULT NULL,
+  `pan_no` varchar(20) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `pin` varchar(10) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_gst` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `round_off` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `total_credit` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tds_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `tds_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `debit_account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `debit_account_type` varchar(10) DEFAULT NULL,
+  `debit_account_name` varchar(255) DEFAULT NULL,
+  `total_debit` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_cgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_sgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_igst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` varchar(20) NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `income_voucher_accounts`
+--
+
+CREATE TABLE `income_voucher_accounts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `income_voucher_id` bigint(20) UNSIGNED NOT NULL,
+  `account_type` varchar(10) DEFAULT NULL,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `account_code` varchar(50) DEFAULT NULL,
+  `account_name` varchar(255) DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `income_voucher_items`
+--
+
+CREATE TABLE `income_voucher_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `income_voucher_id` bigint(20) UNSIGNED NOT NULL,
+  `hsn_code` varchar(20) DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `gst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `cgst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `cgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sgst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `sgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `igst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `igst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `items`
 --
 
@@ -2186,12 +2834,12 @@ CREATE TABLE `items` (
 
 INSERT INTO `items` (`id`, `company_id`, `company_short_name`, `name`, `packing`, `mfg_by`, `location`, `status`, `schedule`, `box_qty`, `case_qty`, `bar_code`, `division`, `flag`, `unit`, `unit_type`, `min_level`, `max_level`, `narcotic_flag`, `s_rate`, `mrp`, `ws_rate`, `ws_net_toggle`, `spl_rate`, `spl_net_toggle`, `scheme_plus`, `scheme_minus`, `sale_scheme`, `min_gp`, `pur_rate`, `cost`, `pur_scheme_plus`, `pur_scheme_minus`, `pur_scheme`, `nr`, `hsn_code`, `cgst_percent`, `sgst_percent`, `igst_percent`, `cess_percent`, `vat_percent`, `fixed_dis`, `fixed_dis_percent`, `fixed_dis_type`, `expiry_flag`, `inclusive_flag`, `generic_flag`, `h_scm_flag`, `q_scm_flag`, `locks_flag`, `max_inv_qty_value`, `max_inv_qty_new`, `weight_new`, `bar_code_flag`, `def_qty_flag`, `volume_new`, `comp_name_bc_new`, `dpc_item_flag`, `lock_sale_flag`, `max_min_flag`, `mrp_for_sale_new`, `commodity`, `current_scheme_flag`, `from_date`, `to_date`, `scheme_plus_value`, `scheme_minus_value`, `category`, `category_2`, `upc`, `is_deleted`, `created_at`, `updated_at`) VALUES
 (18, 66, 'HDFC', 'intas', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, '00', NULL, 1, 'Unit', 0.00, 0.00, 'N', 105.00, 110.00, 0.00, 'Y', 0.00, 'Y', 0, 0, NULL, 0.00, 120.00, 120.00, 0, 0, NULL, 0.00, '90189011', 6.00, 6.00, 12.00, 0.00, 0.00, NULL, 0.00, NULL, 'N', 'N', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, NULL, 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-10-31 06:40:16', '2025-11-21 02:42:27'),
-(29, 66, 'HDFC', 'bisolong', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, 'caryson', NULL, 1, 'Unit', 0.00, 0.00, 'N', 180.00, 250.00, 0.00, 'N', 0.00, 'N', 0, 0, NULL, 0.00, 240.00, 240.00, 0, 0, NULL, 0.00, '30049990', 6.00, 6.00, 12.00, 0.00, 4.00, 'N', 0.00, NULL, 'Y', 'Y', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, 'Y', 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-11-05 01:49:39', '2025-12-01 07:42:06'),
+(29, 66, 'HDFC', 'bisolong', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, 'caryson', NULL, 1, 'Unit', 0.00, 0.00, 'N', 180.00, 250.00, 0.00, 'N', 0.00, 'N', 0, 0, NULL, 0.00, 240.00, 240.00, 0, 0, NULL, 0.00, '29339900', 2.50, 2.50, 5.00, 0.00, 4.00, 'N', 0.00, NULL, 'Y', 'Y', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, 'Y', 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-11-05 01:49:39', '2025-12-18 01:12:58'),
 (30, 63, 'TCS', 'ABAXIS-5 MG TAB.', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, '00', NULL, 1, 'Unit', 0.00, 0.00, 'N', 120.00, 250.00, 0.00, 'Y', 0.00, 'Y', 0, 0, NULL, 0.00, 160.00, 160.00, 0, 0, NULL, 0.00, '38220090', 6.00, 6.00, 12.00, 0.00, 0.00, NULL, 0.00, NULL, 'N', 'N', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, NULL, 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-11-09 23:37:20', '2025-12-04 02:54:11'),
 (31, 66, 'HDFC', 'ACAMPTAS-333 MG TAB.', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, '00', NULL, 1, 'Unit', 0.00, 0.00, 'N', 170.00, 250.00, 0.00, 'Y', 0.00, 'Y', 0, 0, NULL, 0.00, 120.00, 120.00, 0, 0, NULL, 0.00, '90192090', 6.00, 6.00, 12.00, 0.00, 0.00, NULL, 0.00, NULL, 'N', 'N', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, NULL, 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-11-09 23:39:05', '2025-12-04 02:54:11'),
 (32, 66, 'HDFC', 'ALLERCET-AX TAB.', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, '00', NULL, 1, 'Unit', 0.00, 0.00, 'N', 41.14, 53.44, 0.00, 'Y', 0.00, 'Y', 0, 0, NULL, 0.00, 37.23, 37.23, 0, 0, NULL, 0.00, '38220090', 6.00, 6.00, 12.00, 0.00, 0.00, NULL, 0.00, NULL, 'N', 'N', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, NULL, 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-11-09 23:40:37', '2025-12-02 03:21:03'),
 (79, 81, 'BYJUS', 'ACEBOVIR TAB.', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, '00', NULL, 1, 'Unit', 0.00, 0.00, 'N', 131.40, 0.00, 0.00, 'Y', 0.00, 'Y', 0, 0, NULL, 0.00, 115.85, 115.85, 0, 0, NULL, 0.00, '30051090', 6.00, 6.00, 12.00, 0.00, 4.00, 'N', 0.00, NULL, 'N', 'N', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, NULL, 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-11-15 01:45:10', '2025-12-04 02:54:11'),
-(83, 66, 'HDFC', 'ACETAMIDE-250 MG TAB.', '1*10', NULL, NULL, NULL, '00', 0, 0, NULL, '00', NULL, 1, 'Unit', 0.00, 0.00, 'N', 32.48, 50.00, 0.00, 'Y', 0.00, 'Y', 0, 0, NULL, 0.00, 29.23, 29.23, 0, 0, NULL, 0.00, '30051090', 2.50, 2.50, 5.00, 0.00, 4.00, 'N', 0.00, NULL, 'Y', 'Y', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, 'Y', 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-12-02 22:52:43', '2025-12-16 01:25:38'),
+(83, 66, 'HDFC', 'ACETAMIDE-250 MG TAB.', '1*10', NULL, NULL, NULL, '00', 0, 0, '00002', '00', NULL, 1, 'Unit', 0.00, 0.00, 'N', 32.48, 42.63, 0.00, 'Y', 0.00, 'Y', 0, 0, NULL, 0.00, 29.23, 0.00, 0, 0, NULL, 0.00, '30051090', 2.50, 2.50, 5.00, 0.00, 4.00, 'N', 0.00, NULL, 'Y', 'Y', 'N', 'N', 'N', 'S', 0.00, NULL, 0.00, 'N', 'N', 0.00, 'Y', 'N', 'N', '1', 0.00, NULL, 'N', NULL, NULL, 0.00, 0.00, NULL, NULL, NULL, 0, '2025-12-02 22:52:43', '2025-12-19 07:24:08'),
 (84, 112, 'INTAS', 'PIOLET M 15mg', '1*10', NULL, NULL, NULL, '00', 0, 0, '00001', 'SUPRIMA', NULL, 1, 'M', 0.00, 0.00, 'N', 42.50, 55.20, 0.00, 'N', 0.00, 'N', 0, 0, NULL, 0.00, 42.50, 38.25, 0, 0, NULL, 0.00, NULL, 0.00, 0.00, 0.00, 0.00, 4.00, 'N', 0.00, NULL, 'N', 'N', 'N', 'N', 'N', 'N', 0.00, NULL, 0.00, 'N', 'N', 0.00, 'Y', 'N', 'N', '1', 0.00, NULL, 'N', '2002-08-10', '2002-08-10', 0.00, 0.00, NULL, NULL, NULL, 0, '2025-12-16 07:09:06', '2025-12-16 07:09:06');
 
 -- --------------------------------------------------------
@@ -2529,23 +3177,275 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (209, '2025_12_16_100003_create_stock_transfer_incoming_return_transactions_table', 130),
 (210, '2025_12_16_100004_create_stock_transfer_incoming_return_transaction_items_table', 131),
 (211, '2025_12_16_180001_create_sample_issued_transactions_table', 132),
-(214, '2025_11_17_180001_create_sample_received_transactions_table', 133),
-(215, '2025_11_17_180002_create_sample_received_transaction_items_table', 134),
-(216, '2025_11_17_190001_create_godown_breakage_expiry_transactions_table', 135),
-(217, '2025_11_17_190002_create_godown_breakage_expiry_transaction_items_table', 135),
-(218, '2025_12_17_100001_create_quotations_table', 136),
-(219, '2025_12_17_100002_create_quotation_items_table', 137),
-(220, '2025_12_17_200001_create_pending_order_items_table', 138),
-(221, '2025_12_17_220001_create_claim_to_supplier_transactions_table', 139),
-(222, '2025_12_17_220002_create_claim_to_supplier_transaction_items_table', 140),
-(223, '2025_11_18_100000_add_additional_details_to_claim_to_supplier_transactions_table', 141),
-(224, '2025_12_18_100001_create_customer_receipts_table', 142),
-(225, '2025_12_18_100002_create_customer_receipt_items_table', 143),
-(226, '2025_12_18_100003_create_customer_receipt_adjustments_table', 144),
-(227, '2025_12_18_100004_add_bank_details_to_customer_receipt_items_table', 145),
-(228, '2025_12_18_200001_create_supplier_payments_table', 146),
-(229, '2025_12_18_200002_create_supplier_payment_items_table', 147),
-(230, '2025_12_18_200003_create_supplier_payment_adjustments_table', 148);
+(212, '2025_11_17_180001_create_sample_received_transactions_table', 133),
+(213, '2025_11_17_180002_create_sample_received_transaction_items_table', 133),
+(214, '2025_12_17_100002_create_quotation_items_table', 134),
+(215, '2025_12_17_120000_add_customer_id_to_quotations_table', 135),
+(216, '2025_12_17_120001_add_batch_columns_to_quotation_items_table', 136),
+(217, '2025_11_17_190001_create_godown_breakage_expiry_transactions_table', 137),
+(218, '2025_11_17_190002_create_godown_breakage_expiry_transaction_items_table', 137),
+(219, '2025_12_17_200001_create_pending_order_items_table', 138),
+(220, '2025_12_17_220001_create_claim_to_supplier_transactions_table', 139),
+(221, '2025_12_17_220002_create_claim_to_supplier_transaction_items_table', 139),
+(222, '2025_11_18_100000_add_additional_details_to_claim_to_supplier_transactions_table', 140),
+(223, '2025_12_18_100001_create_customer_receipts_table', 141),
+(224, '2025_12_18_100002_create_customer_receipt_items_table', 141),
+(225, '2025_12_18_100003_create_customer_receipt_adjustments_table', 141),
+(226, '2025_12_18_100004_add_bank_details_to_customer_receipt_items_table', 141),
+(227, '2025_12_18_200001_create_supplier_payments_table', 142),
+(228, '2025_12_18_200002_create_supplier_payment_items_table', 143),
+(229, '2025_12_18_200003_create_supplier_payment_adjustments_table', 144),
+(230, '2025_12_18_163800_add_ids_to_customer_receipts_table', 145),
+(231, '2025_12_18_300001_create_cheque_returns_table', 146),
+(232, '2025_12_18_400001_create_deposit_slips_table', 146),
+(233, '2025_12_18_183700_add_bank_charges_to_cheque_returns_table', 147),
+(234, '2025_12_18_185900_add_sale_transaction_id_to_customer_receipt_adjustments', 148),
+(235, '2025_12_19_104600_add_voucher_fields_to_sale_tables', 149),
+(236, '2025_12_19_112100_make_item_fields_nullable_in_sale_transaction_items', 150),
+(237, '2025_12_19_100001_create_vouchers_table', 151),
+(238, '2025_12_19_100002_create_voucher_items_table', 152),
+(239, '2025_12_19_100003_create_purchase_vouchers_table', 153),
+(240, '2025_12_19_100004_create_purchase_voucher_items_table', 154),
+(241, '2025_12_19_100005_create_purchase_voucher_accounts_table', 155),
+(242, '2025_12_19_110001_create_income_vouchers_table', 156),
+(243, '2025_12_19_110002_create_income_voucher_items_table', 157),
+(244, '2025_12_19_110003_create_income_voucher_accounts_table', 158),
+(245, '2025_12_19_123100_add_voucher_type_to_transaction_tables', 159),
+(246, '2025_12_19_131500_add_voucher_type_to_return_tables', 160),
+(247, '2025_12_19_120001_create_multi_vouchers_table', 161),
+(248, '2025_12_19_120002_create_multi_voucher_entries_table', 162),
+(249, '2025_12_19_130001_create_bank_transactions_table', 163),
+(250, '2025_12_19_161000_create_sale_return_replacement_tables', 164),
+(251, '2025_12_20_105631_create_hotkeys_table', 165),
+(252, '2025_12_20_130108_add_business_fields_to_users_table', 166),
+(253, '2025_12_20_130610_add_licensed_to_field_to_users_table', 167),
+(254, '2025_12_22_055058_create_page_settings_table', 168),
+(255, '2025_12_22_100000_add_is_active_to_users_table', 169),
+(256, '2025_12_22_100001_create_permissions_table', 170),
+(257, '2025_12_22_100002_create_user_permissions_table', 171),
+(258, '2025_12_22_100003_seed_permissions_table', 172),
+(260, '2025_12_23_100001_create_breakage_supplier_issued_transactions_table', 173),
+(261, '2025_12_23_100023_create_breakage_supplier_unused_dump_transactions_table', 174),
+(262, '2025_12_23_100028_create_breakage_supplier_unused_dump_transaction_items_table', 174),
+(263, '2025_12_23_100032_create_breakage_supplier_received_transactions_table', 174),
+(264, '2025_12_23_100036_create_breakage_supplier_received_transaction_items_table', 174),
+(265, '2025_12_24_100001_add_claim_fields_to_breakage_supplier_received_transactions_table', 175),
+(266, '2025_12_24_100002_add_hsn_fields_to_breakage_supplier_received_transaction_items_table', 176),
+(267, '2025_12_23_123725_add_balance_amount_to_claim_to_supplier_transactions_table', 177),
+(268, '2025_12_23_124213_create_breakage_supplier_received_adjustments_table', 178);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `multi_vouchers`
+--
+
+CREATE TABLE `multi_vouchers` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `voucher_date` date NOT NULL,
+  `voucher_no` int(11) NOT NULL,
+  `narration` text DEFAULT NULL,
+  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` varchar(20) NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `multi_vouchers`
+--
+
+INSERT INTO `multi_vouchers` (`id`, `voucher_date`, `voucher_no`, `narration`, `total_amount`, `status`, `created_at`, `updated_at`) VALUES
+(1, '2025-12-29', 1, NULL, 1000.00, 'active', '2025-12-28 23:23:57', '2025-12-28 23:23:57');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `multi_voucher_entries`
+--
+
+CREATE TABLE `multi_voucher_entries` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `multi_voucher_id` bigint(20) UNSIGNED NOT NULL,
+  `entry_date` date NOT NULL,
+  `debit_account_type` varchar(20) DEFAULT NULL,
+  `debit_account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `debit_account_name` varchar(255) DEFAULT NULL,
+  `credit_account_type` varchar(20) DEFAULT NULL,
+  `credit_account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `credit_account_name` varchar(255) DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `dr_slcd` varchar(50) DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `multi_voucher_entries`
+--
+
+INSERT INTO `multi_voucher_entries` (`id`, `multi_voucher_id`, `entry_date`, `debit_account_type`, `debit_account_id`, `debit_account_name`, `credit_account_type`, `credit_account_id`, `credit_account_name`, `amount`, `dr_slcd`, `sort_order`, `created_at`, `updated_at`) VALUES
+(1, 1, '2025-12-29', 'Customer', 36, 'abhishek', 'Customer', 36, 'abhishek', 1000.00, NULL, 1, '2025-12-28 23:23:57', '2025-12-28 23:23:57');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `page_settings`
+--
+
+CREATE TABLE `page_settings` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `key` varchar(255) NOT NULL,
+  `value` text DEFAULT NULL,
+  `group` varchar(255) NOT NULL DEFAULT 'general',
+  `label` varchar(255) DEFAULT NULL,
+  `type` varchar(255) NOT NULL DEFAULT 'text',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `page_settings`
+--
+
+INSERT INTO `page_settings` (`id`, `key`, `value`, `group`, `label`, `type`, `created_at`, `updated_at`) VALUES
+(1, 'company_name', 'InvoiceLab', 'general', 'Company Name', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:04'),
+(2, 'company_email', 'support@invoicelab.com', 'general', 'Support Email', 'email', '2025-12-22 00:25:34', '2025-12-22 00:43:04'),
+(3, 'legal_email', 'legal@invoicelab.com', 'general', 'Legal Email', 'email', '2025-12-22 00:25:34', '2025-12-22 00:43:04'),
+(4, 'company_phone', '+91 123 456 7890', 'general', 'Phone Number', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:04'),
+(5, 'company_address', 'Your Business Address, City - 000000', 'general', 'Company Address', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(6, 'support_hours', 'Monday - Saturday: 9:00 AM - 6:00 PM', 'general', 'Support Hours', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(7, 'copyright_year', '2025', 'general', 'Copyright Year', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(8, 'privacy_last_updated', 'December 2025', 'privacy', 'Last Updated Date', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(9, 'privacy_intro', 'InvoiceLab (\"we\", \"our\", or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our billing and inventory management software.', 'privacy', 'Introduction Text', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(10, 'terms_last_updated', 'December 2025', 'terms', 'Last Updated Date', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(11, 'terms_intro', 'By accessing and using InvoiceLab billing and inventory management software, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.', 'terms', 'Introduction Text', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(12, 'support_email_response', 'Response: 24 Hours', 'support', 'Email Response Time', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(13, 'support_phone_hours', 'Mon-Sat: 9AM - 6PM', 'support', 'Phone Support Hours', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(14, 'live_chat_status', 'Coming Soon', 'support', 'Live Chat Status', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(15, 'faq_1_question', 'How do I create a new invoice?', 'faq', 'FAQ 1 Question', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(16, 'faq_1_answer', 'Go to Sales → Create Invoice or press Ctrl+I. Fill in customer details, add products, and click Save. The invoice will be automatically numbered and ready for printing.', 'faq', 'FAQ 1 Answer', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(17, 'faq_2_question', 'How do I add a new product to inventory?', 'faq', 'FAQ 2 Question', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(18, 'faq_2_answer', 'Navigate to Inventory → Products → Add Product. Enter product details including HSN code, GST rate, and pricing. You can also import products in bulk using CSV.', 'faq', 'FAQ 2 Answer', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(19, 'faq_3_question', 'How can I generate GST reports?', 'faq', 'FAQ 3 Question', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(20, 'faq_3_answer', 'Go to Reports → GST Reports. You can generate GSTR-1, GSTR-3B, and other GST reports. Select the date range and export in Excel or PDF format.', 'faq', 'FAQ 3 Answer', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(21, 'faq_4_question', 'How do I backup my data?', 'faq', 'FAQ 4 Question', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(22, 'faq_4_answer', 'Go to Administration → Database Backup. You can create manual backups or schedule automatic daily backups. We recommend storing backups in multiple locations.', 'faq', 'FAQ 4 Answer', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(23, 'faq_5_question', 'How do I manage multiple users?', 'faq', 'FAQ 5 Question', 'text', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(24, 'faq_5_answer', 'Go to Administration → Users to add new users. You can assign roles and permissions to control access to different modules. Each user gets their own login credentials.', 'faq', 'FAQ 5 Answer', 'textarea', '2025-12-22 00:25:34', '2025-12-22 00:43:05'),
+(25, 'privacy_page_title', 'Privacy Policy', 'privacy', 'Page Title', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(26, 'privacy_page_subtitle', 'How we collect, use, and protect your information', 'privacy', 'Page Subtitle', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(27, 'privacy_intro_title', 'Introduction', 'privacy', 'Introduction Section Title', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(28, 'privacy_collect_title', 'Information We Collect', 'privacy', 'Collection Section Title', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(29, 'privacy_collect_intro', 'We collect information that you provide directly to us, including:', 'privacy', 'Collection Intro Text', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(30, 'privacy_collect_item1', 'Account Information: Name, email address, username, password, and business details', 'privacy', 'Collection Item 1', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(31, 'privacy_collect_item2', 'Business Data: Customer details, supplier information, inventory data, sales transactions, and purchase records', 'privacy', 'Collection Item 2', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(32, 'privacy_collect_item3', 'Financial Information: GST numbers, TIN numbers, drug license details, and banking information', 'privacy', 'Collection Item 3', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(33, 'privacy_collect_item4', 'Usage Data: Log files, device information, and how you interact with our software', 'privacy', 'Collection Item 4', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(34, 'privacy_use_title', 'How We Use Your Information', 'privacy', 'Usage Section Title', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(35, 'privacy_use_intro', 'We use the collected information to:', 'privacy', 'Usage Intro Text', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(36, 'privacy_use_item1', 'Provide, maintain, and improve our billing software services', 'privacy', 'Usage Item 1', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(37, 'privacy_use_item2', 'Process transactions and send related information', 'privacy', 'Usage Item 2', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(38, 'privacy_use_item3', 'Generate invoices, reports, and business analytics', 'privacy', 'Usage Item 3', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(39, 'privacy_use_item4', 'Send technical notices, updates, and support messages', 'privacy', 'Usage Item 4', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(40, 'privacy_use_item5', 'Respond to your comments, questions, and customer service requests', 'privacy', 'Usage Item 5', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(41, 'privacy_use_item6', 'Ensure compliance with GST and other regulatory requirements', 'privacy', 'Usage Item 6', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(42, 'privacy_security_title', 'Data Security', 'privacy', 'Security Section Title', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(43, 'privacy_security_intro', 'We implement appropriate technical and organizational measures to protect your personal information, including:', 'privacy', 'Security Intro Text', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(44, 'privacy_security_item1', 'Encrypted data transmission using SSL/TLS protocols', 'privacy', 'Security Item 1', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(45, 'privacy_security_item2', 'Secure password hashing and authentication', 'privacy', 'Security Item 2', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(46, 'privacy_security_item3', 'Regular security audits and updates', 'privacy', 'Security Item 3', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(47, 'privacy_security_item4', 'Access controls and user permission management', 'privacy', 'Security Item 4', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(48, 'privacy_security_item5', 'Secure backup and disaster recovery procedures', 'privacy', 'Security Item 5', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(49, 'privacy_sharing_title', 'Information Sharing', 'privacy', 'Sharing Section Title', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(50, 'privacy_sharing_intro', 'We do not sell, trade, or rent your personal information to third parties. We may share information only in the following circumstances:', 'privacy', 'Sharing Intro Text', 'textarea', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(51, 'privacy_sharing_item1', 'With your consent or at your direction', 'privacy', 'Sharing Item 1', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(52, 'privacy_sharing_item2', 'To comply with legal obligations or government requests', 'privacy', 'Sharing Item 2', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(53, 'privacy_sharing_item3', 'To protect our rights, privacy, safety, or property', 'privacy', 'Sharing Item 3', 'text', '2025-12-22 00:36:22', '2025-12-22 00:43:05'),
+(54, 'privacy_sharing_item4', 'In connection with a merger, acquisition, or sale of assets', 'privacy', 'Sharing Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(55, 'privacy_rights_title', 'Your Rights', 'privacy', 'Rights Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(56, 'privacy_rights_intro', 'You have the right to:', 'privacy', 'Rights Intro Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(57, 'privacy_rights_item1', 'Access, update, or delete your personal information', 'privacy', 'Rights Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(58, 'privacy_rights_item2', 'Export your business data in standard formats', 'privacy', 'Rights Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(59, 'privacy_rights_item3', 'Opt-out of marketing communications', 'privacy', 'Rights Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(60, 'privacy_rights_item4', 'Request information about data processing activities', 'privacy', 'Rights Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(61, 'privacy_contact_title', 'Contact Us', 'privacy', 'Contact Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(62, 'privacy_contact_text', 'If you have any questions about this Privacy Policy, please contact us at:', 'privacy', 'Contact Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(63, 'terms_page_title', 'Terms of Service', 'terms', 'Page Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(64, 'terms_page_subtitle', 'Please read these terms carefully before using our services', 'terms', 'Page Subtitle', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(65, 'terms_acceptance_title', 'Acceptance of Terms', 'terms', 'Acceptance Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(66, 'terms_acceptance_text', 'By accessing and using InvoiceLab billing and inventory management software, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.', 'terms', 'Acceptance Text', 'textarea', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(67, 'terms_acceptance_note', 'These terms constitute a legally binding agreement between you and InvoiceLab.', 'terms', 'Acceptance Important Note', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(68, 'terms_use_title', 'Use of Service', 'terms', 'Use Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(69, 'terms_use_intro', 'InvoiceLab provides a comprehensive billing and inventory management solution. You agree to use the service only for:', 'terms', 'Use Intro Text', 'textarea', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(70, 'terms_use_item1', 'Legitimate business purposes related to billing, invoicing, and inventory management', 'terms', 'Use Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(71, 'terms_use_item2', 'Recording accurate business transactions and maintaining proper records', 'terms', 'Use Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(72, 'terms_use_item3', 'Generating GST-compliant invoices and reports', 'terms', 'Use Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(73, 'terms_use_item4', 'Managing customer and supplier relationships', 'terms', 'Use Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(74, 'terms_account_title', 'Account Responsibilities', 'terms', 'Account Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(75, 'terms_account_intro', 'As an account holder, you are responsible for:', 'terms', 'Account Intro Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(76, 'terms_account_item1', 'Account Security: Maintaining the confidentiality of your login credentials', 'terms', 'Account Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(77, 'terms_account_item2', 'Authorized Access: Ensuring only authorized personnel access your account', 'terms', 'Account Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(78, 'terms_account_item3', 'Data Accuracy: Providing accurate and up-to-date business information', 'terms', 'Account Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(79, 'terms_account_item4', 'Compliance: Ensuring your use complies with applicable laws and regulations', 'terms', 'Account Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(80, 'terms_account_item5', 'Activity Monitoring: Monitoring and being responsible for all activities under your account', 'terms', 'Account Item 5', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(81, 'terms_prohibited_title', 'Prohibited Activities', 'terms', 'Prohibited Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(82, 'terms_prohibited_intro', 'You agree not to:', 'terms', 'Prohibited Intro Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(83, 'terms_prohibited_item1', 'Use the service for any illegal or unauthorized purpose', 'terms', 'Prohibited Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(84, 'terms_prohibited_item2', 'Attempt to gain unauthorized access to any part of the service', 'terms', 'Prohibited Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(85, 'terms_prohibited_item3', 'Interfere with or disrupt the service or servers', 'terms', 'Prohibited Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(86, 'terms_prohibited_item4', 'Transmit viruses, malware, or any malicious code', 'terms', 'Prohibited Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(87, 'terms_prohibited_item5', 'Reverse engineer or attempt to extract source code', 'terms', 'Prohibited Item 5', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(88, 'terms_prohibited_item6', 'Use the service to generate fraudulent invoices or records', 'terms', 'Prohibited Item 6', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(89, 'terms_prohibited_item7', 'Share your account credentials with unauthorized parties', 'terms', 'Prohibited Item 7', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(90, 'terms_data_title', 'Data Ownership', 'terms', 'Data Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(91, 'terms_data_intro', 'You retain ownership of all business data you enter into InvoiceLab, including:', 'terms', 'Data Intro Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(92, 'terms_data_item1', 'Customer and supplier information', 'terms', 'Data Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(93, 'terms_data_item2', 'Product and inventory data', 'terms', 'Data Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(94, 'terms_data_item3', 'Sales and purchase transactions', 'terms', 'Data Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(95, 'terms_data_item4', 'Financial records and reports', 'terms', 'Data Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(96, 'terms_data_note', 'You grant us a limited license to process this data solely for the purpose of providing our services to you.', 'terms', 'Data License Note', 'textarea', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(97, 'terms_payment_title', 'Payment Terms', 'terms', 'Payment Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(98, 'terms_payment_intro', 'If applicable to your subscription:', 'terms', 'Payment Intro Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(99, 'terms_payment_item1', 'Fees are billed in advance on a monthly or annual basis', 'terms', 'Payment Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(100, 'terms_payment_item2', 'All fees are non-refundable unless otherwise specified', 'terms', 'Payment Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(101, 'terms_payment_item3', 'We reserve the right to modify pricing with 30 days notice', 'terms', 'Payment Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(102, 'terms_payment_item4', 'Failure to pay may result in service suspension', 'terms', 'Payment Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(103, 'terms_liability_title', 'Limitation of Liability', 'terms', 'Liability Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(104, 'terms_liability_intro', 'To the maximum extent permitted by law:', 'terms', 'Liability Intro Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(105, 'terms_liability_item1', 'InvoiceLab is provided \"as is\" without warranties of any kind', 'terms', 'Liability Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(106, 'terms_liability_item2', 'We are not liable for any indirect, incidental, or consequential damages', 'terms', 'Liability Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(107, 'terms_liability_item3', 'Our total liability shall not exceed the amount paid by you in the past 12 months', 'terms', 'Liability Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(108, 'terms_liability_item4', 'We are not responsible for data loss due to circumstances beyond our control', 'terms', 'Liability Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(109, 'terms_termination_title', 'Termination', 'terms', 'Termination Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(110, 'terms_termination_intro', 'Either party may terminate this agreement:', 'terms', 'Termination Intro Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(111, 'terms_termination_item1', 'You may cancel your account at any time through the settings', 'terms', 'Termination Item 1', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(112, 'terms_termination_item2', 'We may suspend or terminate accounts that violate these terms', 'terms', 'Termination Item 2', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(113, 'terms_termination_item3', 'Upon termination, you may export your data within 30 days', 'terms', 'Termination Item 3', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(114, 'terms_termination_item4', 'We may retain certain data as required by law', 'terms', 'Termination Item 4', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(115, 'terms_changes_title', 'Changes to Terms', 'terms', 'Changes Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(116, 'terms_changes_text', 'We may update these Terms of Service from time to time. We will notify you of significant changes via email or through the software. Your continued use after changes constitutes acceptance of the new terms.', 'terms', 'Changes Text', 'textarea', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(117, 'terms_contact_title', 'Contact Information', 'terms', 'Contact Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(118, 'terms_contact_text', 'For questions about these Terms of Service, contact us at:', 'terms', 'Contact Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(119, 'support_page_title', 'Support Center', 'support', 'Page Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(120, 'support_page_subtitle', 'We\'re here to help you succeed with InvoiceLab', 'support', 'Page Subtitle', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(121, 'support_email_title', 'Email Support', 'support', 'Email Card Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(122, 'support_email_text', 'Send us your queries and we\'ll respond within 24 hours', 'support', 'Email Card Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(123, 'support_phone_title', 'Phone Support', 'support', 'Phone Card Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(124, 'support_phone_text', 'Talk to our support team for immediate assistance', 'support', 'Phone Card Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(125, 'support_chat_title', 'Live Chat', 'support', 'Chat Card Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(126, 'support_chat_text', 'Chat with our support team in real-time', 'support', 'Chat Card Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(127, 'support_chat_status', 'Coming Soon', 'support', 'Live Chat Status', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(128, 'support_docs_title', 'Documentation', 'support', 'Docs Card Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(129, 'support_docs_text', 'Browse our comprehensive documentation and user guides', 'support', 'Docs Card Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(130, 'support_video_title', 'Video Tutorials', 'support', 'Video Card Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(131, 'support_video_text', 'Watch step-by-step video guides for all features', 'support', 'Video Card Text', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(132, 'support_contact_title', 'Contact Information', 'support', 'Contact Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(133, 'support_contact_subtitle', 'Reach out to us through any of these channels', 'support', 'Contact Section Subtitle', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(134, 'faq_section_title', 'Frequently Asked Questions', 'faq', 'FAQ Section Title', 'text', '2025-12-22 00:36:23', '2025-12-22 00:43:05'),
+(135, 'support_contact_text', 'Reach out to us through any of these channels', 'support', 'Contact Section Text', 'text', '2025-12-22 00:41:23', '2025-12-22 00:43:05'),
+(136, 'privacy_intro_text', 'InvoiceLab (\"we\", \"our\", or \"us\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our billing and inventory management software.', 'privacy', 'Introduction Content', 'textarea', '2025-12-22 00:41:23', '2025-12-22 00:43:05');
 
 -- --------------------------------------------------------
 
@@ -2599,7 +3499,85 @@ CREATE TABLE `pending_order_items` (
 --
 
 INSERT INTO `pending_order_items` (`id`, `item_id`, `item_code`, `item_name`, `action_type`, `quantity`, `remarks`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(1, 30, '30', 'ABAXIS-5 MG TAB.', 'D', 10.00, NULL, 1, NULL, '2025-12-17 04:42:18', '2025-12-17 04:42:18');
+(1, 29, '29', 'bisolong', 'I', 10.00, NULL, 1, NULL, '2025-12-30 04:25:51', '2025-12-30 04:25:51');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `permissions`
+--
+
+CREATE TABLE `permissions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `display_name` varchar(255) NOT NULL,
+  `group` varchar(255) DEFAULT NULL,
+  `icon` varchar(255) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `permissions`
+--
+
+INSERT INTO `permissions` (`id`, `name`, `display_name`, `group`, `icon`, `description`, `sort_order`, `created_at`, `updated_at`) VALUES
+(1, 'companies', 'Companies', 'Masters', 'bi-buildings', NULL, 1, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(2, 'customers', 'Customers', 'Masters', 'bi-people', NULL, 2, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(3, 'items', 'Items', 'Masters', 'bi-box-seam', NULL, 3, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(4, 'suppliers', 'Suppliers', 'Masters', 'bi-truck', NULL, 4, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(5, 'hsn-codes', 'HSN Master', 'Masters', 'bi-upc-scan', NULL, 5, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(6, 'batches', 'Batches', 'Masters', 'bi-collection', NULL, 6, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(7, 'all-ledger', 'All Ledger', 'Ledgers', 'bi-journal-check', NULL, 10, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(8, 'general-ledger', 'General Ledger', 'Ledgers', 'bi-journal-text', NULL, 11, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(9, 'cash-bank-books', 'Cash / Bank Books', 'Ledgers', 'bi-cash-stack', NULL, 12, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(10, 'sale-ledger', 'Sale Ledger', 'Ledgers', 'bi-cart-check', NULL, 13, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(11, 'purchase-ledger', 'Purchase Ledger', 'Ledgers', 'bi-bag-check', NULL, 14, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(12, 'sale', 'Sale Transaction', 'Sales', 'bi-cart-plus', NULL, 20, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(13, 'sale-challan', 'Sale Challan', 'Sales', 'bi-receipt', NULL, 21, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(14, 'sale-return', 'Sale Return', 'Sales', 'bi-cart-dash', NULL, 22, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(15, 'quotation', 'Quotation', 'Sales', 'bi-file-text', NULL, 23, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(16, 'customer-receipt', 'Customer Receipt', 'Sales', 'bi-cash-coin', NULL, 24, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(17, 'purchase', 'Purchase Transaction', 'Purchase', 'bi-bag-plus', NULL, 30, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(18, 'purchase-challan', 'Purchase Challan', 'Purchase', 'bi-receipt-cutoff', NULL, 31, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(19, 'purchase-return', 'Purchase Return', 'Purchase', 'bi-bag-dash', NULL, 32, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(20, 'supplier-payment', 'Supplier Payment', 'Purchase', 'bi-wallet2', NULL, 33, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(21, 'stock-adjustment', 'Stock Adjustment', 'Stock', 'bi-sliders', NULL, 40, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(22, 'stock-transfer-outgoing', 'Stock Transfer Outgoing', 'Stock', 'bi-box-arrow-right', NULL, 41, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(23, 'stock-transfer-incoming', 'Stock Transfer Incoming', 'Stock', 'bi-box-arrow-in-left', NULL, 42, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(24, 'breakage-expiry', 'Breakage/Expiry', 'Stock', 'bi-x-circle', NULL, 43, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(25, 'godown-breakage-expiry', 'Godown Breakage/Expiry', 'Stock', 'bi-house-x', NULL, 44, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(26, 'credit-note', 'Credit Note', 'Notes', 'bi-file-earmark-plus', NULL, 50, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(27, 'debit-note', 'Debit Note', 'Notes', 'bi-file-earmark-minus', NULL, 51, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(28, 'claim-to-supplier', 'Claim to Supplier', 'Notes', 'bi-file-earmark-arrow-up', NULL, 52, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(29, 'replacement-note', 'Replacement Note', 'Notes', 'bi-arrow-repeat', NULL, 53, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(30, 'sample-issued', 'Sample Issued', 'Samples', 'bi-box-arrow-up', NULL, 60, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(31, 'sample-received', 'Sample Received', 'Samples', 'bi-box-arrow-in-down', NULL, 61, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(32, 'voucher-entry', 'Voucher Entry', 'Vouchers', 'bi-journal-plus', NULL, 70, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(33, 'multi-voucher', 'Multi Voucher', 'Vouchers', 'bi-journals', NULL, 71, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(34, 'bank-transaction', 'Bank Transaction', 'Vouchers', 'bi-bank', NULL, 72, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(35, 'cheque-return', 'Cheque Return', 'Vouchers', 'bi-x-square', NULL, 73, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(36, 'deposit-slip', 'Deposit Slip', 'Vouchers', 'bi-file-earmark-check', NULL, 74, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(37, 'sales-men', 'Sales Man', 'HR', 'bi-person-badge', NULL, 80, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(38, 'areas', 'Area', 'HR', 'bi-geo-alt', NULL, 81, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(39, 'routes', 'Route', 'HR', 'bi-signpost', NULL, 82, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(40, 'states', 'State', 'HR', 'bi-map', NULL, 83, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(41, 'area-managers', 'Area Manager', 'HR', 'bi-person-workspace', NULL, 84, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(42, 'regional-managers', 'Regional Manager', 'HR', 'bi-people-fill', NULL, 85, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(43, 'marketing-managers', 'Marketing Manager', 'HR', 'bi-megaphone', NULL, 86, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(44, 'general-managers', 'General Manager', 'HR', 'bi-person-badge', NULL, 87, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(45, 'divisional-managers', 'Divisional Manager', 'HR', 'bi-diagram-3', NULL, 88, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(46, 'country-managers', 'Country Manager', 'HR', 'bi-globe', NULL, 89, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(47, 'personal-directory', 'Personal Directory', 'Utilities', 'bi-person-lines-fill', NULL, 90, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(48, 'general-reminders', 'General Reminders', 'Utilities', 'bi-bell', NULL, 91, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(49, 'general-notebook', 'General NoteBook', 'Utilities', 'bi-journal-text', NULL, 92, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(50, 'item-category', 'Item Category', 'Utilities', 'bi-tag', NULL, 93, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(51, 'transport-master', 'Transport Master', 'Utilities', 'bi-truck', NULL, 94, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(52, 'reports-sales', 'Sales Reports', 'Reports', 'bi-graph-up', NULL, 100, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(53, 'reports-purchase', 'Purchase Reports', 'Reports', 'bi-graph-down', NULL, 101, '2025-12-22 07:39:17', '2025-12-22 07:39:17'),
+(54, 'user-management', 'User Management', 'Admin', 'bi-people-fill', NULL, 110, '2025-12-22 07:39:17', '2025-12-22 07:39:17');
 
 -- --------------------------------------------------------
 
@@ -2706,7 +3684,7 @@ CREATE TABLE `purchase_challan_transactions` (
 --
 
 INSERT INTO `purchase_challan_transactions` (`id`, `challan_no`, `series`, `challan_date`, `due_date`, `supplier_id`, `supplier_invoice_no`, `supplier_invoice_date`, `cash_flag`, `transfer_flag`, `remarks`, `nt_amount`, `sc_amount`, `ft_amount`, `dis_amount`, `scm_amount`, `tax_amount`, `net_amount`, `scm_percent`, `tcs_amount`, `excise_amount`, `is_invoiced`, `purchase_transaction_id`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(3, 'PC000001', '01', '2025-12-04', NULL, 11, NULL, NULL, 'N', 'N', NULL, 2923.00, 0.00, 0.00, 0.00, 0.00, 146.16, 3069.16, 0.000, 0.00, 0.00, 0, NULL, 'pending', 4, NULL, '2025-12-04 00:51:41', '2025-12-04 00:51:41'),
+(3, 'PC000001', '01', '2025-12-04', NULL, 11, NULL, NULL, 'N', 'N', NULL, 2923.00, 0.00, 0.00, 0.00, 0.00, 146.16, 3069.16, 0.000, 0.00, 0.00, 1, 117, 'invoiced', 4, NULL, '2025-12-04 00:51:41', '2025-12-19 02:27:42'),
 (4, 'PC000002', '01', '2025-12-04', NULL, 11, NULL, NULL, 'N', 'N', NULL, 5776.10, 0.00, 0.00, 0.00, 0.00, 192.00, 5968.10, 0.000, 0.00, 0.00, 0, NULL, 'pending', 4, 4, '2025-12-04 02:27:33', '2025-12-04 02:35:25'),
 (5, 'PC000003', '01', '2025-12-04', NULL, 11, NULL, NULL, 'N', 'N', NULL, 9480.87, 0.00, 0.00, 0.00, 0.00, 980.74, 9511.57, 0.000, 0.00, 0.00, 1, 112, 'invoiced', 4, 4, '2025-12-04 02:51:26', '2025-12-04 02:54:11');
 
@@ -2881,6 +3859,7 @@ CREATE TABLE `purchase_return_transactions` (
   `dis1_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `remarks` text DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'active',
+  `voucher_type` varchar(20) NOT NULL DEFAULT 'return',
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,
   `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -2891,16 +3870,19 @@ CREATE TABLE `purchase_return_transactions` (
 -- Dumping data for table `purchase_return_transactions`
 --
 
-INSERT INTO `purchase_return_transactions` (`id`, `pr_no`, `series`, `return_date`, `supplier_id`, `supplier_name`, `invoice_no`, `invoice_date`, `gst_vno`, `tax_flag`, `rate_diff_flag`, `nt_amount`, `sc_amount`, `dis_amount`, `scm_amount`, `scm_percent`, `tax_amount`, `net_amount`, `tcs_amount`, `dis1_amount`, `remarks`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(5, 'PR0001', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 01:16:31', '2025-11-27 01:16:31'),
-(7, 'PR0002', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 01:37:30', '2025-11-27 01:37:30'),
-(8, 'PR0003', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 02:18:50', '2025-11-27 02:18:50'),
-(9, 'PR0004', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 04:01:56', '2025-11-27 04:01:56'),
-(13, 'PR0005', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 370.00, 0.00, 0.00, 0.00, 0.000, 44.40, 414.40, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 04:10:01', '2025-11-27 04:10:01'),
-(14, 'PR0006', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 247.23, 0.00, 0.00, 0.00, 0.000, 29.67, 276.90, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 04:11:05', '2025-11-27 04:11:05'),
-(15, 'PR0007', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 07:48:32', '2025-11-27 07:48:32'),
-(16, 'PR0008', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 07:50:17', '2025-11-27 07:50:17'),
-(17, 'PR0009', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 4, NULL, '2025-11-27 07:54:18', '2025-11-27 07:54:18');
+INSERT INTO `purchase_return_transactions` (`id`, `pr_no`, `series`, `return_date`, `supplier_id`, `supplier_name`, `invoice_no`, `invoice_date`, `gst_vno`, `tax_flag`, `rate_diff_flag`, `nt_amount`, `sc_amount`, `dis_amount`, `scm_amount`, `scm_percent`, `tax_amount`, `net_amount`, `tcs_amount`, `dis1_amount`, `remarks`, `status`, `voucher_type`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(5, 'PR0001', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 01:16:31', '2025-11-27 01:16:31'),
+(7, 'PR0002', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 01:37:30', '2025-11-27 01:37:30'),
+(8, 'PR0003', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 02:18:50', '2025-11-27 02:18:50'),
+(9, 'PR0004', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 04:01:56', '2025-11-27 04:01:56'),
+(13, 'PR0005', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 370.00, 0.00, 0.00, 0.00, 0.000, 44.40, 414.40, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 04:10:01', '2025-11-27 04:10:01'),
+(14, 'PR0006', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 247.23, 0.00, 0.00, 0.00, 0.000, 29.67, 276.90, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 04:11:05', '2025-11-27 04:11:05'),
+(15, 'PR0007', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 07:48:32', '2025-11-27 07:48:32'),
+(16, 'PR0008', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 07:50:17', '2025-11-27 07:50:17'),
+(17, 'PR0009', 'PR', '2025-11-27', 11, 'Mahesh Traders', NULL, NULL, NULL, 'Y', 'N', 210.00, 0.00, 0.00, 0.00, 0.000, 25.20, 235.20, 0.00, 0.00, NULL, 'active', 'return', 4, NULL, '2025-11-27 07:54:18', '2025-11-27 07:54:18'),
+(19, 'PR0010', 'PR', '2025-12-19', 19, NULL, 'PR0010', NULL, NULL, 'Y', 'N', 1000.00, 0.00, 0.00, 0.00, 0.000, 50.00, 1050.00, 0.00, 0.00, NULL, 'completed', 'return', 1, NULL, '2025-12-19 02:38:25', '2025-12-19 02:38:25'),
+(20, 'PR0011', 'PR', '2025-12-19', 19, NULL, NULL, NULL, NULL, 'Y', 'N', 1000.00, 0.00, 0.00, 0.00, 0.000, 120.00, 1120.00, 0.00, 0.00, NULL, 'completed', 'voucher', 1, NULL, '2025-12-19 02:54:10', '2025-12-19 02:54:10'),
+(21, 'PR0012', 'PR', '2025-12-30', 19, NULL, NULL, NULL, NULL, 'Y', 'N', 1000.00, 0.00, 0.00, 0.00, 0.000, 180.00, 1180.00, 0.00, 0.00, NULL, 'completed', 'voucher', 1, NULL, '2025-12-30 07:23:00', '2025-12-30 07:23:00');
 
 -- --------------------------------------------------------
 
@@ -2959,7 +3941,10 @@ INSERT INTO `purchase_return_transaction_items` (`id`, `purchase_return_transact
 (16, 14, 32, 23, '32', 'ALLERCET-AX TAB.', 'batch9534', '2025-11-01', 1.000, 0.000, 37.23, 0.000, 37.23, 37.23, 53.44, 0.00, 41.14, 0.00, 6.000, 6.000, 0.000, 2.23, 2.23, 0.00, 4.47, 41.70, '38220090', '1*10', '1', 'HDFC Bank Ltd', 1, '2025-11-27 04:11:05', '2025-11-27 04:11:05'),
 (17, 15, 29, 25, '29', 'bisolong', 'xdfxdf3434', NULL, 1.000, 0.000, 210.00, 0.000, 210.00, 210.00, 210.00, 170.00, 200.00, 180.00, 6.000, 6.000, 0.000, 12.60, 12.60, 0.00, 25.20, 235.20, '30049990', '1*10', '1', 'HDFC Bank Ltd', 0, '2025-11-27 07:48:32', '2025-11-27 07:48:32'),
 (18, 16, 29, 22, '29', 'bisolong', 'batch7645', '2025-11-28', 1.000, 0.000, 210.00, 0.000, 210.00, 210.00, 210.00, 170.00, 200.00, 180.00, 6.000, 6.000, 0.000, 12.60, 12.60, 0.00, 25.20, 235.20, '30049990', '1*10', '1', 'HDFC Bank Ltd', 0, '2025-11-27 07:50:17', '2025-11-27 07:50:17'),
-(19, 17, 29, 22, '29', 'bisolong', 'batch7645', '2025-11-01', 1.000, 0.000, 210.00, 0.000, 210.00, 210.00, 210.00, 170.00, 200.00, 180.00, 6.000, 6.000, 0.000, 12.60, 12.60, 0.00, 25.20, 235.20, '30049990', '1*10', '1', 'HDFC Bank Ltd', 0, '2025-11-27 07:54:18', '2025-11-27 07:54:18');
+(19, 17, 29, 22, '29', 'bisolong', 'batch7645', '2025-11-01', 1.000, 0.000, 210.00, 0.000, 210.00, 210.00, 210.00, 170.00, 200.00, 180.00, 6.000, 6.000, 0.000, 12.60, 12.60, 0.00, 25.20, 235.20, '30049990', '1*10', '1', 'HDFC Bank Ltd', 0, '2025-11-27 07:54:18', '2025-11-27 07:54:18'),
+(20, 19, NULL, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.000, 0.000, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 2.500, 2.500, 0.000, 25.00, 25.00, 0.00, 0.00, 0.00, '21061000', NULL, NULL, NULL, 1, '2025-12-19 02:38:25', '2025-12-19 02:38:25'),
+(21, 20, NULL, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.000, 0.000, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 6.000, 6.000, 0.000, 60.00, 60.00, 0.00, 0.00, 0.00, '21061000', NULL, NULL, NULL, 1, '2025-12-19 02:54:10', '2025-12-19 02:54:10'),
+(22, 21, NULL, NULL, '21061000', 'HSN-21061000', NULL, NULL, 0.000, 0.000, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 9.000, 9.000, 0.000, 90.00, 90.00, 0.00, 0.00, 0.00, '21061000', NULL, NULL, NULL, 1, '2025-12-30 07:23:01', '2025-12-30 07:23:01');
 
 -- --------------------------------------------------------
 
@@ -2992,6 +3977,7 @@ CREATE TABLE `purchase_transactions` (
   `tof_amount` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'TOF Amount',
   `inv_amount` decimal(15,2) NOT NULL DEFAULT 0.00 COMMENT 'Final Invoice Amount',
   `status` enum('draft','completed','cancelled') NOT NULL DEFAULT 'draft',
+  `voucher_type` varchar(20) NOT NULL DEFAULT 'purchase',
   `order_no` varchar(50) DEFAULT NULL COMMENT 'Reference to pending order if any',
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,
   `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
@@ -3003,48 +3989,57 @@ CREATE TABLE `purchase_transactions` (
 -- Dumping data for table `purchase_transactions`
 --
 
-INSERT INTO `purchase_transactions` (`id`, `trn_no`, `bill_date`, `bill_no`, `supplier_id`, `receive_date`, `due_date`, `cash_flag`, `transfer_flag`, `remarks`, `nt_amount`, `sc_amount`, `scm_amount`, `dis_amount`, `less_amount`, `tax_amount`, `net_amount`, `balance_amount`, `scm_percent`, `tcs_amount`, `dis1_amount`, `tof_amount`, `inv_amount`, `status`, `order_no`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(72, '000001', '2025-11-08', '87457', 11, '2025-11-08', '2025-11-08', 'N', 'N', NULL, 1260.00, 0.00, 0.00, 0.00, 0.00, 151.20, 1411.20, 1411.20, 0.000, 0.00, 0.00, 0.00, 1411.20, 'completed', NULL, 1, NULL, '2025-11-08 07:40:43', '2025-11-08 07:40:43'),
-(73, '000002', '2025-11-08', '4554', 12, '2025-11-08', '2025-11-08', 'N', 'N', NULL, 1260.00, 0.00, 0.00, 0.00, 0.00, 151.20, 1411.20, 1411.20, 0.000, 0.00, 0.00, 0.00, 1411.20, 'completed', NULL, 1, NULL, '2025-11-08 07:41:14', '2025-11-08 07:41:14'),
-(74, '000003', '2025-11-08', '54218647', 13, '2025-11-08', '2025-11-08', 'N', 'N', NULL, 1680.00, 0.00, 0.00, 0.00, 0.00, 201.60, 1881.60, 1881.60, 0.000, 0.00, 0.00, 0.00, 1881.60, 'completed', NULL, 1, NULL, '2025-11-08 07:42:19', '2025-11-08 07:42:19'),
-(75, '000004', '2025-11-10', '452', 11, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 16000.00, 0.00, 0.00, 0.00, 0.00, 1920.00, 17920.00, 17920.00, 0.000, 0.00, 0.00, 0.00, 17920.00, 'completed', NULL, 1, NULL, '2025-11-10 01:48:34', '2025-11-10 01:48:34'),
-(76, '000005', '2025-11-10', '45545', 12, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 6000.00, 0.00, 0.00, 0.00, 0.00, 720.00, 6720.00, 6720.00, 0.000, 0.00, 0.00, 0.00, 6720.00, 'completed', NULL, 1, NULL, '2025-11-10 01:54:45', '2025-11-10 01:54:45'),
-(77, '000006', '2025-11-10', '24527', 11, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 6300.00, 0.00, 0.00, 0.00, 0.00, 756.00, 7056.00, 7056.00, 0.000, 0.00, 0.00, 0.00, 7056.00, 'completed', NULL, 1, NULL, '2025-11-10 02:03:14', '2025-11-10 02:03:14'),
-(78, '000007', '2025-11-10', '454752', 12, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 744.60, 0.00, 0.00, 0.00, 0.00, 89.36, 833.96, 833.96, 0.000, 0.00, 0.00, 0.00, 833.96, 'completed', NULL, 1, NULL, '2025-11-10 02:06:29', '2025-11-10 02:06:29'),
-(79, '000008', '2025-11-10', '45542', 14, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 1680.00, 0.00, 0.00, 0.00, 0.00, 201.60, 1881.60, 1881.60, 0.000, 0.00, 0.00, 0.00, 1881.60, 'completed', NULL, 1, NULL, '2025-11-10 02:27:35', '2025-11-10 02:27:35'),
-(80, '000009', '2025-11-10', '578', 11, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 2520.00, 0.00, 0.00, 0.00, 0.00, 302.40, 2822.40, 2822.40, 0.000, 0.00, 0.00, 0.00, 2822.40, 'completed', NULL, 1, NULL, '2025-11-10 06:45:58', '2025-11-10 06:45:58'),
-(81, '000010', '2025-11-10', '576567', 13, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 744.60, 0.00, 0.00, 0.00, 0.00, 89.36, 833.96, 833.96, 0.000, 0.00, 0.00, 0.00, 833.96, 'completed', NULL, 1, 1, '2025-11-10 06:47:22', '2025-11-10 06:50:50'),
-(82, '000011', '2025-11-12', '578282', 11, '2025-11-12', '2025-11-12', 'N', 'N', NULL, 960.00, 0.00, 0.00, 0.00, 0.00, 115.20, 1075.20, 1075.20, 0.000, 0.00, 0.00, 0.00, 1075.20, 'completed', NULL, 1, 1, '2025-11-12 07:34:17', '2025-11-12 07:49:58'),
-(83, '000012', '2025-11-12', '572527', 12, '2025-11-12', '2025-11-12', 'N', 'N', NULL, 840.00, 0.00, 0.00, 0.00, 0.00, 100.80, 940.80, 940.80, 0.000, 0.00, 0.00, 0.00, 940.80, 'completed', NULL, 1, NULL, '2025-11-12 07:59:42', '2025-11-12 07:59:42'),
-(84, '000013', '2025-11-13', '4552', 11, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 1600.00, 0.00, 0.00, 0.00, 0.00, 192.00, 1792.00, 1792.00, 0.000, 0.00, 0.00, 0.00, 1792.00, 'completed', NULL, 1, NULL, '2025-11-13 02:14:58', '2025-11-13 02:14:58'),
-(85, '000014', '2025-11-13', '1275482', 15, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 1200.00, 0.00, 0.00, 0.00, 0.00, 144.00, 1344.00, 1344.00, 0.000, 0.00, 0.00, 0.00, 1344.00, 'completed', NULL, 1, NULL, '2025-11-13 02:15:49', '2025-11-13 02:15:49'),
-(86, '000015', '2025-11-13', '12855614', 11, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 600.00, 0.00, 0.00, 0.00, 0.00, 72.00, 672.00, 672.00, 0.000, 0.00, 0.00, 0.00, 672.00, 'completed', NULL, 1, NULL, '2025-11-13 02:22:11', '2025-11-13 02:22:11'),
-(87, '000016', '2025-11-13', '45542', 15, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 200.00, 0.00, 0.00, 0.00, 0.00, 24.00, 224.00, 224.00, 0.000, 0.00, 0.00, 0.00, 224.00, 'completed', NULL, 1, 1, '2025-11-13 02:31:38', '2025-11-13 02:55:24'),
-(88, '000017', '2025-11-13', '65765', 11, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 1600.00, 0.00, 0.00, 0.00, 0.00, 192.00, 1792.00, 1792.00, 0.000, 0.00, 0.00, 0.00, 1792.00, 'completed', NULL, 1, NULL, '2025-11-13 08:04:39', '2025-11-13 08:04:39'),
-(89, '000018', '2025-11-14', '67546', 14, '2025-11-14', '2025-11-14', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', NULL, 1, NULL, '2025-11-14 04:24:05', '2025-11-14 04:24:05'),
-(90, '000019', '2025-11-14', '221323', 14, '2025-11-14', '2025-11-14', 'N', 'N', NULL, 335.07, 0.00, 0.00, 0.00, 0.00, 40.20, 375.27, 375.27, 0.000, 0.00, 0.00, 0.00, 375.27, 'completed', NULL, 1, NULL, '2025-11-14 04:28:19', '2025-11-14 04:28:19'),
-(91, '000020', '2025-11-14', '56545', 11, '2025-11-14', '2025-11-14', 'N', 'N', NULL, 1050.00, 0.00, 0.00, 0.00, 0.00, 126.00, 1176.00, 1176.00, 0.000, 0.00, 0.00, 0.00, 1176.00, 'completed', NULL, 1, NULL, '2025-11-14 06:16:24', '2025-11-14 06:16:24'),
-(92, '000021', '2025-11-15', '455529987', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', NULL, 1, NULL, '2025-11-15 01:02:02', '2025-11-15 01:02:02'),
-(93, '000022', '2025-11-15', '45646645', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', NULL, 1, NULL, '2025-11-15 01:06:08', '2025-11-15 01:06:08'),
-(94, '000023', '2025-11-15', '343535', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', NULL, 1, NULL, '2025-11-15 01:08:21', '2025-11-15 01:08:21'),
-(95, '000024', '2025-11-15', '453435', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', NULL, 1, NULL, '2025-11-15 01:19:24', '2025-11-15 01:19:24'),
-(96, '000025', '2025-11-15', '3453455', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 1158.50, 0.00, 0.00, 0.00, 0.00, 139.02, 1297.52, 1297.52, 0.000, 0.00, 0.00, 0.00, 1297.52, 'completed', NULL, 1, NULL, '2025-11-15 01:47:46', '2025-11-15 01:47:46'),
-(97, '000026', '2025-11-15', '4554546', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 1158.50, 0.00, 0.00, 0.00, 0.00, 139.02, 1297.52, 1297.52, 0.000, 0.00, 0.00, 0.00, 1297.52, 'completed', NULL, 1, NULL, '2025-11-15 01:56:16', '2025-11-15 01:56:16'),
-(98, '000027', '2025-11-20', '43435', 11, '2025-11-20', '2025-11-20', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', NULL, 4, NULL, '2025-11-19 23:17:02', '2025-11-19 23:17:02'),
-(99, '000028', '2025-11-20', '54212547', 11, '2025-11-20', '2025-11-20', 'N', 'N', NULL, 1050.00, 0.00, 0.00, 0.00, 0.00, 126.00, 1176.00, 1176.00, 0.000, 0.00, 0.00, 0.00, 1176.00, 'completed', NULL, 4, NULL, '2025-11-20 04:06:15', '2025-11-20 04:06:15'),
-(100, '000029', '2025-11-21', '45645', 11, '2025-11-21', '2025-11-21', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', NULL, 4, NULL, '2025-11-21 02:28:42', '2025-11-21 02:28:42'),
-(101, '000030', '2025-11-24', '234234', 11, '2025-11-24', '2025-11-24', 'N', 'N', NULL, 3798.50, 0.00, 0.00, 0.00, 0.00, 455.82, 4254.32, 4254.32, 0.000, 0.00, 0.00, 0.00, 4254.32, 'completed', NULL, 4, NULL, '2025-11-24 00:19:38', '2025-11-24 00:19:38'),
-(102, '000031', '2025-11-24', '45154', 11, '2025-11-24', '2025-11-24', 'N', 'N', NULL, 3972.30, 0.00, 0.00, 0.00, 0.00, 476.68, 4448.98, 4448.98, 0.000, 0.00, 0.00, 0.00, 4448.98, 'completed', NULL, 4, NULL, '2025-11-24 02:54:50', '2025-11-24 02:54:50'),
-(103, '000032', '2025-11-24', '4534', 11, '2025-11-24', '2025-11-24', 'Y', 'N', NULL, 2400.00, 0.00, 0.00, 0.00, 0.00, 288.00, 2688.00, 2688.00, 0.000, 0.00, 0.00, 0.00, 2688.00, 'completed', NULL, 4, NULL, '2025-11-24 02:58:39', '2025-11-24 02:58:39'),
-(104, '000033', '2025-11-24', '5645', 11, '2025-11-24', '2025-11-24', 'Y', 'N', NULL, 2400.00, 0.00, 0.00, 0.00, 0.00, 288.00, 2688.00, 2688.00, 0.000, 0.00, 0.00, 0.00, 2688.00, 'completed', NULL, 4, NULL, '2025-11-24 05:36:15', '2025-11-24 05:36:15'),
-(105, '000034', '2025-12-01', '345345', 11, '2025-12-01', '2025-12-01', 'N', 'N', NULL, 4800.00, 0.00, 0.00, 0.00, 0.00, 576.00, 5376.00, 5376.00, 0.000, 0.00, 0.00, 0.00, 5376.00, 'completed', NULL, 4, NULL, '2025-12-01 04:13:54', '2025-12-01 04:13:54'),
-(106, '000035', '2025-12-01', '43534553', 11, '2025-12-01', '2025-12-01', 'N', 'N', NULL, 2400.00, 0.00, 0.00, 0.00, 0.00, 288.00, 2688.00, 2688.00, 0.000, 0.00, 0.00, 0.00, 2688.00, 'completed', NULL, 4, NULL, '2025-12-01 07:42:06', '2025-12-01 07:42:06'),
-(107, '000036', '2025-12-02', '254154', 11, '2025-12-02', '2025-12-02', 'N', 'N', NULL, 372.30, 0.00, 0.00, 0.00, 0.00, 44.68, 416.98, 416.98, 0.000, 0.00, 0.00, 0.00, 416.98, 'completed', NULL, 4, NULL, '2025-12-02 03:21:03', '2025-12-02 03:21:03'),
-(108, '000037', '2025-12-03', '546452', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 292.30, 0.00, 0.00, 0.00, 0.00, 14.62, 306.92, 306.92, 0.000, 0.00, 0.00, 0.00, 306.92, 'completed', NULL, 4, NULL, '2025-12-02 22:54:57', '2025-12-02 22:54:57'),
-(109, '000038', '2025-12-03', '4542452', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 2923.00, 0.00, 0.00, 0.00, 0.00, 146.16, 3069.16, 3069.16, 0.000, 0.00, 0.00, 0.00, 3069.16, 'completed', NULL, 4, NULL, '2025-12-02 22:55:57', '2025-12-02 22:55:57'),
-(110, '000039', '2025-12-03', '23112', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 584.60, 0.00, 0.00, 0.00, 0.00, 29.24, 613.84, 613.84, 0.000, 0.00, 0.00, 0.00, 613.84, 'completed', NULL, 4, NULL, '2025-12-03 00:01:59', '2025-12-03 00:01:59'),
-(111, '000040', '2025-12-03', '87654', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 3200.00, 0.00, 0.00, 0.00, 0.00, 384.00, 3584.00, 3584.00, 0.000, 0.00, 0.00, 0.00, 3584.00, 'completed', NULL, 4, NULL, '2025-12-03 01:35:32', '2025-12-03 01:35:32'),
-(112, '000041', '2025-12-04', '3234243', 11, '2025-12-04', NULL, 'N', 'N', '[From Challan: PC000003]', 9127.57, 0.00, 0.00, 0.00, 0.00, 980.74, 9511.57, 9511.57, 0.000, 0.00, 0.00, 0.00, 9511.57, 'completed', NULL, 4, NULL, '2025-12-04 02:54:11', '2025-12-04 02:54:11');
+INSERT INTO `purchase_transactions` (`id`, `trn_no`, `bill_date`, `bill_no`, `supplier_id`, `receive_date`, `due_date`, `cash_flag`, `transfer_flag`, `remarks`, `nt_amount`, `sc_amount`, `scm_amount`, `dis_amount`, `less_amount`, `tax_amount`, `net_amount`, `balance_amount`, `scm_percent`, `tcs_amount`, `dis1_amount`, `tof_amount`, `inv_amount`, `status`, `voucher_type`, `order_no`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(72, '000001', '2025-11-08', '87457', 11, '2025-11-08', '2025-11-08', 'N', 'N', NULL, 1260.00, 0.00, 0.00, 0.00, 0.00, 151.20, 1411.20, 1301.20, 0.000, 0.00, 0.00, 0.00, 1411.20, 'completed', 'purchase', NULL, 1, NULL, '2025-11-08 07:40:43', '2025-11-08 07:40:43'),
+(73, '000002', '2025-11-08', '4554', 12, '2025-11-08', '2025-11-08', 'N', 'N', NULL, 1260.00, 0.00, 0.00, 0.00, 0.00, 151.20, 1411.20, 1411.20, 0.000, 0.00, 0.00, 0.00, 1411.20, 'completed', 'purchase', NULL, 1, NULL, '2025-11-08 07:41:14', '2025-11-08 07:41:14'),
+(74, '000003', '2025-11-08', '54218647', 13, '2025-11-08', '2025-11-08', 'N', 'N', NULL, 1680.00, 0.00, 0.00, 0.00, 0.00, 201.60, 1881.60, 1881.60, 0.000, 0.00, 0.00, 0.00, 1881.60, 'completed', 'purchase', NULL, 1, NULL, '2025-11-08 07:42:19', '2025-11-08 07:42:19'),
+(75, '000004', '2025-11-10', '452', 11, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 16000.00, 0.00, 0.00, 0.00, 0.00, 1920.00, 17920.00, 17920.00, 0.000, 0.00, 0.00, 0.00, 17920.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-10 01:48:34', '2025-11-10 01:48:34'),
+(76, '000005', '2025-11-10', '45545', 12, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 6000.00, 0.00, 0.00, 0.00, 0.00, 720.00, 6720.00, 6720.00, 0.000, 0.00, 0.00, 0.00, 6720.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-10 01:54:45', '2025-11-10 01:54:45'),
+(77, '000006', '2025-11-10', '24527', 11, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 6300.00, 0.00, 0.00, 0.00, 0.00, 756.00, 7056.00, 7056.00, 0.000, 0.00, 0.00, 0.00, 7056.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-10 02:03:14', '2025-11-10 02:03:14'),
+(78, '000007', '2025-11-10', '454752', 12, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 744.60, 0.00, 0.00, 0.00, 0.00, 89.36, 833.96, 833.96, 0.000, 0.00, 0.00, 0.00, 833.96, 'completed', 'purchase', NULL, 1, NULL, '2025-11-10 02:06:29', '2025-11-10 02:06:29'),
+(79, '000008', '2025-11-10', '45542', 14, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 1680.00, 0.00, 0.00, 0.00, 0.00, 201.60, 1881.60, 1881.60, 0.000, 0.00, 0.00, 0.00, 1881.60, 'completed', 'purchase', NULL, 1, NULL, '2025-11-10 02:27:35', '2025-11-10 02:27:35'),
+(80, '000009', '2025-11-10', '578', 11, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 2520.00, 0.00, 0.00, 0.00, 0.00, 302.40, 2822.40, 2822.40, 0.000, 0.00, 0.00, 0.00, 2822.40, 'completed', 'purchase', NULL, 1, NULL, '2025-11-10 06:45:58', '2025-11-10 06:45:58'),
+(81, '000010', '2025-11-10', '576567', 13, '2025-11-10', '2025-11-10', 'N', 'N', NULL, 744.60, 0.00, 0.00, 0.00, 0.00, 89.36, 833.96, 833.96, 0.000, 0.00, 0.00, 0.00, 833.96, 'completed', 'purchase', NULL, 1, 1, '2025-11-10 06:47:22', '2025-11-10 06:50:50'),
+(82, '000011', '2025-11-12', '578282', 11, '2025-11-12', '2025-11-12', 'N', 'N', NULL, 960.00, 0.00, 0.00, 0.00, 0.00, 115.20, 1075.20, 1075.20, 0.000, 0.00, 0.00, 0.00, 1075.20, 'completed', 'purchase', NULL, 1, 1, '2025-11-12 07:34:17', '2025-11-12 07:49:58'),
+(83, '000012', '2025-11-12', '572527', 12, '2025-11-12', '2025-11-12', 'N', 'N', NULL, 840.00, 0.00, 0.00, 0.00, 0.00, 100.80, 940.80, 940.80, 0.000, 0.00, 0.00, 0.00, 940.80, 'completed', 'purchase', NULL, 1, NULL, '2025-11-12 07:59:42', '2025-11-12 07:59:42'),
+(84, '000013', '2025-11-13', '4552', 11, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 1600.00, 0.00, 0.00, 0.00, 0.00, 192.00, 1792.00, 1792.00, 0.000, 0.00, 0.00, 0.00, 1792.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-13 02:14:58', '2025-11-13 02:14:58'),
+(85, '000014', '2025-11-13', '1275482', 15, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 1200.00, 0.00, 0.00, 0.00, 0.00, 144.00, 1344.00, 1344.00, 0.000, 0.00, 0.00, 0.00, 1344.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-13 02:15:49', '2025-11-13 02:15:49'),
+(86, '000015', '2025-11-13', '12855614', 11, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 600.00, 0.00, 0.00, 0.00, 0.00, 72.00, 672.00, 672.00, 0.000, 0.00, 0.00, 0.00, 672.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-13 02:22:11', '2025-11-13 02:22:11'),
+(87, '000016', '2025-11-13', '45542', 15, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 200.00, 0.00, 0.00, 0.00, 0.00, 24.00, 224.00, 224.00, 0.000, 0.00, 0.00, 0.00, 224.00, 'completed', 'purchase', NULL, 1, 1, '2025-11-13 02:31:38', '2025-11-13 02:55:24'),
+(88, '000017', '2025-11-13', '65765', 11, '2025-11-13', '2025-11-13', 'N', 'N', NULL, 1600.00, 0.00, 0.00, 0.00, 0.00, 192.00, 1792.00, 1792.00, 0.000, 0.00, 0.00, 0.00, 1792.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-13 08:04:39', '2025-11-13 08:04:39'),
+(89, '000018', '2025-11-14', '67546', 14, '2025-11-14', '2025-11-14', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-14 04:24:05', '2025-11-14 04:24:05'),
+(90, '000019', '2025-11-14', '221323', 14, '2025-11-14', '2025-11-14', 'N', 'N', NULL, 335.07, 0.00, 0.00, 0.00, 0.00, 40.20, 375.27, 375.27, 0.000, 0.00, 0.00, 0.00, 375.27, 'completed', 'purchase', NULL, 1, NULL, '2025-11-14 04:28:19', '2025-11-14 04:28:19'),
+(91, '000020', '2025-11-14', '56545', 11, '2025-11-14', '2025-11-14', 'N', 'N', NULL, 1050.00, 0.00, 0.00, 0.00, 0.00, 126.00, 1176.00, 1176.00, 0.000, 0.00, 0.00, 0.00, 1176.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-14 06:16:24', '2025-11-14 06:16:24'),
+(92, '000021', '2025-11-15', '455529987', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-15 01:02:02', '2025-11-15 01:02:02'),
+(93, '000022', '2025-11-15', '45646645', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-15 01:06:08', '2025-11-15 01:06:08'),
+(94, '000023', '2025-11-15', '343535', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-15 01:08:21', '2025-11-15 01:08:21'),
+(95, '000024', '2025-11-15', '453435', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', 'purchase', NULL, 1, NULL, '2025-11-15 01:19:24', '2025-11-15 01:19:24'),
+(96, '000025', '2025-11-15', '3453455', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 1158.50, 0.00, 0.00, 0.00, 0.00, 139.02, 1297.52, 1297.52, 0.000, 0.00, 0.00, 0.00, 1297.52, 'completed', 'purchase', NULL, 1, NULL, '2025-11-15 01:47:46', '2025-11-15 01:47:46'),
+(97, '000026', '2025-11-15', '4554546', 11, '2025-11-15', '2025-11-15', 'N', 'N', NULL, 1158.50, 0.00, 0.00, 0.00, 0.00, 139.02, 1297.52, 1297.52, 0.000, 0.00, 0.00, 0.00, 1297.52, 'completed', 'purchase', NULL, 1, NULL, '2025-11-15 01:56:16', '2025-11-15 01:56:16'),
+(98, '000027', '2025-11-20', '43435', 11, '2025-11-20', '2025-11-20', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', 'purchase', NULL, 4, NULL, '2025-11-19 23:17:02', '2025-11-19 23:17:02'),
+(99, '000028', '2025-11-20', '54212547', 11, '2025-11-20', '2025-11-20', 'N', 'N', NULL, 1050.00, 0.00, 0.00, 0.00, 0.00, 126.00, 1176.00, 1176.00, 0.000, 0.00, 0.00, 0.00, 1176.00, 'completed', 'purchase', NULL, 4, NULL, '2025-11-20 04:06:15', '2025-11-20 04:06:15'),
+(100, '000029', '2025-11-21', '45645', 11, '2025-11-21', '2025-11-21', 'N', 'N', NULL, 2100.00, 0.00, 0.00, 0.00, 0.00, 252.00, 2352.00, 2352.00, 0.000, 0.00, 0.00, 0.00, 2352.00, 'completed', 'purchase', NULL, 4, NULL, '2025-11-21 02:28:42', '2025-11-21 02:28:42'),
+(101, '000030', '2025-11-24', '234234', 11, '2025-11-24', '2025-11-24', 'N', 'N', NULL, 3798.50, 0.00, 0.00, 0.00, 0.00, 455.82, 4254.32, 4254.32, 0.000, 0.00, 0.00, 0.00, 4254.32, 'completed', 'purchase', NULL, 4, NULL, '2025-11-24 00:19:38', '2025-11-24 00:19:38'),
+(102, '000031', '2025-11-24', '45154', 11, '2025-11-24', '2025-11-24', 'N', 'N', NULL, 3972.30, 0.00, 0.00, 0.00, 0.00, 476.68, 4448.98, 4448.98, 0.000, 0.00, 0.00, 0.00, 4448.98, 'completed', 'purchase', NULL, 4, NULL, '2025-11-24 02:54:50', '2025-11-24 02:54:50'),
+(103, '000032', '2025-11-24', '4534', 11, '2025-11-24', '2025-11-24', 'Y', 'N', NULL, 2400.00, 0.00, 0.00, 0.00, 0.00, 288.00, 2688.00, 2688.00, 0.000, 0.00, 0.00, 0.00, 2688.00, 'completed', 'purchase', NULL, 4, NULL, '2025-11-24 02:58:39', '2025-11-24 02:58:39'),
+(104, '000033', '2025-11-24', '5645', 11, '2025-11-24', '2025-11-24', 'Y', 'N', NULL, 2400.00, 0.00, 0.00, 0.00, 0.00, 288.00, 2688.00, 2688.00, 0.000, 0.00, 0.00, 0.00, 2688.00, 'completed', 'purchase', NULL, 4, NULL, '2025-11-24 05:36:15', '2025-11-24 05:36:15'),
+(105, '000034', '2025-12-01', '345345', 11, '2025-12-01', '2025-12-01', 'N', 'N', NULL, 4800.00, 0.00, 0.00, 0.00, 0.00, 576.00, 5376.00, 5376.00, 0.000, 0.00, 0.00, 0.00, 5376.00, 'completed', 'purchase', NULL, 4, NULL, '2025-12-01 04:13:54', '2025-12-01 04:13:54'),
+(106, '000035', '2025-12-01', '43534553', 11, '2025-12-01', '2025-12-01', 'N', 'N', NULL, 2400.00, 0.00, 0.00, 0.00, 0.00, 288.00, 2688.00, 2688.00, 0.000, 0.00, 0.00, 0.00, 2688.00, 'completed', 'purchase', NULL, 4, NULL, '2025-12-01 07:42:06', '2025-12-01 07:42:06'),
+(107, '000036', '2025-12-02', '254154', 11, '2025-12-02', '2025-12-02', 'N', 'N', NULL, 372.30, 0.00, 0.00, 0.00, 0.00, 44.68, 416.98, 416.98, 0.000, 0.00, 0.00, 0.00, 416.98, 'completed', 'purchase', NULL, 4, NULL, '2025-12-02 03:21:03', '2025-12-02 03:21:03'),
+(108, '000037', '2025-12-03', '546452', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 292.30, 0.00, 0.00, 0.00, 0.00, 14.62, 306.92, 306.92, 0.000, 0.00, 0.00, 0.00, 306.92, 'completed', 'purchase', NULL, 4, NULL, '2025-12-02 22:54:57', '2025-12-02 22:54:57'),
+(109, '000038', '2025-12-03', '4542452', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 2923.00, 0.00, 0.00, 0.00, 0.00, 146.16, 3069.16, 3069.16, 0.000, 0.00, 0.00, 0.00, 3069.16, 'completed', 'purchase', NULL, 4, NULL, '2025-12-02 22:55:57', '2025-12-02 22:55:57'),
+(110, '000039', '2025-12-03', '23112', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 584.60, 0.00, 0.00, 0.00, 0.00, 29.24, 613.84, 613.84, 0.000, 0.00, 0.00, 0.00, 613.84, 'completed', 'purchase', NULL, 4, NULL, '2025-12-03 00:01:59', '2025-12-03 00:01:59'),
+(111, '000040', '2025-12-03', '87654', 11, '2025-12-03', '2025-12-03', 'N', 'N', NULL, 3200.00, 0.00, 0.00, 0.00, 0.00, 384.00, 3584.00, 3584.00, 0.000, 0.00, 0.00, 0.00, 3584.00, 'completed', 'purchase', NULL, 4, NULL, '2025-12-03 01:35:32', '2025-12-03 01:35:32'),
+(112, '000041', '2025-12-04', '3234243', 11, '2025-12-04', NULL, 'N', 'N', '[From Challan: PC000003]', 9127.57, 0.00, 0.00, 0.00, 0.00, 980.74, 9511.57, 8951.57, 0.000, 0.00, 0.00, 0.00, 9511.57, 'completed', 'purchase', NULL, 4, NULL, '2025-12-04 02:54:11', '2025-12-23 07:22:32'),
+(114, '42', '2025-12-19', '000042', 19, '2025-12-19', NULL, 'N', 'N', NULL, 1000.00, 0.00, 0.00, 0.00, 0.00, 120.00, 1120.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'purchase', NULL, 1, NULL, '2025-12-19 02:06:03', '2025-12-19 02:06:03'),
+(115, '43', '2025-12-19', '000043', 19, '2025-12-19', NULL, 'N', 'N', NULL, 1000.00, 0.00, 0.00, 0.00, 0.00, 50.00, 1050.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'purchase', NULL, 1, NULL, '2025-12-19 02:15:46', '2025-12-19 02:15:46'),
+(116, '44', '2025-12-19', '4534', 19, '2025-12-19', NULL, 'N', 'N', NULL, 1000.00, 0.00, 0.00, 0.00, 0.00, 50.00, 1050.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'purchase', NULL, 1, NULL, '2025-12-19 02:26:40', '2025-12-19 02:26:40'),
+(117, '000045', '2025-12-04', '67867', 11, '2025-12-04', NULL, 'N', 'N', '[From Challan: PC000001]', 3069.16, 0.00, 0.00, 0.00, 0.00, 146.16, 3069.16, 0.00, 0.000, 0.00, 0.00, 0.00, 3069.16, 'completed', 'purchase', NULL, 1, NULL, '2025-12-19 02:27:42', '2025-12-19 02:27:42'),
+(118, '000046', '2025-12-19', '000046', 34, '2025-12-19', NULL, 'N', 'N', NULL, 1000.00, 0.00, 0.00, 0.00, 0.00, 50.00, 1050.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'purchase', NULL, 1, NULL, '2025-12-19 02:33:04', '2025-12-19 02:33:04'),
+(119, '000047', '2025-12-19', '000047', 19, '2025-12-19', NULL, 'N', 'N', NULL, 1000.00, 0.00, 0.00, 0.00, 0.00, 50.00, 1050.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'purchase', NULL, 1, NULL, '2025-12-19 02:51:49', '2025-12-19 02:51:49'),
+(120, '000048', '2025-12-19', '000048', 19, '2025-12-19', NULL, 'N', 'N', NULL, 1000.00, 0.00, 0.00, 0.00, 0.00, 120.00, 1120.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'voucher', NULL, 1, NULL, '2025-12-19 02:56:30', '2025-12-19 02:56:30'),
+(121, '000049', '2025-12-19', '000049', 20, '2025-12-19', NULL, 'N', 'N', NULL, 1500.00, 0.00, 0.00, 0.00, 0.00, 60.00, 1560.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'voucher', NULL, 1, NULL, '2025-12-19 02:57:08', '2025-12-19 02:57:08'),
+(122, '000050', '2025-12-30', '000050', 19, '2025-12-30', NULL, 'N', 'N', NULL, 1000.00, 0.00, 0.00, 0.00, 0.00, 120.00, 1120.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'completed', 'voucher', NULL, 1, NULL, '2025-12-30 05:49:13', '2025-12-30 05:49:13');
 
 -- --------------------------------------------------------
 
@@ -3139,7 +4134,103 @@ INSERT INTO `purchase_transaction_items` (`id`, `purchase_transaction_id`, `item
 (216, 112, 30, '30', 'ABAXIS-5 MG TAB.', '4dec5', '2028-11-01', 20.00, 0.00, 160.00, 250.00, 120.00, 0.00, 0.00, 0.000, 3200.00, 6.000, 6.000, 0.000, 192.00, 192.00, 0.00, 384.00, 3584.00, 160.00, 179.20, '1', '1*10', 'Tata Consultancy Services', NULL, 0, '2025-12-04 02:54:11', '2025-12-04 02:54:11'),
 (217, 112, 31, '31', 'ACAMPTAS-333 MG TAB.', '4dec5', '2028-11-01', 20.00, 0.00, 120.00, 250.00, 170.00, 0.00, 0.00, 0.000, 2400.00, 6.000, 6.000, 0.000, 144.00, 144.00, 0.00, 288.00, 2688.00, 0.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 1, '2025-12-04 02:54:11', '2025-12-04 02:54:11'),
 (218, 112, 79, '79', 'ACEBOVIR TAB.', '4dec5', '2028-11-01', 20.00, 0.00, 115.85, 0.00, 131.40, 0.00, 0.00, 0.000, 2595.04, 6.000, 6.000, 0.000, 139.02, 139.02, 0.00, 278.04, 2595.04, 0.00, 0.00, '1', '1*10', 'BYJU\'S Classes Pvt Ltd', NULL, 2, '2025-12-04 02:54:11', '2025-12-04 02:54:11'),
-(219, 112, 83, '83', 'ACETAMIDE-250 MG TAB.', '4dec5', '2028-11-01', 21.00, 0.00, 29.23, 0.00, 32.48, 0.00, 0.00, 0.000, 644.53, 2.500, 2.500, 0.000, 15.35, 15.35, 0.00, 30.70, 644.53, 0.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 3, '2025-12-04 02:54:11', '2025-12-04 02:54:11');
+(219, 112, 83, '83', 'ACETAMIDE-250 MG TAB.', '4dec5', '2028-11-01', 21.00, 0.00, 29.23, 0.00, 32.48, 0.00, 0.00, 0.000, 644.53, 2.500, 2.500, 0.000, 15.35, 15.35, 0.00, 30.70, 644.53, 0.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 3, '2025-12-04 02:54:11', '2025-12-04 02:54:11'),
+(220, 114, NULL, '29362990', 'HSN-29362990', NULL, NULL, 0.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 6.000, 6.000, 0.000, 60.00, 60.00, 0.00, 120.00, 1120.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-19 02:06:03', '2025-12-19 02:06:03'),
+(221, 115, NULL, '29362990', 'HSN-29362990', NULL, NULL, 0.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 2.500, 2.500, 0.000, 25.00, 25.00, 0.00, 50.00, 1050.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-19 02:15:46', '2025-12-19 02:15:46'),
+(222, 116, NULL, '29339900', 'HSN-29339900', NULL, NULL, 10.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 2.500, 2.500, 0.000, 25.00, 25.00, 0.00, 50.00, 1050.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-19 02:26:40', '2025-12-19 02:26:40'),
+(223, 117, 83, '83', 'ACETAMIDE-250 MG TAB.', '4dec', '2028-11-01', 100.00, 0.00, 29.23, 42.63, 32.48, 0.00, 0.00, 0.000, 3069.16, 2.500, 2.500, 0.000, 73.08, 73.08, 0.00, 146.16, 3069.16, 0.00, 0.00, '1', '1*10', 'HDFC Bank Ltd', NULL, 0, '2025-12-19 02:27:42', '2025-12-19 02:27:42'),
+(224, 118, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 2.500, 2.500, 0.000, 25.00, 25.00, 0.00, 50.00, 1050.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-19 02:33:04', '2025-12-19 02:33:04'),
+(225, 119, NULL, '21061000', 'HSN-21061000', NULL, NULL, 0.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 2.500, 2.500, 0.000, 25.00, 25.00, 0.00, 50.00, 1050.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-19 02:51:49', '2025-12-19 02:51:49'),
+(226, 120, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 6.000, 6.000, 0.000, 60.00, 60.00, 0.00, 120.00, 1120.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-19 02:56:31', '2025-12-19 02:56:31'),
+(227, 121, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 0.000, 0.000, 0.000, 0.00, 0.00, 0.00, 0.00, 1000.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-19 02:57:08', '2025-12-19 02:57:08'),
+(228, 121, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.00, 0.00, 500.00, NULL, 0.00, 0.00, 0.00, 0.000, 500.00, 6.000, 6.000, 0.000, 30.00, 30.00, 0.00, 60.00, 560.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 2, '2025-12-19 02:57:08', '2025-12-19 02:57:08'),
+(229, 122, NULL, '21069099', 'HSN-21069099', NULL, NULL, 10.00, 0.00, 1000.00, NULL, 0.00, 0.00, 0.00, 0.000, 1000.00, 6.000, 6.000, 0.000, 60.00, 60.00, 0.00, 120.00, 1120.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-30 05:49:14', '2025-12-30 05:49:14');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_vouchers`
+--
+
+CREATE TABLE `purchase_vouchers` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `voucher_date` date NOT NULL,
+  `voucher_no` int(11) NOT NULL,
+  `bill_no` varchar(100) DEFAULT NULL,
+  `bill_date` date DEFAULT NULL,
+  `local_inter` enum('L','I') NOT NULL DEFAULT 'L',
+  `rcm` enum('Y','N') NOT NULL DEFAULT 'N',
+  `description` text DEFAULT NULL,
+  `supplier_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `supplier_code` varchar(50) DEFAULT NULL,
+  `supplier_name` varchar(255) DEFAULT NULL,
+  `gst_no` varchar(20) DEFAULT NULL,
+  `pan_no` varchar(20) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `pin` varchar(10) DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_gst` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `round_off` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_debit` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tds_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `tds_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `payment_type` enum('1','2') NOT NULL DEFAULT '1',
+  `credit_account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `credit_account_type` varchar(20) DEFAULT NULL,
+  `credit_account_name` varchar(255) DEFAULT NULL,
+  `cheque_no` varchar(50) DEFAULT NULL,
+  `total_credit` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_cgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_sgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_igst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` enum('active','cancelled','reversed') NOT NULL DEFAULT 'active',
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_voucher_accounts`
+--
+
+CREATE TABLE `purchase_voucher_accounts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `purchase_voucher_id` bigint(20) UNSIGNED NOT NULL,
+  `account_type` varchar(20) DEFAULT NULL,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `account_code` varchar(50) DEFAULT NULL,
+  `account_name` varchar(255) DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `purchase_voucher_items`
+--
+
+CREATE TABLE `purchase_voucher_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `purchase_voucher_id` bigint(20) UNSIGNED NOT NULL,
+  `hsn_code` varchar(20) DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `gst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `cgst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `cgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sgst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `sgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `igst_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `igst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -3170,7 +4261,7 @@ CREATE TABLE `quotations` (
 --
 
 INSERT INTO `quotations` (`id`, `quotation_no`, `series`, `quotation_date`, `customer_id`, `customer_name`, `discount_percent`, `remarks`, `terms`, `net_amount`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(1, 'QT000001', 'QT', '2025-12-17', 36, 'abhishek', 0.00, NULL, NULL, 1900.00, 'active', 1, NULL, '2025-12-17 04:06:15', '2025-12-17 04:06:15');
+(3, 'QT000001', 'QT', '2025-12-17', 2, 'Mahesh Traders', 0.00, NULL, NULL, 300.00, 'active', 1, 1, '2025-12-17 02:37:05', '2025-12-17 03:46:17');
 
 -- --------------------------------------------------------
 
@@ -3185,8 +4276,8 @@ CREATE TABLE `quotation_items` (
   `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
   `item_code` varchar(50) DEFAULT NULL,
   `item_name` varchar(255) DEFAULT NULL,
-  `batch_no` varchar(50) DEFAULT NULL,
-  `expiry_date` varchar(20) DEFAULT NULL,
+  `batch_no` varchar(100) DEFAULT NULL,
+  `expiry_date` varchar(50) DEFAULT NULL,
   `packing` varchar(50) DEFAULT NULL,
   `company_name` varchar(100) DEFAULT NULL,
   `location` varchar(100) DEFAULT NULL,
@@ -3205,7 +4296,8 @@ CREATE TABLE `quotation_items` (
 --
 
 INSERT INTO `quotation_items` (`id`, `quotation_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry_date`, `packing`, `company_name`, `location`, `qty`, `rate`, `mrp`, `amount`, `unit`, `row_order`, `created_at`, `updated_at`) VALUES
-(1, 1, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', '1*10', 'TCS', NULL, 10.000, 190.00, 250.00, 1900.00, '1', 0, '2025-12-17 04:06:15', '2025-12-17 04:06:15');
+(3, 3, 29, NULL, '', 'bisolong', NULL, NULL, '1*10', 'HDFC', NULL, 1.000, 180.00, 250.00, 180.00, '1', 0, '2025-12-17 03:46:17', '2025-12-17 03:46:17'),
+(4, 3, 30, NULL, '', 'ABAXIS-5 MG TAB.', NULL, NULL, '1*10', 'TCS', NULL, 1.000, 120.00, 250.00, 120.00, '1', 1, '2025-12-17 03:46:17', '2025-12-17 03:46:17');
 
 -- --------------------------------------------------------
 
@@ -4048,6 +5140,65 @@ INSERT INTO `sale_return_adjustments` (`id`, `sale_return_id`, `sale_transaction
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `sale_return_replacement_items`
+--
+
+CREATE TABLE `sale_return_replacement_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `transaction_id` bigint(20) UNSIGNED NOT NULL,
+  `item_id` bigint(20) UNSIGNED NOT NULL,
+  `item_code` varchar(255) NOT NULL,
+  `item_name` varchar(255) NOT NULL,
+  `batch_no` varchar(255) DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `qty` int(11) NOT NULL DEFAULT 0,
+  `free_qty` int(11) NOT NULL DEFAULT 0,
+  `sale_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `discount_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `ft_rate` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `packing` varchar(255) DEFAULT NULL,
+  `unit` varchar(255) DEFAULT NULL,
+  `mrp` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sale_return_replacement_transactions`
+--
+
+CREATE TABLE `sale_return_replacement_transactions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `series` varchar(255) NOT NULL DEFAULT 'RG',
+  `trn_no` varchar(255) NOT NULL,
+  `trn_date` date NOT NULL,
+  `is_cash` enum('Y','N') NOT NULL DEFAULT 'N',
+  `customer_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `customer_name` varchar(255) DEFAULT NULL,
+  `fixed_discount` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `sc_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `tax_percent` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `excise` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `tsr` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `nt_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `sc_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `ft_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `dis_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `scm_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `tax_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `net_amt` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `remarks` text DEFAULT NULL,
+  `status` enum('active','cancelled') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `sale_return_transactions`
 --
 
@@ -4085,6 +5236,7 @@ CREATE TABLE `sale_return_transactions` (
   `hs_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `remarks` text DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'active',
+  `voucher_type` varchar(20) NOT NULL DEFAULT 'return',
   `created_by` bigint(20) UNSIGNED DEFAULT NULL,
   `updated_by` bigint(20) UNSIGNED DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -4095,55 +5247,59 @@ CREATE TABLE `sale_return_transactions` (
 -- Dumping data for table `sale_return_transactions`
 --
 
-INSERT INTO `sale_return_transactions` (`id`, `sr_no`, `series`, `return_date`, `customer_id`, `customer_name`, `salesman_id`, `salesman_name`, `original_invoice_no`, `original_invoice_date`, `original_series`, `original_amount`, `rate_diff_flag`, `cash_flag`, `tax_flag`, `fixed_discount`, `nt_amount`, `sc_amount`, `ft_amount`, `dis_amount`, `scm_amount`, `tax_amount`, `net_amount`, `scm_percent`, `tcs_amount`, `excise_amount`, `packing`, `unit`, `cl_qty`, `location`, `hs_amount`, `remarks`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(1, 'SR0001', 'SR', '2025-11-17', 1, NULL, NULL, NULL, 'INV-000018', '2025-11-15', NULL, 0.00, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-17 03:57:11', '2025-11-17 03:57:11'),
-(2, 'SR0002', 'SR', '2025-11-17', 4, NULL, NULL, NULL, 'INV-000024', '2025-11-17', NULL, 0.00, 'N', 'N', 'N', 0.00, 41.14, 0.00, 41.14, 2.88, 0.00, 4.59, 42.85, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-17 05:01:50', '2025-11-17 05:01:50'),
-(3, 'SR0003', 'SR', '2025-11-17', 4, NULL, NULL, NULL, 'INV-000024', '2025-11-17', 'SB', 0.00, 'N', 'N', 'N', 0.00, 41.14, 0.00, 41.14, 2.88, 0.00, 4.59, 42.85, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-17 06:29:59', '2025-11-17 06:29:59'),
-(5, 'SR0004', 'SR', '2025-11-17', 36, NULL, NULL, NULL, 'INV-000025', '2025-11-17', 'SB', 624.96, 'N', 'N', 'N', 0.00, 120.00, 0.00, 120.00, 8.40, 0.00, 13.39, 124.99, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-17 06:52:26', '2025-11-17 06:52:26'),
-(6, 'SR0005', 'SR', '2025-11-17', 36, NULL, NULL, NULL, 'INV-000025', '2025-11-17', 'SB', 624.96, 'N', 'N', 'N', 0.00, 120.00, 0.00, 120.00, 8.40, 0.00, 13.39, 124.99, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-17 07:09:55', '2025-11-17 07:09:55'),
-(7, 'SR0006', 'SR', '2025-11-17', 36, NULL, NULL, NULL, 'INV-000025', '2025-11-17', 'SB', 624.96, 'N', 'N', 'N', 0.00, 120.00, 0.00, 120.00, 8.40, 0.00, 13.39, 124.99, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-17 07:11:28', '2025-11-17 07:11:28'),
-(8, 'SR0007', 'SR', '2025-11-17', 1, NULL, NULL, NULL, 'INV-000026', '2025-11-17', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-17 07:33:38', '2025-11-17 07:33:38'),
-(9, 'SR0008', 'SR', '2025-11-19', 1, NULL, NULL, NULL, 'INV-000026', '2025-11-17', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-19 13:37:55', '2025-11-19 13:37:55'),
-(10, 'SR0009', 'SR', '2025-11-20', 3, NULL, NULL, NULL, 'INV-000027', '2025-11-20', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-19 23:22:15', '2025-11-19 23:22:15'),
-(16, 'SR0010', 'SR', '2025-11-20', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 482.28, 0.00, 482.28, 0.00, 0.00, 57.87, 540.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 03:00:28', '2025-11-20 03:00:28'),
-(17, 'SR0011', 'SR', '2025-11-20', 1, NULL, 5, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 482.28, 0.00, 482.28, 0.00, 0.00, 57.87, 540.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 03:49:41', '2025-11-20 03:49:41'),
-(18, 'SR0012', 'SR', '2025-11-20', 1, NULL, 20, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 400.00, 0.00, 400.00, 0.00, 0.00, 48.00, 448.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 03:52:36', '2025-11-20 03:52:36'),
-(19, 'SR0013', 'SR', '2025-11-20', 1, NULL, 4, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 550.00, 0.00, 550.00, 0.00, 0.00, 66.00, 616.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 03:54:01', '2025-11-20 03:54:01'),
-(20, 'SR0014', 'SR', '2025-11-20', 3, NULL, NULL, NULL, 'INV-000027', '2025-11-20', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 04:03:27', '2025-11-20 04:03:27'),
-(21, 'SR0015', 'SR', '2025-11-20', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 610.00, 0.00, 610.00, 0.00, 0.00, 73.20, 683.20, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 04:18:48', '2025-11-20 04:18:48'),
-(22, 'SR0016', 'SR', '2025-11-20', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 610.00, 0.00, 610.00, 0.00, 0.00, 73.20, 683.20, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 04:34:15', '2025-11-20 04:34:15'),
-(23, 'SR0017', 'SR', '2025-11-20', 36, 'abhishek', 4, 'Amit Patel', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 400.00, 0.00, 400.00, 0.00, 0.00, 48.00, 448.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 05:16:00', '2025-11-20 05:16:00'),
-(24, 'SR0018', 'SR', '2025-11-20', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 800.00, 0.00, 800.00, 0.00, 0.00, 96.00, 896.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, 4, '2025-11-20 05:28:57', '2025-11-20 05:50:51'),
-(25, 'SR0019', 'SR', '2025-11-20', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 82.28, 0.00, 82.28, 0.00, 0.00, 9.87, 92.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 05:56:28', '2025-11-20 05:56:28'),
-(26, 'SR0020', 'SR', '2025-11-20', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 82.28, 0.00, 82.28, 0.00, 0.00, 9.87, 92.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 05:58:15', '2025-11-20 05:58:15'),
-(27, 'SR0021', 'SR', '2025-11-20', 3, 'fdggdv', NULL, '', 'INV-000027', NULL, 'SB', 885.36, 'N', 'N', 'N', 0.00, 340.00, 0.00, 340.00, 23.80, 0.00, 37.94, 354.14, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, 4, '2025-11-20 06:04:05', '2025-11-20 06:05:13'),
-(28, 'SR0022', 'SR', '2025-11-20', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 340.00, 0.00, 340.00, 0.00, 0.00, 40.80, 380.80, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 06:21:36', '2025-11-20 06:21:36'),
-(29, 'SR0023', 'SR', '2025-11-20', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 550.00, 0.00, 550.00, 0.00, 0.00, 66.00, 616.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-20 08:15:02', '2025-11-20 08:15:02'),
-(30, 'SR0024', 'SR', '2025-11-25', 1, 'amansingh', 20, 'dxvcvgdfg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 180.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-25 01:05:22', '2025-11-25 01:05:22'),
-(31, 'SR0025', 'SR', '2025-11-25', 1, 'amansingh', 20, 'dxvcvgdfg', NULL, NULL, NULL, 0.00, 'N', 'Y', 'N', 0.00, 180.00, 0.00, 180.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-25 01:08:09', '2025-11-25 01:08:09'),
-(32, 'SR0026', 'SR', '2025-11-25', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-25 01:10:35', '2025-11-25 01:10:35'),
-(33, 'SR0027', 'SR', '2025-11-25', 1, 'amansingh', 20, 'dxvcvgdfg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-25 02:30:02', '2025-11-25 02:30:02'),
-(34, 'SR0028', 'SR', '2025-11-25', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-25 02:36:02', '2025-11-25 02:36:02'),
-(35, 'SR0029', 'SR', '2025-11-25', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-25 02:47:31', '2025-11-25 02:47:31'),
-(36, 'SR0030', 'SR', '2025-11-25', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-25 02:54:39', '2025-11-25 02:54:39'),
-(37, 'SR0031', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 01:12:38', '2025-11-26 01:12:38'),
-(38, 'SR0032', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 180.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 01:23:40', '2025-11-26 01:23:40'),
-(39, 'SR0033', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 02:23:17', '2025-11-26 02:23:17'),
-(40, 'SR0034', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 02:37:14', '2025-11-26 02:37:14'),
-(41, 'SR0035', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 02:57:08', '2025-11-26 02:57:08'),
-(42, 'SR0036', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 03:58:28', '2025-11-26 03:58:28'),
-(43, 'SR0037', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 03:59:19', '2025-11-26 03:59:19'),
-(44, 'SR0038', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'Y', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 04:00:45', '2025-11-26 04:00:45'),
-(45, 'SR0039', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'Y', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-11-26 04:03:06', '2025-11-26 04:03:06'),
-(48, 'SR0040', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000042', '2025-11-26', 'SB', 177.07, 'N', 'N', 'N', 0.00, 158.10, 0.00, 0.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 4, NULL, '2025-12-01 04:32:15', '2025-12-01 04:32:15'),
-(49, 'SR0041', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000044', '2025-12-01', 'SB', 1008.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 0.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 4, NULL, '2025-12-01 07:50:39', '2025-12-01 07:50:39'),
-(50, 'SR0042', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000044', '2025-12-01', 'SB', 1008.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 0.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 4, NULL, '2025-12-01 07:52:47', '2025-12-01 07:52:47'),
-(51, 'SR0043', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000043', '2025-12-01', 'SB', 187.49, 'N', 'N', 'N', 0.00, 167.40, 0.00, 0.00, 12.60, 0.00, 20.09, 187.49, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 4, NULL, '2025-12-01 08:04:07', '2025-12-01 08:04:07'),
-(52, 'SR0044', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 340.00, 0.00, 0.00, 0.00, 0.00, 40.80, 380.80, 0.000, 0.00, 0.00, 0.00, 0.00, 2.00, '', 0.00, NULL, 'active', 4, NULL, '2025-12-01 08:23:57', '2025-12-01 08:23:57'),
-(53, 'SR0045', 'SR', '2025-12-03', 1, 'amansingh', NULL, '', 'INV-000046', '2025-12-03', 'SB', 317.17, 'N', 'N', 'N', 0.00, 151.03, 0.00, 0.00, 11.37, 0.00, 7.55, 158.58, 0.000, 0.00, 0.00, 0.00, 0.00, 5.00, '', 0.00, NULL, 'active', 4, NULL, '2025-12-02 23:16:26', '2025-12-02 23:16:26'),
-(54, 'SR0046', 'SR', '2025-12-03', 1, 'amansingh', NULL, '', 'INV-000047', '2025-12-03', 'SB', 341.04, 'N', 'N', 'N', 0.00, 162.40, 0.00, 0.00, 0.00, 0.00, 8.12, 170.52, 0.000, 0.00, 0.00, 0.00, 0.00, 5.00, '', 0.00, NULL, 'active', 4, NULL, '2025-12-02 23:29:34', '2025-12-02 23:29:34'),
-(55, 'SR0047', 'SR', '2025-12-03', 1, 'amansingh', NULL, '', 'INV-000048', '2025-12-03', 'SB', 317.17, 'N', 'N', 'N', 0.00, 162.40, 0.00, 162.40, 11.37, 0.00, 7.55, 158.58, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, NULL, '2025-12-03 00:05:27', '2025-12-03 00:05:27'),
-(56, 'SR0048', 'SR', '2025-12-03', 2, 'Mahesh Traders', NULL, '', 'INV-000049', NULL, 'SB', 1276.80, 'N', 'N', 'N', 0.00, 570.00, 0.00, 570.00, 0.00, 0.00, 68.40, 638.40, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', NULL, 4, '2025-12-03 01:40:37', '2025-12-03 01:42:23');
+INSERT INTO `sale_return_transactions` (`id`, `sr_no`, `series`, `return_date`, `customer_id`, `customer_name`, `salesman_id`, `salesman_name`, `original_invoice_no`, `original_invoice_date`, `original_series`, `original_amount`, `rate_diff_flag`, `cash_flag`, `tax_flag`, `fixed_discount`, `nt_amount`, `sc_amount`, `ft_amount`, `dis_amount`, `scm_amount`, `tax_amount`, `net_amount`, `scm_percent`, `tcs_amount`, `excise_amount`, `packing`, `unit`, `cl_qty`, `location`, `hs_amount`, `remarks`, `status`, `voucher_type`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(1, 'SR0001', 'SR', '2025-11-17', 1, NULL, NULL, NULL, 'INV-000018', '2025-11-15', NULL, 0.00, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-17 03:57:11', '2025-11-17 03:57:11'),
+(2, 'SR0002', 'SR', '2025-11-17', 4, NULL, NULL, NULL, 'INV-000024', '2025-11-17', NULL, 0.00, 'N', 'N', 'N', 0.00, 41.14, 0.00, 41.14, 2.88, 0.00, 4.59, 42.85, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-17 05:01:50', '2025-11-17 05:01:50'),
+(3, 'SR0003', 'SR', '2025-11-17', 4, NULL, NULL, NULL, 'INV-000024', '2025-11-17', 'SB', 0.00, 'N', 'N', 'N', 0.00, 41.14, 0.00, 41.14, 2.88, 0.00, 4.59, 42.85, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-17 06:29:59', '2025-11-17 06:29:59'),
+(5, 'SR0004', 'SR', '2025-11-17', 36, NULL, NULL, NULL, 'INV-000025', '2025-11-17', 'SB', 624.96, 'N', 'N', 'N', 0.00, 120.00, 0.00, 120.00, 8.40, 0.00, 13.39, 124.99, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-17 06:52:26', '2025-11-17 06:52:26'),
+(6, 'SR0005', 'SR', '2025-11-17', 36, NULL, NULL, NULL, 'INV-000025', '2025-11-17', 'SB', 624.96, 'N', 'N', 'N', 0.00, 120.00, 0.00, 120.00, 8.40, 0.00, 13.39, 124.99, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-17 07:09:55', '2025-11-17 07:09:55'),
+(7, 'SR0006', 'SR', '2025-11-17', 36, NULL, NULL, NULL, 'INV-000025', '2025-11-17', 'SB', 624.96, 'N', 'N', 'N', 0.00, 120.00, 0.00, 120.00, 8.40, 0.00, 13.39, 124.99, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-17 07:11:28', '2025-11-17 07:11:28'),
+(8, 'SR0007', 'SR', '2025-11-17', 1, NULL, NULL, NULL, 'INV-000026', '2025-11-17', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-17 07:33:38', '2025-11-17 07:33:38'),
+(9, 'SR0008', 'SR', '2025-11-19', 1, NULL, NULL, NULL, 'INV-000026', '2025-11-17', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-19 13:37:55', '2025-11-19 13:37:55'),
+(10, 'SR0009', 'SR', '2025-11-20', 3, NULL, NULL, NULL, 'INV-000027', '2025-11-20', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-19 23:22:15', '2025-11-19 23:22:15'),
+(16, 'SR0010', 'SR', '2025-11-20', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 482.28, 0.00, 482.28, 0.00, 0.00, 57.87, 540.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 03:00:28', '2025-11-20 03:00:28'),
+(17, 'SR0011', 'SR', '2025-11-20', 1, NULL, 5, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 482.28, 0.00, 482.28, 0.00, 0.00, 57.87, 540.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 03:49:41', '2025-11-20 03:49:41'),
+(18, 'SR0012', 'SR', '2025-11-20', 1, NULL, 20, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 400.00, 0.00, 400.00, 0.00, 0.00, 48.00, 448.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 03:52:36', '2025-11-20 03:52:36'),
+(19, 'SR0013', 'SR', '2025-11-20', 1, NULL, 4, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 550.00, 0.00, 550.00, 0.00, 0.00, 66.00, 616.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 03:54:01', '2025-11-20 03:54:01'),
+(20, 'SR0014', 'SR', '2025-11-20', 3, NULL, NULL, NULL, 'INV-000027', '2025-11-20', 'SB', 885.36, 'N', 'N', 'N', 0.00, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 04:03:27', '2025-11-20 04:03:27'),
+(21, 'SR0015', 'SR', '2025-11-20', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 610.00, 0.00, 610.00, 0.00, 0.00, 73.20, 683.20, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 04:18:48', '2025-11-20 04:18:48'),
+(22, 'SR0016', 'SR', '2025-11-20', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 610.00, 0.00, 610.00, 0.00, 0.00, 73.20, 683.20, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 04:34:15', '2025-11-20 04:34:15'),
+(23, 'SR0017', 'SR', '2025-11-20', 36, 'abhishek', 4, 'Amit Patel', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 400.00, 0.00, 400.00, 0.00, 0.00, 48.00, 448.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 05:16:00', '2025-11-20 05:16:00'),
+(24, 'SR0018', 'SR', '2025-11-20', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 800.00, 0.00, 800.00, 0.00, 0.00, 96.00, 896.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, 4, '2025-11-20 05:28:57', '2025-11-20 05:50:51'),
+(25, 'SR0019', 'SR', '2025-11-20', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 82.28, 0.00, 82.28, 0.00, 0.00, 9.87, 92.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 05:56:28', '2025-11-20 05:56:28'),
+(26, 'SR0020', 'SR', '2025-11-20', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 82.28, 0.00, 82.28, 0.00, 0.00, 9.87, 92.15, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 05:58:15', '2025-11-20 05:58:15'),
+(27, 'SR0021', 'SR', '2025-11-20', 3, 'fdggdv', NULL, '', 'INV-000027', NULL, 'SB', 885.36, 'N', 'N', 'N', 0.00, 340.00, 0.00, 340.00, 23.80, 0.00, 37.94, 354.14, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, 4, '2025-11-20 06:04:05', '2025-11-20 06:05:13'),
+(28, 'SR0022', 'SR', '2025-11-20', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 340.00, 0.00, 340.00, 0.00, 0.00, 40.80, 380.80, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 06:21:36', '2025-11-20 06:21:36'),
+(29, 'SR0023', 'SR', '2025-11-20', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 550.00, 0.00, 550.00, 0.00, 0.00, 66.00, 616.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-20 08:15:02', '2025-11-20 08:15:02'),
+(30, 'SR0024', 'SR', '2025-11-25', 1, 'amansingh', 20, 'dxvcvgdfg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 180.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-25 01:05:22', '2025-11-25 01:05:22'),
+(31, 'SR0025', 'SR', '2025-11-25', 1, 'amansingh', 20, 'dxvcvgdfg', NULL, NULL, NULL, 0.00, 'N', 'Y', 'N', 0.00, 180.00, 0.00, 180.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-25 01:08:09', '2025-11-25 01:08:09'),
+(32, 'SR0026', 'SR', '2025-11-25', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-25 01:10:35', '2025-11-25 01:10:35'),
+(33, 'SR0027', 'SR', '2025-11-25', 1, 'amansingh', 20, 'dxvcvgdfg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-25 02:30:02', '2025-11-25 02:30:02'),
+(34, 'SR0028', 'SR', '2025-11-25', 1, 'amansingh', 23, 'fgdtyrdg', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-25 02:36:02', '2025-11-25 02:36:02'),
+(35, 'SR0029', 'SR', '2025-11-25', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-25 02:47:31', '2025-11-25 02:47:31'),
+(36, 'SR0030', 'SR', '2025-11-25', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-25 02:54:39', '2025-11-25 02:54:39'),
+(37, 'SR0031', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 01:12:38', '2025-11-26 01:12:38'),
+(38, 'SR0032', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 180.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 01:23:40', '2025-11-26 01:23:40'),
+(39, 'SR0033', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 02:23:17', '2025-11-26 02:23:17'),
+(40, 'SR0034', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 02:37:14', '2025-11-26 02:37:14'),
+(41, 'SR0035', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 02:57:08', '2025-11-26 02:57:08'),
+(42, 'SR0036', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 03:58:28', '2025-11-26 03:58:28'),
+(43, 'SR0037', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 03:59:19', '2025-11-26 03:59:19'),
+(44, 'SR0038', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'Y', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 04:00:45', '2025-11-26 04:00:45'),
+(45, 'SR0039', 'SR', '2025-11-26', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'Y', 'N', 0.00, 200.00, 0.00, 200.00, 0.00, 0.00, 24.00, 224.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-11-26 04:03:06', '2025-11-26 04:03:06'),
+(48, 'SR0040', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000042', '2025-11-26', 'SB', 177.07, 'N', 'N', 'N', 0.00, 158.10, 0.00, 0.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 'return', 4, NULL, '2025-12-01 04:32:15', '2025-12-01 04:32:15'),
+(49, 'SR0041', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000044', '2025-12-01', 'SB', 1008.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 0.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 'return', 4, NULL, '2025-12-01 07:50:39', '2025-12-01 07:50:39'),
+(50, 'SR0042', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000044', '2025-12-01', 'SB', 1008.00, 'N', 'N', 'N', 0.00, 180.00, 0.00, 0.00, 0.00, 0.00, 21.60, 201.60, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 'return', 4, NULL, '2025-12-01 07:52:47', '2025-12-01 07:52:47'),
+(51, 'SR0043', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', 'INV-000043', '2025-12-01', 'SB', 187.49, 'N', 'N', 'N', 0.00, 167.40, 0.00, 0.00, 12.60, 0.00, 20.09, 187.49, 0.000, 0.00, 0.00, 0.00, 0.00, 1.00, '', 0.00, NULL, 'active', 'return', 4, NULL, '2025-12-01 08:04:07', '2025-12-01 08:04:07'),
+(52, 'SR0044', 'SR', '2025-12-01', 1, 'amansingh', NULL, '', NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 340.00, 0.00, 0.00, 0.00, 0.00, 40.80, 380.80, 0.000, 0.00, 0.00, 0.00, 0.00, 2.00, '', 0.00, NULL, 'active', 'return', 4, NULL, '2025-12-01 08:23:57', '2025-12-01 08:23:57'),
+(53, 'SR0045', 'SR', '2025-12-03', 1, 'amansingh', NULL, '', 'INV-000046', '2025-12-03', 'SB', 317.17, 'N', 'N', 'N', 0.00, 151.03, 0.00, 0.00, 11.37, 0.00, 7.55, 158.58, 0.000, 0.00, 0.00, 0.00, 0.00, 5.00, '', 0.00, NULL, 'active', 'return', 4, NULL, '2025-12-02 23:16:26', '2025-12-02 23:16:26'),
+(54, 'SR0046', 'SR', '2025-12-03', 1, 'amansingh', NULL, '', 'INV-000047', '2025-12-03', 'SB', 341.04, 'N', 'N', 'N', 0.00, 162.40, 0.00, 0.00, 0.00, 0.00, 8.12, 170.52, 0.000, 0.00, 0.00, 0.00, 0.00, 5.00, '', 0.00, NULL, 'active', 'return', 4, NULL, '2025-12-02 23:29:34', '2025-12-02 23:29:34'),
+(55, 'SR0047', 'SR', '2025-12-03', 1, 'amansingh', NULL, '', 'INV-000048', '2025-12-03', 'SB', 317.17, 'N', 'N', 'N', 0.00, 162.40, 0.00, 162.40, 11.37, 0.00, 7.55, 158.58, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, NULL, '2025-12-03 00:05:27', '2025-12-03 00:05:27'),
+(56, 'SR0048', 'SR', '2025-12-03', 2, 'Mahesh Traders', NULL, '', 'INV-000049', NULL, 'SB', 1276.80, 'N', 'N', 'N', 0.00, 570.00, 0.00, 570.00, 0.00, 0.00, 68.40, 638.40, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'active', 'return', NULL, 4, '2025-12-03 01:40:37', '2025-12-03 01:42:23'),
+(57, 'SR0049', 'SR', '2025-12-19', 36, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 1000.00, 0.00, 0.00, 0.00, 0.00, 120.00, 1120.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'completed', 'return', 1, NULL, '2025-12-19 02:38:59', '2025-12-19 02:38:59'),
+(58, 'SR0050', 'SR', '2025-12-19', 4, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 1000.00, 0.00, 0.00, 0.00, 0.00, 50.00, 1050.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'completed', 'return', 1, NULL, '2025-12-19 02:47:24', '2025-12-19 02:47:24'),
+(59, 'SR0051', 'SR', '2025-12-19', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 1000.00, 0.00, 0.00, 0.00, 0.00, 180.00, 1180.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'completed', 'voucher', 1, NULL, '2025-12-19 02:53:48', '2025-12-19 02:53:48'),
+(60, 'SR0052', 'SR', '2025-12-30', 1, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, 'N', 'N', 'N', 0.00, 1000.00, 0.00, 0.00, 0.00, 0.00, 50.00, 1050.00, 0.000, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, 0.00, NULL, 'completed', 'voucher', 1, NULL, '2025-12-30 06:25:15', '2025-12-30 06:25:15');
 
 -- --------------------------------------------------------
 
@@ -4241,7 +5397,11 @@ INSERT INTO `sale_return_transaction_items` (`id`, `sale_return_transaction_id`,
 (64, 53, 83, 98, '', 'ACETAMIDE-250 MG TAB.', '3dec1', '2028-11-01', 5.000, 0.000, 32.48, 42.63, 7.00, 11.37, 162.40, 158.58, 2.50, 2.50, 0.00, 3.78, 3.78, 0.00, 7.55, '1', '1*10', 'HDFC', '30051090', 1, '2025-12-02 23:16:26', '2025-12-02 23:16:26'),
 (65, 54, 83, 97, '', 'ACETAMIDE-250 MG TAB.', '3dec', '2028-11-01', 5.000, 0.000, 32.48, 42.63, 0.00, 0.00, 162.40, 170.52, 2.50, 2.50, 0.00, 4.06, 4.06, 0.00, 8.12, '1', '1*10', 'HDFC', '30051090', 1, '2025-12-02 23:29:34', '2025-12-02 23:29:34'),
 (66, 55, 83, 99, '', 'ACETAMIDE-250 MG TAB.', '3dec2', '2028-11-01', 5.000, 0.000, 32.48, 42.63, 7.00, 11.37, 162.40, 162.40, 2.50, 2.50, 0.00, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'HDFC', '30051090', 1, '2025-12-03 00:05:27', '2025-12-03 00:05:27'),
-(68, 56, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '2025-11-01', 3.000, 0.000, 190.00, 250.00, 0.00, 0.00, 570.00, 0.00, 6.00, 6.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-03 01:42:23', '2025-12-03 01:42:23');
+(68, 56, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '2025-11-01', 3.000, 0.000, 190.00, 250.00, 0.00, 0.00, 570.00, 0.00, 6.00, 6.00, 0.00, 0.00, 0.00, 0.00, 0.00, NULL, NULL, NULL, NULL, 1, '2025-12-03 01:42:23', '2025-12-03 01:42:23'),
+(69, 57, NULL, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.000, 0.000, 0.00, 0.00, 0.00, 0.00, 1000.00, 0.00, 6.00, 6.00, 0.00, 60.00, 60.00, 0.00, 0.00, NULL, NULL, NULL, '21061000', 1, '2025-12-19 02:38:59', '2025-12-19 02:38:59'),
+(70, 58, NULL, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.000, 0.000, 0.00, 0.00, 0.00, 0.00, 1000.00, 0.00, 2.50, 2.50, 0.00, 25.00, 25.00, 0.00, 0.00, NULL, NULL, NULL, '21061000', 1, '2025-12-19 02:47:24', '2025-12-19 02:47:24'),
+(71, 59, NULL, NULL, '21069099', 'HSN-21069099', NULL, NULL, 10.000, 0.000, 0.00, 0.00, 0.00, 0.00, 1000.00, 0.00, 9.00, 9.00, 0.00, 90.00, 90.00, 0.00, 0.00, NULL, NULL, NULL, '21069099', 1, '2025-12-19 02:53:48', '2025-12-19 02:53:48'),
+(72, 60, NULL, NULL, '21061000', 'HSN-21061000', NULL, NULL, 10.000, 0.000, 0.00, 0.00, 0.00, 0.00, 1000.00, 0.00, 2.50, 2.50, 0.00, 25.00, 25.00, 0.00, 0.00, NULL, NULL, NULL, '21061000', 1, '2025-12-30 06:25:15', '2025-12-30 06:25:15');
 
 -- --------------------------------------------------------
 
@@ -4253,6 +5413,7 @@ CREATE TABLE `sale_transactions` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `invoice_no` varchar(100) NOT NULL,
   `series` varchar(10) NOT NULL DEFAULT 'SB',
+  `voucher_type` enum('sale','voucher') NOT NULL DEFAULT 'sale',
   `sale_date` date NOT NULL,
   `due_date` date DEFAULT NULL,
   `customer_id` bigint(20) UNSIGNED NOT NULL,
@@ -4284,54 +5445,61 @@ CREATE TABLE `sale_transactions` (
 -- Dumping data for table `sale_transactions`
 --
 
-INSERT INTO `sale_transactions` (`id`, `invoice_no`, `series`, `sale_date`, `due_date`, `customer_id`, `salesman_id`, `cash_flag`, `transfer_flag`, `remarks`, `nt_amount`, `sc_amount`, `ft_amount`, `dis_amount`, `scm_amount`, `tax_amount`, `net_amount`, `scm_percent`, `tcs_amount`, `excise_amount`, `paid_amount`, `balance_amount`, `payment_status`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(16, 'INV-000001', 'SB', '2025-11-08', '2025-11-08', 4, 8, 'N', 'N', NULL, 2690.00, 0.00, 2690.00, 42.00, 0.00, 317.76, 2965.76, 0.000, 0.00, 0.00, 0.00, 2965.76, 'pending', 'completed', 1, 1, '2025-11-08 07:43:46', '2025-11-11 01:28:52'),
-(18, 'INV-000003', 'SB', '2025-11-10', '2025-11-10', 4, 8, 'N', 'N', NULL, 400.00, 0.00, 400.00, 28.00, 0.00, 44.64, 416.64, 0.000, 0.00, 0.00, 0.00, 416.64, 'pending', 'completed', 1, NULL, '2025-11-09 23:33:15', '2025-11-09 23:33:15'),
-(20, 'INV-000005', 'SB', '2025-11-10', '2025-11-10', 4, 4, 'N', 'N', NULL, 1200.00, 0.00, 1200.00, 84.00, 0.00, 133.92, 1249.92, 0.000, 0.00, 0.00, 0.00, 1249.92, 'pending', 'completed', 1, NULL, '2025-11-10 07:30:02', '2025-11-10 07:30:02'),
-(21, 'INV-000006', 'SB', '2025-11-11', '2025-11-11', 4, 8, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 208.32, 'pending', 'completed', 1, NULL, '2025-11-11 01:28:16', '2025-11-11 01:28:16'),
-(23, 'INV-000008', 'SB', '2025-11-11', '2025-11-11', 4, 8, 'N', 'N', NULL, 190.00, 0.00, 190.00, 13.30, 0.00, 21.20, 197.90, 0.000, 0.00, 0.00, 0.00, 197.90, 'pending', 'completed', 1, NULL, '2025-11-11 02:20:00', '2025-11-11 02:20:00'),
-(24, 'INV-000009', 'SB', '2025-11-12', '2025-11-12', 4, 2, 'N', 'N', NULL, 760.00, 0.00, 760.00, 53.20, 0.00, 84.82, 791.62, 0.000, 0.00, 0.00, 0.00, 791.62, 'pending', 'completed', 1, 1, '2025-11-12 04:40:19', '2025-11-12 04:41:04'),
-(25, 'INV-000010', 'SB', '2025-11-12', '2025-11-12', 3, 3, 'N', 'N', NULL, 390.00, 0.00, 390.00, 27.30, 0.00, 43.52, 406.22, 0.000, 0.00, 0.00, 0.00, 406.22, 'pending', 'completed', 1, NULL, '2025-11-12 07:21:54', '2025-11-12 07:21:54'),
-(26, 'INV-000011', 'SB', '2025-11-14', '2025-11-14', 5, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 208.32, 'pending', 'completed', 1, NULL, '2025-11-14 05:24:31', '2025-11-14 05:24:31'),
-(27, 'INV-000012', 'SB', '2025-11-14', '2025-11-14', 3, 4, 'N', 'N', NULL, 400.00, 0.00, 400.00, 28.00, 0.00, 44.64, 416.64, 0.000, 0.00, 0.00, 0.00, 416.64, 'pending', 'completed', 1, NULL, '2025-11-14 07:15:50', '2025-11-14 07:15:50'),
-(28, 'INV-000013', 'SB', '2025-11-15', '2025-11-15', 2, 3, 'N', 'N', NULL, 380.00, 0.00, 380.00, 26.60, 0.00, 42.41, 395.81, 0.000, 0.00, 0.00, 0.00, 395.81, 'pending', 'completed', 1, 1, '2025-11-14 23:27:30', '2025-11-14 23:29:21'),
-(29, 'INV-000014', 'SB', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 400.00, 0.00, 400.00, 28.00, 0.00, 44.64, 416.64, 0.000, 0.00, 0.00, 0.00, 192.64, 'pending', 'completed', 1, NULL, '2025-11-15 00:07:00', '2025-11-26 02:23:17'),
-(30, 'INV-000015', 'SB', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 1700.00, 0.00, 1700.00, 119.00, 0.00, 189.72, 1770.72, 0.000, 0.00, 0.00, 0.00, 1770.72, 'pending', 'completed', 1, NULL, '2025-11-15 01:03:32', '2025-11-15 01:03:32'),
-(31, 'INV-000016', 'SB', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 1700.00, 0.00, 1700.00, 119.00, 0.00, 189.72, 1770.72, 0.000, 0.00, 0.00, 0.00, 1770.72, 'pending', 'completed', 1, NULL, '2025-11-15 01:06:58', '2025-11-15 01:06:58'),
-(32, 'INV-000017', 'SB', '2025-11-15', '2025-11-15', 1, 1, 'N', 'N', NULL, 1870.00, 0.00, 1870.00, 130.90, 0.00, 208.69, 1947.79, 0.000, 0.00, 0.00, 0.00, 1947.79, 'pending', 'completed', 1, NULL, '2025-11-15 01:09:06', '2025-11-15 01:09:06'),
-(33, 'INV-000018', 'SB', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 1870.00, 0.00, 1870.00, 130.90, 0.00, 208.69, 1947.79, 0.000, 0.00, 0.00, 0.00, 1723.79, 'pending', 'completed', 1, NULL, '2025-11-15 01:20:21', '2025-11-25 02:36:02'),
-(34, 'INV-000019', 'SB', '2025-11-15', '2025-11-15', 3, 2, 'N', 'N', NULL, 1445.40, 0.00, 1445.40, 101.18, 0.00, 161.31, 1505.53, 0.000, 0.00, 0.00, 0.00, 1505.53, 'pending', 'completed', 1, NULL, '2025-11-15 01:48:36', '2025-11-15 01:48:36'),
-(35, 'INV-000020', 'SB', '2025-11-17', '2025-11-17', 1, 1, 'N', 'N', NULL, 1900.00, 0.00, 1900.00, 133.00, 0.00, 212.04, 1979.04, 0.000, 0.00, 0.00, 0.00, 1057.04, 'pending', 'completed', 4, NULL, '2025-11-17 01:31:38', '2025-12-01 01:10:57'),
-(36, 'INV-000021', 'SB', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 3100.00, 0.00, 3100.00, 217.00, 0.00, 345.96, 3228.96, 0.000, 0.00, 0.00, 0.00, 2892.96, 'pending', 'completed', 4, NULL, '2025-11-17 01:57:59', '2025-12-05 06:42:26'),
-(37, 'INV-000022', 'SB', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 1000.00, 0.00, 1000.00, 70.00, 0.00, 111.60, 1041.60, 0.000, 0.00, 0.00, 0.00, 1041.60, 'pending', 'completed', 4, NULL, '2025-11-17 04:10:39', '2025-11-17 04:10:39'),
-(38, 'INV-000023', 'SB', '2025-11-17', '2025-11-17', 3, 3, 'N', 'N', NULL, 205.70, 0.00, 205.70, 14.40, 0.00, 22.96, 214.26, 0.000, 0.00, 0.00, 0.00, 214.26, 'pending', 'completed', 1, NULL, '2025-11-17 04:43:59', '2025-11-17 04:43:59'),
-(39, 'INV-000024', 'SB', '2025-11-17', '2025-11-17', 4, 5, 'N', 'N', NULL, 205.70, 0.00, 205.70, 14.40, 0.00, 22.96, 214.26, 0.000, 0.00, 0.00, 0.00, 214.26, 'pending', 'completed', 1, NULL, '2025-11-17 04:45:46', '2025-11-17 04:45:46'),
-(40, 'INV-000025', 'SB', '2025-11-17', '2025-11-17', 36, 2, 'N', 'N', NULL, 600.00, 0.00, 600.00, 42.00, 0.00, 66.96, 624.96, 0.000, 0.00, 0.00, 0.00, 524.96, 'pending', 'completed', 1, NULL, '2025-11-17 06:41:36', '2025-11-17 06:41:36'),
-(41, 'INV-000026', 'SB', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 850.00, 0.00, 850.00, 59.50, 0.00, 94.86, 885.36, 0.000, 0.00, 0.00, 0.00, 885.36, 'pending', 'completed', 1, NULL, '2025-11-17 07:31:55', '2025-11-17 07:31:55'),
-(42, 'INV-000027', 'SB', '2025-11-20', '2025-11-20', 3, 2, 'N', 'N', NULL, 850.00, 0.00, 850.00, 59.50, 0.00, 94.86, 885.36, 0.000, 0.00, 0.00, 0.00, 885.36, 'pending', 'completed', 4, NULL, '2025-11-19 23:18:12', '2025-11-19 23:18:12'),
-(43, 'INV-000028', 'SB', '2025-11-21', '2025-11-21', 3, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 208.32, 'pending', 'completed', 4, NULL, '2025-11-21 05:48:02', '2025-11-21 05:48:02'),
-(44, 'INV-000029', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 1000.00, 0.00, 1000.00, 70.00, 0.00, 111.60, 1041.60, 0.000, 0.00, 0.00, 0.00, 145.60, 'pending', 'completed', 4, NULL, '2025-11-22 00:22:08', '2025-11-26 01:12:38'),
-(45, 'INV-000030', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 6.72, 'pending', 'completed', 4, NULL, '2025-11-22 01:40:57', '2025-11-26 01:23:40'),
-(46, 'INV-000031', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 109.37, 'pending', 'completed', 4, NULL, '2025-11-22 01:48:15', '2025-11-22 01:48:15'),
-(47, 'INV-000032', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 9.37, 'pending', 'completed', 4, NULL, '2025-11-22 01:51:05', '2025-11-26 02:44:47'),
-(48, 'INV-000033', 'SB', '2025-11-22', '2025-11-22', 1, 1, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 9.37, 'pending', 'completed', 4, NULL, '2025-11-22 02:01:24', '2025-11-25 01:21:51'),
-(49, 'INV-000034', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 109.37, 'pending', 'completed', 4, NULL, '2025-11-22 02:11:27', '2025-11-22 02:11:27'),
-(50, 'INV-000035', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'Y', 'N', NULL, 210.00, 0.00, 210.00, 14.70, 0.00, 23.44, 218.74, 0.000, 0.00, 0.00, 109.37, 118.74, 'paid', 'completed', 4, 4, '2025-11-22 02:25:27', '2025-11-22 07:18:44'),
-(51, 'INV-000036', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 69.37, 'pending', 'completed', 4, NULL, '2025-11-22 04:51:33', '2025-11-22 04:53:19'),
-(52, 'INV-000037', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 210.00, 0.00, 210.00, 14.70, 0.00, 23.44, 218.74, 0.000, 0.00, 0.00, 0.00, 68.74, 'pending', 'completed', 4, NULL, '2025-11-22 05:10:54', '2025-11-22 07:35:52'),
-(53, 'INV-000038', 'SB', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 178.32, 'pending', 'completed', 4, NULL, '2025-11-22 07:31:58', '2025-11-22 07:35:52'),
-(54, 'INV-000039', 'SB', '2025-11-24', '2025-11-24', 3, 4, 'N', 'N', NULL, 540.00, 0.00, 540.00, 37.80, 0.00, 60.26, 562.46, 0.000, 0.00, 0.00, 0.00, 562.46, 'pending', 'completed', 4, NULL, '2025-11-24 00:35:21', '2025-11-24 00:35:21'),
-(55, 'INV-000040', 'SB', '2025-11-25', '2025-11-25', 1, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 8.32, 'pending', 'completed', 4, NULL, '2025-11-25 00:57:31', '2025-11-26 02:42:06'),
-(56, 'INV-000041', 'SB', '2025-11-25', '2025-11-25', 1, 2, 'Y', 'N', NULL, 1000.00, 0.00, 1000.00, 70.00, 0.00, 111.60, 1041.60, 0.000, 0.00, 0.00, 1041.60, 0.00, 'paid', 'completed', 4, NULL, '2025-11-25 00:58:45', '2025-11-25 00:58:45'),
-(57, 'INV-000042', 'SB', '2025-11-26', '2025-11-26', 1, 2, 'N', 'N', NULL, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 177.07, 'pending', 'completed', 4, NULL, '2025-11-26 05:49:31', '2025-11-26 05:49:31'),
-(58, 'INV-000043', 'SB', '2025-12-01', '2025-12-01', 1, 2, 'N', 'N', NULL, 180.00, 0.00, 180.00, 12.60, 0.00, 20.09, 187.49, 0.000, 0.00, 0.00, 0.00, 187.49, 'pending', 'completed', 4, NULL, '2025-12-01 04:15:13', '2025-12-01 04:15:13'),
-(59, 'INV-000044', 'SB', '2025-12-01', '2025-12-01', 1, 2, 'N', 'N', NULL, 900.00, 0.00, 900.00, 0.00, 0.00, 108.00, 1008.00, 0.000, 0.00, 0.00, 0.00, 849.42, 'pending', 'completed', 4, NULL, '2025-12-01 07:45:45', '2025-12-03 00:05:27'),
-(60, 'INV-000045', 'SB', '2025-12-02', '2025-12-02', 1, 2, 'N', 'N', NULL, 41.14, 0.00, 41.14, 0.00, 0.00, 4.94, 46.08, 0.000, 0.00, 0.00, 0.00, 46.08, 'pending', 'completed', 4, NULL, '2025-12-02 04:01:40', '2025-12-02 04:01:40'),
-(61, 'INV-000046', 'SB', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 324.80, 0.00, 324.80, 22.74, 0.00, 15.10, 317.17, 0.000, 0.00, 0.00, 0.00, 317.17, 'pending', 'completed', 4, NULL, '2025-12-02 23:15:00', '2025-12-02 23:15:00'),
-(62, 'INV-000047', 'SB', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 324.80, 0.00, 324.80, 0.00, 0.00, 16.24, 341.04, 0.000, 0.00, 0.00, 0.00, 341.04, 'pending', 'completed', 4, NULL, '2025-12-02 23:28:10', '2025-12-02 23:28:10'),
-(63, 'INV-000048', 'SB', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 324.80, 0.00, 324.80, 22.74, 0.00, 15.10, 317.17, 0.000, 0.00, 0.00, 0.00, 212.17, 'pending', 'completed', 4, NULL, '2025-12-03 00:04:17', '2025-12-04 08:07:24'),
-(64, 'INV-000049', 'SB', '2025-12-03', '2025-12-03', 2, 4, 'N', 'N', NULL, 1140.00, 0.00, 1140.00, 0.00, 0.00, 136.80, 1276.80, 0.000, 0.00, 0.00, 0.00, 638.40, 'pending', 'completed', 4, NULL, '2025-12-03 01:39:24', '2025-12-03 01:42:23'),
-(65, 'INV-000050', 'SB', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 162.40, 0.00, 162.40, 11.37, 0.00, 7.55, 158.58, 0.000, 0.00, 0.00, 0.00, 53.58, 'pending', 'completed', 4, NULL, '2025-12-03 05:53:12', '2025-12-04 07:07:09');
+INSERT INTO `sale_transactions` (`id`, `invoice_no`, `series`, `voucher_type`, `sale_date`, `due_date`, `customer_id`, `salesman_id`, `cash_flag`, `transfer_flag`, `remarks`, `nt_amount`, `sc_amount`, `ft_amount`, `dis_amount`, `scm_amount`, `tax_amount`, `net_amount`, `scm_percent`, `tcs_amount`, `excise_amount`, `paid_amount`, `balance_amount`, `payment_status`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
+(16, 'INV-000001', 'SB', 'sale', '2025-11-08', '2025-11-08', 4, 8, 'N', 'N', NULL, 2690.00, 0.00, 2690.00, 42.00, 0.00, 317.76, 2965.76, 0.000, 0.00, 0.00, 0.00, 2965.76, 'pending', 'completed', 1, 1, '2025-11-08 07:43:46', '2025-11-11 01:28:52'),
+(18, 'INV-000003', 'SB', 'sale', '2025-11-10', '2025-11-10', 4, 8, 'N', 'N', NULL, 400.00, 0.00, 400.00, 28.00, 0.00, 44.64, 416.64, 0.000, 0.00, 0.00, 0.00, 416.64, 'pending', 'completed', 1, NULL, '2025-11-09 23:33:15', '2025-11-09 23:33:15'),
+(20, 'INV-000005', 'SB', 'sale', '2025-11-10', '2025-11-10', 4, 4, 'N', 'N', NULL, 1200.00, 0.00, 1200.00, 84.00, 0.00, 133.92, 1249.92, 0.000, 0.00, 0.00, 0.00, 1249.92, 'pending', 'completed', 1, NULL, '2025-11-10 07:30:02', '2025-11-10 07:30:02'),
+(21, 'INV-000006', 'SB', 'sale', '2025-11-11', '2025-11-11', 4, 8, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 208.32, 'pending', 'completed', 1, NULL, '2025-11-11 01:28:16', '2025-11-11 01:28:16'),
+(23, 'INV-000008', 'SB', 'sale', '2025-11-11', '2025-11-11', 4, 8, 'N', 'N', NULL, 190.00, 0.00, 190.00, 13.30, 0.00, 21.20, 197.90, 0.000, 0.00, 0.00, 0.00, 197.90, 'pending', 'completed', 1, NULL, '2025-11-11 02:20:00', '2025-11-11 02:20:00'),
+(24, 'INV-000009', 'SB', 'sale', '2025-11-12', '2025-11-12', 4, 2, 'N', 'N', NULL, 760.00, 0.00, 760.00, 53.20, 0.00, 84.82, 791.62, 0.000, 0.00, 0.00, 0.00, 791.62, 'pending', 'completed', 1, 1, '2025-11-12 04:40:19', '2025-11-12 04:41:04'),
+(25, 'INV-000010', 'SB', 'sale', '2025-11-12', '2025-11-12', 3, 3, 'N', 'N', NULL, 390.00, 0.00, 390.00, 27.30, 0.00, 43.52, 406.22, 0.000, 0.00, 0.00, 0.00, 406.22, 'pending', 'completed', 1, NULL, '2025-11-12 07:21:54', '2025-11-12 07:21:54'),
+(26, 'INV-000011', 'SB', 'sale', '2025-11-14', '2025-11-14', 5, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 208.32, 'pending', 'completed', 1, NULL, '2025-11-14 05:24:31', '2025-11-14 05:24:31'),
+(27, 'INV-000012', 'SB', 'sale', '2025-11-14', '2025-11-14', 3, 4, 'N', 'N', NULL, 400.00, 0.00, 400.00, 28.00, 0.00, 44.64, 416.64, 0.000, 0.00, 0.00, 0.00, 416.64, 'pending', 'completed', 1, NULL, '2025-11-14 07:15:50', '2025-11-14 07:15:50'),
+(28, 'INV-000013', 'SB', 'sale', '2025-11-15', '2025-11-15', 2, 3, 'N', 'N', NULL, 380.00, 0.00, 380.00, 26.60, 0.00, 42.41, 395.81, 0.000, 0.00, 0.00, 0.00, 185.81, 'pending', 'completed', 1, 1, '2025-11-14 23:27:30', '2025-11-14 23:29:21'),
+(29, 'INV-000014', 'SB', 'sale', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 400.00, 0.00, 400.00, 28.00, 0.00, 44.64, 416.64, 0.000, 0.00, 0.00, 0.00, 192.64, 'pending', 'completed', 1, NULL, '2025-11-15 00:07:00', '2025-11-26 02:23:17'),
+(30, 'INV-000015', 'SB', 'sale', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 1700.00, 0.00, 1700.00, 119.00, 0.00, 189.72, 1770.72, 0.000, 0.00, 0.00, 0.00, 1770.72, 'pending', 'completed', 1, NULL, '2025-11-15 01:03:32', '2025-11-15 01:03:32'),
+(31, 'INV-000016', 'SB', 'sale', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 1700.00, 0.00, 1700.00, 119.00, 0.00, 189.72, 1770.72, 0.000, 0.00, 0.00, 0.00, 1770.72, 'pending', 'completed', 1, NULL, '2025-11-15 01:06:58', '2025-11-15 01:06:58'),
+(32, 'INV-000017', 'SB', 'sale', '2025-11-15', '2025-11-15', 1, 1, 'N', 'N', NULL, 1870.00, 0.00, 1870.00, 130.90, 0.00, 208.69, 1947.79, 0.000, 0.00, 0.00, 0.00, 1947.79, 'pending', 'completed', 1, NULL, '2025-11-15 01:09:06', '2025-11-15 01:09:06'),
+(33, 'INV-000018', 'SB', 'sale', '2025-11-15', '2025-11-15', 1, 2, 'N', 'N', NULL, 1870.00, 0.00, 1870.00, 130.90, 0.00, 208.69, 1947.79, 0.000, 0.00, 0.00, 0.00, 1723.79, 'pending', 'completed', 1, NULL, '2025-11-15 01:20:21', '2025-11-25 02:36:02'),
+(34, 'INV-000019', 'SB', 'sale', '2025-11-15', '2025-11-15', 3, 2, 'N', 'N', NULL, 1445.40, 0.00, 1445.40, 101.18, 0.00, 161.31, 1505.53, 0.000, 0.00, 0.00, 0.00, 1505.53, 'pending', 'completed', 1, NULL, '2025-11-15 01:48:36', '2025-11-15 01:48:36'),
+(35, 'INV-000020', 'SB', 'sale', '2025-11-17', '2025-11-17', 1, 1, 'N', 'N', NULL, 1900.00, 0.00, 1900.00, 133.00, 0.00, 212.04, 1979.04, 0.000, 0.00, 0.00, 0.00, 1057.04, 'pending', 'completed', 4, NULL, '2025-11-17 01:31:38', '2025-12-01 01:10:57'),
+(36, 'INV-000021', 'SB', 'sale', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 3100.00, 0.00, 3100.00, 217.00, 0.00, 345.96, 3228.96, 0.000, 0.00, 0.00, 0.00, 2892.96, 'pending', 'completed', 4, NULL, '2025-11-17 01:57:59', '2025-12-05 06:42:26'),
+(37, 'INV-000022', 'SB', 'sale', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 1000.00, 0.00, 1000.00, 70.00, 0.00, 111.60, 1041.60, 0.000, 0.00, 0.00, 0.00, 1041.60, 'pending', 'completed', 4, NULL, '2025-11-17 04:10:39', '2025-11-17 04:10:39'),
+(38, 'INV-000023', 'SB', 'sale', '2025-11-17', '2025-11-17', 3, 3, 'N', 'N', NULL, 205.70, 0.00, 205.70, 14.40, 0.00, 22.96, 214.26, 0.000, 0.00, 0.00, 0.00, 214.26, 'pending', 'completed', 1, NULL, '2025-11-17 04:43:59', '2025-11-17 04:43:59'),
+(39, 'INV-000024', 'SB', 'sale', '2025-11-17', '2025-11-17', 4, 5, 'N', 'N', NULL, 205.70, 0.00, 205.70, 14.40, 0.00, 22.96, 214.26, 0.000, 0.00, 0.00, 0.00, 214.26, 'pending', 'completed', 1, NULL, '2025-11-17 04:45:46', '2025-11-17 04:45:46'),
+(40, 'INV-000025', 'SB', 'sale', '2025-11-17', '2025-11-17', 36, 2, 'N', 'N', NULL, 600.00, 0.00, 600.00, 42.00, 0.00, 66.96, 624.96, 0.000, 0.00, 0.00, 0.00, 424.96, 'pending', 'completed', 1, NULL, '2025-11-17 06:41:36', '2025-11-17 06:41:36'),
+(41, 'INV-000026', 'SB', 'sale', '2025-11-17', '2025-11-17', 1, 2, 'N', 'N', NULL, 850.00, 0.00, 850.00, 59.50, 0.00, 94.86, 885.36, 0.000, 0.00, 0.00, 0.00, 885.36, 'pending', 'completed', 1, NULL, '2025-11-17 07:31:55', '2025-11-17 07:31:55'),
+(42, 'INV-000027', 'SB', 'sale', '2025-11-20', '2025-11-20', 3, 2, 'N', 'N', NULL, 850.00, 0.00, 850.00, 59.50, 0.00, 94.86, 885.36, 0.000, 0.00, 0.00, 0.00, 885.36, 'pending', 'completed', 4, NULL, '2025-11-19 23:18:12', '2025-11-19 23:18:12'),
+(43, 'INV-000028', 'SB', 'sale', '2025-11-21', '2025-11-21', 3, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 208.32, 'pending', 'completed', 4, NULL, '2025-11-21 05:48:02', '2025-11-21 05:48:02'),
+(44, 'INV-000029', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 1000.00, 0.00, 1000.00, 70.00, 0.00, 111.60, 1041.60, 0.000, 0.00, 0.00, 0.00, 145.60, 'pending', 'completed', 4, NULL, '2025-11-22 00:22:08', '2025-11-26 01:12:38'),
+(45, 'INV-000030', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 6.72, 'pending', 'completed', 4, NULL, '2025-11-22 01:40:57', '2025-11-26 01:23:40'),
+(46, 'INV-000031', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 109.37, 'pending', 'completed', 4, NULL, '2025-11-22 01:48:15', '2025-11-22 01:48:15'),
+(47, 'INV-000032', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 9.37, 'pending', 'completed', 4, NULL, '2025-11-22 01:51:05', '2025-11-26 02:44:47'),
+(48, 'INV-000033', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 1, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 9.37, 'pending', 'completed', 4, NULL, '2025-11-22 02:01:24', '2025-11-25 01:21:51'),
+(49, 'INV-000034', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 109.37, 'pending', 'completed', 4, NULL, '2025-11-22 02:11:27', '2025-11-22 02:11:27'),
+(50, 'INV-000035', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'Y', 'N', NULL, 210.00, 0.00, 210.00, 14.70, 0.00, 23.44, 218.74, 0.000, 0.00, 0.00, 109.37, 118.74, 'paid', 'completed', 4, 4, '2025-11-22 02:25:27', '2025-11-22 07:18:44'),
+(51, 'INV-000036', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 105.00, 0.00, 105.00, 7.35, 0.00, 11.72, 109.37, 0.000, 0.00, 0.00, 0.00, 69.37, 'pending', 'completed', 4, NULL, '2025-11-22 04:51:33', '2025-11-22 04:53:19'),
+(52, 'INV-000037', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 210.00, 0.00, 210.00, 14.70, 0.00, 23.44, 218.74, 0.000, 0.00, 0.00, 0.00, 68.74, 'pending', 'completed', 4, NULL, '2025-11-22 05:10:54', '2025-11-22 07:35:52'),
+(53, 'INV-000038', 'SB', 'sale', '2025-11-22', '2025-11-22', 1, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 178.32, 'pending', 'completed', 4, NULL, '2025-11-22 07:31:58', '2025-11-22 07:35:52'),
+(54, 'INV-000039', 'SB', 'sale', '2025-11-24', '2025-11-24', 3, 4, 'N', 'N', NULL, 540.00, 0.00, 540.00, 37.80, 0.00, 60.26, 562.46, 0.000, 0.00, 0.00, 0.00, 562.46, 'pending', 'completed', 4, NULL, '2025-11-24 00:35:21', '2025-11-24 00:35:21'),
+(55, 'INV-000040', 'SB', 'sale', '2025-11-25', '2025-11-25', 1, 2, 'N', 'N', NULL, 200.00, 0.00, 200.00, 14.00, 0.00, 22.32, 208.32, 0.000, 0.00, 0.00, 0.00, 8.32, 'pending', 'completed', 4, NULL, '2025-11-25 00:57:31', '2025-11-26 02:42:06'),
+(56, 'INV-000041', 'SB', 'sale', '2025-11-25', '2025-11-25', 1, 2, 'Y', 'N', NULL, 1000.00, 0.00, 1000.00, 70.00, 0.00, 111.60, 1041.60, 0.000, 0.00, 0.00, 1041.60, 0.00, 'paid', 'completed', 4, NULL, '2025-11-25 00:58:45', '2025-11-25 00:58:45'),
+(57, 'INV-000042', 'SB', 'sale', '2025-11-26', '2025-11-26', 1, 2, 'N', 'N', NULL, 170.00, 0.00, 170.00, 11.90, 0.00, 18.97, 177.07, 0.000, 0.00, 0.00, 0.00, 177.07, 'pending', 'completed', 4, NULL, '2025-11-26 05:49:31', '2025-11-26 05:49:31'),
+(58, 'INV-000043', 'SB', 'sale', '2025-12-01', '2025-12-01', 1, 2, 'N', 'N', NULL, 180.00, 0.00, 180.00, 12.60, 0.00, 20.09, 187.49, 0.000, 0.00, 0.00, 0.00, 187.49, 'pending', 'completed', 4, NULL, '2025-12-01 04:15:13', '2025-12-01 04:15:13'),
+(59, 'INV-000044', 'SB', 'sale', '2025-12-01', '2025-12-01', 1, 2, 'N', 'N', NULL, 900.00, 0.00, 900.00, 0.00, 0.00, 108.00, 1008.00, 0.000, 0.00, 0.00, 0.00, 849.42, 'pending', 'completed', 4, NULL, '2025-12-01 07:45:45', '2025-12-03 00:05:27'),
+(60, 'INV-000045', 'SB', 'sale', '2025-12-02', '2025-12-02', 1, 2, 'N', 'N', NULL, 41.14, 0.00, 41.14, 0.00, 0.00, 4.94, 46.08, 0.000, 0.00, 0.00, 0.00, 46.08, 'pending', 'completed', 4, NULL, '2025-12-02 04:01:40', '2025-12-02 04:01:40'),
+(61, 'INV-000046', 'SB', 'sale', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 324.80, 0.00, 324.80, 22.74, 0.00, 15.10, 317.17, 0.000, 0.00, 0.00, 0.00, 317.17, 'pending', 'completed', 4, NULL, '2025-12-02 23:15:00', '2025-12-02 23:15:00'),
+(62, 'INV-000047', 'SB', 'sale', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 324.80, 0.00, 324.80, 0.00, 0.00, 16.24, 341.04, 0.000, 0.00, 0.00, 0.00, 341.04, 'pending', 'completed', 4, NULL, '2025-12-02 23:28:10', '2025-12-02 23:28:10'),
+(63, 'INV-000048', 'SB', 'sale', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 324.80, 0.00, 324.80, 22.74, 0.00, 15.10, 317.17, 0.000, 0.00, 0.00, 0.00, 212.17, 'pending', 'completed', 4, NULL, '2025-12-03 00:04:17', '2025-12-04 08:07:24'),
+(64, 'INV-000049', 'SB', 'sale', '2025-12-03', '2025-12-03', 2, 4, 'N', 'N', NULL, 1140.00, 0.00, 1140.00, 0.00, 0.00, 136.80, 1276.80, 0.000, 0.00, 0.00, 0.00, 438.40, 'pending', 'completed', 4, NULL, '2025-12-03 01:39:24', '2025-12-03 01:42:23'),
+(65, 'INV-000050', 'SB', 'sale', '2025-12-03', '2025-12-03', 1, 2, 'N', 'N', NULL, 162.40, 0.00, 162.40, 11.37, 0.00, 7.55, 158.58, 0.000, 0.00, 0.00, 0.00, 53.58, 'pending', 'completed', 4, NULL, '2025-12-03 05:53:12', '2025-12-04 07:07:09'),
+(66, 'INV-000051', 'SB', 'sale', '2025-12-18', '2025-12-18', 2, 3, 'N', 'N', NULL, 205.70, 0.00, 205.70, 0.00, 0.00, 24.68, 230.38, 0.000, 0.00, 0.00, 0.00, 20.38, 'pending', 'completed', 1, NULL, '2025-12-18 05:49:28', '2025-12-18 05:49:28'),
+(69, 'INV-000002', 'SB', 'sale', '2025-12-19', '2025-12-19', 2, 2, 'N', 'N', NULL, 205.70, 0.00, 205.70, 0.00, 0.00, 24.68, 230.38, 0.000, 0.00, 0.00, 0.00, 230.38, 'pending', 'completed', 1, NULL, '2025-12-19 00:29:25', '2025-12-19 00:29:25'),
+(77, 'INV-000052', 'S2', 'voucher', '2025-12-19', '2025-12-19', 1, 8, 'N', 'N', NULL, 1000.00, 0.00, 1000.00, 0.00, 0.00, 50.00, 1050.00, 0.000, 0.00, 0.00, 0.00, 1050.00, 'unpaid', 'completed', 1, NULL, '2025-12-19 00:52:52', '2025-12-19 00:52:52'),
+(78, 'INV-000053', 'SB', 'sale', '2025-12-22', '2025-12-22', 3, NULL, 'N', 'N', NULL, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'pending', 'completed', 1, NULL, '2025-12-22 12:28:29', '2025-12-22 12:28:29'),
+(79, 'INV-000054', 'SB', 'sale', '2025-12-22', '2025-12-22', 1, NULL, 'N', 'N', NULL, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.000, 0.00, 0.00, 0.00, 0.00, 'pending', 'completed', 1, NULL, '2025-12-22 12:28:59', '2025-12-22 12:28:59'),
+(80, 'INV-000055', 'SB', 'sale', '2025-12-22', '2025-12-22', 2, NULL, 'N', 'N', NULL, 200.00, 0.00, 200.00, 0.00, 0.00, 10.00, 210.00, 0.000, 0.00, 0.00, 0.00, 210.00, 'pending', 'completed', 1, NULL, '2025-12-22 12:29:32', '2025-12-22 12:29:32'),
+(81, 'INV-000056', 'S2', 'voucher', '2025-12-30', '2025-12-30', 1, 8, 'N', 'N', NULL, 10000.00, 0.00, 10000.00, 0.00, 0.00, 100000.00, 110000.00, 0.000, 0.00, 0.00, 0.00, 110000.00, 'unpaid', 'completed', 1, NULL, '2025-12-30 05:15:02', '2025-12-30 05:15:02');
 
 -- --------------------------------------------------------
 
@@ -4344,8 +5512,8 @@ CREATE TABLE `sale_transaction_items` (
   `sale_transaction_id` bigint(20) UNSIGNED NOT NULL,
   `item_id` bigint(20) UNSIGNED DEFAULT NULL,
   `batch_id` bigint(20) UNSIGNED DEFAULT NULL,
-  `item_code` varchar(100) NOT NULL,
-  `item_name` varchar(255) NOT NULL,
+  `item_code` varchar(50) DEFAULT NULL,
+  `item_name` varchar(255) DEFAULT NULL,
   `batch_no` varchar(100) DEFAULT NULL,
   `expiry_date` varchar(20) DEFAULT NULL,
   `qty` decimal(15,3) NOT NULL DEFAULT 0.000,
@@ -4361,12 +5529,15 @@ CREATE TABLE `sale_transaction_items` (
   `cess_percent` decimal(10,2) NOT NULL DEFAULT 0.00,
   `cgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `sgst_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `gross_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `cess_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `tax_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
   `unit` varchar(50) DEFAULT NULL,
   `packing` varchar(100) DEFAULT NULL,
   `company_name` varchar(255) DEFAULT NULL,
   `hsn_code` varchar(50) DEFAULT NULL,
+  `hsn_description` text DEFAULT NULL,
+  `gst_percent` decimal(8,2) NOT NULL DEFAULT 0.00,
   `row_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -4376,58 +5547,65 @@ CREATE TABLE `sale_transaction_items` (
 -- Dumping data for table `sale_transaction_items`
 --
 
-INSERT INTO `sale_transaction_items` (`id`, `sale_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry_date`, `qty`, `free_qty`, `sale_rate`, `mrp`, `discount_percent`, `discount_amount`, `amount`, `net_amount`, `cgst_percent`, `sgst_percent`, `cess_percent`, `cgst_amount`, `sgst_amount`, `cess_amount`, `tax_amount`, `unit`, `packing`, `company_name`, `hsn_code`, `row_order`, `created_at`, `updated_at`) VALUES
-(13, 18, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-09 23:33:15', '2025-11-09 23:33:15'),
-(14, 18, 29, 18, '', 'bisolong', 'abhi23', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 1, '2025-11-09 23:33:15', '2025-11-09 23:33:15'),
-(16, 20, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 6.000, 0.000, 200.00, 210.00, 7.00, 84.00, 1200.00, 1249.92, 6.00, 6.00, 0.00, 66.96, 66.96, 0.00, 133.92, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-10 07:30:02', '2025-11-10 07:30:02'),
-(20, 21, 29, 17, '', 'bisolong', 'abhi1', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-11 01:28:16', '2025-11-11 01:28:16'),
-(23, 16, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 3.000, 0.000, 200.00, 210.00, 7.00, 42.00, 600.00, 624.96, 6.00, 6.00, 0.00, 33.48, 33.48, 0.00, 66.96, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-11 01:29:01', '2025-11-11 01:29:01'),
-(24, 16, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 11.000, 0.000, 190.00, 250.00, 0.00, 0.00, 2090.00, 2340.80, 6.00, 6.00, 0.00, 125.40, 125.40, 0.00, 250.80, '1', '1*10', 'TCS', '38220090', 1, '2025-11-11 01:29:01', '2025-11-11 01:29:01'),
-(28, 23, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 1.000, 0.000, 190.00, 250.00, 7.00, 13.30, 190.00, 197.90, 6.00, 6.00, 0.00, 10.60, 10.60, 0.00, 21.20, '1', '1*10', 'TCS', '38220090', 0, '2025-11-11 02:20:00', '2025-11-11 02:20:00'),
-(30, 24, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 4.000, 0.000, 190.00, 250.00, 7.00, 53.20, 760.00, 791.62, 6.00, 6.00, 0.00, 42.41, 42.41, 0.00, 84.82, '1', '1*10', 'TCS', '38220090', 0, '2025-11-12 04:41:04', '2025-11-12 04:41:04'),
-(31, 25, 29, 24, '', 'bisolong', 'raviagency1', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-12 07:21:54', '2025-11-12 07:21:54'),
-(32, 25, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 1.000, 0.000, 190.00, 250.00, 7.00, 13.30, 190.00, 197.90, 6.00, 6.00, 0.00, 10.60, 10.60, 0.00, 21.20, '1', '1*10', 'TCS', '38220090', 1, '2025-11-12 07:21:54', '2025-11-12 07:21:54'),
-(33, 26, 29, 24, '', 'bisolong', 'raviagency1', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-14 05:24:31', '2025-11-14 05:24:31'),
-(34, 27, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 2.000, 0.000, 200.00, 210.00, 7.00, 28.00, 400.00, 416.64, 6.00, 6.00, 0.00, 22.32, 22.32, 0.00, 44.64, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-14 07:15:50', '2025-11-14 07:15:50'),
-(37, 28, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 2.000, 0.000, 190.00, 250.00, 7.00, 26.60, 380.00, 395.81, 6.00, 6.00, 0.00, 21.20, 21.20, 0.00, 42.41, '1', '1*10', 'TCS', '38220090', 0, '2025-11-14 23:30:25', '2025-11-14 23:30:25'),
-(38, 29, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 2.000, 0.000, 200.00, 210.00, 7.00, 28.00, 400.00, 416.64, 6.00, 6.00, 0.00, 22.32, 22.32, 0.00, 44.64, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-15 00:07:00', '2025-11-15 00:07:00'),
-(39, 30, 29, 55, '', 'bisolong', 'abhi15nov', '11/2025', 10.000, 0.000, 170.00, 210.00, 7.00, 119.00, 1700.00, 1770.72, 6.00, 6.00, 0.00, 94.86, 94.86, 0.00, 189.72, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-15 01:03:32', '2025-11-15 01:03:32'),
-(40, 31, 29, 56, '', 'bisolong', 'abhi15nov1', '11/2025', 10.000, 0.000, 170.00, 210.00, 7.00, 119.00, 1700.00, 1770.72, 6.00, 6.00, 0.00, 94.86, 94.86, 0.00, 189.72, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-15 01:06:58', '2025-11-15 01:06:58'),
-(41, 32, 29, 57, '', 'bisolong', 'abhi15nov11', '11/2025', 11.000, 0.000, 170.00, 210.00, 7.00, 130.90, 1870.00, 1947.79, 6.00, 6.00, 0.00, 104.35, 104.35, 0.00, 208.69, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-15 01:09:06', '2025-11-15 01:09:06'),
-(42, 33, 29, 58, '', 'bisolong', 'abhi15nov111', '11/2025', 11.000, 0.000, 170.00, 210.00, 7.00, 130.90, 1870.00, 1947.79, 6.00, 6.00, 0.00, 104.35, 104.35, 0.00, 208.69, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-15 01:20:21', '2025-11-15 01:20:21'),
-(43, 34, 79, 59, '', 'ACEBOVIR TAB.', 'ABHI15NOV', '11/2025', 11.000, 0.000, 131.40, 180.00, 7.00, 101.18, 1445.40, 1505.53, 6.00, 6.00, 0.00, 80.65, 80.65, 0.00, 161.31, '1', '1*10', 'BYJUS', '30051090', 0, '2025-11-15 01:48:36', '2025-11-15 01:48:36'),
-(44, 35, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 10.000, 0.000, 190.00, 250.00, 7.00, 133.00, 1900.00, 1979.04, 6.00, 6.00, 0.00, 106.02, 106.02, 0.00, 212.04, '1', '1*10', 'TCS', '38220090', 0, '2025-11-17 01:31:38', '2025-11-17 01:31:38'),
-(45, 36, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 10.000, 0.000, 190.00, 250.00, 7.00, 133.00, 1900.00, 1979.04, 6.00, 6.00, 0.00, 106.02, 106.02, 0.00, 212.04, '1', '1*10', 'TCS', '38220090', 0, '2025-11-17 01:57:59', '2025-11-17 01:57:59'),
-(46, 36, 31, 21, '', 'ACAMPTAS-333 MG TAB.', 'batch243', '11/2025', 10.000, 0.000, 120.00, 250.00, 7.00, 84.00, 1200.00, 1249.92, 6.00, 6.00, 0.00, 66.96, 66.96, 0.00, 133.92, '1', '1*10', 'HDFC', '90192090', 1, '2025-11-17 01:57:59', '2025-11-17 01:57:59'),
-(47, 37, 29, 25, '', 'bisolong', 'xdfxdf3434', '---', 5.000, 0.000, 200.00, 210.00, 7.00, 70.00, 1000.00, 1041.60, 6.00, 6.00, 0.00, 55.80, 55.80, 0.00, 111.60, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-17 04:10:39', '2025-11-17 04:10:39'),
-(48, 38, 32, 50, '', 'ALLERCET-AX TAB.', 'fgbdfg45', '---', 5.000, 0.000, 41.14, 53.44, 7.00, 14.40, 205.70, 214.26, 6.00, 6.00, 0.00, 11.48, 11.48, 0.00, 22.96, '1', '1*10', 'HDFC', '38220090', 0, '2025-11-17 04:43:59', '2025-11-17 04:43:59'),
-(49, 39, 32, 50, '', 'ALLERCET-AX TAB.', 'fgbdfg45', '---', 5.000, 0.000, 41.14, 53.44, 7.00, 14.40, 205.70, 214.26, 6.00, 6.00, 0.00, 11.48, 11.48, 0.00, 22.96, '1', '1*10', 'HDFC', '38220090', 0, '2025-11-17 04:45:46', '2025-11-17 04:45:46'),
-(50, 40, 30, 43, '', 'ABAXIS-5 MG TAB.', 'cbfgd33', '11/2025', 5.000, 0.000, 120.00, 250.00, 7.00, 42.00, 600.00, 624.96, 6.00, 6.00, 0.00, 33.48, 33.48, 0.00, 66.96, '1', '1*10', 'TCS', '38220090', 0, '2025-11-17 06:41:36', '2025-11-17 06:41:36'),
-(51, 41, 29, 52, '', 'bisolong', 'abhi65353', '11/2025', 5.000, 0.000, 170.00, 210.00, 7.00, 59.50, 850.00, 885.36, 6.00, 6.00, 0.00, 47.43, 47.43, 0.00, 94.86, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-17 07:31:55', '2025-11-17 07:31:55'),
-(52, 42, 29, 64, '', 'bisolong', 'abhi20nov', '11/2028', 5.000, 0.000, 170.00, 210.00, 7.00, 59.50, 850.00, 885.36, 6.00, 6.00, 0.00, 47.43, 47.43, 0.00, 94.86, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-19 23:18:12', '2025-11-19 23:18:12'),
-(53, 43, 29, 18, '', 'bisolong', 'abhi23', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-21 05:48:02', '2025-11-21 05:48:02'),
-(54, 44, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 5.000, 0.000, 200.00, 210.00, 7.00, 70.00, 1000.00, 1041.60, 6.00, 6.00, 0.00, 55.80, 55.80, 0.00, 111.60, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-22 00:22:08', '2025-11-22 00:22:08'),
-(55, 45, 29, 25, '', 'bisolong', 'xdfxdf3434', '---', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-22 01:40:57', '2025-11-22 01:40:57'),
-(56, 46, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', 0, '2025-11-22 01:48:15', '2025-11-22 01:48:15'),
-(57, 47, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', 0, '2025-11-22 01:51:05', '2025-11-22 01:51:05'),
-(58, 48, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', 0, '2025-11-22 02:01:24', '2025-11-22 02:01:24'),
-(59, 49, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', 0, '2025-11-22 02:11:27', '2025-11-22 02:11:27'),
-(62, 50, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 2.000, 0.000, 105.00, 110.00, 7.00, 14.70, 210.00, 218.74, 6.00, 6.00, 0.00, 11.72, 11.72, 0.00, 23.44, '1', '1*10', 'HDFC', '90189011', 0, '2025-11-22 02:35:18', '2025-11-22 02:35:18'),
-(63, 51, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', 0, '2025-11-22 04:51:33', '2025-11-22 04:51:33'),
-(64, 52, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 2.000, 0.000, 105.00, 110.00, 7.00, 14.70, 210.00, 218.74, 6.00, 6.00, 0.00, 11.72, 11.72, 0.00, 23.44, '1', '1*10', 'HDFC', '90189011', 0, '2025-11-22 05:10:54', '2025-11-22 05:10:54'),
-(65, 53, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-22 07:31:58', '2025-11-22 07:31:58'),
-(66, 54, 29, 85, '', 'bisolong', 'a24nov', '11/2028', 3.000, 0.000, 180.00, 250.00, 7.00, 37.80, 540.00, 562.46, 6.00, 6.00, 0.00, 30.13, 30.13, 0.00, 60.26, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-24 00:35:21', '2025-11-24 00:35:21'),
-(67, 55, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-25 00:57:31', '2025-11-25 00:57:31'),
-(68, 56, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 5.000, 0.000, 200.00, 210.00, 7.00, 70.00, 1000.00, 1041.60, 6.00, 6.00, 0.00, 55.80, 55.80, 0.00, 111.60, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-25 00:58:45', '2025-11-25 00:58:45'),
-(69, 57, 29, 52, '', 'bisolong', 'abhi65353', '11/2025', 1.000, 0.000, 170.00, 210.00, 7.00, 11.90, 170.00, 177.07, 6.00, 6.00, 0.00, 9.49, 9.49, 0.00, 18.97, '1', '1*10', 'HDFC', '30049990', 0, '2025-11-26 05:49:31', '2025-11-26 05:49:31'),
-(70, 58, 29, 94, '', 'bisolong', 'a24nov32424', '11/2028', 1.000, 0.000, 180.00, 250.00, 7.00, 12.60, 180.00, 187.49, 6.00, 6.00, 0.00, 10.04, 10.04, 0.00, 20.09, '1', '1*10', 'HDFC', '30049990', 0, '2025-12-01 04:15:13', '2025-12-01 04:15:13'),
-(71, 59, 29, 89, '', 'bisolong', 'a24nov', '11/2028', 5.000, 0.000, 180.00, 250.00, 0.00, 0.00, 900.00, 1008.00, 6.00, 6.00, 0.00, 54.00, 54.00, 0.00, 108.00, '1', '1*10', 'HDFC', '30049990', 0, '2025-12-01 07:45:45', '2025-12-01 07:45:45'),
-(72, 60, 32, 23, '', 'ALLERCET-AX TAB.', 'batch9534', '11/2025', 1.000, 0.000, 41.14, 53.44, 0.00, 0.00, 41.14, 46.08, 6.00, 6.00, 0.00, 2.47, 2.47, 0.00, 4.94, '1', '1*10', 'HDFC', '38220090', 0, '2025-12-02 04:01:40', '2025-12-02 04:01:40'),
-(73, 61, 83, 98, '', 'ACETAMIDE-250 MG TAB.', '3dec1', '11/2028', 10.000, 0.000, 32.48, 42.63, 7.00, 22.74, 324.80, 317.17, 2.50, 2.50, 0.00, 7.55, 7.55, 0.00, 15.10, '1', '1*10', 'HDFC', '30051090', 0, '2025-12-02 23:15:00', '2025-12-02 23:15:00'),
-(74, 62, 83, 97, '', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', 10.000, 0.000, 32.48, 42.63, 0.00, 0.00, 324.80, 341.04, 2.50, 2.50, 0.00, 8.12, 8.12, 0.00, 16.24, '1', '1*10', 'HDFC', '30051090', 0, '2025-12-02 23:28:10', '2025-12-02 23:28:10'),
-(75, 63, 83, 99, '', 'ACETAMIDE-250 MG TAB.', '3dec2', '11/2028', 10.000, 0.000, 32.48, 42.63, 7.00, 22.74, 324.80, 317.17, 2.50, 2.50, 0.00, 7.55, 7.55, 0.00, 15.10, '1', '1*10', 'HDFC', '30051090', 0, '2025-12-03 00:04:17', '2025-12-03 00:04:17'),
-(76, 64, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 6.000, 0.000, 190.00, 250.00, 0.00, 0.00, 1140.00, 1276.80, 6.00, 6.00, 0.00, 68.40, 68.40, 0.00, 136.80, '1', '1*10', 'TCS', '38220090', 0, '2025-12-03 01:39:24', '2025-12-03 01:39:24'),
-(77, 65, 83, 99, '', 'ACETAMIDE-250 MG TAB.', '3dec2', '11/28', 5.000, 0.000, 32.48, 42.63, 7.00, 11.37, 162.40, 158.58, 2.50, 2.50, 0.00, 3.78, 3.78, 0.00, 7.55, '1', '1*10', 'HDFC', '30051090', 0, '2025-12-03 05:53:12', '2025-12-03 05:53:12');
+INSERT INTO `sale_transaction_items` (`id`, `sale_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry_date`, `qty`, `free_qty`, `sale_rate`, `mrp`, `discount_percent`, `discount_amount`, `amount`, `net_amount`, `cgst_percent`, `sgst_percent`, `cess_percent`, `cgst_amount`, `sgst_amount`, `gross_amount`, `cess_amount`, `tax_amount`, `unit`, `packing`, `company_name`, `hsn_code`, `hsn_description`, `gst_percent`, `row_order`, `created_at`, `updated_at`) VALUES
+(13, 18, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-09 23:33:15', '2025-11-09 23:33:15'),
+(14, 18, 29, 18, '', 'bisolong', 'abhi23', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 1, '2025-11-09 23:33:15', '2025-11-09 23:33:15'),
+(16, 20, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 6.000, 0.000, 200.00, 210.00, 7.00, 84.00, 1200.00, 1249.92, 6.00, 6.00, 0.00, 66.96, 66.96, 0.00, 0.00, 133.92, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-10 07:30:02', '2025-11-10 07:30:02'),
+(20, 21, 29, 17, '', 'bisolong', 'abhi1', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-11 01:28:16', '2025-11-11 01:28:16'),
+(23, 16, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 3.000, 0.000, 200.00, 210.00, 7.00, 42.00, 600.00, 624.96, 6.00, 6.00, 0.00, 33.48, 33.48, 0.00, 0.00, 66.96, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-11 01:29:01', '2025-11-11 01:29:01'),
+(24, 16, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 11.000, 0.000, 190.00, 250.00, 0.00, 0.00, 2090.00, 2340.80, 6.00, 6.00, 0.00, 125.40, 125.40, 0.00, 0.00, 250.80, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 1, '2025-11-11 01:29:01', '2025-11-11 01:29:01'),
+(28, 23, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 1.000, 0.000, 190.00, 250.00, 7.00, 13.30, 190.00, 197.90, 6.00, 6.00, 0.00, 10.60, 10.60, 0.00, 0.00, 21.20, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 0, '2025-11-11 02:20:00', '2025-11-11 02:20:00'),
+(30, 24, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 4.000, 0.000, 190.00, 250.00, 7.00, 53.20, 760.00, 791.62, 6.00, 6.00, 0.00, 42.41, 42.41, 0.00, 0.00, 84.82, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 0, '2025-11-12 04:41:04', '2025-11-12 04:41:04'),
+(31, 25, 29, 24, '', 'bisolong', 'raviagency1', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-12 07:21:54', '2025-11-12 07:21:54'),
+(32, 25, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 1.000, 0.000, 190.00, 250.00, 7.00, 13.30, 190.00, 197.90, 6.00, 6.00, 0.00, 10.60, 10.60, 0.00, 0.00, 21.20, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 1, '2025-11-12 07:21:54', '2025-11-12 07:21:54'),
+(33, 26, 29, 24, '', 'bisolong', 'raviagency1', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-14 05:24:31', '2025-11-14 05:24:31'),
+(34, 27, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 2.000, 0.000, 200.00, 210.00, 7.00, 28.00, 400.00, 416.64, 6.00, 6.00, 0.00, 22.32, 22.32, 0.00, 0.00, 44.64, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-14 07:15:50', '2025-11-14 07:15:50'),
+(37, 28, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 2.000, 0.000, 190.00, 250.00, 7.00, 26.60, 380.00, 395.81, 6.00, 6.00, 0.00, 21.20, 21.20, 0.00, 0.00, 42.41, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 0, '2025-11-14 23:30:25', '2025-11-14 23:30:25'),
+(38, 29, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 2.000, 0.000, 200.00, 210.00, 7.00, 28.00, 400.00, 416.64, 6.00, 6.00, 0.00, 22.32, 22.32, 0.00, 0.00, 44.64, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-15 00:07:00', '2025-11-15 00:07:00'),
+(39, 30, 29, 55, '', 'bisolong', 'abhi15nov', '11/2025', 10.000, 0.000, 170.00, 210.00, 7.00, 119.00, 1700.00, 1770.72, 6.00, 6.00, 0.00, 94.86, 94.86, 0.00, 0.00, 189.72, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-15 01:03:32', '2025-11-15 01:03:32'),
+(40, 31, 29, 56, '', 'bisolong', 'abhi15nov1', '11/2025', 10.000, 0.000, 170.00, 210.00, 7.00, 119.00, 1700.00, 1770.72, 6.00, 6.00, 0.00, 94.86, 94.86, 0.00, 0.00, 189.72, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-15 01:06:58', '2025-11-15 01:06:58'),
+(41, 32, 29, 57, '', 'bisolong', 'abhi15nov11', '11/2025', 11.000, 0.000, 170.00, 210.00, 7.00, 130.90, 1870.00, 1947.79, 6.00, 6.00, 0.00, 104.35, 104.35, 0.00, 0.00, 208.69, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-15 01:09:06', '2025-11-15 01:09:06'),
+(42, 33, 29, 58, '', 'bisolong', 'abhi15nov111', '11/2025', 11.000, 0.000, 170.00, 210.00, 7.00, 130.90, 1870.00, 1947.79, 6.00, 6.00, 0.00, 104.35, 104.35, 0.00, 0.00, 208.69, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-15 01:20:21', '2025-11-15 01:20:21'),
+(43, 34, 79, 59, '', 'ACEBOVIR TAB.', 'ABHI15NOV', '11/2025', 11.000, 0.000, 131.40, 180.00, 7.00, 101.18, 1445.40, 1505.53, 6.00, 6.00, 0.00, 80.65, 80.65, 0.00, 0.00, 161.31, '1', '1*10', 'BYJUS', '30051090', NULL, 0.00, 0, '2025-11-15 01:48:36', '2025-11-15 01:48:36'),
+(44, 35, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 10.000, 0.000, 190.00, 250.00, 7.00, 133.00, 1900.00, 1979.04, 6.00, 6.00, 0.00, 106.02, 106.02, 0.00, 0.00, 212.04, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 0, '2025-11-17 01:31:38', '2025-11-17 01:31:38'),
+(45, 36, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 10.000, 0.000, 190.00, 250.00, 7.00, 133.00, 1900.00, 1979.04, 6.00, 6.00, 0.00, 106.02, 106.02, 0.00, 0.00, 212.04, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 0, '2025-11-17 01:57:59', '2025-11-17 01:57:59'),
+(46, 36, 31, 21, '', 'ACAMPTAS-333 MG TAB.', 'batch243', '11/2025', 10.000, 0.000, 120.00, 250.00, 7.00, 84.00, 1200.00, 1249.92, 6.00, 6.00, 0.00, 66.96, 66.96, 0.00, 0.00, 133.92, '1', '1*10', 'HDFC', '90192090', NULL, 0.00, 1, '2025-11-17 01:57:59', '2025-11-17 01:57:59'),
+(47, 37, 29, 25, '', 'bisolong', 'xdfxdf3434', '---', 5.000, 0.000, 200.00, 210.00, 7.00, 70.00, 1000.00, 1041.60, 6.00, 6.00, 0.00, 55.80, 55.80, 0.00, 0.00, 111.60, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-17 04:10:39', '2025-11-17 04:10:39'),
+(48, 38, 32, 50, '', 'ALLERCET-AX TAB.', 'fgbdfg45', '---', 5.000, 0.000, 41.14, 53.44, 7.00, 14.40, 205.70, 214.26, 6.00, 6.00, 0.00, 11.48, 11.48, 0.00, 0.00, 22.96, '1', '1*10', 'HDFC', '38220090', NULL, 0.00, 0, '2025-11-17 04:43:59', '2025-11-17 04:43:59'),
+(49, 39, 32, 50, '', 'ALLERCET-AX TAB.', 'fgbdfg45', '---', 5.000, 0.000, 41.14, 53.44, 7.00, 14.40, 205.70, 214.26, 6.00, 6.00, 0.00, 11.48, 11.48, 0.00, 0.00, 22.96, '1', '1*10', 'HDFC', '38220090', NULL, 0.00, 0, '2025-11-17 04:45:46', '2025-11-17 04:45:46'),
+(50, 40, 30, 43, '', 'ABAXIS-5 MG TAB.', 'cbfgd33', '11/2025', 5.000, 0.000, 120.00, 250.00, 7.00, 42.00, 600.00, 624.96, 6.00, 6.00, 0.00, 33.48, 33.48, 0.00, 0.00, 66.96, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 0, '2025-11-17 06:41:36', '2025-11-17 06:41:36'),
+(51, 41, 29, 52, '', 'bisolong', 'abhi65353', '11/2025', 5.000, 0.000, 170.00, 210.00, 7.00, 59.50, 850.00, 885.36, 6.00, 6.00, 0.00, 47.43, 47.43, 0.00, 0.00, 94.86, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-17 07:31:55', '2025-11-17 07:31:55'),
+(52, 42, 29, 64, '', 'bisolong', 'abhi20nov', '11/2028', 5.000, 0.000, 170.00, 210.00, 7.00, 59.50, 850.00, 885.36, 6.00, 6.00, 0.00, 47.43, 47.43, 0.00, 0.00, 94.86, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-19 23:18:12', '2025-11-19 23:18:12'),
+(53, 43, 29, 18, '', 'bisolong', 'abhi23', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-21 05:48:02', '2025-11-21 05:48:02'),
+(54, 44, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 5.000, 0.000, 200.00, 210.00, 7.00, 70.00, 1000.00, 1041.60, 6.00, 6.00, 0.00, 55.80, 55.80, 0.00, 0.00, 111.60, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-22 00:22:08', '2025-11-22 00:22:08'),
+(55, 45, 29, 25, '', 'bisolong', 'xdfxdf3434', '---', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-22 01:40:57', '2025-11-22 01:40:57'),
+(56, 46, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', NULL, 0.00, 0, '2025-11-22 01:48:15', '2025-11-22 01:48:15'),
+(57, 47, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', NULL, 0.00, 0, '2025-11-22 01:51:05', '2025-11-22 01:51:05'),
+(58, 48, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', NULL, 0.00, 0, '2025-11-22 02:01:24', '2025-11-22 02:01:24'),
+(59, 49, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', NULL, 0.00, 0, '2025-11-22 02:11:27', '2025-11-22 02:11:27'),
+(62, 50, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 2.000, 0.000, 105.00, 110.00, 7.00, 14.70, 210.00, 218.74, 6.00, 6.00, 0.00, 11.72, 11.72, 0.00, 0.00, 23.44, '1', '1*10', 'HDFC', '90189011', NULL, 0.00, 0, '2025-11-22 02:35:18', '2025-11-22 02:35:18'),
+(63, 51, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 1.000, 0.000, 105.00, 110.00, 7.00, 7.35, 105.00, 109.37, 6.00, 6.00, 0.00, 5.86, 5.86, 0.00, 0.00, 11.72, '1', '1*10', 'HDFC', '90189011', NULL, 0.00, 0, '2025-11-22 04:51:33', '2025-11-22 04:51:33'),
+(64, 52, 18, 44, '', 'intas', 'fgdxcvfg34', '11/2025', 2.000, 0.000, 105.00, 110.00, 7.00, 14.70, 210.00, 218.74, 6.00, 6.00, 0.00, 11.72, 11.72, 0.00, 0.00, 23.44, '1', '1*10', 'HDFC', '90189011', NULL, 0.00, 0, '2025-11-22 05:10:54', '2025-11-22 05:10:54'),
+(65, 53, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-22 07:31:58', '2025-11-22 07:31:58'),
+(66, 54, 29, 85, '', 'bisolong', 'a24nov', '11/2028', 3.000, 0.000, 180.00, 250.00, 7.00, 37.80, 540.00, 562.46, 6.00, 6.00, 0.00, 30.13, 30.13, 0.00, 0.00, 60.26, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-24 00:35:21', '2025-11-24 00:35:21'),
+(67, 55, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 1.000, 0.000, 200.00, 210.00, 7.00, 14.00, 200.00, 208.32, 6.00, 6.00, 0.00, 11.16, 11.16, 0.00, 0.00, 22.32, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-25 00:57:31', '2025-11-25 00:57:31'),
+(68, 56, 29, 19, '', 'bisolong', 'abhi654', '11/2025', 5.000, 0.000, 200.00, 210.00, 7.00, 70.00, 1000.00, 1041.60, 6.00, 6.00, 0.00, 55.80, 55.80, 0.00, 0.00, 111.60, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-25 00:58:45', '2025-11-25 00:58:45'),
+(69, 57, 29, 52, '', 'bisolong', 'abhi65353', '11/2025', 1.000, 0.000, 170.00, 210.00, 7.00, 11.90, 170.00, 177.07, 6.00, 6.00, 0.00, 9.49, 9.49, 0.00, 0.00, 18.97, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-11-26 05:49:31', '2025-11-26 05:49:31'),
+(70, 58, 29, 94, '', 'bisolong', 'a24nov32424', '11/2028', 1.000, 0.000, 180.00, 250.00, 7.00, 12.60, 180.00, 187.49, 6.00, 6.00, 0.00, 10.04, 10.04, 0.00, 0.00, 20.09, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-12-01 04:15:13', '2025-12-01 04:15:13'),
+(71, 59, 29, 89, '', 'bisolong', 'a24nov', '11/2028', 5.000, 0.000, 180.00, 250.00, 0.00, 0.00, 900.00, 1008.00, 6.00, 6.00, 0.00, 54.00, 54.00, 0.00, 0.00, 108.00, '1', '1*10', 'HDFC', '30049990', NULL, 0.00, 0, '2025-12-01 07:45:45', '2025-12-01 07:45:45'),
+(72, 60, 32, 23, '', 'ALLERCET-AX TAB.', 'batch9534', '11/2025', 1.000, 0.000, 41.14, 53.44, 0.00, 0.00, 41.14, 46.08, 6.00, 6.00, 0.00, 2.47, 2.47, 0.00, 0.00, 4.94, '1', '1*10', 'HDFC', '38220090', NULL, 0.00, 0, '2025-12-02 04:01:40', '2025-12-02 04:01:40'),
+(73, 61, 83, 98, '', 'ACETAMIDE-250 MG TAB.', '3dec1', '11/2028', 10.000, 0.000, 32.48, 42.63, 7.00, 22.74, 324.80, 317.17, 2.50, 2.50, 0.00, 7.55, 7.55, 0.00, 0.00, 15.10, '1', '1*10', 'HDFC', '30051090', NULL, 0.00, 0, '2025-12-02 23:15:00', '2025-12-02 23:15:00'),
+(74, 62, 83, 97, '', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', 10.000, 0.000, 32.48, 42.63, 0.00, 0.00, 324.80, 341.04, 2.50, 2.50, 0.00, 8.12, 8.12, 0.00, 0.00, 16.24, '1', '1*10', 'HDFC', '30051090', NULL, 0.00, 0, '2025-12-02 23:28:10', '2025-12-02 23:28:10'),
+(75, 63, 83, 99, '', 'ACETAMIDE-250 MG TAB.', '3dec2', '11/2028', 10.000, 0.000, 32.48, 42.63, 7.00, 22.74, 324.80, 317.17, 2.50, 2.50, 0.00, 7.55, 7.55, 0.00, 0.00, 15.10, '1', '1*10', 'HDFC', '30051090', NULL, 0.00, 0, '2025-12-03 00:04:17', '2025-12-03 00:04:17'),
+(76, 64, 30, 20, '', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', 6.000, 0.000, 190.00, 250.00, 0.00, 0.00, 1140.00, 1276.80, 6.00, 6.00, 0.00, 68.40, 68.40, 0.00, 0.00, 136.80, '1', '1*10', 'TCS', '38220090', NULL, 0.00, 0, '2025-12-03 01:39:24', '2025-12-03 01:39:24'),
+(77, 65, 83, 99, '', 'ACETAMIDE-250 MG TAB.', '3dec2', '11/28', 5.000, 0.000, 32.48, 42.63, 7.00, 11.37, 162.40, 158.58, 2.50, 2.50, 0.00, 3.78, 3.78, 0.00, 0.00, 7.55, '1', '1*10', 'HDFC', '30051090', NULL, 0.00, 0, '2025-12-03 05:53:12', '2025-12-03 05:53:12'),
+(78, 66, 32, 53, '', 'ALLERCET-AX TAB.', 'fgbdfg456', '11/2025', 5.000, 0.000, 41.14, 53.44, 0.00, 0.00, 205.70, 230.38, 6.00, 6.00, 0.00, 12.34, 12.34, 0.00, 0.00, 24.68, '1', '1*10', 'HDFC', '38220090', NULL, 0.00, 0, '2025-12-18 05:49:28', '2025-12-18 05:49:28'),
+(80, 69, 32, 53, '', 'ALLERCET-AX TAB.', 'fgbdfg456', '11/2025', 5.000, 0.000, 41.14, 53.44, 0.00, 0.00, 205.70, 230.38, 6.00, 6.00, 0.00, 12.34, 12.34, 0.00, 0.00, 24.68, '1', '1*10', 'HDFC', '38220090', NULL, 0.00, 0, '2025-12-19 00:29:25', '2025-12-19 00:29:25'),
+(81, 77, NULL, NULL, NULL, NULL, NULL, NULL, 1.000, 0.000, 0.00, 0.00, 0.00, 0.00, 1000.00, 1050.00, 2.50, 2.50, 0.00, 25.00, 25.00, 1000.00, 0.00, 50.00, NULL, NULL, NULL, '21069011', NULL, 5.00, 1, '2025-12-19 00:52:52', '2025-12-19 00:52:52'),
+(82, 78, 29, 22, '', 'bisolong', 'batch7645', '11/2025', 0.000, 0.000, 200.00, 210.00, 0.00, 0.00, 0.00, 0.00, 2.50, 2.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'HDFC', '29339900', NULL, 0.00, 0, '2025-12-22 12:28:29', '2025-12-22 12:28:29'),
+(83, 79, 29, 24, '', 'bisolong', 'raviagency1', '11/2025', 0.000, 0.000, 200.00, 210.00, 0.00, 0.00, 0.00, 0.00, 2.50, 2.50, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, '1', '1*10', 'HDFC', '29339900', NULL, 0.00, 0, '2025-12-22 12:28:59', '2025-12-22 12:28:59'),
+(84, 80, 29, 24, '', 'bisolong', 'raviagency1', '11/2025', 1.000, 0.000, 200.00, 210.00, 0.00, 0.00, 200.00, 210.00, 2.50, 2.50, 0.00, 5.00, 5.00, 0.00, 0.00, 10.00, '1', '1*10', 'HDFC', '29339900', NULL, 0.00, 0, '2025-12-22 12:29:32', '2025-12-22 12:29:32'),
+(85, 81, NULL, NULL, NULL, NULL, NULL, NULL, 10.000, 0.000, 0.00, 0.00, 0.00, 0.00, 10000.00, 110000.00, 500.00, 500.00, 0.00, 50000.00, 50000.00, 10000.00, 0.00, 100000.00, NULL, NULL, NULL, '21643434', NULL, 1000.00, 1, '2025-12-30 05:15:02', '2025-12-30 05:15:02');
 
 -- --------------------------------------------------------
 
@@ -4469,7 +5647,8 @@ CREATE TABLE `sample_issued_transactions` (
 
 INSERT INTO `sample_issued_transactions` (`id`, `trn_no`, `series`, `transaction_date`, `day_name`, `party_type`, `party_id`, `party_name`, `gr_no`, `gr_date`, `cases`, `road_permit_no`, `truck_no`, `transport`, `remarks`, `on_field`, `rate`, `tag`, `total_qty`, `total_amount`, `net_amount`, `status`, `is_deleted`, `created_at`, `updated_at`) VALUES
 (2, 'SI25120001', 'SI', '2025-12-16', 'Tuesday', 'CUSTOMER', 2, 'Mahesh Traders', NULL, '2025-12-16', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 1.00, 105.00, 105.00, 'completed', 0, '2025-12-16 08:00:23', '2025-12-16 08:00:23'),
-(3, 'SI25120002', 'SI', '2025-12-16', 'Tuesday', 'CUSTOMER', 2, 'Mahesh Traders', NULL, '2025-12-16', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 1.00, 32.48, 32.48, 'completed', 0, '2025-12-16 08:07:52', '2025-12-16 08:07:52');
+(3, 'SI25120002', 'SI', '2025-12-16', 'Tuesday', 'CUSTOMER', 2, 'Mahesh Traders', NULL, '2025-12-16', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 2.00, 64.96, 64.96, 'completed', 0, '2025-12-16 08:07:52', '2025-12-17 05:30:14'),
+(4, 'SI25120003', 'SI', '2025-12-30', 'Tuesday', 'SALES_MAN', 4, 'Amit Patel', NULL, '2025-12-30', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 1.00, 0.00, 0.00, 'completed', 0, '2025-12-30 02:12:27', '2025-12-30 02:12:27');
 
 -- --------------------------------------------------------
 
@@ -4507,7 +5686,8 @@ CREATE TABLE `sample_issued_transaction_items` (
 
 INSERT INTO `sample_issued_transaction_items` (`id`, `sample_issued_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `expiry_date`, `qty`, `free_qty`, `rate`, `mrp`, `amount`, `packing`, `unit`, `company_name`, `hsn_code`, `row_order`, `created_at`, `updated_at`) VALUES
 (3, 2, 18, 44, '18', 'intas', 'fgdxcvfg34', '11/2025', NULL, 1.00, 0.00, 105.00, 110.00, 105.00, '1*10', '1', 'HDFC', '90189011', 1, '2025-12-16 08:02:52', '2025-12-16 08:02:52'),
-(4, 3, 83, 97, '83', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', NULL, 1.00, 0.00, 32.48, 50.00, 32.48, '1*10', '1', 'HDFC', '30051090', 1, '2025-12-16 08:07:52', '2025-12-16 08:07:52');
+(13, 3, 83, 97, '83', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', NULL, 2.00, 0.00, 32.48, 50.00, 64.96, '1*10', '1', 'HDFC', '30051090', 1, '2025-12-17 05:30:14', '2025-12-17 05:30:14'),
+(14, 4, 31, 41, '31', 'ACAMPTAS-333 MG TAB.', '12NOV', '11/2025', NULL, 1.00, 0.00, 0.00, 250.00, 0.00, '1*10', '1', 'HDFC', '90192090', 1, '2025-12-30 02:12:27', '2025-12-30 02:12:27');
 
 -- --------------------------------------------------------
 
@@ -4548,9 +5728,9 @@ CREATE TABLE `sample_received_transactions` (
 --
 
 INSERT INTO `sample_received_transactions` (`id`, `trn_no`, `series`, `transaction_date`, `day_name`, `party_type`, `party_id`, `party_name`, `gr_no`, `gr_date`, `cases`, `road_permit_no`, `truck_no`, `transport`, `remarks`, `on_field`, `rate`, `tag`, `total_qty`, `total_amount`, `net_amount`, `status`, `is_deleted`, `created_at`, `updated_at`) VALUES
-(1, 'SR25110001', 'SR', '2025-11-17', 'Monday', 'CUSTOMER', 36, 'abhishek', NULL, '2025-11-17', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 2.00, 231.14, 231.14, 'completed', 0, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
-(2, 'SR25110002', 'SR', '2025-11-17', 'Monday', 'CUSTOMER', 36, 'abhishek', NULL, '2025-11-17', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 5.00, 950.00, 950.00, 'completed', 0, '2025-11-17 02:15:21', '2025-11-17 02:24:26'),
-(3, 'SR25110003', 'SR', '2025-11-17', 'Monday', 'CUSTOMER', 1, 'amansingh', NULL, '2025-11-17', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 5.00, 950.00, 950.00, 'completed', 0, '2025-11-17 02:19:31', '2025-11-17 02:19:56');
+(1, 'SR25120001', 'SR', '2025-12-17', 'Wednesday', 'CUSTOMER', 2, 'Mahesh Traders', NULL, '2025-12-17', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 2.00, 400.00, 400.00, 'completed', 0, '2025-12-17 05:31:11', '2025-12-17 05:31:41'),
+(2, 'SR25120002', 'SR', '2025-12-23', 'Tuesday', 'CUSTOMER', 1, 'amansingh', NULL, '2025-12-23', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 0.00, 0.00, 0.00, 'completed', 0, '2025-12-23 06:29:41', '2025-12-23 06:29:41'),
+(3, 'SR25120003', 'SR', '2025-12-30', 'Tuesday', 'SALES_MAN', 4, 'Amit Patel', NULL, '2025-12-30', 0, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 0.00, 0.00, 0.00, 'completed', 0, '2025-12-30 02:43:21', '2025-12-30 02:43:21');
 
 -- --------------------------------------------------------
 
@@ -4587,10 +5767,7 @@ CREATE TABLE `sample_received_transaction_items` (
 --
 
 INSERT INTO `sample_received_transaction_items` (`id`, `sample_received_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `expiry_date`, `qty`, `free_qty`, `rate`, `mrp`, `amount`, `packing`, `unit`, `company_name`, `hsn_code`, `row_order`, `created_at`, `updated_at`) VALUES
-(1, 1, 30, 20, '30', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', NULL, 1.00, 0.00, 190.00, 250.00, 190.00, '1*10', '1', 'TCS', '38220090', 1, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
-(2, 1, 32, 50, '32', 'ALLERCET-AX TAB.', 'fgbdfg45', NULL, NULL, 1.00, 0.00, 41.14, 53.44, 41.14, '1*10', '1', 'HDFC', '38220090', 2, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
-(5, 3, 30, 20, '30', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', NULL, 5.00, 0.00, 190.00, 250.00, 950.00, '1*10', '1', 'TCS', '38220090', 1, '2025-11-17 02:19:56', '2025-11-17 02:19:56'),
-(6, 2, 30, 20, '30', 'ABAXIS-5 MG TAB.', 'batch2', '11/2025', NULL, 5.00, 0.00, 190.00, 250.00, 950.00, '1*10', '1', 'TCS', '38220090', 1, '2025-11-17 02:24:26', '2025-11-17 02:24:26');
+(3, 1, 29, 22, '29', 'bisolong', 'batch7645', '11/2025', NULL, 2.00, 0.00, 200.00, 250.00, 400.00, '1*10', '1', 'HDFC', '30049990', 1, '2025-12-17 05:31:41', '2025-12-17 05:31:41');
 
 -- --------------------------------------------------------
 
@@ -4612,7 +5789,9 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('bIttOwYImWTfoQRbys8giq96WsPvOYSnlobJ7W24', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoibkEyaU51WXc3N2hGcVdFUWxmbFNERGhhU1VKWFhyclpBYUc4TGlDNCI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6ODQ6Imh0dHA6Ly9sb2NhbGhvc3QvYmlsbC1zb2Z0d2FyZS9hZG1pbi9zdXBwbGllci1wYXltZW50L3N1cHBsaWVyLW91dHN0YW5kaW5nLzExP3BhZ2U9MSI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6NTA6ImxvZ2luX3dlYl81OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7fQ==', 1766052612);
+('BzmztSR11K0VKrl8t5F2wi1BAyVEtOedTvrIrGUd', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiVkU4Z3psa20wNFF4ekpGM2JMYWRJTGNsYmd1T3NUOFZmbUZmM3pXMSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NTg6Imh0dHA6Ly9sb2NhbGhvc3QvYmlsbC1zb2Z0d2FyZTEvYWRtaW4vYXJlYS1tYW5hZ2Vycy9jcmVhdGUiO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO30=', 1767175202),
+('RekdDGwLjCvTx3ho1mAxse6sI52qFl0sUz1WdF37', 1, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoibzRDTG9pUE9aMHJlRTl1Rm5XbU9EdnFpdHNodEJvcHo5T3E0eVRmNSI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDc6Imh0dHA6Ly9sb2NhbGhvc3QvYmlsbC1zb2Z0d2FyZTEvYWRtaW4vZGFzaGJvYXJkIjt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO2k6MTt9', 1767174143),
+('zcgYbdJDNRaJVvnryItfUJJwtxwSUyqjjl1JB81d', NULL, '::1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiY2VXcTMyTmdMbkFUQ3BMbE9UNlNkYW4wYzJ5UlFCSXlGSTVWeGtDVSI7czo5OiJfcHJldmlvdXMiO2E6MTp7czozOiJ1cmwiO3M6NDM6Imh0dHA6Ly9sb2NhbGhvc3QvYmlsbC1zb2Z0d2FyZTEvYWRtaW4vdXNlcnMiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1767167179);
 
 -- --------------------------------------------------------
 
@@ -4862,11 +6041,17 @@ INSERT INTO `stock_ledgers` (`id`, `trans_no`, `item_id`, `batch_id`, `customer_
 (122, NULL, 83, 122, NULL, NULL, 'OUT', 10.00, 0.00, NULL, NULL, NULL, 32.48, 0.00, 0.00, 0.00, 'STOCK_TRANSFER_INCOMING_RETURN', 2, '2025-12-16', NULL, NULL, 4, '2025-12-16 04:49:53', '2025-12-16 04:49:53'),
 (124, NULL, 83, 97, NULL, NULL, 'OUT', 6.00, 0.00, NULL, NULL, NULL, 32.48, 0.00, 0.00, 0.00, 'STOCK_TRANSFER_INCOMING_RETURN', 3, '2025-12-16', NULL, NULL, 4, '2025-12-16 05:29:52', '2025-12-16 05:29:52'),
 (126, NULL, 18, 44, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'SI25120001', '2025-12-16', 105.00, 0.00, 0.00, 0.00, 'SAMPLE_ISSUED', 2, '2025-12-16', NULL, 'Sample Issued (Modified) - SI25120001', NULL, '2025-12-16 08:02:52', '2025-12-16 08:02:52'),
-(127, NULL, 83, 97, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'SI25120002', '2025-12-16', 32.48, 0.00, 0.00, 0.00, 'SAMPLE_ISSUED', 3, '2025-12-16', NULL, 'Sample Issued - SI25120002', NULL, '2025-12-16 08:07:52', '2025-12-16 08:07:52'),
-(128, NULL, 30, 20, NULL, NULL, 'IN', 1.00, 0.00, NULL, 'SR25110001', '2025-11-17', 190.00, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 1, '2025-11-17', NULL, 'Sample Received - SR25110001', NULL, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
-(129, NULL, 32, 50, NULL, NULL, 'IN', 1.00, 0.00, NULL, 'SR25110001', '2025-11-17', 41.14, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 1, '2025-11-17', NULL, 'Sample Received - SR25110001', NULL, '2025-11-17 01:13:49', '2025-11-17 01:13:49'),
-(132, NULL, 30, 20, NULL, NULL, 'IN', 5.00, 0.00, NULL, 'SR25110003', '2025-11-17', 190.00, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 3, '2025-11-17', NULL, 'Sample Received (Modified) - SR25110003', NULL, '2025-11-17 02:19:56', '2025-11-17 02:19:56'),
-(133, NULL, 30, 20, NULL, NULL, 'IN', 5.00, 0.00, NULL, 'SR25110002', '2025-11-17', 190.00, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 2, '2025-11-17', NULL, 'Sample Received (Modified) - SR25110002', NULL, '2025-11-17 02:24:26', '2025-11-17 02:24:26');
+(138, NULL, 29, 24, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'GBE2512001', '2025-12-17', 210.00, 0.00, 0.00, 0.00, 'GODOWN_BREAKAGE_EXPIRY', 1, '2025-12-17', NULL, 'Godown BREAKAGE (Modified) - GBE2512001', NULL, '2025-12-17 05:14:50', '2025-12-17 05:14:50'),
+(139, NULL, 18, 44, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'GBE2512001', '2025-12-17', 120.00, 0.00, 0.00, 0.00, 'GODOWN_BREAKAGE_EXPIRY', 1, '2025-12-17', NULL, 'Godown BREAKAGE (Modified) - GBE2512001', NULL, '2025-12-17 05:14:50', '2025-12-17 05:14:50'),
+(142, NULL, 83, 97, NULL, NULL, 'OUT', 2.00, 0.00, NULL, 'SI25120002', '2025-12-16', 32.48, 0.00, 0.00, 0.00, 'SAMPLE_ISSUED', 3, '2025-12-16', NULL, 'Sample Issued (Modified) - SI25120002', NULL, '2025-12-17 05:30:14', '2025-12-17 05:30:14'),
+(145, NULL, 29, 22, NULL, NULL, 'IN', 2.00, 0.00, NULL, 'SR25120001', '2025-12-17', 200.00, 0.00, 0.00, 0.00, 'SAMPLE_RECEIVED', 1, '2025-12-17', NULL, 'Sample Received (Modified) - SR25120001', NULL, '2025-12-17 05:31:41', '2025-12-17 05:31:41'),
+(146, 'STOR-002', 83, 102, NULL, NULL, 'IN', 1.00, 0.00, NULL, NULL, NULL, 32.48, 0.00, 0.00, 0.00, 'StockTransferOutgoingReturn', 2, '2025-12-23', NULL, 'Stock Transfer Outgoing Return - bcbcv', 1, '2025-12-23 06:30:21', '2025-12-23 06:30:21'),
+(147, NULL, 32, 53, NULL, NULL, 'OUT', 1.00, 0.00, NULL, NULL, NULL, 41.14, 0.00, 0.00, 0.00, 'STOCK_TRANSFER_INCOMING_RETURN', 4, '2025-12-23', NULL, NULL, 1, '2025-12-23 06:30:41', '2025-12-23 06:30:41'),
+(148, NULL, 83, 98, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'GBE2512002', '2025-12-23', 29.23, 0.00, 0.00, 0.00, 'GODOWN_BREAKAGE_EXPIRY', 2, '2025-12-23', NULL, 'Godown BREAKAGE - GBE2512002', NULL, '2025-12-23 06:30:54', '2025-12-23 06:30:54'),
+(149, NULL, 29, 52, NULL, NULL, 'IN', 1.00, 0.00, NULL, NULL, NULL, 220.50, 0.00, 0.00, 0.00, 'STOCK_TRANSFER_INCOMING', 3, '2025-12-30', NULL, NULL, 1, '2025-12-30 00:09:17', '2025-12-30 00:09:17'),
+(150, NULL, 29, 52, NULL, NULL, 'OUT', 1.00, 0.00, NULL, NULL, NULL, 170.00, 0.00, 0.00, 0.00, 'STOCK_TRANSFER_INCOMING_RETURN', 5, '2025-12-30', NULL, NULL, 1, '2025-12-30 01:06:21', '2025-12-30 01:06:21'),
+(151, NULL, 31, 41, NULL, NULL, 'OUT', 1.00, 0.00, NULL, 'SI25120003', '2025-12-30', 0.00, 0.00, 0.00, 0.00, 'SAMPLE_ISSUED', 4, '2025-12-30', NULL, 'Sample Issued - SI25120003', NULL, '2025-12-30 02:12:27', '2025-12-30 02:12:27'),
+(152, NULL, 29, 22, NULL, NULL, 'OUT', 2.00, 0.00, NULL, 'GBE2512003', '2025-12-30', 210.00, 0.00, 0.00, 0.00, 'GODOWN_BREAKAGE_EXPIRY', 3, '2025-12-30', NULL, 'Godown BREAKAGE - GBE2512003', NULL, '2025-12-30 02:58:30', '2025-12-30 02:58:30');
 
 -- --------------------------------------------------------
 
@@ -4907,7 +6092,9 @@ CREATE TABLE `stock_transfer_incoming_return_transactions` (
 INSERT INTO `stock_transfer_incoming_return_transactions` (`id`, `trn_no`, `series`, `transaction_date`, `day_name`, `name`, `gr_no`, `gr_date`, `cases`, `transport`, `remarks`, `net_amount`, `packing`, `unit`, `cl_qty`, `comp`, `lctn`, `srlno`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
 (1, 'STIR00001', 'STIR', '2025-12-16', 'Tuesday', 'Mahesh Traders', NULL, '2025-12-16', NULL, NULL, NULL, 324.80, '1*10', '1', 347.00, 'HDFC', NULL, NULL, 'active', 4, NULL, '2025-12-16 04:44:30', '2025-12-16 04:44:30'),
 (2, 'STIR00002', 'STIR', '2025-12-16', 'Tuesday', 'Mahesh Traders', NULL, '2025-12-16', NULL, NULL, NULL, 324.80, '1*10', '1', 347.00, 'HDFC', NULL, NULL, 'active', 4, NULL, '2025-12-16 04:49:53', '2025-12-16 04:49:53'),
-(3, 'STIR00003', 'STIR', '2025-12-16', 'Tuesday', 'Mahesh Traders', NULL, '2025-12-16', NULL, NULL, NULL, 194.88, '1*10', '1', 16.00, 'HDFC', NULL, NULL, 'active', 4, 4, '2025-12-16 04:51:16', '2025-12-16 05:29:52');
+(3, 'STIR00003', 'STIR', '2025-12-16', 'Tuesday', 'Mahesh Traders', NULL, '2025-12-16', NULL, NULL, NULL, 194.88, '1*10', '1', 16.00, 'HDFC', NULL, NULL, 'active', 4, 4, '2025-12-16 04:51:16', '2025-12-16 05:29:52'),
+(4, 'STIR00004', 'STIR', '2025-12-23', 'Tuesday', 'Ganesh Medico', NULL, '2025-12-23', NULL, NULL, NULL, 41.14, '1*10', '1', 5.00, 'HDFC', NULL, NULL, 'active', 1, NULL, '2025-12-23 06:30:41', '2025-12-23 06:30:41'),
+(5, 'STIR00005', 'STIR', '2025-12-30', 'Tuesday', 'Mahesh Traders', NULL, '2025-12-30', NULL, NULL, NULL, 170.00, '1*10', '1', 8.00, 'HDFC', NULL, NULL, 'active', 1, NULL, '2025-12-30 01:06:21', '2025-12-30 01:06:21');
 
 -- --------------------------------------------------------
 
@@ -4944,7 +6131,9 @@ CREATE TABLE `stock_transfer_incoming_return_transaction_items` (
 INSERT INTO `stock_transfer_incoming_return_transaction_items` (`id`, `stock_transfer_incoming_return_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `expiry_date`, `qty`, `rate`, `amount`, `packing`, `unit`, `company_name`, `hsn_code`, `row_order`, `created_at`, `updated_at`) VALUES
 (1, 1, 83, 121, '83', 'ACETAMIDE-250 MG TAB.', 'fdgdg', '11/28', '2025-11-28', 10.00, 32.48, 324.80, '', '', '', '', 0, '2025-12-16 04:44:30', '2025-12-16 04:44:30'),
 (2, 2, 83, 122, '83', 'ACETAMIDE-250 MG TAB.', 'hghgh', '11/28', '2025-11-28', 10.00, 32.48, 324.80, '', '', '', '', 0, '2025-12-16 04:49:53', '2025-12-16 04:49:53'),
-(4, 3, 83, 97, '83', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', '2028-11-01', 6.00, 32.48, 194.88, '', '', '', '', 0, '2025-12-16 05:29:52', '2025-12-16 05:29:52');
+(4, 3, 83, 97, '83', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', '2028-11-01', 6.00, 32.48, 194.88, '', '', '', '', 0, '2025-12-16 05:29:52', '2025-12-16 05:29:52'),
+(5, 4, 32, 53, '32', 'ALLERCET-AX TAB.', 'fgbdfg456', '11/2025', '2025-11-01', 1.00, 41.14, 41.14, '', '', '', '', 0, '2025-12-23 06:30:41', '2025-12-23 06:30:41'),
+(6, 5, 29, 52, '29', 'bisolong', 'abhi65353', '11/2025', '2025-11-01', 1.00, 170.00, 170.00, '', '', '', '', 0, '2025-12-30 01:06:21', '2025-12-30 01:06:21');
 
 -- --------------------------------------------------------
 
@@ -4986,7 +6175,8 @@ CREATE TABLE `stock_transfer_incoming_transactions` (
 
 INSERT INTO `stock_transfer_incoming_transactions` (`id`, `trf_no`, `series`, `transaction_date`, `day_name`, `supplier_id`, `supplier_name`, `st_date`, `gr_no`, `gr_date`, `cases`, `transport`, `remarks`, `total_amount`, `packing`, `unit`, `cl_qty`, `comp`, `lctn`, `srlno`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
 (1, 'STI00001', 'STI', '2025-12-16', 'Tuesday', 11, 'Mahesh Traders', '2025-12-16', NULL, '2025-12-16', NULL, NULL, NULL, 388.66, '1*10', '1', 341.00, 'HDFC', NULL, NULL, 'active', 4, NULL, '2025-12-16 02:00:02', '2025-12-16 02:00:02'),
-(2, 'STI00002', 'STI', '2025-12-16', 'Tuesday', 11, 'Mahesh Traders', '2025-12-16', NULL, '2025-12-16', NULL, NULL, NULL, 30.69, '1*10', '1', 0.00, 'HDFC', NULL, NULL, 'active', 4, 4, '2025-12-16 03:53:45', '2025-12-16 04:01:04');
+(2, 'STI00002', 'STI', '2025-12-16', 'Tuesday', 11, 'Mahesh Traders', '2025-12-16', NULL, '2025-12-16', NULL, NULL, NULL, 30.69, '1*10', '1', 0.00, 'HDFC', NULL, NULL, 'active', 4, 4, '2025-12-16 03:53:45', '2025-12-16 04:01:04'),
+(3, 'STI00003', 'STI', '2025-12-30', 'Tuesday', 11, 'Mahesh Traders', '2025-12-30', NULL, '2025-12-30', NULL, NULL, NULL, 220.50, '1*10', '1', 144.00, 'HDFC', NULL, NULL, 'active', 1, NULL, '2025-12-30 00:09:17', '2025-12-30 00:09:17');
 
 -- --------------------------------------------------------
 
@@ -5028,7 +6218,8 @@ CREATE TABLE `stock_transfer_incoming_transaction_items` (
 INSERT INTO `stock_transfer_incoming_transaction_items` (`id`, `stock_transfer_incoming_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `expiry_date`, `qty`, `free_qty`, `p_rate`, `gst_percent`, `ft_rate`, `ft_amount`, `mrp`, `s_rate`, `packing`, `unit`, `company_name`, `hsn_code`, `row_order`, `created_at`, `updated_at`) VALUES
 (1, 1, 83, 97, '83', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', '2028-11-01', 5.00, 0.00, 29.23, 5.00, 30.69, 153.46, 42.63, 32.48, '', '', '', '', 0, '2025-12-16 02:00:02', '2025-12-16 02:00:02'),
 (2, 1, 29, 52, '29', 'bisolong', 'abhi65353', '11/2025', '2025-11-01', 1.00, 0.00, 210.00, 12.00, 235.20, 235.20, 42.63, 32.48, '', '', '', '', 1, '2025-12-16 02:00:02', '2025-12-16 02:00:02'),
-(6, 2, 83, 97, '83', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', '2028-11-01', 1.00, 0.00, 29.23, 5.00, 30.69, 30.69, 0.00, 0.00, '', '', '', '', 0, '2025-12-16 04:01:04', '2025-12-16 04:01:04');
+(6, 2, 83, 97, '83', 'ACETAMIDE-250 MG TAB.', '3dec', '11/2028', '2028-11-01', 1.00, 0.00, 29.23, 5.00, 30.69, 30.69, 0.00, 0.00, '', '', '', '', 0, '2025-12-16 04:01:04', '2025-12-16 04:01:04'),
+(7, 3, 29, 52, '29', 'bisolong', 'abhi65353', '11/2025', '2025-11-01', 1.00, 0.00, 210.00, 5.00, 220.50, 220.50, 210.00, 170.00, '', '', '', '', 0, '2025-12-30 00:09:17', '2025-12-30 00:09:17');
 
 -- --------------------------------------------------------
 
@@ -5071,7 +6262,8 @@ CREATE TABLE `stock_transfer_outgoing_return_transactions` (
 --
 
 INSERT INTO `stock_transfer_outgoing_return_transactions` (`id`, `sr_no`, `series`, `transaction_date`, `original_transfer_id`, `original_sr_no`, `transfer_from`, `transfer_from_name`, `trf_return_no`, `challan_no`, `challan_date`, `cases`, `transport`, `gst_vno`, `with_gst`, `mrp_value`, `gross_amount`, `discount_amount`, `scheme_amount`, `tax_amount`, `net_amount`, `remarks`, `status`, `created_by`, `updated_by`, `created_at`, `updated_at`) VALUES
-(1, 'STOR-001', 'STOR', '2025-12-15', NULL, NULL, '2', 'Mahesh Traders', NULL, NULL, '2025-12-15', 0, NULL, 'N', 'N', 0.00, 0.00, 0.00, 0.00, 0.00, 850.00, NULL, 'active', 4, NULL, '2025-12-15 06:55:58', '2025-12-15 06:55:58');
+(1, 'STOR-001', 'STOR', '2025-12-15', NULL, NULL, '2', 'Mahesh Traders', NULL, NULL, '2025-12-15', 0, NULL, 'N', 'N', 0.00, 0.00, 0.00, 0.00, 0.00, 850.00, NULL, 'active', 4, NULL, '2025-12-15 06:55:58', '2025-12-15 06:55:58'),
+(2, 'STOR-002', 'STOR', '2025-12-23', NULL, NULL, '4', 'bcbcv', NULL, NULL, '2025-12-23', 0, NULL, 'N', 'N', 0.00, 0.00, 0.00, 0.00, 0.00, 32.48, NULL, 'active', 1, NULL, '2025-12-23 06:30:21', '2025-12-23 06:30:21');
 
 -- --------------------------------------------------------
 
@@ -5115,7 +6307,8 @@ CREATE TABLE `stock_transfer_outgoing_return_transaction_items` (
 --
 
 INSERT INTO `stock_transfer_outgoing_return_transaction_items` (`id`, `stock_transfer_outgoing_return_transaction_id`, `item_id`, `batch_id`, `item_code`, `item_name`, `batch_no`, `expiry`, `qty`, `f_qty`, `mrp`, `p_rate`, `s_rate`, `scm_percent`, `dis_percent`, `amount`, `hsn_code`, `cgst_percent`, `sgst_percent`, `cgst_amount`, `sgst_amount`, `tax_percent`, `tax_amount`, `packing`, `company_name`, `row_order`, `created_at`, `updated_at`) VALUES
-(1, 1, 29, 52, '29', 'bisolong', 'abhi65353', '11/2025', 5.00, 0.00, 210.00, 210.00, 170.00, 0.00, 0.00, 850.00, '30049990', 6.00, 6.00, 0.00, 0.00, 12.00, 0.00, '1*10', NULL, 0, '2025-12-15 06:55:58', '2025-12-15 06:55:58');
+(1, 1, 29, 52, '29', 'bisolong', 'abhi65353', '11/2025', 5.00, 0.00, 210.00, 210.00, 170.00, 0.00, 0.00, 850.00, '30049990', 6.00, 6.00, 0.00, 0.00, 12.00, 0.00, '1*10', NULL, 0, '2025-12-15 06:55:58', '2025-12-15 06:55:58'),
+(2, 2, 83, 102, '83', 'ACETAMIDE-250 MG TAB.', '4dec', '11/2028', 1.00, 0.00, 42.63, 29.23, 32.48, 0.00, 0.00, 32.48, '30051090', 2.50, 2.50, 0.00, 0.00, 5.00, 0.00, '1*10', NULL, 0, '2025-12-23 06:30:21', '2025-12-23 06:30:21');
 
 -- --------------------------------------------------------
 
@@ -5346,6 +6539,13 @@ CREATE TABLE `supplier_payments` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `supplier_payments`
+--
+
+INSERT INTO `supplier_payments` (`id`, `payment_date`, `day_name`, `trn_no`, `ledger`, `bank_code`, `bank_name`, `total_cash`, `total_cheque`, `amt_outstanding`, `amt_adjusted`, `tds_amount`, `currency_detail`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, '2025-12-18', 'Thursday', 1, 'SL', 'CODE-001', 'BANK_001', 0.00, 110.00, 0.00, 0.00, 0.00, 0, NULL, '2025-12-18 06:25:15', '2025-12-18 06:42:33');
+
 -- --------------------------------------------------------
 
 --
@@ -5365,6 +6565,13 @@ CREATE TABLE `supplier_payment_adjustments` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `supplier_payment_adjustments`
+--
+
+INSERT INTO `supplier_payment_adjustments` (`id`, `supplier_payment_id`, `supplier_payment_item_id`, `adjustment_type`, `reference_no`, `reference_date`, `reference_amount`, `adjusted_amount`, `balance_amount`, `created_at`, `updated_at`) VALUES
+(2, 1, NULL, 'outstanding', '87457', '2025-11-08', 1411.20, 110.00, 1301.20, '2025-12-18 06:42:33', '2025-12-18 06:42:33');
 
 -- --------------------------------------------------------
 
@@ -5389,6 +6596,13 @@ CREATE TABLE `supplier_payment_items` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `supplier_payment_items`
+--
+
+INSERT INTO `supplier_payment_items` (`id`, `supplier_payment_id`, `party_code`, `party_name`, `supplier_id`, `cheque_no`, `cheque_date`, `cheque_bank_name`, `cheque_bank_area`, `cheque_closed_on`, `amount`, `unadjusted`, `payment_type`, `created_at`, `updated_at`) VALUES
+(2, 1, 'SUP001', 'Mahesh Traders', 11, '45645', '2025-12-18', 'BANK_001', 'meerut', '2025-12-18', 110.00, 0.00, 'cheque', '2025-12-18 06:42:33', '2025-12-18 06:42:33');
 
 -- --------------------------------------------------------
 
@@ -5461,7 +6675,15 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `role` varchar(255) NOT NULL DEFAULT 'user',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `profile_picture` varchar(255) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `telephone` varchar(50) DEFAULT NULL,
+  `tin_no` varchar(50) DEFAULT NULL,
+  `gst_no` varchar(50) DEFAULT NULL,
+  `dl_no` varchar(50) DEFAULT NULL,
+  `dl_no_1` varchar(50) DEFAULT NULL,
+  `licensed_to` varchar(255) DEFAULT NULL,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -5471,11 +6693,95 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`user_id`, `full_name`, `username`, `email`, `password`, `role`, `profile_picture`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'abhishek', 'admin', 'admin@example.com', '$2y$12$vS5rUdF7AIRSadrWjVrq7Oz1.ha0QtsUedZUXrAJ98o6UqALsJgSS', 'admin', 'storage/profiles/XJenld9HwgtZdb7OF69iKxb8QBXKOHLFGh7qRdK9.jpg', NULL, '2025-10-07 04:07:34', '2025-10-24 05:59:29'),
-(2, 'abhishek chauhan', 'abhi1', 'abhi@ok.com', '$2y$12$eQv8LEAbT7xYITpglenLN.K5ExKt/WSG4u0yxCqyVa/yhnJUVhPve', 'admin', NULL, NULL, '2025-10-08 05:21:12', '2025-10-08 05:21:12'),
-(3, 'abhishek chauhan', 'abhi11', 'abhi11@gmail.com', '$2y$12$Ig1trZyIyDxCvOq0sgGdouvy6UMFBEorilt9T8uUG4j4gV2CKQ9oS', 'user', NULL, NULL, '2025-10-14 23:29:43', '2025-10-14 23:29:43'),
-(4, 'Delta Agencies Pvt Ltd', 'admin1', 'johnsrud.woodridge@vtdat.com', '$2y$12$Q2VX2bchLCkG7B4StaL9/.rP8uruqWtSMkmfNGXGNod.NDDrxQaH2', 'admin', 'storage/profiles/XmtXZ0hPCmPfrkotJ5MLtORhmQi19A2ig95gamPK.jpg', NULL, '2025-11-15 05:56:03', '2025-12-03 01:21:22');
+INSERT INTO `users` (`user_id`, `full_name`, `username`, `email`, `password`, `role`, `is_active`, `profile_picture`, `address`, `telephone`, `tin_no`, `gst_no`, `dl_no`, `dl_no_1`, `licensed_to`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'Abhishek', 'admin', 'admin@example.com', '$2y$12$vS5rUdF7AIRSadrWjVrq7Oz1.ha0QtsUedZUXrAJ98o6UqALsJgSS', 'admin', 1, 'storage/profiles/Rfy3EG3Eu2ebgyTqQnl3N9myAnZ6kf3CEu50mXmT.jpg', NULL, NULL, '435353', '43534534', '345345345', '345345345', 'ABHISHEK MEDICAL COMPANY', NULL, '2025-10-07 04:07:34', '2025-12-22 06:50:07'),
+(2, 'abhishek chauhan', 'abhi1', 'abhi@ok.com', '$2y$12$vS5rUdF7AIRSadrWjVrq7Oz1.ha0QtsUedZUXrAJ98o6UqALsJgSS', 'admin', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-08 05:21:12', '2025-10-08 05:21:12'),
+(3, 'abhishek chauhan', 'abhi11', 'abhi11@gmail.com', '$2y$12$vS5rUdF7AIRSadrWjVrq7Oz1.ha0QtsUedZUXrAJ98o6UqALsJgSS', 'user', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-10-14 23:29:43', '2025-10-14 23:29:43'),
+(4, 'Delta Agencies Pvt Ltd', 'admin1', 'johnsrud.woodridge@vtdat.com', '$2y$12$Q2VX2bchLCkG7B4StaL9/.rP8uruqWtSMkmfNGXGNod.NDDrxQaH2', 'admin', 1, 'storage/profiles/XmtXZ0hPCmPfrkotJ5MLtORhmQi19A2ig95gamPK.jpg', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2025-11-15 05:56:03', '2025-12-03 01:21:22'),
+(5, 'abhishek chauhan', 'abhi', 'admin@example1.com', '$2y$12$Msr7j9X47Dxinv2S4MNoQOCC.RPULcJ7UWtUpaICd9DXEpZCtsCJW', 'user', 1, NULL, 'vf', '7367532323', NULL, NULL, NULL, NULL, NULL, NULL, '2025-12-22 07:54:23', '2025-12-22 07:54:23');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_permissions`
+--
+
+CREATE TABLE `user_permissions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `permission_id` bigint(20) UNSIGNED NOT NULL,
+  `can_view` tinyint(1) NOT NULL DEFAULT 0,
+  `can_create` tinyint(1) NOT NULL DEFAULT 0,
+  `can_edit` tinyint(1) NOT NULL DEFAULT 0,
+  `can_delete` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `user_permissions`
+--
+
+INSERT INTO `user_permissions` (`id`, `user_id`, `permission_id`, `can_view`, `can_create`, `can_edit`, `can_delete`, `created_at`, `updated_at`) VALUES
+(58, 5, 17, 1, 1, 1, 1, '2025-12-22 12:12:01', '2025-12-22 12:12:01'),
+(59, 5, 12, 1, 1, 1, 1, '2025-12-22 12:12:01', '2025-12-22 12:12:01');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `vouchers`
+--
+
+CREATE TABLE `vouchers` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `voucher_no` int(11) NOT NULL,
+  `voucher_date` date NOT NULL,
+  `day_name` varchar(20) DEFAULT NULL,
+  `voucher_type` enum('receipt','payment','contra','journal') NOT NULL DEFAULT 'receipt',
+  `multi_narration` tinyint(1) NOT NULL DEFAULT 0,
+  `narration` text DEFAULT NULL,
+  `total_debit` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `total_credit` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `status` enum('active','cancelled') NOT NULL DEFAULT 'active',
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `vouchers`
+--
+
+INSERT INTO `vouchers` (`id`, `voucher_no`, `voucher_date`, `day_name`, `voucher_type`, `multi_narration`, `narration`, `total_debit`, `total_credit`, `status`, `remarks`, `created_at`, `updated_at`) VALUES
+(1, 1, '2025-12-29', 'Monday', 'receipt', 0, NULL, 100.00, 0.00, 'active', NULL, '2025-12-29 02:15:56', '2025-12-29 02:15:56');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `voucher_items`
+--
+
+CREATE TABLE `voucher_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `voucher_id` bigint(20) UNSIGNED NOT NULL,
+  `account_type` varchar(20) DEFAULT NULL,
+  `account_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `account_code` varchar(50) DEFAULT NULL,
+  `account_name` varchar(255) DEFAULT NULL,
+  `debit_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `credit_amount` decimal(15,2) NOT NULL DEFAULT 0.00,
+  `item_narration` text DEFAULT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `voucher_items`
+--
+
+INSERT INTO `voucher_items` (`id`, `voucher_id`, `account_type`, `account_id`, `account_code`, `account_name`, `debit_amount`, `credit_amount`, `item_narration`, `sort_order`, `created_at`, `updated_at`) VALUES
+(1, 1, 'GL', 18, NULL, 'ab1', 100.00, 0.00, NULL, 1, '2025-12-29 02:15:56', '2025-12-29 02:15:56');
 
 --
 -- Indexes for dumped tables
@@ -5493,6 +6799,14 @@ ALTER TABLE `areas`
 ALTER TABLE `area_managers`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `area_managers_code_unique` (`code`);
+
+--
+-- Indexes for table `bank_transactions`
+--
+ALTER TABLE `bank_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `bank_transactions_transaction_date_transaction_no_index` (`transaction_date`,`transaction_no`),
+  ADD KEY `bank_transactions_transaction_type_index` (`transaction_type`);
 
 --
 -- Indexes for table `batches`
@@ -5536,6 +6850,66 @@ ALTER TABLE `breakage_expiry_transaction_items`
   ADD KEY `be_trans_items_batch_id_fk` (`batch_id`);
 
 --
+-- Indexes for table `breakage_supplier_issued_transactions`
+--
+ALTER TABLE `breakage_supplier_issued_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `breakage_supplier_issued_transactions_trn_no_unique` (`trn_no`),
+  ADD KEY `breakage_supplier_issued_transactions_transaction_date_index` (`transaction_date`),
+  ADD KEY `breakage_supplier_issued_transactions_supplier_id_index` (`supplier_id`),
+  ADD KEY `breakage_supplier_issued_transactions_status_index` (`status`);
+
+--
+-- Indexes for table `breakage_supplier_issued_transaction_items`
+--
+ALTER TABLE `breakage_supplier_issued_transaction_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `bsi_items_transaction_id_fk` (`transaction_id`),
+  ADD KEY `breakage_supplier_issued_transaction_items_item_id_index` (`item_id`),
+  ADD KEY `breakage_supplier_issued_transaction_items_batch_id_index` (`batch_id`);
+
+--
+-- Indexes for table `breakage_supplier_received_adjustments`
+--
+ALTER TABLE `breakage_supplier_received_adjustments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `bsr_adj_received_fk` (`received_transaction_id`),
+  ADD KEY `bsr_adj_purchase_fk` (`purchase_transaction_id`);
+
+--
+-- Indexes for table `breakage_supplier_received_transactions`
+--
+ALTER TABLE `breakage_supplier_received_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `breakage_supplier_received_transactions_trn_no_unique` (`trn_no`),
+  ADD KEY `bs_recv_supplier_fk` (`supplier_id`);
+
+--
+-- Indexes for table `breakage_supplier_received_transaction_items`
+--
+ALTER TABLE `breakage_supplier_received_transaction_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `bs_recv_trans_fk` (`transaction_id`),
+  ADD KEY `bs_recv_item_fk` (`item_id`),
+  ADD KEY `bs_recv_batch_fk` (`batch_id`);
+
+--
+-- Indexes for table `breakage_supplier_unused_dump_transactions`
+--
+ALTER TABLE `breakage_supplier_unused_dump_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `breakage_supplier_unused_dump_transactions_trn_no_unique` (`trn_no`);
+
+--
+-- Indexes for table `breakage_supplier_unused_dump_transaction_items`
+--
+ALTER TABLE `breakage_supplier_unused_dump_transaction_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `bs_udump_trans_fk` (`transaction_id`),
+  ADD KEY `bs_udump_item_fk` (`item_id`),
+  ADD KEY `bs_udump_batch_fk` (`batch_id`);
+
+--
 -- Indexes for table `cache`
 --
 ALTER TABLE `cache`
@@ -5552,6 +6926,16 @@ ALTER TABLE `cache_locks`
 --
 ALTER TABLE `cash_bank_books`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `cheque_returns`
+--
+ALTER TABLE `cheque_returns`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cheque_returns_customer_receipt_item_id_foreign` (`customer_receipt_item_id`),
+  ADD KEY `cheque_returns_customer_receipt_id_foreign` (`customer_receipt_id`),
+  ADD KEY `cheque_returns_customer_id_status_index` (`customer_id`,`status`),
+  ADD KEY `cheque_returns_cheque_no_index` (`cheque_no`);
 
 --
 -- Indexes for table `claim_to_supplier_transactions`
@@ -5670,7 +7054,8 @@ ALTER TABLE `customer_receipts`
 ALTER TABLE `customer_receipt_adjustments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `customer_receipt_adjustments_customer_receipt_id_foreign` (`customer_receipt_id`),
-  ADD KEY `customer_receipt_adjustments_customer_receipt_item_id_foreign` (`customer_receipt_item_id`);
+  ADD KEY `customer_receipt_adjustments_customer_receipt_item_id_foreign` (`customer_receipt_item_id`),
+  ADD KEY `customer_receipt_adjustments_sale_transaction_id_index` (`sale_transaction_id`);
 
 --
 -- Indexes for table `customer_receipt_items`
@@ -5716,6 +7101,15 @@ ALTER TABLE `debit_note_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `debit_note_items_debit_note_id_foreign` (`debit_note_id`),
   ADD KEY `debit_note_items_hsn_code_index` (`hsn_code`);
+
+--
+-- Indexes for table `deposit_slips`
+--
+ALTER TABLE `deposit_slips`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `deposit_slips_cheque_no_customer_id_index` (`cheque_no`,`customer_id`),
+  ADD KEY `deposit_slips_deposit_date_index` (`deposit_date`),
+  ADD KEY `deposit_slips_status_index` (`status`);
 
 --
 -- Indexes for table `divisional_managers`
@@ -5790,10 +7184,41 @@ ALTER TABLE `godown_expiry`
   ADD KEY `godown_expiry_expiry_date_index` (`expiry_date`);
 
 --
+-- Indexes for table `hotkeys`
+--
+ALTER TABLE `hotkeys`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `hotkeys_key_combination_unique` (`key_combination`),
+  ADD KEY `hotkeys_category_index` (`category`),
+  ADD KEY `hotkeys_scope_index` (`scope`),
+  ADD KEY `hotkeys_is_active_index` (`is_active`);
+
+--
 -- Indexes for table `hsn_codes`
 --
 ALTER TABLE `hsn_codes`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `income_vouchers`
+--
+ALTER TABLE `income_vouchers`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `income_vouchers_voucher_date_voucher_no_index` (`voucher_date`,`voucher_no`);
+
+--
+-- Indexes for table `income_voucher_accounts`
+--
+ALTER TABLE `income_voucher_accounts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `income_voucher_accounts_income_voucher_id_foreign` (`income_voucher_id`);
+
+--
+-- Indexes for table `income_voucher_items`
+--
+ALTER TABLE `income_voucher_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `income_voucher_items_income_voucher_id_foreign` (`income_voucher_id`);
 
 --
 -- Indexes for table `items`
@@ -5835,6 +7260,27 @@ ALTER TABLE `migrations`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `multi_vouchers`
+--
+ALTER TABLE `multi_vouchers`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `multi_vouchers_voucher_date_voucher_no_index` (`voucher_date`,`voucher_no`);
+
+--
+-- Indexes for table `multi_voucher_entries`
+--
+ALTER TABLE `multi_voucher_entries`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `multi_voucher_entries_multi_voucher_id_foreign` (`multi_voucher_id`);
+
+--
+-- Indexes for table `page_settings`
+--
+ALTER TABLE `page_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `page_settings_key_unique` (`key`);
+
+--
 -- Indexes for table `pending_orders`
 --
 ALTER TABLE `pending_orders`
@@ -5850,6 +7296,13 @@ ALTER TABLE `pending_order_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `pending_order_items_item_id_index` (`item_id`),
   ADD KEY `pending_order_items_created_by_index` (`created_by`);
+
+--
+-- Indexes for table `permissions`
+--
+ALTER TABLE `permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `permissions_name_unique` (`name`);
 
 --
 -- Indexes for table `personal_directories`
@@ -5937,14 +7390,36 @@ ALTER TABLE `purchase_transaction_items`
   ADD KEY `purchase_transaction_items_expiry_date_index` (`expiry_date`);
 
 --
+-- Indexes for table `purchase_vouchers`
+--
+ALTER TABLE `purchase_vouchers`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `purchase_vouchers_voucher_no_voucher_date_index` (`voucher_no`,`voucher_date`),
+  ADD KEY `purchase_vouchers_supplier_id_index` (`supplier_id`),
+  ADD KEY `purchase_vouchers_bill_no_index` (`bill_no`);
+
+--
+-- Indexes for table `purchase_voucher_accounts`
+--
+ALTER TABLE `purchase_voucher_accounts`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `purchase_voucher_accounts_purchase_voucher_id_index` (`purchase_voucher_id`),
+  ADD KEY `purchase_voucher_accounts_account_type_index` (`account_type`);
+
+--
+-- Indexes for table `purchase_voucher_items`
+--
+ALTER TABLE `purchase_voucher_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `purchase_voucher_items_purchase_voucher_id_index` (`purchase_voucher_id`),
+  ADD KEY `purchase_voucher_items_hsn_code_index` (`hsn_code`);
+
+--
 -- Indexes for table `quotations`
 --
 ALTER TABLE `quotations`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `quotations_quotation_no_unique` (`quotation_no`),
-  ADD KEY `quotations_customer_id_index` (`customer_id`),
-  ADD KEY `quotations_created_by_index` (`created_by`),
-  ADD KEY `quotations_updated_by_index` (`updated_by`);
+  ADD KEY `quotations_customer_id_index` (`customer_id`);
 
 --
 -- Indexes for table `quotation_items`
@@ -5952,8 +7427,7 @@ ALTER TABLE `quotations`
 ALTER TABLE `quotation_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `quotation_items_quotation_id_index` (`quotation_id`),
-  ADD KEY `quotation_items_item_id_index` (`item_id`),
-  ADD KEY `quotation_items_batch_id_index` (`batch_id`);
+  ADD KEY `quotation_items_item_id_index` (`item_id`);
 
 --
 -- Indexes for table `regional_managers`
@@ -6067,6 +7541,21 @@ ALTER TABLE `sale_return_adjustments`
   ADD PRIMARY KEY (`id`),
   ADD KEY `sale_return_adjustments_sale_return_id_index` (`sale_return_id`),
   ADD KEY `sale_return_adjustments_sale_transaction_id_index` (`sale_transaction_id`);
+
+--
+-- Indexes for table `sale_return_replacement_items`
+--
+ALTER TABLE `sale_return_replacement_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_return_replacement_items_transaction_id_foreign` (`transaction_id`),
+  ADD KEY `sale_return_replacement_items_item_id_foreign` (`item_id`);
+
+--
+-- Indexes for table `sale_return_replacement_transactions`
+--
+ALTER TABLE `sale_return_replacement_transactions`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `sale_return_replacement_transactions_customer_id_foreign` (`customer_id`);
 
 --
 -- Indexes for table `sale_return_transactions`
@@ -6306,6 +7795,30 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `users_email_unique` (`email`);
 
 --
+-- Indexes for table `user_permissions`
+--
+ALTER TABLE `user_permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `user_permissions_user_id_permission_id_unique` (`user_id`,`permission_id`),
+  ADD KEY `user_permissions_permission_id_foreign` (`permission_id`);
+
+--
+-- Indexes for table `vouchers`
+--
+ALTER TABLE `vouchers`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `vouchers_voucher_no_voucher_type_index` (`voucher_no`,`voucher_type`),
+  ADD KEY `vouchers_voucher_date_index` (`voucher_date`);
+
+--
+-- Indexes for table `voucher_items`
+--
+ALTER TABLE `voucher_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `voucher_items_voucher_id_index` (`voucher_id`),
+  ADD KEY `voucher_items_account_type_index` (`account_type`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -6320,6 +7833,12 @@ ALTER TABLE `areas`
 --
 ALTER TABLE `area_managers`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `bank_transactions`
+--
+ALTER TABLE `bank_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `batches`
@@ -6346,22 +7865,70 @@ ALTER TABLE `breakage_expiry_transaction_items`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
+-- AUTO_INCREMENT for table `breakage_supplier_issued_transactions`
+--
+ALTER TABLE `breakage_supplier_issued_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `breakage_supplier_issued_transaction_items`
+--
+ALTER TABLE `breakage_supplier_issued_transaction_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `breakage_supplier_received_adjustments`
+--
+ALTER TABLE `breakage_supplier_received_adjustments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `breakage_supplier_received_transactions`
+--
+ALTER TABLE `breakage_supplier_received_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `breakage_supplier_received_transaction_items`
+--
+ALTER TABLE `breakage_supplier_received_transaction_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `breakage_supplier_unused_dump_transactions`
+--
+ALTER TABLE `breakage_supplier_unused_dump_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `breakage_supplier_unused_dump_transaction_items`
+--
+ALTER TABLE `breakage_supplier_unused_dump_transaction_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `cash_bank_books`
 --
 ALTER TABLE `cash_bank_books`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=68;
 
 --
+-- AUTO_INCREMENT for table `cheque_returns`
+--
+ALTER TABLE `cheque_returns`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `claim_to_supplier_transactions`
 --
 ALTER TABLE `claim_to_supplier_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `claim_to_supplier_transaction_items`
 --
 ALTER TABLE `claim_to_supplier_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `companies`
@@ -6397,7 +7964,7 @@ ALTER TABLE `credit_note_items`
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `customer_challans`
@@ -6433,19 +8000,19 @@ ALTER TABLE `customer_prescriptions`
 -- AUTO_INCREMENT for table `customer_receipts`
 --
 ALTER TABLE `customer_receipts`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `customer_receipt_adjustments`
 --
 ALTER TABLE `customer_receipt_adjustments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `customer_receipt_items`
 --
 ALTER TABLE `customer_receipt_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `customer_special_rates`
@@ -6472,6 +8039,12 @@ ALTER TABLE `debit_note_items`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
+-- AUTO_INCREMENT for table `deposit_slips`
+--
+ALTER TABLE `deposit_slips`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT for table `divisional_managers`
 --
 ALTER TABLE `divisional_managers`
@@ -6481,7 +8054,7 @@ ALTER TABLE `divisional_managers`
 -- AUTO_INCREMENT for table `expiry_ledger`
 --
 ALTER TABLE `expiry_ledger`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=99;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -6517,13 +8090,13 @@ ALTER TABLE `general_reminders`
 -- AUTO_INCREMENT for table `godown_breakage_expiry_transactions`
 --
 ALTER TABLE `godown_breakage_expiry_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `godown_breakage_expiry_transaction_items`
 --
 ALTER TABLE `godown_breakage_expiry_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `godown_expiry`
@@ -6532,10 +8105,34 @@ ALTER TABLE `godown_expiry`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
+-- AUTO_INCREMENT for table `hotkeys`
+--
+ALTER TABLE `hotkeys`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=81;
+
+--
 -- AUTO_INCREMENT for table `hsn_codes`
 --
 ALTER TABLE `hsn_codes`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=336;
+
+--
+-- AUTO_INCREMENT for table `income_vouchers`
+--
+ALTER TABLE `income_vouchers`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `income_voucher_accounts`
+--
+ALTER TABLE `income_voucher_accounts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `income_voucher_items`
+--
+ALTER TABLE `income_voucher_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `items`
@@ -6565,7 +8162,25 @@ ALTER TABLE `marketing_managers`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=231;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=269;
+
+--
+-- AUTO_INCREMENT for table `multi_vouchers`
+--
+ALTER TABLE `multi_vouchers`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `multi_voucher_entries`
+--
+ALTER TABLE `multi_voucher_entries`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `page_settings`
+--
+ALTER TABLE `page_settings`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=137;
 
 --
 -- AUTO_INCREMENT for table `pending_orders`
@@ -6578,6 +8193,12 @@ ALTER TABLE `pending_orders`
 --
 ALTER TABLE `pending_order_items`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `permissions`
+--
+ALTER TABLE `permissions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `personal_directories`
@@ -6613,37 +8234,55 @@ ALTER TABLE `purchase_return_adjustments`
 -- AUTO_INCREMENT for table `purchase_return_transactions`
 --
 ALTER TABLE `purchase_return_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `purchase_return_transaction_items`
 --
 ALTER TABLE `purchase_return_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
 
 --
 -- AUTO_INCREMENT for table `purchase_transactions`
 --
 ALTER TABLE `purchase_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=113;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
 
 --
 -- AUTO_INCREMENT for table `purchase_transaction_items`
 --
 ALTER TABLE `purchase_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=220;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=230;
+
+--
+-- AUTO_INCREMENT for table `purchase_vouchers`
+--
+ALTER TABLE `purchase_vouchers`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `purchase_voucher_accounts`
+--
+ALTER TABLE `purchase_voucher_accounts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `purchase_voucher_items`
+--
+ALTER TABLE `purchase_voucher_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `quotations`
 --
 ALTER TABLE `quotations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `quotation_items`
 --
 ALTER TABLE `quotation_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `regional_managers`
@@ -6730,40 +8369,52 @@ ALTER TABLE `sale_return_adjustments`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
+-- AUTO_INCREMENT for table `sale_return_replacement_items`
+--
+ALTER TABLE `sale_return_replacement_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `sale_return_replacement_transactions`
+--
+ALTER TABLE `sale_return_replacement_transactions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `sale_return_transactions`
 --
 ALTER TABLE `sale_return_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=61;
 
 --
 -- AUTO_INCREMENT for table `sale_return_transaction_items`
 --
 ALTER TABLE `sale_return_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=73;
 
 --
 -- AUTO_INCREMENT for table `sale_transactions`
 --
 ALTER TABLE `sale_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=66;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
 
 --
 -- AUTO_INCREMENT for table `sale_transaction_items`
 --
 ALTER TABLE `sale_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=78;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
 
 --
 -- AUTO_INCREMENT for table `sample_issued_transactions`
 --
 ALTER TABLE `sample_issued_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `sample_issued_transaction_items`
 --
 ALTER TABLE `sample_issued_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `sample_received_transactions`
@@ -6775,7 +8426,7 @@ ALTER TABLE `sample_received_transactions`
 -- AUTO_INCREMENT for table `sample_received_transaction_items`
 --
 ALTER TABLE `sample_received_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `states`
@@ -6799,43 +8450,43 @@ ALTER TABLE `stock_adjustment_items`
 -- AUTO_INCREMENT for table `stock_ledgers`
 --
 ALTER TABLE `stock_ledgers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=134;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=153;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_incoming_return_transactions`
 --
 ALTER TABLE `stock_transfer_incoming_return_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_incoming_return_transaction_items`
 --
 ALTER TABLE `stock_transfer_incoming_return_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_incoming_transactions`
 --
 ALTER TABLE `stock_transfer_incoming_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_incoming_transaction_items`
 --
 ALTER TABLE `stock_transfer_incoming_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_outgoing_return_transactions`
 --
 ALTER TABLE `stock_transfer_outgoing_return_transactions`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_outgoing_return_transaction_items`
 --
 ALTER TABLE `stock_transfer_outgoing_return_transaction_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `stock_transfer_outgoing_transactions`
@@ -6859,19 +8510,19 @@ ALTER TABLE `suppliers`
 -- AUTO_INCREMENT for table `supplier_payments`
 --
 ALTER TABLE `supplier_payments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `supplier_payment_adjustments`
 --
 ALTER TABLE `supplier_payment_adjustments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `supplier_payment_items`
 --
 ALTER TABLE `supplier_payment_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `transport_masters`
@@ -6883,7 +8534,25 @@ ALTER TABLE `transport_masters`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `user_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `user_permissions`
+--
+ALTER TABLE `user_permissions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+
+--
+-- AUTO_INCREMENT for table `vouchers`
+--
+ALTER TABLE `vouchers`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `voucher_items`
+--
+ALTER TABLE `voucher_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables
@@ -6913,6 +8582,49 @@ ALTER TABLE `breakage_expiry_transaction_items`
   ADD CONSTRAINT `be_trans_items_batch_id_fk` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `be_trans_items_be_trans_id_fk` FOREIGN KEY (`breakage_expiry_transaction_id`) REFERENCES `breakage_expiry_transactions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `be_trans_items_item_id_fk` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `breakage_supplier_issued_transaction_items`
+--
+ALTER TABLE `breakage_supplier_issued_transaction_items`
+  ADD CONSTRAINT `bsi_items_transaction_id_fk` FOREIGN KEY (`transaction_id`) REFERENCES `breakage_supplier_issued_transactions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `breakage_supplier_received_adjustments`
+--
+ALTER TABLE `breakage_supplier_received_adjustments`
+  ADD CONSTRAINT `bsr_adj_purchase_fk` FOREIGN KEY (`purchase_transaction_id`) REFERENCES `purchase_transactions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `bsr_adj_received_fk` FOREIGN KEY (`received_transaction_id`) REFERENCES `breakage_supplier_received_transactions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `breakage_supplier_received_transactions`
+--
+ALTER TABLE `breakage_supplier_received_transactions`
+  ADD CONSTRAINT `bs_recv_supplier_fk` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`);
+
+--
+-- Constraints for table `breakage_supplier_received_transaction_items`
+--
+ALTER TABLE `breakage_supplier_received_transaction_items`
+  ADD CONSTRAINT `bs_recv_batch_fk` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`),
+  ADD CONSTRAINT `bs_recv_item_fk` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
+  ADD CONSTRAINT `bs_recv_trans_fk` FOREIGN KEY (`transaction_id`) REFERENCES `breakage_supplier_received_transactions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `breakage_supplier_unused_dump_transaction_items`
+--
+ALTER TABLE `breakage_supplier_unused_dump_transaction_items`
+  ADD CONSTRAINT `bs_udump_batch_fk` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`),
+  ADD CONSTRAINT `bs_udump_item_fk` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
+  ADD CONSTRAINT `bs_udump_trans_fk` FOREIGN KEY (`transaction_id`) REFERENCES `breakage_supplier_unused_dump_transactions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `cheque_returns`
+--
+ALTER TABLE `cheque_returns`
+  ADD CONSTRAINT `cheque_returns_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `cheque_returns_customer_receipt_id_foreign` FOREIGN KEY (`customer_receipt_id`) REFERENCES `customer_receipts` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `cheque_returns_customer_receipt_item_id_foreign` FOREIGN KEY (`customer_receipt_item_id`) REFERENCES `customer_receipt_items` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `claim_to_supplier_transaction_items`
@@ -7021,10 +8733,28 @@ ALTER TABLE `godown_expiry`
   ADD CONSTRAINT `godown_expiry_item_id_foreign` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `income_voucher_accounts`
+--
+ALTER TABLE `income_voucher_accounts`
+  ADD CONSTRAINT `income_voucher_accounts_income_voucher_id_foreign` FOREIGN KEY (`income_voucher_id`) REFERENCES `income_vouchers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `income_voucher_items`
+--
+ALTER TABLE `income_voucher_items`
+  ADD CONSTRAINT `income_voucher_items_income_voucher_id_foreign` FOREIGN KEY (`income_voucher_id`) REFERENCES `income_vouchers` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `items`
 --
 ALTER TABLE `items`
   ADD CONSTRAINT `items_company_id_foreign` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `multi_voucher_entries`
+--
+ALTER TABLE `multi_voucher_entries`
+  ADD CONSTRAINT `multi_voucher_entries_multi_voucher_id_foreign` FOREIGN KEY (`multi_voucher_id`) REFERENCES `multi_vouchers` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `pending_orders`
@@ -7086,6 +8816,18 @@ ALTER TABLE `purchase_transaction_items`
   ADD CONSTRAINT `purchase_transaction_items_purchase_transaction_id_foreign` FOREIGN KEY (`purchase_transaction_id`) REFERENCES `purchase_transactions` (`id`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `purchase_voucher_accounts`
+--
+ALTER TABLE `purchase_voucher_accounts`
+  ADD CONSTRAINT `purchase_voucher_accounts_purchase_voucher_id_foreign` FOREIGN KEY (`purchase_voucher_id`) REFERENCES `purchase_vouchers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `purchase_voucher_items`
+--
+ALTER TABLE `purchase_voucher_items`
+  ADD CONSTRAINT `purchase_voucher_items_purchase_voucher_id_foreign` FOREIGN KEY (`purchase_voucher_id`) REFERENCES `purchase_vouchers` (`id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `replacement_note_transaction_items`
 --
 ALTER TABLE `replacement_note_transaction_items`
@@ -7141,6 +8883,19 @@ ALTER TABLE `sale_items`
 ALTER TABLE `sale_return_adjustments`
   ADD CONSTRAINT `sale_return_adjustments_sale_return_id_foreign` FOREIGN KEY (`sale_return_id`) REFERENCES `sale_return_transactions` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `sale_return_adjustments_sale_transaction_id_foreign` FOREIGN KEY (`sale_transaction_id`) REFERENCES `sale_transactions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `sale_return_replacement_items`
+--
+ALTER TABLE `sale_return_replacement_items`
+  ADD CONSTRAINT `sale_return_replacement_items_item_id_foreign` FOREIGN KEY (`item_id`) REFERENCES `items` (`id`),
+  ADD CONSTRAINT `sale_return_replacement_items_transaction_id_foreign` FOREIGN KEY (`transaction_id`) REFERENCES `sale_return_replacement_transactions` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `sale_return_replacement_transactions`
+--
+ALTER TABLE `sale_return_replacement_transactions`
+  ADD CONSTRAINT `sale_return_replacement_transactions_customer_id_foreign` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL;
 
 --
 -- Constraints for table `sale_return_transactions`
@@ -7270,6 +9025,19 @@ ALTER TABLE `supplier_payment_adjustments`
 ALTER TABLE `supplier_payment_items`
   ADD CONSTRAINT `supplier_payment_items_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`supplier_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `supplier_payment_items_supplier_payment_id_foreign` FOREIGN KEY (`supplier_payment_id`) REFERENCES `supplier_payments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_permissions`
+--
+ALTER TABLE `user_permissions`
+  ADD CONSTRAINT `user_permissions_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_permissions_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `voucher_items`
+--
+ALTER TABLE `voucher_items`
+  ADD CONSTRAINT `voucher_items_voucher_id_foreign` FOREIGN KEY (`voucher_id`) REFERENCES `vouchers` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
