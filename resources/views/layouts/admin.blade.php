@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Admin')</title>
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -22,6 +25,7 @@
         body {
             overflow: hidden;
             background: #f6f8fb;
+            font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .app {
@@ -223,11 +227,26 @@
 
         .profile .dropdown-menu {
             position: absolute !important;
-            inset: auto auto 50px 0 !important;
-            transition: all 0.3s ease;
-            z-index: 1001; /* Even higher for dropdown */
+            bottom: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            margin-bottom: 5px !important;
+            transition: none !important;
+            transform: none !important;
+            inset: auto !important;
+            z-index: 1001;
             background: #1e293b !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .profile .dropdown-menu.show {
+            transform: none !important;
+            inset: auto !important;
+            bottom: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
         }
 
         .profile .dropdown-menu .dropdown-item {
@@ -690,6 +709,8 @@
             .collapsed .profile .dropdown-menu {
                 left: 72px !important;
                 bottom: 0 !important;
+                right: auto !important;
+                top: auto !important;
                 min-width: 200px !important;
                 inset: auto auto 0 72px !important;
             }
@@ -1043,16 +1064,32 @@
             }
         }
 
-        /* Global Delete Modal - stays centered on full screen */
+        /* Global Delete Modal - only show when .show class is present */
         #globalMultipleDeleteModal,
-        #globalDeleteModal,
-        [id*="DeleteModal"],
-        [id*="deleteModal"] {
+        #globalDeleteModal {
+            display: none !important;
+        }
+        
+        #globalMultipleDeleteModal.show,
+        #globalDeleteModal.show {
+            display: block !important;
             position: fixed !important;
             z-index: 1055 !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        
+        #globalMultipleDeleteModal .modal-dialog,
+        #globalDeleteModal .modal-dialog {
+            margin: 1.75rem auto !important;
+            max-width: 500px !important;
+            transform: none !important;
         }
 
         /* Ensure modal dialog is properly centered */
@@ -1146,16 +1183,16 @@
                         <i class="bi bi-chevron-up ms-auto small"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="{{ route('profile.settings') }}"><i
-                                    class="bi bi-gear me-2"></i>Settings</a></li>
-
-
-                        <hr class="dropdown-divider">
+                        <li class="px-3 py-1">
+                            <a class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center" href="{{ route('profile.settings') }}">
+                                <i class="bi bi-gear me-2"></i>Settings
+                            </a>
                         </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <form method="POST" action="{{ route('logout') }}" class="px-3 py-1">
                                 @csrf
-                                <button class="btn btn-outline-light w-100"><i
+                                <button class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center"><i
                                         class="bi bi-box-arrow-right me-2"></i>Logout</button>
                             </form>
                         </li>

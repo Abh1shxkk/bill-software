@@ -786,7 +786,7 @@
         </li>
         
         <!-- Profile Dropdown -->
-        <li class="nav-item d-none d-sm-inline">
+        <li class="nav-item dropdown d-none d-sm-inline">
         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown"
           aria-expanded="false">
           <img
@@ -794,8 +794,8 @@
             class="rounded-circle me-2" width="32" height="32" alt="avatar">
           <span class="d-none d-sm-inline">{{ auth()->user()->full_name ?? auth()->user()->name }}</span>
         </a>
-        <ul class="dropdown-menu dropdown-menu-end">
-          <li class="px-3 py-2 small text-muted">
+        <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
+          <li class="px-3 py-2 text-muted" style="font-size: 0.9rem;">
             {{ auth()->user()->email }}
           </li>
             <li>
@@ -804,10 +804,10 @@
             <li><a class="dropdown-item" href="{{ route('profile.settings') }}"><i
                   class="bi bi-gear me-2"></i>Settings</a></li>
             <li>
-              <form method="POST" action="{{ route('logout') }}" class="px-3 py-1">
+              <form method="POST" action="{{ route('logout') }}" class="px-3 py-2">
                 @csrf
-                <button class="btn btn-sm btn-outline-danger w-100"><i
-                    class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                <button class="btn btn-sm btn-outline-danger w-100 py-1" style="font-size: 0.85rem;"><i
+                    class="bi bi-box-arrow-right me-1"></i>Logout</button>
               </form>
             </li>
           </ul>
@@ -823,6 +823,18 @@
     grid-area: header;
     z-index: 100;
     position: relative;
+  }
+
+  /* Profile Dropdown Fix */
+  .profile-dropdown {
+    position: absolute !important;
+    right: 0 !important;
+    left: auto !important;
+    top: 100% !important;
+    min-width: 220px;
+    max-width: 280px;
+    transform: none !important;
+    margin-top: 0.5rem !important;
   }
 
   /* Sidebar toggle button */

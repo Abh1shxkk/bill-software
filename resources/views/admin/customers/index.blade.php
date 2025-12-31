@@ -2,44 +2,6 @@
 @section('title','Customers')
 @section('content')
 <style>
-  /* Scroll to Top Button Styles */
-  #scrollToTop {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 9999;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    background: #0d6efd;
-    color: white;
-    border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    transition: all 0.3s ease;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    opacity: 0;
-    visibility: hidden;
-  }
-  
-  #scrollToTop.show {
-    opacity: 1;
-    visibility: visible;
-  }
-  
-  #scrollToTop:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-    background: #0b5ed7;
-  }
-  
-  #scrollToTop i {
-    font-size: 22px;
-  }
-  
   /* Smooth scroll */
   .content {
     scroll-behavior: smooth !important;
@@ -221,10 +183,6 @@
     @endif
   </div>
 </div>
-<!-- Scroll to Top Button -->
-<button id="scrollToTop" type="button" title="Scroll to top" onclick="scrollToTopNow()">
-  <i class="bi bi-arrow-up"></i>
-</button>
 @endsection
 
 @push('scripts')
@@ -326,45 +284,7 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     });
   }
-// GLOBAL FUNCTION for smooth scroll to top
-function scrollToTopNow() {
-  const contentDiv = document.querySelector('.content');
-  if(contentDiv) {
-    contentDiv.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-// expose globally for inline onclick handler
-window.scrollToTopNow = scrollToTopNow;
 
-  const scrollBtn = document.getElementById('scrollToTop');
-  const contentDiv = document.querySelector('.content');
-  
-  if(scrollBtn && contentDiv) {
-    contentDiv.addEventListener('scroll', function() {
-      const scrollPos = contentDiv.scrollTop;
-      if (scrollPos > 200) {
-        scrollBtn.style.opacity = '1';
-        scrollBtn.style.visibility = 'visible';
-      } else {
-        scrollBtn.style.opacity = '0';
-        scrollBtn.style.visibility = 'hidden';
-      }
-    });
-  }
-  // also react to window scroll as a fallback
-  if(scrollBtn) {
-    window.addEventListener('scroll', function(){
-      const y = window.scrollY || document.documentElement.scrollTop;
-      if (y > 200) {
-        scrollBtn.style.opacity = '1';
-        scrollBtn.style.visibility = 'visible';
-      } else {
-        scrollBtn.style.opacity = '0';
-        scrollBtn.style.visibility = 'hidden';
-      }
-    });
-  }
   // Search input with debounce (reduced to 300ms for faster response)
   if(searchInput) {
     searchInput.addEventListener('keyup', function() {

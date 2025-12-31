@@ -2,6 +2,30 @@
 @section('title','Companies')
 @section('content')
 <style>
+  /* Table row single line fix */
+  .table tbody tr td {
+    white-space: nowrap;
+  }
+  
+  /* Address column - limit width and truncate */
+  .table tbody tr td:nth-child(5) {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Actions buttons in single line */
+  .table td.text-end {
+    white-space: nowrap;
+    min-width: 120px;
+  }
+  
+  .table td.text-end .btn,
+  .table td.text-end form {
+    display: inline-block;
+    margin-left: 2px;
+  }
+
   /* Scroll to Top Button Styles */
    #scrollToTop {
     position: fixed;
@@ -109,11 +133,10 @@
             </div>
           </th>
           <th>#</th>
-          <th>Alter Code</th>
+          <th>Code</th>
           <th>Name</th>
           <th>Address</th>
-          <th>Email</th>
-          <th>Mobile 1</th>
+          <th>Mobile</th>
           <th class="text-end">Actions</th>
         </tr>
       </thead>
@@ -132,7 +155,6 @@
             <td>{{ $company->alter_code }}</td>
             <td>{{ $company->name }}</td>
             <td>{{ $company->address }}</td>
-            <td>{{ $company->email }}</td>
             <td>{{ $company->mobile_1 }}</td>
             <td class="text-end">
               <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.companies.show',$company) }}" title="View"><i class="bi bi-eye"></i></a>
