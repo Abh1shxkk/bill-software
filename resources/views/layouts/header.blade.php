@@ -885,6 +885,7 @@
 
   .dropdown-item {
     padding: 6px 12px;
+    padding-left: 28px; /* Space for icon */
     margin: 0; /* Full width items for sharp look */
     width: 100%;
     border-radius: 0px; /* Sharp corners */
@@ -892,6 +893,48 @@
     white-space: nowrap;
     font-size: 12px;
     position: relative;
+  }
+  
+  /* File icon for regular menu items (without submenus) */
+  .dropdown-menu > li:not(.dropdown-submenu) > .dropdown-item:not(.dropdown-toggle)::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    /* File/document icon SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23666666'%3E%3Cpath d='M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.414A2 2 0 0 0 13.414 3L11 .586A2 2 0 0 0 9.586 0H4zm5 1.5v2A1.5 1.5 0 0 0 10.5 5h2l-4-4v.5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+  
+  /* Change file icon color on hover */
+  .dropdown-menu > li:not(.dropdown-submenu) > .dropdown-item:not(.dropdown-toggle):hover::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230d6efd'%3E%3Cpath d='M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.414A2 2 0 0 0 13.414 3L11 .586A2 2 0 0 0 9.586 0H4zm5 1.5v2A1.5 1.5 0 0 0 10.5 5h2l-4-4v.5z'/%3E%3C/svg%3E");
+  }
+  
+  /* Folder icon for submenu toggles */
+  .dropdown-submenu > .dropdown-toggle::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 14px;
+    height: 14px;
+    /* Folder icon SVG */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffc107'%3E%3Cpath d='M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+  }
+  
+  /* Keep folder icon on hover (same color) */
+  .dropdown-submenu > .dropdown-toggle:hover::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23ffc107'%3E%3Cpath d='M1 3.5A1.5 1.5 0 0 1 2.5 2h2.764c.958 0 1.76.56 2.311 1.184C7.985 3.648 8.48 4 9 4h4.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z'/%3E%3C/svg%3E");
   }
 
   .dropdown-item:hover, .dropdown-item:focus {
