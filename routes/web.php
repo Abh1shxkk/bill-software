@@ -347,10 +347,66 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/sales/export-pdf', [SalesReportController::class, 'exportPdf'])->name('reports.sales.export-pdf');
         Route::get('reports/sales/chart-data', [SalesReportController::class, 'getChartData'])->name('reports.sales.chart-data');
         
-        // Purchase Reports
+        // Purchase Reports - Main Index
         Route::get('reports/purchase', [PurchaseReportController::class, 'index'])->name('reports.purchase');
         Route::get('reports/purchase/export-csv', [PurchaseReportController::class, 'exportCsv'])->name('reports.purchase.export-csv');
         Route::get('reports/purchase/export-pdf', [PurchaseReportController::class, 'exportPdf'])->name('reports.purchase.export-pdf');
+        
+        // Purchase Reports - Individual Reports
+        Route::get('reports/purchase/purchase-book', [PurchaseReportController::class, 'purchaseBook'])->name('reports.purchase.purchase-book');
+        Route::get('reports/purchase/purchase-book-gstr', [PurchaseReportController::class, 'purchaseBookGstr'])->name('reports.purchase.purchase-book-gstr');
+        Route::get('reports/purchase/purchase-book-tcs', [PurchaseReportController::class, 'purchaseBookTcs'])->name('reports.purchase.purchase-book-tcs');
+        Route::get('reports/purchase/tds-output', [PurchaseReportController::class, 'tdsOutput'])->name('reports.purchase.tds-output');
+        Route::get('reports/purchase/purchase-book-sale-value', [PurchaseReportController::class, 'purchaseBookSaleValue'])->name('reports.purchase.purchase-book-sale-value');
+        Route::get('reports/purchase/party-wise-purchase', [PurchaseReportController::class, 'partyWisePurchase'])->name('reports.purchase.party-wise-purchase');
+        Route::get('reports/purchase/monthly-purchase-summary', [PurchaseReportController::class, 'monthlyPurchaseSummary'])->name('reports.purchase.monthly-purchase-summary');
+        Route::get('reports/purchase/debit-credit-note', [PurchaseReportController::class, 'debitCreditNote'])->name('reports.purchase.debit-credit-note');
+        Route::get('reports/purchase/day-purchase-summary', [PurchaseReportController::class, 'dayPurchaseSummary'])->name('reports.purchase.day-purchase-summary');
+        Route::get('reports/purchase/purchase-return-item-wise', [PurchaseReportController::class, 'purchaseReturnItemWise'])->name('reports.purchase.purchase-return-item-wise');
+        Route::get('reports/purchase/local-central-register', [PurchaseReportController::class, 'localCentralRegister'])->name('reports.purchase.local-central-register');
+        Route::get('reports/purchase/purchase-voucher-detail', [PurchaseReportController::class, 'purchaseVoucherDetail'])->name('reports.purchase.purchase-voucher-detail');
+        Route::get('reports/purchase/short-expiry-received', [PurchaseReportController::class, 'shortExpiryReceived'])->name('reports.purchase.short-expiry-received');
+        Route::get('reports/purchase/purchase-return-list', [PurchaseReportController::class, 'purchaseReturnList'])->name('reports.purchase.purchase-return-list');
+        
+        // GST SET OFF Reports
+        Route::get('reports/purchase/gst-set-off', [PurchaseReportController::class, 'gstSetOff'])->name('reports.purchase.gst-set-off');
+        Route::get('reports/purchase/gst-set-off-gstr', [PurchaseReportController::class, 'gstSetOffGstr'])->name('reports.purchase.gst-set-off-gstr');
+        
+        // Purchase Challan Reports
+        Route::get('reports/purchase/challan/purchase-challan-book', [PurchaseReportController::class, 'purchaseChallanBook'])->name('reports.purchase.challan.purchase-challan-book');
+        Route::get('reports/purchase/challan/pending-challans', [PurchaseReportController::class, 'pendingChallans'])->name('reports.purchase.challan.pending-challans');
+        
+        // Miscellaneous Purchase Analysis
+        Route::get('reports/purchase/misc/purchase-with-item-details', [PurchaseReportController::class, 'purchaseWithItemDetails'])->name('reports.purchase.misc.purchase-with-item-details');
+        
+        // Supplier Wise Purchase Submenu
+        Route::get('reports/purchase/misc/supplier/all-supplier', [PurchaseReportController::class, 'supplierAllSupplier'])->name('reports.purchase.misc.supplier.all-supplier');
+        Route::get('reports/purchase/misc/supplier/bill-wise', [PurchaseReportController::class, 'supplierBillWise'])->name('reports.purchase.misc.supplier.bill-wise');
+        Route::get('reports/purchase/misc/supplier/item-wise', [PurchaseReportController::class, 'supplierItemWise'])->name('reports.purchase.misc.supplier.item-wise');
+        Route::get('reports/purchase/misc/supplier/item-invoice-wise', [PurchaseReportController::class, 'supplierItemInvoiceWise'])->name('reports.purchase.misc.supplier.item-invoice-wise');
+        Route::get('reports/purchase/misc/supplier/invoice-item-wise', [PurchaseReportController::class, 'supplierInvoiceItemWise'])->name('reports.purchase.misc.supplier.invoice-item-wise');
+
+        // Company Wise Purchase Submenu
+        Route::get('reports/purchase/misc/company/all-company', [PurchaseReportController::class, 'companyAllCompany'])->name('reports.purchase.misc.company.all-company');
+        Route::get('reports/purchase/misc/company/item-wise', [PurchaseReportController::class, 'companyItemWise'])->name('reports.purchase.misc.company.item-wise');
+        Route::get('reports/purchase/misc/company/party-wise', [PurchaseReportController::class, 'companyPartyWise'])->name('reports.purchase.misc.company.party-wise');
+
+        // Item Wise Purchase Submenu
+        Route::get('reports/purchase/misc/item/bill-wise', [PurchaseReportController::class, 'itemBillWise'])->name('reports.purchase.misc.item.bill-wise');
+        Route::get('reports/purchase/misc/item/all-item-purchase', [PurchaseReportController::class, 'itemAllItemPurchase'])->name('reports.purchase.misc.item.all-item-purchase');
+        
+        // Schemed Received Submenu
+        Route::get('reports/purchase/misc/schemed/free-schemed', [PurchaseReportController::class, 'schemedFreeSchemed'])->name('reports.purchase.misc.schemed.free-schemed');
+        Route::get('reports/purchase/misc/schemed/half-schemed', [PurchaseReportController::class, 'schemedHalfSchemed'])->name('reports.purchase.misc.schemed.half-schemed');
+        Route::get('reports/purchase/misc/schemed/free-without-qty', [PurchaseReportController::class, 'schemedFreeWithoutQty'])->name('reports.purchase.misc.schemed.free-without-qty');
+
+        // Other Purchase Reports
+        Route::get('reports/purchase/other/supplier-visit-report', [PurchaseReportController::class, 'supplierVisitReport'])->name('reports.purchase.other.supplier-visit-report');
+        Route::get('reports/purchase/other/supplier-wise-companies', [PurchaseReportController::class, 'supplierWiseCompanies'])->name('reports.purchase.other.supplier-wise-companies');
+        Route::get('reports/purchase/other/purchase-book-item-details', [PurchaseReportController::class, 'purchaseBookItemDetails'])->name('reports.purchase.other.purchase-book-item-details');
+        Route::get('reports/purchase/other/central-purchase-local-value', [PurchaseReportController::class, 'centralPurchaseLocalValue'])->name('reports.purchase.other.central-purchase-local-value');
+        Route::get('reports/purchase/other/party-wise-all-purchase-details', [PurchaseReportController::class, 'partyWiseAllPurchaseDetails'])->name('reports.purchase.other.party-wise-all-purchase-details');
+        Route::get('reports/purchase/other/register-schedule-h1-drugs', [PurchaseReportController::class, 'registerScheduleH1Drugs'])->name('reports.purchase.other.register-schedule-h1-drugs');
         
         Route::get('api/verify-batch-supplier', [PurchaseReturnController::class, 'verifyBatchSupplier'])->name('api.verify-batch-supplier');
         Route::get('api/party-details/{type}/{id}', [ItemController::class, 'getPartyDetails'])->name('api.party-details');

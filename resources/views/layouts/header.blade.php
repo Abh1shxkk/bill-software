@@ -639,10 +639,112 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Purchase Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase') }}">Purchase Book</a></li>
-                <li><a class="dropdown-item" href="#">Purchase Book Party Wise</a></li>
-                <li><a class="dropdown-item" href="#">Purchase Summary</a></li>
-                <li><a class="dropdown-item" href="#">Purchase Return List</a></li>
+                <!-- Purchase Book Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Purchase Book</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-book') }}">Purchase Book</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-book-gstr') }}">Purchase Book GSTR</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-book-tcs') }}">Purchase Book With TCS</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.tds-output') }}">TDS OUTPUT</a></li>
+                  </ul>
+                </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-book-sale-value') }}">Purchase Book With Sale Value</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.party-wise-purchase') }}">Party Wise Purchase</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.monthly-purchase-summary') }}">Monthly Purchase Sales Summary</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.debit-credit-note') }}">Debit / Credit Note Report</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.day-purchase-summary') }}">Day Purchase Summary - Item Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-return-item-wise') }}">Purchase / Return Book Item Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.local-central-register') }}">Local / Central Purchase Register</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-voucher-detail') }}">Purchase Voucher Detail</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.short-expiry-received') }}">Short Expiry Received</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-return-list') }}">Purchase Return List</a></li>
+                
+                <li><hr class="dropdown-divider"></li>
+                
+                <!-- GST SET OFF Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">GST-SET OFF</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.gst-set-off') }}">GST-SET OFF</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.gst-set-off-gstr') }}">GST SET OFF GSTR</a></li>
+                  </ul>
+                </li>
+                
+                <!-- Purchase Challan Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Purchase Challan Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.challan.purchase-challan-book') }}">Purchase Challan Book</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.challan.pending-challans') }}">Pending Challans</a></li>
+                  </ul>
+                </li>
+                
+                <!-- Miscellaneous Purchase Analysis Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Miscellaneous Purchase Analysis</a>
+                  <ul class="dropdown-menu">
+                    <!-- Supplier Wise Purchase Folder -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Supplier Wise Purchase</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.supplier.all-supplier') }}">All Supplier</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.supplier.bill-wise') }}">Bill Wise</a></li>
+                         <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.supplier.item-wise') }}">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.supplier.item-invoice-wise') }}">Item - Invoice Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.supplier.invoice-item-wise') }}">Invoice - Item Wise</a></li>
+                      </ul>
+                    </li>
+                    
+                    <!-- Company Wise Purchase Folder -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Company Wise Purchase</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.company.all-company') }}">All Company</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.company.item-wise') }}">Item Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.company.party-wise') }}">Party Wise</a></li>
+                      </ul>
+                    </li>
+
+                    <!-- Item Wise Purchase Folder -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Item Wise Purchase</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.item.bill-wise') }}">Bill Wise</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.item.all-item-purchase') }}">All Item Purchase</a></li>
+                      </ul>
+                    </li>
+
+                    <!-- Purchase with Item Details (Single File) -->
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.purchase-with-item-details') }}">Purchase with Item Details</a></li>
+
+                    <!-- Schemed Received Folder -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Schemed Received</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.schemed.free-schemed') }}">Free Schemed Received</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.schemed.half-schemed') }}">Half Schemed Received</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.misc.schemed.free-without-qty') }}">Free Received Without Qty.</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                
+                <!-- Other Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Other Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.other.supplier-visit-report') }}">Supplier Visit Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.other.supplier-wise-companies') }}">Supplier Wise Companies</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.other.purchase-book-item-details') }}">Purchase Book - Item Details</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.other.central-purchase-local-value') }}">Central Purchase with Local Value</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.other.party-wise-all-purchase-details') }}">Party Wise All Purchase Details</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.other.register-schedule-h1-drugs') }}">Register of Schedule H1 Drugs</a></li>
+                  </ul>
+                </li>
+                
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase') }}"><i class="bi bi-house-door me-1"></i>Purchase Reports Dashboard</a></li>
               </ul>
             </li>
 
@@ -751,7 +853,7 @@
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
             Administration
           </a>
-          <ul class="dropdown-menu">
+          <ul class="dropdown-menu admin-menu">
             <li>
               <a class="dropdown-item" href="{{ route('admin.administration.hotkeys.index') }}">
                 <i class="bi bi-keyboard me-2"></i>Hotkey Management
@@ -898,8 +1000,8 @@
     position: relative;
   }
   
-  /* File icon for regular menu items (without submenus) */
-  .dropdown-menu > li:not(.dropdown-submenu) > .dropdown-item:not(.dropdown-toggle)::before {
+  /* File icon for regular menu items (without submenus) - excluding admin-menu and items with icons */
+  .dropdown-menu:not(.admin-menu) > li:not(.dropdown-submenu) > .dropdown-item:not(.dropdown-toggle)::before {
     content: "";
     position: absolute;
     left: 8px;
@@ -914,8 +1016,8 @@
     background-size: contain;
   }
   
-  /* Change file icon color on hover */
-  .dropdown-menu > li:not(.dropdown-submenu) > .dropdown-item:not(.dropdown-toggle):hover::before {
+  /* Change file icon color on hover - excluding admin-menu */
+  .dropdown-menu:not(.admin-menu) > li:not(.dropdown-submenu) > .dropdown-item:not(.dropdown-toggle):hover::before {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%230d6efd'%3E%3Cpath d='M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.414A2 2 0 0 0 13.414 3L11 .586A2 2 0 0 0 9.586 0H4zm5 1.5v2A1.5 1.5 0 0 0 10.5 5h2l-4-4v.5z'/%3E%3C/svg%3E");
   }
   
