@@ -2470,35 +2470,80 @@ class SalesReportController extends Controller
     // ==========================================
 
     /**
-     * Sales Man and other Level Sale Report
+     * Sales Man and other Level Sale Report (Marketing Levels Report)
      */
     public function salesmanLevelSale(Request $request)
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
-
-        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code', 'area_mgr_name')->orderBy('name')->get();
-
-        $sales = SaleTransaction::with(['salesman:id,name,code,area_mgr_name'])
-            ->whereBetween('sale_date', [$dateFrom, $dateTo])
-            ->get();
-
-        $groupedSales = $sales->groupBy(fn($s) => $s->salesman->area_mgr_name ?? 'No Manager');
-
-        $totals = [
-            'count' => $sales->count(),
-            'net_amount' => (float) $sales->sum('net_amount')
-        ];
-
+        $transactionType = $request->get('transaction_type', '4');
+        $level = $request->get('level', 'salesman');
+        $salesmanId = $request->get('salesman_id');
+        $companyId = $request->get('company_id');
+        
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        
+        $data = collect();
+        $totals = ['sale_qty' => 0, 'sale_amount' => 0, 'return_qty' => 0, 'return_amount' => 0, 'net_qty' => 0, 'net_amount' => 0];
+        
         if ($request->get('view_type') === 'print') {
-            return view('admin.reports.sale-report.sale-book.salesman-level-sale-print', compact(
-                'groupedSales', 'totals', 'salesmen', 'dateFrom', 'dateTo'
-            ));
+            // Get sales data grouped by salesman
+            $salesQuery = SaleTransaction::with(['salesman:id,name,code', 'items'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo])
+                ->where('is_return', false);
+            
+            if ($salesmanId) $salesQuery->where('salesman_id', $salesmanId);
+            
+            $salesData = $salesQuery->get()->groupBy('salesman_id');
+            
+            // Get returns data
+            $returnsQuery = SaleTransaction::with(['salesman:id,name,code', 'items'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo])
+                ->where('is_return', true);
+            
+            if ($salesmanId) $returnsQuery->where('salesman_id', $salesmanId);
+            
+            $returnsData = $returnsQuery->get()->groupBy('salesman_id');
+            
+            // Combine data
+            $allSalesmanIds = $salesData->keys()->merge($returnsData->keys())->unique();
+            
+            foreach ($allSalesmanIds as $sId) {
+                $sales = $salesData->get($sId, collect());
+                $returns = $returnsData->get($sId, collect());
+                $salesman = $sales->first()?->salesman ?? $returns->first()?->salesman;
+                
+                $saleQty = $sales->sum(fn($t) => $t->items->sum('qty'));
+                $saleAmt = $sales->sum('net_amount');
+                $returnQty = $returns->sum(fn($t) => $t->items->sum('qty'));
+                $returnAmt = $returns->sum('net_amount');
+                
+                $data->push([
+                    'name' => $salesman?->name ?? 'Unknown',
+                    'code' => $salesman?->code ?? '-',
+                    'sale_qty' => $saleQty,
+                    'sale_amount' => $saleAmt,
+                    'return_qty' => $returnQty,
+                    'return_amount' => $returnAmt,
+                    'net_qty' => $saleQty - $returnQty,
+                    'net_amount' => $saleAmt - $returnAmt,
+                ]);
+            }
+            
+            $totals = [
+                'sale_qty' => $data->sum('sale_qty'),
+                'sale_amount' => $data->sum('sale_amount'),
+                'return_qty' => $data->sum('return_qty'),
+                'return_amount' => $data->sum('return_amount'),
+                'net_qty' => $data->sum('net_qty'),
+                'net_amount' => $data->sum('net_amount'),
+            ];
+            
+            return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-level-sale-print', compact('data', 'totals', 'dateFrom', 'dateTo', 'level'));
         }
-
-        return view('admin.reports.sale-report.sale-book.salesman-level-sale', compact(
-            'groupedSales', 'totals', 'salesmen', 'dateFrom', 'dateTo'
-        ));
+        
+        return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-level-sale', compact('dateFrom', 'dateTo', 'salesmen', 'companies'));
     }
 
     /**
@@ -7053,4 +7098,3 @@ class SalesReportController extends Controller
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.discount-wise-sales.item-wise-invoice-wise', compact('dateFrom', 'dateTo', 'companies', 'items', 'customers'));
     }
 }
-
