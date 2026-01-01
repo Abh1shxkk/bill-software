@@ -9,6 +9,9 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Area;
+use App\Models\State;
 
 class PurchaseReportController extends Controller
 {
@@ -81,7 +84,7 @@ class PurchaseReportController extends Controller
 
         $suppliers = Supplier::select('supplier_id', 'name')->get();
 
-        return view('admin.reports.purchase.index', compact(
+        return view('admin.reports.purchase-report.index', compact(
             'totalPurchases', 'totalInvoices', 'avgPurchaseValue', 'totalTax',
             'dailyPurchases', 'topSuppliers', 'topItems', 'monthlyData',
             'recentPurchases', 'suppliers', 'dateFrom', 'dateTo', 'supplierId'
@@ -154,4 +157,416 @@ class PurchaseReportController extends Controller
 
         return view('admin.reports.purchase.pdf', compact('purchases', 'dateFrom', 'dateTo', 'totalPurchases', 'totalTax'));
     }
+
+    /**
+     * Purchase Book Report
+     */
+    public function purchaseBook(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        $users = User::select('user_id', 'full_name')->get();
+        $areas = Area::active()->get();
+        $states = State::all();
+        $seriesList = PurchaseTransaction::distinct()->pluck('voucher_type')->filter()->values();
+        
+        return view('admin.reports.purchase-report.purchase-book.purchase-book', compact('dateFrom', 'dateTo', 'suppliers', 'users', 'areas', 'states', 'seriesList'));
+    }
+
+    /**
+     * Purchase Book GSTR Report
+     */
+    public function purchaseBookGstr(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.purchase-book.purchase-book-gstr', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Purchase Book With TCS Report
+     */
+    public function purchaseBookTcs(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.purchase-book.purchase-book-tcs', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * TDS OUTPUT Report
+     */
+    public function tdsOutput(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.purchase-book.tds-output', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Purchase Book with Sale Value
+     */
+    public function purchaseBookSaleValue(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.purchase-book-sale-value', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Party Wise Purchase Report
+     */
+    public function partyWisePurchase(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.party-wise-purchase', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Monthly Purchase Summary
+     */
+    public function monthlyPurchaseSummary(Request $request)
+    {
+        $year = $request->get('year', date('Y'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.monthly-purchase-summary', compact('year', 'suppliers'));
+    }
+
+    /**
+     * Debit/Credit Note Report
+     */
+    public function debitCreditNote(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.debit-credit-note', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Day Purchase Summary Item Wise
+     */
+    public function dayPurchaseSummary(Request $request)
+    {
+        $date = $request->get('date', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.day-purchase-summary', compact('date', 'suppliers'));
+    }
+
+    /**
+     * Purchase/Return Book Item Wise
+     */
+    public function purchaseReturnItemWise(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        return view('admin.reports.purchase-report.purchase-return-item-wise', compact('dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Local/Central Purchase Register
+     */
+    public function localCentralRegister(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        return view('admin.reports.purchase-report.local-central-register', compact('dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Purchase Voucher Detail
+     */
+    public function purchaseVoucherDetail(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        return view('admin.reports.purchase-report.purchase-voucher-detail', compact('dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Short Expiry Received Report
+     */
+    public function shortExpiryReceived(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.short-expiry-received', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Purchase Return List
+     */
+    public function purchaseReturnList(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.purchase-return-list', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * GST SET OFF Report
+     */
+    public function gstSetOff(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        return view('admin.reports.purchase-report.gst-set-off.gst-set-off', compact('dateFrom', 'dateTo'));
+    }
+
+    /**
+     * GST SET OFF GSTR Report
+     */
+    public function gstSetOffGstr(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        return view('admin.reports.purchase-report.gst-set-off.gst-set-off-gstr', compact('dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Purchase Challan Book
+     */
+    public function purchaseChallanBook(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.purchase-challan-reports.purchase-challan-book', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Pending Challans
+     */
+    public function pendingChallans(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.purchase-challan-reports.pending-challans', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Supplier Wise Purchase
+     */
+    /**
+     * Purchase with Item Details
+     */
+    public function purchaseWithItemDetails(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.purchase-with-item-details', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    // --- Supplier Wise Purchase Submodule Methods ---
+
+    /**
+     * All Supplier Purchase Summary
+     */
+    public function supplierAllSupplier(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.all-supplier');
+    }
+
+    /**
+     * Supplier Bill Wise Purchase
+     */
+    public function supplierBillWise(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.bill-wise');
+    }
+
+    /**
+     * Supplier Item Wise Purchase
+     */
+    public function supplierItemWise(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-wise');
+    }
+
+    /**
+     * Supplier Item - Invoice Wise Purchase
+     */
+    public function supplierItemInvoiceWise(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-invoice-wise');
+    }
+
+    /**
+     * Supplier Invoice - Item Wise Purchase
+     */
+    public function supplierInvoiceItemWise(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.invoice-item-wise');
+    }
+
+    // --- Company Wise Purchase Submodule Methods ---
+
+    /**
+     * All Company Purchase Summary
+     */
+    public function companyAllCompany(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.all-company');
+    }
+
+    /**
+     * Company Item Wise Purchase
+     */
+    public function companyItemWise(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.item-wise');
+    }
+
+    /**
+     * Company Party Wise Purchase
+     */
+    public function companyPartyWise(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.party-wise');
+    }
+
+    // --- Item Wise Purchase Submodule Methods ---
+
+    /**
+     * Item Bill Wise Purchase
+     */
+    public function itemBillWise(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.bill-wise');
+    }
+
+    /**
+     * All Item Purchase Summary
+     */
+    public function itemAllItemPurchase(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.all-item-purchase');
+    }
+
+    // --- Schemed Received Submodule Methods ---
+
+    /**
+     * Free Schemed Received
+     */
+    public function schemedFreeSchemed(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-schemed-received');
+    }
+
+    /**
+     * Half Schemed Received
+     */
+    public function schemedHalfSchemed(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.half-schemed-received');
+    }
+
+    /**
+     * Free Received Without Qty
+     */
+    public function schemedFreeWithoutQty(Request $request)
+    {
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-received-without-qty');
+    }
+
+    /**
+     * Supplier Visit Report
+     */
+    public function supplierVisitReport(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.other-reports.supplier-visit-report', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Supplier Wise Companies
+     */
+    public function supplierWiseCompanies(Request $request)
+    {
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.other-reports.supplier-wise-companies', compact('suppliers'));
+    }
+
+    /**
+     * Purchase Book - Item Details
+     */
+    public function purchaseBookItemDetails(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.other-reports.purchase-book-item-details', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Central Purchase with Local Value
+     */
+    public function centralPurchaseLocalValue(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.other-reports.central-purchase-local-value', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Party Wise All Purchase Details
+     */
+    public function partyWiseAllPurchaseDetails(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.other-reports.party-wise-all-purchase-details', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
+
+    /**
+     * Register of Schedule H1 Drugs
+     */
+    public function registerScheduleH1Drugs(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $suppliers = Supplier::select('supplier_id', 'name')->get();
+        
+        return view('admin.reports.purchase-report.other-reports.register-schedule-h1-drugs', compact('dateFrom', 'dateTo', 'suppliers'));
+    }
 }
+
