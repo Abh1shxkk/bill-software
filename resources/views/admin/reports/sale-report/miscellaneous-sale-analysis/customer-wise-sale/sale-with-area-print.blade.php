@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><title>Customer Wise Sale - Sale With Area</title>
+<style>* { margin: 0; padding: 0; box-sizing: border-box; } body { font-family: Arial, sans-serif; font-size: 11px; } .container { padding: 10px; } .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #8B0000; padding-bottom: 5px; } .header h2 { color: #8B0000; font-style: italic; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #333; padding: 4px 6px; } th { background: #f0f0f0; } .text-right { text-align: right; } .total-row { background: #e0e0e0; font-weight: bold; } .area-header { background: #d0d8ff; font-weight: bold; } @media print { body { font-size: 10px; } }</style>
+</head><body><div class="container">
+<div class="header"><h2>Customer Wise Sale - Sale With Area</h2><p>{{ \Carbon\Carbon::parse($dateFrom)->format('d-M-Y') }} To {{ \Carbon\Carbon::parse($dateTo)->format('d-M-Y') }}</p></div>
+<table><thead><tr><th>Area / Customer</th><th class="text-right">Bills</th><th class="text-right">Gross Amt</th><th class="text-right">Net Amt</th></tr></thead>
+<tbody>@php $currentArea = ''; @endphp @foreach($data as $row)@if($currentArea != $row['area_name'])@php $currentArea = $row['area_name']; @endphp<tr class="area-header"><td colspan="4">{{ $currentArea }}</td></tr>@endif
+<tr><td style="padding-left: 15px;">{{ $row['customer_name'] }}</td><td class="text-right">{{ $row['bill_count'] }}</td><td class="text-right">{{ number_format($row['gross_amount'], 2) }}</td><td class="text-right">{{ number_format($row['net_amount'], 2) }}</td></tr>@endforeach
+<tr class="total-row"><td>Grand Total</td><td class="text-right">{{ $totals['bill_count'] }}</td><td class="text-right">{{ number_format($totals['gross_amount'], 2) }}</td><td class="text-right">{{ number_format($totals['net_amount'], 2) }}</td></tr>
+</tbody></table></div><script>window.onload=function(){window.print();}</script></body></html>
