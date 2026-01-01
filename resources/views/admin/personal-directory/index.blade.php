@@ -76,21 +76,22 @@
 
   .personal-directory-modal-backdrop {
     display: none;
-    position: fixed;
-    top: 0;
-    left: 260px;
-    width: calc(100vw - 260px);
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
     z-index: 999998 !important;
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
   }
 
   .personal-directory-modal-backdrop.show {
-    opacity: 0.7;
+    display: block !important;
+    opacity: 1 !important;
   }
 
   @media (max-width: 768px) {

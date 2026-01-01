@@ -1263,21 +1263,22 @@
 
         .hsn-modal-backdrop {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
             z-index: 999998 !important;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: opacity 0.3s ease;
         }
 
         .hsn-modal-backdrop.show {
-            opacity: 0.7;
+            display: block !important;
+            opacity: 1 !important;
         }
 
         /* HSN Code Cards */

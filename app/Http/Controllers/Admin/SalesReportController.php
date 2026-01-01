@@ -2666,12 +2666,83 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '5');
+        $taggedSalesman = $request->get('tagged_salesman', 'N');
         $salesmanId = $request->get('salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $orderBy = $request->get('order_by', 'N');
+        $ascDesc = $request->get('asc_desc', 'A');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
+        $series = $request->get('series');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+        $seriesList = SaleTransaction::distinct()->whereNotNull('series')->pluck('series')->toArray();
+
+        $data = collect();
+        $totals = ['bill_count' => 0, 'gross_amount' => 0, 'discount' => 0, 'net_amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,area_code,route_code,state_code'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+            if ($series) $query->where('series', $series);
+
+            $sales = $query->get();
+
+            // Group by salesman
+            $grouped = $sales->groupBy('salesman_id');
+
+            foreach ($grouped as $smanId => $smanSales) {
+                $salesman = $smanSales->first()->salesman;
+                $grossAmount = $smanSales->sum('gross_amount');
+                $discount = $smanSales->sum('discount_amount');
+                $netAmount = $smanSales->sum('net_amount');
+
+                $data->push([
+                    'salesman_name' => $salesman->name ?? '-',
+                    'salesman_code' => $salesman->code ?? '-',
+                    'bill_count' => $smanSales->count(),
+                    'gross_amount' => $grossAmount,
+                    'discount' => $discount,
+                    'net_amount' => $netAmount,
+                ]);
+            }
+
+            // Sort data
+            if ($orderBy === 'N') {
+                $data = $ascDesc === 'A' ? $data->sortBy('salesman_name') : $data->sortByDesc('salesman_name');
+            } else {
+                $data = $ascDesc === 'A' ? $data->sortBy('net_amount') : $data->sortByDesc('net_amount');
+            }
+            $data = $data->values();
+
+            $totals = [
+                'bill_count' => $data->sum('bill_count'),
+                'gross_amount' => $data->sum('gross_amount'),
+                'discount' => $data->sum('discount'),
+                'net_amount' => $data->sum('net_amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.all-salesman-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'transactionType', 'taggedSalesman',
+                    'salesmanId', 'areaId', 'routeId', 'stateId', 'orderBy', 'ascDesc', 'withBrExpiry', 'series'
+                ));
+            }
+        }
 
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.all-salesman', compact(
-            'salesmen', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'areas', 'routes', 'states', 'seriesList', 'dateFrom', 'dateTo', 'transactionType',
+            'taggedSalesman', 'salesmanId', 'areaId', 'routeId', 'stateId', 'orderBy', 'ascDesc', 'withBrExpiry', 'series'
         ));
     }
 
@@ -2682,12 +2753,74 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '5');
+        $selective = $request->get('selective', 'Y');
         $salesmanId = $request->get('salesman_id');
+        $companyId = $request->get('company_id');
+        $filterSalesmanId = $request->get('filter_salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $customerId = $request->get('customer_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
+        $series = $request->get('series');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+        $seriesList = SaleTransaction::distinct()->whereNotNull('series')->pluck('series')->toArray();
+
+        $data = collect();
+        $totals = ['gross_amount' => 0, 'discount' => 0, 'net_amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,code,area_code,route_code,state_code'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($filterSalesmanId) $query->where('salesman_id', $filterSalesmanId);
+            if ($customerId) $query->where('customer_id', $customerId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+            if ($series) $query->where('series', $series);
+
+            $sales = $query->orderBy('salesman_id')->orderBy('sale_date')->orderBy('invoice_no')->get();
+
+            foreach ($sales as $sale) {
+                $data->push([
+                    'salesman_name' => $sale->salesman->name ?? '-',
+                    'salesman_code' => $sale->salesman->code ?? '-',
+                    'invoice_no' => $sale->invoice_no,
+                    'invoice_date' => $sale->sale_date,
+                    'customer_name' => $sale->customer->name ?? '-',
+                    'series' => $sale->series ?? '-',
+                    'gross_amount' => $sale->gross_amount ?? 0,
+                    'discount' => $sale->discount_amount ?? 0,
+                    'net_amount' => $sale->net_amount ?? 0,
+                ]);
+            }
+
+            $totals = [
+                'gross_amount' => $data->sum('gross_amount'),
+                'discount' => $data->sum('discount'),
+                'net_amount' => $data->sum('net_amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.bill-wise-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'salesmanId'
+                ));
+            }
+        }
 
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.bill-wise', compact(
-            'salesmen', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'companies', 'customers', 'areas', 'routes', 'states', 'seriesList',
+            'dateFrom', 'dateTo', 'transactionType', 'selective', 'salesmanId', 'companyId',
+            'filterSalesmanId', 'areaId', 'routeId', 'stateId', 'customerId', 'withBrExpiry', 'series'
         ));
     }
 
@@ -2698,13 +2831,76 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '5');
+        $selective = $request->get('selective', 'S');
         $salesmanId = $request->get('salesman_id');
+        $filterSalesmanId = $request->get('filter_salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $customerId = $request->get('customer_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+
+        $data = collect();
+        $totals = ['bill_count' => 0, 'gross_amount' => 0, 'discount' => 0, 'net_amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,code,area_code,route_code,state_code'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($filterSalesmanId) $query->where('salesman_id', $filterSalesmanId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+
+            $sales = $query->get();
+
+            // Group by salesman then by customer
+            $grouped = $sales->groupBy('salesman_id');
+
+            foreach ($grouped as $smanId => $smanSales) {
+                $salesman = $smanSales->first()->salesman;
+                $customerGroups = $smanSales->groupBy('customer_id');
+
+                foreach ($customerGroups as $custId => $custSales) {
+                    $customer = $custSales->first()->customer;
+                    $data->push([
+                        'salesman_name' => $salesman->name ?? '-',
+                        'salesman_code' => $salesman->code ?? '-',
+                        'customer_name' => $customer->name ?? '-',
+                        'customer_code' => $customer->code ?? '-',
+                        'bill_count' => $custSales->count(),
+                        'gross_amount' => $custSales->sum('gross_amount'),
+                        'discount' => $custSales->sum('discount_amount'),
+                        'net_amount' => $custSales->sum('net_amount'),
+                    ]);
+                }
+            }
+
+            $totals = [
+                'bill_count' => $data->sum('bill_count'),
+                'gross_amount' => $data->sum('gross_amount'),
+                'discount' => $data->sum('discount'),
+                'net_amount' => $data->sum('net_amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.customer-wise-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'salesmanId'
+                ));
+            }
+        }
 
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.customer-wise', compact(
-            'salesmen', 'customers', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'customers', 'areas', 'routes', 'states', 'dateFrom', 'dateTo',
+            'transactionType', 'selective', 'salesmanId', 'filterSalesmanId', 'areaId', 'routeId', 'stateId', 'customerId', 'withBrExpiry'
         ));
     }
 
@@ -2715,14 +2911,83 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '1');
+        $selective = $request->get('selective', 'Y');
         $salesmanId = $request->get('salesman_id');
+        $companyId = $request->get('company_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $items = Item::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
         $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+
+        $data = collect();
+        $totals = ['qty' => 0, 'free_qty' => 0, 'amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,area_code,route_code,state_code', 'items.item:id,name,code,packing,company_id', 'items.item.company:id,name,code'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+
+            $sales = $query->get();
+
+            // Group by salesman then by item
+            $grouped = $sales->groupBy('salesman_id');
+
+            foreach ($grouped as $smanId => $smanSales) {
+                $salesman = $smanSales->first()->salesman;
+                $itemsCollection = collect();
+
+                foreach ($smanSales as $sale) {
+                    foreach ($sale->items as $item) {
+                        if ($companyId && $item->item && $item->item->company_id != $companyId) continue;
+                        $itemsCollection->push($item);
+                    }
+                }
+
+                $itemGroups = $itemsCollection->groupBy('item_id');
+
+                foreach ($itemGroups as $itemId => $itemRecords) {
+                    $firstItem = $itemRecords->first();
+                    $data->push([
+                        'salesman_name' => $salesman->name ?? '-',
+                        'salesman_code' => $salesman->code ?? '-',
+                        'item_name' => $firstItem->item_name ?? ($firstItem->item->name ?? '-'),
+                        'company_name' => $firstItem->item->company->name ?? '-',
+                        'packing' => $firstItem->item->packing ?? '-',
+                        'qty' => $itemRecords->sum('qty'),
+                        'free_qty' => $itemRecords->sum('free_qty'),
+                        'amount' => $itemRecords->sum('amount'),
+                    ]);
+                }
+            }
+
+            $totals = [
+                'qty' => $data->sum('qty'),
+                'free_qty' => $data->sum('free_qty'),
+                'amount' => $data->sum('amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.item-wise-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'salesmanId'
+                ));
+            }
+        }
 
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.item-wise', compact(
-            'salesmen', 'items', 'companies', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'items', 'companies', 'areas', 'routes', 'states', 'dateFrom', 'dateTo',
+            'transactionType', 'selective', 'salesmanId', 'companyId', 'areaId', 'routeId', 'stateId', 'withBrExpiry'
         ));
     }
 
@@ -2733,13 +2998,83 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '5');
+        $selective = $request->get('selective', 'Y');
         $salesmanId = $request->get('salesman_id');
+        $companyId = $request->get('company_id');
+        $filterSalesmanId = $request->get('filter_salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
-        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+
+        $data = collect();
+        $totals = ['item_count' => 0, 'qty' => 0, 'amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,area_code,route_code,state_code', 'items.item:id,name,company_id', 'items.item.company:id,name,code'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($filterSalesmanId) $query->where('salesman_id', $filterSalesmanId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+
+            $sales = $query->get();
+
+            // Group by salesman then by company
+            $grouped = $sales->groupBy('salesman_id');
+
+            foreach ($grouped as $smanId => $smanSales) {
+                $salesman = $smanSales->first()->salesman;
+                $companyItems = collect();
+
+                foreach ($smanSales as $sale) {
+                    foreach ($sale->items as $item) {
+                        if ($companyId && $item->item && $item->item->company_id != $companyId) continue;
+                        $companyItems->push($item);
+                    }
+                }
+
+                $companyGroups = $companyItems->groupBy(fn($i) => $i->item->company_id ?? 0);
+
+                foreach ($companyGroups as $compId => $compRecords) {
+                    $firstItem = $compRecords->first();
+                    $data->push([
+                        'salesman_name' => $salesman->name ?? '-',
+                        'salesman_code' => $salesman->code ?? '-',
+                        'company_name' => $firstItem->item->company->name ?? '-',
+                        'company_code' => $firstItem->item->company->code ?? '-',
+                        'item_count' => $compRecords->unique('item_id')->count(),
+                        'qty' => $compRecords->sum('qty'),
+                        'amount' => $compRecords->sum('amount'),
+                    ]);
+                }
+            }
+
+            $totals = [
+                'item_count' => $data->sum('item_count'),
+                'qty' => $data->sum('qty'),
+                'amount' => $data->sum('amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.company-wise-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'salesmanId'
+                ));
+            }
+        }
 
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.company-wise', compact(
-            'salesmen', 'companies', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'companies', 'areas', 'routes', 'states', 'dateFrom', 'dateTo',
+            'transactionType', 'selective', 'salesmanId', 'companyId', 'filterSalesmanId', 'areaId', 'routeId', 'stateId', 'withBrExpiry'
         ));
     }
 
@@ -2750,13 +3085,73 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '5');
+        $selective = $request->get('selective', 'S');
         $salesmanId = $request->get('salesman_id');
+        $filterSalesmanId = $request->get('filter_salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+
+        $data = collect();
+        $totals = ['bill_count' => 0, 'gross_amount' => 0, 'discount' => 0, 'net_amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,area_code,route_code,state_code', 'customer.area:id,name'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($filterSalesmanId) $query->where('salesman_id', $filterSalesmanId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+
+            $sales = $query->get();
+
+            // Group by salesman then by area
+            $grouped = $sales->groupBy('salesman_id');
+
+            foreach ($grouped as $smanId => $smanSales) {
+                $salesman = $smanSales->first()->salesman;
+                $areaGroups = $smanSales->groupBy(fn($s) => $s->customer->area_code ?? 0);
+
+                foreach ($areaGroups as $areaCode => $areaSales) {
+                    $area = $areaSales->first()->customer->area ?? null;
+                    $data->push([
+                        'salesman_name' => $salesman->name ?? '-',
+                        'salesman_code' => $salesman->code ?? '-',
+                        'area_name' => $area->name ?? 'No Area',
+                        'bill_count' => $areaSales->count(),
+                        'gross_amount' => $areaSales->sum('gross_amount'),
+                        'discount' => $areaSales->sum('discount_amount'),
+                        'net_amount' => $areaSales->sum('net_amount'),
+                    ]);
+                }
+            }
+
+            $totals = [
+                'bill_count' => $data->sum('bill_count'),
+                'gross_amount' => $data->sum('gross_amount'),
+                'discount' => $data->sum('discount'),
+                'net_amount' => $data->sum('net_amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.area-wise-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'salesmanId'
+                ));
+            }
+        }
 
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.area-wise', compact(
-            'salesmen', 'areas', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'areas', 'routes', 'states', 'dateFrom', 'dateTo',
+            'transactionType', 'selective', 'salesmanId', 'filterSalesmanId', 'areaId', 'routeId', 'stateId', 'withBrExpiry'
         ));
     }
 
@@ -2767,13 +3162,73 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '5');
+        $selective = $request->get('selective', 'S');
         $salesmanId = $request->get('salesman_id');
+        $filterSalesmanId = $request->get('filter_salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
         $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+
+        $data = collect();
+        $totals = ['bill_count' => 0, 'gross_amount' => 0, 'discount' => 0, 'net_amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,area_code,route_code,state_code', 'customer.route:id,name'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($filterSalesmanId) $query->where('salesman_id', $filterSalesmanId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+
+            $sales = $query->get();
+
+            // Group by salesman then by route
+            $grouped = $sales->groupBy('salesman_id');
+
+            foreach ($grouped as $smanId => $smanSales) {
+                $salesman = $smanSales->first()->salesman;
+                $routeGroups = $smanSales->groupBy(fn($s) => $s->customer->route_code ?? 0);
+
+                foreach ($routeGroups as $routeCode => $routeSales) {
+                    $route = $routeSales->first()->customer->route ?? null;
+                    $data->push([
+                        'salesman_name' => $salesman->name ?? '-',
+                        'salesman_code' => $salesman->code ?? '-',
+                        'route_name' => $route->name ?? 'No Route',
+                        'bill_count' => $routeSales->count(),
+                        'gross_amount' => $routeSales->sum('gross_amount'),
+                        'discount' => $routeSales->sum('discount_amount'),
+                        'net_amount' => $routeSales->sum('net_amount'),
+                    ]);
+                }
+            }
+
+            $totals = [
+                'bill_count' => $data->sum('bill_count'),
+                'gross_amount' => $data->sum('gross_amount'),
+                'discount' => $data->sum('discount'),
+                'net_amount' => $data->sum('net_amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.route-wise-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'salesmanId'
+                ));
+            }
+        }
 
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.route-wise', compact(
-            'salesmen', 'routes', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'areas', 'routes', 'states', 'dateFrom', 'dateTo',
+            'transactionType', 'selective', 'salesmanId', 'filterSalesmanId', 'areaId', 'routeId', 'stateId', 'withBrExpiry'
         ));
     }
 
@@ -2784,13 +3239,73 @@ class SalesReportController extends Controller
     {
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $transactionType = $request->get('transaction_type', '5');
+        $selective = $request->get('selective', 'S');
         $salesmanId = $request->get('salesman_id');
+        $filterSalesmanId = $request->get('filter_salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
 
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
         $states = State::select('id', 'name')->orderBy('name')->get();
 
+        $data = collect();
+        $totals = ['bill_count' => 0, 'gross_amount' => 0, 'discount' => 0, 'net_amount' => 0];
+
+        if ($request->get('view_type') === 'print' || $request->has('export')) {
+            $query = SaleTransaction::with(['salesman:id,name,code', 'customer:id,name,area_code,route_code,state_code', 'customer.state:id,name'])
+                ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            if ($filterSalesmanId) $query->where('salesman_id', $filterSalesmanId);
+            if ($areaId) $query->whereHas('customer', fn($q) => $q->where('area_code', $areaId));
+            if ($routeId) $query->whereHas('customer', fn($q) => $q->where('route_code', $routeId));
+            if ($stateId) $query->whereHas('customer', fn($q) => $q->where('state_code', $stateId));
+
+            $sales = $query->get();
+
+            // Group by salesman then by state
+            $grouped = $sales->groupBy('salesman_id');
+
+            foreach ($grouped as $smanId => $smanSales) {
+                $salesman = $smanSales->first()->salesman;
+                $stateGroups = $smanSales->groupBy(fn($s) => $s->customer->state_code ?? 0);
+
+                foreach ($stateGroups as $stateCode => $stateSales) {
+                    $state = $stateSales->first()->customer->state ?? null;
+                    $data->push([
+                        'salesman_name' => $salesman->name ?? '-',
+                        'salesman_code' => $salesman->code ?? '-',
+                        'state_name' => $state->name ?? 'No State',
+                        'bill_count' => $stateSales->count(),
+                        'gross_amount' => $stateSales->sum('gross_amount'),
+                        'discount' => $stateSales->sum('discount_amount'),
+                        'net_amount' => $stateSales->sum('net_amount'),
+                    ]);
+                }
+            }
+
+            $totals = [
+                'bill_count' => $data->sum('bill_count'),
+                'gross_amount' => $data->sum('gross_amount'),
+                'discount' => $data->sum('discount'),
+                'net_amount' => $data->sum('net_amount'),
+            ];
+
+            if ($request->get('view_type') === 'print') {
+                return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.state-wise-print', compact(
+                    'data', 'totals', 'dateFrom', 'dateTo', 'salesmanId'
+                ));
+            }
+        }
+
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.salesman-wise-sales.state-wise', compact(
-            'salesmen', 'states', 'dateFrom', 'dateTo', 'salesmanId'
+            'salesmen', 'areas', 'routes', 'states', 'dateFrom', 'dateTo',
+            'transactionType', 'selective', 'salesmanId', 'filterSalesmanId', 'areaId', 'routeId', 'stateId', 'withBrExpiry'
         ));
     }
 

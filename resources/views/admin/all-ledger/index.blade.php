@@ -887,21 +887,22 @@
 
            .ledger-modal-backdrop {
             display: none;
-            position: fixed;
-            top: 70px; /* Start below header */
-            left: 260px; /* Start after sidebar width */
-            width: calc(100vw - 260px); /* Exclude sidebar width */
-            height: calc(100vh - 70px); /* Exclude header height */
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            z-index: 999997 !important; /* Lower than header and sidebar */
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+            z-index: 999997 !important;
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: opacity 0.3s ease;
         }
 
         .ledger-modal-backdrop.show {
-            opacity: 0.7;
+            display: block !important;
+            opacity: 1 !important;
         }
 
         /* Responsive adjustments */
