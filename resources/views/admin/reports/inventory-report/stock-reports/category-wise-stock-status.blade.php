@@ -66,14 +66,23 @@
 
     <!-- Results Table -->
     <div class="card mt-2">
+        @if(isset($reportData) && $reportData->count() > 0)
+        <div class="card-header bg-primary text-white py-2 d-flex justify-content-between">
+            <strong>Category Wise Stock Status</strong>
+            <div>
+                <button type="button" class="btn btn-sm btn-light" onclick="printReport()"><i class="fas fa-print"></i> Print</button>
+                <button type="button" class="btn btn-sm btn-success ms-1" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Excel</button>
+            </div>
+        </div>
+        @endif
         <div class="card-body p-0">
             <table class="table table-bordered table-sm mb-0" style="background-color: #fff;">
                 <thead style="background-color: #ccccff;">
                     <tr>
                         <th class="text-center" style="width: 40px; background-color: #90EE90;">Sr.</th>
                         <th style="background-color: #ccccff;">Category Name</th>
-                        <th class="text-end" style="width: 80px; background-color: #ccccff;">Qty</th>
-                        <th class="text-end" style="width: 120px; background-color: #ccccff;">Value</th>
+                        <th class="text-end" style="width: 100px; background-color: #ccccff;">Qty</th>
+                        <th class="text-end" style="width: 140px; background-color: #ccccff;">Value</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -97,11 +106,44 @@
                         @endfor
                     @endif
                 </tbody>
+                @if(isset($reportData) && $reportData->count() > 0)
+                <tfoot style="background-color: #ffff99; font-weight: bold;">
+                    <tr>
+                        <td colspan="2" class="text-end">Total:</td>
+                        <td class="text-end">{{ number_format($totals['total_qty'] ?? 0, 2) }}</td>
+                        <td class="text-end">{{ number_format($totals['total_value'] ?? 0, 2) }}</td>
+                    </tr>
+                </tfoot>
+                @endif
             </table>
         </div>
+        @if(isset($reportData) && $reportData->count() > 0)
+        <div class="card-footer">
+            <small class="text-muted">Total Records: {{ $reportData->count() }}</small>
+        </div>
+        @endif
     </div>
+
+    @if(request()->has('view') && (!isset($reportData) || $reportData->count() == 0))
+    <div class="alert alert-info mt-3"><i class="fas fa-info-circle"></i> No records found for the selected filters.</div>
+    @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function exportToExcel() {
+    const params = new URLSearchParams(new FormData(document.getElementById('filterForm')));
+    params.set('export', 'excel');
+    window.location.href = '{{ route("admin.reports.inventory.stock.category-wise-stock-status") }}?' + params.toString();
+}
+function printReport() {
+    const params = new URLSearchParams(new FormData(document.getElementById('filterForm')));
+    params.set('print', '1');
+    window.open('{{ route("admin.reports.inventory.stock.category-wise-stock-status") }}?' + params.toString(), 'PrintReport', 'width=900,height=700');
+}
+</script>
+@endpush
 
 @push('styles')
 <style>

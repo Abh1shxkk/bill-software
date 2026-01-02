@@ -961,10 +961,66 @@ class InventoryReportController extends Controller
      */
     public function categoryWiseStockStatus(Request $request)
     {
+        $companies = Company::where('is_deleted', 0)->orderBy('name')->get();
         $categories = collect(); // Add Category model if exists
         $reportData = collect();
+        $totals = ['total_qty' => 0, 'total_value' => 0];
         
-        return view('admin.reports.inventory-report.stock-reports.category-wise-stock-status', compact('categories', 'reportData'));
+        if ($request->has('view') || $request->has('print')) {
+            // Value on type: cost, sale, mrp, purchase
+            $valueOn = $request->input('value_on', 'cost');
+            
+            $query = Item::where('is_deleted', 0);
+            
+            // Filter by company
+            if ($request->filled('company_id')) {
+                $query->where('company_id', $request->company_id);
+            }
+            
+            // Group items by category and calculate totals
+            $items = $query->with('company')->get();
+            
+            // Group by category (using company as category for now)
+            $grouped = $items->groupBy('company_id');
+            
+            $reportData = $grouped->map(function($categoryItems, $companyId) use ($valueOn) {
+                $totalQty = 0;
+                $totalValue = 0;
+                $categoryName = $categoryItems->first()->company->name ?? 'Unknown';
+                
+                foreach ($categoryItems as $item) {
+                    $qty = $item->getTotalQuantity();
+                    $rate = match($valueOn) {
+                        'cost' => floatval($item->cost),
+                        'sale' => floatval($item->s_rate),
+                        'mrp' => floatval($item->mrp),
+                        'purchase' => floatval($item->pur_rate),
+                        default => floatval($item->cost)
+                    };
+                    $totalQty += $qty;
+                    $totalValue += $qty * $rate;
+                }
+                
+                return [
+                    'category_name' => $categoryName,
+                    'qty' => $totalQty,
+                    'value' => $totalValue,
+                ];
+            })->filter(function($row) {
+                return $row['qty'] > 0; // Only show categories with stock
+            })->values();
+            
+            // Calculate totals
+            $totals['total_qty'] = $reportData->sum('qty');
+            $totals['total_value'] = $reportData->sum('value');
+            
+            // Handle print view
+            if ($request->has('print')) {
+                return view('admin.reports.inventory-report.stock-reports.category-wise-stock-status-print', compact('reportData', 'totals', 'request'));
+            }
+        }
+        
+        return view('admin.reports.inventory-report.stock-reports.category-wise-stock-status', compact('companies', 'categories', 'reportData', 'totals'));
     }
 
     /**
@@ -974,8 +1030,76 @@ class InventoryReportController extends Controller
     {
         $companies = Company::where('is_deleted', 0)->orderBy('name')->get();
         $reportData = collect();
+        $totals = ['total_qty' => 0, 'total_value' => 0];
         
-        return view('admin.reports.inventory-report.stock-reports.current-stock-status', compact('companies', 'reportData'));
+        if ($request->has('view') || $request->has('export')) {
+            $query = Item::where('is_deleted', 0);
+            
+            // Filter by company
+            $filterType = strtoupper($request->input('filter_type', 'A'));
+            if ($filterType == 'C' && $request->filled('company_id')) {
+                $query->where('company_id', $request->company_id);
+            }
+            
+            // Filter by status
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            
+            // Value on type: 1=Cost, 2=Sale, 3=Pur, 4=MRP, 5=Cost+Tax
+            $valueOn = $request->input('value_on', '1');
+            
+            $reportData = $query->with('company')
+                ->orderBy('company_id')
+                ->orderBy('name')
+                ->get()
+                ->map(function($item) use ($valueOn) {
+                    $qty = $item->getTotalQuantity();
+                    $rate = match($valueOn) {
+                        '1' => floatval($item->cost),
+                        '2' => floatval($item->s_rate),
+                        '3' => floatval($item->pur_rate),
+                        '4' => floatval($item->mrp),
+                        '5' => floatval($item->cost) + (floatval($item->cost) * floatval($item->vat_percent) / 100),
+                        default => floatval($item->cost)
+                    };
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'company_name' => $item->company->name ?? '',
+                        'packing' => $item->packing,
+                        'qty' => $qty,
+                        'rate' => $rate,
+                        'value' => $qty * $rate,
+                    ];
+                });
+            
+            // Stock filter: 1=All, 2=With Stock, 3=W/o Stock, 4=Negative
+            $stockFilter = $request->input('stock_filter', '2');
+            $reportData = $reportData->filter(function($item) use ($stockFilter) {
+                return match($stockFilter) {
+                    '1' => true,
+                    '2' => $item['qty'] > 0,
+                    '3' => $item['qty'] == 0,
+                    '4' => $item['qty'] < 0,
+                    default => $item['qty'] > 0
+                };
+            })->values();
+            
+            // Calculate totals
+            $totals['total_qty'] = $reportData->sum('qty');
+            $totals['total_value'] = $reportData->sum('value');
+            
+            if ($request->has('export') && $request->export == 'excel') {
+                return $this->exportToExcel($reportData, 'current-stock-status');
+            }
+            
+            if ($request->has('print')) {
+                return view('admin.reports.inventory-report.stock-reports.current-stock-status-print', compact('reportData', 'totals', 'request'));
+            }
+        }
+        
+        return view('admin.reports.inventory-report.stock-reports.current-stock-status', compact('companies', 'reportData', 'totals'));
     }
 
     /**
