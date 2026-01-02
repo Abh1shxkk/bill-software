@@ -14,7 +14,25 @@ class ItemCategoryController extends Controller
 
     public function index(Request $request)
     {
-        $categories = ItemCategory::orderBy('id', 'desc')->paginate(10);
+        $query = ItemCategory::query();
+        
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $searchField = $request->search_field ?? 'all';
+            
+            if ($searchField === 'all') {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('alter_code', 'like', "%{$search}%")
+                      ->orWhere('status', 'like', "%{$search}%");
+                });
+            } else {
+                $query->where($searchField, 'like', "%{$search}%");
+            }
+        }
+        
+        $categories = $query->orderBy('id', 'desc')->paginate(10);
         
         // Handle AJAX requests for infinite scroll
         if ($request->ajax() || $request->header('X-Requested-With') === 'XMLHttpRequest') {

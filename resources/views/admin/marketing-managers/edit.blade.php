@@ -244,8 +244,8 @@ document.addEventListener('keydown', function (e) {
 .btn-close-modal { background: rgba(255, 255, 255, 0.2); border: none; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; cursor: pointer; font-size: 1rem; }
 .btn-close-modal:hover { background: rgba(255, 255, 255, 0.3); transform: rotate(90deg); }
 .manager-modal-body { padding: 1rem; overflow-y: auto; flex: 1; background: #f8f9fa; }
-.manager-modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 999998; opacity: 0; transition: all 0.3s ease; }
-.manager-modal-backdrop.show { opacity: 1; }
+.manager-modal-backdrop { display: none; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; background-color: rgba(0, 0, 0, 0.5) !important; z-index: 999998; opacity: 0; transition: opacity 0.3s ease; }
+.manager-modal-backdrop.show { display: block !important; opacity: 1 !important; }
 .manager-card { cursor: pointer; transition: all 0.2s ease; border: 1px solid #dee2e6; }
 .manager-card:hover { border-color: #0d6efd; box-shadow: 0 2px 8px rgba(13, 110, 253, 0.15); transform: translateY(-1px); }
 @media (max-width: 768px) { .manager-modal { width: 100%; } }

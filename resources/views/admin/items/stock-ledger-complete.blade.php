@@ -155,7 +155,12 @@
                         ($ledger['type'] === 'PURCHASE' ? 'table-info' : 
                         ($ledger['type'] === 'STOCK_ADJUSTMENT' ? 'table-secondary' : 
                         ($ledger['type'] === 'REPLACEMENT_NOTE' ? 'table-danger' :
-                        ($ledger['type'] === 'REPLACEMENT_RECEIVED' ? 'table-primary' : 'table-warning')))) 
+                        ($ledger['type'] === 'REPLACEMENT_RECEIVED' ? 'table-primary' : 
+                        ($ledger['type'] === 'STOCK_TRANSFER_INCOMING' ? 'table-success' :
+                        ($ledger['type'] === 'STOCK_TRANSFER_INCOMING_RETURN' ? 'table-warning' :
+                        ($ledger['type'] === 'SAMPLE_ISSUED' ? 'table-danger' :
+                        ($ledger['type'] === 'STOCK_TRANSFER_OUTGOING' ? 'table-warning' :
+                        ($ledger['type'] === 'STOCK_TRANSFER_OUTGOING_RETURN' ? 'table-info' : 'table-warning'))))))))) 
                     }}">
                         <td>
                             @if($ledger['type'] === 'SALE_RETURN')
@@ -168,6 +173,16 @@
                                 <i class="bi bi-arrow-repeat text-danger me-1" title="Replacement Note (Out)"></i>
                             @elseif($ledger['type'] === 'REPLACEMENT_RECEIVED')
                                 <i class="bi bi-arrow-down-left-circle text-primary me-1" title="Replacement Received (In)"></i>
+                            @elseif($ledger['type'] === 'STOCK_TRANSFER_INCOMING')
+                                <i class="bi bi-box-arrow-in-down text-success me-1" title="Stock Transfer Incoming"></i>
+                            @elseif($ledger['type'] === 'STOCK_TRANSFER_INCOMING_RETURN')
+                                <i class="bi bi-box-arrow-up text-warning me-1" title="Stock Transfer Incoming Return"></i>
+                            @elseif($ledger['type'] === 'SAMPLE_ISSUED')
+                                <i class="bi bi-gift text-danger me-1" title="Sample Issued"></i>
+                            @elseif($ledger['type'] === 'STOCK_TRANSFER_OUTGOING')
+                                <i class="bi bi-box-arrow-right text-warning me-1" title="Stock Transfer Outgoing"></i>
+                            @elseif($ledger['type'] === 'STOCK_TRANSFER_OUTGOING_RETURN')
+                                <i class="bi bi-box-arrow-in-left text-info me-1" title="Stock Transfer Outgoing Return"></i>
                             @else
                                 <i class="bi bi-arrow-up-circle text-warning me-1" title="Sale"></i>
                             @endif
@@ -456,6 +471,16 @@ function viewStockLedgerDetails(transactionType, transactionId) {
         endpoint = `/bill-software/admin/replacement-note/details/${transactionId}`;
     } else if (transactionType === 'REPLACEMENT_RECEIVED') {
         endpoint = `/bill-software/admin/replacement-received/details/${transactionId}`;
+    } else if (transactionType === 'STOCK_TRANSFER_INCOMING') {
+        endpoint = `/bill-software/admin/stock-transfer-incoming/${transactionId}/details`;
+    } else if (transactionType === 'STOCK_TRANSFER_INCOMING_RETURN') {
+        endpoint = `/bill-software/admin/stock-transfer-incoming-return/${transactionId}/details`;
+    } else if (transactionType === 'SAMPLE_ISSUED') {
+        endpoint = `/bill-software/admin/sample-issued/${transactionId}`;
+    } else if (transactionType === 'STOCK_TRANSFER_OUTGOING') {
+        endpoint = `/bill-software/admin/stock-transfer-outgoing/${transactionId}/details`;
+    } else if (transactionType === 'STOCK_TRANSFER_OUTGOING_RETURN') {
+        endpoint = `/bill-software/admin/stock-transfer-outgoing-return/${transactionId}/details`;
     } else {
         showErrorInStockLedgerModal('Invalid transaction type');
         return;
@@ -863,6 +888,325 @@ function populateStockLedgerData(data, transactionType) {
                     <div class="detail-row">
                         <span class="detail-label">Total Amount:</span>
                         <span class="detail-value fw-bold">₹${parseFloat(data.transaction?.total_amount || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items (${data.items?.length || 0})</h6>
+                </div>
+                <div class="card-body p-0">
+                    ${itemsHtml}
+                </div>
+            </div>
+        `;
+    } else if (transactionType === 'STOCK_TRANSFER_INCOMING') {
+        let itemsHtml = '';
+        if (data.items && data.items.length > 0) {
+            itemsHtml = `
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Batch</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">Rate</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map(item => `
+                            <tr>
+                                <td>${item.item_name || '-'}</td>
+                                <td>${item.batch_no || '-'}</td>
+                                <td class="text-end">${parseFloat(item.qty || 0).toFixed(0)}</td>
+                                <td class="text-end">₹${parseFloat(item.rate || 0).toFixed(2)}</td>
+                                <td class="text-end">₹${parseFloat(item.amount || 0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        html = `
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="bi bi-box-arrow-in-down me-2"></i>Stock Transfer Incoming</h6>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">TRF No:</span>
+                        <span class="detail-value">${data.trf_no || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${data.transaction_date || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">From:</span>
+                        <span class="detail-value">${data.supplier_name || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Amount:</span>
+                        <span class="detail-value fw-bold">₹${parseFloat(data.total_amount || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items (${data.items?.length || 0})</h6>
+                </div>
+                <div class="card-body p-0">
+                    ${itemsHtml}
+                </div>
+            </div>
+        `;
+    } else if (transactionType === 'STOCK_TRANSFER_INCOMING_RETURN') {
+        let itemsHtml = '';
+        if (data.items && data.items.length > 0) {
+            itemsHtml = `
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Batch</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">Rate</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map(item => `
+                            <tr>
+                                <td>${item.item_name || '-'}</td>
+                                <td>${item.batch_no || '-'}</td>
+                                <td class="text-end">${parseFloat(item.qty || 0).toFixed(0)}</td>
+                                <td class="text-end">₹${parseFloat(item.rate || 0).toFixed(2)}</td>
+                                <td class="text-end">₹${parseFloat(item.amount || 0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        html = `
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="bi bi-box-arrow-up me-2"></i>Stock Transfer Incoming Return</h6>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">TRN No:</span>
+                        <span class="detail-value">${data.trn_no || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${data.transaction_date || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">To:</span>
+                        <span class="detail-value">${data.name || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Amount:</span>
+                        <span class="detail-value fw-bold">₹${parseFloat(data.net_amount || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items (${data.items?.length || 0})</h6>
+                </div>
+                <div class="card-body p-0">
+                    ${itemsHtml}
+                </div>
+            </div>
+        `;
+    } else if (transactionType === 'SAMPLE_ISSUED') {
+        let itemsHtml = '';
+        if (data.items && data.items.length > 0) {
+            itemsHtml = `
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Batch</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">Rate</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map(item => `
+                            <tr>
+                                <td>${item.item_name || '-'}</td>
+                                <td>${item.batch_no || '-'}</td>
+                                <td class="text-end">${parseFloat(item.qty || 0).toFixed(0)}</td>
+                                <td class="text-end">₹${parseFloat(item.rate || 0).toFixed(2)}</td>
+                                <td class="text-end">₹${parseFloat(item.amount || 0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        html = `
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0"><i class="bi bi-gift me-2"></i>Sample Issued</h6>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">TRN No:</span>
+                        <span class="detail-value">${data.trn_no || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${data.transaction_date || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Party:</span>
+                        <span class="detail-value">${data.party_name || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Party Type:</span>
+                        <span class="detail-value">${data.party_type || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Amount:</span>
+                        <span class="detail-value fw-bold">₹${parseFloat(data.net_amount || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items (${data.items?.length || 0})</h6>
+                </div>
+                <div class="card-body p-0">
+                    ${itemsHtml}
+                </div>
+            </div>
+        `;
+    } else if (transactionType === 'STOCK_TRANSFER_OUTGOING') {
+        let itemsHtml = '';
+        if (data.items && data.items.length > 0) {
+            itemsHtml = `
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Batch</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">Rate</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map(item => `
+                            <tr>
+                                <td>${item.item_name || '-'}</td>
+                                <td>${item.batch_no || '-'}</td>
+                                <td class="text-end">${parseFloat(item.qty || 0).toFixed(0)}</td>
+                                <td class="text-end">₹${parseFloat(item.rate || 0).toFixed(2)}</td>
+                                <td class="text-end">₹${parseFloat(item.amount || 0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        html = `
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0"><i class="bi bi-box-arrow-right me-2"></i>Stock Transfer Outgoing</h6>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">TRF No:</span>
+                        <span class="detail-value">${data.trf_no || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${data.transaction_date || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">To:</span>
+                        <span class="detail-value">${data.transfer_to_name || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Amount:</span>
+                        <span class="detail-value fw-bold">₹${parseFloat(data.total_amount || 0).toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-list-ul me-2"></i>Items (${data.items?.length || 0})</h6>
+                </div>
+                <div class="card-body p-0">
+                    ${itemsHtml}
+                </div>
+            </div>
+        `;
+    } else if (transactionType === 'STOCK_TRANSFER_OUTGOING_RETURN') {
+        let itemsHtml = '';
+        if (data.items && data.items.length > 0) {
+            itemsHtml = `
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th>Batch</th>
+                            <th class="text-end">Qty</th>
+                            <th class="text-end">Rate</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.items.map(item => `
+                            <tr>
+                                <td>${item.item_name || '-'}</td>
+                                <td>${item.batch_no || '-'}</td>
+                                <td class="text-end">${parseFloat(item.qty || 0).toFixed(0)}</td>
+                                <td class="text-end">₹${parseFloat(item.rate || 0).toFixed(2)}</td>
+                                <td class="text-end">₹${parseFloat(item.amount || 0).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+        
+        html = `
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="bi bi-box-arrow-in-left me-2"></i>Stock Transfer Outgoing Return</h6>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <span class="detail-label">TRN No:</span>
+                        <span class="detail-value">${data.trn_no || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Date:</span>
+                        <span class="detail-value">${data.transaction_date || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">From:</span>
+                        <span class="detail-value">${data.transfer_from_name || '-'}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Total Amount:</span>
+                        <span class="detail-value fw-bold">₹${parseFloat(data.net_amount || 0).toFixed(2)}</span>
                     </div>
                 </div>
             </div>

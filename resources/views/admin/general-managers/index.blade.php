@@ -6,15 +6,19 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="mb-0">General Managers Management</h2>
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3 flex-wrap">
+                    <h2 class="mb-0">General Managers Management</h2>
+                    @include('layouts.partials.module-shortcuts', [
+                        'createRoute' => route('admin.general-managers.create'),
+                        'tableBodyId' => 'generalManagersTableBody',
+                        'checkboxClass' => 'general-managers-checkbox'
+                    ])
+                </div>
                 <div class="d-flex gap-2">
                     <button type="button" id="delete-selected-general-managers-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteGeneralManagers()">
                         <i class="bi bi-trash me-2"></i>Delete Selected (<span id="selected-general-managers-count">0</span>)
                     </button>
-                    <a href="{{ route('admin.general-managers.create') }}" class="btn btn-primary">
-                        <i class="bi bi-plus-circle me-2"></i>Add New General Manager
-                    </a>
                 </div>
             </div>
 
@@ -783,21 +787,22 @@ document.addEventListener('keydown', function (e) {
 
 .general-manager-modal-backdrop {
   display: none;
-  position: fixed;
-  top: 0;
-  left: 260px; /* Start after sidebar width */
-  width: calc(100vw - 260px); /* Exclude sidebar width */
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
   z-index: 999998 !important;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 
 .general-manager-modal-backdrop.show {
-  opacity: 0.7;
+  display: block !important;
+  opacity: 1 !important;
 }
 
 /* Responsive adjustments */

@@ -2,6 +2,30 @@
 @section('title','Companies')
 @section('content')
 <style>
+  /* Table row single line fix */
+  .table tbody tr td {
+    white-space: nowrap;
+  }
+  
+  /* Address column - limit width and truncate */
+  .table tbody tr td:nth-child(5) {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Actions buttons in single line */
+  .table td.text-end {
+    white-space: nowrap;
+    min-width: 120px;
+  }
+  
+  .table td.text-end .btn,
+  .table td.text-end form {
+    display: inline-block;
+    margin-left: 2px;
+  }
+
   /* Scroll to Top Button Styles */
    #scrollToTop {
     position: fixed;
@@ -46,10 +70,17 @@
     font-size: 22px;
   }
 </style>
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Companies</h4>
-    <div class="text-muted small">Manage your company database</div>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-grid-3x3-gap-fill me-2"></i> Companies</h4>
+      <div class="text-muted small">Manage your company database</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.companies.create'),
+        'tableBodyId' => 'company-table-body',
+        'checkboxClass' => 'company-checkbox'
+    ])
   </div>
   <div>
     <button type="button" id="delete-selected-companies-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteCompanies()">
@@ -102,11 +133,10 @@
             </div>
           </th>
           <th>#</th>
-          <th>Alter Code</th>
+          <th>Code</th>
           <th>Name</th>
           <th>Address</th>
-          <th>Email</th>
-          <th>Mobile 1</th>
+          <th>Mobile</th>
           <th class="text-end">Actions</th>
         </tr>
       </thead>
@@ -125,7 +155,6 @@
             <td>{{ $company->alter_code }}</td>
             <td>{{ $company->name }}</td>
             <td>{{ $company->address }}</td>
-            <td>{{ $company->email }}</td>
             <td>{{ $company->mobile_1 }}</td>
             <td class="text-end">
               <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.companies.show',$company) }}" title="View"><i class="bi bi-eye"></i></a>

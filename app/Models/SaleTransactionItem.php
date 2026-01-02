@@ -36,6 +36,9 @@ class SaleTransactionItem extends Model
         'packing',
         'company_name',
         'hsn_code',
+        'hsn_description',
+        'gst_percent',
+        'gross_amount',
         'row_order',
     ];
 
@@ -55,6 +58,8 @@ class SaleTransactionItem extends Model
         'sgst_amount' => 'decimal:2',
         'cess_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
+        'gst_percent' => 'decimal:2',
+        'gross_amount' => 'decimal:2',
         'row_order' => 'integer',
     ];
 

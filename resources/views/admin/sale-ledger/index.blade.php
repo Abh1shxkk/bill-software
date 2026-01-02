@@ -1,18 +1,22 @@
 @extends('layouts.admin')
 @section('title','Sale Ledger')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-check me-2"></i> Sale Ledger</h4>
-    <div class="text-muted small">Manage sales transactions</div>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-check me-2"></i> Sale Ledger</h4>
+      <div class="text-muted small">Manage sales transactions</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.sale-ledger.create'),
+        'tableBodyId' => 'sale-ledger-table-body',
+        'checkboxClass' => 'sale-ledger-checkbox'
+    ])
   </div>
   <div class="d-flex gap-2">
     <button type="button" id="delete-selected-sale-ledger-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteSaleLedger()">
       <i class="bi bi-trash me-1"></i> Delete Selected (<span id="selected-sale-ledger-count">0</span>)
     </button>
-    <a href="{{ route('admin.sale-ledger.create') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle me-1"></i> Add Sale Entry
-    </a>
   </div>
 </div>
 

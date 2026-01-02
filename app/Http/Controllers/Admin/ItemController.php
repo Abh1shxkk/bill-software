@@ -483,12 +483,15 @@ class ItemController extends Controller
                     'name', 
                     'mrp', 
                     's_rate',
+                    'ws_rate',
+                    'pur_rate',
                     'hsn_code',
-                    'cgst_percent as cgst',
-                    'sgst_percent as sgst',
-                    'cess_percent as gst_cess',
+                    'cgst_percent',
+                    'sgst_percent',
+                    'cess_percent',
                     'packing',
                     'unit',
+                    'location',
                     'company_id'
                 )
                 ->with('company:id,name,short_name')
@@ -513,13 +516,17 @@ class ItemController extends Controller
                         'name' => $item->name,
                         'mrp' => $item->mrp,
                         's_rate' => $item->s_rate,
+                        'ws_rate' => $item->ws_rate,
+                        'pur_rate' => $item->pur_rate,
                         'hsn_code' => $item->hsn_code,
-                        'cgst' => $item->cgst,
-                        'sgst' => $item->sgst,
-                        'gst_cess' => $item->gst_cess,
+                        'cgst_percent' => $item->cgst_percent,
+                        'sgst_percent' => $item->sgst_percent,
+                        'cess_percent' => $item->cess_percent,
                         'packing' => $item->packing,
                         'unit' => $item->unit,
+                        'location' => $item->location,
                         'company_name' => $companyShortName,
+                        'company_short_name' => $companyShortName,
                         'total_qty' => $totalQty
                     ];
                 });
@@ -548,6 +555,7 @@ class ItemController extends Controller
                     'name', 
                     'mrp', 
                     's_rate',
+                    'ws_rate',
                     'pur_rate',
                     'hsn_code',
                     'cgst_percent',
@@ -596,6 +604,7 @@ class ItemController extends Controller
                         'name' => $item->name,
                         'mrp' => $item->mrp,
                         's_rate' => $item->s_rate,
+                        'ws_rate' => $item->ws_rate,
                         'pur_rate' => $item->pur_rate,
                         'hsn_code' => $item->hsn_code,
                         'cgst_percent' => $item->cgst_percent,
@@ -929,6 +938,99 @@ class ItemController extends Controller
                 'issued_free' => 0,
                 'type' => 'STOCK_TRANSFER_OUTGOING_RETURN',
                 'transaction_id' => $storItem->stock_transfer_outgoing_return_transaction_id,
+            ]);
+        }
+
+        // Get Stock Transfer Incoming Transactions (RECEIVED - items received from another branch)
+        $stockTransferIncomingItems = \App\Models\StockTransferIncomingTransactionItem::query()
+            ->whereHas('transaction', function ($query) use ($fromDate, $toDate, $supplierId) {
+                $query->whereDate('transaction_date', '>=', $fromDate)
+                    ->whereDate('transaction_date', '<=', $toDate)
+                    ->when($supplierId, function ($q) use ($supplierId) {
+                        return $q->where('supplier_id', $supplierId);
+                    });
+            })
+            ->where('item_id', $item->id)
+            ->with(['transaction', 'batch'])
+            ->get();
+
+        foreach ($stockTransferIncomingItems as $stiItem) {
+            $batchNo = $stiItem->batch_no;
+            if (empty($batchNo) && $stiItem->batch) {
+                $batchNo = $stiItem->batch->batch_no ?? '-';
+            }
+            
+            $transactions->push([
+                'trans_no' => 'STI/' . $stiItem->stock_transfer_incoming_transaction_id,
+                'date' => $stiItem->transaction->transaction_date,
+                'party_name' => $stiItem->transaction->supplier_name ?? '-',
+                'batch' => $batchNo ?: '-',
+                'received_qty' => $stiItem->qty, // Stock Transfer Incoming = received
+                'received_free' => $stiItem->f_qty ?? 0,
+                'issued_qty' => 0,
+                'issued_free' => 0,
+                'type' => 'STOCK_TRANSFER_INCOMING',
+                'transaction_id' => $stiItem->stock_transfer_incoming_transaction_id,
+            ]);
+        }
+
+        // Get Stock Transfer Incoming Return Transactions (ISSUED - items returned to sending branch)
+        $stockTransferIncomingReturnItems = \App\Models\StockTransferIncomingReturnTransactionItem::query()
+            ->whereHas('transaction', function ($query) use ($fromDate, $toDate) {
+                $query->whereDate('transaction_date', '>=', $fromDate)
+                    ->whereDate('transaction_date', '<=', $toDate);
+            })
+            ->where('item_id', $item->id)
+            ->with(['transaction', 'batch'])
+            ->get();
+
+        foreach ($stockTransferIncomingReturnItems as $stirItem) {
+            $batchNo = $stirItem->batch_no;
+            if (empty($batchNo) && $stirItem->batch) {
+                $batchNo = $stirItem->batch->batch_no ?? '-';
+            }
+            
+            $transactions->push([
+                'trans_no' => 'STIR/' . $stirItem->stock_transfer_incoming_return_transaction_id,
+                'date' => $stirItem->transaction->transaction_date,
+                'party_name' => $stirItem->transaction->name ?? '-',
+                'batch' => $batchNo ?: '-',
+                'received_qty' => 0,
+                'received_free' => 0,
+                'issued_qty' => $stirItem->qty, // Stock Transfer Incoming Return = issued (returned out)
+                'issued_free' => 0,
+                'type' => 'STOCK_TRANSFER_INCOMING_RETURN',
+                'transaction_id' => $stirItem->stock_transfer_incoming_return_transaction_id,
+            ]);
+        }
+
+        // Get Sample Issued Transactions (ISSUED - samples given out)
+        $sampleIssuedItems = \App\Models\SampleIssuedTransactionItem::query()
+            ->whereHas('sampleIssuedTransaction', function ($query) use ($fromDate, $toDate) {
+                $query->whereDate('transaction_date', '>=', $fromDate)
+                    ->whereDate('transaction_date', '<=', $toDate);
+            })
+            ->where('item_id', $item->id)
+            ->with(['sampleIssuedTransaction', 'batch'])
+            ->get();
+
+        foreach ($sampleIssuedItems as $siItem) {
+            $batchNo = $siItem->batch_no;
+            if (empty($batchNo) && $siItem->batch) {
+                $batchNo = $siItem->batch->batch_no ?? '-';
+            }
+            
+            $transactions->push([
+                'trans_no' => 'SI/' . $siItem->sample_issued_transaction_id,
+                'date' => $siItem->sampleIssuedTransaction->transaction_date,
+                'party_name' => $siItem->sampleIssuedTransaction->party_name ?? '-',
+                'batch' => $batchNo ?: '-',
+                'received_qty' => 0,
+                'received_free' => 0,
+                'issued_qty' => $siItem->qty, // Sample Issued = issued
+                'issued_free' => $siItem->free_qty ?? 0,
+                'type' => 'SAMPLE_ISSUED',
+                'transaction_id' => $siItem->sample_issued_transaction_id,
             ]);
         }
 

@@ -51,7 +51,12 @@ use App\Http\Controllers\Admin\StockTransferOutgoingReturnController;
 use App\Http\Controllers\Admin\StockTransferIncomingController;
 use App\Http\Controllers\Admin\StockTransferIncomingReturnController;
 use App\Http\Controllers\Admin\SampleIssuedController;
+use App\Http\Controllers\Admin\SampleReceivedController;
+use App\Http\Controllers\Admin\GodownBreakageExpiryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\SalesReportController;
+use App\Http\Controllers\Admin\PurchaseReportController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\ProfileController;
 
 // Auth routes
@@ -62,22 +67,34 @@ Route::post('/register', [AuthController::class, 'register'])->name('register.pe
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/', function () {
-    // Redirect logged-in users to their dashboard
+    // All logged-in users go to admin dashboard
     if (auth()->check()) {
-        $role = auth()->user()->role;
-        return $role === 'admin' 
-            ? redirect('/admin/dashboard') 
-            : redirect('/user/dashboard');
+        return redirect('/admin/dashboard');
     }
     return view('auth.login');
 });
 
 // Admin
-Route::middleware(['admin'])->group(function () {
+Route::middleware(['admin', 'module.access'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::prefix('admin')->name('admin.')->group(function () {
+        // User Management Routes (Admin Only - handled by module.access middleware)
+        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('users', [UserController::class, 'store'])->name('users.store');
+        Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+        Route::get('users/{user}/permissions', [UserController::class, 'permissions'])->name('users.permissions');
+        Route::put('users/{user}/permissions', [UserController::class, 'updatePermissions'])->name('users.permissions.update');
+        Route::post('users/multiple-delete', [UserController::class, 'multipleDelete'])->name('users.multiple-delete');
+        
         // Company routes - MUST be before resource route
         Route::post('companies/multiple-delete', [CompanyController::class, 'multipleDelete'])->name('companies.multiple-delete');
+        Route::get('companies/by-code/{code}', [CompanyController::class, 'getByCode'])->name('companies.by-code');
+        Route::get('companies/get-all', [CompanyController::class, 'getAll'])->name('companies.get-all');
         
         Route::resource('companies', CompanyController::class);
         
@@ -174,6 +191,223 @@ Route::middleware(['admin'])->group(function () {
         Route::get('batches/{batch}/stock-ledger', [BatchController::class, 'stockLedger'])->name('batches.stock-ledger');
         Route::get('batches/expiry/report', [BatchController::class, 'expiryReport'])->name('batches.expiry-report');
         Route::get('api/item-batches/{itemId}', [BatchController::class, 'getItemBatches'])->name('api.item-batches');
+        
+        // Sales Reports
+        Route::get('reports/sales', [SalesReportController::class, 'index'])->name('reports.sales');
+        Route::get('reports/sales/sales-book', [SalesReportController::class, 'salesBook'])->name('reports.sales.sales-book');
+        Route::get('reports/sales/sales-book-gstr', [SalesReportController::class, 'salesBookGstr'])->name('reports.sales.sales-book-gstr');
+        Route::get('reports/sales/sales-book-extra-charges', [SalesReportController::class, 'salesBookExtraCharges'])->name('reports.sales.sales-book-extra-charges');
+        Route::get('reports/sales/sales-book-tcs', [SalesReportController::class, 'salesBookTcs'])->name('reports.sales.sales-book-tcs');
+        Route::get('reports/sales/tcs-eligibility', [SalesReportController::class, 'tcsEligibility'])->name('reports.sales.tcs-eligibility');
+        Route::get('reports/sales/tds-input', [SalesReportController::class, 'tdsInput'])->name('reports.sales.tds-input');
+        Route::get('reports/sales/sales-book-party-wise', [SalesReportController::class, 'salesBookPartyWise'])->name('reports.sales.sales-book-party-wise');
+        Route::get('reports/sales/day-sales-summary-item-wise', [SalesReportController::class, 'daySalesSummaryItemWise'])->name('reports.sales.day-sales-summary-item-wise');
+        Route::get('reports/sales/sales-summary', [SalesReportController::class, 'salesSummary'])->name('reports.sales.sales-summary');
+        Route::get('reports/sales/sales-bills-printing', [SalesReportController::class, 'salesBillsPrinting'])->name('reports.sales.sales-bills-printing');
+        Route::get('reports/sales/sale-sheet', [SalesReportController::class, 'saleSheet'])->name('reports.sales.sale-sheet');
+        Route::get('reports/sales/dispatch-sheet', [SalesReportController::class, 'dispatchSheet'])->name('reports.sales.dispatch-sheet');
+        Route::get('reports/sales/sale-return-book-item-wise', [SalesReportController::class, 'saleReturnBookItemWise'])->name('reports.sales.sale-return-book-item-wise');
+        Route::get('reports/sales/local-central-sale-register', [SalesReportController::class, 'localCentralSaleRegister'])->name('reports.sales.local-central-sale-register');
+        Route::get('reports/sales/sale-challan-reports', [SalesReportController::class, 'saleChallanReports'])->name('reports.sales.sale-challan-reports');
+        Route::get('reports/sales/sale-challan-book', [SalesReportController::class, 'saleChallanBook'])->name('reports.sales.sale-challan-book');
+        Route::get('reports/sales/pending-challans', [SalesReportController::class, 'pendingChallans'])->name('reports.sales.pending-challans');
+        Route::get('reports/sales/sales-stock-summary', [SalesReportController::class, 'salesStockSummary'])->name('reports.sales.sales-stock-summary');
+        Route::get('reports/sales/customer-visit-status', [SalesReportController::class, 'customerVisitStatus'])->name('reports.sales.customer-visit-status');
+        Route::get('reports/sales/shortage-report', [SalesReportController::class, 'shortageReport'])->name('reports.sales.shortage-report');
+        Route::get('reports/sales/sale-return-list', [SalesReportController::class, 'saleReturnList'])->name('reports.sales.sale-return-list');
+        
+        // Miscellaneous Sales Analysis Reports
+        // Salesman Wise Sales Sub-Options
+        Route::get('reports/sales/salesman-wise-sales', [SalesReportController::class, 'salesmanWiseSales'])->name('reports.sales.salesman-wise-sales');
+        Route::get('reports/sales/salesman-wise-sales/all-salesman', [SalesReportController::class, 'salesmanWiseSalesAllSalesman'])->name('reports.sales.salesman-wise-sales.all-salesman');
+        Route::get('reports/sales/salesman-wise-sales/bill-wise', [SalesReportController::class, 'salesmanWiseSalesBillWise'])->name('reports.sales.salesman-wise-sales.bill-wise');
+        Route::get('reports/sales/salesman-wise-sales/customer-wise', [SalesReportController::class, 'salesmanWiseSalesCustomerWise'])->name('reports.sales.salesman-wise-sales.customer-wise');
+        Route::get('reports/sales/salesman-wise-sales/item-wise', [SalesReportController::class, 'salesmanWiseSalesItemWise'])->name('reports.sales.salesman-wise-sales.item-wise');
+        Route::get('reports/sales/salesman-wise-sales/company-wise', [SalesReportController::class, 'salesmanWiseSalesCompanyWise'])->name('reports.sales.salesman-wise-sales.company-wise');
+        Route::get('reports/sales/salesman-wise-sales/area-wise', [SalesReportController::class, 'salesmanWiseSalesAreaWise'])->name('reports.sales.salesman-wise-sales.area-wise');
+        Route::get('reports/sales/salesman-wise-sales/route-wise', [SalesReportController::class, 'salesmanWiseSalesRouteWise'])->name('reports.sales.salesman-wise-sales.route-wise');
+        Route::get('reports/sales/salesman-wise-sales/state-wise', [SalesReportController::class, 'salesmanWiseSalesStateWise'])->name('reports.sales.salesman-wise-sales.state-wise');
+        Route::get('reports/sales/salesman-wise-sales/salesman-wise', [SalesReportController::class, 'salesmanWiseSalesSalesmanWise'])->name('reports.sales.salesman-wise-sales.salesman-wise');
+        Route::get('reports/sales/salesman-wise-sales/salesman-item-wise', [SalesReportController::class, 'salesmanWiseSalesSalesmanItemWise'])->name('reports.sales.salesman-wise-sales.salesman-item-wise');
+        Route::get('reports/sales/salesman-wise-sales/item-invoice-wise', [SalesReportController::class, 'salesmanWiseSalesItemInvoiceWise'])->name('reports.sales.salesman-wise-sales.item-invoice-wise');
+        Route::get('reports/sales/salesman-wise-sales/invoice-item-wise', [SalesReportController::class, 'salesmanWiseSalesInvoiceItemWise'])->name('reports.sales.salesman-wise-sales.invoice-item-wise');
+        Route::get('reports/sales/salesman-wise-sales/month-wise-summary', [SalesReportController::class, 'salesmanWiseSalesMonthWiseSummary'])->name('reports.sales.salesman-wise-sales.month-wise-summary');
+        Route::get('reports/sales/salesman-wise-sales/sale-book', [SalesReportController::class, 'salesmanWiseSalesSaleBook'])->name('reports.sales.salesman-wise-sales.sale-book');
+        Route::get('reports/sales/salesman-wise-sales/monthly-target', [SalesReportController::class, 'salesmanWiseSalesMonthlyTarget'])->name('reports.sales.salesman-wise-sales.monthly-target');
+        
+        Route::get('reports/sales/area-wise-sale', [SalesReportController::class, 'areaWiseSale'])->name('reports.sales.area-wise-sale');
+        
+        // Area Wise Sales - Separate Routes
+        Route::get('reports/sales/area-wise-sales/all-area', [SalesReportController::class, 'areaWiseSalesAllArea'])->name('reports.sales.area-wise-sales.all-area');
+        Route::get('reports/sales/area-wise-sales/bill-wise', [SalesReportController::class, 'areaWiseSalesBillWise'])->name('reports.sales.area-wise-sales.bill-wise');
+        Route::get('reports/sales/area-wise-sales/customer-wise', [SalesReportController::class, 'areaWiseSalesCustomerWise'])->name('reports.sales.area-wise-sales.customer-wise');
+        Route::get('reports/sales/area-wise-sales/item-wise', [SalesReportController::class, 'areaWiseSalesItemWise'])->name('reports.sales.area-wise-sales.item-wise');
+        Route::get('reports/sales/area-wise-sales/company-wise', [SalesReportController::class, 'areaWiseSalesCompanyWise'])->name('reports.sales.area-wise-sales.company-wise');
+        Route::get('reports/sales/area-wise-sales/salesman-wise', [SalesReportController::class, 'areaWiseSalesSalesmanWise'])->name('reports.sales.area-wise-sales.salesman-wise');
+        Route::get('reports/sales/area-wise-sales/route-wise', [SalesReportController::class, 'areaWiseSalesRouteWise'])->name('reports.sales.area-wise-sales.route-wise');
+        Route::get('reports/sales/area-wise-sales/state-wise', [SalesReportController::class, 'areaWiseSalesStateWise'])->name('reports.sales.area-wise-sales.state-wise');
+        Route::get('reports/sales/area-wise-sales/item-invoice-wise', [SalesReportController::class, 'areaWiseSalesItemInvoiceWise'])->name('reports.sales.area-wise-sales.item-invoice-wise');
+        Route::get('reports/sales/area-wise-sales/invoice-item-wise', [SalesReportController::class, 'areaWiseSalesInvoiceItemWise'])->name('reports.sales.area-wise-sales.invoice-item-wise');
+        Route::get('reports/sales/area-wise-sales/sale-book', [SalesReportController::class, 'areaWiseSalesSaleBook'])->name('reports.sales.area-wise-sales.sale-book');
+        Route::get('reports/sales/area-wise-sales/month-wise/area-wise', [SalesReportController::class, 'areaWiseSalesMonthWiseAreaWise'])->name('reports.sales.area-wise-sales.month-wise.area-wise');
+        Route::get('reports/sales/area-wise-sales/month-wise/area-item-wise', [SalesReportController::class, 'areaWiseSalesMonthWiseAreaItemWise'])->name('reports.sales.area-wise-sales.month-wise.area-item-wise');
+        
+        Route::get('reports/sales/route-wise-sale', [SalesReportController::class, 'routeWiseSale'])->name('reports.sales.route-wise-sale');
+        
+        // Route Wise Sale - Separate Routes
+        Route::get('reports/sales/route-wise-sale/all-route', [SalesReportController::class, 'routeWiseSaleAllRoute'])->name('reports.sales.route-wise-sale.all-route');
+        Route::get('reports/sales/route-wise-sale/bill-wise', [SalesReportController::class, 'routeWiseSaleBillWise'])->name('reports.sales.route-wise-sale.bill-wise');
+        Route::get('reports/sales/route-wise-sale/customer-wise', [SalesReportController::class, 'routeWiseSaleCustomerWise'])->name('reports.sales.route-wise-sale.customer-wise');
+        Route::get('reports/sales/route-wise-sale/item-wise', [SalesReportController::class, 'routeWiseSaleItemWise'])->name('reports.sales.route-wise-sale.item-wise');
+        Route::get('reports/sales/route-wise-sale/company-wise', [SalesReportController::class, 'routeWiseSaleCompanyWise'])->name('reports.sales.route-wise-sale.company-wise');
+        Route::get('reports/sales/route-wise-sale/salesman-wise', [SalesReportController::class, 'routeWiseSaleSalesmanWise'])->name('reports.sales.route-wise-sale.salesman-wise');
+        Route::get('reports/sales/route-wise-sale/area-wise', [SalesReportController::class, 'routeWiseSaleAreaWise'])->name('reports.sales.route-wise-sale.area-wise');
+        Route::get('reports/sales/route-wise-sale/state-wise', [SalesReportController::class, 'routeWiseSaleStateWise'])->name('reports.sales.route-wise-sale.state-wise');
+        Route::get('reports/sales/route-wise-sale/item-invoice-wise', [SalesReportController::class, 'routeWiseSaleItemInvoiceWise'])->name('reports.sales.route-wise-sale.item-invoice-wise');
+        Route::get('reports/sales/route-wise-sale/invoice-item-wise', [SalesReportController::class, 'routeWiseSaleInvoiceItemWise'])->name('reports.sales.route-wise-sale.invoice-item-wise');
+        Route::get('reports/sales/route-wise-sale/sale-book', [SalesReportController::class, 'routeWiseSaleSaleBook'])->name('reports.sales.route-wise-sale.sale-book');
+        Route::get('reports/sales/route-wise-sale/month-wise/route-wise', [SalesReportController::class, 'routeWiseSaleMonthWiseRouteWise'])->name('reports.sales.route-wise-sale.month-wise.route-wise');
+        Route::get('reports/sales/route-wise-sale/month-wise/route-item-wise', [SalesReportController::class, 'routeWiseSaleMonthWiseRouteItemWise'])->name('reports.sales.route-wise-sale.month-wise.route-item-wise');
+        
+        Route::get('reports/sales/state-wise-sale', [SalesReportController::class, 'stateWiseSale'])->name('reports.sales.state-wise-sale');
+        
+        // State Wise Sale - Separate Routes
+        Route::get('reports/sales/state-wise-sale/all-state', [SalesReportController::class, 'stateWiseSaleAllState'])->name('reports.sales.state-wise-sale.all-state');
+        Route::get('reports/sales/state-wise-sale/bill-wise', [SalesReportController::class, 'stateWiseSaleBillWise'])->name('reports.sales.state-wise-sale.bill-wise');
+        Route::get('reports/sales/state-wise-sale/customer-wise', [SalesReportController::class, 'stateWiseSaleCustomerWise'])->name('reports.sales.state-wise-sale.customer-wise');
+        Route::get('reports/sales/state-wise-sale/item-wise', [SalesReportController::class, 'stateWiseSaleItemWise'])->name('reports.sales.state-wise-sale.item-wise');
+        Route::get('reports/sales/state-wise-sale/company-wise', [SalesReportController::class, 'stateWiseSaleCompanyWise'])->name('reports.sales.state-wise-sale.company-wise');
+        Route::get('reports/sales/state-wise-sale/salesman-wise', [SalesReportController::class, 'stateWiseSaleSalesmanWise'])->name('reports.sales.state-wise-sale.salesman-wise');
+        Route::get('reports/sales/state-wise-sale/area-wise', [SalesReportController::class, 'stateWiseSaleAreaWise'])->name('reports.sales.state-wise-sale.area-wise');
+        Route::get('reports/sales/state-wise-sale/route-wise', [SalesReportController::class, 'stateWiseSaleRouteWise'])->name('reports.sales.state-wise-sale.route-wise');
+        Route::get('reports/sales/state-wise-sale/invoice-item-wise', [SalesReportController::class, 'stateWiseSaleInvoiceItemWise'])->name('reports.sales.state-wise-sale.invoice-item-wise');
+        Route::get('reports/sales/state-wise-sale/month-wise/state-wise', [SalesReportController::class, 'stateWiseSaleMonthWiseState'])->name('reports.sales.state-wise-sale.month-wise.state-wise');
+        Route::get('reports/sales/state-wise-sale/month-wise/state-item-wise', [SalesReportController::class, 'stateWiseSaleMonthWiseStateItem'])->name('reports.sales.state-wise-sale.month-wise.state-item-wise');
+        
+        Route::get('reports/sales/customer-wise-sale', [SalesReportController::class, 'customerWiseSale'])->name('reports.sales.customer-wise-sale');
+        
+        // Customer Wise Sale - Separate Routes
+        Route::get('reports/sales/customer-wise-sale/all-customer', [SalesReportController::class, 'customerWiseSaleAllCustomer'])->name('reports.sales.customer-wise-sale.all-customer');
+        Route::get('reports/sales/customer-wise-sale/bill-wise', [SalesReportController::class, 'customerWiseSaleBillWise'])->name('reports.sales.customer-wise-sale.bill-wise');
+        Route::get('reports/sales/customer-wise-sale/item-wise', [SalesReportController::class, 'customerWiseSaleItemWise'])->name('reports.sales.customer-wise-sale.item-wise');
+        Route::get('reports/sales/customer-wise-sale/company-wise', [SalesReportController::class, 'customerWiseSaleCompanyWise'])->name('reports.sales.customer-wise-sale.company-wise');
+        Route::get('reports/sales/customer-wise-sale/item-invoice-wise', [SalesReportController::class, 'customerWiseSaleItemInvoiceWise'])->name('reports.sales.customer-wise-sale.item-invoice-wise');
+        Route::get('reports/sales/customer-wise-sale/invoice-item-wise', [SalesReportController::class, 'customerWiseSaleInvoiceItemWise'])->name('reports.sales.customer-wise-sale.invoice-item-wise');
+        Route::get('reports/sales/customer-wise-sale/quantity-wise-summary', [SalesReportController::class, 'customerWiseSaleQtySummary'])->name('reports.sales.customer-wise-sale.quantity-wise-summary');
+        Route::get('reports/sales/customer-wise-sale/party-billwise-volume-discount', [SalesReportController::class, 'customerWiseSalePartyVolumeDiscount'])->name('reports.sales.customer-wise-sale.party-billwise-volume-discount');
+        Route::get('reports/sales/customer-wise-sale/sale-with-area', [SalesReportController::class, 'customerWiseSaleWithArea'])->name('reports.sales.customer-wise-sale.sale-with-area');
+        Route::get('reports/sales/customer-wise-sale/month-wise/customer-wise', [SalesReportController::class, 'customerWiseSaleMonthWiseCustomer'])->name('reports.sales.customer-wise-sale.month-wise.customer-wise');
+        Route::get('reports/sales/customer-wise-sale/month-wise/customer-item-wise', [SalesReportController::class, 'customerWiseSaleMonthWiseCustomerItem'])->name('reports.sales.customer-wise-sale.month-wise.customer-item-wise');
+
+        Route::get('reports/sales/company-wise-sales', [SalesReportController::class, 'companyWiseSales'])->name('reports.sales.company-wise-sales');
+        
+        // Company Wise Sales - Separate Routes
+        Route::get('reports/sales/company-wise-sales/all-company', [SalesReportController::class, 'companyWiseSalesAllCompany'])->name('reports.sales.company-wise-sales.all-company');
+        Route::get('reports/sales/company-wise-sales/bill-wise', [SalesReportController::class, 'companyWiseSalesBillWise'])->name('reports.sales.company-wise-sales.bill-wise');
+        Route::get('reports/sales/company-wise-sales/item-wise', [SalesReportController::class, 'companyWiseSalesItemWise'])->name('reports.sales.company-wise-sales.item-wise');
+        Route::get('reports/sales/company-wise-sales/salesman-wise', [SalesReportController::class, 'companyWiseSalesSalesmanWise'])->name('reports.sales.company-wise-sales.salesman-wise');
+        Route::get('reports/sales/company-wise-sales/area-wise', [SalesReportController::class, 'companyWiseSalesAreaWise'])->name('reports.sales.company-wise-sales.area-wise');
+        Route::get('reports/sales/company-wise-sales/route-wise', [SalesReportController::class, 'companyWiseSalesRouteWise'])->name('reports.sales.company-wise-sales.route-wise');
+        Route::get('reports/sales/company-wise-sales/customer-wise', [SalesReportController::class, 'companyWiseSalesCustomerWise'])->name('reports.sales.company-wise-sales.customer-wise');
+        Route::get('reports/sales/company-wise-sales/customer-item-invoice-wise', [SalesReportController::class, 'companyWiseSalesCustomerItemInvoiceWise'])->name('reports.sales.company-wise-sales.customer-item-invoice-wise');
+        Route::get('reports/sales/company-wise-sales/customer-item-wise', [SalesReportController::class, 'companyWiseSalesCustomerItemWise'])->name('reports.sales.company-wise-sales.customer-item-wise');
+        Route::get('reports/sales/company-wise-sales/month-wise/company-item-wise', [SalesReportController::class, 'companyWiseSalesMonthWiseCompanyItem'])->name('reports.sales.company-wise-sales.month-wise.company-item-wise');
+        Route::get('reports/sales/company-wise-sales/month-wise/company-customer-wise', [SalesReportController::class, 'companyWiseSalesMonthWiseCompanyCustomer'])->name('reports.sales.company-wise-sales.month-wise.company-customer-wise');
+
+        Route::get('reports/sales/item-wise-sales', [SalesReportController::class, 'itemWiseSales'])->name('reports.sales.item-wise-sales');
+        
+        // Item Wise Sales - Separate Routes
+        Route::get('reports/sales/item-wise-sales/all-item-sale', [SalesReportController::class, 'itemWiseSalesAllItemSale'])->name('reports.sales.item-wise-sales.all-item-sale');
+        Route::get('reports/sales/item-wise-sales/all-item-summary', [SalesReportController::class, 'itemWiseSalesAllItemSummary'])->name('reports.sales.item-wise-sales.all-item-summary');
+        Route::get('reports/sales/item-wise-sales/bill-wise', [SalesReportController::class, 'itemWiseSalesBillWise'])->name('reports.sales.item-wise-sales.bill-wise');
+        Route::get('reports/sales/item-wise-sales/salesman-wise', [SalesReportController::class, 'itemWiseSalesSalesmanWise'])->name('reports.sales.item-wise-sales.salesman-wise');
+        Route::get('reports/sales/item-wise-sales/area-wise', [SalesReportController::class, 'itemWiseSalesAreaWise'])->name('reports.sales.item-wise-sales.area-wise');
+        Route::get('reports/sales/item-wise-sales/area-wise-matrix', [SalesReportController::class, 'itemWiseSalesAreaWiseMatrix'])->name('reports.sales.item-wise-sales.area-wise-matrix');
+        Route::get('reports/sales/item-wise-sales/route-wise', [SalesReportController::class, 'itemWiseSalesRouteWise'])->name('reports.sales.item-wise-sales.route-wise');
+        Route::get('reports/sales/item-wise-sales/state-wise', [SalesReportController::class, 'itemWiseSalesStateWise'])->name('reports.sales.item-wise-sales.state-wise');
+        Route::get('reports/sales/item-wise-sales/customer-wise', [SalesReportController::class, 'itemWiseSalesCustomerWise'])->name('reports.sales.item-wise-sales.customer-wise');
+        Route::get('reports/sales/item-wise-sales/below-cost-item-sale', [SalesReportController::class, 'itemWiseSalesBelowCostItemSale'])->name('reports.sales.item-wise-sales.below-cost-item-sale');
+
+        Route::get('reports/sales/discount-wise-sales', [SalesReportController::class, 'discountWiseSales'])->name('reports.sales.discount-wise-sales');
+        
+        // Discount Wise Sales - Separate Routes
+        Route::get('reports/sales/discount-wise-sales/all-discount', [SalesReportController::class, 'discountWiseSalesAllDiscount'])->name('reports.sales.discount-wise-sales.all-discount');
+        Route::get('reports/sales/discount-wise-sales/item-wise', [SalesReportController::class, 'discountWiseSalesItemWise'])->name('reports.sales.discount-wise-sales.item-wise');
+        Route::get('reports/sales/discount-wise-sales/item-wise-invoice-wise', [SalesReportController::class, 'discountWiseSalesItemWiseInvoiceWise'])->name('reports.sales.discount-wise-sales.item-wise-invoice-wise');
+
+        // Other Sales Reports
+        Route::get('reports/sales/salesman-level-sale', [SalesReportController::class, 'salesmanLevelSale'])->name('reports.sales.salesman-level-sale');
+        Route::get('reports/sales/scheme-issued', [SalesReportController::class, 'schemeIssued'])->name('reports.sales.scheme-issued');
+        Route::get('reports/sales/mrp-wise-sales', [SalesReportController::class, 'mrpWiseSales'])->name('reports.sales.mrp-wise-sales');
+        Route::get('reports/sales/display-amount-report', [SalesReportController::class, 'displayAmountReport'])->name('reports.sales.display-amount-report');
+        Route::get('reports/sales/cancelled-invoices', [SalesReportController::class, 'cancelledInvoices'])->name('reports.sales.cancelled-invoices');
+        Route::get('reports/sales/missing-invoices', [SalesReportController::class, 'missingInvoices'])->name('reports.sales.missing-invoices');
+        
+        Route::get('reports/sales/export-csv', [SalesReportController::class, 'exportCsv'])->name('reports.sales.export-csv');
+        Route::get('reports/sales/export-pdf', [SalesReportController::class, 'exportPdf'])->name('reports.sales.export-pdf');
+        Route::get('reports/sales/chart-data', [SalesReportController::class, 'getChartData'])->name('reports.sales.chart-data');
+        
+        // Purchase Reports - Main Index
+        Route::get('reports/purchase', [PurchaseReportController::class, 'index'])->name('reports.purchase');
+        Route::get('reports/purchase/export-csv', [PurchaseReportController::class, 'exportCsv'])->name('reports.purchase.export-csv');
+        Route::get('reports/purchase/export-pdf', [PurchaseReportController::class, 'exportPdf'])->name('reports.purchase.export-pdf');
+        
+        // Purchase Reports - Individual Reports
+        Route::get('reports/purchase/purchase-book', [PurchaseReportController::class, 'purchaseBook'])->name('reports.purchase.purchase-book');
+        Route::get('reports/purchase/purchase-book-gstr', [PurchaseReportController::class, 'purchaseBookGstr'])->name('reports.purchase.purchase-book-gstr');
+        Route::get('reports/purchase/purchase-book-tcs', [PurchaseReportController::class, 'purchaseBookTcs'])->name('reports.purchase.purchase-book-tcs');
+        Route::get('reports/purchase/tds-output', [PurchaseReportController::class, 'tdsOutput'])->name('reports.purchase.tds-output');
+        Route::get('reports/purchase/purchase-book-sale-value', [PurchaseReportController::class, 'purchaseBookSaleValue'])->name('reports.purchase.purchase-book-sale-value');
+        Route::get('reports/purchase/party-wise-purchase', [PurchaseReportController::class, 'partyWisePurchase'])->name('reports.purchase.party-wise-purchase');
+        Route::get('reports/purchase/monthly-purchase-summary', [PurchaseReportController::class, 'monthlyPurchaseSummary'])->name('reports.purchase.monthly-purchase-summary');
+        Route::get('reports/purchase/debit-credit-note', [PurchaseReportController::class, 'debitCreditNote'])->name('reports.purchase.debit-credit-note');
+        Route::get('reports/purchase/day-purchase-summary', [PurchaseReportController::class, 'dayPurchaseSummary'])->name('reports.purchase.day-purchase-summary');
+        Route::get('reports/purchase/purchase-return-item-wise', [PurchaseReportController::class, 'purchaseReturnItemWise'])->name('reports.purchase.purchase-return-item-wise');
+        Route::get('reports/purchase/local-central-register', [PurchaseReportController::class, 'localCentralRegister'])->name('reports.purchase.local-central-register');
+        Route::get('reports/purchase/purchase-voucher-detail', [PurchaseReportController::class, 'purchaseVoucherDetail'])->name('reports.purchase.purchase-voucher-detail');
+        Route::get('reports/purchase/short-expiry-received', [PurchaseReportController::class, 'shortExpiryReceived'])->name('reports.purchase.short-expiry-received');
+        Route::get('reports/purchase/purchase-return-list', [PurchaseReportController::class, 'purchaseReturnList'])->name('reports.purchase.purchase-return-list');
+        
+        // GST SET OFF Reports
+        Route::get('reports/purchase/gst-set-off', [PurchaseReportController::class, 'gstSetOff'])->name('reports.purchase.gst-set-off');
+        Route::get('reports/purchase/gst-set-off-gstr', [PurchaseReportController::class, 'gstSetOffGstr'])->name('reports.purchase.gst-set-off-gstr');
+        
+        // Purchase Challan Reports
+        Route::get('reports/purchase/challan/purchase-challan-book', [PurchaseReportController::class, 'purchaseChallanBook'])->name('reports.purchase.challan.purchase-challan-book');
+        Route::get('reports/purchase/challan/pending-challans', [PurchaseReportController::class, 'pendingChallans'])->name('reports.purchase.challan.pending-challans');
+        
+        // Miscellaneous Purchase Analysis
+        Route::get('reports/purchase/misc/purchase-with-item-details', [PurchaseReportController::class, 'purchaseWithItemDetails'])->name('reports.purchase.misc.purchase-with-item-details');
+        
+        // Supplier Wise Purchase Submenu
+        Route::get('reports/purchase/misc/supplier/all-supplier', [PurchaseReportController::class, 'supplierAllSupplier'])->name('reports.purchase.misc.supplier.all-supplier');
+        Route::get('reports/purchase/misc/supplier/bill-wise', [PurchaseReportController::class, 'supplierBillWise'])->name('reports.purchase.misc.supplier.bill-wise');
+        Route::get('reports/purchase/misc/supplier/item-wise', [PurchaseReportController::class, 'supplierItemWise'])->name('reports.purchase.misc.supplier.item-wise');
+        Route::get('reports/purchase/misc/supplier/item-invoice-wise', [PurchaseReportController::class, 'supplierItemInvoiceWise'])->name('reports.purchase.misc.supplier.item-invoice-wise');
+        Route::get('reports/purchase/misc/supplier/invoice-item-wise', [PurchaseReportController::class, 'supplierInvoiceItemWise'])->name('reports.purchase.misc.supplier.invoice-item-wise');
+
+        // Company Wise Purchase Submenu
+        Route::get('reports/purchase/misc/company/all-company', [PurchaseReportController::class, 'companyAllCompany'])->name('reports.purchase.misc.company.all-company');
+        Route::get('reports/purchase/misc/company/item-wise', [PurchaseReportController::class, 'companyItemWise'])->name('reports.purchase.misc.company.item-wise');
+        Route::get('reports/purchase/misc/company/party-wise', [PurchaseReportController::class, 'companyPartyWise'])->name('reports.purchase.misc.company.party-wise');
+
+        // Item Wise Purchase Submenu
+        Route::get('reports/purchase/misc/item/bill-wise', [PurchaseReportController::class, 'itemBillWise'])->name('reports.purchase.misc.item.bill-wise');
+        Route::get('reports/purchase/misc/item/all-item-purchase', [PurchaseReportController::class, 'itemAllItemPurchase'])->name('reports.purchase.misc.item.all-item-purchase');
+        
+        // Schemed Received Submenu
+        Route::get('reports/purchase/misc/schemed/free-schemed', [PurchaseReportController::class, 'schemedFreeSchemed'])->name('reports.purchase.misc.schemed.free-schemed');
+        Route::get('reports/purchase/misc/schemed/half-schemed', [PurchaseReportController::class, 'schemedHalfSchemed'])->name('reports.purchase.misc.schemed.half-schemed');
+        Route::get('reports/purchase/misc/schemed/free-without-qty', [PurchaseReportController::class, 'schemedFreeWithoutQty'])->name('reports.purchase.misc.schemed.free-without-qty');
+
+        // Other Purchase Reports
+        Route::get('reports/purchase/other/supplier-visit-report', [PurchaseReportController::class, 'supplierVisitReport'])->name('reports.purchase.other.supplier-visit-report');
+        Route::get('reports/purchase/other/supplier-wise-companies', [PurchaseReportController::class, 'supplierWiseCompanies'])->name('reports.purchase.other.supplier-wise-companies');
+        Route::get('reports/purchase/other/purchase-book-item-details', [PurchaseReportController::class, 'purchaseBookItemDetails'])->name('reports.purchase.other.purchase-book-item-details');
+        Route::get('reports/purchase/other/central-purchase-local-value', [PurchaseReportController::class, 'centralPurchaseLocalValue'])->name('reports.purchase.other.central-purchase-local-value');
+        Route::get('reports/purchase/other/party-wise-all-purchase-details', [PurchaseReportController::class, 'partyWiseAllPurchaseDetails'])->name('reports.purchase.other.party-wise-all-purchase-details');
+        Route::get('reports/purchase/other/register-schedule-h1-drugs', [PurchaseReportController::class, 'registerScheduleH1Drugs'])->name('reports.purchase.other.register-schedule-h1-drugs');
+        
         Route::get('api/verify-batch-supplier', [PurchaseReturnController::class, 'verifyBatchSupplier'])->name('api.verify-batch-supplier');
         Route::get('api/party-details/{type}/{id}', [ItemController::class, 'getPartyDetails'])->name('api.party-details');
         
@@ -387,12 +621,37 @@ Route::middleware(['admin'])->group(function () {
         Route::get('sample-issued/get-items', [SampleIssuedController::class, 'getItems'])->name('sample-issued.getItems');
         Route::get('sample-issued/load-by-trn-no', [SampleIssuedController::class, 'loadByTrnNo'])->name('sample-issued.loadByTrnNo');
         Route::get('sample-issued/get-party-list', [SampleIssuedController::class, 'getPartyList'])->name('sample-issued.getPartyList');
+        Route::get('sample-issued/get-past-invoices', [SampleIssuedController::class, 'getPastInvoices'])->name('sample-issued.getPastInvoices');
+        Route::get('sample-issued/modification', [SampleIssuedController::class, 'modification'])->name('sample-issued.modification');
         Route::get('sample-issued/{id}', [SampleIssuedController::class, 'show'])->name('sample-issued.show');
         Route::get('sample-issued/{id}/edit', [SampleIssuedController::class, 'edit'])->name('sample-issued.edit');
         Route::put('sample-issued/{id}', [SampleIssuedController::class, 'update'])->name('sample-issued.update');
         Route::delete('sample-issued/{id}', [SampleIssuedController::class, 'destroy'])->name('sample-issued.destroy');
-        Route::get('sample-issued-modification', [SampleIssuedController::class, 'modification'])->name('sample-issued.modification');
-        Route::get('sample-issued/get-past-invoices', [SampleIssuedController::class, 'getPastInvoices'])->name('sample-issued.getPastInvoices');
+        
+        // Sample Received Routes
+        Route::get('sample-received', [SampleReceivedController::class, 'index'])->name('sample-received.index');
+        Route::get('sample-received/create', [SampleReceivedController::class, 'create'])->name('sample-received.create');
+        Route::post('sample-received', [SampleReceivedController::class, 'store'])->name('sample-received.store');
+        Route::get('sample-received/get-items', [SampleReceivedController::class, 'getItems'])->name('sample-received.getItems');
+        Route::get('sample-received/load-by-trn-no', [SampleReceivedController::class, 'loadByTrnNo'])->name('sample-received.loadByTrnNo');
+        Route::get('sample-received/get-party-list', [SampleReceivedController::class, 'getPartyList'])->name('sample-received.getPartyList');
+        Route::get('sample-received/get-past-invoices', [SampleReceivedController::class, 'getPastInvoices'])->name('sample-received.getPastInvoices');
+        Route::get('sample-received-modification', [SampleReceivedController::class, 'modification'])->name('sample-received.modification');
+        Route::get('sample-received/{id}', [SampleReceivedController::class, 'show'])->name('sample-received.show');
+        Route::get('sample-received/{id}/edit', [SampleReceivedController::class, 'edit'])->name('sample-received.edit');
+        Route::put('sample-received/{id}', [SampleReceivedController::class, 'update'])->name('sample-received.update');
+        Route::delete('sample-received/{id}', [SampleReceivedController::class, 'destroy'])->name('sample-received.destroy');
+        
+        // Godown Breakage/Expiry Routes
+        Route::get('godown-breakage-expiry', [GodownBreakageExpiryController::class, 'index'])->name('godown-breakage-expiry.index');
+        Route::get('godown-breakage-expiry/create', [GodownBreakageExpiryController::class, 'create'])->name('godown-breakage-expiry.create');
+        Route::post('godown-breakage-expiry', [GodownBreakageExpiryController::class, 'store'])->name('godown-breakage-expiry.store');
+        Route::get('godown-breakage-expiry/get-items', [GodownBreakageExpiryController::class, 'getItems'])->name('godown-breakage-expiry.getItems');
+        Route::get('godown-breakage-expiry/get-past-invoices', [GodownBreakageExpiryController::class, 'getPastInvoices'])->name('godown-breakage-expiry.getPastInvoices');
+        Route::get('godown-breakage-expiry-modification', [GodownBreakageExpiryController::class, 'modification'])->name('godown-breakage-expiry.modification');
+        Route::get('godown-breakage-expiry/{id}', [GodownBreakageExpiryController::class, 'show'])->name('godown-breakage-expiry.show');
+        Route::put('godown-breakage-expiry/{id}', [GodownBreakageExpiryController::class, 'update'])->name('godown-breakage-expiry.update');
+        Route::delete('godown-breakage-expiry/{id}', [GodownBreakageExpiryController::class, 'destroy'])->name('godown-breakage-expiry.destroy');
         
         // Purchase Return Routes
         Route::get('purchase-return', [PurchaseReturnController::class, 'index'])->name('purchase-return.index');
@@ -429,13 +688,38 @@ Route::middleware(['admin'])->group(function () {
         Route::get('purchase-challan/{id}/show', [PurchaseChallanTransactionController::class, 'show'])->name('purchase-challan.show');
         Route::post('purchase-challan/{id}/mark-invoiced', [PurchaseChallanTransactionController::class, 'markAsInvoiced'])->name('purchase-challan.mark-invoiced');
         
-        // Breakage/Expiry to Supplier Routes
+        // Breakage/Expiry to Supplier Routes - Issued
+        Route::get('breakage-supplier/issued', [BreakageSupplierController::class, 'issuedIndex'])->name('breakage-supplier.issued-index');
         Route::get('breakage-supplier/issued-transaction', [BreakageSupplierController::class, 'issuedTransaction'])->name('breakage-supplier.issued-transaction');
+        Route::post('breakage-supplier/issued', [BreakageSupplierController::class, 'storeIssued'])->name('breakage-supplier.store-issued');
         Route::get('breakage-supplier/issued-modification', [BreakageSupplierController::class, 'issuedModification'])->name('breakage-supplier.issued-modification');
+        Route::get('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'showIssued'])->name('breakage-supplier.show-issued');
+        Route::put('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'updateIssued'])->name('breakage-supplier.update-issued');
+        Route::delete('breakage-supplier/issued/{id}', [BreakageSupplierController::class, 'destroyIssued'])->name('breakage-supplier.destroy-issued');
+        Route::get('breakage-supplier/get-items', [BreakageSupplierController::class, 'getItems'])->name('breakage-supplier.get-items');
+        Route::get('breakage-supplier/get-batches/{itemId}', [BreakageSupplierController::class, 'getBatches'])->name('breakage-supplier.get-batches');
+        Route::get('breakage-supplier/get-issued-past-invoices', [BreakageSupplierController::class, 'getIssuedPastInvoices'])->name('breakage-supplier.get-issued-past-invoices');
+        Route::get('breakage-supplier/next-trn-no', [BreakageSupplierController::class, 'getNextTrnNo'])->name('breakage-supplier.next-trn-no');
+        
+        // Breakage/Expiry to Supplier Routes - Received & Unused Dump
         Route::get('breakage-supplier/received-transaction', [BreakageSupplierController::class, 'receivedTransaction'])->name('breakage-supplier.received-transaction');
+        Route::post('breakage-supplier/store-received', [BreakageSupplierController::class, 'storeReceived'])->name('breakage-supplier.store-received');
         Route::get('breakage-supplier/received-modification', [BreakageSupplierController::class, 'receivedModification'])->name('breakage-supplier.received-modification');
+        Route::get('breakage-supplier/get-received-past-invoices', [BreakageSupplierController::class, 'getReceivedPastInvoices'])->name('breakage-supplier.get-received-past-invoices');
+        Route::get('breakage-supplier/received-details/{id}', [BreakageSupplierController::class, 'getReceivedDetails'])->name('breakage-supplier.received-details');
+        Route::get('breakage-supplier/received/{id}', [BreakageSupplierController::class, 'showReceived'])->name('breakage-supplier.show-received');
+        Route::post('breakage-supplier/update-received/{id}', [BreakageSupplierController::class, 'updateReceived'])->name('breakage-supplier.update-received');
+        Route::put('breakage-supplier/received/{id}', [BreakageSupplierController::class, 'updateReceived'])->name('breakage-supplier.put-received');
+        Route::delete('breakage-supplier/delete-received/{id}', [BreakageSupplierController::class, 'deleteReceived'])->name('breakage-supplier.delete-received');
+        Route::get('breakage-supplier/supplier-purchases/{supplierId}', [BreakageSupplierController::class, 'getSupplierPurchases'])->name('breakage-supplier.supplier-purchases');
+        Route::get('breakage-supplier/unused-dump-index', [BreakageSupplierController::class, 'unusedDumpIndex'])->name('breakage-supplier.unused-dump-index');
         Route::get('breakage-supplier/unused-dump-transaction', [BreakageSupplierController::class, 'unusedDumpTransaction'])->name('breakage-supplier.unused-dump-transaction');
+        Route::post('breakage-supplier/unused-dump-transaction', [BreakageSupplierController::class, 'storeUnusedDump'])->name('breakage-supplier.store-unused-dump');
         Route::get('breakage-supplier/unused-dump-modification', [BreakageSupplierController::class, 'unusedDumpModification'])->name('breakage-supplier.unused-dump-modification');
+        Route::delete('breakage-supplier/unused-dump/{id}', [BreakageSupplierController::class, 'destroyUnusedDump'])->name('breakage-supplier.destroy-unused-dump');
+        Route::get('breakage-supplier/get-dump-past-invoices', [BreakageSupplierController::class, 'getDumpPastInvoices'])->name('breakage-supplier.get-dump-past-invoices');
+        Route::get('breakage-supplier/unused-dump/{id}', [BreakageSupplierController::class, 'showUnusedDump'])->name('breakage-supplier.show-unused-dump');
+        Route::put('breakage-supplier/unused-dump/{id}', [BreakageSupplierController::class, 'updateUnusedDump'])->name('breakage-supplier.update-unused-dump');
         
         Route::get('/api/countries', [CustomerController::class, 'getCountries'])->name('api.countries');
         Route::get('/api/states/{country}', [CustomerController::class, 'getStates'])->name('api.states');
@@ -511,6 +795,221 @@ Route::middleware(['admin'])->group(function () {
         Route::put('stock-adjustment/{id}', [StockAdjustmentController::class, 'update'])->name('stock-adjustment.update');
         Route::delete('stock-adjustment/{id}', [StockAdjustmentController::class, 'destroy'])->name('stock-adjustment.destroy');
         Route::get('stock-adjustment/{id}/details', [StockAdjustmentController::class, 'getDetails'])->name('stock-adjustment.details');
+
+        // Quotation Routes
+        Route::get('quotation', [\App\Http\Controllers\Admin\QuotationController::class, 'index'])->name('quotation.index');
+        Route::get('quotation/transaction', [\App\Http\Controllers\Admin\QuotationController::class, 'transaction'])->name('quotation.transaction');
+        Route::get('quotation/modification', [\App\Http\Controllers\Admin\QuotationController::class, 'modification'])->name('quotation.modification');
+        Route::get('quotation/get-items', [\App\Http\Controllers\Admin\QuotationController::class, 'getItems'])->name('quotation.getItems');
+        Route::get('quotation/get-batches/{itemId}', [\App\Http\Controllers\Admin\QuotationController::class, 'getBatches'])->name('quotation.getBatches');
+        Route::get('quotation/get-quotations', [\App\Http\Controllers\Admin\QuotationController::class, 'getQuotations'])->name('quotation.getQuotations');
+        Route::post('quotation', [\App\Http\Controllers\Admin\QuotationController::class, 'store'])->name('quotation.store');
+        Route::get('quotation/{id}', [\App\Http\Controllers\Admin\QuotationController::class, 'show'])->name('quotation.show');
+        Route::get('quotation/{id}/edit', [\App\Http\Controllers\Admin\QuotationController::class, 'edit'])->name('quotation.edit');
+        Route::put('quotation/{id}', [\App\Http\Controllers\Admin\QuotationController::class, 'update'])->name('quotation.update');
+        Route::post('quotation/{id}/cancel', [\App\Http\Controllers\Admin\QuotationController::class, 'cancel'])->name('quotation.cancel');
+
+        // Pending Order Item Routes
+        Route::get('pending-order-item', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'index'])->name('pending-order-item.index');
+        Route::get('pending-order-item/transaction', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'transaction'])->name('pending-order-item.transaction');
+        Route::get('pending-order-item/get-items', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'getItems'])->name('pending-order-item.getItems');
+        Route::post('pending-order-item', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'store'])->name('pending-order-item.store');
+        Route::delete('pending-order-item/{id}', [\App\Http\Controllers\Admin\PendingOrderItemController::class, 'destroy'])->name('pending-order-item.destroy');
+
+        // Claim to Supplier Routes
+        Route::get('claim-to-supplier', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'index'])->name('claim-to-supplier.index');
+        Route::get('claim-to-supplier/transaction', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'transaction'])->name('claim-to-supplier.transaction');
+        Route::get('claim-to-supplier/modification', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'modification'])->name('claim-to-supplier.modification');
+        Route::get('claim-to-supplier/next-trn-no', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getNextTransactionNumber'])->name('claim-to-supplier.next-trn-no');
+        Route::get('claim-to-supplier/batches', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getBatches'])->name('claim-to-supplier.batches');
+        Route::post('claim-to-supplier/store', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'store'])->name('claim-to-supplier.store');
+        Route::get('claim-to-supplier/past-claims', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getPastClaims'])->name('claim-to-supplier.past-claims');
+        Route::get('claim-to-supplier/details/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getClaimDetails'])->name('claim-to-supplier.details');
+        Route::get('claim-to-supplier/get-by-claim-no/{claimNo}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'getByClaimNo'])->name('claim-to-supplier.get-by-claim-no');
+        Route::put('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'update'])->name('claim-to-supplier.update');
+        Route::get('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'show'])->name('claim-to-supplier.show');
+        Route::delete('claim-to-supplier/{id}', [\App\Http\Controllers\Admin\ClaimToSupplierController::class, 'destroy'])->name('claim-to-supplier.destroy');
+
+        // Customer Receipt Routes
+        Route::get('customer-receipt', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'index'])->name('customer-receipt.index');
+        Route::get('customer-receipt/transaction', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'transaction'])->name('customer-receipt.transaction');
+        Route::get('customer-receipt/modification', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'modification'])->name('customer-receipt.modification');
+        Route::get('customer-receipt/get-receipts', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getReceipts'])->name('customer-receipt.get-receipts');
+        Route::get('customer-receipt/get-by-trn/{trnNo}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getByTrnNo'])->name('customer-receipt.get-by-trn');
+        Route::get('customer-receipt/next-trn-no', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getNextTrnNo'])->name('customer-receipt.next-trn-no');
+        Route::get('customer-receipt/customer-outstanding/{customerId}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getCustomerOutstanding'])->name('customer-receipt.customer-outstanding');
+        Route::get('customer-receipt/details/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'getDetails'])->name('customer-receipt.details');
+        Route::post('customer-receipt', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'store'])->name('customer-receipt.store');
+        Route::get('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'show'])->name('customer-receipt.show');
+        Route::put('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'update'])->name('customer-receipt.update');
+        Route::delete('customer-receipt/{id}', [\App\Http\Controllers\Admin\CustomerReceiptController::class, 'destroy'])->name('customer-receipt.destroy');
+
+        // Cheque Return Unpaid Routes
+        Route::get('cheque-return', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'index'])->name('cheque-return.index');
+        Route::get('cheque-return/get-cheques', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'getCheques'])->name('cheque-return.get-cheques');
+        Route::post('cheque-return/return', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'returnCheque'])->name('cheque-return.return');
+        Route::post('cheque-return/cancel', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'cancelReturn'])->name('cheque-return.cancel');
+        Route::get('cheque-return/history', [\App\Http\Controllers\Admin\ChequeReturnController::class, 'getHistory'])->name('cheque-return.history');
+
+        // Deposit Slip Routes
+        Route::get('deposit-slip', [\App\Http\Controllers\Admin\DepositSlipController::class, 'index'])->name('deposit-slip.index');
+        Route::get('deposit-slip/get-cheques', [\App\Http\Controllers\Admin\DepositSlipController::class, 'getCheques'])->name('deposit-slip.get-cheques');
+        Route::post('deposit-slip/store', [\App\Http\Controllers\Admin\DepositSlipController::class, 'store'])->name('deposit-slip.store');
+        Route::post('deposit-slip/unpost', [\App\Http\Controllers\Admin\DepositSlipController::class, 'unpost'])->name('deposit-slip.unpost');
+        Route::get('deposit-slip/summary', [\App\Http\Controllers\Admin\DepositSlipController::class, 'getSummary'])->name('deposit-slip.summary');
+
+        // Supplier Payment Routes
+        Route::get('supplier-payment', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'index'])->name('supplier-payment.index');
+        Route::get('supplier-payment/transaction', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'transaction'])->name('supplier-payment.transaction');
+        Route::get('supplier-payment/modification', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'modification'])->name('supplier-payment.modification');
+        Route::get('supplier-payment/get-payments', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getPayments'])->name('supplier-payment.get-payments');
+        Route::get('supplier-payment/get-by-trn/{trnNo}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getByTrnNo'])->name('supplier-payment.get-by-trn');
+        Route::get('supplier-payment/next-trn-no', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getNextTrnNo'])->name('supplier-payment.next-trn-no');
+        Route::get('supplier-payment/supplier-outstanding/{supplierId}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'getSupplierOutstanding'])->name('supplier-payment.supplier-outstanding');
+        Route::post('supplier-payment', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'store'])->name('supplier-payment.store');
+        Route::get('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'show'])->name('supplier-payment.show');
+        Route::put('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'update'])->name('supplier-payment.update');
+        Route::delete('supplier-payment/{id}', [\App\Http\Controllers\Admin\SupplierPaymentController::class, 'destroy'])->name('supplier-payment.destroy');
+
+        // Sale Voucher Routes (HSN based sale without stock)
+        Route::get('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'index'])->name('sale-voucher.index');
+        Route::get('sale-voucher/transaction', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'transaction'])->name('sale-voucher.transaction');
+        Route::get('sale-voucher/modification', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'modification'])->name('sale-voucher.modification');
+        Route::get('sale-voucher/get-vouchers', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getVouchers'])->name('sale-voucher.get-vouchers');
+        Route::get('sale-voucher/search', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'searchVoucher'])->name('sale-voucher.search');
+        Route::get('sale-voucher/{id}/details', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getDetails'])->name('sale-voucher.details');
+        Route::post('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'store'])->name('sale-voucher.store');
+        Route::put('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'update'])->name('sale-voucher.update');
+        Route::get('sale-voucher/hsn-codes', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getHsnCodes'])->name('sale-voucher.hsn-codes');
+        Route::delete('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'destroy'])->name('sale-voucher.destroy');
+
+        // Voucher Entry Routes
+        Route::get('voucher-entry', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'index'])->name('voucher-entry.index');
+        Route::get('voucher-entry/transaction', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'transaction'])->name('voucher-entry.transaction');
+        Route::get('voucher-entry/modification', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'modification'])->name('voucher-entry.modification');
+        Route::post('voucher-entry', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'store'])->name('voucher-entry.store');
+        Route::get('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'show'])->name('voucher-entry.show');
+        Route::get('voucher-entry/{id}/details', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getDetails'])->name('voucher-entry.details');
+        Route::put('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'update'])->name('voucher-entry.update');
+        Route::delete('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'destroy'])->name('voucher-entry.destroy');
+        Route::get('voucher-entry-list', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getVouchers'])->name('voucher-entry.get-vouchers');
+        Route::get('voucher-entry-search', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'searchVoucher'])->name('voucher-entry.search');
+
+        // Voucher Purchase (Input GST) Routes
+        Route::get('voucher-purchase', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'index'])->name('voucher-purchase.index');
+        Route::get('voucher-purchase/transaction', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'transaction'])->name('voucher-purchase.transaction');
+        Route::get('voucher-purchase/modification', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'modification'])->name('voucher-purchase.modification');
+        Route::post('voucher-purchase', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'store'])->name('voucher-purchase.store');
+        Route::get('voucher-purchase/{id}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'show'])->name('voucher-purchase.show');
+        Route::get('voucher-purchase/{id}/details', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'getDetails'])->name('voucher-purchase.details');
+        Route::put('voucher-purchase/{id}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'update'])->name('voucher-purchase.update');
+        Route::delete('voucher-purchase/{id}', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'destroy'])->name('voucher-purchase.destroy');
+        Route::get('voucher-purchase-list', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'getVouchers'])->name('voucher-purchase.get-vouchers');
+        Route::get('voucher-purchase-search', [\App\Http\Controllers\Admin\VoucherPurchaseController::class, 'searchVoucher'])->name('voucher-purchase.search');
+
+        // Voucher Income (Output GST) Routes
+        Route::get('voucher-income', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'index'])->name('voucher-income.index');
+        Route::get('voucher-income/transaction', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'transaction'])->name('voucher-income.transaction');
+        Route::get('voucher-income/modification', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'modification'])->name('voucher-income.modification');
+        Route::post('voucher-income', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'store'])->name('voucher-income.store');
+        Route::get('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'show'])->name('voucher-income.show');
+        Route::get('voucher-income/{id}/details', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'getDetails'])->name('voucher-income.details');
+        Route::put('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'update'])->name('voucher-income.update');
+        Route::delete('voucher-income/{id}', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'destroy'])->name('voucher-income.destroy');
+        Route::get('voucher-income-list', [\App\Http\Controllers\Admin\VoucherIncomeController::class, 'getVouchers'])->name('voucher-income.get-vouchers');
+        // Sale Voucher Routes
+        Route::get('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'index'])->name('sale-voucher.index');
+        Route::get('sale-voucher/transaction', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'transaction'])->name('sale-voucher.transaction');
+        Route::get('sale-voucher/modification', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'modification'])->name('sale-voucher.modification');
+        Route::get('sale-voucher/get-vouchers', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getVouchers'])->name('sale-voucher.get-vouchers');
+        Route::get('sale-voucher/search', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'searchVoucher'])->name('sale-voucher.search');
+        Route::get('sale-voucher/{id}/details', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'getDetails'])->name('sale-voucher.details');
+        Route::post('sale-voucher', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'store'])->name('sale-voucher.store');
+        Route::get('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'show'])->name('sale-voucher.show');
+        Route::put('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'update'])->name('sale-voucher.update');
+        Route::delete('sale-voucher/{id}', [\App\Http\Controllers\Admin\SaleVoucherController::class, 'destroy'])->name('sale-voucher.destroy');
+
+        // Purchase Voucher Routes
+        Route::get('purchase-voucher', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'index'])->name('purchase-voucher.index');
+        Route::get('purchase-voucher/transaction', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'transaction'])->name('purchase-voucher.transaction');
+        Route::get('purchase-voucher/modification', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'modification'])->name('purchase-voucher.modification');
+        Route::get('purchase-voucher/get-vouchers', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'getVouchers'])->name('purchase-voucher.get-vouchers');
+        Route::get('purchase-voucher/search', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'searchVoucher'])->name('purchase-voucher.search');
+        Route::get('purchase-voucher/{id}/details', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'getDetails'])->name('purchase-voucher.details');
+        Route::post('purchase-voucher', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'store'])->name('purchase-voucher.store');
+        Route::get('purchase-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'show'])->name('purchase-voucher.show');
+        Route::put('purchase-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'update'])->name('purchase-voucher.update');
+        Route::delete('purchase-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseVoucherController::class, 'destroy'])->name('purchase-voucher.destroy');
+
+        // Sale Return Voucher Routes
+        Route::get('sale-return-voucher', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'index'])->name('sale-return-voucher.index');
+        Route::get('sale-return-voucher/transaction', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'transaction'])->name('sale-return-voucher.transaction');
+        Route::get('sale-return-voucher/modification', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'modification'])->name('sale-return-voucher.modification');
+        Route::get('sale-return-voucher/get-vouchers', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'getVouchers'])->name('sale-return-voucher.get-vouchers');
+        Route::get('sale-return-voucher/search', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'searchVoucher'])->name('sale-return-voucher.search');
+        Route::get('sale-return-voucher/{id}/details', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'getDetails'])->name('sale-return-voucher.details');
+        Route::post('sale-return-voucher', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'store'])->name('sale-return-voucher.store');
+        Route::get('sale-return-voucher/{id}', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'show'])->name('sale-return-voucher.show');
+        Route::put('sale-return-voucher/{id}', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'update'])->name('sale-return-voucher.update');
+        Route::delete('sale-return-voucher/{id}', [\App\Http\Controllers\Admin\SaleReturnVoucherController::class, 'destroy'])->name('sale-return-voucher.destroy');
+
+        // Purchase Return Voucher Routes
+        Route::get('purchase-return-voucher', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'index'])->name('purchase-return-voucher.index');
+        Route::get('purchase-return-voucher/transaction', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'transaction'])->name('purchase-return-voucher.transaction');
+        Route::get('purchase-return-voucher/modification', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'modification'])->name('purchase-return-voucher.modification');
+        Route::get('purchase-return-voucher/get-vouchers', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'getVouchers'])->name('purchase-return-voucher.get-vouchers');
+        Route::get('purchase-return-voucher/search', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'searchVoucher'])->name('purchase-return-voucher.search');
+        Route::get('purchase-return-voucher/{id}/details', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'getDetails'])->name('purchase-return-voucher.details');
+        Route::post('purchase-return-voucher', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'store'])->name('purchase-return-voucher.store');
+        Route::get('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'show'])->name('purchase-return-voucher.show');
+        Route::put('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'update'])->name('purchase-return-voucher.update');
+        Route::delete('purchase-return-voucher/{id}', [\App\Http\Controllers\Admin\PurchaseReturnVoucherController::class, 'destroy'])->name('purchase-return-voucher.destroy');
+
+        // Multi Voucher Routes
+        Route::get('multi-voucher', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'index'])->name('multi-voucher.index');
+        Route::get('multi-voucher/transaction', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'transaction'])->name('multi-voucher.transaction');
+        Route::get('multi-voucher/modification', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'modification'])->name('multi-voucher.modification');
+        Route::get('multi-voucher/get/{voucherNo}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'getByVoucherNo'])->name('multi-voucher.get');
+        Route::post('multi-voucher', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'store'])->name('multi-voucher.store');
+        Route::get('multi-voucher/{id}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'show'])->name('multi-voucher.show');
+        Route::put('multi-voucher/{id}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'update'])->name('multi-voucher.update');
+        Route::delete('multi-voucher/{id}', [\App\Http\Controllers\Admin\MultiVoucherController::class, 'destroy'])->name('multi-voucher.destroy');
+
+        // Bank Transaction Routes
+        Route::get('bank-transaction', [\App\Http\Controllers\Admin\BankTransactionController::class, 'index'])->name('bank-transaction.index');
+        Route::get('bank-transaction/transaction', [\App\Http\Controllers\Admin\BankTransactionController::class, 'transaction'])->name('bank-transaction.transaction');
+        Route::post('bank-transaction', [\App\Http\Controllers\Admin\BankTransactionController::class, 'store'])->name('bank-transaction.store');
+        Route::get('bank-transaction/{id}', [\App\Http\Controllers\Admin\BankTransactionController::class, 'show'])->name('bank-transaction.show');
+        Route::delete('bank-transaction/{id}', [\App\Http\Controllers\Admin\BankTransactionController::class, 'destroy'])->name('bank-transaction.destroy');
+
+        // Sale Return Replacement Routes
+        Route::get('sale-return-replacement', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'index'])->name('sale-return-replacement.index');
+        Route::get('sale-return-replacement/transaction', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'transaction'])->name('sale-return-replacement.transaction');
+        Route::get('sale-return-replacement/modification', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'modification'])->name('sale-return-replacement.modification');
+        Route::get('sale-return-replacement/get/{trnNo}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'getByTrnNo'])->name('sale-return-replacement.get');
+        Route::post('sale-return-replacement', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'store'])->name('sale-return-replacement.store');
+        Route::get('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'show'])->name('sale-return-replacement.show');
+        Route::put('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'update'])->name('sale-return-replacement.update');
+        Route::delete('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'destroy'])->name('sale-return-replacement.destroy');
+        
+        // =============== ADMINISTRATION ===============
+        Route::prefix('administration')->name('administration.')->group(function () {
+            // Hotkeys Management
+            Route::get('hotkeys', [\App\Http\Controllers\Admin\HotkeyController::class, 'index'])->name('hotkeys.index');
+            Route::get('hotkeys/data', [\App\Http\Controllers\Admin\HotkeyController::class, 'getData'])->name('hotkeys.data');
+            Route::get('hotkeys/{hotkey}/edit', [\App\Http\Controllers\Admin\HotkeyController::class, 'edit'])->name('hotkeys.edit');
+            Route::put('hotkeys/{hotkey}', [\App\Http\Controllers\Admin\HotkeyController::class, 'update'])->name('hotkeys.update');
+            Route::post('hotkeys/{hotkey}/toggle-status', [\App\Http\Controllers\Admin\HotkeyController::class, 'toggleStatus'])->name('hotkeys.toggle-status');
+            Route::post('hotkeys/check-key', [\App\Http\Controllers\Admin\HotkeyController::class, 'checkKey'])->name('hotkeys.check-key');
+            Route::post('hotkeys/reset-to-default', [\App\Http\Controllers\Admin\HotkeyController::class, 'resetToDefault'])->name('hotkeys.reset-to-default');
+        });
+
+        // Page Content Settings
+        Route::get('page-settings', [\App\Http\Controllers\Admin\PageSettingController::class, 'index'])->name('page-settings.index');
+        Route::put('page-settings', [\App\Http\Controllers\Admin\PageSettingController::class, 'update'])->name('page-settings.update');
+        
+        // Hotkeys JSON API (for keyboard-shortcuts.js)
+        Route::get('api/hotkeys', [\App\Http\Controllers\Admin\HotkeyController::class, 'getHotkeysJson'])->name('api.hotkeys');
     });
     // Profile settings page
     Route::get('/profile', function () {
@@ -521,8 +1020,8 @@ Route::middleware(['admin'])->group(function () {
     Route::post('/password/change', [ProfileController::class, 'changePassword'])->name('password.change');
 });
 
-// User
-Route::middleware(['user'])->group(function () {
-    Route::view('/user/dashboard', 'user.dashboard');
-});
-
+// Static Pages (accessible to all)
+Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacy'])->name('pages.privacy');
+Route::get('/terms', [\App\Http\Controllers\PagesController::class, 'terms'])->name('pages.terms');
+Route::get('/support', [\App\Http\Controllers\PagesController::class, 'support'])->name('pages.support');
+Route::get('/documentation', [\App\Http\Controllers\PagesController::class, 'documentation'])->name('pages.documentation');

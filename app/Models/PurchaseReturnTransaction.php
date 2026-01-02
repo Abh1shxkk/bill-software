@@ -12,6 +12,7 @@ class PurchaseReturnTransaction extends Model
     protected $fillable = [
         'pr_no',
         'series',
+        'voucher_type',
         'return_date',
         'supplier_id',
         'supplier_name',
@@ -27,6 +28,7 @@ class PurchaseReturnTransaction extends Model
         'scm_percent',
         'tax_amount',
         'net_amount',
+        'balance_amount',
         'tcs_amount',
         'dis1_amount',
         'remarks',

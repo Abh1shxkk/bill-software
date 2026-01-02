@@ -48,18 +48,22 @@
   }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-person-badge me-2"></i> Sales Men</h4>
-    <div class="text-muted small">Manage your sales team</div>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-person-badge me-2"></i> Sales Men</h4>
+      <div class="text-muted small">Manage your sales team</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.sales-men.create'),
+        'tableBodyId' => 'salesmen-table-body',
+        'checkboxClass' => 'sales-men-checkbox'
+    ])
   </div>
   <div class="d-flex gap-2">
     <button type="button" id="delete-selected-sales-men-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteSalesMen()">
       <i class="bi bi-trash me-1"></i> Delete Selected (<span id="selected-sales-men-count">0</span>)
     </button>
-    <a href="{{ route('admin.sales-men.create') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle"></i> Add New Sales Man
-    </a>
   </div>
 </div>
 
@@ -886,21 +890,22 @@ function confirmMultipleDeleteSalesMen() {
 
 .salesman-modal-backdrop {
   display: none;
-  position: fixed;
-  top: 0;
-  left: 260px; /* Start after sidebar width */
-  width: calc(100vw - 260px); /* Exclude sidebar width */
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
   z-index: 999998 !important;
   opacity: 0;
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
 }
 
 .salesman-modal-backdrop.show {
-  opacity: 0.7;
+  display: block !important;
+  opacity: 1 !important;
 }
 
 /* Responsive adjustments */

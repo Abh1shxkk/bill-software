@@ -5,7 +5,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Admin')</title>
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -20,6 +25,7 @@
         body {
             overflow: hidden;
             background: #f6f8fb;
+            font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .app {
@@ -31,8 +37,8 @@
                 "sidebar main"
                 "sidebar footer";
             height: 100vh;
-            transition: grid-template-columns 0.3s ease;
             position: relative;
+            contain: layout style;
         }
 
         .sidebar {
@@ -42,20 +48,77 @@
             top: 0;
             left: 0;
             height: 100vh;
-            overflow: hidden; /* Changed to hidden to control scroll in nav section */
-            transition: width 0.3s ease, transform .25s ease;
-            will-change: transform, width;
+            overflow: hidden;
             width: 260px;
             grid-area: sidebar;
             z-index: 1030;
             display: flex;
             flex-direction: column;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            will-change: width;
+            contain: layout style;
+        }
+
+        /* Premium Floating Collapse Button */
+        .sidebar-collapse-btn {
+            position: fixed;
+            top: 16px;
+            left: 242px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            transition: left 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .sidebar-collapse-btn:hover {
+            background: #2c3e50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .sidebar-collapse-btn:hover svg {
+            stroke: #ffffff;
+        }
+
+        .sidebar-collapse-btn:active {
+            transform: scale(0.92);
+        }
+
+        .sidebar-collapse-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: #2c3e50;
+            stroke-width: 2.5;
+            fill: none;
+            transition: transform 0.25s ease;
+        }
+
+        .collapsed .sidebar-collapse-btn {
+            left: 54px;
+        }
+
+        .collapsed .sidebar-collapse-btn svg {
+            transform: rotate(180deg);
+        }
+
+        /* Hide on mobile */
+        @media (max-width: 991.98px) {
+            .sidebar-collapse-btn {
+                display: none !important;
+            }
         }
 
         .sidebar a {
             color: #cfe0ff;
             text-decoration: none;
-            transition: all 0.2s ease;
         }
 
         .sidebar .nav-link:hover {
@@ -82,6 +145,9 @@
             grid-area: main;
             z-index: 10;
             position: relative;
+            contain: layout style;
+            transform: translateZ(0);
+            will-change: scroll-position;
         }
 
         /* Sidebar header with toggle button */
@@ -97,7 +163,6 @@
         .brand {
             font-weight: 600;
             letter-spacing: .3px;
-            transition: opacity 0.3s ease;
             display: flex;
             align-items: center;
         }
@@ -108,7 +173,6 @@
             color: #fff;
             padding: 0.375rem 0.5rem;
             border-radius: 0.375rem;
-            transition: all 0.3s ease;
             cursor: pointer;
             flex-shrink: 0;
         }
@@ -118,7 +182,7 @@
         }
 
         .sidebar-toggle-inside i {
-            transition: transform 0.3s ease;
+            transition: transform 0.15s ease-out;
         }
 
         .sidebar-header {
@@ -163,15 +227,44 @@
 
         .profile .dropdown-menu {
             position: absolute !important;
-            inset: auto auto 50px 0 !important;
-            transition: all 0.3s ease;
-            z-index: 1001; /* Even higher for dropdown */
+            bottom: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
+            margin-bottom: 5px !important;
+            transition: none !important;
+            transform: none !important;
+            inset: auto !important;
+            z-index: 1001;
+            background: #1e293b !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        .profile .dropdown-menu.show {
+            transform: none !important;
+            inset: auto !important;
+            bottom: 100% !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: auto !important;
         }
 
-        /* Label transitions */
+        .profile .dropdown-menu .dropdown-item {
+            color: #e2e8f0 !important;
+        }
+
+        .profile .dropdown-menu .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: #fff !important;
+        }
+
+        .profile .dropdown-menu .dropdown-divider {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        /* Label - no transitions */
         .label {
             opacity: 1;
-            transition: opacity 0.2s ease;
             display: inline-block;
             white-space: nowrap;
         }
@@ -182,7 +275,6 @@
             top: 14px;
             left: 14px;
             z-index: 1030;
-            transition: all 0.3s ease;
         }
 
         /* MOBILE FIXES - CRITICAL */
@@ -218,10 +310,11 @@
                 transform: translateX(-100%);
                 height: 100vh !important;
                 height: 100dvh !important;
-                /* Dynamic viewport height for mobile browsers */
-                overflow: hidden; /* Keep consistent with desktop */
+                overflow: hidden;
                 display: flex;
                 flex-direction: column;
+                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                will-change: transform;
             }
 
             .sidebar.show {
@@ -241,7 +334,6 @@
                 width: 100%;
                 padding: 1rem 1rem 1rem 1rem !important;
                 -webkit-overflow-scrolling: touch;
-                /* Smooth scrolling on iOS */
             }
 
             .sidebar-backdrop {
@@ -252,7 +344,7 @@
                 z-index: 1028;
                 opacity: 0;
                 visibility: hidden;
-                transition: opacity .25s ease;
+                transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
                 top: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
@@ -315,7 +407,12 @@
             }
 
             .collapsed .sidebar-header .brand {
-                display: none;
+                display: flex;
+                justify-content: center;
+            }
+            
+            .collapsed .sidebar .sidebar-logo {
+                height: 24px !important;
             }
 
             /* Fix Invoice Items Table Alignment - PC & Mobile */
@@ -612,6 +709,8 @@
             .collapsed .profile .dropdown-menu {
                 left: 72px !important;
                 bottom: 0 !important;
+                right: auto !important;
+                top: auto !important;
                 min-width: 200px !important;
                 inset: auto auto 0 72px !important;
             }
@@ -684,15 +783,14 @@
             }
         }
 
-        /* Smooth icon transitions */
+        /* No transitions for instant response */
         .sidebar i {
-            transition: margin 0.3s ease;
+            /* No transition */
         }
 
-        /* Button styling improvements */
+        /* Button styling */
         [data-bs-toggle="collapse"] {
             border: none;
-            transition: all 0.2s ease;
         }
 
         [data-bs-toggle="collapse"]:hover {
@@ -705,7 +803,6 @@
             color: #cfe0ff;
             font-weight: 700;
             line-height: 1;
-            transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
         .sidebar [data-bs-toggle="collapse"][aria-expanded="true"]::after {
@@ -786,6 +883,265 @@
             padding-top: 11px !important;
             padding-bottom: 11px !important;
         }
+
+        /* Instant sidebar collapse - no animation for smooth feel */
+        /* Smoother sidebar dropdown menus */
+        .sidebar .collapse,
+        .sidebar .collapsing {
+            transition: height 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar .collapsing {
+            overflow: hidden;
+        }
+
+        /* Smooth sidebar collapse/expand with GPU acceleration */
+        .app {
+            transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            will-change: width;
+        }
+        
+        .sidebar .label {
+            transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar .nav-link,
+        .sidebar .btn {
+            transition: padding 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        .sidebar-toggle-inside i {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* GPU accelerated collapse button - smooth slide */
+        .sidebar-collapse-btn {
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        transform 0.15s ease-out,
+                        background 0.15s ease-out !important;
+            will-change: left;
+        }
+        
+        .sidebar-collapse-btn svg {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* Smooth content area adjustment */
+        .content {
+            transition: none !important;
+            contain: layout paint;
+        }
+        
+        /* PEAK OPTIMIZATION: Freeze content during sidebar animation */
+        body.sidebar-animating .content {
+            pointer-events: none !important;
+            will-change: auto !important;
+        }
+        
+        body.sidebar-animating .content * {
+            animation: none !important;
+            transition: none !important;
+            will-change: auto !important;
+        }
+        
+        /* Force GPU layer for content */
+        body.sidebar-animating .content {
+            transform: translateZ(0);
+            backface-visibility: hidden;
+        }
+        
+        /* Profile section smooth transition */
+        .sidebar .profile .btn {
+            transition: justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        /* ============================================
+           GLOBAL MODAL BACKDROP FIX - CRITICAL
+           This ensures ALL modal backdrops cover ENTIRE screen
+           Including Bootstrap modals AND custom modals
+           ============================================ */
+        
+        /* Force Bootstrap modal and backdrop to be fixed to viewport */
+        .modal,
+        .modal-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            min-width: 100vw !important;
+            min-height: 100vh !important;
+            max-width: none !important;
+            max-height: none !important;
+        }
+
+        .modal-backdrop {
+            z-index: 1040 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .modal-backdrop.show {
+            opacity: 1 !important;
+        }
+
+        .modal {
+            z-index: 1050 !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+            display: none;
+        }
+
+        .modal.show {
+            display: block !important;
+        }
+
+        /* ============================================
+           CUSTOM MODAL BACKDROP FIX
+           For pending-orders-backdrop, alert-modal-backdrop, etc.
+           ============================================ */
+        .pending-orders-backdrop,
+        .alert-modal-backdrop,
+        .choose-items-backdrop,
+        [class*="-backdrop"]:not(#sidebarBackdrop) {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            min-width: 100vw !important;
+            min-height: 100vh !important;
+            z-index: 1040 !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .pending-orders-backdrop.show,
+        .alert-modal-backdrop.show,
+        .choose-items-backdrop.show,
+        [class*="-backdrop"].show:not(#sidebarBackdrop) {
+            display: block !important;
+            opacity: 1 !important;
+        }
+
+        /* ============================================
+           CUSTOM MODALS - CENTER IN CONTENT AREA
+           (Excluding global delete modals which stay screen-centered)
+           ============================================ */
+        
+        /* Custom modals centered in content area (sidebar width = 260px) */
+        .pending-orders-modal,
+        .alert-modal,
+        .choose-items-modal {
+            position: fixed !important;
+            z-index: 1050 !important;
+            top: 50% !important;
+            left: calc(260px + (100vw - 260px) / 2) !important;
+            transform: translate(-50%, -50%) !important;
+        }
+
+        /* When sidebar is collapsed (72px width) */
+        .collapsed .pending-orders-modal,
+        .collapsed .alert-modal,
+        .collapsed .choose-items-modal {
+            left: calc(72px + (100vw - 72px) / 2) !important;
+        }
+
+        /* Mobile - full screen center (no sidebar) */
+        @media (max-width: 991.98px) {
+            .pending-orders-modal,
+            .alert-modal,
+            .choose-items-modal {
+                left: 50% !important;
+            }
+        }
+
+        /* Global Delete Modal - only show when .show class is present */
+        #globalMultipleDeleteModal,
+        #globalDeleteModal {
+            display: none !important;
+        }
+        
+        #globalMultipleDeleteModal.show,
+        #globalDeleteModal.show {
+            display: block !important;
+            position: fixed !important;
+            z-index: 1055 !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
+        }
+        
+        #globalMultipleDeleteModal .modal-dialog,
+        #globalDeleteModal .modal-dialog {
+            margin: 1.75rem auto !important;
+            max-width: 500px !important;
+            transform: none !important;
+        }
+
+        /* Ensure modal dialog is properly centered */
+        .modal-dialog {
+            margin: 1.75rem auto !important;
+            max-height: calc(100vh - 3.5rem) !important;
+            position: relative !important;
+        }
+
+        .modal-content {
+            max-height: calc(100vh - 3.5rem) !important;
+            overflow: hidden !important;
+        }
+
+        .modal-body {
+            overflow-y: auto !important;
+            max-height: calc(100vh - 200px) !important;
+        }
+
+        /* When ANY modal is open, LOCK everything */
+        body.modal-open,
+        body.custom-modal-open {
+            overflow: hidden !important;
+            padding-right: 0 !important;
+            height: 100vh !important;
+            position: fixed !important;
+            width: 100% !important;
+        }
+
+        body.modal-open .app,
+        body.custom-modal-open .app {
+            overflow: hidden !important;
+            height: 100vh !important;
+        }
+
+        body.modal-open .content,
+        body.custom-modal-open .content {
+            overflow: hidden !important;
+        }
+
+        /* Prevent any parent from clipping the modal */
+        .app, .content, .sidebar, main {
+            contain: layout style !important;
+        }
+
+        /* When modal open, ensure nothing clips it */
+        body.modal-open .app,
+        body.modal-open .content,
+        body.modal-open main {
+            overflow: visible !important;
+            contain: none !important;
+        }
     </style>
     @stack('styles')
     @vite(['resources/js/app.js'])
@@ -795,396 +1151,26 @@
 
 <body>
     <div id="sidebarBackdrop" class="sidebar-backdrop d-lg-none"></div>
+    
+    <!-- Premium Floating Collapse Button - Outside sidebar for proper layering -->
+    <button class="sidebar-collapse-btn d-none d-lg-flex" id="sidebarCollapseBtn" title="Toggle Sidebar">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+    </button>
+    
     <div class="app">
         @include('layouts.header')
         <aside class="sidebar p-3 position-relative">
             <div class="sidebar-header">
-                <div class="brand d-flex align-items-center small">
-                    <i class="bi bi-ui-checks-grid me-2 text-info"></i>
-                    <span class="label">InvoiceLab</span>
+                <div class="brand d-flex align-items-center">
+                    <img src="{{ asset('https://res.cloudinary.com/dz8p5iadt/image/upload/v1766408873/m-logo-01_hdqtci.svg') }}" alt="Medi BillSuite" style="height: 32px;" class="sidebar-logo">
+                    <span class="label ms-2">Medi-BillSuite</span>
                 </div>
             </div>
 
             <div class="sidebar-nav-container">
-                <nav class="nav flex-column small">
-                <a class="nav-link text-white d-flex align-items-center px-2" href="{{ route('admin.dashboard') }}">
-                    <i class="bi bi-speedometer2 me-2"></i><span class="label">Dashboard</span>
-                </a>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCompanies" aria-expanded="false"
-                        style="background:transparent;">
-                        <i class="bi bi-buildings me-2"></i> <span class="label">Companies</span>
-                    </button>
-                    <div class="collapse" id="menuCompanies"><a class="nav-link ms-3 d-flex align-items-center"
-                            href="{{ route('admin.companies.create') }}">
-                            <span class="label">Add Company</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.companies.index') }}">
-                            <span class="label">All Companies</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCustomers" style="background:transparent;">
-                        <i class="bi bi-people me-2"></i> <span class="label">Customers</span>
-                    </button>
-                    <div class="collapse" id="menuCustomers"><a class="nav-link ms-3 d-flex align-items-center"
-                            href="{{ route('admin.customers.create') }}">
-                            <span class="label">Add Customer</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.customers.index') }}">
-                            <span class="label">All Customers</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuItems" style="background:transparent;">
-                        <i class="bi bi-box-seam me-2"></i> <span class="label">Items</span>
-                    </button>
-                    <div class="collapse" id="menuItems"><a class="nav-link ms-3 d-flex align-items-center"
-                            href="{{ route('admin.items.create') }}">
-                            <span class="label">Add Item</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.items.index') }}">
-                            <span class="label">All Items</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuSuppliers" style="background:transparent;">
-                        <i class="bi bi-truck me-2"></i> <span class="label">Suppliers</span>
-                    </button>
-                    <div class="collapse" id="menuSuppliers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.suppliers.create') }}">
-                            <span class="label">Add Supplier</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.suppliers.index') }}">
-                            <span class="label">All Suppliers</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuHsnCodes" style="background:transparent;">
-                        <i class="bi bi-upc-scan me-2"></i> <span class="label">HSN Master</span>
-                    </button>
-                    <div class="collapse" id="menuHsnCodes">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.hsn-codes.create') }}">
-                            <span class="label">Add HSN Code</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.hsn-codes.index') }}">
-                            <span class="label">All HSN Codes</span>
-                        </a>
-
-                    </div>
-                </div>
-
-                
-                <div class="mt-2">
-                    <a class="nav-link text-white d-flex align-items-center px-2" href="{{ route('admin.all-ledger.index') }}">
-                        <i class="bi bi-journal-check me-2"></i><span class="label">All Ledger</span>
-                    </a>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralLedger" style="background:transparent;">
-                        <i class="bi bi-journal-text me-2"></i> <span class="label">General Ledger</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralLedger">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-ledger.create') }}">
-                            <span class="label">Add Account</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-ledger.index') }}">
-                            <span class="label">All Accounts</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCashBank" style="background:transparent;">
-                        <i class="bi bi-cash-stack me-2"></i> <span class="label">Cash / Bank Books</span>
-                    </button>
-                    <div class="collapse" id="menuCashBank">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.cash-bank-books.create') }}">
-                            <span class="label">Add Transaction</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.cash-bank-books.index') }}">
-                            <span class="label">All Transactions</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuSaleLedger" style="background:transparent;">
-                        <i class="bi bi-cart-check me-2"></i> <span class="label">Sale Ledger</span>
-                    </button>
-                    <div class="collapse" id="menuSaleLedger">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sale-ledger.create') }}">
-                            <span class="label">Add Sale Entry</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sale-ledger.index') }}">
-                            <span class="label">All Sale Entries</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuPurchaseLedger" style="background:transparent;">
-                        <i class="bi bi-bag-check me-2"></i> <span class="label">Purchase Ledger</span>
-                    </button>
-                    <div class="collapse" id="menuPurchaseLedger">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.purchase-ledger.create') }}">
-                            <span class="label">Add Purchase Entry</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.purchase-ledger.index') }}">
-                            <span class="label">All Purchase Entries</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuSalesMen" style="background:transparent;">
-                        <i class="bi bi-person-badge me-2"></i> <span class="label">Sales Man</span>
-                    </button>
-                    <div class="collapse" id="menuSalesMen">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sales-men.create') }}">
-                            <span class="label">Add Sales Man</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.sales-men.index') }}">
-                            <span class="label">All Sales Men</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuAreas" style="background:transparent;">
-                        <i class="bi bi-geo-alt me-2"></i> <span class="label">Area</span>
-                    </button>
-                    <div class="collapse" id="menuAreas">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.areas.create') }}">
-                            <span class="label">Add Area</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.areas.index') }}">
-                            <span class="label">All Areas</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuRoutes" style="background:transparent;">
-                        <i class="bi bi-signpost me-2"></i> <span class="label">Route</span>
-                    </button>
-                    <div class="collapse" id="menuRoutes">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.routes.create') }}">
-                            <span class="label">Add Route</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.routes.index') }}">
-                            <span class="label">All Routes</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuStates" style="background:transparent;">
-                        <i class="bi bi-map me-2"></i> <span class="label">State</span>
-                    </button>
-                    <div class="collapse" id="menuStates">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.states.create') }}">
-                            <span class="label">Add State</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.states.index') }}">
-                            <span class="label">All States</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuAreaManagers" style="background:transparent;">
-                        <i class="bi bi-person-workspace me-2"></i> <span class="label">Area Mgr.</span>
-                    </button>
-                    <div class="collapse" id="menuAreaManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.area-managers.create') }}">
-                            <span class="label">Add Area Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.area-managers.index') }}">
-                            <span class="label">All Area Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuRegionalManagers" style="background:transparent;">
-                        <i class="bi bi-people-fill me-2"></i> <span class="label">Regn.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuRegionalManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.regional-managers.create') }}">
-                            <span class="label">Add Regional Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.regional-managers.index') }}">
-                            <span class="label">All Regional Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuMarketingManagers" style="background:transparent;">
-                        <i class="bi bi-megaphone me-2"></i> <span class="label">Mkt.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuMarketingManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.marketing-managers.create') }}">
-                            <span class="label">Add Marketing Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.marketing-managers.index') }}">
-                            <span class="label">All Marketing Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralManagers" style="background:transparent;">
-                        <i class="bi bi-person-badge me-2"></i> <span class="label">Gen.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-managers.create') }}">
-                            <span class="label">Add General Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-managers.index') }}">
-                            <span class="label">All General Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuDivisionalManagers" style="background:transparent;">
-                        <i class="bi bi-diagram-3 me-2"></i> <span class="label">D.c.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuDivisionalManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.divisional-managers.create') }}">
-                            <span class="label">Add Divisional Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.divisional-managers.index') }}">
-                            <span class="label">All Divisional Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuCountryManagers" style="background:transparent;">
-                        <i class="bi bi-globe me-2"></i> <span class="label">C.mgr</span>
-                    </button>
-                    <div class="collapse" id="menuCountryManagers">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.country-managers.create') }}">
-                            <span class="label">Add Country Manager</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.country-managers.index') }}">
-                            <span class="label">All Country Managers</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuPersonalDirectory" style="background:transparent;">
-                        <i class="bi bi-person-lines-fill me-2"></i> <span class="label">Personal Directory</span>
-                    </button>
-                    <div class="collapse" id="menuPersonalDirectory">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.personal-directory.create') }}">
-                            <span class="label">Add Entry</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.personal-directory.index') }}">
-                            <span class="label">All Entries</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralReminders" style="background:transparent;">
-                        <i class="bi bi-bell me-2"></i> <span class="label">General Reminders</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralReminders">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-reminders.create') }}">
-                            <span class="label">Add Reminder</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-reminders.index') }}">
-                            <span class="label">All Reminders</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuGeneralNotebook" style="background:transparent;">
-                        <i class="bi bi-journal-text me-2"></i> <span class="label">General NoteBook</span>
-                    </button>
-                    <div class="collapse" id="menuGeneralNotebook">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-notebook.create') }}">
-                            <span class="label">Add Note</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.general-notebook.index') }}">
-                            <span class="label">All Notes</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuItemCategory" style="background:transparent;">
-                        <i class="bi bi-tag me-2"></i> <span class="label">Item Category</span>
-                    </button>
-                    <div class="collapse" id="menuItemCategory">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.item-category.create') }}">
-                            <span class="label">Add Category</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.item-category.index') }}">
-                            <span class="label">All Categories</span>
-                        </a>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <button class="btn btn-sm w-100 text-start text-white d-flex align-items-center px-2"
-                        data-bs-toggle="collapse" data-bs-target="#menuTransportMaster" style="background:transparent;">
-                        <i class="bi bi-truck me-2"></i> <span class="label">Transport Master</span>
-                    </button>
-                    <div class="collapse" id="menuTransportMaster">
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.transport-master.create') }}">
-                            <span class="label">Add Transport</span>
-                        </a>
-                        <a class="nav-link ms-3 d-flex align-items-center" href="{{ route('admin.transport-master.index') }}">
-                            <span class="label">All Transports</span>
-                        </a>
-                    </div>
-                </div>
-
-                </nav>
+                @include('layouts.partials.sidebar-nav')
             </div>
 
             <div class="profile">
@@ -1197,16 +1183,16 @@
                         <i class="bi bi-chevron-up ms-auto small"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-dark">
-                        <li><a class="dropdown-item" href="{{ route('profile.settings') }}"><i
-                                    class="bi bi-gear me-2"></i>Settings</a></li>
-
-
-                        <hr class="dropdown-divider">
+                        <li class="px-3 py-1">
+                            <a class="btn btn-outline-light w-100 d-flex align-items-center justify-content-center" href="{{ route('profile.settings') }}">
+                                <i class="bi bi-gear me-2"></i>Settings
+                            </a>
                         </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <form method="POST" action="{{ route('logout') }}" class="px-3 py-1">
                                 @csrf
-                                <button class="btn btn-outline-light w-100"><i
+                                <button class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center"><i
                                         class="bi bi-box-arrow-right me-2"></i>Logout</button>
                             </form>
                         </li>
@@ -1234,6 +1220,29 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        // Initialize Select2 globally for all select elements
+        $(document).ready(function() {
+            // Initialize Select2 on all select elements
+            $('select').not('.no-select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Select an option',
+                allowClear: true
+            });
+            
+            // Re-initialize Select2 when new content is added dynamically
+            $(document).on('DOMNodeInserted', function(e) {
+                if ($(e.target).is('select') || $(e.target).find('select').length) {
+                    $(e.target).find('select').not('.no-select2, .select2-hidden-accessible').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Select an option',
+                        allowClear: true
+                    });
+                }
+            });
+        });
+        
         // Global function for smooth scroll to top
         function scrollToTopNow() {
             const contentDiv = document.querySelector('.content');
@@ -1243,35 +1252,132 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Global scroll to top button handler
+        // GLOBAL FIX: Move ALL modals and backdrops to body level (Bootstrap + Custom)
+        (function() {
+            // Selectors for all types of modals and backdrops
+            const modalSelectors = '.modal, .pending-orders-modal, .alert-modal, .choose-items-modal, [id$="Modal"]';
+            const backdropSelectors = '.modal-backdrop, .pending-orders-backdrop, .alert-modal-backdrop, .choose-items-backdrop, [id$="Backdrop"]';
+
+            function moveModalsToBody() {
+                // Move all modals to body
+                document.querySelectorAll(modalSelectors).forEach(function(modal) {
+                    if (modal.parentElement && modal.parentElement !== document.body) {
+                        document.body.appendChild(modal);
+                    }
+                });
+                // Move all backdrops to body
+                document.querySelectorAll(backdropSelectors).forEach(function(backdrop) {
+                    if (backdrop.parentElement && backdrop.parentElement !== document.body) {
+                        document.body.appendChild(backdrop);
+                    }
+                });
+            }
+
+            // Run on DOMContentLoaded
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', moveModalsToBody);
+            } else {
+                moveModalsToBody();
+            }
+
+            // Also run after a short delay to catch dynamically loaded content
+            setTimeout(moveModalsToBody, 500);
+            setTimeout(moveModalsToBody, 1000);
+            setTimeout(moveModalsToBody, 2000);
+
+            // Watch for new modals being added anywhere in the DOM
+            const observer = new MutationObserver(function(mutations) {
+                let shouldMove = false;
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) {
+                            if (node.classList && (node.classList.contains('modal') || node.classList.contains('modal-backdrop'))) {
+                                shouldMove = true;
+                            }
+                            // Also check children
+                            if (node.querySelectorAll) {
+                                if (node.querySelectorAll('.modal, .modal-backdrop').length > 0) {
+                                    shouldMove = true;
+                                }
+                            }
+                        }
+                    });
+                });
+                if (shouldMove) {
+                    setTimeout(moveModalsToBody, 0);
+                }
+            });
+
+            observer.observe(document.documentElement, { childList: true, subtree: true });
+
+            // Also hook into Bootstrap modal events
+            document.addEventListener('show.bs.modal', function(e) {
+                setTimeout(moveModalsToBody, 0);
+            });
+        })();
+
+        // FIX: Move modals to body level when they open for proper backdrop coverage
+        document.addEventListener('DOMContentLoaded', function() {
+            // Move all modals to body level on page load
+            document.querySelectorAll('.modal').forEach(function(modal) {
+                if (modal.parentElement !== document.body) {
+                    document.body.appendChild(modal);
+                }
+            });
+
+            // Also handle dynamically created modals
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1 && node.classList && node.classList.contains('modal')) {
+                            if (node.parentElement !== document.body) {
+                                document.body.appendChild(node);
+                            }
+                        }
+                    });
+                });
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+
+        // Global scroll to top button handler - OPTIMIZED with throttle
         document.addEventListener('DOMContentLoaded', function() {
             const scrollBtn = document.getElementById('scrollToTop');
             const contentDiv = document.querySelector('.content');
             
-            if (scrollBtn && contentDiv) {
-                contentDiv.addEventListener('scroll', function() {
-                    const y = contentDiv.scrollTop;
-                    if (y > 200) {
-                        scrollBtn.classList.add('show');
-                        scrollBtn.classList.remove('hide');
-                    } else {
-                        scrollBtn.classList.add('hide');
-                        scrollBtn.classList.remove('show');
+            // Throttle function for scroll performance
+            function throttle(fn, wait) {
+                let lastTime = 0;
+                return function(...args) {
+                    const now = Date.now();
+                    if (now - lastTime >= wait) {
+                        lastTime = now;
+                        fn.apply(this, args);
                     }
-                });
+                };
+            }
+            
+            function handleScroll(y) {
+                if (y > 200) {
+                    scrollBtn.classList.add('show');
+                    scrollBtn.classList.remove('hide');
+                } else {
+                    scrollBtn.classList.add('hide');
+                    scrollBtn.classList.remove('show');
+                }
+            }
+            
+            if (scrollBtn && contentDiv) {
+                contentDiv.addEventListener('scroll', throttle(function() {
+                    handleScroll(contentDiv.scrollTop);
+                }, 100), { passive: true });
             }
             
             if (scrollBtn) {
-                window.addEventListener('scroll', function() {
-                    const y = window.scrollY || document.documentElement.scrollTop;
-                    if (y > 200) {
-                        scrollBtn.classList.add('show');
-                        scrollBtn.classList.remove('hide');
-                    } else {
-                        scrollBtn.classList.add('hide');
-                        scrollBtn.classList.remove('show');
-                    }
-                });
+                window.addEventListener('scroll', throttle(function() {
+                    handleScroll(window.scrollY || document.documentElement.scrollTop);
+                }, 100), { passive: true });
             }
         });
 
@@ -1281,12 +1387,24 @@
             const backdrop = document.getElementById('sidebarBackdrop');
             const desktopBtn = document.getElementById('desktopSidebarToggle');
             const headerBtn = document.getElementById('headerSidebarToggle');
+            const collapseBtn = document.getElementById('sidebarCollapseBtn');
 
             // --- MOBILE TOGGLE ---
             function toggleSidebar() {
                 sidebar.classList.toggle('show');
                 backdrop.classList.toggle('show');
             }
+            
+            // PEAK OPTIMIZATION: Freeze content during sidebar animation
+            function toggleSidebarWithFreeze() {
+                document.body.classList.add('sidebar-animating');
+                document.body.classList.toggle('collapsed');
+                // Remove animating class after transition completes
+                setTimeout(() => {
+                    document.body.classList.remove('sidebar-animating');
+                }, 350);
+            }
+            
             if (btn && backdrop) {
                 btn.addEventListener('click', toggleSidebar);
                 backdrop.addEventListener('click', toggleSidebar);
@@ -1295,9 +1413,8 @@
                 headerBtn.addEventListener('click', function (e) {
                     e.preventDefault();
                     if (window.innerWidth >= 992) {
-                        // Desktop: collapse/expand sidebar
-                        document.body.classList.toggle('collapsed');
-                        localStorage.setItem('sidebarCollapsed', document.body.classList.contains('collapsed') ? 'true' : 'false');
+                        // Desktop: collapse/expand sidebar with freeze
+                        toggleSidebarWithFreeze();
                     } else {
                         // Mobile: slide sidebar
                         toggleSidebar();
@@ -1305,17 +1422,23 @@
                 });
             }
 
+            // --- FLOATING COLLAPSE BUTTON ---
+            if (collapseBtn) {
+                collapseBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    toggleSidebarWithFreeze();
+                });
+            }
+
             // --- DESKTOP COLLAPSE ---
             if (desktopBtn) {
                 desktopBtn.addEventListener('click', e => {
                     e.preventDefault();
-                    document.body.classList.toggle('collapsed');
-                    localStorage.setItem('sidebarCollapsed', document.body.classList.contains('collapsed') ? 'true' : 'false');
+                    toggleSidebarWithFreeze();
                 });
-                if (localStorage.getItem('sidebarCollapsed') === 'true') {
-                    document.body.classList.add('collapsed');
-                }
             }
+            
+            // Sidebar always starts OPEN - no localStorage restore
 
             // --- SET ACTIVE MENU ON PAGE LOAD ---
             (function () {
@@ -1599,74 +1722,78 @@
         });
     </script>
 
-    <!-- Global Select2 Initialization for All Dropdowns -->
+    <!-- Global Select2 Initialization for All Dropdowns - OPTIMIZED -->
     <script>
         $(document).ready(function () {
-            // Initialize Select2 on all existing select elements
-            initializeSelect2();
+            // Defer Select2 initialization to not block page load
+            requestIdleCallback ? requestIdleCallback(initializeSelect2) : setTimeout(initializeSelect2, 100);
 
             // Function to initialize Select2 on select elements
             function initializeSelect2(container) {
                 const selectElements = container ? $(container).find('select:not(.select2-hidden-accessible)') : $('select:not(.select2-hidden-accessible)');
 
-                selectElements.each(function () {
-                    const $select = $(this);
+                // Process in batches to avoid blocking
+                const batchSize = 10;
+                let index = 0;
+                
+                function processBatch() {
+                    const batch = selectElements.slice(index, index + batchSize);
+                    if (batch.length === 0) return;
+                    
+                    batch.each(function () {
+                        const $select = $(this);
+                        if ($select.hasClass('no-select2') || $select.data('select2')) return;
 
-                    // Skip if already initialized or explicitly marked to skip
-                    if ($select.hasClass('no-select2') || $select.data('select2')) {
-                        return;
-                    }
+                        const placeholder = $select.data('placeholder') || $select.find('option:first').text() || 'Select an option';
+                        const allowClear = $select.data('allow-clear') !== false;
+                        const minimumResultsForSearch = $select.data('minimum-results-for-search') || 0;
 
-                    // Get custom options from data attributes
-                    const placeholder = $select.data('placeholder') || $select.find('option:first').text() || 'Select an option';
-                    const allowClear = $select.data('allow-clear') !== false; // Default true
-                    const minimumResultsForSearch = $select.data('minimum-results-for-search') || 0; // Show search by default
-
-                    // Initialize Select2 with Bootstrap 5 theme
-                    $select.select2({
-                        theme: 'bootstrap-5',
-                        width: '100%',
-                        placeholder: placeholder,
-                        allowClear: allowClear,
-                        minimumResultsForSearch: minimumResultsForSearch,
-                        dropdownAutoWidth: true,
-                        language: {
-                            noResults: function () {
-                                return "No results found";
-                            },
-                            searching: function () {
-                                return "Searching...";
-                            }
-                        }
-                    });
-                });
-            }
-
-            // Watch for dynamically added select elements using MutationObserver
-            const observer = new MutationObserver(function (mutations) {
-                mutations.forEach(function (mutation) {
-                    if (mutation.addedNodes.length) {
-                        mutation.addedNodes.forEach(function (node) {
-                            if (node.nodeType === 1) { // Element node
-                                // Check if the added node is a select or contains select elements
-                                if (node.tagName === 'SELECT') {
-                                    initializeSelect2($(node).parent());
-                                } else if ($(node).find('select').length > 0) {
-                                    initializeSelect2(node);
-                                }
+                        $select.select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            placeholder: placeholder,
+                            allowClear: allowClear,
+                            minimumResultsForSearch: minimumResultsForSearch,
+                            dropdownAutoWidth: true,
+                            language: {
+                                noResults: () => "No results found",
+                                searching: () => "Searching..."
                             }
                         });
+                    });
+                    
+                    index += batchSize;
+                    if (index < selectElements.length) {
+                        requestAnimationFrame(processBatch);
                     }
-                });
+                }
+                
+                processBatch();
+            }
+
+            // Debounced MutationObserver for dynamic selects
+            let mutationTimeout;
+            const observer = new MutationObserver(function (mutations) {
+                clearTimeout(mutationTimeout);
+                mutationTimeout = setTimeout(() => {
+                    mutations.forEach(function (mutation) {
+                        if (mutation.addedNodes.length) {
+                            mutation.addedNodes.forEach(function (node) {
+                                if (node.nodeType === 1) {
+                                    if (node.tagName === 'SELECT') {
+                                        initializeSelect2($(node).parent());
+                                    } else if ($(node).find('select').length > 0) {
+                                        initializeSelect2(node);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }, 50);
             });
 
-            // Start observing the document body for changes
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
+            observer.observe(document.body, { childList: true, subtree: true });
 
-            // Re-initialize Select2 when Bootstrap modals are shown
             $(document).on('shown.bs.modal', function (e) {
                 initializeSelect2(e.target);
             });
@@ -1906,6 +2033,11 @@
 
             @if(session('crud_info'))
                 crudNotification.showToast('info', 'Info', '{{ session('crud_info') }}');
+            @endif
+
+            // Access Denied toast for permission errors
+            @if(session('access_denied'))
+                crudNotification.showToast('error', 'Access Denied', 'You do not have permission to access "{{ session('access_denied') }}" module. Please contact your administrator.');
             @endif
 
             // Specific CRUD operation messages
@@ -2271,8 +2403,58 @@
             } else {
                 console.warn('Global confirm multiple delete button not found');
             }
+            
+            // Enter key to confirm delete when modal is open
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    // Check if globalMultipleDeleteModal is open
+                    const multiDeleteModal = document.getElementById('globalMultipleDeleteModal');
+                    if (multiDeleteModal && multiDeleteModal.classList.contains('show')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const confirmBtn = document.getElementById('global-confirm-multiple-delete');
+                        if (confirmBtn && !confirmBtn.disabled) {
+                            confirmBtn.click();
+                        }
+                        return;
+                    }
+                    
+                    // Check if single delete modal (globalDeleteModal) is open
+                    const singleDeleteModal = document.getElementById('globalDeleteModal');
+                    if (singleDeleteModal && singleDeleteModal.classList.contains('show')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const confirmBtn = document.getElementById('globalDeleteConfirm');
+                        if (confirmBtn && !confirmBtn.disabled) {
+                            confirmBtn.click();
+                        }
+                        return;
+                    }
+                    
+                    // Check if deleteModal is open
+                    const deleteModal = document.getElementById('deleteModal');
+                    if (deleteModal && deleteModal.classList.contains('show')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const confirmBtn = document.getElementById('confirmDeleteBtn');
+                        if (confirmBtn && !confirmBtn.disabled) {
+                            confirmBtn.click();
+                        }
+                        return;
+                    }
+                }
+            });
         });
     </script>
+    
+    <!-- Global Keyboard Shortcuts (EasySol-style) - Press F1 for help -->
+    @include('layouts.partials.keyboard-shortcuts-config')
+    @include('layouts.partials.index-shortcuts-config')
+    @include('layouts.partials.keyboard-shortcuts-inline')
+    @include('layouts.partials.index-shortcuts-inline')
+    
+    <!-- Transaction Shortcuts - End key to save -->
+    @include('layouts.partials.transaction-shortcuts')
 </body>
 
 </html>

@@ -279,6 +279,68 @@ class CompanyController extends Controller
     }
 
     /**
+     * Get all companies for dropdown
+     */
+    public function getAll()
+    {
+        try {
+            $companies = Company::select('id', 'name', 'short_name', 'alter_code')
+                ->orderBy('name')
+                ->get();
+            
+            return response()->json([
+                'success' => true,
+                'companies' => $companies
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Get all companies error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading companies'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get company by code (alter_code or id)
+     * Used for AJAX lookup in Additional Details modal
+     */
+    public function getByCode($code)
+    {
+        try {
+            // Try to find by alter_code first, then by id, then by short_name
+            $company = Company::where('alter_code', $code)
+                ->orWhere('id', $code)
+                ->orWhere('short_name', $code)
+                ->first();
+            
+            if ($company) {
+                return response()->json([
+                    'success' => true,
+                    'company' => [
+                        'id' => $company->id,
+                        'name' => $company->name,
+                        'short_name' => $company->short_name,
+                        'alter_code' => $company->alter_code,
+                    ]
+                ]);
+            }
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Company not found'
+            ], 404);
+            
+        } catch (\Exception $e) {
+            \Log::error('Company lookup error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error looking up company'
+            ], 500);
+        }
+    }
+
+    /**
      * Delete multiple companies
      */
     public function multipleDelete(Request $request)

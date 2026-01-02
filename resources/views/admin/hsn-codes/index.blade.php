@@ -2,10 +2,17 @@
 @section('title', 'HSN Codes')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-upc-scan me-2"></i> HSN Codes Master</h4>
-        <div class="text-muted small">Manage your HSN codes list</div>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div>
+            <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-upc-scan me-2"></i> HSN Codes Master</h4>
+            <div class="text-muted small">Manage your HSN codes list</div>
+        </div>
+        @include('layouts.partials.module-shortcuts', [
+            'createRoute' => route('admin.hsn-codes.create'),
+            'tableBodyId' => 'hsn-table-body',
+            'checkboxClass' => 'hsn-codes-checkbox'
+        ])
     </div>
     <div>
         <button type="button" id="delete-selected-hsn-codes-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteHsnCodes()">

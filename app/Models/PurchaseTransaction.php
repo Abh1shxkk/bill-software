@@ -13,6 +13,7 @@ class PurchaseTransaction extends Model
         'trn_no',
         'bill_date',
         'bill_no',
+        'voucher_type',
         'supplier_id',
         'receive_date',
         'due_date',
@@ -26,6 +27,7 @@ class PurchaseTransaction extends Model
         'less_amount',
         'tax_amount',
         'net_amount',
+        'balance_amount',
         'scm_percent',
         'tcs_amount',
         'dis1_amount',
@@ -76,7 +78,7 @@ class PurchaseTransaction extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by', 'user_id');
     }
 
     /**

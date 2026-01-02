@@ -1,18 +1,22 @@
 @extends('layouts.admin')
 @section('title','General Ledger')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <div>
-    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-journal-text me-2"></i> General Ledger</h4>
-    <div class="text-muted small">Manage general ledger accounts</div>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <div>
+      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-journal-text me-2"></i> General Ledger</h4>
+      <div class="text-muted small">Manage general ledger accounts</div>
+    </div>
+    @include('layouts.partials.module-shortcuts', [
+        'createRoute' => route('admin.general-ledger.create'),
+        'tableBodyId' => 'ledger-table-body',
+        'checkboxClass' => 'general-ledger-checkbox'
+    ])
   </div>
   <div class="d-flex gap-2">
     <button type="button" id="delete-selected-general-ledger-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteGeneralLedger()">
       <i class="bi bi-trash me-1"></i> Delete Selected (<span id="selected-general-ledger-count">0</span>)
     </button>
-    <a href="{{ route('admin.general-ledger.create') }}" class="btn btn-primary">
-      <i class="bi bi-plus-circle me-1"></i> Add Account
-    </a>
   </div>
 </div>
 

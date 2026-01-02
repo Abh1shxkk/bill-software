@@ -1,10 +1,23 @@
 @extends('layouts.admin')
 @section('title', 'Suppliers')
 @section('content')
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-truck me-2"></i> Suppliers</h4>
-      <div class="text-muted small">Manage your supplier list</div>
+  <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-start gap-3">
+      <div style="min-width: 130px;">
+        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-truck me-2"></i> Suppliers</h4>
+        <div class="text-muted small">Manage your supplier list</div>
+      </div>
+      @include('layouts.partials.module-shortcuts', [
+          'createRoute' => route('admin.suppliers.create'),
+          'tableBodyId' => 'supplier-table-body',
+          'checkboxClass' => 'supplier-checkbox',
+          'extraShortcuts' => [
+              ['key' => 'F7', 'label' => 'Pend. Order', 'action' => 'pending-orders'],
+              ['key' => 'F5', 'label' => 'Due List', 'action' => 'dues'],
+              ['key' => 'F10', 'label' => 'Ledger', 'action' => 'ledger'],
+              ['key' => 'F2', 'label' => 'List Of Bills', 'action' => 'bills'],
+          ]
+      ])
     </div>
     <div>
       <button type="button" id="delete-selected-suppliers-btn" class="btn btn-danger d-none" onclick="confirmMultipleDeleteSuppliers()">
@@ -53,7 +66,7 @@
           <span class="visually-hidden">Loading...</span>
         </div>
       </div>
-      <table class="table table-hover align-middle mb-0" id="suppliers-table">
+      <table class="table align-middle mb-0" id="suppliers-table">
         <thead class="table-light">
           <tr>
             <th>

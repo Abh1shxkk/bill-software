@@ -174,6 +174,28 @@ class Customer extends Model
         return $this->hasMany(CustomerPrescription::class);
     }
 
+    /**
+     * Relationship with Area
+     */
+    public function area()
+    {
+        return $this->belongsTo(Area::class, 'area_code', 'id');
+    }
+
+    /**
+     * Relationship with Route
+     */
+    public function route()
+    {
+        return $this->belongsTo(Route::class, 'route_code', 'id');
+    }
+
+    /**
+     * Relationship with State
+     */
+    public function state()
+    {
+        return $this->belongsTo(State::class, 'state_code', 'id');
+    }
+
 }
-
-
