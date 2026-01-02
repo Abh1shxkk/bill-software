@@ -92,11 +92,16 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('filterForm');
+    
+    // View button - open in new window
     document.getElementById('btnView').addEventListener('click', function() {
-        let vi = form.querySelector('input[name="view_type"]');
-        if (!vi) { vi = document.createElement('input'); vi.type = 'hidden'; vi.name = 'view_type'; form.appendChild(vi); }
-        vi.value = 'print'; form.target = '_blank'; form.submit(); form.target = '_self'; vi.value = '';
+        const formData = new FormData(form);
+        const params = new URLSearchParams(formData);
+        params.set('view_type', 'print');
+        window.open('{{ route("admin.reports.sales.area-wise-sale") }}?' + params.toString(), 'AreaWiseSale', 'width=1000,height=800,scrollbars=yes,resizable=yes');
     });
+    
+    // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') window.history.back();
         if (e.key === 'F7') { e.preventDefault(); document.getElementById('btnView').click(); }

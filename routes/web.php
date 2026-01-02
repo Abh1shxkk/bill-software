@@ -336,6 +336,33 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/sales/discount-wise-sales/item-wise-invoice-wise', [SalesReportController::class, 'discountWiseSalesItemWiseInvoiceWise'])->name('reports.sales.discount-wise-sales.item-wise-invoice-wise');
 
         // Other Sales Reports
+        Route::get('reports/sales/other/cash-coll-trnf-sale', [SalesReportController::class, 'cashCollTrnfSale'])->name('reports.sales.other.cash-coll-trnf-sale');
+        Route::get('reports/sales/other/sale-bill-wise-discount', [SalesReportController::class, 'saleBillWiseDiscount'])->name('reports.sales.other.sale-bill-wise-discount');
+        Route::get('reports/sales/other/sales-book-with-return', [SalesReportController::class, 'salesBookWithReturn'])->name('reports.sales.other.sales-book-with-return');
+        Route::get('reports/sales/other/rate-difference', [SalesReportController::class, 'rateDifference'])->name('reports.sales.other.rate-difference');
+        Route::get('reports/sales/other/sales-matrix', [SalesReportController::class, 'salesMatrix'])->name('reports.sales.other.sales-matrix');
+        Route::get('reports/sales/other/minus-qty-sale', [SalesReportController::class, 'minusQtySale'])->name('reports.sales.other.minus-qty-sale');
+        Route::get('reports/sales/other/sales-details', [SalesReportController::class, 'salesDetails'])->name('reports.sales.other.sales-details');
+        Route::get('reports/sales/other/invoice-documents', [SalesReportController::class, 'invoiceDocuments'])->name('reports.sales.other.invoice-documents');
+        Route::get('reports/sales/other/sale-remarks', [SalesReportController::class, 'saleRemarks'])->name('reports.sales.other.sale-remarks');
+        Route::get('reports/sales/other/item-wise-discount', [SalesReportController::class, 'itemWiseDiscount'])->name('reports.sales.other.item-wise-discount');
+        Route::get('reports/sales/other/item-wise-scheme', [SalesReportController::class, 'itemWiseScheme'])->name('reports.sales.other.item-wise-scheme');
+        Route::get('reports/sales/other/tax-percentage-wise-sale', [SalesReportController::class, 'taxPercentageWiseSale'])->name('reports.sales.other.tax-percentage-wise-sale');
+        Route::get('reports/sales/other/transaction-book-address', [SalesReportController::class, 'transactionBookAddress'])->name('reports.sales.other.transaction-book-address');
+        Route::get('reports/sales/other/sale-stock-detail', [SalesReportController::class, 'saleStockDetail'])->name('reports.sales.other.sale-stock-detail');
+        Route::get('reports/sales/other/customer-stock-details', [SalesReportController::class, 'customerStockDetails'])->name('reports.sales.other.customer-stock-details');
+        Route::get('reports/sales/other/gst-sale-book', [SalesReportController::class, 'gstSaleBook'])->name('reports.sales.other.gst-sale-book');
+        Route::get('reports/sales/other/customer-consistency', [SalesReportController::class, 'customerConsistency'])->name('reports.sales.other.customer-consistency');
+        Route::get('reports/sales/other/sale-return-adjustment', [SalesReportController::class, 'saleReturnAdjustment'])->name('reports.sales.other.sale-return-adjustment');
+        Route::get('reports/sales/other/pending-orders', [SalesReportController::class, 'pendingOrders'])->name('reports.sales.other.pending-orders');
+        Route::get('reports/sales/other/st38-outword', [SalesReportController::class, 'st38Outword'])->name('reports.sales.other.st38-outword');
+        Route::get('reports/sales/other/frige-item', [SalesReportController::class, 'frigeItem'])->name('reports.sales.other.frige-item');
+        Route::get('reports/sales/other/volume-discount', [SalesReportController::class, 'volumeDiscount'])->name('reports.sales.other.volume-discount');
+        Route::get('reports/sales/other/party-volume-discount', [SalesReportController::class, 'partyVolumeDiscount'])->name('reports.sales.other.party-volume-discount');
+        Route::get('reports/sales/other/schedule-h1-drugs', [SalesReportController::class, 'scheduleH1Drugs'])->name('reports.sales.other.schedule-h1-drugs');
+        Route::get('reports/sales/other/sale-book-sc', [SalesReportController::class, 'saleBookSc'])->name('reports.sales.other.sale-book-sc');
+        Route::get('reports/sales/other/sale-book-summarised', [SalesReportController::class, 'saleBookSummarised'])->name('reports.sales.other.sale-book-summarised');
+
         Route::get('reports/sales/salesman-level-sale', [SalesReportController::class, 'salesmanLevelSale'])->name('reports.sales.salesman-level-sale');
         Route::get('reports/sales/scheme-issued', [SalesReportController::class, 'schemeIssued'])->name('reports.sales.scheme-issued');
         Route::get('reports/sales/mrp-wise-sales', [SalesReportController::class, 'mrpWiseSales'])->name('reports.sales.mrp-wise-sales');
@@ -454,10 +481,16 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         // Sales & Management Routes
         Route::post('sales-men/multiple-delete', [SalesManController::class, 'multipleDelete'])->name('sales-men.multiple-delete');
         Route::resource('sales-men', SalesManController::class);
+        Route::get('salesmen/search', [SalesManController::class, 'search'])->name('salesmen.search');
+        
         Route::post('areas/multiple-delete', [AreaController::class, 'multipleDelete'])->name('areas.multiple-delete');
         Route::resource('areas', AreaController::class)->except(['show']);
+        Route::get('areas/search', [AreaController::class, 'search'])->name('areas.search');
+        
         Route::post('routes/multiple-delete', [RouteController::class, 'multipleDelete'])->name('routes.multiple-delete');
         Route::resource('routes', RouteController::class)->except(['show']);
+        Route::get('routes/search', [RouteController::class, 'search'])->name('routes.search');
+        
         Route::post('states/multiple-delete', [StateController::class, 'multipleDelete'])->name('states.multiple-delete');
         Route::post('area-managers/multiple-delete', [AreaManagerController::class, 'multipleDelete'])->name('area-managers.multiple-delete');
         Route::post('regional-managers/multiple-delete', [RegionalManagerController::class, 'multipleDelete'])->name('regional-managers.multiple-delete');
@@ -466,12 +499,18 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::post('divisional-managers/multiple-delete', [DivisionalManagerController::class, 'multipleDelete'])->name('divisional-managers.multiple-delete');
         Route::post('country-managers/multiple-delete', [CountryManagerController::class, 'multipleDelete'])->name('country-managers.multiple-delete');
         Route::resource('states', StateController::class)->except(['show']);
+        Route::get('states/search', [StateController::class, 'search'])->name('states.search');
+        
         Route::resource('area-managers', AreaManagerController::class);
         Route::resource('regional-managers', RegionalManagerController::class);
         Route::resource('marketing-managers', MarketingManagerController::class);
         Route::resource('general-managers', GeneralManagerController::class);
         Route::resource('divisional-managers', DivisionalManagerController::class);
         Route::resource('country-managers', CountryManagerController::class);
+        
+        // Search routes for AJAX lookups
+        Route::get('customers/search', [CustomerController::class, 'search'])->name('customers.search');
+        Route::get('companies/search', [CompanyController::class, 'search'])->name('companies.search');
         
         // New Modules Routes
         Route::post('personal-directory/multiple-delete', [PersonalDirectoryController::class, 'multipleDelete'])->name('personal-directory.multiple-delete');

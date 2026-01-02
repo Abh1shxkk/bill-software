@@ -8,6 +8,7 @@
         <h5 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>Sale / Return Book Item Wise</h5>
         <div class="btn-group btn-group-sm">
             <button type="button" class="btn btn-success" onclick="exportReport('csv')"><i class="bi bi-file-excel me-1"></i>CSV</button>
+            <button type="button" class="btn btn-info" onclick="viewReport()"><i class="bi bi-eye me-1"></i>View</button>
             <button type="button" class="btn btn-secondary" onclick="window.print()"><i class="bi bi-printer me-1"></i>Print</button>
         </div>
     </div>
@@ -137,5 +138,12 @@ function exportReport(type) {
     params.set('report_type', 'sale-return-item-wise');
     window.open('{{ route("admin.reports.sales.export-csv") }}?' + params.toString(), '_blank');
 }
+
+function viewReport() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('view_type', 'print');
+    window.open('{{ route("admin.reports.sales.sale-return-book-item-wise") }}?' + params.toString(), 'SaleReturnBookItemWise', 'width=1100,height=800,scrollbars=yes,resizable=yes');
+}
 </script>
 @endpush
+

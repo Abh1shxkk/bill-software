@@ -417,4 +417,26 @@ class CompanyController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Search company by code (AJAX)
+     */
+    public function search(Request $request)
+    {
+        $code = $request->get('code');
+        
+        if (!$code) {
+            return response()->json(['name' => '']);
+        }
+
+        $company = Company::where('code', $code)
+            ->where('is_deleted', '!=', 1)
+            ->first();
+
+        return response()->json([
+            'id' => $company->id ?? null,
+            'name' => $company->name ?? '',
+            'code' => $company->code ?? ''
+        ]);
+    }
 }

@@ -491,6 +491,26 @@ class CustomerController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Search customer by code (AJAX)
+     */
+    public function search(Request $request)
+    {
+        $code = $request->get('code');
+        
+        if (!$code) {
+            return response()->json(['name' => '']);
+        }
+
+        $customer = Customer::where('code', $code)
+            ->where('is_deleted', '!=', 1)
+            ->first();
+
+        return response()->json([
+            'id' => $customer->id ?? null,
+            'name' => $customer->name ?? '',
+            'code' => $customer->code ?? ''
+        ]);
+    }
 }
-
-
