@@ -10,6 +10,8 @@ use App\Models\DebitNote;
 use App\Models\CreditNote;
 use App\Models\Supplier;
 use App\Models\Customer;
+use App\Models\Company;
+use App\Models\ItemCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -3110,7 +3112,213 @@ class PurchaseReportController extends Controller
      */
     public function supplierAllSupplier(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.all-supplier');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '1'); // 1=Purchase, 2=Return, 3=DN, 4=CN, 5=Consolidated
+        $taggedParties = $request->get('tagged_parties', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $orderBy = $request->get('order_by', 'N'); // N=Name, V=Value
+        $sortOrder = $request->get('sort_order', 'A'); // A=Ascending, D=Descending
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
+
+        $suppliers = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            // Build query based on report type
+            if ($reportType == '1') {
+                // Purchase
+                $suppliers = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+                    ->select(
+                        'supplier_id',
+                        DB::raw('COUNT(*) as total_bills'),
+                        DB::raw('SUM(COALESCE(nt_amount, 0)) as total_amount'),
+                        DB::raw('SUM(COALESCE(tax_amount, 0)) as tax_amount'),
+                        DB::raw('SUM(COALESCE(net_amount, 0)) as net_payable')
+                    )
+                    ->groupBy('supplier_id')
+                    ->with('supplier:supplier_id,name,mobile,address')
+                    ->get();
+            } elseif ($reportType == '2') {
+                // Purchase Return - uses return_date
+                $suppliers = PurchaseReturnTransaction::whereBetween('return_date', [$dateFrom, $dateTo])
+                    ->select(
+                        'supplier_id',
+                        DB::raw('COUNT(*) as total_bills'),
+                        DB::raw('SUM(COALESCE(nt_amount, 0)) as total_amount'),
+                        DB::raw('SUM(COALESCE(tax_amount, 0)) as tax_amount'),
+                        DB::raw('SUM(COALESCE(net_amount, 0)) as net_payable')
+                    )
+                    ->groupBy('supplier_id')
+                    ->with('supplier:supplier_id,name,mobile,address')
+                    ->get();
+            } elseif ($reportType == '3') {
+                // Debit Note - uses debit_note_date and debit_party_id for supplier
+                $suppliers = DebitNote::whereBetween('debit_note_date', [$dateFrom, $dateTo])
+                    ->where('debit_party_type', 'S') // Only supplier debit notes
+                    ->select(
+                        'debit_party_id as supplier_id',
+                        DB::raw('COUNT(*) as total_bills'),
+                        DB::raw('SUM(COALESCE(gross_amount, 0)) as total_amount'),
+                        DB::raw('SUM(COALESCE(total_gst, 0)) as tax_amount'),
+                        DB::raw('SUM(COALESCE(dn_amount, 0)) as net_payable')
+                    )
+                    ->groupBy('debit_party_id')
+                    ->get()
+                    ->map(function($item) {
+                        $item->supplier = Supplier::select('supplier_id', 'name', 'mobile', 'address')
+                            ->where('supplier_id', $item->supplier_id)->first();
+                        return $item;
+                    });
+            } elseif ($reportType == '4') {
+                // Credit Note - uses credit_note_date and credit_party_id for supplier
+                $suppliers = CreditNote::whereBetween('credit_note_date', [$dateFrom, $dateTo])
+                    ->where('credit_party_type', 'S') // Only supplier credit notes
+                    ->select(
+                        'credit_party_id as supplier_id',
+                        DB::raw('COUNT(*) as total_bills'),
+                        DB::raw('SUM(COALESCE(gross_amount, 0)) as total_amount'),
+                        DB::raw('SUM(COALESCE(total_gst, 0)) as tax_amount'),
+                        DB::raw('SUM(COALESCE(cn_amount, 0)) as net_payable')
+                    )
+                    ->groupBy('credit_party_id')
+                    ->get()
+                    ->map(function($item) {
+                        $item->supplier = Supplier::select('supplier_id', 'name', 'mobile', 'address')
+                            ->where('supplier_id', $item->supplier_id)->first();
+                        return $item;
+                    });
+            } else {
+                // Consolidated Purchase Book (all types combined)
+                $suppliers = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+                    ->select(
+                        'supplier_id',
+                        DB::raw('COUNT(*) as total_bills'),
+                        DB::raw('SUM(COALESCE(nt_amount, 0)) as total_amount'),
+                        DB::raw('SUM(COALESCE(tax_amount, 0)) as tax_amount'),
+                        DB::raw('SUM(COALESCE(net_amount, 0)) as net_payable')
+                    )
+                    ->groupBy('supplier_id')
+                    ->with('supplier:supplier_id,name,mobile,address')
+                    ->get();
+            }
+
+            // Sort results
+            if ($orderBy == 'V') {
+                $suppliers = $sortOrder == 'D' 
+                    ? $suppliers->sortByDesc('net_payable')->values()
+                    : $suppliers->sortBy('net_payable')->values();
+            } else {
+                $suppliers = $sortOrder == 'D'
+                    ? $suppliers->sortByDesc(fn($s) => $s->supplier->name ?? '')->values()
+                    : $suppliers->sortBy(fn($s) => $s->supplier->name ?? '')->values();
+            }
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.all-supplier', compact(
+            'suppliers', 'dateFrom', 'dateTo', 'reportType', 'taggedParties', 'removeTags', 'orderBy', 'sortOrder', 'withBrExpiry'
+        ));
+    }
+
+    /**
+     * All Supplier Purchase Summary - Print View
+     */
+    public function supplierAllSupplierPrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '1');
+        $orderBy = $request->get('order_by', 'N');
+        $sortOrder = $request->get('sort_order', 'A');
+
+        $suppliers = collect();
+
+        // Build query based on report type
+        if ($reportType == '1') {
+            $suppliers = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+                ->select(
+                    'supplier_id',
+                    DB::raw('COUNT(*) as total_bills'),
+                    DB::raw('SUM(COALESCE(nt_amount, 0)) as total_amount'),
+                    DB::raw('SUM(COALESCE(tax_amount, 0)) as tax_amount'),
+                    DB::raw('SUM(COALESCE(net_amount, 0)) as net_payable')
+                )
+                ->groupBy('supplier_id')
+                ->with('supplier:supplier_id,name,mobile,address')
+                ->get();
+        } elseif ($reportType == '2') {
+            $suppliers = PurchaseReturnTransaction::whereBetween('return_date', [$dateFrom, $dateTo])
+                ->select(
+                    'supplier_id',
+                    DB::raw('COUNT(*) as total_bills'),
+                    DB::raw('SUM(COALESCE(nt_amount, 0)) as total_amount'),
+                    DB::raw('SUM(COALESCE(tax_amount, 0)) as tax_amount'),
+                    DB::raw('SUM(COALESCE(net_amount, 0)) as net_payable')
+                )
+                ->groupBy('supplier_id')
+                ->with('supplier:supplier_id,name,mobile,address')
+                ->get();
+        } elseif ($reportType == '3') {
+            $suppliers = DebitNote::whereBetween('debit_note_date', [$dateFrom, $dateTo])
+                ->where('debit_party_type', 'S')
+                ->select(
+                    'debit_party_id as supplier_id',
+                    DB::raw('COUNT(*) as total_bills'),
+                    DB::raw('SUM(COALESCE(gross_amount, 0)) as total_amount'),
+                    DB::raw('SUM(COALESCE(total_gst, 0)) as tax_amount'),
+                    DB::raw('SUM(COALESCE(dn_amount, 0)) as net_payable')
+                )
+                ->groupBy('debit_party_id')
+                ->get()
+                ->map(function($item) {
+                    $item->supplier = Supplier::select('supplier_id', 'name', 'mobile', 'address')
+                        ->where('supplier_id', $item->supplier_id)->first();
+                    return $item;
+                });
+        } elseif ($reportType == '4') {
+            $suppliers = CreditNote::whereBetween('credit_note_date', [$dateFrom, $dateTo])
+                ->where('credit_party_type', 'S')
+                ->select(
+                    'credit_party_id as supplier_id',
+                    DB::raw('COUNT(*) as total_bills'),
+                    DB::raw('SUM(COALESCE(gross_amount, 0)) as total_amount'),
+                    DB::raw('SUM(COALESCE(total_gst, 0)) as tax_amount'),
+                    DB::raw('SUM(COALESCE(cn_amount, 0)) as net_payable')
+                )
+                ->groupBy('credit_party_id')
+                ->get()
+                ->map(function($item) {
+                    $item->supplier = Supplier::select('supplier_id', 'name', 'mobile', 'address')
+                        ->where('supplier_id', $item->supplier_id)->first();
+                    return $item;
+                });
+        } else {
+            $suppliers = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+                ->select(
+                    'supplier_id',
+                    DB::raw('COUNT(*) as total_bills'),
+                    DB::raw('SUM(COALESCE(nt_amount, 0)) as total_amount'),
+                    DB::raw('SUM(COALESCE(tax_amount, 0)) as tax_amount'),
+                    DB::raw('SUM(COALESCE(net_amount, 0)) as net_payable')
+                )
+                ->groupBy('supplier_id')
+                ->with('supplier:supplier_id,name,mobile,address')
+                ->get();
+        }
+
+        // Sort results
+        if ($orderBy == 'V') {
+            $suppliers = $sortOrder == 'D' 
+                ? $suppliers->sortByDesc('net_payable')->values()
+                : $suppliers->sortBy('net_payable')->values();
+        } else {
+            $suppliers = $sortOrder == 'D'
+                ? $suppliers->sortByDesc(fn($s) => $s->supplier->name ?? '')->values()
+                : $suppliers->sortBy(fn($s) => $s->supplier->name ?? '')->values();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.all-supplier-print', compact(
+            'suppliers', 'dateFrom', 'dateTo', 'reportType'
+        ));
     }
 
     /**
@@ -3118,7 +3326,60 @@ class PurchaseReportController extends Controller
      */
     public function supplierBillWise(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.bill-wise');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $supplierId = $request->get('supplier_id');
+        $supplierCode = $request->get('supplier_code');
+        $taggedParties = $request->get('tagged_parties', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $withBrExpiry = $request->get('with_br_expiry', 'Y');
+        $amountType = $request->get('amount_type', '1'); // 1=Taxable, 2=Bill Amount
+
+        $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
+        $bills = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            $query = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+                ->with('supplier:supplier_id,name,code,mobile,address');
+
+            // Filter by supplier
+            if ($supplierId) {
+                $query->where('supplier_id', $supplierId);
+            }
+
+            $bills = $query->orderBy('bill_date', 'desc')->orderBy('bill_no')->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.bill-wise', compact(
+            'bills', 'suppliers', 'dateFrom', 'dateTo', 'supplierId', 'supplierCode', 
+            'taggedParties', 'removeTags', 'withBrExpiry', 'amountType'
+        ));
+    }
+
+    /**
+     * Supplier Bill Wise Purchase - Print View
+     */
+    public function supplierBillWisePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $supplierId = $request->get('supplier_id');
+
+        $query = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+            ->with('supplier:supplier_id,name,code,mobile,address');
+
+        $supplierName = null;
+        if ($supplierId) {
+            $query->where('supplier_id', $supplierId);
+            $supplier = Supplier::find($supplierId);
+            $supplierName = $supplier ? $supplier->name : null;
+        }
+
+        $bills = $query->orderBy('bill_date', 'desc')->orderBy('bill_no')->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.bill-wise-print', compact(
+            'bills', 'dateFrom', 'dateTo', 'supplierName'
+        ));
     }
 
     /**
@@ -3126,7 +3387,98 @@ class PurchaseReportController extends Controller
      */
     public function supplierItemWise(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-wise');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '3'); // 1=Purchase, 2=Return, 3=Both
+        $supplierId = $request->get('supplier_id');
+        $supplierCode = $request->get('supplier_code');
+        $groupBy = $request->get('group_by', 'C'); // C=Company, I=Item
+        $taggedCompanies = $request->get('tagged_companies', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code');
+        $divisionId = $request->get('division_id');
+        $divisionCode = $request->get('division_code');
+        $categoryId = $request->get('category_id');
+        $categoryCode = $request->get('category_code');
+
+        $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
+        $companies = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $categories = ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $items = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo, $supplierId) {
+                $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+                if ($supplierId) {
+                    $q->where('supplier_id', $supplierId);
+                }
+            });
+
+            // Group by item and aggregate
+            $items = $query->select(
+                    'item_id',
+                    'item_name',
+                    'company_name',
+                    DB::raw('SUM(qty) as total_qty'),
+                    DB::raw('SUM(free_qty) as total_free_qty'),
+                    DB::raw('AVG(pur_rate) as avg_rate'),
+                    DB::raw('SUM(amount) as total_amount'),
+                    DB::raw('SUM(tax_amount) as total_tax'),
+                    DB::raw('SUM(net_amount) as total_net')
+                )
+                ->groupBy('item_id', 'item_name', 'company_name')
+                ->orderBy('item_name')
+                ->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-wise', compact(
+            'items', 'suppliers', 'companies', 'categories', 'dateFrom', 'dateTo', 'reportType',
+            'supplierId', 'supplierCode', 'groupBy', 'taggedCompanies', 'removeTags',
+            'companyId', 'companyCode', 'divisionId', 'divisionCode', 'categoryId', 'categoryCode'
+        ));
+    }
+
+    /**
+     * Supplier Item Wise Purchase - Print View
+     */
+    public function supplierItemWisePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $supplierId = $request->get('supplier_id');
+
+        $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo, $supplierId) {
+            $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+            if ($supplierId) {
+                $q->where('supplier_id', $supplierId);
+            }
+        });
+
+        $supplierName = null;
+        if ($supplierId) {
+            $supplier = Supplier::find($supplierId);
+            $supplierName = $supplier ? $supplier->name : null;
+        }
+
+        $items = $query->select(
+                'item_id',
+                'item_name',
+                'company_name',
+                DB::raw('SUM(qty) as total_qty'),
+                DB::raw('SUM(free_qty) as total_free_qty'),
+                DB::raw('AVG(pur_rate) as avg_rate'),
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('SUM(tax_amount) as total_tax'),
+                DB::raw('SUM(net_amount) as total_net')
+            )
+            ->groupBy('item_id', 'item_name', 'company_name')
+            ->orderBy('item_name')
+            ->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-wise-print', compact(
+            'items', 'dateFrom', 'dateTo', 'supplierName'
+        ));
     }
 
     /**
@@ -3134,15 +3486,155 @@ class PurchaseReportController extends Controller
      */
     public function supplierItemInvoiceWise(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-invoice-wise');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '3'); // 1=Purchase, 2=Return, 3=Both
+        $supplierId = $request->get('supplier_id');
+        $supplierCode = $request->get('supplier_code');
+        $groupBy = $request->get('group_by', 'C'); // C=Company, I=Item
+        $taggedCompanies = $request->get('tagged_companies', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code');
+        $divisionId = $request->get('division_id');
+        $divisionCode = $request->get('division_code');
+        $categoryId = $request->get('category_id');
+        $categoryCode = $request->get('category_code');
+
+        $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
+        $companies = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $categories = ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $items = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            // Get items with their invoice details - grouped by item first, then showing invoices
+            $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo, $supplierId) {
+                $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+                if ($supplierId) {
+                    $q->where('supplier_id', $supplierId);
+                }
+            })
+            ->with(['transaction' => function($q) {
+                $q->select('id', 'bill_date', 'bill_no', 'supplier_id')
+                  ->with('supplier:supplier_id,name');
+            }]);
+
+            $items = $query->orderBy('item_name')->orderBy('purchase_transaction_id')->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-invoice-wise', compact(
+            'items', 'suppliers', 'companies', 'categories', 'dateFrom', 'dateTo', 'reportType',
+            'supplierId', 'supplierCode', 'groupBy', 'taggedCompanies', 'removeTags',
+            'companyId', 'companyCode', 'divisionId', 'divisionCode', 'categoryId', 'categoryCode'
+        ));
+    }
+
+    /**
+     * Supplier Item - Invoice Wise Purchase - Print View
+     */
+    public function supplierItemInvoiceWisePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $supplierId = $request->get('supplier_id');
+
+        $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo, $supplierId) {
+            $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+            if ($supplierId) {
+                $q->where('supplier_id', $supplierId);
+            }
+        })
+        ->with(['transaction' => function($q) {
+            $q->select('id', 'bill_date', 'bill_no', 'supplier_id')
+              ->with('supplier:supplier_id,name');
+        }]);
+
+        $supplierName = null;
+        if ($supplierId) {
+            $supplier = Supplier::find($supplierId);
+            $supplierName = $supplier ? $supplier->name : null;
+        }
+
+        $items = $query->orderBy('item_name')->orderBy('purchase_transaction_id')->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.item-invoice-wise-print', compact(
+            'items', 'dateFrom', 'dateTo', 'supplierName'
+        ));
     }
 
     /**
      * Supplier Invoice - Item Wise Purchase
+     * Shows invoices first, then items under each invoice
      */
     public function supplierInvoiceItemWise(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.invoice-item-wise');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '3'); // 1=Purchase, 2=Return, 3=Both
+        $supplierId = $request->get('supplier_id');
+        $supplierCode = $request->get('supplier_code');
+        $groupBy = $request->get('group_by', 'C'); // C=Company, I=Item
+        $taggedCompanies = $request->get('tagged_companies', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code');
+        $divisionId = $request->get('division_id');
+        $divisionCode = $request->get('division_code');
+        $categoryId = $request->get('category_id');
+        $categoryCode = $request->get('category_code');
+
+        $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
+        $companies = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $categories = ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $invoices = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            // Get invoices with their items - grouped by invoice first
+            $query = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+                ->with(['supplier:supplier_id,name', 'items' => function($q) {
+                    $q->orderBy('item_name');
+                }]);
+
+            if ($supplierId) {
+                $query->where('supplier_id', $supplierId);
+            }
+
+            $invoices = $query->orderBy('bill_date', 'desc')->orderBy('bill_no')->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.invoice-item-wise', compact(
+            'invoices', 'suppliers', 'companies', 'categories', 'dateFrom', 'dateTo', 'reportType',
+            'supplierId', 'supplierCode', 'groupBy', 'taggedCompanies', 'removeTags',
+            'companyId', 'companyCode', 'divisionId', 'divisionCode', 'categoryId', 'categoryCode'
+        ));
+    }
+
+    /**
+     * Supplier Invoice - Item Wise Purchase - Print View
+     */
+    public function supplierInvoiceItemWisePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $supplierId = $request->get('supplier_id');
+
+        $query = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+            ->with(['supplier:supplier_id,name', 'items' => function($q) {
+                $q->orderBy('item_name');
+            }]);
+
+        $supplierName = null;
+        if ($supplierId) {
+            $query->where('supplier_id', $supplierId);
+            $supplier = Supplier::find($supplierId);
+            $supplierName = $supplier ? $supplier->name : null;
+        }
+
+        $invoices = $query->orderBy('bill_date', 'desc')->orderBy('bill_no')->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.supplier-wise-purchase.invoice-item-wise-print', compact(
+            'invoices', 'dateFrom', 'dateTo', 'supplierName'
+        ));
     }
 
     // --- Company Wise Purchase Submodule Methods ---
@@ -3152,7 +3644,63 @@ class PurchaseReportController extends Controller
      */
     public function companyAllCompany(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.all-company');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '1'); // 1=Purchase, 2=Return, 3=Both
+
+        $companies = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            // Get company-wise purchase summary from transaction items
+            $companies = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo) {
+                $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+            })
+            ->select(
+                'company_name',
+                DB::raw('COUNT(DISTINCT item_id) as total_items'),
+                DB::raw('SUM(qty) as total_qty'),
+                DB::raw('SUM(free_qty) as total_free_qty'),
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('SUM(tax_amount) as total_tax'),
+                DB::raw('SUM(net_amount) as total_net')
+            )
+            ->groupBy('company_name')
+            ->orderBy('company_name')
+            ->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.all-company', compact(
+            'companies', 'dateFrom', 'dateTo', 'reportType'
+        ));
+    }
+
+    /**
+     * All Company Purchase Summary - Print View
+     */
+    public function companyAllCompanyPrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+
+        $companies = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+        })
+        ->select(
+            'company_name',
+            DB::raw('COUNT(DISTINCT item_id) as total_items'),
+            DB::raw('SUM(qty) as total_qty'),
+            DB::raw('SUM(free_qty) as total_free_qty'),
+            DB::raw('SUM(amount) as total_amount'),
+            DB::raw('SUM(tax_amount) as total_tax'),
+            DB::raw('SUM(net_amount) as total_net')
+        )
+        ->groupBy('company_name')
+        ->orderBy('company_name')
+        ->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.all-company-print', compact(
+            'companies', 'dateFrom', 'dateTo'
+        ));
     }
 
     /**
@@ -3160,7 +3708,89 @@ class PurchaseReportController extends Controller
      */
     public function companyItemWise(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.item-wise');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code');
+
+        $companyList = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $items = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo) {
+                $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+            });
+
+            if ($companyId) {
+                $company = Company::find($companyId);
+                if ($company) {
+                    $query->where('company_name', $company->name);
+                }
+            }
+
+            $items = $query->select(
+                'company_name',
+                'item_id',
+                'item_name',
+                DB::raw('SUM(qty) as total_qty'),
+                DB::raw('SUM(free_qty) as total_free_qty'),
+                DB::raw('AVG(pur_rate) as avg_rate'),
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('SUM(tax_amount) as total_tax'),
+                DB::raw('SUM(net_amount) as total_net')
+            )
+            ->groupBy('company_name', 'item_id', 'item_name')
+            ->orderBy('company_name')
+            ->orderBy('item_name')
+            ->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.item-wise', compact(
+            'items', 'companyList', 'dateFrom', 'dateTo', 'companyId', 'companyCode'
+        ));
+    }
+
+    /**
+     * Company Item Wise Purchase - Print View
+     */
+    public function companyItemWisePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $companyId = $request->get('company_id');
+
+        $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+        });
+
+        $companyName = null;
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+                $companyName = $company->name;
+            }
+        }
+
+        $items = $query->select(
+            'company_name',
+            'item_id',
+            'item_name',
+            DB::raw('SUM(qty) as total_qty'),
+            DB::raw('SUM(free_qty) as total_free_qty'),
+            DB::raw('AVG(pur_rate) as avg_rate'),
+            DB::raw('SUM(amount) as total_amount'),
+            DB::raw('SUM(tax_amount) as total_tax'),
+            DB::raw('SUM(net_amount) as total_net')
+        )
+        ->groupBy('company_name', 'item_id', 'item_name')
+        ->orderBy('company_name')
+        ->orderBy('item_name')
+        ->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.item-wise-print', compact(
+            'items', 'dateFrom', 'dateTo', 'companyName'
+        ));
     }
 
     /**
@@ -3168,25 +3798,312 @@ class PurchaseReportController extends Controller
      */
     public function companyPartyWise(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.party-wise');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code');
+
+        $companyList = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $parties = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            // Get company-wise party (supplier) purchase summary
+            $query = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+                ->with('supplier:supplier_id,name')
+                ->join('purchase_transaction_items', 'purchase_transactions.id', '=', 'purchase_transaction_items.purchase_transaction_id');
+
+            if ($companyId) {
+                $company = Company::find($companyId);
+                if ($company) {
+                    $query->where('purchase_transaction_items.company_name', $company->name);
+                }
+            }
+
+            $parties = $query->select(
+                'purchase_transaction_items.company_name',
+                'purchase_transactions.supplier_id',
+                DB::raw('COUNT(DISTINCT purchase_transactions.id) as total_bills'),
+                DB::raw('SUM(purchase_transaction_items.qty) as total_qty'),
+                DB::raw('SUM(purchase_transaction_items.amount) as total_amount'),
+                DB::raw('SUM(purchase_transaction_items.net_amount) as total_net')
+            )
+            ->groupBy('purchase_transaction_items.company_name', 'purchase_transactions.supplier_id')
+            ->orderBy('purchase_transaction_items.company_name')
+            ->get()
+            ->map(function($item) {
+                $item->supplier = Supplier::select('supplier_id', 'name')->where('supplier_id', $item->supplier_id)->first();
+                return $item;
+            });
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.party-wise', compact(
+            'parties', 'companyList', 'dateFrom', 'dateTo', 'companyId', 'companyCode'
+        ));
+    }
+
+    /**
+     * Company Party Wise Purchase - Print View
+     */
+    public function companyPartyWisePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $companyId = $request->get('company_id');
+
+        $query = PurchaseTransaction::whereBetween('bill_date', [$dateFrom, $dateTo])
+            ->join('purchase_transaction_items', 'purchase_transactions.id', '=', 'purchase_transaction_items.purchase_transaction_id');
+
+        $companyName = null;
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('purchase_transaction_items.company_name', $company->name);
+                $companyName = $company->name;
+            }
+        }
+
+        $parties = $query->select(
+            'purchase_transaction_items.company_name',
+            'purchase_transactions.supplier_id',
+            DB::raw('COUNT(DISTINCT purchase_transactions.id) as total_bills'),
+            DB::raw('SUM(purchase_transaction_items.qty) as total_qty'),
+            DB::raw('SUM(purchase_transaction_items.amount) as total_amount'),
+            DB::raw('SUM(purchase_transaction_items.net_amount) as total_net')
+        )
+        ->groupBy('purchase_transaction_items.company_name', 'purchase_transactions.supplier_id')
+        ->orderBy('purchase_transaction_items.company_name')
+        ->get()
+        ->map(function($item) {
+            $item->supplier = Supplier::select('supplier_id', 'name')->where('supplier_id', $item->supplier_id)->first();
+            return $item;
+        });
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.company-wise-purchase.party-wise-print', compact(
+            'parties', 'dateFrom', 'dateTo', 'companyName'
+        ));
     }
 
     // --- Item Wise Purchase Submodule Methods ---
 
     /**
-     * Item Bill Wise Purchase
+     * Item Bill Wise Purchase (Item Wise Purchase - second screenshot)
      */
     public function itemBillWise(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.bill-wise');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '3'); // 1=Purchase, 2=Return, 3=Both
+        $selectiveItem = $request->get('selective_item', 'Y');
+        $taggedItems = $request->get('tagged_items', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $itemId = $request->get('item_id');
+        $divisionCode = $request->get('division_code');
+        $batchNo = $request->get('batch_no');
+        $partyCode = $request->get('party_code');
+        $supplierId = $request->get('supplier_id');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
+        $withAddress = $request->get('with_address', 'N');
+        $withValue = $request->get('with_value', 'N');
+        $categoryId = $request->get('category_id');
+
+        $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
+        $categories = ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $items = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo, $supplierId) {
+                $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+                if ($supplierId) {
+                    $q->where('supplier_id', $supplierId);
+                }
+            })
+            ->with(['transaction' => function($q) {
+                $q->select('id', 'bill_date', 'bill_no', 'supplier_id')
+                  ->with('supplier:supplier_id,name');
+            }]);
+
+            if ($batchNo) {
+                $query->where('batch_no', 'like', "%{$batchNo}%");
+            }
+
+            $items = $query->orderBy('item_name')->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.bill-wise', compact(
+            'items', 'suppliers', 'categories', 'dateFrom', 'dateTo', 'reportType',
+            'selectiveItem', 'taggedItems', 'removeTags', 'itemId', 'divisionCode',
+            'batchNo', 'partyCode', 'supplierId', 'withBrExpiry', 'withAddress', 'withValue', 'categoryId'
+        ));
     }
 
     /**
-     * All Item Purchase Summary
+     * Item Bill Wise Purchase - Print View
+     */
+    public function itemBillWisePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $supplierId = $request->get('supplier_id');
+        $batchNo = $request->get('batch_no');
+
+        $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo, $supplierId) {
+            $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+            if ($supplierId) {
+                $q->where('supplier_id', $supplierId);
+            }
+        })
+        ->with(['transaction' => function($q) {
+            $q->select('id', 'bill_date', 'bill_no', 'supplier_id')
+              ->with('supplier:supplier_id,name');
+        }]);
+
+        if ($batchNo) {
+            $query->where('batch_no', 'like', "%{$batchNo}%");
+        }
+
+        $items = $query->orderBy('item_name')->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.bill-wise-print', compact(
+            'items', 'dateFrom', 'dateTo'
+        ));
+    }
+
+    /**
+     * All Item Purchase Summary (first screenshot)
      */
     public function itemAllItemPurchase(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.all-item-purchase');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '3'); // 1=Purchase, 2=Return, 3=Both
+        $billNoFrom = $request->get('bill_no_from', 0);
+        $billNoTo = $request->get('bill_no_to', 0);
+        $taggedCompanies = $request->get('tagged_companies', 'N');
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code');
+        $divisionCode = $request->get('division_code');
+        $itemId = $request->get('item_id');
+        $itemCode = $request->get('item_code');
+        $taggedCategories = $request->get('tagged_categories', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $categoryId = $request->get('category_id');
+        $categoryCode = $request->get('category_code');
+        $rangeYN = $request->get('range_yn', 'N');
+        $valueFrom = $request->get('value_from', -999999999);
+        $valueTo = $request->get('value_to', 999999999);
+        $orderBy = $request->get('order_by', 'V'); // Q=Qty, V=Value
+        $sortOrder = $request->get('sort_order', 'D'); // A=Asc, D=Desc
+        $topItems = $request->get('top_items', 0);
+        $batchWise = $request->get('batch_wise', 'N');
+        $withBrExpiry = $request->get('with_br_expiry', 'N');
+        $withReturnDet = $request->get('with_return_det', 'N');
+
+        $companies = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $categories = ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $items = collect();
+
+        if ($request->has('from_date') || $request->has('to_date')) {
+            $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo) {
+                $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+            });
+
+            if ($companyId) {
+                $company = Company::find($companyId);
+                if ($company) {
+                    $query->where('company_name', $company->name);
+                }
+            }
+
+            $items = $query->select(
+                'item_id',
+                'item_name',
+                'company_name',
+                DB::raw('SUM(qty) as total_qty'),
+                DB::raw('SUM(free_qty) as total_free_qty'),
+                DB::raw('AVG(pur_rate) as avg_rate'),
+                DB::raw('SUM(amount) as total_amount'),
+                DB::raw('SUM(tax_amount) as total_tax'),
+                DB::raw('SUM(net_amount) as total_net')
+            )
+            ->groupBy('item_id', 'item_name', 'company_name');
+
+            // Apply sorting
+            if ($orderBy == 'Q') {
+                $items = $items->orderBy('total_qty', $sortOrder == 'D' ? 'desc' : 'asc');
+            } else {
+                $items = $items->orderBy('total_net', $sortOrder == 'D' ? 'desc' : 'asc');
+            }
+
+            // Apply top items limit
+            if ($topItems > 0) {
+                $items = $items->limit($topItems);
+            }
+
+            $items = $items->get();
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.all-item-purchase', compact(
+            'items', 'companies', 'categories', 'dateFrom', 'dateTo', 'reportType',
+            'billNoFrom', 'billNoTo', 'taggedCompanies', 'companyId', 'companyCode',
+            'divisionCode', 'itemId', 'itemCode', 'taggedCategories', 'removeTags',
+            'categoryId', 'categoryCode', 'rangeYN', 'valueFrom', 'valueTo',
+            'orderBy', 'sortOrder', 'topItems', 'batchWise', 'withBrExpiry', 'withReturnDet'
+        ));
+    }
+
+    /**
+     * All Item Purchase Summary - Print View
+     */
+    public function itemAllItemPurchasePrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $companyId = $request->get('company_id');
+        $orderBy = $request->get('order_by', 'V');
+        $sortOrder = $request->get('sort_order', 'D');
+        $topItems = $request->get('top_items', 0);
+
+        $query = PurchaseTransactionItem::whereHas('transaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('bill_date', [$dateFrom, $dateTo]);
+        });
+
+        $companyName = null;
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+                $companyName = $company->name;
+            }
+        }
+
+        $items = $query->select(
+            'item_id',
+            'item_name',
+            'company_name',
+            DB::raw('SUM(qty) as total_qty'),
+            DB::raw('SUM(free_qty) as total_free_qty'),
+            DB::raw('AVG(pur_rate) as avg_rate'),
+            DB::raw('SUM(amount) as total_amount'),
+            DB::raw('SUM(tax_amount) as total_tax'),
+            DB::raw('SUM(net_amount) as total_net')
+        )
+        ->groupBy('item_id', 'item_name', 'company_name');
+
+        if ($orderBy == 'Q') {
+            $items = $items->orderBy('total_qty', $sortOrder == 'D' ? 'desc' : 'asc');
+        } else {
+            $items = $items->orderBy('total_net', $sortOrder == 'D' ? 'desc' : 'asc');
+        }
+
+        if ($topItems > 0) {
+            $items = $items->limit($topItems);
+        }
+
+        $items = $items->get();
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.item-wise-purchase.all-item-purchase-print', compact(
+            'items', 'dateFrom', 'dateTo', 'companyName'
+        ));
     }
 
     // --- Schemed Received Submodule Methods ---
