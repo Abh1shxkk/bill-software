@@ -9214,14 +9214,14 @@ class SalesReportController extends Controller
         $returns = SaleReturnTransaction::with('customer:id,name')
             ->whereBetween('return_date', [$dateFrom, $dateTo])
             ->orderBy('return_date')
-            ->orderBy('return_no')
+            ->orderBy('sr_no')
             ->get();
 
         $adjustments = $returns->map(function($return, $index) {
             $adjustedAmount = 0; // Would come from adjustment table if exists
             return [
                 'date' => $return->return_date->format('d-m-Y'),
-                'trn_no' => $return->return_no,
+                'trn_no' => $return->sr_no,
                 'party_name' => $return->customer->name ?? 'N/A',
                 'amount' => $return->net_amount ?? 0,
                 'adj_bill' => '',

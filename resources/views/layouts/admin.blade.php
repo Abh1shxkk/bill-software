@@ -1143,6 +1143,171 @@
             contain: none !important;
         }
     </style>
+    <!-- Flatpickr Date Picker - Minimal Theme -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* Ultra Minimal Flatpickr Theme */
+        .flatpickr-calendar {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            padding: 8px;
+            width: 280px;
+            font-family: 'Montserrat', -apple-system, sans-serif;
+        }
+        .flatpickr-calendar.arrowTop:before,
+        .flatpickr-calendar.arrowTop:after,
+        .flatpickr-calendar.arrowBottom:before,
+        .flatpickr-calendar.arrowBottom:after {
+            display: none;
+        }
+        .flatpickr-months {
+            padding: 8px 4px;
+        }
+        .flatpickr-months .flatpickr-month {
+            height: 32px;
+        }
+        .flatpickr-current-month {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1f2937;
+            padding-top: 4px;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months {
+            font-weight: 600;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            color: #1f2937;
+            padding: 4px 8px;
+            cursor: pointer;
+            appearance: auto;
+            -webkit-appearance: menulist;
+        }
+        .flatpickr-current-month .flatpickr-monthDropdown-months:hover {
+            background: #f3f4f6;
+        }
+        .flatpickr-current-month input.cur-year {
+            font-weight: 600;
+            color: #1f2937;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 4px 8px;
+            width: 70px;
+        }
+        /* Prevent Select2 on flatpickr elements */
+        .flatpickr-calendar select,
+        .flatpickr-calendar .flatpickr-monthDropdown-months {
+            appearance: auto !important;
+            -webkit-appearance: menulist !important;
+        }
+        .flatpickr-calendar .select2-container {
+            display: none !important;
+        }
+        .flatpickr-months .flatpickr-prev-month,
+        .flatpickr-months .flatpickr-next-month {
+            padding: 6px 10px;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+        .flatpickr-months .flatpickr-prev-month:hover,
+        .flatpickr-months .flatpickr-next-month:hover {
+            background: #f3f4f6;
+        }
+        .flatpickr-months .flatpickr-prev-month svg,
+        .flatpickr-months .flatpickr-next-month svg {
+            fill: #6b7280;
+            width: 12px;
+            height: 12px;
+        }
+        .flatpickr-weekdays {
+            padding: 8px 0;
+        }
+        span.flatpickr-weekday {
+            color: #9ca3af;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .flatpickr-days {
+            width: 100%;
+        }
+        .dayContainer {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+        }
+        .flatpickr-day {
+            height: 36px;
+            line-height: 36px;
+            border-radius: 8px;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 500;
+            border: none;
+            margin: 1px;
+            max-width: 36px;
+            transition: all 0.15s ease;
+        }
+        .flatpickr-day:hover {
+            background: #f3f4f6;
+            border: none;
+        }
+        .flatpickr-day.today {
+            background: #eff6ff;
+            color: #2563eb;
+            border: none;
+        }
+        .flatpickr-day.today:hover {
+            background: #dbeafe;
+        }
+        .flatpickr-day.selected,
+        .flatpickr-day.selected:hover {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+        }
+        .flatpickr-day.prevMonthDay,
+        .flatpickr-day.nextMonthDay {
+            color: #d1d5db;
+        }
+        .flatpickr-day.flatpickr-disabled {
+            color: #e5e7eb;
+        }
+        /* Input styling - prevent Select2 interference */
+        input.flatpickr-input,
+        input.flatpickr-alt-input,
+        input[data-fp] {
+            background: #fff !important;
+            cursor: pointer !important;
+        }
+        input.flatpickr-input[readonly],
+        input.flatpickr-alt-input[readonly] {
+            background: #fff !important;
+        }
+        /* Hide original input, show alt input */
+        input.flatpickr-input[data-fp] {
+            position: absolute !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+        }
+        /* Animation */
+        .flatpickr-calendar.open {
+            animation: fpFadeIn 0.2s ease-out;
+        }
+        @keyframes fpFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
     @stack('styles')
     @vite(['resources/js/app.js'])
     @csrf
@@ -1220,20 +1385,23 @@
     <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        // Initialize Select2 globally for all select elements
+        // Initialize Select2 globally for all select elements (EXCLUDE flatpickr elements)
         $(document).ready(function() {
-            // Initialize Select2 on all select elements
-            $('select').not('.no-select2').select2({
+            // Initialize Select2 on all select elements - exclude flatpickr calendar selects
+            $('select').not('.no-select2, .flatpickr-monthDropdown-months').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 placeholder: 'Select an option',
                 allowClear: true
             });
             
-            // Re-initialize Select2 when new content is added dynamically
+            // Re-initialize Select2 when new content is added dynamically - exclude flatpickr
             $(document).on('DOMNodeInserted', function(e) {
+                // Skip if inside flatpickr calendar
+                if ($(e.target).closest('.flatpickr-calendar').length) return;
+                
                 if ($(e.target).is('select') || $(e.target).find('select').length) {
-                    $(e.target).find('select').not('.no-select2, .select2-hidden-accessible').select2({
+                    $(e.target).find('select').not('.no-select2, .select2-hidden-accessible, .flatpickr-monthDropdown-months').select2({
                         theme: 'bootstrap-5',
                         width: '100%',
                         placeholder: 'Select an option',
@@ -1728,9 +1896,12 @@
             // Defer Select2 initialization to not block page load
             requestIdleCallback ? requestIdleCallback(initializeSelect2) : setTimeout(initializeSelect2, 100);
 
-            // Function to initialize Select2 on select elements
+            // Function to initialize Select2 on select elements (EXCLUDE flatpickr)
             function initializeSelect2(container) {
-                const selectElements = container ? $(container).find('select:not(.select2-hidden-accessible)') : $('select:not(.select2-hidden-accessible)');
+                // Exclude flatpickr calendar selects
+                const selectElements = container 
+                    ? $(container).find('select:not(.select2-hidden-accessible):not(.flatpickr-monthDropdown-months)').not('.flatpickr-calendar select') 
+                    : $('select:not(.select2-hidden-accessible):not(.flatpickr-monthDropdown-months)').not('.flatpickr-calendar select');
 
                 // Process in batches to avoid blocking
                 const batchSize = 10;
@@ -1742,7 +1913,8 @@
                     
                     batch.each(function () {
                         const $select = $(this);
-                        if ($select.hasClass('no-select2') || $select.data('select2')) return;
+                        // Skip flatpickr elements and already initialized
+                        if ($select.hasClass('no-select2') || $select.data('select2') || $select.closest('.flatpickr-calendar').length) return;
 
                         const placeholder = $select.data('placeholder') || $select.find('option:first').text() || 'Select an option';
                         const allowClear = $select.data('allow-clear') !== false;
@@ -1798,6 +1970,61 @@
                 initializeSelect2(e.target);
             });
         });
+    </script>
+
+    <!-- Flatpickr Date Picker JS - Minimal -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // Minimal Flatpickr initialization
+        (function() {
+            const fpConfig = {
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd-m-Y',
+                allowInput: true,
+                disableMobile: true,
+                animate: true,
+                onReady: function(selectedDates, dateStr, instance) {
+                    // Add class to prevent Select2 interference
+                    if (instance.altInput) {
+                        instance.altInput.classList.add('flatpickr-alt-input');
+                    }
+                },
+                parseDate: (str) => {
+                    if (!str) return null;
+                    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+                        const [y,m,d] = str.split('-');
+                        return new Date(y, m-1, d);
+                    }
+                    if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+                        const [d,m,y] = str.split('-');
+                        return new Date(y, m-1, d);
+                    }
+                    return null;
+                }
+            };
+
+            function initDatePickers(root) {
+                (root || document).querySelectorAll('input[type="date"]:not([data-fp])').forEach(el => {
+                    const val = el.value;
+                    el.type = 'text';
+                    el.setAttribute('data-fp', '1');
+                    el.classList.add('flatpickr-input', 'no-select2');
+                    const fp = flatpickr(el, fpConfig);
+                    if (val) fp.setDate(val, true);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', () => initDatePickers());
+            
+            new MutationObserver(muts => {
+                muts.forEach(m => m.addedNodes.forEach(n => {
+                    if (n.nodeType === 1 && n.querySelectorAll) initDatePickers(n);
+                }));
+            }).observe(document.body, { childList: true, subtree: true });
+
+            $(document).on('shown.bs.modal', e => initDatePickers(e.target));
+        })();
     </script>
 
     @stack('scripts')
