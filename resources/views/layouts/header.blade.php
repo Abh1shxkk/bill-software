@@ -653,15 +653,6 @@
                 <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.party-wise-purchase') }}">Party Wise Purchase</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.monthly-purchase-summary') }}">Monthly Purchase Sales Summary</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.debit-credit-note') }}">Debit / Credit Note Report</a></li>
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.day-purchase-summary') }}">Day Purchase Summary - Item Wise</a></li>
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-return-item-wise') }}">Purchase / Return Book Item Wise</a></li>
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.local-central-register') }}">Local / Central Purchase Register</a></li>
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-voucher-detail') }}">Purchase Voucher Detail</a></li>
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.short-expiry-received') }}">Short Expiry Received</a></li>
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-return-list') }}">Purchase Return List</a></li>
-                
-                <li><hr class="dropdown-divider"></li>
-                
                 <!-- GST SET OFF Submenu -->
                 <li class="dropdown-submenu">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">GST-SET OFF</a>
@@ -670,7 +661,10 @@
                     <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.gst-set-off-gstr') }}">GST SET OFF GSTR</a></li>
                   </ul>
                 </li>
-                
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.day-purchase-summary') }}">Day Purchase Summary - Item Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-return-item-wise') }}">Purchase / Return Book Item Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.local-central-register') }}">Local / Central Purchase Register</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-voucher-detail') }}">Purchase Voucher Detail</a></li>
                 <!-- Purchase Challan Reports Submenu -->
                 <li class="dropdown-submenu">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Purchase Challan Reports</a>
@@ -679,6 +673,12 @@
                     <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.challan.pending-challans') }}">Pending Challans</a></li>
                   </ul>
                 </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.short-expiry-received') }}">Short Expiry Received</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.purchase-return-list') }}">Purchase Return List</a></li>
+                
+                <li><hr class="dropdown-divider"></li>
+                
+                
                 
                 <!-- Miscellaneous Purchase Analysis Submenu -->
                 <li class="dropdown-submenu">
@@ -742,9 +742,6 @@
                     <li><a class="dropdown-item" href="{{ route('admin.reports.purchase.other.register-schedule-h1-drugs') }}">Register of Schedule H1 Drugs</a></li>
                   </ul>
                 </li>
-                
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="{{ route('admin.reports.purchase') }}"><i class="bi bi-house-door me-1"></i>Purchase Reports Dashboard</a></li>
               </ul>
             </li>
 

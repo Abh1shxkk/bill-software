@@ -1,67 +1,75 @@
 @extends('layouts.admin')
 
-@section('title', 'GST SET OFF GSTR')
+@section('title', 'GST - SET OFF GSTR')
 
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #d4edda 0%, #e8f5e9 100%);">
+    <div class="card mb-2" style="background: linear-gradient(135deg, #f0e68c 0%, #daa520 100%);">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-success fst-italic fw-bold">GST SET OFF GSTR</h4>
+            <h4 class="mb-0 text-dark fst-italic fw-bold">GST - SET OFF GSTR</h4>
         </div>
     </div>
 
     <!-- Filters -->
     <div class="card shadow-sm mb-2">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.purchase.gst-set-off-gstr') }}">
                 <div class="row g-2">
+                    <!-- Row 1: Date Range -->
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">From:</span>
+                            <input type="date" name="date_from" class="form-control" value="{{ $dateFrom }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">To:</span>
+                            <input type="date" name="date_to" class="form-control" value="{{ $dateTo }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6"></div>
+
+                    <!-- Row 2: Options -->
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">Month</span>
-                            <select name="month" class="form-select">
-                                @for($i = 1; $i <= 12; $i++)
-                                    <option value="{{ $i }}" {{ (date('n') == $i) ? 'selected' : '' }}>{{ date('F', mktime(0, 0, 0, $i, 1)) }}</option>
-                                @endfor
+                            <span class="input-group-text">Show DN/CN:</span>
+                            <select name="show_dn_cn" class="form-select" style="max-width: 60px;">
+                                <option value="Y" {{ ($showDnCn ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
+                                <option value="N" {{ ($showDnCn ?? '') == 'N' ? 'selected' : '' }}>N</option>
                             </select>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">Year</span>
-                            <select name="year" class="form-select">
-                                @for($y = date('Y'); $y >= date('Y') - 5; $y--)
-                                    <option value="{{ $y }}" {{ (date('Y') == $y) ? 'selected' : '' }}>{{ $y }}</option>
-                                @endfor
+                            <span class="input-group-text">Show Br. Exp:</span>
+                            <select name="show_br_exp" class="form-select" style="max-width: 60px;">
+                                <option value="Y" {{ ($showBrExp ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
+                                <option value="N" {{ ($showBrExp ?? '') == 'N' ? 'selected' : '' }}>N</option>
                             </select>
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">GSTR Type</span>
-                            <select name="gstr_type" class="form-select">
-                                <option value="GSTR3B">GSTR-3B</option>
-                                <option value="GSTR1">GSTR-1</option>
-                                <option value="GSTR2A">GSTR-2A</option>
-                                <option value="GSTR2B">GSTR-2B</option>
-                            </select>
+                        <div class="form-check mt-1">
+                            <input type="checkbox" class="form-check-input" name="without_hsn" id="withoutHsn" value="1" {{ ($withoutHsn ?? false) ? 'checked' : '' }}>
+                            <label class="form-check-label small" for="withoutHsn">Without HSN Code</label>
                         </div>
                     </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">Format</span>
-                            <select name="format" class="form-select">
-                                <option value="summary">Summary</option>
-                                <option value="detailed">Detailed</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-eye me-1"></i>View</button>
-                            <button type="button" class="btn btn-success btn-sm"><i class="bi bi-file-excel me-1"></i>Excel</button>
-                            <button type="button" class="btn btn-info btn-sm text-white"><i class="bi bi-download me-1"></i>JSON</button>
-                            <a href="{{ route('admin.reports.purchase') }}" class="btn btn-secondary btn-sm"><i class="bi bi-x-lg"></i></a>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-success btn-sm" id="btnExcel">
+                                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" id="btnView">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btnPrint">
+                                <i class="bi bi-printer me-1"></i>Print
+                            </button>
+                            <a href="{{ route('admin.reports.purchase') }}" class="btn btn-dark btn-sm">
+                                <i class="bi bi-x-lg me-1"></i>Close
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -71,8 +79,8 @@
 
     <!-- GSTR-3B Summary -->
     <div class="card shadow-sm mb-2">
-        <div class="card-header bg-success text-white py-2">
-            <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>GSTR-3B Summary - {{ date('F Y') }}</h6>
+        <div class="card-header bg-warning text-dark py-2">
+            <h6 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>GSTR-3B Summary - {{ \Carbon\Carbon::parse($dateFrom)->format('M Y') }} to {{ \Carbon\Carbon::parse($dateTo)->format('M Y') }}</h6>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -80,10 +88,10 @@
                     <thead class="table-dark">
                         <tr>
                             <th colspan="2">Description</th>
-                            <th class="text-end">Integrated Tax</th>
-                            <th class="text-end">Central Tax</th>
-                            <th class="text-end">State/UT Tax</th>
-                            <th class="text-end">Cess</th>
+                            <th class="text-end" style="width: 110px;">Integrated Tax</th>
+                            <th class="text-end" style="width: 110px;">Central Tax</th>
+                            <th class="text-end" style="width: 110px;">State/UT Tax</th>
+                            <th class="text-end" style="width: 90px;">Cess</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -136,13 +144,13 @@
                         <tr class="table-light">
                             <td colspan="6" class="fw-bold">4. Eligible ITC</td>
                         </tr>
-                        <tr>
+                        <tr class="table-info">
                             <td>(A)</td>
-                            <td>ITC Available (whether in full or part)</td>
-                            <td class="text-end">{{ number_format($gstr['itc_igst'] ?? 0, 2) }}</td>
-                            <td class="text-end">{{ number_format($gstr['itc_cgst'] ?? 0, 2) }}</td>
-                            <td class="text-end">{{ number_format($gstr['itc_sgst'] ?? 0, 2) }}</td>
-                            <td class="text-end">{{ number_format($gstr['itc_cess'] ?? 0, 2) }}</td>
+                            <td class="fw-bold">ITC Available (whether in full or part)</td>
+                            <td class="text-end fw-bold">{{ number_format($gstr['itc_igst'] ?? 0, 2) }}</td>
+                            <td class="text-end fw-bold">{{ number_format($gstr['itc_cgst'] ?? 0, 2) }}</td>
+                            <td class="text-end fw-bold">{{ number_format($gstr['itc_sgst'] ?? 0, 2) }}</td>
+                            <td class="text-end fw-bold">{{ number_format($gstr['itc_cess'] ?? 0, 2) }}</td>
                         </tr>
                         <tr>
                             <td></td>
@@ -214,10 +222,10 @@
                         </tr>
                         <tr>
                             <td colspan="2">Paid through ITC</td>
-                            <td class="text-end">{{ number_format($gstr['paid_itc_igst'] ?? 0, 2) }}</td>
-                            <td class="text-end">{{ number_format($gstr['paid_itc_cgst'] ?? 0, 2) }}</td>
-                            <td class="text-end">{{ number_format($gstr['paid_itc_sgst'] ?? 0, 2) }}</td>
-                            <td class="text-end">{{ number_format($gstr['paid_itc_cess'] ?? 0, 2) }}</td>
+                            <td class="text-end text-success">{{ number_format($gstr['paid_itc_igst'] ?? 0, 2) }}</td>
+                            <td class="text-end text-success">{{ number_format($gstr['paid_itc_cgst'] ?? 0, 2) }}</td>
+                            <td class="text-end text-success">{{ number_format($gstr['paid_itc_sgst'] ?? 0, 2) }}</td>
+                            <td class="text-end text-success">{{ number_format($gstr['paid_itc_cess'] ?? 0, 2) }}</td>
                         </tr>
                         <tr class="table-danger">
                             <td colspan="2" class="fw-bold">Tax/Cess paid in Cash</td>
@@ -232,6 +240,7 @@
         </div>
     </div>
 
+
     <!-- ITC Reconciliation -->
     <div class="card shadow-sm">
         <div class="card-header bg-info text-white py-2">
@@ -243,10 +252,10 @@
                     <thead class="table-light">
                         <tr>
                             <th>Particulars</th>
-                            <th class="text-end">As Per Books</th>
-                            <th class="text-end">As Per GSTR-2B</th>
-                            <th class="text-end">Difference</th>
-                            <th class="text-center">Status</th>
+                            <th class="text-end" style="width: 130px;">As Per Books</th>
+                            <th class="text-end" style="width: 130px;">As Per GSTR-2B</th>
+                            <th class="text-end" style="width: 120px;">Difference</th>
+                            <th class="text-center" style="width: 100px;">Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -312,9 +321,68 @@
 </div>
 @endsection
 
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('filterForm');
+
+    // View button
+    document.getElementById('btnView').addEventListener('click', function() {
+        let viewTypeInput = form.querySelector('input[name="view_type"]');
+        if (viewTypeInput) viewTypeInput.value = '';
+        let exportInput = form.querySelector('input[name="export"]');
+        if (exportInput) exportInput.value = '';
+        form.target = '_self';
+        form.submit();
+    });
+
+    // Excel button
+    document.getElementById('btnExcel').addEventListener('click', function() {
+        let exportInput = form.querySelector('input[name="export"]');
+        if (!exportInput) {
+            exportInput = document.createElement('input');
+            exportInput.type = 'hidden';
+            exportInput.name = 'export';
+            form.appendChild(exportInput);
+        }
+        exportInput.value = 'excel';
+        form.target = '_self';
+        form.submit();
+        exportInput.value = '';
+    });
+
+    // Print button
+    document.getElementById('btnPrint').addEventListener('click', function() {
+        let viewTypeInput = form.querySelector('input[name="view_type"]');
+        if (!viewTypeInput) {
+            viewTypeInput = document.createElement('input');
+            viewTypeInput.type = 'hidden';
+            viewTypeInput.name = 'view_type';
+            form.appendChild(viewTypeInput);
+        }
+        viewTypeInput.value = 'print';
+        form.target = '_blank';
+        form.submit();
+        form.target = '_self';
+        viewTypeInput.value = '';
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') window.history.back();
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btnView').click();
+        }
+    });
+});
+</script>
+@endpush
+
 @push('styles')
 <style>
-.input-group-text { font-size: 0.75rem; }
+.input-group-text { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+.form-control, .form-select { font-size: 0.8rem; }
 .table th, .table td { padding: 0.35rem 0.5rem; font-size: 0.8rem; vertical-align: middle; }
 </style>
 @endpush
