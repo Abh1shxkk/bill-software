@@ -408,19 +408,29 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         
         // Supplier Wise Purchase Submenu
         Route::get('reports/purchase/misc/supplier/all-supplier', [PurchaseReportController::class, 'supplierAllSupplier'])->name('reports.purchase.misc.supplier.all-supplier');
+        Route::get('reports/purchase/misc/supplier/all-supplier/print', [PurchaseReportController::class, 'supplierAllSupplierPrint'])->name('reports.purchase.misc.supplier.all-supplier.print');
         Route::get('reports/purchase/misc/supplier/bill-wise', [PurchaseReportController::class, 'supplierBillWise'])->name('reports.purchase.misc.supplier.bill-wise');
+        Route::get('reports/purchase/misc/supplier/bill-wise/print', [PurchaseReportController::class, 'supplierBillWisePrint'])->name('reports.purchase.misc.supplier.bill-wise.print');
         Route::get('reports/purchase/misc/supplier/item-wise', [PurchaseReportController::class, 'supplierItemWise'])->name('reports.purchase.misc.supplier.item-wise');
+        Route::get('reports/purchase/misc/supplier/item-wise/print', [PurchaseReportController::class, 'supplierItemWisePrint'])->name('reports.purchase.misc.supplier.item-wise.print');
         Route::get('reports/purchase/misc/supplier/item-invoice-wise', [PurchaseReportController::class, 'supplierItemInvoiceWise'])->name('reports.purchase.misc.supplier.item-invoice-wise');
+        Route::get('reports/purchase/misc/supplier/item-invoice-wise/print', [PurchaseReportController::class, 'supplierItemInvoiceWisePrint'])->name('reports.purchase.misc.supplier.item-invoice-wise.print');
         Route::get('reports/purchase/misc/supplier/invoice-item-wise', [PurchaseReportController::class, 'supplierInvoiceItemWise'])->name('reports.purchase.misc.supplier.invoice-item-wise');
+        Route::get('reports/purchase/misc/supplier/invoice-item-wise/print', [PurchaseReportController::class, 'supplierInvoiceItemWisePrint'])->name('reports.purchase.misc.supplier.invoice-item-wise.print');
 
         // Company Wise Purchase Submenu
         Route::get('reports/purchase/misc/company/all-company', [PurchaseReportController::class, 'companyAllCompany'])->name('reports.purchase.misc.company.all-company');
+        Route::get('reports/purchase/misc/company/all-company/print', [PurchaseReportController::class, 'companyAllCompanyPrint'])->name('reports.purchase.misc.company.all-company.print');
         Route::get('reports/purchase/misc/company/item-wise', [PurchaseReportController::class, 'companyItemWise'])->name('reports.purchase.misc.company.item-wise');
+        Route::get('reports/purchase/misc/company/item-wise/print', [PurchaseReportController::class, 'companyItemWisePrint'])->name('reports.purchase.misc.company.item-wise.print');
         Route::get('reports/purchase/misc/company/party-wise', [PurchaseReportController::class, 'companyPartyWise'])->name('reports.purchase.misc.company.party-wise');
+        Route::get('reports/purchase/misc/company/party-wise/print', [PurchaseReportController::class, 'companyPartyWisePrint'])->name('reports.purchase.misc.company.party-wise.print');
 
         // Item Wise Purchase Submenu
         Route::get('reports/purchase/misc/item/bill-wise', [PurchaseReportController::class, 'itemBillWise'])->name('reports.purchase.misc.item.bill-wise');
+        Route::get('reports/purchase/misc/item/bill-wise/print', [PurchaseReportController::class, 'itemBillWisePrint'])->name('reports.purchase.misc.item.bill-wise.print');
         Route::get('reports/purchase/misc/item/all-item-purchase', [PurchaseReportController::class, 'itemAllItemPurchase'])->name('reports.purchase.misc.item.all-item-purchase');
+        Route::get('reports/purchase/misc/item/all-item-purchase/print', [PurchaseReportController::class, 'itemAllItemPurchasePrint'])->name('reports.purchase.misc.item.all-item-purchase.print');
         
         // Schemed Received Submenu
         Route::get('reports/purchase/misc/schemed/free-schemed', [PurchaseReportController::class, 'schemedFreeSchemed'])->name('reports.purchase.misc.schemed.free-schemed');
