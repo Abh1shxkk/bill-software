@@ -434,8 +434,11 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         
         // Schemed Received Submenu
         Route::get('reports/purchase/misc/schemed/free-schemed', [PurchaseReportController::class, 'schemedFreeSchemed'])->name('reports.purchase.misc.schemed.free-schemed');
+        Route::get('reports/purchase/misc/schemed/free-schemed/print', [PurchaseReportController::class, 'schemedFreeSchemedPrint'])->name('reports.purchase.misc.schemed.free-schemed.print');
         Route::get('reports/purchase/misc/schemed/half-schemed', [PurchaseReportController::class, 'schemedHalfSchemed'])->name('reports.purchase.misc.schemed.half-schemed');
+        Route::get('reports/purchase/misc/schemed/half-schemed/print', [PurchaseReportController::class, 'schemedHalfSchemedPrint'])->name('reports.purchase.misc.schemed.half-schemed.print');
         Route::get('reports/purchase/misc/schemed/free-without-qty', [PurchaseReportController::class, 'schemedFreeWithoutQty'])->name('reports.purchase.misc.schemed.free-without-qty');
+        Route::get('reports/purchase/misc/schemed/free-without-qty/print', [PurchaseReportController::class, 'schemedFreeWithoutQtyPrint'])->name('reports.purchase.misc.schemed.free-without-qty.print');
 
         // Other Purchase Reports
         Route::get('reports/purchase/other/supplier-visit-report', [PurchaseReportController::class, 'supplierVisitReport'])->name('reports.purchase.other.supplier-visit-report');

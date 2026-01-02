@@ -4113,7 +4113,129 @@ class PurchaseReportController extends Controller
      */
     public function schemedFreeSchemed(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-schemed-received');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $dateType = $request->get('date_type', 'B');
+        $showReturn = $request->get('show_return', 'N');
+        $reportType = $request->get('report_type', 'D');
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code', '00');
+        $divisionId = $request->get('division_id');
+        $divisionCode = $request->get('division_code', '00');
+        $vat = $request->get('vat', 'N');
+        $rateType = $request->get('rate_type', 'P');
+        $taggedCategories = $request->get('tagged_categories', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $categoryId = $request->get('category_id');
+        $categoryCode = $request->get('category_code', '00');
+        $supplierId = $request->get('supplier_id');
+        $supplierCode = $request->get('supplier_code', '00');
+
+        $companies = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
+        $categories = ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $divisions = collect(); // Add Division model if available
+
+        $items = collect();
+
+        if ($request->has('from_date')) {
+            $dateColumn = $dateType === 'R' ? 'receive_date' : 'bill_date';
+
+            $query = PurchaseTransactionItem::with([
+                'transaction:id,bill_no,bill_date,receive_date,supplier_id',
+                'transaction.supplier:supplier_id,name'
+            ])
+            ->whereHas('transaction', function($q) use ($dateFrom, $dateTo, $dateColumn, $supplierId) {
+                $q->whereBetween($dateColumn, [$dateFrom, $dateTo]);
+                if ($supplierId) {
+                    $q->where('supplier_id', $supplierId);
+                }
+            })
+            ->where('free_qty', '>=', 0); // Show all items with free qty (including 0 for testing)
+
+            if ($companyId) {
+                $company = Company::find($companyId);
+                if ($company) {
+                    $query->where('company_name', $company->name);
+                }
+            }
+
+            $items = $query->get()->map(function($item) use ($rateType) {
+                $rate = $rateType === 'S' ? ($item->s_rate ?? 0) : ($item->pur_rate ?? 0);
+                $freeQty = $item->free_qty ?? 0;
+                $schemePercent = '-';
+                if ($freeQty > 0 && $item->qty > 0) {
+                    $schemePercent = round(($item->qty / $freeQty), 0) . '+1';
+                }
+                return (object)[
+                    'bill_date' => $item->transaction->bill_date ?? null,
+                    'bill_no' => $item->transaction->bill_no ?? '-',
+                    'supplier_name' => $item->transaction->supplier->name ?? '-',
+                    'item_name' => $item->item_name,
+                    'company_name' => $item->company_name,
+                    'qty' => $item->qty,
+                    'free_qty' => $freeQty,
+                    'scheme_percent' => $schemePercent,
+                    'free_value' => $freeQty * $rate
+                ];
+            });
+        }
+
+        // Excel export
+        if ($request->get('export') === 'excel') {
+            return $this->exportFreeSchemeToExcel($items, $dateFrom, $dateTo);
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-schemed-received', compact(
+            'items', 'dateFrom', 'dateTo', 'dateType', 'showReturn', 'reportType',
+            'companies', 'companyId', 'companyCode',
+            'divisions', 'divisionId', 'divisionCode',
+            'suppliers', 'supplierId', 'supplierCode',
+            'categories', 'categoryId', 'categoryCode',
+            'vat', 'rateType', 'taggedCategories', 'removeTags'
+        ));
+    }
+
+    /**
+     * Export Free Scheme Received to Excel
+     */
+    private function exportFreeSchemeToExcel($items, $dateFrom, $dateTo)
+    {
+        $filename = 'free_scheme_received_' . date('Y-m-d_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($items, $dateFrom, $dateTo) {
+            $file = fopen('php://output', 'w');
+            
+            fputcsv($file, ['Free Scheme Received Report']);
+            fputcsv($file, ['From: ' . $dateFrom, 'To: ' . $dateTo]);
+            fputcsv($file, []);
+            fputcsv($file, ['S.No', 'Bill Date', 'Bill No', 'Supplier Name', 'Item Name', 'Company', 'Pur. Qty', 'Free Qty', 'Scheme %', 'Free Value']);
+            
+            $sno = 1;
+            foreach ($items as $item) {
+                fputcsv($file, [
+                    $sno++,
+                    $item->bill_date ? $item->bill_date->format('d-m-Y') : '-',
+                    $item->bill_no,
+                    $item->supplier_name,
+                    $item->item_name,
+                    $item->company_name,
+                    $item->qty,
+                    $item->free_qty,
+                    $item->scheme_percent,
+                    number_format($item->free_value, 2)
+                ]);
+            }
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
@@ -4121,7 +4243,73 @@ class PurchaseReportController extends Controller
      */
     public function schemedHalfSchemed(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.half-schemed-received');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $dateType = $request->get('date_type', 'B');
+        $showReturn = $request->get('show_return', 'N');
+        $vat = $request->get('vat', 'N');
+        $rateType = $request->get('rate_type', 'P');
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code', '00');
+        $divisionId = $request->get('division_id');
+        $divisionCode = $request->get('division_code', '00');
+        $supplierId = $request->get('supplier_id');
+        $supplierCode = $request->get('supplier_code', '00');
+
+        $companies = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
+        $divisions = collect(); // Add Division model if available
+
+        $items = collect();
+
+        if ($request->has('from_date')) {
+            $dateColumn = $dateType === 'S' ? 'created_at' : 'bill_date';
+
+            $query = PurchaseTransactionItem::with([
+                'transaction:id,bill_no,bill_date,supplier_id',
+                'transaction.supplier:supplier_id,name'
+            ])
+            ->whereHas('transaction', function($q) use ($dateFrom, $dateTo, $dateColumn, $supplierId) {
+                $q->whereBetween($dateColumn, [$dateFrom, $dateTo]);
+                if ($supplierId) {
+                    $q->where('supplier_id', $supplierId);
+                }
+            });
+
+            if ($companyId) {
+                $company = Company::find($companyId);
+                if ($company) {
+                    $query->where('company_name', $company->name);
+                }
+            }
+
+            // Half scheme: show all items with scheme calculation
+            $items = $query->get()->map(function($item) {
+                $freeQty = $item->free_qty ?? 0;
+                $expectedFree = $item->qty > 0 ? floor($item->qty / 10) : 0; // Assuming 10+1 scheme
+                $difference = $expectedFree - $freeQty;
+                
+                return (object)[
+                    'bill_date' => $item->transaction->bill_date ?? null,
+                    'bill_no' => $item->transaction->bill_no ?? '-',
+                    'supplier_name' => $item->transaction->supplier->name ?? '-',
+                    'item_name' => $item->item_name,
+                    'company_name' => $item->company_name,
+                    'full_scheme' => '10+2',
+                    'half_scheme' => '10+1',
+                    'qty' => $item->qty,
+                    'free_qty' => $freeQty,
+                    'difference' => $difference
+                ];
+            });
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.half-schemed-received', compact(
+            'items', 'dateFrom', 'dateTo', 'dateType', 'showReturn', 'vat', 'rateType',
+            'companies', 'companyId', 'companyCode',
+            'divisions', 'divisionId', 'divisionCode',
+            'suppliers', 'supplierId', 'supplierCode'
+        ));
     }
 
     /**
@@ -4129,7 +4317,216 @@ class PurchaseReportController extends Controller
      */
     public function schemedFreeWithoutQty(Request $request)
     {
-        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-received-without-qty');
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $dateType = $request->get('date_type', 'B');
+        $reportType = $request->get('report_type', 'D');
+        $companyId = $request->get('company_id');
+        $companyCode = $request->get('company_code', '00');
+        $customerId = $request->get('customer_id');
+        $customerCode = $request->get('customer_code', '00');
+
+        $companies = Company::select('id', 'name', 'short_name')->orderBy('name')->get();
+        $customers = Customer::select('id', 'name', 'code')->orderBy('name')->get();
+
+        $items = collect();
+
+        if ($request->has('from_date')) {
+            $dateColumn = $dateType === 'S' ? 'created_at' : 'bill_date';
+
+            $query = PurchaseTransactionItem::with([
+                'transaction:id,bill_no,bill_date,supplier_id',
+                'transaction.supplier:supplier_id,name'
+            ])
+            ->whereHas('transaction', function($q) use ($dateFrom, $dateTo, $dateColumn) {
+                $q->whereBetween($dateColumn, [$dateFrom, $dateTo]);
+            });
+
+            if ($companyId) {
+                $company = Company::find($companyId);
+                if ($company) {
+                    $query->where('company_name', $company->name);
+                }
+            }
+
+            $items = $query->get()->map(function($item) {
+                return (object)[
+                    'bill_date' => $item->transaction->bill_date ?? null,
+                    'bill_no' => $item->transaction->bill_no ?? '-',
+                    'supplier_name' => $item->transaction->supplier->name ?? '-',
+                    'item_name' => $item->item_name,
+                    'packing' => $item->packing ?? '-',
+                    'qty' => $item->qty ?? 0,
+                    'free_qty' => $item->free_qty ?? 0,
+                    'amount' => $item->amount ?? 0
+                ];
+            });
+        }
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-received-without-qty', compact(
+            'items', 'dateFrom', 'dateTo', 'dateType', 'reportType',
+            'companies', 'companyId', 'companyCode',
+            'customers', 'customerId', 'customerCode'
+        ));
+    }
+
+    /**
+     * Free Received Without Qty - Print View
+     */
+    public function schemedFreeWithoutQtyPrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $dateType = $request->get('date_type', 'B');
+        $reportType = $request->get('report_type', 'D');
+        $companyId = $request->get('company_id');
+
+        $dateColumn = $dateType === 'S' ? 'created_at' : 'bill_date';
+
+        $query = PurchaseTransactionItem::with([
+            'transaction:id,bill_no,bill_date,supplier_id',
+            'transaction.supplier:supplier_id,name'
+        ])
+        ->whereHas('transaction', function($q) use ($dateFrom, $dateTo, $dateColumn) {
+            $q->whereBetween($dateColumn, [$dateFrom, $dateTo]);
+        });
+
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+
+        $items = $query->get()->map(function($item) {
+            return (object)[
+                'bill_date' => $item->transaction->bill_date ?? null,
+                'bill_no' => $item->transaction->bill_no ?? '-',
+                'supplier_name' => $item->transaction->supplier->name ?? '-',
+                'item_name' => $item->item_name,
+                'packing' => $item->packing ?? '-',
+                'qty' => $item->qty ?? 0,
+                'free_qty' => $item->free_qty ?? 0,
+                'amount' => $item->amount ?? 0
+            ];
+        });
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-received-without-qty-print', compact(
+            'items', 'dateFrom', 'dateTo', 'reportType'
+        ));
+    }
+
+    /**
+     * Half Schemed Received - Print View
+     */
+    public function schemedHalfSchemedPrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $dateType = $request->get('date_type', 'B');
+        $companyId = $request->get('company_id');
+        $supplierId = $request->get('supplier_id');
+
+        $dateColumn = $dateType === 'S' ? 'created_at' : 'bill_date';
+
+        $query = PurchaseTransactionItem::with([
+            'transaction:id,bill_no,bill_date,supplier_id',
+            'transaction.supplier:supplier_id,name'
+        ])
+        ->whereHas('transaction', function($q) use ($dateFrom, $dateTo, $dateColumn, $supplierId) {
+            $q->whereBetween($dateColumn, [$dateFrom, $dateTo]);
+            if ($supplierId) {
+                $q->where('supplier_id', $supplierId);
+            }
+        });
+
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+
+        $items = $query->get()->map(function($item) {
+            $freeQty = $item->free_qty ?? 0;
+            $expectedFree = $item->qty > 0 ? floor($item->qty / 10) : 0;
+            $difference = $expectedFree - $freeQty;
+            
+            return (object)[
+                'bill_date' => $item->transaction->bill_date ?? null,
+                'bill_no' => $item->transaction->bill_no ?? '-',
+                'supplier_name' => $item->transaction->supplier->name ?? '-',
+                'item_name' => $item->item_name,
+                'company_name' => $item->company_name,
+                'full_scheme' => '10+2',
+                'half_scheme' => '10+1',
+                'qty' => $item->qty,
+                'free_qty' => $freeQty,
+                'difference' => $difference
+            ];
+        });
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.half-schemed-received-print', compact(
+            'items', 'dateFrom', 'dateTo'
+        ));
+    }
+
+    /**
+     * Free Schemed Received - Print View
+     */
+    public function schemedFreeSchemedPrint(Request $request)
+    {
+        $dateFrom = $request->get('from_date', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('to_date', Carbon::now()->format('Y-m-d'));
+        $dateType = $request->get('date_type', 'B');
+        $reportType = $request->get('report_type', 'D');
+        $companyId = $request->get('company_id');
+        $supplierId = $request->get('supplier_id');
+        $rateType = $request->get('rate_type', 'P');
+
+        $dateColumn = $dateType === 'R' ? 'receive_date' : 'bill_date';
+
+        $query = PurchaseTransactionItem::with([
+            'transaction:id,bill_no,bill_date,receive_date,supplier_id',
+            'transaction.supplier:supplier_id,name'
+        ])
+        ->whereHas('transaction', function($q) use ($dateFrom, $dateTo, $dateColumn, $supplierId) {
+            $q->whereBetween($dateColumn, [$dateFrom, $dateTo]);
+            if ($supplierId) {
+                $q->where('supplier_id', $supplierId);
+            }
+        });
+
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+
+        $items = $query->get()->map(function($item) use ($rateType) {
+            $rate = $rateType === 'S' ? ($item->s_rate ?? 0) : ($item->pur_rate ?? 0);
+            $freeQty = $item->free_qty ?? 0;
+            $schemePercent = '-';
+            if ($freeQty > 0 && $item->qty > 0) {
+                $schemePercent = round(($item->qty / $freeQty), 0) . '+1';
+            }
+            return (object)[
+                'bill_date' => $item->transaction->bill_date ?? null,
+                'bill_no' => $item->transaction->bill_no ?? '-',
+                'supplier_name' => $item->transaction->supplier->name ?? '-',
+                'item_name' => $item->item_name,
+                'company_name' => $item->company_name,
+                'qty' => $item->qty,
+                'free_qty' => $freeQty,
+                'scheme_percent' => $schemePercent,
+                'free_value' => $freeQty * $rate
+            ];
+        });
+
+        return view('admin.reports.purchase-report.miscellaneous-purchase-analysis.schemed-received.free-schemed-received-print', compact(
+            'items', 'dateFrom', 'dateTo', 'reportType'
+        ));
     }
 
     /**
