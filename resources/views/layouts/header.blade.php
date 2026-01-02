@@ -625,11 +625,36 @@
                     <li><a class="dropdown-item" href="{{ route('admin.reports.sales.missing-invoices') }}">List of Missing Invoices</a></li>
                   </ul>
                 </li>
-                <!-- Other Reports - Empty for now, will add later -->
+                <!-- Other Reports -->
                 <li class="dropdown-submenu">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Other Reports</a>
                   <ul class="dropdown-menu">
-                    <li><a class="dropdown-item text-muted" href="#">Coming Soon...</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.cash-coll-trnf-sale') }}">Cash Collection Transfer</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sale-bill-wise-discount') }}">Discount On Sale - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sales-book-with-return') }}">Sale Book With Sale Return</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.rate-difference') }}">Rate Change Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sales-matrix') }}">Sales Matrix</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.minus-qty-sale') }}">Minus Qty in Sale Invoice</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sales-details') }}">Sales Details</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.invoice-documents') }}">Invoice Documents</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sale-remarks') }}">Sale Remarks Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.item-wise-discount') }}">Item Wise Discount</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.item-wise-scheme') }}">Item Wise Scheme</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.tax-percentage-wise-sale') }}">Tax Percentage Wise Sale</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.transaction-book-address') }}">Transaction Book with Address</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sale-stock-detail') }}">Sale/Stock Detail</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.customer-stock-details') }}">Customer Stock Details</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.gst-sale-book') }}">GST Sale Book</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.customer-consistency') }}">Customer Consistency Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sale-return-adjustment') }}">Sale Return Adjustment</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.pending-orders') }}">Pending Orders</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.st38-outword') }}">ST-38 OutWord</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.frige-item') }}">Frige Item Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.volume-discount') }}">Volume Discount</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.party-volume-discount') }}">Party Volume Discount</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.schedule-h1-drugs') }}">Schedule H1 Drugs</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sale-book-sc') }}">Sale Book SC</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.sales.other.sale-book-summarised') }}">Sale Book Summarised</a></li>
                   </ul>
                 </li>
               </ul>

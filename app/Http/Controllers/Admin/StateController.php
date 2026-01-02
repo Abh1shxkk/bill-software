@@ -210,4 +210,24 @@ class StateController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Search state by code (AJAX)
+     */
+    public function search(Request $request)
+    {
+        $code = $request->get('code');
+        
+        if (!$code) {
+            return response()->json(['name' => '']);
+        }
+
+        $state = State::where('code', $code)->first();
+
+        return response()->json([
+            'id' => $state->id ?? null,
+            'name' => $state->name ?? '',
+            'code' => $state->code ?? ''
+        ]);
+    }
 }

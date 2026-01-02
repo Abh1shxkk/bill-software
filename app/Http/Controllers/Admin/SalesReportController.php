@@ -891,7 +891,7 @@ class SalesReportController extends Controller
         }
 
         $items = collect($combinedData)->sortBy('item_name');
-        $itemsList = Item::select('id', 'name', 'code')->orderBy('name')->get();
+        $itemsList = Item::select('id', 'name')->orderBy('name')->get();
         $companies = Company::select('id', 'name')->orderBy('name')->get();
 
         $totals = [
@@ -902,6 +902,13 @@ class SalesReportController extends Controller
             'net_qty' => $items->sum('net_qty'),
             'net_amount' => $items->sum('net_amount')
         ];
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.sale-return-book-item-wise-print', compact(
+                'items', 'totals', 'itemsList', 'companies',
+                'dateFrom', 'dateTo', 'itemId', 'companyId'
+            ));
+        }
 
         return view('admin.reports.sale-report.sale-return-book-item-wise', compact(
             'items', 'totals', 'itemsList', 'companies',
@@ -1345,7 +1352,7 @@ class SalesReportController extends Controller
         // Get current stock for these items
         $itemIds = $soldItems->pluck('item_id');
         $stockData = \App\Models\Batch::whereIn('item_id', $itemIds)
-            ->select('item_id', DB::raw('SUM(current_qty) as current_stock'))
+            ->select('item_id', DB::raw('SUM(qty) as current_stock'))
             ->groupBy('item_id')
             ->get()
             ->keyBy('item_id');
@@ -7096,5 +7103,2556 @@ class SalesReportController extends Controller
         }
         
         return view('admin.reports.sale-report.miscellaneous-sale-analysis.discount-wise-sales.item-wise-invoice-wise', compact('dateFrom', 'dateTo', 'companies', 'items', 'customers'));
+    }
+
+    // ==================== SCHEME ISSUED REPORTS ====================
+
+    public function schemeIssuedFreeScheme(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+        
+        if ($request->get('view_type') === 'print') {
+            $data = collect(); $totals = ['free_qty' => 0, 'amount' => 0];
+            return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.free-scheme-issued-print', compact('data', 'totals', 'dateFrom', 'dateTo'));
+        }
+        
+        return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.free-scheme-issued', compact('dateFrom', 'dateTo', 'companies', 'customers', 'salesmen', 'areas', 'routes', 'states'));
+    }
+
+    public function schemeIssuedHalfScheme(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+        
+        if ($request->get('view_type') === 'print') {
+            $data = collect(); $totals = ['half_qty' => 0, 'amount' => 0];
+            return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.half-scheme-issued-print', compact('data', 'totals', 'dateFrom', 'dateTo'));
+        }
+        
+        return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.half-scheme-issued', compact('dateFrom', 'dateTo', 'companies', 'customers', 'salesmen', 'areas', 'routes', 'states'));
+    }
+
+    public function schemeIssuedItemWiseLess(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        
+        if ($request->get('view_type') === 'print') {
+            $data = collect(); $totals = ['qty' => 0, 'less_amount' => 0, 'net_amount' => 0];
+            return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.item-wise-less-print', compact('data', 'totals', 'dateFrom', 'dateTo'));
+        }
+        
+        return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.item-wise-less', compact('dateFrom', 'dateTo', 'companies', 'salesmen'));
+    }
+
+    public function schemeIssuedFreeIssuesWithoutQty(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+        
+        if ($request->get('view_type') === 'print') {
+            $data = collect(); $totals = ['free_qty' => 0, 'amount' => 0];
+            return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.free-issues-without-qty-print', compact('data', 'totals', 'dateFrom', 'dateTo'));
+        }
+        
+        return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.free-issues-without-qty', compact('dateFrom', 'dateTo', 'companies', 'customers', 'salesmen', 'areas', 'routes', 'states'));
+    }
+
+    public function schemeIssuedInvalidFreeScheme(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+        
+        if ($request->get('view_type') === 'print' || $request->get('export') === 'excel') {
+            $data = collect(); $totals = ['qty' => 0, 'free_qty' => 0, 'amount' => 0];
+            return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.invalid-free-scheme-issued-print', compact('data', 'totals', 'dateFrom', 'dateTo'));
+        }
+        
+        return view('admin.reports.sale-report.miscellaneous-sale-analysis.scheme-issued.invalid-free-scheme-issued', compact('dateFrom', 'dateTo', 'companies', 'customers', 'salesmen', 'areas', 'routes', 'states'));
+    }
+    /**
+     * Cash Collection Transfer Sale Report
+     * Shows cash collection and transfer details from sales
+     */
+    public function cashCollTrnfSale(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+
+        // Fetch sales with cash payment details (cash_flag = 'Y' means cash sale)
+        $query = SaleTransaction::with([
+            'customer:id,name,code,area_name,route_name',
+            'salesman:id,name,code'
+        ])
+        ->whereBetween('sale_date', [$dateFrom, $dateTo])
+        ->orderBy('sale_date')
+        ->orderBy('invoice_no');
+
+        $sales = $query->get();
+
+        // Calculate totals
+        $totals = [
+            'count' => $sales->count(),
+            'net_amount' => $sales->sum('net_amount'),
+            'paid_amount' => $sales->sum('paid_amount'),
+            'balance_amount' => $sales->sum('balance_amount')
+        ];
+
+        // Group by date for daily summary
+        $dailySummary = $sales->groupBy(function($sale) {
+            return $sale->sale_date->format('Y-m-d');
+        })->map(function($daySales) {
+            return [
+                'count' => $daySales->count(),
+                'net_amount' => $daySales->sum('net_amount'),
+                'paid_amount' => $daySales->sum('paid_amount'),
+                'balance_amount' => $daySales->sum('balance_amount')
+            ];
+        });
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportCashCollTrnfToExcel($sales, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.cash-coll-trnf-sale-print', compact(
+                'sales', 'totals', 'dailySummary', 'dateFrom', 'dateTo'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.cash-coll-trnf-sale', compact(
+            'dateFrom', 'dateTo', 'sales', 'totals', 'dailySummary'
+        ));
+    }
+
+    /**
+     * Export Cash Collection Transfer to Excel
+     */
+    private function exportCashCollTrnfToExcel($sales, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'cash_collection_transfer_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($sales, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Date', 'Bill No', 'Party Code', 'Party Name', 'Salesman', 'Net Amount', 'Paid Amount', 'Balance']);
+
+            foreach ($sales as $sale) {
+                fputcsv($file, [
+                    $sale->sale_date->format('d-m-Y'),
+                    ($sale->series ?? '') . $sale->invoice_no,
+                    $sale->customer->code ?? '',
+                    $sale->customer->name ?? 'N/A',
+                    $sale->salesman->name ?? '',
+                    number_format($sale->net_amount ?? 0, 2),
+                    number_format($sale->paid_amount ?? 0, 2),
+                    number_format($sale->balance_amount ?? 0, 2)
+                ]);
+            }
+
+            fputcsv($file, []);
+            fputcsv($file, ['', '', '', 'TOTAL', '', 
+                number_format($totals['net_amount'] ?? 0, 2),
+                number_format($totals['paid_amount'] ?? 0, 2),
+                number_format($totals['balance_amount'] ?? 0, 2)
+            ]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Discount On Sale - Bill Wise Report
+     * Shows discount details for each sale bill
+     */
+    public function saleBillWiseDiscount(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $discountOption = $request->get('discount_option', '1'); // 1=With Dis, 2=W/o Dis, 3=All
+        $salesmanId = $request->get('salesman_id', '');
+        $areaId = $request->get('area_id', '');
+        $routeId = $request->get('route_id', '');
+        $stateId = $request->get('state_id', '');
+        $customerId = $request->get('customer_id', '');
+        $series = $request->get('series', '');
+        
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+
+        // Build query
+        $query = SaleTransaction::with([
+            'customer:id,name,code,area_name,route_name,state_name',
+            'salesman:id,name,code'
+        ])
+        ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        // Discount filter
+        if ($discountOption == '1') {
+            $query->where('dis_amount', '>', 0);
+        } elseif ($discountOption == '2') {
+            $query->where(function($q) {
+                $q->where('dis_amount', '<=', 0)->orWhereNull('dis_amount');
+            });
+        }
+
+        // Apply filters
+        if ($salesmanId && $salesmanId != '') {
+            $query->where('salesman_id', $salesmanId);
+        }
+        if ($areaId && $areaId != '') {
+            $query->whereHas('customer', function($q) use ($areaId) {
+                $area = Area::find($areaId);
+                if ($area) {
+                    $q->where('area_name', $area->name);
+                }
+            });
+        }
+        if ($routeId && $routeId != '') {
+            $query->whereHas('customer', function($q) use ($routeId) {
+                $route = Route::find($routeId);
+                if ($route) {
+                    $q->where('route_name', $route->name);
+                }
+            });
+        }
+        if ($stateId && $stateId != '') {
+            $query->whereHas('customer', function($q) use ($stateId) {
+                $state = State::find($stateId);
+                if ($state) {
+                    $q->where('state_name', $state->name);
+                }
+            });
+        }
+        if ($customerId && $customerId != '') {
+            $query->where('customer_id', $customerId);
+        }
+        if ($series && $series != '') {
+            $query->where('series', $series);
+        }
+
+        $sales = $query->orderBy('sale_date')->orderBy('invoice_no')->get();
+
+        // Calculate totals
+        $totals = [
+            'count' => $sales->count(),
+            'gross_amount' => $sales->sum('nt_amount'),
+            'dis_amount' => $sales->sum('dis_amount'),
+            'dis_percent' => $sales->sum('nt_amount') > 0 ? ($sales->sum('dis_amount') / $sales->sum('nt_amount')) * 100 : 0,
+            'scm_amount' => $sales->sum('scm_amount'),
+            'tax_amount' => $sales->sum('tax_amount'),
+            'net_amount' => $sales->sum('net_amount')
+        ];
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportBillWiseDiscountToExcel($sales, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.sale-bill-wise-discount-print', compact(
+                'sales', 'totals', 'dateFrom', 'dateTo', 'discountOption', 'salesmanId', 'areaId', 
+                'routeId', 'stateId', 'customerId', 'series'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.sale-bill-wise-discount', compact(
+            'dateFrom', 'dateTo', 'salesmen', 'areas', 'routes', 'states', 'customers', 'sales', 'totals',
+            'discountOption', 'salesmanId', 'areaId', 'routeId', 'stateId', 'customerId', 'series'
+        ));
+    }
+
+    /**
+     * Export Bill Wise Discount to Excel
+     */
+    private function exportBillWiseDiscountToExcel($sales, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'bill_wise_discount_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($sales, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Date', 'Bill No', 'Party Code', 'Party Name', 'Area', 'Salesman', 'Gross Amt', 'Discount', 'Dis%', 'Scheme', 'Tax', 'Net Amount']);
+
+            foreach ($sales as $sale) {
+                $disPercent = $sale->nt_amount > 0 ? ($sale->dis_amount / $sale->nt_amount) * 100 : 0;
+                fputcsv($file, [
+                    $sale->sale_date->format('d-m-Y'),
+                    ($sale->series ?? '') . $sale->invoice_no,
+                    $sale->customer->code ?? '',
+                    $sale->customer->name ?? 'N/A',
+                    $sale->customer->area_name ?? '',
+                    $sale->salesman->name ?? '',
+                    number_format($sale->nt_amount ?? 0, 2),
+                    number_format($sale->dis_amount ?? 0, 2),
+                    number_format($disPercent, 2) . '%',
+                    number_format($sale->scm_amount ?? 0, 2),
+                    number_format($sale->tax_amount ?? 0, 2),
+                    number_format($sale->net_amount ?? 0, 2)
+                ]);
+            }
+
+            fputcsv($file, []);
+            fputcsv($file, ['', '', '', 'TOTAL', '', '', 
+                number_format($totals['gross_amount'] ?? 0, 2),
+                number_format($totals['dis_amount'] ?? 0, 2),
+                number_format($totals['dis_percent'] ?? 0, 2) . '%',
+                number_format($totals['scm_amount'] ?? 0, 2),
+                number_format($totals['tax_amount'] ?? 0, 2),
+                number_format($totals['net_amount'] ?? 0, 2)
+            ]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Sale Book With Sale Return Report
+     * Shows sales and returns combined for a customer
+     */
+    public function salesBookWithReturn(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $customerId = $request->get('customer_id', '');
+        
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+
+        // Build sales query
+        $salesQuery = SaleTransaction::with(['customer:id,name,code,area_name,route_name'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        // Build returns query
+        $returnsQuery = SaleReturnTransaction::with(['customer:id,name,code,area_name,route_name'])
+            ->whereBetween('return_date', [$dateFrom, $dateTo]);
+
+        // Apply customer filter
+        if ($customerId && $customerId != '') {
+            $salesQuery->where('customer_id', $customerId);
+            $returnsQuery->where('customer_id', $customerId);
+        }
+
+        $sales = $salesQuery->orderBy('sale_date')->orderBy('invoice_no')->get();
+        $returns = $returnsQuery->orderBy('return_date')->orderBy('sr_no')->get();
+
+        // Combine and sort by date
+        $combinedData = collect();
+        
+        foreach ($sales as $sale) {
+            $combinedData->push([
+                'date' => $sale->sale_date,
+                'type' => 'Sale',
+                'doc_no' => ($sale->series ?? '') . $sale->invoice_no,
+                'customer_code' => $sale->customer->code ?? '',
+                'customer_name' => $sale->customer->name ?? 'N/A',
+                'area' => $sale->customer->area_name ?? '',
+                'gross_amount' => $sale->nt_amount ?? 0,
+                'dis_amount' => $sale->dis_amount ?? 0,
+                'tax_amount' => $sale->tax_amount ?? 0,
+                'net_amount' => $sale->net_amount ?? 0,
+                'is_return' => false
+            ]);
+        }
+
+        foreach ($returns as $return) {
+            $combinedData->push([
+                'date' => $return->return_date,
+                'type' => 'Return',
+                'doc_no' => ($return->series ?? '') . ($return->invoice_no ?? $return->sr_no),
+                'customer_code' => $return->customer->code ?? '',
+                'customer_name' => $return->customer->name ?? 'N/A',
+                'area' => $return->customer->area_name ?? '',
+                'gross_amount' => -($return->nt_amount ?? 0),
+                'dis_amount' => -($return->dis_amount ?? 0),
+                'tax_amount' => -($return->tax_amount ?? 0),
+                'net_amount' => -($return->net_amount ?? 0),
+                'is_return' => true
+            ]);
+        }
+
+        // Sort by date
+        $combinedData = $combinedData->sortBy('date')->values();
+
+        // Calculate totals
+        $totals = [
+            'sale_count' => $sales->count(),
+            'return_count' => $returns->count(),
+            'sale_amount' => $sales->sum('net_amount'),
+            'return_amount' => $returns->sum('net_amount'),
+            'net_amount' => $sales->sum('net_amount') - $returns->sum('net_amount'),
+            'gross_amount' => $sales->sum('nt_amount') - $returns->sum('nt_amount'),
+            'dis_amount' => $sales->sum('dis_amount') - $returns->sum('dis_amount'),
+            'tax_amount' => $sales->sum('tax_amount') - $returns->sum('tax_amount')
+        ];
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportSalesBookWithReturnToExcel($combinedData, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.sales-book-with-return-print', compact(
+                'combinedData', 'totals', 'dateFrom', 'dateTo', 'customerId'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.sales-book-with-return', compact(
+            'dateFrom', 'dateTo', 'customers', 'combinedData', 'totals', 'customerId'
+        ));
+    }
+
+    /**
+     * Export Sales Book With Return to Excel
+     */
+    private function exportSalesBookWithReturnToExcel($combinedData, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'sales_book_with_return_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($combinedData, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Date', 'Type', 'Doc No', 'Party Code', 'Party Name', 'Area', 'Gross Amt', 'Discount', 'Tax', 'Net Amount']);
+
+            foreach ($combinedData as $row) {
+                fputcsv($file, [
+                    Carbon::parse($row['date'])->format('d-m-Y'),
+                    $row['type'],
+                    $row['doc_no'],
+                    $row['customer_code'],
+                    $row['customer_name'],
+                    $row['area'],
+                    number_format($row['gross_amount'], 2),
+                    number_format($row['dis_amount'], 2),
+                    number_format($row['tax_amount'], 2),
+                    number_format($row['net_amount'], 2)
+                ]);
+            }
+
+            fputcsv($file, []);
+            fputcsv($file, ['', '', '', '', 'TOTAL', '', 
+                number_format($totals['gross_amount'], 2),
+                number_format($totals['dis_amount'], 2),
+                number_format($totals['tax_amount'], 2),
+                number_format($totals['net_amount'], 2)
+            ]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Rate Change Report (Rate Difference)
+     * Shows rate differences in sales - Purchase Rate vs Sale Rate vs Cost
+     */
+    public function rateDifference(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $itemId = $request->get('item_id', '');
+        $companyId = $request->get('company_id', '');
+        $customerId = $request->get('customer_id', '');
+        $rateType = $request->get('rate_type', 'R'); // P=Purchase, S=Sale, R=Rate Diff, C=Cost
+        $groupBy = $request->get('group_by', 'I'); // I=Item Wise, B=Bill Wise, P=Party Wise
+        $withVat = $request->boolean('with_vat');
+        $withSc = $request->boolean('with_sc');
+        
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name', 'short_name')->orderBy('name')->get();
+        $items = Item::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+
+        // Build query for sale items with rate details
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,series,sale_date,customer_id',
+            'saleTransaction.customer:id,name,code',
+            'item:id,name,pur_rate,s_rate,cost,mrp'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+        });
+
+        // Apply filters using IDs
+        if ($itemId && $itemId != '') {
+            $query->where('item_id', $itemId);
+        }
+        if ($companyId && $companyId != '') {
+            // Get company name for filtering since SaleTransactionItem stores company_name not company_id
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+        if ($customerId && $customerId != '') {
+            $query->whereHas('saleTransaction', function($q) use ($customerId) {
+                $q->where('customer_id', $customerId);
+            });
+        }
+
+        $saleItems = $query->get();
+
+        // Process data based on group by option
+        $reportData = collect();
+
+        if ($groupBy === 'I') {
+            // Item Wise grouping
+            $grouped = $saleItems->groupBy('item_id');
+            foreach ($grouped as $grpItemId => $grpItems) {
+                $firstItem = $grpItems->first();
+                $totalQty = $grpItems->sum('qty');
+                $totalAmount = $grpItems->sum('net_amount');
+                $avgSaleRate = $totalQty > 0 ? $totalAmount / $totalQty : 0;
+                $purchaseRate = $firstItem->item->pur_rate ?? 0;
+                $costRate = $firstItem->item->cost ?? 0;
+                $rateDiff = $avgSaleRate - $purchaseRate;
+
+                $reportData->push([
+                    'item_id' => $grpItemId,
+                    'item_name' => $firstItem->item_name ?? $firstItem->item->name ?? '',
+                    'company_name' => $firstItem->company_name ?? '',
+                    'qty' => $totalQty,
+                    'purchase_rate' => $purchaseRate,
+                    'sale_rate' => $avgSaleRate,
+                    'cost_rate' => $costRate,
+                    'rate_diff' => $rateDiff,
+                    'diff_amount' => $rateDiff * $totalQty,
+                    'total_amount' => $totalAmount
+                ]);
+            }
+        } elseif ($groupBy === 'B') {
+            // Bill Wise
+            foreach ($saleItems as $item) {
+                $purchaseRate = $item->item->pur_rate ?? 0;
+                $saleRate = $item->sale_rate ?? 0;
+                $rateDiff = $saleRate - $purchaseRate;
+
+                $reportData->push([
+                    'date' => $item->saleTransaction->sale_date,
+                    'bill_no' => ($item->saleTransaction->series ?? '') . $item->saleTransaction->invoice_no,
+                    'party_name' => $item->saleTransaction->customer->name ?? '',
+                    'item_id' => $item->item_id,
+                    'item_name' => $item->item_name ?? $item->item->name ?? '',
+                    'qty' => $item->qty,
+                    'purchase_rate' => $purchaseRate,
+                    'sale_rate' => $saleRate,
+                    'rate_diff' => $rateDiff,
+                    'diff_amount' => $rateDiff * $item->qty,
+                    'total_amount' => $item->net_amount
+                ]);
+            }
+        } else {
+            // Party Wise
+            $grouped = $saleItems->groupBy(function($item) {
+                return $item->saleTransaction->customer_id;
+            });
+            foreach ($grouped as $grpCustomerId => $grpItems) {
+                $firstItem = $grpItems->first();
+                $totalQty = $grpItems->sum('qty');
+                $totalAmount = $grpItems->sum('net_amount');
+                $totalPurchaseValue = $grpItems->sum(function($i) {
+                    return ($i->item->pur_rate ?? 0) * $i->qty;
+                });
+                $rateDiffTotal = $totalAmount - $totalPurchaseValue;
+
+                $reportData->push([
+                    'party_code' => $firstItem->saleTransaction->customer->code ?? '',
+                    'party_name' => $firstItem->saleTransaction->customer->name ?? '',
+                    'total_qty' => $totalQty,
+                    'purchase_value' => $totalPurchaseValue,
+                    'sale_value' => $totalAmount,
+                    'rate_diff' => $rateDiffTotal,
+                    'diff_percent' => $totalPurchaseValue > 0 ? ($rateDiffTotal / $totalPurchaseValue) * 100 : 0
+                ]);
+            }
+        }
+
+        // Calculate totals
+        $totals = [
+            'count' => $reportData->count(),
+            'total_qty' => $reportData->sum('qty') ?: $reportData->sum('total_qty'),
+            'total_diff_amount' => $reportData->sum('diff_amount') ?: $reportData->sum('rate_diff'),
+            'total_amount' => $reportData->sum('total_amount') ?: $reportData->sum('sale_value')
+        ];
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportRateDifferenceToExcel($reportData, $totals, $dateFrom, $dateTo, $groupBy);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.rate-difference-print', compact(
+                'reportData', 'totals', 'dateFrom', 'dateTo', 'itemId', 'companyId', 'customerId',
+                'rateType', 'groupBy', 'withVat', 'withSc'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.rate-difference', compact(
+            'dateFrom', 'dateTo', 'companies', 'items', 'customers', 'reportData', 'totals',
+            'itemId', 'companyId', 'customerId', 'rateType', 'groupBy', 'withVat', 'withSc'
+        ));
+    }
+
+    /**
+     * Export Rate Difference to Excel
+     */
+    private function exportRateDifferenceToExcel($reportData, $totals, $dateFrom, $dateTo, $groupBy)
+    {
+        $filename = 'rate_difference_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($reportData, $totals, $groupBy) {
+            $file = fopen('php://output', 'w');
+            
+            if ($groupBy === 'I') {
+                fputcsv($file, ['Item Name', 'Company', 'Qty', 'Purchase Rate', 'Sale Rate', 'Rate Diff', 'Diff Amount', 'Total Amount']);
+                foreach ($reportData as $row) {
+                    fputcsv($file, [
+                        $row['item_name'], $row['company_name'], $row['qty'],
+                        number_format($row['purchase_rate'], 2), number_format($row['sale_rate'], 2),
+                        number_format($row['rate_diff'], 2), number_format($row['diff_amount'], 2),
+                        number_format($row['total_amount'], 2)
+                    ]);
+                }
+            } elseif ($groupBy === 'B') {
+                fputcsv($file, ['Date', 'Bill No', 'Party', 'Item Name', 'Qty', 'Purchase Rate', 'Sale Rate', 'Rate Diff', 'Diff Amount']);
+                foreach ($reportData as $row) {
+                    fputcsv($file, [
+                        Carbon::parse($row['date'])->format('d-m-Y'), $row['bill_no'], $row['party_name'],
+                        $row['item_name'], $row['qty'],
+                        number_format($row['purchase_rate'], 2), number_format($row['sale_rate'], 2),
+                        number_format($row['rate_diff'], 2), number_format($row['diff_amount'], 2)
+                    ]);
+                }
+            } else {
+                fputcsv($file, ['Party Code', 'Party Name', 'Total Qty', 'Purchase Value', 'Sale Value', 'Rate Diff', 'Diff %']);
+                foreach ($reportData as $row) {
+                    fputcsv($file, [
+                        $row['party_code'], $row['party_name'], $row['total_qty'],
+                        number_format($row['purchase_value'], 2), number_format($row['sale_value'], 2),
+                        number_format($row['rate_diff'], 2), number_format($row['diff_percent'], 2) . '%'
+                    ]);
+                }
+            }
+
+            fputcsv($file, []);
+            fputcsv($file, ['TOTAL', '', $totals['total_qty'], '', '', '', $totals['total_diff_amount'], $totals['total_amount']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Sales Matrix Report
+     * Cross-tabulation of Party/Item sales data
+     */
+    public function salesMatrix(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $companyId = $request->get('company_id', '');
+        $divisionCode = $request->get('division_code', '00');
+        $statusCode = $request->get('status_code', '');
+        $showFor = $request->get('show_for', 'Party'); // Party, Area, Salesman, Route
+        $salesmanId = $request->get('salesman_id', '');
+        $areaId = $request->get('area_id', '');
+        $routeId = $request->get('route_id', '');
+        $valueOn = $request->get('value_on', 'NetSale'); // NetSale, Sale, WS, Spl, Cost
+        $printSalesReturn = $request->boolean('print_sales_return');
+        $addFreeQty = $request->get('add_free_qty', 'Y');
+        $matrixType = $request->get('matrix_type', '1'); // 1=X->Party Y->Item, 2=X->Item Y->Party
+        
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name', 'short_name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+
+        // Build query
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,sale_date,customer_id,salesman_id',
+            'saleTransaction.customer:id,name,code,area_name,route_name',
+            'saleTransaction.salesman:id,name,code'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+        });
+
+        // Apply filters using IDs
+        if ($companyId && $companyId != '') {
+            // Get company name for filtering since SaleTransactionItem stores company_name not company_id
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+        if ($salesmanId && $salesmanId != '') {
+            $query->whereHas('saleTransaction', function($q) use ($salesmanId) {
+                $q->where('salesman_id', $salesmanId);
+            });
+        }
+        if ($areaId && $areaId != '') {
+            $area = Area::find($areaId);
+            if ($area) {
+                $query->whereHas('saleTransaction.customer', function($q) use ($area) {
+                    $q->where('area_name', $area->name);
+                });
+            }
+        }
+        if ($routeId && $routeId != '') {
+            $route = Route::find($routeId);
+            if ($route) {
+                $query->whereHas('saleTransaction.customer', function($q) use ($route) {
+                    $q->where('route_name', $route->name);
+                });
+            }
+        }
+
+        $saleItems = $query->get();
+
+        // Get unique items and entities based on showFor
+        $itemsList = $saleItems->pluck('item_name', 'item_id')->unique();
+        
+        $entitiesList = collect();
+        if ($showFor === 'Party') {
+            $entitiesList = $saleItems->map(function($item) {
+                return [
+                    'id' => $item->saleTransaction->customer_id,
+                    'name' => $item->saleTransaction->customer->name ?? 'Unknown'
+                ];
+            })->unique('id')->pluck('name', 'id');
+        } elseif ($showFor === 'Area') {
+            $entitiesList = $saleItems->map(function($item) {
+                return [
+                    'id' => $item->saleTransaction->customer->area_name ?? 'NA',
+                    'name' => $item->saleTransaction->customer->area_name ?? 'Unknown'
+                ];
+            })->unique('id')->pluck('name', 'id');
+        } elseif ($showFor === 'Salesman') {
+            $entitiesList = $saleItems->map(function($item) {
+                return [
+                    'id' => $item->saleTransaction->salesman_id,
+                    'name' => $item->saleTransaction->salesman->name ?? 'Unknown'
+                ];
+            })->unique('id')->pluck('name', 'id');
+        } elseif ($showFor === 'Route') {
+            $entitiesList = $saleItems->map(function($item) {
+                return [
+                    'id' => $item->saleTransaction->customer->route_name ?? 'NA',
+                    'name' => $item->saleTransaction->customer->route_name ?? 'Unknown'
+                ];
+            })->unique('id')->pluck('name', 'id');
+        }
+
+        // Build matrix data
+        $matrixData = [];
+        $rowTotals = [];
+        $colTotals = [];
+        $grandTotal = 0;
+
+        foreach ($saleItems as $item) {
+            $entityId = match($showFor) {
+                'Party' => $item->saleTransaction->customer_id,
+                'Area' => $item->saleTransaction->customer->area_name ?? 'NA',
+                'Salesman' => $item->saleTransaction->salesman_id,
+                'Route' => $item->saleTransaction->customer->route_name ?? 'NA',
+                default => $item->saleTransaction->customer_id
+            };
+
+            $itemId = $item->item_id;
+            
+            // Calculate value based on valueOn option
+            $value = match($valueOn) {
+                'Sale' => $item->amount ?? 0,
+                'WS' => ($item->ws_rate ?? 0) * $item->qty,
+                'Spl' => ($item->spl_rate ?? 0) * $item->qty,
+                'Cost' => ($item->cost_rate ?? 0) * $item->qty,
+                default => $item->net_amount ?? 0
+            };
+
+            // Add free qty value if requested
+            if ($addFreeQty === 'Y' && $item->free_qty > 0) {
+                $freeValue = ($item->sale_rate ?? 0) * $item->free_qty;
+                $value += $freeValue;
+            }
+
+            if ($matrixType === '1') {
+                // X->Party Y->Item
+                if (!isset($matrixData[$entityId])) {
+                    $matrixData[$entityId] = [];
+                }
+                if (!isset($matrixData[$entityId][$itemId])) {
+                    $matrixData[$entityId][$itemId] = 0;
+                }
+                $matrixData[$entityId][$itemId] += $value;
+            } else {
+                // X->Item Y->Party
+                if (!isset($matrixData[$itemId])) {
+                    $matrixData[$itemId] = [];
+                }
+                if (!isset($matrixData[$itemId][$entityId])) {
+                    $matrixData[$itemId][$entityId] = 0;
+                }
+                $matrixData[$itemId][$entityId] += $value;
+            }
+
+            // Calculate totals
+            if (!isset($rowTotals[$entityId])) $rowTotals[$entityId] = 0;
+            if (!isset($colTotals[$itemId])) $colTotals[$itemId] = 0;
+            
+            $rowTotals[$entityId] += $value;
+            $colTotals[$itemId] += $value;
+            $grandTotal += $value;
+        }
+
+        // Handle sales returns if requested
+        $returnData = collect();
+        if ($printSalesReturn) {
+            $returnQuery = SaleReturnTransactionItem::with([
+                'saleReturnTransaction:id,sr_no,invoice_no,return_date,customer_id,salesman_id',
+                'saleReturnTransaction.customer:id,name,code,area_name,route_name',
+                'saleReturnTransaction.salesman:id,name,code'
+            ])
+            ->whereHas('saleReturnTransaction', function($q) use ($dateFrom, $dateTo) {
+                $q->whereBetween('return_date', [$dateFrom, $dateTo]);
+            });
+
+            if ($companyId && $companyId != '') {
+                $company = Company::find($companyId);
+                if ($company) {
+                    $returnQuery->where('company_name', $company->name);
+                }
+            }
+
+            $returnData = $returnQuery->get();
+        }
+
+        $totals = [
+            'items_count' => $itemsList->count(),
+            'entities_count' => $entitiesList->count(),
+            'grand_total' => $grandTotal,
+            'row_totals' => $rowTotals,
+            'col_totals' => $colTotals
+        ];
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.sales-matrix-print', compact(
+                'matrixData', 'itemsList', 'entitiesList', 'totals', 'dateFrom', 'dateTo',
+                'companyId', 'divisionCode', 'showFor', 'salesmanId', 'areaId', 'routeId',
+                'valueOn', 'printSalesReturn', 'addFreeQty', 'matrixType', 'returnData'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.sales-matrix', compact(
+            'dateFrom', 'dateTo', 'companies', 'salesmen', 'areas', 'routes',
+            'matrixData', 'itemsList', 'entitiesList', 'totals',
+            'companyId', 'divisionCode', 'showFor', 'salesmanId', 'areaId', 'routeId',
+            'valueOn', 'printSalesReturn', 'addFreeQty', 'matrixType'
+        ));
+    }
+
+    /**
+     * Minus Qty Sale Report
+     * Shows negative quantity items in sale invoices
+     */
+    public function minusQtySale(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $includeCancelled = $request->boolean('include_cancelled');
+
+        // Query sale transaction items with negative qty
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,series,sale_date,customer_id,status',
+            'saleTransaction.customer:id,name,code'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo, $includeCancelled) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+            if (!$includeCancelled) {
+                $q->where(function($sq) {
+                    $sq->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                });
+            }
+        })
+        ->where('qty', '<', 0);
+
+        $negativeItems = $query->orderBy('sale_transaction_id')->get();
+
+        $items = $negativeItems->map(function($item) {
+            return [
+                'date' => $item->saleTransaction->sale_date->format('d-m-Y'),
+                'bill_no' => ($item->saleTransaction->series ?? '') . $item->saleTransaction->invoice_no,
+                'party_name' => $item->saleTransaction->customer->name ?? 'N/A',
+                'item_code' => $item->item_code,
+                'item_name' => $item->item_name,
+                'qty' => (float) $item->qty,
+                'rate' => (float) $item->sale_rate,
+                'amount' => (float) $item->net_amount,
+            ];
+        });
+
+        $totals = [
+            'qty' => $items->sum('qty'),
+            'amount' => $items->sum('amount'),
+            'count' => $items->count()
+        ];
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportMinusQtySaleToExcel($items, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.minus-qty-sale-print', compact(
+                'items', 'totals', 'dateFrom', 'dateTo', 'includeCancelled'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.minus-qty-sale', compact(
+            'items', 'totals', 'dateFrom', 'dateTo', 'includeCancelled'
+        ));
+    }
+
+    /**
+     * Export Minus Qty Sale to Excel
+     */
+    private function exportMinusQtySaleToExcel($items, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'minus_qty_sale_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($items, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'Date', 'Bill No', 'Party', 'Item Code', 'Item Name', 'Qty', 'Rate', 'Amount']);
+            $i = 1;
+            foreach ($items as $item) {
+                fputcsv($file, [$i++, $item['date'], $item['bill_no'], $item['party_name'], $item['item_code'], $item['item_name'], $item['qty'], $item['rate'], $item['amount']]);
+            }
+            fputcsv($file, ['', '', '', '', '', 'Total:', $totals['qty'], '', $totals['amount']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Sales Details Report
+     * Detailed sales with cancelled invoices option
+     */
+    public function salesDetails(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $customerId = $request->get('customer_id');
+        $includeCancelled = $request->boolean('include_cancelled');
+        $companyId = $request->get('company_id');
+
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,series,sale_date,customer_id,status',
+            'saleTransaction.customer:id,name,code'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo, $customerId, $includeCancelled) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+            if ($customerId) {
+                $q->where('customer_id', $customerId);
+            }
+            if (!$includeCancelled) {
+                $q->where(function($sq) {
+                    $sq->whereNull('status')->orWhere('status', '!=', 'cancelled');
+                });
+            }
+        });
+
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+
+        $saleItems = $query->orderBy('sale_transaction_id')->get();
+
+        $details = $saleItems->map(function($item) {
+            return [
+                'date' => $item->saleTransaction->sale_date->format('d-m-Y'),
+                'bill_no' => ($item->saleTransaction->series ?? '') . $item->saleTransaction->invoice_no,
+                'party_name' => $item->saleTransaction->customer->name ?? 'N/A',
+                'item_code' => $item->item_code,
+                'item_name' => $item->item_name,
+                'company_name' => $item->company_name ?? '',
+                'qty' => (float) $item->qty,
+                'free_qty' => (float) ($item->free_qty ?? 0),
+                'rate' => (float) $item->sale_rate,
+                'amount' => (float) $item->net_amount,
+                'status' => $item->saleTransaction->status ?? 'active'
+            ];
+        });
+
+        $totals = [
+            'qty' => $details->sum('qty'),
+            'free_qty' => $details->sum('free_qty'),
+            'amount' => $details->sum('amount'),
+            'count' => $details->count()
+        ];
+
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportSalesDetailsToExcel($details, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.sales-details-print', compact(
+                'details', 'totals', 'customers', 'companies', 'dateFrom', 'dateTo', 'customerId', 'companyId', 'includeCancelled'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.sales-details', compact(
+            'details', 'totals', 'customers', 'companies', 'dateFrom', 'dateTo', 'customerId', 'companyId', 'includeCancelled'
+        ));
+    }
+
+    /**
+     * Export Sales Details to Excel
+     */
+    private function exportSalesDetailsToExcel($details, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'sales_details_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($details, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'Date', 'Bill No', 'Party', 'Item', 'Company', 'Qty', 'Free', 'Rate', 'Amount']);
+            $i = 1;
+            foreach ($details as $d) {
+                fputcsv($file, [$i++, $d['date'], $d['bill_no'], $d['party_name'], $d['item_name'], $d['company_name'], $d['qty'], $d['free_qty'], $d['rate'], $d['amount']]);
+            }
+            fputcsv($file, ['', '', '', '', '', 'Total:', $totals['qty'], $totals['free_qty'], '', $totals['amount']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Invoice Documents Report
+     * Shows invoice documents with advice date, fin year, series, bill no filters
+     */
+    public function invoiceDocuments(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $series = $request->get('series');
+        $billNoFrom = $request->get('bill_no_from');
+        $billNoTo = $request->get('bill_no_to');
+        $finYear = $request->get('fin_year', date('Y') . '-' . (date('Y') + 1));
+
+        $query = SaleTransaction::with(['customer:id,name,code,gst_number'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        if ($series) {
+            $query->where('series', $series);
+        }
+        if ($billNoFrom) {
+            $query->where('invoice_no', '>=', $billNoFrom);
+        }
+        if ($billNoTo) {
+            $query->where('invoice_no', '<=', $billNoTo);
+        }
+
+        $sales = $query->orderBy('sale_date')->orderBy('invoice_no')->get();
+
+        $documents = $sales->map(function($sale, $index) {
+            return [
+                'sr_no' => $index + 1,
+                'date' => $sale->sale_date->format('d-m-Y'),
+                'invoice_no' => ($sale->series ?? '') . $sale->invoice_no,
+                'party_code' => $sale->customer->code ?? '',
+                'party_name' => $sale->customer->name ?? 'N/A',
+                'gst_number' => $sale->customer->gst_number ?? '',
+                'amount' => (float) $sale->net_amount,
+                'eway_bill' => $sale->eway_bill_no ?? '',
+                'irn_no' => $sale->irn_no ?? '',
+                'status' => ($sale->eway_bill_no || $sale->irn_no) ? 'Generated' : 'Pending'
+            ];
+        });
+
+        $totals = [
+            'count' => $documents->count(),
+            'amount' => $documents->sum('amount'),
+            'generated' => $documents->where('status', 'Generated')->count(),
+            'pending' => $documents->where('status', 'Pending')->count()
+        ];
+
+        $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportInvoiceDocumentsToExcel($documents, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.invoice-documents-print', compact(
+                'documents', 'totals', 'seriesList', 'dateFrom', 'dateTo', 'series', 'billNoFrom', 'billNoTo', 'finYear'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.invoice-documents', compact(
+            'documents', 'totals', 'seriesList', 'dateFrom', 'dateTo', 'series', 'billNoFrom', 'billNoTo', 'finYear'
+        ));
+    }
+
+    /**
+     * Export Invoice Documents to Excel
+     */
+    private function exportInvoiceDocumentsToExcel($documents, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'invoice_documents_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($documents, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Sr.No', 'Date', 'Invoice No', 'Party Code', 'Party Name', 'GST No', 'Amount', 'E-Way Bill', 'IRN No', 'Status']);
+            foreach ($documents as $doc) {
+                fputcsv($file, [$doc['sr_no'], $doc['date'], $doc['invoice_no'], $doc['party_code'], $doc['party_name'], $doc['gst_number'], $doc['amount'], $doc['eway_bill'], $doc['irn_no'], $doc['status']]);
+            }
+            fputcsv($file, ['', '', '', '', '', 'Total:', $totals['amount'], '', '', '']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Sale Remarks Report
+     * Shows sales with remarks, P/N/A filter, stock filter
+     */
+    public function saleRemarks(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $series = $request->get('series');
+        $pendingFilter = $request->get('pending_filter', 'A'); // P=Pending, N=Non-Pending, A=All
+        $stockFilter = $request->get('stock_filter', '3'); // 1=With Stock, 2=Without Stock, 3=All
+
+        $query = SaleTransaction::with(['customer:id,name,code', 'salesman:id,name'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->whereNotNull('remarks')
+            ->where('remarks', '!=', '');
+
+        if ($series) {
+            $query->where('series', $series);
+        }
+
+        // Pending filter - based on balance_amount
+        if ($pendingFilter === 'P') {
+            $query->where('balance_amount', '>', 0);
+        } elseif ($pendingFilter === 'N') {
+            $query->where(function($q) {
+                $q->whereNull('balance_amount')->orWhere('balance_amount', '<=', 0);
+            });
+        }
+
+        $sales = $query->orderBy('sale_date')->orderBy('invoice_no')->get();
+
+        $remarks = $sales->map(function($sale) {
+            return [
+                'date' => $sale->sale_date->format('d-m-Y'),
+                'bill_no' => ($sale->series ?? '') . $sale->invoice_no,
+                'party_code' => $sale->customer->code ?? '',
+                'party_name' => $sale->customer->name ?? 'N/A',
+                'salesman' => $sale->salesman->name ?? '',
+                'remarks' => $sale->remarks,
+                'amount' => (float) $sale->net_amount,
+                'balance' => (float) ($sale->balance_amount ?? 0),
+                'status' => ($sale->balance_amount ?? 0) > 0 ? 'Pending' : 'Paid'
+            ];
+        });
+
+        $totals = [
+            'count' => $remarks->count(),
+            'amount' => $remarks->sum('amount'),
+            'balance' => $remarks->sum('balance'),
+            'pending' => $remarks->where('status', 'Pending')->count(),
+            'paid' => $remarks->where('status', 'Paid')->count()
+        ];
+
+        $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportSaleRemarksToExcel($remarks, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.sale-remarks-print', compact(
+                'remarks', 'totals', 'seriesList', 'dateFrom', 'dateTo', 'series', 'pendingFilter', 'stockFilter'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.sale-remarks', compact(
+            'remarks', 'totals', 'seriesList', 'dateFrom', 'dateTo', 'series', 'pendingFilter', 'stockFilter'
+        ));
+    }
+
+    /**
+     * Export Sale Remarks to Excel
+     */
+    private function exportSaleRemarksToExcel($remarks, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'sale_remarks_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($remarks, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'Date', 'Bill No', 'Party Code', 'Party Name', 'Salesman', 'Remarks', 'Amount', 'Balance', 'Status']);
+            $i = 1;
+            foreach ($remarks as $r) {
+                fputcsv($file, [$i++, $r['date'], $r['bill_no'], $r['party_code'], $r['party_name'], $r['salesman'], $r['remarks'], $r['amount'], $r['balance'], $r['status']]);
+            }
+            fputcsv($file, ['', '', '', '', '', '', 'Total:', $totals['amount'], $totals['balance'], '']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Item Wise Discount Report
+     * Shows item-wise discount with multiple filters
+     */
+    public function itemWiseDiscount(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', 'I'); // I=Item Wise, C=Company Wise
+        $companyId = $request->get('company_id');
+        $selectiveCompany = $request->get('selective_company', 'N');
+        $itemWise = $request->get('item_wise', 'Y');
+        $series = $request->get('series');
+        $taggedCategories = $request->get('tagged_categories', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $categoryId = $request->get('category_id');
+        $salesmanId = $request->get('salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $customerId = $request->get('customer_id');
+        $day = $request->get('day');
+
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,series,sale_date,customer_id,salesman_id',
+            'saleTransaction.customer:id,name,code,area_name,route_name',
+            'saleTransaction.salesman:id,name'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo, $series, $customerId, $salesmanId, $areaId, $routeId, $day) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+            if ($series) $q->where('series', $series);
+            if ($customerId) $q->where('customer_id', $customerId);
+            if ($salesmanId) $q->where('salesman_id', $salesmanId);
+            if ($day) $q->whereRaw('DAYNAME(sale_date) = ?', [$day]);
+            
+            if ($areaId || $routeId) {
+                $q->whereHas('customer', function($cq) use ($areaId, $routeId) {
+                    if ($areaId) {
+                        $area = Area::find($areaId);
+                        if ($area) $cq->where('area_name', $area->name);
+                    }
+                    if ($routeId) {
+                        $route = Route::find($routeId);
+                        if ($route) $cq->where('route_name', $route->name);
+                    }
+                });
+            }
+        })
+        ->where(function($q) {
+            $q->where('discount_percent', '>', 0)->orWhere('discount_amount', '>', 0);
+        });
+
+        // Company filter
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+
+        // Category filter
+        if ($categoryId) {
+            $query->whereHas('item', function($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            });
+        }
+
+        $saleItems = $query->get();
+
+        // Group by item or company based on report type
+        if ($reportType === 'C') {
+            // Company Wise
+            $groupedData = $saleItems->groupBy('company_name')->map(function($group, $companyName) {
+                return [
+                    'company_name' => $companyName ?: 'No Company',
+                    'qty' => (float) $group->sum('qty'),
+                    'gross' => (float) $group->sum('amount'),
+                    'disc_amount' => (float) $group->sum('discount_amount'),
+                    'net_amount' => (float) $group->sum('net_amount'),
+                    'disc_percent' => $group->sum('amount') > 0 ? ($group->sum('discount_amount') / $group->sum('amount')) * 100 : 0
+                ];
+            })->values();
+        } else {
+            // Item Wise
+            $groupedData = $saleItems->groupBy('item_id')->map(function($group) {
+                $first = $group->first();
+                return [
+                    'item_code' => $first->item_code,
+                    'item_name' => $first->item_name,
+                    'company_name' => $first->company_name ?? '',
+                    'qty' => (float) $group->sum('qty'),
+                    'gross' => (float) $group->sum('amount'),
+                    'disc_amount' => (float) $group->sum('discount_amount'),
+                    'net_amount' => (float) $group->sum('net_amount'),
+                    'disc_percent' => $group->sum('amount') > 0 ? ($group->sum('discount_amount') / $group->sum('amount')) * 100 : 0
+                ];
+            })->sortBy('item_name')->values();
+        }
+
+        $items = $groupedData;
+
+        $totals = [
+            'qty' => $items->sum('qty'),
+            'gross' => $items->sum('gross'),
+            'disc_amount' => $items->sum('disc_amount'),
+            'net_amount' => $items->sum('net_amount'),
+            'count' => $items->count()
+        ];
+
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $categories = \App\Models\ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportItemWiseDiscountToExcel($items, $totals, $dateFrom, $dateTo, $reportType);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.item-wise-discount-print', compact(
+                'items', 'totals', 'companies', 'salesmen', 'areas', 'routes', 'customers', 'categories', 'seriesList',
+                'dateFrom', 'dateTo', 'reportType', 'companyId', 'selectiveCompany', 'itemWise', 'series',
+                'taggedCategories', 'removeTags', 'categoryId', 'salesmanId', 'areaId', 'routeId', 'customerId', 'day'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.item-wise-discount', compact(
+            'items', 'totals', 'companies', 'salesmen', 'areas', 'routes', 'customers', 'categories', 'seriesList',
+            'dateFrom', 'dateTo', 'reportType', 'companyId', 'selectiveCompany', 'itemWise', 'series',
+            'taggedCategories', 'removeTags', 'categoryId', 'salesmanId', 'areaId', 'routeId', 'customerId', 'day'
+        ));
+    }
+
+    /**
+     * Export Item Wise Discount to Excel
+     */
+    private function exportItemWiseDiscountToExcel($items, $totals, $dateFrom, $dateTo, $reportType)
+    {
+        $filename = 'item_wise_discount_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($items, $totals, $reportType) {
+            $file = fopen('php://output', 'w');
+            if ($reportType === 'C') {
+                fputcsv($file, ['#', 'Company', 'Qty', 'Gross Amt', 'Disc %', 'Disc Amt', 'Net Amt']);
+            } else {
+                fputcsv($file, ['#', 'Item Code', 'Item Name', 'Company', 'Qty', 'Gross Amt', 'Disc %', 'Disc Amt', 'Net Amt']);
+            }
+            $i = 1;
+            foreach ($items as $item) {
+                if ($reportType === 'C') {
+                    fputcsv($file, [$i++, $item['company_name'], $item['qty'], $item['gross'], number_format($item['disc_percent'], 2) . '%', $item['disc_amount'], $item['net_amount']]);
+                } else {
+                    fputcsv($file, [$i++, $item['item_code'], $item['item_name'], $item['company_name'], $item['qty'], $item['gross'], number_format($item['disc_percent'], 2) . '%', $item['disc_amount'], $item['net_amount']]);
+                }
+            }
+            fputcsv($file, ['', '', '', 'Total:', $totals['qty'], $totals['gross'], '', $totals['disc_amount'], $totals['net_amount']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Item Wise Scheme Report
+     * Shows item-wise scheme/free qty details with multiple filters
+     */
+    public function itemWiseScheme(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', 'C'); // I=Item Wise, C=Company Wise
+        $selectiveCompany = $request->get('selective_company', 'Y');
+        $itemWise = $request->get('item_wise', 'Y');
+        $series = $request->get('series');
+        $companyId = $request->get('company_id');
+        $taggedCategories = $request->get('tagged_categories', 'N');
+        $removeTags = $request->get('remove_tags', 'N');
+        $categoryId = $request->get('category_id');
+        $salesmanId = $request->get('salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $customerId = $request->get('customer_id');
+        $day = $request->get('day');
+
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,series,sale_date,customer_id,salesman_id',
+            'saleTransaction.customer:id,name,code,area_name,route_name',
+            'saleTransaction.salesman:id,name'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo, $series, $customerId, $salesmanId, $areaId, $routeId, $day) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+            if ($series) $q->where('series', $series);
+            if ($customerId) $q->where('customer_id', $customerId);
+            if ($salesmanId) $q->where('salesman_id', $salesmanId);
+            if ($day) $q->whereRaw('DAYNAME(sale_date) = ?', [$day]);
+            
+            if ($areaId || $routeId) {
+                $q->whereHas('customer', function($cq) use ($areaId, $routeId) {
+                    if ($areaId) {
+                        $area = Area::find($areaId);
+                        if ($area) $cq->where('area_name', $area->name);
+                    }
+                    if ($routeId) {
+                        $route = Route::find($routeId);
+                        if ($route) $cq->where('route_name', $route->name);
+                    }
+                });
+            }
+        })
+        ->where('free_qty', '>', 0); // Only items with free qty (scheme)
+
+        // Company filter
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+
+        // Category filter
+        if ($categoryId) {
+            $query->whereHas('item', function($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            });
+        }
+
+        $saleItems = $query->get();
+
+        // Group by item or company based on report type
+        if ($reportType === 'C') {
+            // Company Wise
+            $groupedData = $saleItems->groupBy('company_name')->map(function($group, $companyName) {
+                $saleQty = (float) $group->sum('qty');
+                $freeQty = (float) $group->sum('free_qty');
+                $schemePercent = $saleQty > 0 ? ($freeQty / $saleQty) * 100 : 0;
+                $schemeAmount = (float) $group->sum(function($item) {
+                    return ($item->free_qty ?? 0) * ($item->sale_rate ?? 0);
+                });
+                return [
+                    'company_name' => $companyName ?: 'No Company',
+                    'sale_qty' => $saleQty,
+                    'free_qty' => $freeQty,
+                    'scheme_percent' => $schemePercent,
+                    'scheme_amount' => $schemeAmount
+                ];
+            })->values();
+        } else {
+            // Item Wise
+            $groupedData = $saleItems->groupBy('item_id')->map(function($group) {
+                $first = $group->first();
+                $saleQty = (float) $group->sum('qty');
+                $freeQty = (float) $group->sum('free_qty');
+                $schemePercent = $saleQty > 0 ? ($freeQty / $saleQty) * 100 : 0;
+                $schemeAmount = (float) $group->sum(function($item) {
+                    return ($item->free_qty ?? 0) * ($item->sale_rate ?? 0);
+                });
+                return [
+                    'item_code' => $first->item_code,
+                    'item_name' => $first->item_name,
+                    'company_name' => $first->company_name ?? '',
+                    'sale_qty' => $saleQty,
+                    'free_qty' => $freeQty,
+                    'scheme_percent' => $schemePercent,
+                    'scheme_amount' => $schemeAmount
+                ];
+            })->sortBy('item_name')->values();
+        }
+
+        $items = $groupedData;
+
+        $totals = [
+            'sale_qty' => $items->sum('sale_qty'),
+            'free_qty' => $items->sum('free_qty'),
+            'scheme_amount' => $items->sum('scheme_amount'),
+            'count' => $items->count()
+        ];
+
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $categories = \App\Models\ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportItemWiseSchemeToExcel($items, $totals, $dateFrom, $dateTo, $reportType);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.item-wise-scheme-print', compact(
+                'items', 'totals', 'companies', 'salesmen', 'areas', 'routes', 'customers', 'categories', 'seriesList',
+                'dateFrom', 'dateTo', 'reportType', 'companyId', 'selectiveCompany', 'itemWise', 'series',
+                'taggedCategories', 'removeTags', 'categoryId', 'salesmanId', 'areaId', 'routeId', 'customerId', 'day'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.item-wise-scheme', compact(
+            'items', 'totals', 'companies', 'salesmen', 'areas', 'routes', 'customers', 'categories', 'seriesList',
+            'dateFrom', 'dateTo', 'reportType', 'companyId', 'selectiveCompany', 'itemWise', 'series',
+            'taggedCategories', 'removeTags', 'categoryId', 'salesmanId', 'areaId', 'routeId', 'customerId', 'day'
+        ));
+    }
+
+    /**
+     * Export Item Wise Scheme to Excel
+     */
+    private function exportItemWiseSchemeToExcel($items, $totals, $dateFrom, $dateTo, $reportType)
+    {
+        $filename = 'item_wise_scheme_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($items, $totals, $reportType) {
+            $file = fopen('php://output', 'w');
+            if ($reportType === 'C') {
+                fputcsv($file, ['#', 'Company', 'Sale Qty', 'Free Qty', 'Scheme %', 'Scheme Amt']);
+            } else {
+                fputcsv($file, ['#', 'Item Code', 'Item Name', 'Company', 'Sale Qty', 'Free Qty', 'Scheme %', 'Scheme Amt']);
+            }
+            $i = 1;
+            foreach ($items as $item) {
+                if ($reportType === 'C') {
+                    fputcsv($file, [$i++, $item['company_name'], $item['sale_qty'], $item['free_qty'], number_format($item['scheme_percent'], 2) . '%', $item['scheme_amount']]);
+                } else {
+                    fputcsv($file, [$i++, $item['item_code'], $item['item_name'], $item['company_name'], $item['sale_qty'], $item['free_qty'], number_format($item['scheme_percent'], 2) . '%', $item['scheme_amount']]);
+                }
+            }
+            fputcsv($file, ['', '', 'Total:', $totals['sale_qty'], $totals['free_qty'], '', $totals['scheme_amount']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Tax Percentage Wise Sale Report
+     * Shows sales grouped by GST percentage
+     */
+    public function taxPercentageWiseSale(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+
+        // Get sale items grouped by GST percentage
+        $saleItems = SaleTransactionItem::whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+        })->get();
+
+        // Group by GST percentage
+        $groupedData = $saleItems->groupBy(function($item) {
+            return (float) ($item->gst_percent ?? 0);
+        })->map(function($group, $gstPercent) {
+            $taxableValue = (float) $group->sum('amount');
+            $cgst = (float) $group->sum('cgst_amount');
+            $sgst = (float) $group->sum('sgst_amount');
+            $igst = (float) $group->sum(function($item) {
+                return $item->igst_amount ?? 0;
+            });
+            $totalTax = $cgst + $sgst + $igst;
+            
+            return [
+                'gst_percent' => $gstPercent,
+                'taxable_value' => $taxableValue,
+                'cgst' => $cgst,
+                'sgst' => $sgst,
+                'igst' => $igst,
+                'total_tax' => $totalTax,
+                'invoice_value' => $taxableValue + $totalTax
+            ];
+        })->sortBy('gst_percent')->values();
+
+        $taxData = $groupedData;
+
+        $totals = [
+            'taxable_value' => $taxData->sum('taxable_value'),
+            'cgst' => $taxData->sum('cgst'),
+            'sgst' => $taxData->sum('sgst'),
+            'igst' => $taxData->sum('igst'),
+            'total_tax' => $taxData->sum('total_tax'),
+            'invoice_value' => $taxData->sum('invoice_value'),
+            'count' => $taxData->count()
+        ];
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportTaxPercentageWiseSaleToExcel($taxData, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.tax-percentage-wise-sale-print', compact(
+                'taxData', 'totals', 'dateFrom', 'dateTo'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.tax-percentage-wise-sale', compact(
+            'taxData', 'totals', 'dateFrom', 'dateTo'
+        ));
+    }
+
+    /**
+     * Export Tax Percentage Wise Sale to Excel
+     */
+    private function exportTaxPercentageWiseSaleToExcel($taxData, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'tax_percentage_wise_sale_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($taxData, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'GST %', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Total Tax', 'Invoice Value']);
+            $i = 1;
+            foreach ($taxData as $tax) {
+                fputcsv($file, [$i++, $tax['gst_percent'] . '%', $tax['taxable_value'], $tax['cgst'], $tax['sgst'], $tax['igst'], $tax['total_tax'], $tax['invoice_value']]);
+            }
+            fputcsv($file, ['', 'Total:', $totals['taxable_value'], $totals['cgst'], $totals['sgst'], $totals['igst'], $totals['total_tax'], $totals['invoice_value']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Transaction Book with Address Report
+     * Shows sales with customer address details
+     */
+    public function transactionBookAddress(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $series = $request->get('series');
+        $reportBy = $request->get('report_by', 'S'); // T=Transaction, S=Series
+        $partyStatus = $request->get('party_status');
+
+        $query = SaleTransaction::with(['customer:id,name,code,address,mobile,gst_number,area_name,route_name'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        if ($series) {
+            $query->where('series', $series);
+        }
+
+        // Party status filter (if applicable)
+        if ($partyStatus) {
+            $query->whereHas('customer', function($q) use ($partyStatus) {
+                $q->where('status', $partyStatus);
+            });
+        }
+
+        // Order by series or transaction
+        if ($reportBy === 'S') {
+            $query->orderBy('series')->orderBy('invoice_no');
+        } else {
+            $query->orderBy('sale_date')->orderBy('invoice_no');
+        }
+
+        $sales = $query->get();
+
+        $totals = [
+            'count' => $sales->count(),
+            'amount' => (float) $sales->sum('net_amount')
+        ];
+
+        $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportTransactionBookAddressToExcel($sales, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.transaction-book-address-print', compact(
+                'sales', 'totals', 'seriesList', 'dateFrom', 'dateTo', 'series', 'reportBy', 'partyStatus'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.transaction-book-address', compact(
+            'sales', 'totals', 'seriesList', 'dateFrom', 'dateTo', 'series', 'reportBy', 'partyStatus'
+        ));
+    }
+
+    /**
+     * Export Transaction Book with Address to Excel
+     */
+    private function exportTransactionBookAddressToExcel($sales, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'transaction_book_address_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($sales, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'Date', 'Bill No', 'Party Name', 'Address', 'Mobile', 'GST No', 'Amount']);
+            $i = 1;
+            foreach ($sales as $sale) {
+                fputcsv($file, [
+                    $i++,
+                    $sale->sale_date->format('d-m-Y'),
+                    ($sale->series ?? '') . $sale->invoice_no,
+                    $sale->customer->name ?? 'N/A',
+                    $sale->customer->address ?? '-',
+                    $sale->customer->mobile ?? '-',
+                    $sale->customer->gst_number ?? '-',
+                    $sale->net_amount
+                ]);
+            }
+            fputcsv($file, ['', '', '', '', '', '', 'Total:', $totals['amount']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Sale/Stock Detail Report
+     * Shows sale vs stock comparison by company
+     */
+    public function saleStockDetail(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $companyId = $request->get('company_id');
+
+        // Get sale items grouped by item
+        $query = SaleTransactionItem::whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+        });
+
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) {
+                $query->where('company_name', $company->name);
+            }
+        }
+
+        $saleItems = $query->select(
+            'item_id', 'item_code', 'item_name', 'company_name',
+            DB::raw('SUM(qty) as sold_qty'),
+            DB::raw('SUM(net_amount) as sale_value')
+        )->groupBy('item_id', 'item_code', 'item_name', 'company_name')->get();
+
+        // Get current stock for these items
+        $itemIds = $saleItems->pluck('item_id');
+        $stockData = \App\Models\Batch::whereIn('item_id', $itemIds)
+            ->select('item_id', DB::raw('SUM(qty) as current_stock'))
+            ->groupBy('item_id')
+            ->get()
+            ->keyBy('item_id');
+
+        // Build report data
+        $items = $saleItems->map(function($item) use ($stockData) {
+            $currentStock = (float) ($stockData->get($item->item_id)->current_stock ?? 0);
+            $soldQty = (float) $item->sold_qty;
+            // Opening stock = current stock + sold qty (approximate)
+            $openingStock = $currentStock + $soldQty;
+            
+            return [
+                'item_code' => $item->item_code,
+                'item_name' => $item->item_name,
+                'company_name' => $item->company_name ?? '',
+                'stock' => $openingStock,
+                'sold' => $soldQty,
+                'balance' => $currentStock,
+                'sale_value' => (float) $item->sale_value
+            ];
+        })->sortBy('item_name')->values();
+
+        $totals = [
+            'stock' => $items->sum('stock'),
+            'sold' => $items->sum('sold'),
+            'balance' => $items->sum('balance'),
+            'sale_value' => $items->sum('sale_value'),
+            'count' => $items->count()
+        ];
+
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportSaleStockDetailToExcel($items, $totals, $dateFrom, $dateTo);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.sale-stock-detail-print', compact(
+                'items', 'totals', 'companies', 'dateFrom', 'dateTo', 'companyId'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.sale-stock-detail', compact(
+            'items', 'totals', 'companies', 'dateFrom', 'dateTo', 'companyId'
+        ));
+    }
+
+    /**
+     * Export Sale/Stock Detail to Excel
+     */
+    private function exportSaleStockDetailToExcel($items, $totals, $dateFrom, $dateTo)
+    {
+        $filename = 'sale_stock_detail_' . $dateFrom . '_to_' . $dateTo . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($items, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'Item Code', 'Item Name', 'Company', 'Stock', 'Sold', 'Balance', 'Sale Value']);
+            $i = 1;
+            foreach ($items as $item) {
+                fputcsv($file, [$i++, $item['item_code'], $item['item_name'], $item['company_name'], $item['stock'], $item['sold'], $item['balance'], $item['sale_value']]);
+            }
+            fputcsv($file, ['', '', '', 'Total:', $totals['stock'], $totals['sold'], $totals['balance'], $totals['sale_value']]);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Customer Stock Details Report
+     * Shows customer-wise stock/sale details
+     */
+    public function customerStockDetails(Request $request)
+    {
+        $asOnDate = $request->get('as_on_date', Carbon::now()->format('Y-m-d'));
+        $customerId = $request->get('customer_id');
+        $itemId = $request->get('item_id');
+        $flag = $request->get('flag');
+
+        // Get sale items for the customer
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,sale_date,customer_id',
+            'saleTransaction.customer:id,name,code'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($asOnDate, $customerId) {
+            $q->where('sale_date', '<=', $asOnDate);
+            if ($customerId) {
+                $q->where('customer_id', $customerId);
+            }
+        });
+
+        if ($itemId) {
+            $query->where('item_id', $itemId);
+        }
+
+        $saleItems = $query->get();
+
+        // Group by customer and item
+        $groupedData = $saleItems->groupBy(function($item) {
+            return $item->saleTransaction->customer_id . '_' . $item->item_id;
+        })->map(function($group) {
+            $first = $group->first();
+            $lastSale = $group->sortByDesc(function($item) {
+                return $item->saleTransaction->sale_date;
+            })->first();
+            
+            return [
+                'customer_code' => $first->saleTransaction->customer->code ?? '',
+                'customer_name' => $first->saleTransaction->customer->name ?? 'N/A',
+                'item_code' => $first->item_code,
+                'item_name' => $first->item_name,
+                'qty_sold' => (float) $group->sum('qty'),
+                'value' => (float) $group->sum('net_amount'),
+                'last_sale' => $lastSale->saleTransaction->sale_date->format('d-m-Y')
+            ];
+        })->sortBy('customer_name')->values();
+
+        $stockData = $groupedData;
+
+        $totals = [
+            'qty_sold' => $stockData->sum('qty_sold'),
+            'value' => $stockData->sum('value'),
+            'count' => $stockData->count()
+        ];
+
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $itemsList = Item::select('id', 'name')->orderBy('name')->get();
+
+        if ($request->get('export') === 'excel') {
+            return $this->exportCustomerStockDetailsToExcel($stockData, $totals, $asOnDate);
+        }
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.customer-stock-details-print', compact(
+                'stockData', 'totals', 'customers', 'itemsList', 'asOnDate', 'customerId', 'itemId', 'flag'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.customer-stock-details', compact(
+            'stockData', 'totals', 'customers', 'itemsList', 'asOnDate', 'customerId', 'itemId', 'flag'
+        ));
+    }
+
+    /**
+     * Export Customer Stock Details to Excel
+     */
+    private function exportCustomerStockDetailsToExcel($stockData, $totals, $asOnDate)
+    {
+        $filename = 'customer_stock_details_' . $asOnDate . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ];
+
+        $callback = function() use ($stockData, $totals) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'Customer Code', 'Customer Name', 'Item', 'Qty Sold', 'Value', 'Last Sale']);
+            $i = 1;
+            foreach ($stockData as $data) {
+                fputcsv($file, [$i++, $data['customer_code'], $data['customer_name'], $data['item_name'], $data['qty_sold'], $data['value'], $data['last_sale']]);
+            }
+            fputcsv($file, ['', '', '', 'Total:', $totals['qty_sold'], $totals['value'], '']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * GST Sale Book Report
+     */
+    public function gstSaleBook(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $saleType = $request->get('sale_type', '1');
+        $gstDetail = $request->get('gst_detail', 'Y');
+
+        $query = SaleTransaction::with('customer:id,name,gst_number')
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        if ($saleType == '1') {
+            $query->where('payment_mode', 'cash');
+        } elseif ($saleType == '2') {
+            $query->where('payment_mode', 'credit');
+        }
+
+        $sales = $query->orderBy('sale_date')->orderBy('invoice_no')->get();
+
+        $totals = [
+            'taxable' => $sales->sum('nt_amount'),
+            'cgst' => $sales->sum('cgst_amount'),
+            'sgst' => $sales->sum('sgst_amount'),
+            'igst' => $sales->sum('igst_amount'),
+            'total' => $sales->sum('net_amount')
+        ];
+
+        return view('admin.reports.sale-report.other-reports.gst-sale-book', compact(
+            'sales', 'totals', 'dateFrom', 'dateTo', 'saleType', 'gstDetail'
+        ));
+    }
+
+    /**
+     * Customer Consistency Report
+     */
+    public function customerConsistency(Request $request)
+    {
+        $period1From = $request->get('period1_from', Carbon::now()->subMonth()->startOfMonth()->format('Y-m-d'));
+        $period1To = $request->get('period1_to', Carbon::now()->subMonth()->endOfMonth()->format('Y-m-d'));
+        $period2From = $request->get('period2_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $period2To = $request->get('period2_to', Carbon::now()->format('Y-m-d'));
+        $reportType = $request->get('report_type', '3');
+        $itemId = $request->get('item_id');
+
+        $itemsList = Item::select('id', 'name')->orderBy('name')->get();
+
+        // Get Period 1 sales by customer
+        $period1Sales = SaleTransaction::with('customer:id,name,code,area_id')
+            ->whereBetween('sale_date', [$period1From, $period1To])
+            ->select('customer_id', DB::raw('COUNT(*) as bill_count'), DB::raw('SUM(net_amount) as total_value'))
+            ->groupBy('customer_id')
+            ->get()
+            ->keyBy('customer_id');
+
+        // Get Period 2 sales by customer
+        $period2Sales = SaleTransaction::with('customer:id,name,code,area_id')
+            ->whereBetween('sale_date', [$period2From, $period2To])
+            ->select('customer_id', DB::raw('COUNT(*) as bill_count'), DB::raw('SUM(net_amount) as total_value'))
+            ->groupBy('customer_id')
+            ->get()
+            ->keyBy('customer_id');
+
+        // Merge customer IDs from both periods
+        $allCustomerIds = $period1Sales->keys()->merge($period2Sales->keys())->unique();
+        $customersData = Customer::whereIn('id', $allCustomerIds)->with('area:id,name')->get()->keyBy('id');
+
+        $customers = $allCustomerIds->map(function($customerId) use ($period1Sales, $period2Sales, $customersData) {
+            $customer = $customersData->get($customerId);
+            $p1 = $period1Sales->get($customerId);
+            $p2 = $period2Sales->get($customerId);
+            return [
+                'code' => $customer->code ?? '',
+                'name' => $customer->name ?? 'N/A',
+                'area' => $customer->area->name ?? '',
+                'period1_bills' => $p1->bill_count ?? 0,
+                'period1_value' => $p1->total_value ?? 0,
+                'period2_bills' => $p2->bill_count ?? 0,
+                'period2_value' => $p2->total_value ?? 0,
+            ];
+        })->filter(function($c) use ($reportType) {
+            if ($reportType == '1') return ($c['period1_bills'] > 0 && $c['period2_bills'] > 0);
+            if ($reportType == '2') return ($c['period1_bills'] == 0 || $c['period2_bills'] == 0);
+            return true;
+        })->sortBy('name')->values();
+
+        $totals = [
+            'period1_bills' => $customers->sum('period1_bills'),
+            'period1_value' => $customers->sum('period1_value'),
+            'period2_bills' => $customers->sum('period2_bills'),
+            'period2_value' => $customers->sum('period2_value'),
+        ];
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.customer-consistency-print', compact(
+                'customers', 'totals', 'itemsList', 'period1From', 'period1To', 'period2From', 'period2To', 'reportType', 'itemId'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.customer-consistency', compact(
+            'customers', 'totals', 'itemsList', 'period1From', 'period1To', 'period2From', 'period2To', 'reportType', 'itemId'
+        ));
+    }
+
+    /**
+     * Sale Return Adjustment Report
+     */
+    public function saleReturnAdjustment(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+
+        $returns = SaleReturnTransaction::with('customer:id,name')
+            ->whereBetween('return_date', [$dateFrom, $dateTo])
+            ->orderBy('return_date')
+            ->orderBy('return_no')
+            ->get();
+
+        $adjustments = $returns->map(function($return, $index) {
+            $adjustedAmount = 0; // Would come from adjustment table if exists
+            return [
+                'date' => $return->return_date->format('d-m-Y'),
+                'trn_no' => $return->return_no,
+                'party_name' => $return->customer->name ?? 'N/A',
+                'amount' => $return->net_amount ?? 0,
+                'adj_bill' => '',
+                'bal_amt' => ($return->net_amount ?? 0) - $adjustedAmount,
+            ];
+        });
+
+        $totals = [
+            'amount' => $adjustments->sum('amount'),
+            'bal_amt' => $adjustments->sum('bal_amt'),
+        ];
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.sale-return-adjustment-print', compact(
+                'adjustments', 'totals', 'dateFrom', 'dateTo'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.sale-return-adjustment', compact(
+            'adjustments', 'totals', 'dateFrom', 'dateTo'
+        ));
+    }
+
+    /**
+     * Pending Orders Report
+     */
+    public function pendingOrders(Request $request)
+    {
+        $orderType = $request->get('order_type', 'C');
+        $salesmanId = $request->get('salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+        $stateId = $request->get('state_id');
+
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+        $states = State::select('id', 'name')->orderBy('name')->get();
+
+        // Get pending orders from pending_orders table
+        $query = \App\Models\PendingOrder::with(['supplier:supplier_id,name', 'item:id,name'])
+            ->where('balance_qty', '>', 0);
+
+        $pendingOrders = $query->orderBy('order_date', 'desc')->get();
+
+        $orders = $pendingOrders->map(function($order) {
+            return [
+                'date' => $order->order_date ? $order->order_date->format('d-m-Y') : '',
+                'order_no' => $order->order_no ?? '',
+                'party_name' => $order->supplier->name ?? 'N/A',
+                'item_name' => $order->item->name ?? 'N/A',
+                'ordered' => $order->order_qty ?? 0,
+                'delivered' => ($order->order_qty ?? 0) - ($order->balance_qty ?? 0),
+                'pending' => $order->balance_qty ?? 0,
+                'status' => ($order->balance_qty ?? 0) <= 0 ? 'Complete' : 'Pending',
+            ];
+        });
+
+        $totals = [
+            'ordered' => $orders->sum('ordered'),
+            'delivered' => $orders->sum('delivered'),
+            'pending' => $orders->sum('pending'),
+        ];
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.pending-orders-print', compact(
+                'orders', 'totals', 'orderType', 'salesmen', 'areas', 'routes', 'states',
+                'salesmanId', 'areaId', 'routeId', 'stateId'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.pending-orders', compact(
+            'orders', 'totals', 'orderType', 'salesmen', 'areas', 'routes', 'states',
+            'salesmanId', 'areaId', 'routeId', 'stateId'
+        ));
+    }
+
+    /**
+     * ST-38 OutWord Report (Stock Transfer)
+     */
+    public function st38Outword(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+
+        // Get stock transfer outgoing transactions
+        $stockTransfers = \App\Models\StockTransferOutgoingTransaction::whereBetween('transaction_date', [$dateFrom, $dateTo])
+            ->orderBy('transaction_date')
+            ->orderBy('sr_no')
+            ->get();
+
+        $transfers = $stockTransfers->map(function($txn) {
+            return [
+                'date' => $txn->transaction_date ? $txn->transaction_date->format('d-m-Y') : '',
+                'st38_no' => $txn->sr_no ?? '',
+                'party_name' => $txn->transfer_to_name ?? 'N/A',
+                'state' => '',
+                'taxable' => $txn->gross_amount ?? 0,
+                'tax' => $txn->tax_amount ?? 0,
+                'total' => $txn->net_amount ?? 0,
+            ];
+        });
+
+        $totals = [
+            'taxable' => $transfers->sum('taxable'),
+            'tax' => $transfers->sum('tax'),
+            'total' => $transfers->sum('total'),
+        ];
+
+        if ($request->get('view_type') === 'print') {
+            return view('admin.reports.sale-report.other-reports.st38-outword-print', compact(
+                'transfers', 'totals', 'dateFrom', 'dateTo'
+            ));
+        }
+
+        return view('admin.reports.sale-report.other-reports.st38-outword', compact(
+            'transfers', 'totals', 'dateFrom', 'dateTo'
+        ));
+    }
+
+    /**
+     * Frige Item Report
+     * Shows frige/cold storage items sold
+     */
+    public function frigeItem(Request $request)
+    {
+        $date = $request->get('date', Carbon::now()->format('Y-m-d'));
+        $billFrom = $request->get('bill_from');
+        $billTo = $request->get('bill_to');
+        $categoryId = $request->get('category_id');
+        $status = $request->get('status');
+        $salesmanId = $request->get('salesman_id');
+        $areaId = $request->get('area_id');
+        $routeId = $request->get('route_id');
+
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,series,sale_date,customer_id,salesman_id',
+            'saleTransaction.customer:id,name,code',
+            'item:id,name,category'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($date, $billFrom, $billTo, $salesmanId, $areaId, $routeId) {
+            $q->whereDate('sale_date', $date);
+            if ($billFrom) $q->where('invoice_no', '>=', $billFrom);
+            if ($billTo) $q->where('invoice_no', '<=', $billTo);
+            if ($salesmanId) $q->where('salesman_id', $salesmanId);
+            if ($areaId || $routeId) {
+                $q->whereHas('customer', function($cq) use ($areaId, $routeId) {
+                    if ($areaId) $cq->where('area_code', $areaId);
+                    if ($routeId) $cq->where('route_code', $routeId);
+                });
+            }
+        })
+        ->whereHas('item', function($q) use ($categoryId, $status) {
+            $q->where(function($sq) {
+                $sq->where('category', 'like', '%frige%')
+                   ->orWhere('category', 'like', '%cold%')
+                   ->orWhere('category', 'like', '%refriger%');
+            });
+            if ($categoryId) $q->where('category_id', $categoryId);
+            if ($status) $q->where('status', $status);
+        });
+
+        $saleItems = $query->get();
+
+        $items = $saleItems->map(function($item) {
+            return [
+                'invoice_no' => ($item->saleTransaction->series ?? '') . $item->saleTransaction->invoice_no,
+                'date' => $item->saleTransaction->sale_date->format('d-m-Y'),
+                'customer' => $item->saleTransaction->customer->name ?? 'N/A',
+                'item_name' => $item->item_name,
+                'qty' => (float) $item->qty,
+                'amount' => (float) $item->net_amount,
+            ];
+        });
+
+        $totals = [
+            'qty' => $items->sum('qty'),
+            'amount' => $items->sum('amount'),
+        ];
+
+        $categories = \App\Models\ItemCategory::select('id', 'name')->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+        $routes = Route::select('id', 'name')->orderBy('name')->get();
+
+        return view('admin.reports.sale-report.other-reports.frige-item', compact(
+            'items', 'totals', 'categories', 'salesmen', 'areas', 'routes',
+            'date', 'billFrom', 'billTo', 'categoryId', 'status', 'salesmanId', 'areaId', 'routeId'
+        ));
+    }
+
+    /**
+     * Volume Discount Report
+     * Shows volume-based discounts by party and company
+     */
+    public function volumeDiscount(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $customerId = $request->get('customer_id');
+        $companyId = $request->get('company_id');
+        $volumeOnly = $request->get('volume_only');
+
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,sale_date,customer_id',
+            'saleTransaction.customer:id,name,code'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo, $customerId) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+            if ($customerId) $q->where('customer_id', $customerId);
+        });
+
+        if ($companyId) {
+            $company = Company::find($companyId);
+            if ($company) $query->where('company_name', $company->name);
+        }
+
+        if ($volumeOnly) {
+            $query->where('discount_amount', '>', 0);
+        }
+
+        $saleItems = $query->get();
+
+        $groupedData = $saleItems->groupBy(function($item) {
+            return ($item->saleTransaction->customer->name ?? 'N/A') . '|' . ($item->company_name ?? 'N/A');
+        })->map(function($group, $key) {
+            $parts = explode('|', $key);
+            return [
+                'party_name' => $parts[0],
+                'company' => $parts[1],
+                'qty' => (float) $group->sum('qty'),
+                'sale_value' => (float) $group->sum('amount'),
+                'discount' => (float) $group->sum('discount_amount'),
+                'net_value' => (float) $group->sum('net_amount'),
+            ];
+        })->values();
+
+        $discounts = $groupedData;
+
+        $totals = [
+            'qty' => $discounts->sum('qty'),
+            'sale_value' => $discounts->sum('sale_value'),
+            'discount' => $discounts->sum('discount'),
+            'net_value' => $discounts->sum('net_value'),
+        ];
+
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+        $companies = Company::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
+
+        return view('admin.reports.sale-report.other-reports.volume-discount', compact(
+            'discounts', 'totals', 'customers', 'companies',
+            'dateFrom', 'dateTo', 'customerId', 'companyId', 'volumeOnly'
+        ));
+    }
+
+    /**
+     * Party Volume Discount Report
+     * Shows volume discounts grouped by party
+     */
+    public function partyVolumeDiscount(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $customerId = $request->get('customer_id');
+
+        $query = SaleTransaction::with(['customer:id,name,code'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        }
+
+        $sales = $query->get();
+
+        $groupedData = $sales->groupBy('customer_id')->map(function($group) {
+            $customer = $group->first()->customer;
+            $totalSale = (float) $group->sum('net_amount');
+            $volumeDiscount = (float) $group->sum('dis_amount');
+            return [
+                'party_code' => $customer->code ?? '',
+                'party_name' => $customer->name ?? 'N/A',
+                'total_sale' => $totalSale,
+                'volume_discount' => $volumeDiscount,
+                'net_amount' => $totalSale - $volumeDiscount,
+            ];
+        })->sortBy('party_name')->values();
+
+        $discounts = $groupedData;
+
+        $totals = [
+            'total_sale' => $discounts->sum('total_sale'),
+            'volume_discount' => $discounts->sum('volume_discount'),
+            'net_amount' => $discounts->sum('net_amount'),
+        ];
+
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+
+        return view('admin.reports.sale-report.other-reports.party-volume-discount', compact(
+            'discounts', 'totals', 'customers', 'dateFrom', 'dateTo', 'customerId'
+        ));
+    }
+
+    /**
+     * Schedule H1 Drugs Report
+     * Shows sales of Schedule H1 drugs with patient/doctor details
+     */
+    public function scheduleH1Drugs(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+
+        $query = SaleTransactionItem::with([
+            'saleTransaction:id,invoice_no,series,sale_date,customer_id,patient_name,doctor_name',
+            'saleTransaction.customer:id,name,address',
+            'item:id,name,schedule'
+        ])
+        ->whereHas('saleTransaction', function($q) use ($dateFrom, $dateTo) {
+            $q->whereBetween('sale_date', [$dateFrom, $dateTo]);
+        })
+        ->whereHas('item', function($q) {
+            $q->where('schedule', 'H1')
+              ->orWhere('schedule', 'like', '%H1%');
+        });
+
+        $saleItems = $query->get();
+
+        $drugs = $saleItems->map(function($item) {
+            return [
+                'date' => $item->saleTransaction->sale_date->format('d-m-Y'),
+                'bill_no' => ($item->saleTransaction->series ?? '') . $item->saleTransaction->invoice_no,
+                'drug_name' => $item->item_name,
+                'batch' => $item->batch_no ?? '',
+                'qty' => (float) $item->qty,
+                'patient_name' => $item->saleTransaction->patient_name ?? '',
+                'doctor_name' => $item->saleTransaction->doctor_name ?? '',
+                'address' => $item->saleTransaction->customer->address ?? '',
+            ];
+        });
+
+        $totals = [
+            'qty' => $drugs->sum('qty'),
+        ];
+
+        return view('admin.reports.sale-report.other-reports.schedule-h1-drugs', compact(
+            'drugs', 'totals', 'dateFrom', 'dateTo'
+        ));
+    }
+
+    /**
+     * Sale Book SC (Special Category) Report
+     * Shows sales with special charges breakdown
+     */
+    public function saleBookSc(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $series = $request->get('series');
+
+        $query = SaleTransaction::with(['customer:id,name,code'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        if ($series) {
+            $query->where('series', $series);
+        }
+
+        $sales = $query->orderBy('sale_date')->orderBy('invoice_no')->get();
+
+        $totals = [
+            'gross' => $sales->sum('gross_amount'),
+            'disc' => $sales->sum('dis_amount'),
+            'sc' => $sales->sum('sc_amount'),
+            'tax' => $sales->sum('tax_amount'),
+            'net' => $sales->sum('net_amount'),
+        ];
+
+        $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
+
+        return view('admin.reports.sale-report.other-reports.sale-book-sc', compact(
+            'sales', 'totals', 'seriesList', 'dateFrom', 'dateTo', 'series'
+        ));
+    }
+
+    /**
+     * Sale Book Summarised Report
+     * Shows summarised sales by customer
+     */
+    public function saleBookSummarised(Request $request)
+    {
+        $dateFrom = $request->get('date_from', Carbon::now()->format('Y-m-d'));
+        $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
+        $selective = $request->get('selective', 'N');
+        $customerCode = $request->get('customer_code', '00');
+        $customerId = $request->get('customer_id');
+
+        $query = SaleTransaction::with(['customer:id,name,code'])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo]);
+
+        if ($selective === 'Y' && $customerId) {
+            $query->where('customer_id', $customerId);
+        }
+
+        $sales = $query->get();
+
+        // Group by customer
+        $groupedData = $sales->groupBy('customer_id')->map(function($group) {
+            $customer = $group->first()->customer;
+            return [
+                'customer_code' => $customer->code ?? '',
+                'customer_name' => $customer->name ?? 'N/A',
+                'bill_count' => $group->count(),
+                'gross' => (float) $group->sum('gross_amount'),
+                'disc' => (float) $group->sum('dis_amount'),
+                'tax' => (float) $group->sum('tax_amount'),
+                'net' => (float) $group->sum('net_amount'),
+            ];
+        })->sortBy('customer_name')->values();
+
+        $summary = $groupedData;
+
+        $totals = [
+            'bills' => $summary->sum('bill_count'),
+            'gross' => $summary->sum('gross'),
+            'disc' => $summary->sum('disc'),
+            'tax' => $summary->sum('tax'),
+            'net' => $summary->sum('net'),
+        ];
+
+        $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
+
+        return view('admin.reports.sale-report.other-reports.sale-book-summarised', compact(
+            'summary', 'totals', 'customers', 'dateFrom', 'dateTo', 'selective', 'customerCode', 'customerId'
+        ));
     }
 }

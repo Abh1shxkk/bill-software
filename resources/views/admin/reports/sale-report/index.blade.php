@@ -430,6 +430,66 @@
                 </div>
             </div>
         </div>
+
+        <!-- Cash Coll Trnf Sale -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 shadow-sm hover-shadow border-warning">
+                <div class="card-body text-center">
+                    <i class="bi bi-cash-stack text-warning fs-1 mb-3"></i>
+                    <h6 class="card-title">Cash Coll Trnf Sale</h6>
+                    <p class="card-text small text-muted">Cash collection transfer report</p>
+                    <a href="{{ route('admin.reports.sales.other.cash-coll-trnf-sale') }}" class="btn btn-outline-warning btn-sm">View Report</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discount On Sale - Bill Wise -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 shadow-sm hover-shadow border-warning">
+                <div class="card-body text-center">
+                    <i class="bi bi-percent text-warning fs-1 mb-3"></i>
+                    <h6 class="card-title">Discount On Sale - Bill Wise</h6>
+                    <p class="card-text small text-muted">Bill wise discount analysis</p>
+                    <a href="{{ route('admin.reports.sales.other.sale-bill-wise-discount') }}" class="btn btn-outline-warning btn-sm">View Report</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Book With Return -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 shadow-sm hover-shadow border-warning">
+                <div class="card-body text-center">
+                    <i class="bi bi-journal-richtext text-warning fs-1 mb-3"></i>
+                    <h6 class="card-title">Sales Book With Return</h6>
+                    <p class="card-text small text-muted">Sales with return details</p>
+                    <a href="{{ route('admin.reports.sales.other.sales-book-with-return') }}" class="btn btn-outline-warning btn-sm">View Report</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rate Change Report -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 shadow-sm hover-shadow border-warning">
+                <div class="card-body text-center">
+                    <i class="bi bi-arrow-down-up text-warning fs-1 mb-3"></i>
+                    <h6 class="card-title">Rate Change Report</h6>
+                    <p class="card-text small text-muted">Rate difference analysis</p>
+                    <a href="{{ route('admin.reports.sales.other.rate-difference') }}" class="btn btn-outline-warning btn-sm">View Report</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Matrix -->
+        <div class="col-md-4 col-lg-3">
+            <div class="card h-100 shadow-sm hover-shadow border-warning">
+                <div class="card-body text-center">
+                    <i class="bi bi-grid-3x3 text-warning fs-1 mb-3"></i>
+                    <h6 class="card-title">Sales Matrix</h6>
+                    <p class="card-text small text-muted">Comprehensive sales matrix</p>
+                    <a href="{{ route('admin.reports.sales.other.sales-matrix') }}" class="btn btn-outline-warning btn-sm">View Report</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

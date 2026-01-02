@@ -212,4 +212,24 @@ class RouteController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Search route by code (AJAX)
+     */
+    public function search(Request $request)
+    {
+        $code = $request->get('code');
+        
+        if (!$code) {
+            return response()->json(['name' => '']);
+        }
+
+        $route = Route::where('code', $code)->first();
+
+        return response()->json([
+            'id' => $route->id ?? null,
+            'name' => $route->name ?? '',
+            'code' => $route->code ?? ''
+        ]);
+    }
 }

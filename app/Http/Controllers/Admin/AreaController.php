@@ -214,4 +214,26 @@ class AreaController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Search area by code (AJAX)
+     */
+    public function search(Request $request)
+    {
+        $code = $request->get('code');
+        
+        if (!$code) {
+            return response()->json(['name' => '']);
+        }
+
+        $area = Area::where('code', $code)
+            ->where('is_deleted', '!=', 1)
+            ->first();
+
+        return response()->json([
+            'id' => $area->id ?? null,
+            'name' => $area->name ?? '',
+            'code' => $area->code ?? ''
+        ]);
+    }
 }

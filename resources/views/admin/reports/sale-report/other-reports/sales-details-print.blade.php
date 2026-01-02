@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Details - Print</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 11px; padding: 10px; }
+        .header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .header h2 { font-size: 16px; margin-bottom: 5px; }
+        .header p { font-size: 11px; color: #666; }
+        .filters { margin-bottom: 10px; font-size: 10px; background: #f5f5f5; padding: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #333; padding: 4px 6px; text-align: left; }
+        th { background: #333; color: #fff; font-weight: bold; }
+        .text-end { text-align: right; }
+        .text-center { text-align: center; }
+        .text-success { color: #198754; }
+        .fw-bold { font-weight: bold; }
+        .table-danger { background: #f8d7da; }
+        tfoot td { background: #333; color: #fff; font-weight: bold; }
+        .print-btn { position: fixed; top: 10px; right: 10px; padding: 8px 16px; background: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 4px; }
+        .print-btn:hover { background: #0056b3; }
+        @media print {
+            .print-btn { display: none; }
+            body { padding: 0; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Print</button>
+    
+    <div class="header">
+        <h2>Sales Details</h2>
+        <p>Period: {{ \Carbon\Carbon::parse($dateFrom)->format('d-m-Y') }} to {{ \Carbon\Carbon::parse($dateTo)->format('d-m-Y') }}</p>
+    </div>
+
+    <div class="filters">
+        <strong>Filters:</strong> 
+        Date: {{ \Carbon\Carbon::parse($dateFrom)->format('d-m-Y') }} - {{ \Carbon\Carbon::parse($dateTo)->format('d-m-Y') }}
+        @if($customerId ?? false) | Customer: {{ $customers->find($customerId)->name ?? 'Selected' }} @endif
+        @if($companyId ?? false) | Company: {{ $companies->find($companyId)->name ?? 'Selected' }} @endif
+        @if($includeCancelled ?? false) | Include Cancelled: Yes @endif
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center" style="width: 30px;">#</th>
+                <th style="width: 70px;">Date</th>
+                <th style="width: 80px;">Bill No</th>
+                <th>Party Name</th>
+                <th>Item Name</th>
+                <th>Company</th>
+                <th class="text-end" style="width: 50px;">Qty</th>
+                <th class="text-end" style="width: 50px;">Free</th>
+                <th class="text-end" style="width: 60px;">Rate</th>
+                <th class="text-end" style="width: 80px;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($details ?? [] as $index => $d)
+            <tr class="{{ ($d['status'] ?? '') == 'cancelled' ? 'table-danger' : '' }}">
+                <td class="text-center">{{ $index + 1 }}</td>
+                <td>{{ $d['date'] }}</td>
+                <td>{{ $d['bill_no'] }}</td>
+                <td>{{ $d['party_name'] }}</td>
+                <td>{{ $d['item_name'] }}</td>
+                <td>{{ $d['company_name'] }}</td>
+                <td class="text-end">{{ number_format($d['qty'], 0) }}</td>
+                <td class="text-end text-success">{{ number_format($d['free_qty'], 0) }}</td>
+                <td class="text-end">{{ number_format($d['rate'], 2) }}</td>
+                <td class="text-end fw-bold">{{ number_format($d['amount'], 2) }}</td>
+            </tr>
+            @empty
+            <tr>
+                <td colspan="10" class="text-center">No data found</td>
+            </tr>
+            @endforelse
+        </tbody>
+        @if(isset($totals) && ($totals['count'] ?? 0) > 0)
+        <tfoot>
+            <tr>
+                <td colspan="6" class="text-end">Total ({{ $totals['count'] }} items):</td>
+                <td class="text-end">{{ number_format($totals['qty'], 0) }}</td>
+                <td class="text-end">{{ number_format($totals['free_qty'], 0) }}</td>
+                <td></td>
+                <td class="text-end">{{ number_format($totals['amount'], 2) }}</td>
+            </tr>
+        </tfoot>
+        @endif
+    </table>
+
+    <div style="margin-top: 20px; font-size: 10px; color: #666;">
+        Printed on: {{ now()->format('d-m-Y H:i:s') }}
+    </div>
+</body>
+</html>
