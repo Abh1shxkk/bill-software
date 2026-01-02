@@ -448,6 +448,54 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('api/verify-batch-supplier', [PurchaseReturnController::class, 'verifyBatchSupplier'])->name('api.verify-batch-supplier');
         Route::get('api/party-details/{type}/{id}', [ItemController::class, 'getPartyDetails'])->name('api.party-details');
         
+        // Inventory Reports
+        Route::get('reports/inventory', [\App\Http\Controllers\Admin\InventoryReportController::class, 'index'])->name('reports.inventory');
+        
+        // Inventory Reports - Item Reports
+        Route::get('reports/inventory/item/min-max-level', [\App\Http\Controllers\Admin\InventoryReportController::class, 'minimumMaximumLevelItems'])->name('reports.inventory.item.min-max-level');
+        Route::get('reports/inventory/item/display-item-list', [\App\Http\Controllers\Admin\InventoryReportController::class, 'displayItemList'])->name('reports.inventory.item.display-item-list');
+        Route::get('reports/inventory/item/tax-mrp-rate-range', [\App\Http\Controllers\Admin\InventoryReportController::class, 'itemListTaxMrpRateRange'])->name('reports.inventory.item.tax-mrp-rate-range');
+        Route::get('reports/inventory/item/margin-wise', [\App\Http\Controllers\Admin\InventoryReportController::class, 'marginWiseItems'])->name('reports.inventory.item.margin-wise');
+        Route::get('reports/inventory/item/margin-wise-running', [\App\Http\Controllers\Admin\InventoryReportController::class, 'marginWiseItemsRunning'])->name('reports.inventory.item.margin-wise-running');
+        Route::get('reports/inventory/item/multi-rate', [\App\Http\Controllers\Admin\InventoryReportController::class, 'multiRateItems'])->name('reports.inventory.item.multi-rate');
+        Route::get('reports/inventory/item/new-items-customers-suppliers', [\App\Http\Controllers\Admin\InventoryReportController::class, 'newItemsCustomersSuppliers'])->name('reports.inventory.item.new-items-customers-suppliers');
+        Route::get('reports/inventory/item/rate-list', [\App\Http\Controllers\Admin\InventoryReportController::class, 'rateList'])->name('reports.inventory.item.rate-list');
+        Route::get('reports/inventory/item/vat-wise', [\App\Http\Controllers\Admin\InventoryReportController::class, 'vatWiseItems'])->name('reports.inventory.item.vat-wise');
+        Route::get('reports/inventory/item/item-list-with-salts', [\App\Http\Controllers\Admin\InventoryReportController::class, 'itemListWithSalts'])->name('reports.inventory.item.item-list-with-salts');
+        Route::get('reports/inventory/item/list-of-schemes', [\App\Http\Controllers\Admin\InventoryReportController::class, 'listOfSchemes'])->name('reports.inventory.item.list-of-schemes');
+        Route::get('reports/inventory/item/item-search-by-batch', [\App\Http\Controllers\Admin\InventoryReportController::class, 'itemSearchByBatch'])->name('reports.inventory.item.item-search-by-batch');
+        Route::get('reports/inventory/item/item-ledger-printing', [\App\Http\Controllers\Admin\InventoryReportController::class, 'itemLedgerPrinting'])->name('reports.inventory.item.item-ledger-printing');
+        
+        // Inventory Reports - Stock Reports
+        Route::get('reports/inventory/stock/stock-register', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockRegister'])->name('reports.inventory.stock.stock-register');
+        Route::get('reports/inventory/stock/stock-and-sales-with-value', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockAndSalesWithValue'])->name('reports.inventory.stock.stock-and-sales-with-value');
+        Route::get('reports/inventory/stock/batch-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'batchWiseStock'])->name('reports.inventory.stock.batch-wise-stock');
+        Route::get('reports/inventory/stock/location-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'locationWiseStock'])->name('reports.inventory.stock.location-wise-stock');
+        Route::get('reports/inventory/stock/category-wise-stock-status', [\App\Http\Controllers\Admin\InventoryReportController::class, 'categoryWiseStockStatus'])->name('reports.inventory.stock.category-wise-stock-status');
+        Route::get('reports/inventory/stock/current-stock-status', [\App\Http\Controllers\Admin\InventoryReportController::class, 'currentStockStatus'])->name('reports.inventory.stock.current-stock-status');
+        Route::get('reports/inventory/stock/stock-and-sales-analysis', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockAndSalesAnalysis'])->name('reports.inventory.stock.stock-and-sales-analysis');
+        Route::get('reports/inventory/stock/valuation-of-closing-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'valuationOfClosingStock'])->name('reports.inventory.stock.valuation-of-closing-stock');
+        Route::get('reports/inventory/stock/category-wise-valuation-closing-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'categoryWiseValuationClosingStock'])->name('reports.inventory.stock.category-wise-valuation-closing-stock');
+        Route::get('reports/inventory/stock/company-wise-stock-value', [\App\Http\Controllers\Admin\InventoryReportController::class, 'companyWiseStockValue'])->name('reports.inventory.stock.company-wise-stock-value');
+        Route::get('reports/inventory/stock/stock-register-it-return', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockRegisterItReturn'])->name('reports.inventory.stock.stock-register-it-return');
+        Route::get('reports/inventory/stock/list-of-old-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'listOfOldStock'])->name('reports.inventory.stock.list-of-old-stock');
+        Route::get('reports/inventory/stock/sales-and-stock-variation', [\App\Http\Controllers\Admin\InventoryReportController::class, 'salesAndStockVariation'])->name('reports.inventory.stock.sales-and-stock-variation');
+        Route::get('reports/inventory/stock/current-stock-status-supplier-wise', [\App\Http\Controllers\Admin\InventoryReportController::class, 'currentStockStatusSupplierWise'])->name('reports.inventory.stock.current-stock-status-supplier-wise');
+        Route::get('reports/inventory/stock/annual-stock-ledger-summary', [\App\Http\Controllers\Admin\InventoryReportController::class, 'annualStockLedgerSummary'])->name('reports.inventory.stock.annual-stock-ledger-summary');
+        
+        // Inventory Reports - Reorder Reports
+        Route::get('reports/inventory/reorder-sale-basis', [\App\Http\Controllers\Admin\InventoryReportController::class, 'reorderOnSaleBasis'])->name('reports.inventory.reorder-sale-basis');
+        Route::get('reports/inventory/reorder-min-stock-basis', [\App\Http\Controllers\Admin\InventoryReportController::class, 'reorderOnMinStockBasis'])->name('reports.inventory.reorder-min-stock-basis');
+        Route::get('reports/inventory/reorder-min-stock-sale-basis', [\App\Http\Controllers\Admin\InventoryReportController::class, 'reorderOnMinStockSaleBasis'])->name('reports.inventory.reorder-min-stock-sale-basis');
+        Route::get('reports/inventory/order-form-3-column', [\App\Http\Controllers\Admin\InventoryReportController::class, 'orderForm3Column'])->name('reports.inventory.order-form-3-column');
+        Route::get('reports/inventory/order-form-6-column', [\App\Http\Controllers\Admin\InventoryReportController::class, 'orderForm6Column'])->name('reports.inventory.order-form-6-column');
+        
+        // Inventory Reports - Others
+        Route::get('reports/inventory/fifo-alteration', [\App\Http\Controllers\Admin\InventoryReportController::class, 'fifoAlteration'])->name('reports.inventory.fifo-alteration');
+        Route::get('reports/inventory/list-hold-batches', [\App\Http\Controllers\Admin\InventoryReportController::class, 'listHoldBatches'])->name('reports.inventory.list-hold-batches');
+        Route::get('reports/inventory/list-hold-batches-sr-pb', [\App\Http\Controllers\Admin\InventoryReportController::class, 'listHoldBatchesSrPb'])->name('reports.inventory.list-hold-batches-sr-pb');
+        Route::get('reports/inventory/remove-batch-hold', [\App\Http\Controllers\Admin\InventoryReportController::class, 'removeBatchHold'])->name('reports.inventory.remove-batch-hold');
+        
         // Supplier specific routes - MUST be before resource route
         Route::get('suppliers/{supplier}/pending-orders', [SupplierController::class, 'pendingOrders'])->name('suppliers.pending-orders');
         Route::post('suppliers/{supplier}/pending-orders', [SupplierController::class, 'storePendingOrder'])->name('suppliers.pending-orders.store');

@@ -774,10 +774,68 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Inventory Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Stock Report</a></li>
-                <li><a class="dropdown-item" href="#">Stock Ledger</a></li>
-                <li><a class="dropdown-item" href="#">Stock Valuation</a></li>
-                <li><a class="dropdown-item" href="#">Reorder Level Report</a></li>
+                <!-- Item Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Item Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.min-max-level') }}">Minimum / Maximum Level Items</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.display-item-list') }}">Display Item List</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.tax-mrp-rate-range') }}">Item List - Tax / MRP / Rate Range</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.margin-wise') }}">Margin-Wise Items</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.margin-wise-running') }}">Margin-Wise Items (Running)</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.multi-rate') }}">Multi Rate Items</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.new-items-customers-suppliers') }}">New Items / Customers / Suppliers</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.rate-list') }}">Rate List</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.vat-wise') }}">Vat-Wise Items</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.item-list-with-salts') }}">Item List with Salts</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.list-of-schemes') }}">List of Schemes</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.item-search-by-batch') }}">Item Search By Batch</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.item.item-ledger-printing') }}">Item Ledger Printing</a></li>
+                  </ul>
+                </li>
+                <!-- Stock Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Stock Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.stock-register') }}">Stock Register</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.stock-and-sales-with-value') }}">Stock and Sales with Value</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.batch-wise-stock') }}">Batch Wise Stock</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.location-wise-stock') }}">Location Wise Stock</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.category-wise-stock-status') }}">Category Wise Stock Status</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.current-stock-status') }}">Current Stock Status</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.stock-and-sales-analysis') }}">Stock and Sales Analysis</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.valuation-of-closing-stock') }}">Valuation of Closing Stock</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.category-wise-valuation-closing-stock') }}">Category Wise Valuation of Closing Stock</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.company-wise-stock-value') }}">Company Wise Stock Value</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.stock-register-it-return') }}">Stock Register for IT Return</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.list-of-old-stock') }}">List of Old Stock</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.sales-and-stock-variation') }}">Sales and Stock Variation</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.current-stock-status-supplier-wise') }}">Current Stock Status Supplier Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.annual-stock-ledger-summary') }}">Annual Stock Ledger Summary</a></li>
+                  </ul>
+                </li>
+                <!-- FIFO Alteration Report -->
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.fifo-alteration') }}">FiFo Alteration Report</a></li>
+                
+                <li><hr class="dropdown-divider"></li>
+                
+                <!-- Direct Reports -->
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.reorder-sale-basis') }}">Reorder on Sale Basis</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.reorder-min-stock-basis') }}">Reorder on Minimum Stock Basis</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.reorder-min-stock-sale-basis') }}">Reorder on Minimum Stock & Sale Basis</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.order-form-3-column') }}">Order Form 3 Column</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.order-form-6-column') }}">Order Form 6 Column</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.list-hold-batches') }}">List of Hold Batches</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.remove-batch-hold') }}">Remove Batch Hold Status</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.list-hold-batches-sr-pb') }}">List of Hold Batches (SR,PB)</a></li>
+                <!-- Others Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Others</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Other Report 1</a></li>
+                    <li><a class="dropdown-item" href="#">Other Report 2</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
 
