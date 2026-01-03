@@ -797,12 +797,8 @@
                 <li class="dropdown-submenu">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Stock Reports</a>
                   <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.stock-register') }}">Stock Register</a></li>
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.stock-and-sales-with-value') }}">Stock and Sales with Value</a></li>
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.batch-wise-stock') }}">Batch Wise Stock</a></li>
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.location-wise-stock') }}">Location Wise Stock</a></li>
-                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.category-wise-stock-status') }}">Category Wise Stock Status</a></li>
                     <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.current-stock-status') }}">Current Stock Status</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.category-wise-stock-status') }}">Category Wise Stock Status</a></li>
                     <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.stock-and-sales-analysis') }}">Stock and Sales Analysis</a></li>
                     <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.valuation-of-closing-stock') }}">Valuation of Closing Stock</a></li>
                     <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.category-wise-valuation-closing-stock') }}">Category Wise Valuation of Closing Stock</a></li>
@@ -812,6 +808,17 @@
                     <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.sales-and-stock-variation') }}">Sales and Stock Variation</a></li>
                     <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.current-stock-status-supplier-wise') }}">Current Stock Status Supplier Wise</a></li>
                     <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.annual-stock-ledger-summary') }}">Annual Stock Ledger Summary</a></li>
+                    <!-- Others Submenu -->
+                    <li class="dropdown-submenu">
+                      <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Others</a>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.other.stock-register') }}">Stock Register</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.other.stock-and-sales-with-value') }}">Stock and Sales with Value</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.other.batch-wise-stock') }}">Batch Wise Stock</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.other.location-wise-stock') }}">Location Wise Stock</a></li>
+                        <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.stock.other.category-wise-stock-status') }}">Category Wise Stock Status</a></li>
+                      </ul>
+                    </li>
                   </ul>
                 </li>
                 <!-- FIFO Alteration Report -->
@@ -832,8 +839,8 @@
                 <li class="dropdown-submenu">
                   <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Others</a>
                   <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">Other Report 1</a></li>
-                    <li><a class="dropdown-item" href="#">Other Report 2</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.others.fifo-ledger') }}">FiFo Ledger</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.inventory.others.stock-os-report-bank') }}">Stock & O/S Report for Bank</a></li>
                   </ul>
                 </li>
               </ul>
@@ -843,9 +850,67 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Management Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Profit & Loss</a></li>
-                <li><a class="dropdown-item" href="#">Balance Sheet</a></li>
-                <li><a class="dropdown-item" href="#">Trial Balance</a></li>
+                <!-- Due Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Due Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list') }}">Due List</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.bill-tagging') }}">Bill Tagging</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list-with-pdc') }}">Due List With PDC</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list-company-wise') }}">Due List Company Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list-account-ledger') }}">Due List Account Ledger</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.ageing-analysis') }}">Ageing Analysis</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.ageing-analysis-account-ledger') }}">Ageing Analysis Account Ledger</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.list-of-pending-tags') }}">List of Pending Tags</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.bill-history') }}">Bill History</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list-summary') }}">Due List Summary</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list-reminder-letter') }}">Due List Reminder Letter</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.balance-confirmation-letter') }}">Balance Confirmation Letter</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.balance-confirmation-letter-account-ledger') }}">Balance Confirmation Letter Account Ledger</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list-monthly') }}">Due List Monthly</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.due-reports.due-list-adjustment-analysis') }}">Due List Adjustment Analysis</a></li>
+                  </ul>
+                </li>
+                <!-- Gross Profit Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Gross Profit Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.bill-wise') }}">Gross Profit - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.item-bill-wise') }}">Gross Profit - Item - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.selective-all-items') }}">Gross Profit - Selective/All Items</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.company-bill-wise') }}">Gross Profit - Company - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.selective-all-companies') }}">Gross Profit - Selective/All Companies</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.customer-bill-wise') }}">Gross Profit - Customer - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.selective-all-customers') }}">Gross Profit - Selective/All Customers</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.selective-all-suppliers') }}">Gross Profit - Selective/All Suppliers</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.salt-wise') }}">Gross Profit - Salt wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.claim-items-sold-on-loss') }}">Claim Items - Sold on Loss</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.gross-profit.selective-all-salesman') }}">Gross Profit - Selective/All Salesman</a></li>
+                  </ul>
+                </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.management.list-of-expired-items') }}">List of Expired Items</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.management.sale-purchase-schemes') }}">Sale/Purchase Schemes</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.management.suppliers-pending-order') }}">Supplier's Pending Order</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.management.customers-pending-order') }}">Customer's Pending Order</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.management.non-moving-items') }}">Non Moving Items</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.management.slow-moving-items') }}">Slow Moving Items</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.management.performance-report') }}">Performance Report</a></li>
+                <!-- Others Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Others</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.day-check-list') }}">Day Check List</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.prescription-reminder-list') }}">Prescription Reminder List</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.ledger-due-list-mismatch-report') }}">Ledger Due List Mismatch Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.salepurchase1-due-list-mismatch-report') }}">Salepurchase1 Due List Mismatch Report</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.attendence-sheet') }}">Attendence Sheet</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.list-of-modifications') }}">List of Modifications</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.list-of-master-modifications') }}">List of Master Modifications</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.cl-sl-date-wise-ledger-summary') }}">CL/SL - Date Wise Ledger Summary</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.user-work-summary') }}">User Work Summary</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.management.others.hsn-wise-sale-purchase-report') }}">HSN Wise Sale Purchase Report</a></li>
+                  </ul>
+                </li>
               </ul>
             </li>
 

@@ -13,47 +13,49 @@
     <div class="card shadow-sm" style="background-color: #f0f0f0;">
         <div class="card-body p-3">
             <form method="GET" id="filterForm" action="">
-                <!-- Date Filters -->
-                <div class="row g-2 mb-3 align-items-center">
-                    <div class="col-auto">
+                <!-- From Date -->
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-md-2 text-end pe-2">
                         <label class="fw-bold mb-0"><u>F</u>rom :</label>
                     </div>
-                    <div class="col-md-2">
-                        <input type="date" name="date_from" id="date_from" class="form-control form-control-sm" value="{{ $dateFrom ?? date('Y-m-d') }}">
-                    </div>
-                    <div class="col-auto ms-4">
-                        <label class="fw-bold mb-0">To :</label>
-                    </div>
-                    <div class="col-md-2">
-                        <input type="date" name="date_to" id="date_to" class="form-control form-control-sm" value="{{ $dateTo ?? date('Y-m-d') }}">
+                    <div class="col-md-3">
+                        <input type="date" name="from_date" id="from_date" class="form-control form-control-sm" value="{{ $fromDate ?? date('Y-m-d') }}">
                     </div>
                 </div>
 
-                <!-- Item -->
-                <div class="row g-0 mb-1 align-items-center">
+                <!-- To Date -->
+                <div class="row g-2 mb-2 align-items-center">
                     <div class="col-md-2 text-end pe-2">
-                        <label class="fw-bold mb-0">Item :</label>
+                        <label class="fw-bold mb-0">To :</label>
                     </div>
-                    <div class="col-md-4">
-                        <select name="item_id" id="item_id" class="form-select form-select-sm">
-                            <option value="">All</option>
-                            @foreach($items ?? [] as $item)
-                                <option value="{{ $item->id }}" {{ ($itemId ?? '') == $item->id ? 'selected' : '' }}>{{ $item->id }} - {{ Str::limit($item->name, 20) }}</option>
-                            @endforeach
+                    <div class="col-md-3">
+                        <input type="date" name="to_date" id="to_date" class="form-control form-control-sm" value="{{ $toDate ?? date('Y-m-d') }}">
+                    </div>
+                </div>
+
+                <!-- Sort Order -->
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-md-2 text-end pe-2">
+                        <label class="fw-bold mb-0">Sort Order :</label>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="sort_order" id="sort_order" class="form-select form-select-sm">
+                            <option value="1" {{ ($sortOrder ?? '1') == '1' ? 'selected' : '' }}>1.Date</option>
+                            <option value="2" {{ ($sortOrder ?? '') == '2' ? 'selected' : '' }}>2.Item Name</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Company -->
-                <div class="row g-0 mb-1 align-items-center">
+                <!-- User -->
+                <div class="row g-2 mb-2 align-items-center">
                     <div class="col-md-2 text-end pe-2">
-                        <label class="fw-bold mb-0">Company :</label>
+                        <label class="fw-bold mb-0">User :</label>
                     </div>
-                    <div class="col-md-4">
-                        <select name="company_id" id="company_id" class="form-select form-select-sm">
-                            <option value="">All</option>
-                            @foreach($companies ?? [] as $company)
-                                <option value="{{ $company->id }}" {{ ($companyId ?? '') == $company->id ? 'selected' : '' }}>{{ $company->id }} - {{ Str::limit($company->name, 15) }}</option>
+                    <div class="col-md-3">
+                        <select name="user_id" id="user_id" class="form-select form-select-sm">
+                            <option value="">All Users</option>
+                            @foreach($users ?? [] as $user)
+                                <option value="{{ $user->user_id }}" {{ ($userId ?? '') == $user->user_id ? 'selected' : '' }}>{{ $user->full_name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -61,14 +63,8 @@
 
                 <!-- Action Buttons -->
                 <div class="row mt-3" style="border-top: 2px solid #000; padding-top: 10px;">
-                    <div class="col-md-2">
-                        <button type="button" class="btn btn-light border w-100 fw-bold shadow-sm" onclick="exportToExcel()">
-                            <u>E</u>xcel
-                        </button>
-                    </div>
-                    <div class="col-md-6 offset-md-4 text-end">
-                        <button type="submit" class="btn btn-primary border px-4 fw-bold shadow-sm me-2">Show</button>
-                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="viewReport()"><u>V</u>iew</button>
+                    <div class="col-md-12 text-center">
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2"><u>V</u>iew</button>
                         <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm" onclick="closeWindow()">Close</button>
                     </div>
                 </div>
@@ -94,6 +90,7 @@
                             <th class="text-end">New Qty</th>
                             <th class="text-end">Difference</th>
                             <th class="text-center">Date</th>
+                            <th>User</th>
                             <th>Remarks</th>
                         </tr>
                     </thead>
@@ -108,6 +105,7 @@
                             <td class="text-end">{{ number_format($row['new_qty'] ?? 0, 0) }}</td>
                             <td class="text-end">{{ number_format($row['difference'] ?? 0, 0) }}</td>
                             <td class="text-center">{{ $row['date'] ?? '' }}</td>
+                            <td>{{ $row['user_name'] ?? '' }}</td>
                             <td>{{ $row['remarks'] ?? '' }}</td>
                         </tr>
                         @endforeach
@@ -122,16 +120,6 @@
 
 @push('scripts')
 <script>
-function exportToExcel() {
-    const params = new URLSearchParams(new FormData(document.getElementById('filterForm')));
-    params.set('export', 'excel');
-    window.location.href = window.location.pathname + '?' + params.toString();
-}
-
-function viewReport() {
-    document.getElementById('filterForm').submit();
-}
-
 function closeWindow() {
     window.location.href = '{{ route("admin.reports.inventory") ?? "#" }}';
 }

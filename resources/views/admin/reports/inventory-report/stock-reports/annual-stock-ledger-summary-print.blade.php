@@ -3,58 +3,81 @@
 <head>
     <title>Annual Stock Ledger Summary - Print</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; margin: 10px; }
+        body { font-family: Arial, sans-serif; font-size: 11px; margin: 10px; }
         .header { text-align: center; margin-bottom: 15px; }
-        .header h3 { margin: 0; color: #0066cc; font-style: italic; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #000; padding: 4px 6px; }
-        th { background-color: #333; color: #fff; font-size: 11px; }
-        td { font-size: 11px; }
+        .header h3 { margin: 0; color: #333; }
+        .header p { margin: 5px 0; font-size: 11px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #333; padding: 3px 5px; text-align: left; }
+        th { background-color: #f0f0f0; font-weight: bold; font-size: 10px; }
         .text-end { text-align: right; }
         .text-center { text-align: center; }
-        .footer { margin-top: 10px; font-size: 10px; text-align: right; }
-        @media print { .no-print { display: none; } }
+        tfoot td { font-weight: bold; background-color: #f5f5f5; }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
     </style>
 </head>
-<body>
-    <div class="no-print" style="margin-bottom: 10px;">
-        <button onclick="window.print()">Print</button>
-        <button onclick="window.close()">Close</button>
-    </div>
+<body onload="window.print();">
     <div class="header">
         <h3>Annual Stock Ledger Summary</h3>
-        <p>Financial Year: {{ request('financial_year', '2025-26') }}</p>
+        <p>Year: {{ request('closing_year', date('Y')) }}</p>
+        <p>Generated on: {{ date('d-m-Y H:i:s') }}</p>
     </div>
+
     <table>
         <thead>
             <tr>
-                <th class="text-center" style="width:30px;">Sr.</th>
+                <th class="text-center" style="width: 30px;">Sr.</th>
                 <th>Item Name</th>
                 <th>Company</th>
-                <th class="text-end">Opening</th>
-                <th class="text-end">Purchase</th>
-                <th class="text-end">Sale</th>
-                <th class="text-end">Closing</th>
-                <th class="text-end">Value</th>
+                <th class="text-end">Op. Qty</th>
+                <th class="text-end">Op. Value</th>
+                <th class="text-end">Pur. Qty</th>
+                <th class="text-end">Pur. Value</th>
+                <th class="text-end">Sale Qty</th>
+                <th class="text-end">Sale Value</th>
+                <th class="text-end">Cl. Qty</th>
+                <th class="text-end">Cl. Value</th>
             </tr>
         </thead>
         <tbody>
-            @forelse($reportData ?? [] as $index => $row)
-            <tr>
-                <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $row['name'] }}</td>
-                <td>{{ $row['company_name'] }}</td>
-                <td class="text-end">{{ number_format($row['opening'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($row['purchase'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($row['sale'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($row['closing'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($row['value'] ?? 0, 2) }}</td>
-            </tr>
-            @empty
-            <tr><td colspan="8" class="text-center">No records found</td></tr>
-            @endforelse
+            @if(isset($reportData) && $reportData->count() > 0)
+                @foreach($reportData as $index => $row)
+                <tr>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td>{{ $row['item_name'] ?? '' }}</td>
+                    <td>{{ $row['company_name'] ?? '' }}</td>
+                    <td class="text-end">{{ number_format($row['opening_qty'] ?? 0, 2) }}</td>
+                    <td class="text-end">{{ number_format($row['opening_value'] ?? 0, 2) }}</td>
+                    <td class="text-end">{{ number_format($row['purchase_qty'] ?? 0, 2) }}</td>
+                    <td class="text-end">{{ number_format($row['purchase_value'] ?? 0, 2) }}</td>
+                    <td class="text-end">{{ number_format($row['sale_qty'] ?? 0, 2) }}</td>
+                    <td class="text-end">{{ number_format($row['sale_value'] ?? 0, 2) }}</td>
+                    <td class="text-end">{{ number_format($row['closing_qty'] ?? 0, 2) }}</td>
+                    <td class="text-end">{{ number_format($row['closing_value'] ?? 0, 2) }}</td>
+                </tr>
+                @endforeach
+            @else
+                <tr><td colspan="11" class="text-center">No records found</td></tr>
+            @endif
         </tbody>
+        @if(isset($reportData) && $reportData->count() > 0)
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end">Total:</td>
+                <td class="text-end">{{ number_format($totals['total_opening_qty'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($totals['total_opening_value'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($totals['total_purchase_qty'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($totals['total_purchase_value'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($totals['total_sale_qty'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($totals['total_sale_value'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($totals['total_closing_qty'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($totals['total_closing_value'] ?? 0, 2) }}</td>
+            </tr>
+        </tfoot>
+        @endif
     </table>
-    <div class="footer">Printed on: {{ date('d-m-Y H:i:s') }}</div>
 </body>
 </html>

@@ -95,7 +95,6 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::post('companies/multiple-delete', [CompanyController::class, 'multipleDelete'])->name('companies.multiple-delete');
         Route::get('companies/by-code/{code}', [CompanyController::class, 'getByCode'])->name('companies.by-code');
         Route::get('companies/get-all', [CompanyController::class, 'getAll'])->name('companies.get-all');
-        
         Route::resource('companies', CompanyController::class);
         
         // Customer routes
@@ -469,13 +468,9 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/inventory/item/item-search-by-batch', [\App\Http\Controllers\Admin\InventoryReportController::class, 'itemSearchByBatch'])->name('reports.inventory.item.item-search-by-batch');
         Route::get('reports/inventory/item/item-ledger-printing', [\App\Http\Controllers\Admin\InventoryReportController::class, 'itemLedgerPrinting'])->name('reports.inventory.item.item-ledger-printing');
         
-        // Inventory Reports - Stock Reports
-        Route::get('reports/inventory/stock/stock-register', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockRegister'])->name('reports.inventory.stock.stock-register');
-        Route::get('reports/inventory/stock/stock-and-sales-with-value', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockAndSalesWithValue'])->name('reports.inventory.stock.stock-and-sales-with-value');
-        Route::get('reports/inventory/stock/batch-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'batchWiseStock'])->name('reports.inventory.stock.batch-wise-stock');
-        Route::get('reports/inventory/stock/location-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'locationWiseStock'])->name('reports.inventory.stock.location-wise-stock');
-        Route::get('reports/inventory/stock/category-wise-stock-status', [\App\Http\Controllers\Admin\InventoryReportController::class, 'categoryWiseStockStatus'])->name('reports.inventory.stock.category-wise-stock-status');
+        // Inventory Reports - Stock Reports (Main Level - in main folder)
         Route::get('reports/inventory/stock/current-stock-status', [\App\Http\Controllers\Admin\InventoryReportController::class, 'currentStockStatus'])->name('reports.inventory.stock.current-stock-status');
+        Route::get('reports/inventory/stock/category-wise-stock-status', [\App\Http\Controllers\Admin\InventoryReportController::class, 'categoryWiseStockStatus'])->name('reports.inventory.stock.category-wise-stock-status');
         Route::get('reports/inventory/stock/stock-and-sales-analysis', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockAndSalesAnalysis'])->name('reports.inventory.stock.stock-and-sales-analysis');
         Route::get('reports/inventory/stock/valuation-of-closing-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'valuationOfClosingStock'])->name('reports.inventory.stock.valuation-of-closing-stock');
         Route::get('reports/inventory/stock/category-wise-valuation-closing-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'categoryWiseValuationClosingStock'])->name('reports.inventory.stock.category-wise-valuation-closing-stock');
@@ -485,6 +480,17 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/inventory/stock/sales-and-stock-variation', [\App\Http\Controllers\Admin\InventoryReportController::class, 'salesAndStockVariation'])->name('reports.inventory.stock.sales-and-stock-variation');
         Route::get('reports/inventory/stock/current-stock-status-supplier-wise', [\App\Http\Controllers\Admin\InventoryReportController::class, 'currentStockStatusSupplierWise'])->name('reports.inventory.stock.current-stock-status-supplier-wise');
         Route::get('reports/inventory/stock/annual-stock-ledger-summary', [\App\Http\Controllers\Admin\InventoryReportController::class, 'annualStockLedgerSummary'])->name('reports.inventory.stock.annual-stock-ledger-summary');
+        Route::get('reports/inventory/stock/stock-register', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockRegisterOther'])->name('reports.inventory.stock.stock-register');
+        Route::get('reports/inventory/stock/stock-and-sales-with-value', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockAndSalesWithValueOther'])->name('reports.inventory.stock.stock-and-sales-with-value');
+        Route::get('reports/inventory/stock/batch-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'batchWiseStockOther'])->name('reports.inventory.stock.batch-wise-stock');
+        Route::get('reports/inventory/stock/location-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'locationWiseStockOther'])->name('reports.inventory.stock.location-wise-stock');
+        
+        // Inventory Reports - Stock Reports - Others (in other folder)
+        Route::get('reports/inventory/stock/other/stock-register', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockRegisterOther'])->name('reports.inventory.stock.other.stock-register');
+        Route::get('reports/inventory/stock/other/stock-and-sales-with-value', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockAndSalesWithValueOther'])->name('reports.inventory.stock.other.stock-and-sales-with-value');
+        Route::get('reports/inventory/stock/other/batch-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'batchWiseStockOther'])->name('reports.inventory.stock.other.batch-wise-stock');
+        Route::get('reports/inventory/stock/other/location-wise-stock', [\App\Http\Controllers\Admin\InventoryReportController::class, 'locationWiseStockOther'])->name('reports.inventory.stock.other.location-wise-stock');
+        Route::get('reports/inventory/stock/other/category-wise-stock-status', [\App\Http\Controllers\Admin\InventoryReportController::class, 'categoryWiseStockStatusOther'])->name('reports.inventory.stock.other.category-wise-stock-status');
         
         // Inventory Reports - Reorder Reports
         Route::get('reports/inventory/reorder-sale-basis', [\App\Http\Controllers\Admin\InventoryReportController::class, 'reorderOnSaleBasis'])->name('reports.inventory.reorder-sale-basis');
@@ -498,6 +504,65 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/inventory/list-hold-batches', [\App\Http\Controllers\Admin\InventoryReportController::class, 'listHoldBatches'])->name('reports.inventory.list-hold-batches');
         Route::get('reports/inventory/list-hold-batches-sr-pb', [\App\Http\Controllers\Admin\InventoryReportController::class, 'listHoldBatchesSrPb'])->name('reports.inventory.list-hold-batches-sr-pb');
         Route::get('reports/inventory/remove-batch-hold', [\App\Http\Controllers\Admin\InventoryReportController::class, 'removeBatchHold'])->name('reports.inventory.remove-batch-hold');
+        Route::get('reports/inventory/others/fifo-ledger', [\App\Http\Controllers\Admin\InventoryReportController::class, 'fifoLedger'])->name('reports.inventory.others.fifo-ledger');
+        Route::get('reports/inventory/others/stock-os-report-bank', [\App\Http\Controllers\Admin\InventoryReportController::class, 'stockOsReportBank'])->name('reports.inventory.others.stock-os-report-bank');
+        
+        // Management Reports
+        // Due Reports
+        Route::get('reports/management/due-reports/due-list', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueList'])->name('reports.management.due-reports.due-list');
+        Route::get('reports/management/due-reports/bill-tagging', [\App\Http\Controllers\Admin\ManagementReportController::class, 'billTagging'])->name('reports.management.due-reports.bill-tagging');
+        Route::get('reports/management/due-reports/due-list-with-pdc', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueListWithPdc'])->name('reports.management.due-reports.due-list-with-pdc');
+        Route::get('reports/management/due-reports/due-list-company-wise', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueListCompanyWise'])->name('reports.management.due-reports.due-list-company-wise');
+        Route::get('reports/management/due-reports/due-list-account-ledger', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueListAccountLedger'])->name('reports.management.due-reports.due-list-account-ledger');
+        Route::get('reports/management/due-reports/ageing-analysis', [\App\Http\Controllers\Admin\ManagementReportController::class, 'ageingAnalysis'])->name('reports.management.due-reports.ageing-analysis');
+        Route::get('reports/management/due-reports/ageing-analysis-account-ledger', [\App\Http\Controllers\Admin\ManagementReportController::class, 'ageingAnalysisAccountLedger'])->name('reports.management.due-reports.ageing-analysis-account-ledger');
+        Route::get('reports/management/due-reports/list-of-pending-tags', [\App\Http\Controllers\Admin\ManagementReportController::class, 'listOfPendingTags'])->name('reports.management.due-reports.list-of-pending-tags');
+        Route::get('reports/management/due-reports/bill-history', [\App\Http\Controllers\Admin\ManagementReportController::class, 'billHistory'])->name('reports.management.due-reports.bill-history');
+        Route::get('reports/management/due-reports/due-list-summary', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueListSummary'])->name('reports.management.due-reports.due-list-summary');
+        Route::get('reports/management/due-reports/due-list-reminder-letter', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueListReminderLetter'])->name('reports.management.due-reports.due-list-reminder-letter');
+        Route::get('reports/management/due-reports/balance-confirmation-letter', [\App\Http\Controllers\Admin\ManagementReportController::class, 'balanceConfirmationLetter'])->name('reports.management.due-reports.balance-confirmation-letter');
+        Route::get('reports/management/due-reports/balance-confirmation-letter-account-ledger', [\App\Http\Controllers\Admin\ManagementReportController::class, 'balanceConfirmationLetterAccountLedger'])->name('reports.management.due-reports.balance-confirmation-letter-account-ledger');
+        Route::get('reports/management/due-reports/due-list-monthly', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueListMonthly'])->name('reports.management.due-reports.due-list-monthly');
+        Route::get('reports/management/due-reports/due-list-adjustment-analysis', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dueListAdjustmentAnalysis'])->name('reports.management.due-reports.due-list-adjustment-analysis');
+        // Gross Profit Reports
+        Route::get('reports/management/gross-profit/bill-wise', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitBillWise'])->name('reports.management.gross-profit.bill-wise');
+        Route::get('reports/management/gross-profit/item-bill-wise', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitItemBillWise'])->name('reports.management.gross-profit.item-bill-wise');
+        Route::get('reports/management/gross-profit/selective-all-items', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitSelectiveAllItems'])->name('reports.management.gross-profit.selective-all-items');
+        Route::get('reports/management/gross-profit/company-bill-wise', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitCompanyBillWise'])->name('reports.management.gross-profit.company-bill-wise');
+        Route::get('reports/management/gross-profit/selective-all-companies', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitSelectiveAllCompanies'])->name('reports.management.gross-profit.selective-all-companies');
+        Route::get('reports/management/gross-profit/customer-bill-wise', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitCustomerBillWise'])->name('reports.management.gross-profit.customer-bill-wise');
+        Route::get('reports/management/gross-profit/selective-all-customers', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitSelectiveAllCustomers'])->name('reports.management.gross-profit.selective-all-customers');
+        Route::get('reports/management/gross-profit/selective-all-suppliers', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitSelectiveAllSuppliers'])->name('reports.management.gross-profit.selective-all-suppliers');
+        Route::get('reports/management/gross-profit/salt-wise', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitSaltWise'])->name('reports.management.gross-profit.salt-wise');
+        Route::get('reports/management/gross-profit/claim-items-sold-on-loss', [\App\Http\Controllers\Admin\ManagementReportController::class, 'claimItemsSoldOnLoss'])->name('reports.management.gross-profit.claim-items-sold-on-loss');
+        Route::get('reports/management/gross-profit/selective-all-salesman', [\App\Http\Controllers\Admin\ManagementReportController::class, 'grossProfitSelectiveAllSalesman'])->name('reports.management.gross-profit.selective-all-salesman');
+        Route::get('reports/management/list-of-expired-items', [\App\Http\Controllers\Admin\ManagementReportController::class, 'listOfExpiredItems'])->name('reports.management.list-of-expired-items');
+        Route::get('reports/management/sale-purchase-schemes', [\App\Http\Controllers\Admin\ManagementReportController::class, 'salePurchaseSchemes'])->name('reports.management.sale-purchase-schemes');
+        Route::get('reports/management/suppliers-pending-order', [\App\Http\Controllers\Admin\ManagementReportController::class, 'suppliersPendingOrder'])->name('reports.management.suppliers-pending-order');
+        Route::get('reports/management/customers-pending-order', [\App\Http\Controllers\Admin\ManagementReportController::class, 'customersPendingOrder'])->name('reports.management.customers-pending-order');
+        Route::get('reports/management/non-moving-items', [\App\Http\Controllers\Admin\ManagementReportController::class, 'nonMovingItems'])->name('reports.management.non-moving-items');
+        Route::get('reports/management/slow-moving-items', [\App\Http\Controllers\Admin\ManagementReportController::class, 'slowMovingItems'])->name('reports.management.slow-moving-items');
+        Route::get('reports/management/performance-report', [\App\Http\Controllers\Admin\ManagementReportController::class, 'performanceReport'])->name('reports.management.performance-report');
+        // Others
+        Route::get('reports/management/others/day-check-list', [\App\Http\Controllers\Admin\ManagementReportController::class, 'dayCheckList'])->name('reports.management.others.day-check-list');
+        Route::get('reports/management/others/prescription-reminder-list', [\App\Http\Controllers\Admin\ManagementReportController::class, 'prescriptionReminderList'])->name('reports.management.others.prescription-reminder-list');
+        Route::get('reports/management/others/ledger-due-list-mismatch-report', [\App\Http\Controllers\Admin\ManagementReportController::class, 'ledgerDueListMismatchReport'])->name('reports.management.others.ledger-due-list-mismatch-report');
+        Route::get('reports/management/others/salepurchase1-due-list-mismatch-report', [\App\Http\Controllers\Admin\ManagementReportController::class, 'salepurchase1DueListMismatchReport'])->name('reports.management.others.salepurchase1-due-list-mismatch-report');
+        Route::get('reports/management/others/attendence-sheet', [\App\Http\Controllers\Admin\ManagementReportController::class, 'attendenceSheet'])->name('reports.management.others.attendence-sheet');
+        Route::get('reports/management/others/list-of-modifications', [\App\Http\Controllers\Admin\ManagementReportController::class, 'listOfModifications'])->name('reports.management.others.list-of-modifications');
+        Route::get('reports/management/others/list-of-master-modifications', [\App\Http\Controllers\Admin\ManagementReportController::class, 'listOfMasterModifications'])->name('reports.management.others.list-of-master-modifications');
+        Route::get('reports/management/others/cl-sl-date-wise-ledger-summary', [\App\Http\Controllers\Admin\ManagementReportController::class, 'clSlDateWiseLedgerSummary'])->name('reports.management.others.cl-sl-date-wise-ledger-summary');
+        Route::get('reports/management/others/user-work-summary', [\App\Http\Controllers\Admin\ManagementReportController::class, 'userWorkSummary'])->name('reports.management.others.user-work-summary');
+        Route::get('reports/management/others/hsn-wise-sale-purchase-report', [\App\Http\Controllers\Admin\ManagementReportController::class, 'hsnWiseSalePurchaseReport'])->name('reports.management.others.hsn-wise-sale-purchase-report');
+        
+        // Management Report AJAX Lookups
+        Route::get('reports/management/lookup/customer', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getCustomerByCode'])->name('reports.management.lookup.customer');
+        Route::get('reports/management/lookup/supplier', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getSupplierByCode'])->name('reports.management.lookup.supplier');
+        Route::get('reports/management/lookup/salesman', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getSalesmanByCode'])->name('reports.management.lookup.salesman');
+        Route::get('reports/management/lookup/area', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getAreaByCode'])->name('reports.management.lookup.area');
+        Route::get('reports/management/lookup/route', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getRouteByCode'])->name('reports.management.lookup.route');
+        Route::get('reports/management/lookup/state', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getStateByCode'])->name('reports.management.lookup.state');
+        Route::get('reports/management/lookup/company', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getCompanyByCode'])->name('reports.management.lookup.company');
         
         // Supplier specific routes - MUST be before resource route
         Route::get('suppliers/{supplier}/pending-orders', [SupplierController::class, 'pendingOrders'])->name('suppliers.pending-orders');
