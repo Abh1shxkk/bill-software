@@ -959,9 +959,54 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Breakage/Expiry Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Breakage Report</a></li>
-                <li><a class="dropdown-item" href="#">Expiry Report</a></li>
-                <li><a class="dropdown-item" href="{{ route('admin.batches.expiry-report') }}">Batch Expiry Report</a></li>
+                <!-- Breakage/Expiry from Customer -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Breakage/Expiry from Customer</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.from-customer.pending') }}">Pending</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.from-customer.all') }}">All</a></li>
+                  </ul>
+                </li>
+                <!-- Breakage/Expiry to Supplier -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Breakage/Expiry to Supplier</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.to-supplier.pending') }}">Pending</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.to-supplier.all') }}">All</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.to-supplier.difference') }}">Difference</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.to-supplier.disallow') }}">Disallow</a></li>
+                  </ul>
+                </li>
+                <!-- Godown Brk/Expiry Item Wise -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Godown Brk/Expiry Item Wise</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.godown-item-wise.pending') }}">Pending</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.godown-item-wise.all') }}">All</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.godown-item-wise.disallowed-items') }}">Disallowed Items</a></li>
+                  </ul>
+                </li>
+                <!-- Replacement to Customer -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Replacement to Customer</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.replacement-to-customer.pending') }}">Pending</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.replacement-to-customer.all') }}">All</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.replacement-to-customer.item-wise') }}">Item Wise Replacement</a></li>
+                  </ul>
+                </li>
+                <!-- Company Wise Expiry Return -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Company Wise Expiry Return</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.company-wise.from-customer') }}">From Customer</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.company-wise.to-supplier') }}">To Supplier</a></li>
+                  </ul>
+                </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.replacement-from-supplier') }}">Replacement from Supplier</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.unused-dump') }}">Unused Dump</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.list-of-disallowed-items') }}">List of Disallowed Items</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.breakage-expiry.customer-wise-expiry-return') }}">Customer Wise Expiry Return</a></li>
               </ul>
             </li>
 

@@ -586,6 +586,26 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         // Bill Printing
         Route::get('reports/misc-transaction/bill-printing', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'billPrinting'])->name('reports.misc-transaction.bill-printing');
         
+        // Breakage/Expiry Reports
+        Route::get('reports/breakage-expiry/from-customer/pending', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'fromCustomerPending'])->name('reports.breakage-expiry.from-customer.pending');
+        Route::get('reports/breakage-expiry/from-customer/all', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'fromCustomerAll'])->name('reports.breakage-expiry.from-customer.all');
+        Route::get('reports/breakage-expiry/to-supplier/pending', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'toSupplierPending'])->name('reports.breakage-expiry.to-supplier.pending');
+        Route::get('reports/breakage-expiry/to-supplier/all', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'toSupplierAll'])->name('reports.breakage-expiry.to-supplier.all');
+        Route::get('reports/breakage-expiry/to-supplier/difference', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'toSupplierDifference'])->name('reports.breakage-expiry.to-supplier.difference');
+        Route::get('reports/breakage-expiry/to-supplier/disallow', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'toSupplierDisallow'])->name('reports.breakage-expiry.to-supplier.disallow');
+        Route::get('reports/breakage-expiry/godown-item-wise/pending', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'godownItemWisePending'])->name('reports.breakage-expiry.godown-item-wise.pending');
+        Route::get('reports/breakage-expiry/godown-item-wise/all', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'godownItemWiseAll'])->name('reports.breakage-expiry.godown-item-wise.all');
+        Route::get('reports/breakage-expiry/godown-item-wise/disallowed-items', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'godownItemWiseDisallowedItems'])->name('reports.breakage-expiry.godown-item-wise.disallowed-items');
+        Route::get('reports/breakage-expiry/replacement-to-customer/pending', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'replacementToCustomerPending'])->name('reports.breakage-expiry.replacement-to-customer.pending');
+        Route::get('reports/breakage-expiry/replacement-to-customer/all', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'replacementToCustomerAll'])->name('reports.breakage-expiry.replacement-to-customer.all');
+        Route::get('reports/breakage-expiry/replacement-to-customer/item-wise', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'replacementToCustomerItemWise'])->name('reports.breakage-expiry.replacement-to-customer.item-wise');
+        Route::get('reports/breakage-expiry/company-wise/from-customer', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'companyWiseFromCustomer'])->name('reports.breakage-expiry.company-wise.from-customer');
+        Route::get('reports/breakage-expiry/company-wise/to-supplier', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'companyWiseToSupplier'])->name('reports.breakage-expiry.company-wise.to-supplier');
+        Route::get('reports/breakage-expiry/replacement-from-supplier', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'replacementFromSupplier'])->name('reports.breakage-expiry.replacement-from-supplier');
+        Route::get('reports/breakage-expiry/unused-dump', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'unusedDump'])->name('reports.breakage-expiry.unused-dump');
+        Route::get('reports/breakage-expiry/list-of-disallowed-items', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'listOfDisallowedItems'])->name('reports.breakage-expiry.list-of-disallowed-items');
+        Route::get('reports/breakage-expiry/customer-wise-expiry-return', [\App\Http\Controllers\Admin\BreakageExpiryReportController::class, 'customerWiseExpiryReturn'])->name('reports.breakage-expiry.customer-wise-expiry-return');
+        
         // Supplier specific routes - MUST be before resource route
         Route::get('suppliers/{supplier}/pending-orders', [SupplierController::class, 'pendingOrders'])->name('suppliers.pending-orders');
         Route::post('suppliers/{supplier}/pending-orders', [SupplierController::class, 'storePendingOrder'])->name('suppliers.pending-orders.store');
