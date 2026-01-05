@@ -580,6 +580,21 @@ class ReceiptPaymentReportController extends Controller
         $reportData = [];
 
         if ($request->has('view') || $request->has('print')) {
+            $reportDate = $request->report_date ?? date('Y-m-d');
+
+            try {
+                // Query currency details for the date - adjust table name based on your schema
+                $currencies = DB::table('currency_details')
+                    ->where('transaction_date', $reportDate)
+                    ->get();
+
+                foreach ($currencies as $currency) {
+                    $reportData[$currency->denomination] = $currency->count ?? 0;
+                }
+            } catch (\Exception $e) {
+                // Table may not exist, return empty data
+            }
+
             if ($request->has('print')) {
                 return view('admin.reports.receipt-payment-reports.currency-detail-print', compact('reportData', 'request'));
             }
@@ -591,16 +606,119 @@ class ReceiptPaymentReportController extends Controller
     // Receipt from Customer - Month Wise
     public function receiptCustomerMonthWise(Request $request)
     {
+        // Fetch dropdown data
         $customers = Customer::where('is_deleted', false)->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', false)->orderBy('name')->get();
+        $areas = Area::where('is_deleted', false)->orderBy('name')->get();
+        $routes = Route::orderBy('name')->get();
+        
         $reportData = [];
 
-        if ($request->has('view') || $request->has('print')) {
+        if ($request->has('view') || $request->has('print') || $request->has('excel')) {
+            $fromYear = $request->from_year ?? date('Y');
+            $toYear = $request->to_year ?? date('Y');
+            $paymentMode = $request->payment_mode ?? '5'; // 5 = All
+
+            // Fiscal year: April to March
+            $startDate = $fromYear . '-04-01';
+            $endDate = $toYear . '-03-31';
+
+            try {
+                $query = DB::table('customer_ledgers')
+                    ->leftJoin('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
+                    ->where('customer_ledgers.transaction_type', 'Receipt')
+                    ->whereBetween('customer_ledgers.transaction_date', [$startDate, $endDate]);
+
+                // Payment mode filter
+                $modes = ['1' => 'Cash', '2' => 'Cheque', '3' => 'RTGS', '4' => 'NEFT'];
+                if ($paymentMode != '5' && isset($modes[$paymentMode])) {
+                    $query->where('customer_ledgers.payment_mode', $modes[$paymentMode]);
+                }
+
+                // Customer filter
+                if ($request->customer_id) {
+                    $query->where('customer_ledgers.customer_id', $request->customer_id);
+                }
+
+                // Salesman filter
+                if ($request->salesman_id) {
+                    $query->where('customers.salesman_id', $request->salesman_id);
+                }
+
+                // Area filter
+                if ($request->area_id) {
+                    $query->where('customers.area_id', $request->area_id);
+                }
+
+                // Route filter
+                if ($request->route_id) {
+                    $query->where('customers.route_id', $request->route_id);
+                }
+
+                $receipts = $query->select(
+                    'customers.id as customer_id',
+                    'customers.name as customer_name',
+                    'customer_ledgers.transaction_date',
+                    'customer_ledgers.amount'
+                )->get();
+
+                // Group by customer and month
+                $customerData = [];
+                foreach ($receipts as $receipt) {
+                    $customerId = $receipt->customer_id;
+                    if (!isset($customerData[$customerId])) {
+                        $customerData[$customerId] = [
+                            'customer_name' => $receipt->customer_name ?? 'Unknown',
+                            'months' => array_fill(0, 12, 0), // Apr to Mar (0-11)
+                        ];
+                    }
+                    
+                    $month = (int) Carbon::parse($receipt->transaction_date)->format('n');
+                    // Convert calendar month to fiscal month (Apr=0, May=1, ..., Mar=11)
+                    $fiscalMonth = ($month >= 4) ? $month - 4 : $month + 8;
+                    $customerData[$customerId]['months'][$fiscalMonth] += abs($receipt->amount ?? 0);
+                }
+
+                $reportData = array_values($customerData);
+            } catch (\Exception $e) {}
+
             if ($request->has('print')) {
                 return view('admin.reports.receipt-payment-reports.receipt-customer-month-wise-print', compact('reportData', 'request'));
             }
+
+            if ($request->has('excel')) {
+                return $this->exportReceiptMonthWiseExcel($reportData, $request);
+            }
         }
 
-        return view('admin.reports.receipt-payment-reports.receipt-customer-month-wise', compact('customers', 'reportData'));
+        return view('admin.reports.receipt-payment-reports.receipt-customer-month-wise', compact('customers', 'salesmen', 'areas', 'routes', 'reportData'));
+    }
+
+    // Export Receipt Month Wise to Excel
+    private function exportReceiptMonthWiseExcel($reportData, $request)
+    {
+        $filename = 'Receipt_Month_Wise_' . date('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($reportData) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['#', 'Customer Name', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Total']);
+            
+            foreach ($reportData as $index => $row) {
+                $rowData = [$index + 1, $row['customer_name']];
+                foreach ($row['months'] as $amt) {
+                    $rowData[] = number_format($amt, 2);
+                }
+                $rowData[] = number_format(array_sum($row['months']), 2);
+                fputcsv($file, $rowData);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     // Payment History
@@ -609,10 +727,12 @@ class ReceiptPaymentReportController extends Controller
         $suppliers = Supplier::where('is_deleted', false)->orderBy('name')->get();
         $reportData = [];
 
-        if ($request->has('view') || $request->has('print')) {
-            $fromDate = $request->from_date ?? date('Y-m-d');
+        if ($request->has('view') || $request->has('print') || $request->has('excel')) {
+            $fromDate = $request->from_date ?? date('Y-m-01');
             $toDate = $request->to_date ?? date('Y-m-d');
             $supplierId = $request->supplier_id;
+            $paymentMode = $request->payment_mode ?? '5'; // 5 = All
+            $sortBy = $request->sort_by ?? 'party';
 
             try {
                 $query = DB::table('supplier_ledgers')
@@ -620,24 +740,45 @@ class ReceiptPaymentReportController extends Controller
                     ->where('supplier_ledgers.transaction_type', 'Payment')
                     ->whereBetween('supplier_ledgers.transaction_date', [$fromDate, $toDate]);
 
+                // Supplier filter
                 if ($supplierId) {
                     $query->where('supplier_ledgers.supplier_id', $supplierId);
                 }
 
+                // Payment mode filter
+                $modes = ['1' => 'Cash', '2' => 'Cheque', '3' => 'RTGS', '4' => 'NEFT'];
+                if ($paymentMode != '5' && isset($modes[$paymentMode])) {
+                    $query->where('supplier_ledgers.payment_mode', $modes[$paymentMode]);
+                }
+
+                // Sort by
+                if ($sortBy == 'date') {
+                    $query->orderBy('supplier_ledgers.transaction_date');
+                } elseif ($sortBy == 'amount') {
+                    $query->orderBy('supplier_ledgers.amount', 'desc');
+                } else {
+                    $query->orderBy('suppliers.name');
+                }
+
                 $payments = $query->select(
                     'supplier_ledgers.*',
-                    'suppliers.name as supplier_name'
-                )->orderBy('supplier_ledgers.transaction_date')->get();
+                    'suppliers.name as supplier_name',
+                    'suppliers.code as supplier_code'
+                )->get();
 
                 foreach ($payments as $payment) {
+                    $trnDate = Carbon::parse($payment->transaction_date);
                     $reportData[] = [
-                        'date' => Carbon::parse($payment->transaction_date)->format('d-M-Y'),
-                        'voucher_no' => $payment->reference_no ?? $payment->id,
-                        'supplier_name' => $payment->supplier_name ?? 'Unknown',
-                        'mode' => $payment->payment_mode ?? 'Cash',
-                        'cheque_ref' => $payment->cheque_no ?? '',
+                        'code' => $payment->supplier_code ?? $payment->supplier_id,
+                        'party_name' => $payment->supplier_name ?? 'Unknown',
+                        'trn_date' => $trnDate->format('d-M-Y'),
+                        'trn_no' => $payment->reference_no ?? $payment->id,
                         'amount' => abs($payment->amount ?? 0),
-                        'narration' => $payment->narration ?? '',
+                        'mode' => $payment->payment_mode ?? 'Cash',
+                        'days' => $payment->bill_date ? $trnDate->diffInDays(Carbon::parse($payment->bill_date)) : '',
+                        'bill_date' => $payment->bill_date ? Carbon::parse($payment->bill_date)->format('d-M-Y') : '',
+                        'bill_no' => $payment->bill_no ?? '',
+                        'bill_amount' => abs($payment->bill_amount ?? 0),
                     ];
                 }
             } catch (\Exception $e) {}
@@ -645,8 +786,45 @@ class ReceiptPaymentReportController extends Controller
             if ($request->has('print')) {
                 return view('admin.reports.receipt-payment-reports.payment-history-print', compact('reportData', 'request'));
             }
+
+            if ($request->has('excel')) {
+                return $this->exportPaymentHistoryExcel($reportData, $request);
+            }
         }
 
         return view('admin.reports.receipt-payment-reports.payment-history', compact('suppliers', 'reportData'));
+    }
+
+    // Export Payment History to Excel
+    private function exportPaymentHistoryExcel($reportData, $request)
+    {
+        $filename = 'Payment_History_' . date('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($reportData) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Code', 'Party Name', 'Trn. Date', 'Trn.No', 'Amount', 'P.Mode', 'Days', 'Bill Date', 'Bill No', 'Bill Amt']);
+            
+            foreach ($reportData as $row) {
+                fputcsv($file, [
+                    $row['code'],
+                    $row['party_name'],
+                    $row['trn_date'],
+                    $row['trn_no'],
+                    number_format($row['amount'], 2),
+                    $row['mode'],
+                    $row['days'],
+                    $row['bill_date'],
+                    $row['bill_no'],
+                    number_format($row['bill_amount'], 2)
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }
