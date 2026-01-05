@@ -1014,9 +1014,16 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Receipt / Payment Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Receipt Report</a></li>
-                <li><a class="dropdown-item" href="#">Payment Report</a></li>
-                <li><a class="dropdown-item" href="#">Outstanding Report</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.receipt-from-customer') }}">Receipt from Customer</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.payment-to-supplier') }}">Payment to Supplier</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.post-dated-cheques') }}">List of Post Dated Cheques</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.returned-cheques') }}">List of Returned Cheques</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.cash-cheque-collection') }}">Cash/Cheque Collection</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.cash-collection-summary') }}">Cash Collection Summary</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.pay-in-slip') }}">Pay - In - Slip Report</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.currency-detail') }}">Currency Detail</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.receipt-customer-month-wise') }}">Receipt from Customer - Month Wise</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.receipt-payment.payment-history') }}">Payment History</a></li>
               </ul>
             </li>
 
