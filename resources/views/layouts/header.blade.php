@@ -918,9 +918,38 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Misc. Transaction Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Stock Transfer Report</a></li>
-                <li><a class="dropdown-item" href="#">Sample Report</a></li>
-                <li><a class="dropdown-item" href="#">Adjustment Report</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.misc-transaction-book') }}">Misc Transaction Book</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-adjustment') }}">Stock Adjustment</a></li>
+                <!-- Stock Transfer Outgoing Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Stock Transfer Outgoing</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-outgoing.bill-wise') }}">Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-outgoing.party-bill-wise') }}">Party - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-outgoing.item-bill-wise') }}">Item - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-outgoing.item-party-bill-wise') }}">Item - Party - Bill Wise</a></li>
+                  </ul>
+                </li>
+                <!-- Stock Transfer Incoming Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Stock Transfer Incoming</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-incoming.bill-wise') }}">Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-incoming.party-bill-wise') }}">Party - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-incoming.item-bill-wise') }}">Item - Bill Wise</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.stock-transfer-incoming.item-party-bill-wise') }}">Item - Party - Bill Wise</a></li>
+                  </ul>
+                </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.sale-return-replacement') }}">Sale Return Replacement</a></li>
+                <!-- Sample Reports Submenu -->
+                <li class="dropdown-submenu">
+                  <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Sample Reports</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.sample-reports.list-of-sample-issued') }}">List of Sample Issued</a></li>
+                    <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.sample-reports.list-of-sample-received') }}">List of Sample Received</a></li>
+                  </ul>
+                </li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.misc-transaction.bill-printing') }}">Misc. Tran. Bill Printing</a></li>
               </ul>
             </li>
 

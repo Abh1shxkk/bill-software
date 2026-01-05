@@ -513,4 +513,24 @@ class CustomerController extends Controller
             'code' => $customer->code ?? ''
         ]);
     }
+
+    /**
+     * Get customer by code (AJAX lookup)
+     */
+    public function getByCode($code)
+    {
+        $customer = Customer::where('code', $code)
+            ->where('is_deleted', '!=', 1)
+            ->first();
+
+        if ($customer) {
+            return response()->json([
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'code' => $customer->code
+            ]);
+        }
+
+        return response()->json(null);
+    }
 }

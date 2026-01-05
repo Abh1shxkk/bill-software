@@ -21,7 +21,7 @@ class StockAdjustmentItem extends Model
         'packing',
         'company_name',
         'mrp',
-        'row_order',
+        'row_order'
     ];
 
     protected $casts = [
@@ -32,43 +32,13 @@ class StockAdjustmentItem extends Model
         'mrp' => 'decimal:2',
     ];
 
-    /**
-     * Relationship with StockAdjustment
-     */
     public function stockAdjustment()
     {
-        return $this->belongsTo(StockAdjustment::class, 'stock_adjustment_id');
+        return $this->belongsTo(StockAdjustment::class);
     }
 
-    /**
-     * Relationship with Item
-     */
     public function item()
     {
-        return $this->belongsTo(Item::class, 'item_id');
-    }
-
-    /**
-     * Relationship with Batch
-     */
-    public function batch()
-    {
-        return $this->belongsTo(Batch::class, 'batch_id');
-    }
-
-    /**
-     * Get adjustment type label
-     */
-    public function getAdjustmentTypeLabelAttribute()
-    {
-        return $this->adjustment_type === 'S' ? 'Shortage' : 'Excess';
-    }
-
-    /**
-     * Get formatted expiry date
-     */
-    public function getFormattedExpiryAttribute()
-    {
-        return $this->expiry_date ? $this->expiry_date->format('m/Y') : '-';
+        return $this->belongsTo(Item::class);
     }
 }

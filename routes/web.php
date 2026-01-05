@@ -99,6 +99,7 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         
         // Customer routes
         Route::post('customers/multiple-delete', [CustomerController::class, 'multipleDelete'])->name('customers.multiple-delete');
+        Route::get('customers/by-code/{code}', [CustomerController::class, 'getByCode'])->name('customers.by-code');
         Route::get('customers/{customer}/sales', [CustomerController::class, 'getSales'])->name('customers.sales');
         Route::get('customers/{customer}/challans', [CustomerController::class, 'challans'])->name('customers.challans');
         Route::resource('customers', CustomerController::class);
@@ -563,6 +564,27 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/management/lookup/route', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getRouteByCode'])->name('reports.management.lookup.route');
         Route::get('reports/management/lookup/state', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getStateByCode'])->name('reports.management.lookup.state');
         Route::get('reports/management/lookup/company', [\App\Http\Controllers\Admin\ManagementReportController::class, 'getCompanyByCode'])->name('reports.management.lookup.company');
+        
+        // Misc Transaction Reports
+        Route::get('reports/misc-transaction/misc-transaction-book', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'miscTransactionBook'])->name('reports.misc-transaction.misc-transaction-book');
+        Route::get('reports/misc-transaction/stock-adjustment', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockAdjustment'])->name('reports.misc-transaction.stock-adjustment');
+        // Stock Transfer Outgoing
+        Route::get('reports/misc-transaction/stock-transfer-outgoing/bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferOutgoingBillWise'])->name('reports.misc-transaction.stock-transfer-outgoing.bill-wise');
+        Route::get('reports/misc-transaction/stock-transfer-outgoing/party-bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferOutgoingPartyBillWise'])->name('reports.misc-transaction.stock-transfer-outgoing.party-bill-wise');
+        Route::get('reports/misc-transaction/stock-transfer-outgoing/item-bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferOutgoingItemBillWise'])->name('reports.misc-transaction.stock-transfer-outgoing.item-bill-wise');
+        Route::get('reports/misc-transaction/stock-transfer-outgoing/item-party-bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferOutgoingItemPartyBillWise'])->name('reports.misc-transaction.stock-transfer-outgoing.item-party-bill-wise');
+        // Stock Transfer Incoming
+        Route::get('reports/misc-transaction/stock-transfer-incoming/bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferIncomingBillWise'])->name('reports.misc-transaction.stock-transfer-incoming.bill-wise');
+        Route::get('reports/misc-transaction/stock-transfer-incoming/party-bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferIncomingPartyBillWise'])->name('reports.misc-transaction.stock-transfer-incoming.party-bill-wise');
+        Route::get('reports/misc-transaction/stock-transfer-incoming/item-bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferIncomingItemBillWise'])->name('reports.misc-transaction.stock-transfer-incoming.item-bill-wise');
+        Route::get('reports/misc-transaction/stock-transfer-incoming/item-party-bill-wise', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'stockTransferIncomingItemPartyBillWise'])->name('reports.misc-transaction.stock-transfer-incoming.item-party-bill-wise');
+        // Sale Return Replacement
+        Route::get('reports/misc-transaction/sale-return-replacement', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'saleReturnReplacement'])->name('reports.misc-transaction.sale-return-replacement');
+        // Sample Reports
+        Route::get('reports/misc-transaction/sample-reports/list-of-sample-issued', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'listOfSampleIssued'])->name('reports.misc-transaction.sample-reports.list-of-sample-issued');
+        Route::get('reports/misc-transaction/sample-reports/list-of-sample-received', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'listOfSampleReceived'])->name('reports.misc-transaction.sample-reports.list-of-sample-received');
+        // Bill Printing
+        Route::get('reports/misc-transaction/bill-printing', [\App\Http\Controllers\Admin\MiscTransactionReportController::class, 'billPrinting'])->name('reports.misc-transaction.bill-printing');
         
         // Supplier specific routes - MUST be before resource route
         Route::get('suppliers/{supplier}/pending-orders', [SupplierController::class, 'pendingOrders'])->name('suppliers.pending-orders');
