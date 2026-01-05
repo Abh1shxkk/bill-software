@@ -1179,6 +1179,20 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::put('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'update'])->name('sale-return-replacement.update');
         Route::delete('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'destroy'])->name('sale-return-replacement.destroy');
         
+        // =============== RECEIPT / PAYMENT REPORTS ===============
+        Route::prefix('reports/receipt-payment')->name('reports.receipt-payment.')->group(function () {
+            Route::get('receipt-from-customer', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'receiptFromCustomer'])->name('receipt-from-customer');
+            Route::get('payment-to-supplier', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'paymentToSupplier'])->name('payment-to-supplier');
+            Route::get('post-dated-cheques', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'postDatedCheques'])->name('post-dated-cheques');
+            Route::get('returned-cheques', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'returnedCheques'])->name('returned-cheques');
+            Route::get('cash-cheque-collection', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'cashChequeCollection'])->name('cash-cheque-collection');
+            Route::get('cash-collection-summary', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'cashCollectionSummary'])->name('cash-collection-summary');
+            Route::get('pay-in-slip', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'payInSlip'])->name('pay-in-slip');
+            Route::get('currency-detail', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'currencyDetail'])->name('currency-detail');
+            Route::get('receipt-customer-month-wise', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'receiptCustomerMonthWise'])->name('receipt-customer-month-wise');
+            Route::get('payment-history', [\App\Http\Controllers\Admin\ReceiptPaymentReportController::class, 'paymentHistory'])->name('payment-history');
+        });
+        
         // =============== ADMINISTRATION ===============
         Route::prefix('administration')->name('administration.')->group(function () {
             // Hotkeys Management
