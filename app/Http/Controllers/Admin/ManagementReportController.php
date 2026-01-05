@@ -493,22 +493,471 @@ class ManagementReportController extends Controller
     // Gross Profit Reports
     public function grossProfitBillWise(Request $request)
     {
-        return view('admin.reports.management-report.gross-profit-reports.bill-wise');
+        $salesmen = SalesMan::where('is_deleted', 0)->orderBy('name')->get();
+        $areas = Area::where('is_deleted', 0)->orderBy('name')->get();
+        $routes = Route::orderBy('name')->get();
+        $reportData = [];
+
+        if ($request->has('view') || $request->has('print')) {
+            $fromDate = $request->from_date ?? date('Y-m-d');
+            $toDate = $request->to_date ?? date('Y-m-d');
+
+            $query = SaleTransaction::with(['customer', 'salesman', 'items.batch'])
+                ->whereBetween('sale_date', [$fromDate, $toDate]);
+
+            // Series filter
+            if ($request->series && $request->series != '00') {
+                $query->where('series', $request->series);
+            }
+
+            // Salesman filter
+            if ($request->salesman_id) {
+                $query->where('salesman_id', $request->salesman_id);
+            }
+
+            // Area filter (through customer)
+            if ($request->area_id) {
+                $query->whereHas('customer', function($q) use ($request) {
+                    $q->where('area_id', $request->area_id);
+                });
+            }
+
+            // Route filter (through customer)
+            if ($request->route_id) {
+                $query->whereHas('customer', function($q) use ($request) {
+                    $q->where('route_id', $request->route_id);
+                });
+            }
+
+            // Day filter
+            if ($request->day) {
+                $query->whereRaw("DAYNAME(sale_date) = ?", [$request->day]);
+            }
+
+            // Sort
+            $sortBy = $request->sort_by ?? 'date';
+            $order = $request->order ?? 'asc';
+            
+            switch ($sortBy) {
+                case 'invoice_no':
+                    $query->orderBy('invoice_no', $order);
+                    break;
+                case 'customer':
+                    $query->join('customers', 'sale_transactions.customer_id', '=', 'customers.id')
+                          ->orderBy('customers.name', $order)
+                          ->select('sale_transactions.*');
+                    break;
+                default:
+                    $query->orderBy('sale_date', $order);
+            }
+
+            $transactions = $query->get();
+
+            foreach ($transactions as $transaction) {
+                $saleAmount = (float) $transaction->net_amount;
+                $purchaseAmount = 0;
+
+                // Calculate purchase cost from items
+                foreach ($transaction->items as $item) {
+                    $qty = (float) $item->qty + (float) $item->free_qty;
+                    if ($item->batch) {
+                        // Use cost or pur_rate from batch
+                        $purchaseAmount += $qty * (float) ($item->batch->cost ?? $item->batch->pur_rate ?? 0);
+                    }
+                }
+
+                $gpAmount = $saleAmount - $purchaseAmount;
+                $gpPercent = $saleAmount > 0 ? ($gpAmount / $saleAmount * 100) : 0;
+
+                // GP% filter
+                if ($request->gp_percent) {
+                    $filterGP = (float) $request->gp_percent;
+                    if ($gpPercent < $filterGP) {
+                        continue;
+                    }
+                }
+
+                // Negative filter
+                if ($request->negative == 'Y' && $gpAmount >= 0) {
+                    continue;
+                }
+
+                $reportData[] = [
+                    'sale_date' => $transaction->sale_date,
+                    'invoice_no' => $transaction->invoice_no,
+                    'customer_name' => $transaction->customer->name ?? 'N/A',
+                    'sale_amount' => $saleAmount,
+                    'purchase_amount' => $purchaseAmount,
+                    'gp_amount' => $gpAmount,
+                    'gp_percent' => $gpPercent,
+                ];
+            }
+
+            // Sort by GP amount or percent if needed
+            if ($sortBy == 'gp_amount') {
+                usort($reportData, function($a, $b) use ($order) {
+                    return $order == 'asc' ? $a['gp_amount'] <=> $b['gp_amount'] : $b['gp_amount'] <=> $a['gp_amount'];
+                });
+            } elseif ($sortBy == 'gp_percent') {
+                usort($reportData, function($a, $b) use ($order) {
+                    return $order == 'asc' ? $a['gp_percent'] <=> $b['gp_percent'] : $b['gp_percent'] <=> $a['gp_percent'];
+                });
+            }
+
+            if ($request->has('print')) {
+                $salesmanName = $request->salesman_id ? SalesMan::find($request->salesman_id)?->name : null;
+                $areaName = $request->area_id ? Area::find($request->area_id)?->name : null;
+                $routeName = $request->route_id ? Route::find($request->route_id)?->name : null;
+                
+                return view('admin.reports.management-report.gross-profit-reports.bill-wise-print', compact(
+                    'reportData', 'request', 'salesmanName', 'areaName', 'routeName'
+                ));
+            }
+        }
+
+        return view('admin.reports.management-report.gross-profit-reports.bill-wise', compact(
+            'salesmen', 'areas', 'routes', 'reportData'
+        ));
     }
 
     public function grossProfitItemBillWise(Request $request)
     {
-        return view('admin.reports.management-report.gross-profit-reports.item-bill-wise');
+        $salesmen = SalesMan::where('is_deleted', 0)->orderBy('name')->get();
+        $areas = Area::where('is_deleted', 0)->orderBy('name')->get();
+        $routes = Route::orderBy('name')->get();
+        $reportData = [];
+
+        if ($request->has('view') || $request->has('print')) {
+            $fromDate = $request->from_date ?? date('Y-m-d');
+            $toDate = $request->to_date ?? date('Y-m-d');
+
+            $query = SaleTransaction::with(['customer', 'salesman', 'items.batch'])
+                ->whereBetween('sale_date', [$fromDate, $toDate]);
+
+            // Series filter
+            if ($request->series && $request->series != '00') {
+                $query->where('series', $request->series);
+            }
+
+            // Salesman filter
+            if ($request->salesman_id) {
+                $query->where('salesman_id', $request->salesman_id);
+            }
+
+            // Area filter (through customer)
+            if ($request->area_id) {
+                $query->whereHas('customer', function($q) use ($request) {
+                    $q->where('area_id', $request->area_id);
+                });
+            }
+
+            // Route filter (through customer)
+            if ($request->route_id) {
+                $query->whereHas('customer', function($q) use ($request) {
+                    $q->where('route_id', $request->route_id);
+                });
+            }
+
+            // Day filter
+            if ($request->day) {
+                $query->whereRaw("DAYNAME(sale_date) = ?", [$request->day]);
+            }
+
+            $transactions = $query->orderBy('sale_date')->get();
+
+            foreach ($transactions as $transaction) {
+                foreach ($transaction->items as $item) {
+                    $qty = (float) $item->qty + (float) $item->free_qty;
+                    $saleRate = (float) $item->sale_rate;
+                    $saleAmount = (float) $item->net_amount;
+                    
+                    // Get purchase rate from batch
+                    $purRate = 0;
+                    if ($item->batch) {
+                        $purRate = (float) ($item->batch->cost ?? $item->batch->pur_rate ?? 0);
+                    }
+                    $purchaseAmount = $qty * $purRate;
+
+                    $gpAmount = $saleAmount - $purchaseAmount;
+                    $gpPercent = $saleAmount > 0 ? ($gpAmount / $saleAmount * 100) : 0;
+
+                    // GP% filter
+                    if ($request->gp_percent) {
+                        $filterGP = (float) $request->gp_percent;
+                        if ($gpPercent < $filterGP) {
+                            continue;
+                        }
+                    }
+
+                    // Negative filter
+                    if ($request->negative == 'Y' && $gpAmount >= 0) {
+                        continue;
+                    }
+
+                    $reportData[] = [
+                        'sale_date' => $transaction->sale_date,
+                        'invoice_no' => $transaction->invoice_no,
+                        'item_name' => $item->item_name ?? 'N/A',
+                        'qty' => $qty,
+                        'sale_rate' => $saleRate,
+                        'pur_rate' => $purRate,
+                        'sale_amount' => $saleAmount,
+                        'purchase_amount' => $purchaseAmount,
+                        'gp_amount' => $gpAmount,
+                        'gp_percent' => $gpPercent,
+                    ];
+                }
+            }
+
+            // Sort
+            $sortBy = $request->sort_by ?? 'date';
+            $order = $request->order ?? 'asc';
+            
+            usort($reportData, function($a, $b) use ($sortBy, $order) {
+                $field = match($sortBy) {
+                    'invoice_no' => 'invoice_no',
+                    'item_name' => 'item_name',
+                    'gp_amount' => 'gp_amount',
+                    'gp_percent' => 'gp_percent',
+                    default => 'sale_date'
+                };
+                
+                if ($order == 'asc') {
+                    return $a[$field] <=> $b[$field];
+                }
+                return $b[$field] <=> $a[$field];
+            });
+
+            if ($request->has('print')) {
+                $salesmanName = $request->salesman_id ? SalesMan::find($request->salesman_id)?->name : null;
+                $areaName = $request->area_id ? Area::find($request->area_id)?->name : null;
+                $routeName = $request->route_id ? Route::find($request->route_id)?->name : null;
+                
+                return view('admin.reports.management-report.gross-profit-reports.item-bill-wise-print', compact(
+                    'reportData', 'request', 'salesmanName', 'areaName', 'routeName'
+                ));
+            }
+        }
+
+        return view('admin.reports.management-report.gross-profit-reports.item-bill-wise', compact(
+            'salesmen', 'areas', 'routes', 'reportData'
+        ));
     }
 
     public function grossProfitSelectiveAllItems(Request $request)
     {
-        return view('admin.reports.management-report.gross-profit-reports.selective-all-items');
+        $items = Item::where('is_deleted', 0)->orderBy('name')->get();
+        $companies = Company::where('is_deleted', 0)->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', 0)->orderBy('name')->get();
+        $reportData = [];
+
+        if ($request->has('view') || $request->has('print')) {
+            $fromDate = $request->from_date ?? date('Y-m-d');
+            $toDate = $request->to_date ?? date('Y-m-d');
+
+            $query = DB::table('sale_transaction_items')
+                ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
+                ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
+                ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
+                ->select(
+                    'sale_transaction_items.item_id',
+                    'sale_transaction_items.item_name',
+                    'sale_transaction_items.company_name',
+                    DB::raw('SUM(sale_transaction_items.qty + COALESCE(sale_transaction_items.free_qty, 0)) as total_qty'),
+                    DB::raw('SUM(sale_transaction_items.net_amount) as total_sale'),
+                    DB::raw('SUM((sale_transaction_items.qty + COALESCE(sale_transaction_items.free_qty, 0)) * COALESCE(batches.cost, batches.pur_rate, 0)) as total_purchase')
+                )
+                ->groupBy('sale_transaction_items.item_id', 'sale_transaction_items.item_name', 'sale_transaction_items.company_name');
+
+            // Series filter
+            if ($request->series && $request->series != '00') {
+                $query->where('sale_transactions.series', $request->series);
+            }
+
+            // Item filter
+            if ($request->item_id) {
+                $query->where('sale_transaction_items.item_id', $request->item_id);
+            }
+
+            // Company filter
+            if ($request->company_id) {
+                $query->where('sale_transaction_items.company_name', Company::find($request->company_id)?->name);
+            }
+
+            // Salesman filter
+            if ($request->salesman_id) {
+                $query->where('sale_transactions.salesman_id', $request->salesman_id);
+            }
+
+            $results = $query->get();
+
+            foreach ($results as $row) {
+                $saleAmount = (float) $row->total_sale;
+                $purchaseAmount = (float) $row->total_purchase;
+                $gpAmount = $saleAmount - $purchaseAmount;
+                $gpPercent = $saleAmount > 0 ? ($gpAmount / $saleAmount * 100) : 0;
+
+                // GP% filter
+                if ($request->gp_percent && $gpPercent < (float) $request->gp_percent) {
+                    continue;
+                }
+
+                // Negative filter
+                if ($request->negative == 'Y' && $gpAmount >= 0) {
+                    continue;
+                }
+
+                $reportData[] = [
+                    'item_name' => $row->item_name ?? 'N/A',
+                    'company_name' => $row->company_name ?? 'N/A',
+                    'qty' => (float) $row->total_qty,
+                    'sale_amount' => $saleAmount,
+                    'purchase_amount' => $purchaseAmount,
+                    'gp_amount' => $gpAmount,
+                    'gp_percent' => $gpPercent,
+                ];
+            }
+
+            // Sort
+            $sortBy = $request->sort_by ?? 'item_name';
+            $order = $request->order ?? 'asc';
+            
+            usort($reportData, function($a, $b) use ($sortBy, $order) {
+                $result = $a[$sortBy] <=> $b[$sortBy];
+                return $order == 'asc' ? $result : -$result;
+            });
+
+            if ($request->has('print')) {
+                $itemName = $request->item_id ? Item::find($request->item_id)?->name : null;
+                $companyName = $request->company_id ? Company::find($request->company_id)?->name : null;
+                $salesmanName = $request->salesman_id ? SalesMan::find($request->salesman_id)?->name : null;
+                
+                return view('admin.reports.management-report.gross-profit-reports.selective-all-items-print', compact(
+                    'reportData', 'request', 'itemName', 'companyName', 'salesmanName'
+                ));
+            }
+        }
+
+        return view('admin.reports.management-report.gross-profit-reports.selective-all-items', compact(
+            'items', 'companies', 'salesmen', 'reportData'
+        ));
     }
 
     public function grossProfitCompanyBillWise(Request $request)
     {
-        return view('admin.reports.management-report.gross-profit-reports.company-bill-wise');
+        $companies = Company::where('is_deleted', 0)->orderBy('name')->get();
+        $salesmen = SalesMan::where('is_deleted', 0)->orderBy('name')->get();
+        $areas = Area::where('is_deleted', 0)->orderBy('name')->get();
+        $routes = Route::orderBy('name')->get();
+        $reportData = [];
+
+        if ($request->has('view') || $request->has('print')) {
+            $fromDate = $request->from_date ?? date('Y-m-d');
+            $toDate = $request->to_date ?? date('Y-m-d');
+
+            // Get transactions with items grouped by company
+            $query = DB::table('sale_transaction_items')
+                ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
+                ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
+                ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
+                ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
+                ->select(
+                    'sale_transactions.id',
+                    'sale_transactions.sale_date',
+                    'sale_transactions.invoice_no',
+                    'sale_transaction_items.company_name',
+                    'customers.name as customer_name',
+                    DB::raw('SUM(sale_transaction_items.net_amount) as total_sale'),
+                    DB::raw('SUM((sale_transaction_items.qty + COALESCE(sale_transaction_items.free_qty, 0)) * COALESCE(batches.cost, batches.pur_rate, 0)) as total_purchase')
+                )
+                ->groupBy('sale_transactions.id', 'sale_transactions.sale_date', 'sale_transactions.invoice_no', 'sale_transaction_items.company_name', 'customers.name');
+
+            // Series filter
+            if ($request->series && $request->series != '00') {
+                $query->where('sale_transactions.series', $request->series);
+            }
+
+            // Company filter
+            if ($request->company_id) {
+                $query->where('sale_transaction_items.company_name', Company::find($request->company_id)?->name);
+            }
+
+            // Salesman filter
+            if ($request->salesman_id) {
+                $query->where('sale_transactions.salesman_id', $request->salesman_id);
+            }
+
+            // Area filter
+            if ($request->area_id) {
+                $query->where('customers.area_id', $request->area_id);
+            }
+
+            // Route filter
+            if ($request->route_id) {
+                $query->where('customers.route_id', $request->route_id);
+            }
+
+            $results = $query->get();
+
+            foreach ($results as $row) {
+                $saleAmount = (float) $row->total_sale;
+                $purchaseAmount = (float) $row->total_purchase;
+                $gpAmount = $saleAmount - $purchaseAmount;
+                $gpPercent = $saleAmount > 0 ? ($gpAmount / $saleAmount * 100) : 0;
+
+                // GP% filter
+                if ($request->gp_percent && $gpPercent < (float) $request->gp_percent) {
+                    continue;
+                }
+
+                // Negative filter
+                if ($request->negative == 'Y' && $gpAmount >= 0) {
+                    continue;
+                }
+
+                $reportData[] = [
+                    'sale_date' => $row->sale_date,
+                    'invoice_no' => $row->invoice_no,
+                    'company_name' => $row->company_name ?? 'N/A',
+                    'customer_name' => $row->customer_name ?? 'N/A',
+                    'sale_amount' => $saleAmount,
+                    'purchase_amount' => $purchaseAmount,
+                    'gp_amount' => $gpAmount,
+                    'gp_percent' => $gpPercent,
+                ];
+            }
+
+            // Sort
+            $sortBy = $request->sort_by ?? 'date';
+            $order = $request->order ?? 'asc';
+            
+            usort($reportData, function($a, $b) use ($sortBy, $order) {
+                $field = match($sortBy) {
+                    'invoice_no' => 'invoice_no',
+                    'company' => 'company_name',
+                    'gp_amount' => 'gp_amount',
+                    'gp_percent' => 'gp_percent',
+                    default => 'sale_date'
+                };
+                $result = $a[$field] <=> $b[$field];
+                return $order == 'asc' ? $result : -$result;
+            });
+
+            if ($request->has('print')) {
+                $companyName = $request->company_id ? Company::find($request->company_id)?->name : null;
+                $salesmanName = $request->salesman_id ? SalesMan::find($request->salesman_id)?->name : null;
+                $areaName = $request->area_id ? Area::find($request->area_id)?->name : null;
+                $routeName = $request->route_id ? Route::find($request->route_id)?->name : null;
+                
+                return view('admin.reports.management-report.gross-profit-reports.company-bill-wise-print', compact(
+                    'reportData', 'request', 'companyName', 'salesmanName', 'areaName', 'routeName'
+                ));
+            }
+        }
+
+        return view('admin.reports.management-report.gross-profit-reports.company-bill-wise', compact(
+            'companies', 'salesmen', 'areas', 'routes', 'reportData'
+        ));
     }
 
     public function grossProfitSelectiveAllCompanies(Request $request)
