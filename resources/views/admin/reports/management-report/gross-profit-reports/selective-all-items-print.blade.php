@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gross Profit - Selective/All Items - Print</title>
+    <title>Item Wise Gross Profit - Print</title>
     <style>
         body { font-family: Arial, sans-serif; font-size: 11px; margin: 10px; }
         .header { text-align: center; margin-bottom: 15px; }
@@ -25,14 +25,18 @@
 </head>
 <body onload="window.print()">
     <div class="header">
-        <h3>Gross Profit - Selective/All Items</h3>
+        <h3>Item Wise Gross Profit</h3>
         <p>Period: {{ \Carbon\Carbon::parse($request->from_date ?? date('Y-m-d'))->format('d-M-Y') }} To {{ \Carbon\Carbon::parse($request->to_date ?? date('Y-m-d'))->format('d-M-Y') }}</p>
     </div>
 
     <div class="filters">
-        @if($request->item_id)<span>Item: {{ $itemName ?? 'Selected' }}</span>@endif
-        @if($request->company_id)<span>Company: {{ $companyName ?? 'Selected' }}</span>@endif
+        @if($request->view_type == 'selective')<span>View: Selective</span>@else<span>View: All</span>@endif
+        @if($request->company_id)<span>Company: {{ $companyName ?? 'All' }}</span>@endif
+        @if($request->category_id)<span>Category: {{ $categoryName ?? 'All' }}</span>@endif
+        @if($request->customer_id)<span>Customer: {{ $customerName ?? 'All' }}</span>@endif
         @if($request->salesman_id)<span>Salesman: {{ $salesmanName ?? 'All' }}</span>@endif
+        @if($request->area_id)<span>Area: {{ $areaName ?? 'All' }}</span>@endif
+        @if($request->route_id)<span>Route: {{ $routeName ?? 'All' }}</span>@endif
     </div>
 
     <table>
@@ -40,7 +44,7 @@
             <tr>
                 <th class="text-center" style="width: 5%;">S.No</th>
                 <th style="width: 30%;">Item Name</th>
-                <th style="width: 20%;">Company</th>
+                <th style="width: 15%;">Company</th>
                 <th class="text-center" style="width: 8%;">Qty</th>
                 <th class="text-end" style="width: 12%;">Sale Amt</th>
                 <th class="text-end" style="width: 12%;">Pur Amt</th>
