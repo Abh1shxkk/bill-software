@@ -399,6 +399,34 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/purchase/gst-set-off', [PurchaseReportController::class, 'gstSetOff'])->name('reports.purchase.gst-set-off');
         Route::get('reports/purchase/gst-set-off-gstr', [PurchaseReportController::class, 'gstSetOffGstr'])->name('reports.purchase.gst-set-off-gstr');
         
+        // GST Reports
+        Route::get('reports/gst/form-3b', [\App\Http\Controllers\Admin\GstReportController::class, 'form3b'])->name('reports.gst.form-3b');
+        
+        // Financial Reports
+        Route::get('reports/financial/trial-balance', [\App\Http\Controllers\Admin\FinancialReportController::class, 'trialBalance'])->name('reports.financial.trial-balance');
+        Route::get('reports/financial/balance-sheet', [\App\Http\Controllers\Admin\FinancialReportController::class, 'balanceSheet'])->name('reports.financial.balance-sheet');
+        Route::get('reports/financial/day-book', [\App\Http\Controllers\Admin\FinancialReportController::class, 'dayBook'])->name('reports.financial.day-book');
+        Route::get('reports/financial/sundry-creditors', [\App\Http\Controllers\Admin\FinancialReportController::class, 'sundryCreditors'])->name('reports.financial.sundry-creditors');
+        Route::get('reports/financial/sundry-debtors', [\App\Http\Controllers\Admin\FinancialReportController::class, 'sundryDebtors'])->name('reports.financial.sundry-debtors');
+        Route::get('reports/financial/voucher-printing', [\App\Http\Controllers\Admin\FinancialReportController::class, 'voucherPrinting'])->name('reports.financial.voucher-printing');
+        Route::get('reports/financial/ledger-printing', [\App\Http\Controllers\Admin\FinancialReportController::class, 'ledgerPrinting'])->name('reports.financial.ledger-printing');
+        Route::get('reports/financial/ledger-summary', [\App\Http\Controllers\Admin\FinancialReportController::class, 'ledgerSummary'])->name('reports.financial.ledger-summary');
+        Route::get('reports/financial/cash-deposite-withdrawn', [\App\Http\Controllers\Admin\FinancialReportController::class, 'cashDepositeWithdrawn'])->name('reports.financial.cash-deposite-withdrawn');
+        
+        // Other Reports
+        Route::get('reports/other/customer-supplier-list', [\App\Http\Controllers\Admin\OtherReportController::class, 'customerSupplierList'])->name('reports.other.customer-supplier-list');
+        Route::get('reports/other/mailing-labels', [\App\Http\Controllers\Admin\OtherReportController::class, 'mailingLabels'])->name('reports.other.mailing-labels');
+        Route::get('reports/other/doctor-wise-customers', [\App\Http\Controllers\Admin\OtherReportController::class, 'doctorWiseCustomers'])->name('reports.other.doctor-wise-customers');
+        Route::get('reports/other/list-of-masters', [\App\Http\Controllers\Admin\OtherReportController::class, 'listOfMasters'])->name('reports.other.list-of-masters');
+        Route::get('reports/other/company-wise-discount', [\App\Http\Controllers\Admin\OtherReportController::class, 'companyWiseDiscount'])->name('reports.other.company-wise-discount');
+        Route::get('reports/other/customer-list', [\App\Http\Controllers\Admin\OtherReportController::class, 'customerList'])->name('reports.other.customer-list');
+        
+        // Label Generation Reports
+        Route::get('reports/label/from-purchase-invoice', [\App\Http\Controllers\Admin\LabelGenerationController::class, 'fromPurchaseInvoice'])->name('reports.label.from-purchase-invoice');
+        Route::get('reports/label/from-batches', [\App\Http\Controllers\Admin\LabelGenerationController::class, 'fromBatches'])->name('reports.label.from-batches');
+        Route::get('reports/label/from-item', [\App\Http\Controllers\Admin\LabelGenerationController::class, 'fromItem'])->name('reports.label.from-item');
+        Route::get('reports/label/get-batches', [\App\Http\Controllers\Admin\LabelGenerationController::class, 'getBatches'])->name('reports.label.get-batches');
+        
         // Purchase Challan Reports
         Route::get('reports/purchase/challan/purchase-challan-book', [PurchaseReportController::class, 'purchaseChallanBook'])->name('reports.purchase.challan.purchase-challan-book');
         Route::get('reports/purchase/challan/pending-challans', [PurchaseReportController::class, 'pendingChallans'])->name('reports.purchase.challan.pending-challans');

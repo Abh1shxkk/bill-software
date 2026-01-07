@@ -1031,10 +1031,17 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Financial Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Day Book</a></li>
-                <li><a class="dropdown-item" href="#">Cash Book</a></li>
-                <li><a class="dropdown-item" href="#">Bank Book</a></li>
-                <li><a class="dropdown-item" href="#">Ledger Report</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.trial-balance') }}">Trial Balance</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.balance-sheet') }}">Balance Sheet</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.day-book') }}">Day Book</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.sundry-creditors') }}">Sundry Creditors</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.sundry-debtors') }}">Sundry Debtors</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.voucher-printing') }}">Voucher Printing</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.ledger-printing') }}">Ledger Printing</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.ledger-summary') }}">Ledger Summary</a></li>
+                <li><a class="dropdown-item disabled" href="#">Bank Reconciliation</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.financial.cash-deposite-withdrawn') }}">Cash Deposite/Withdrawn</a></li>
               </ul>
             </li>
 
@@ -1044,9 +1051,12 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Other Reports</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Customer List</a></li>
-                <li><a class="dropdown-item" href="#">Supplier List</a></li>
-                <li><a class="dropdown-item" href="#">Item List</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.other.customer-supplier-list') }}">Customer/Supplier List</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.other.mailing-labels') }}">Mailing Labels</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.other.doctor-wise-customers') }}">Doctor Wise Customers</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.other.list-of-masters') }}">List of Masters</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.other.company-wise-discount') }}">Company Wise Discount</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.other.customer-list') }}">Customer List</a></li>
               </ul>
             </li>
 
@@ -1054,8 +1064,9 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">Label Generation</a>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Item Labels</a></li>
-                <li><a class="dropdown-item" href="#">Barcode Labels</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.label.from-purchase-invoice') }}">From Purchase Invoice</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.label.from-batches') }}">From Batches</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.label.from-item') }}">From Item</a></li>
               </ul>
             </li>
 
@@ -1065,10 +1076,16 @@
             <li class="dropdown-submenu">
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">GST Reports</a>
               <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.form-3b') }}">Form 3B</a></li>
                 <li><a class="dropdown-item" href="#">GSTR-1</a></li>
                 <li><a class="dropdown-item" href="#">GSTR-2</a></li>
-                <li><a class="dropdown-item" href="#">GSTR-3B</a></li>
-                <li><a class="dropdown-item" href="#">HSN Summary</a></li>
+                <li><a class="dropdown-item" href="#">GSTR-4</a></li>
+                <li><a class="dropdown-item" href="#">GSTR-4 (Annual)</a></li>
+                <li><a class="dropdown-item" href="#">Customer GST Detail Mail</a></li>
+                <li><a class="dropdown-item" href="#">Stock Trans - 1</a></li>
+                <li><a class="dropdown-item" href="#">Stock Trans - 2</a></li>
+                <li><a class="dropdown-item" href="#">WayBill Generation</a></li>
+                <li><a class="dropdown-item" href="#">GSTR-9</a></li>
               </ul>
             </li>
           </ul>
