@@ -5,18 +5,18 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-primary fst-italic fw-bold">SALE BOOK LOCAL CENTRAL</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">SALE BOOK LOCAL CENTRAL</h4>
         </div>
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.local-central-sale-register') }}">
                 <div class="row g-2 align-items-end">
-                    <!-- Row 1: Date Range -->
+                    <!-- Row 1: Date Range & Type -->
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">From</span>
@@ -29,70 +29,26 @@
                             <input type="date" name="date_to" class="form-control" value="{{ $dateTo }}">
                         </div>
                     </div>
-                </div>
-
-                <div class="row g-2 mt-1">
-                    <!-- Row 2: Report Type -->
-                    <div class="col-md-8">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">1. Sale / 2. Sale Return / 3. Debit Note / 4. Credit Note / 5. Consolidated</span>
-                            <select name="report_type" class="form-select" style="width: 60px;">
-                                <option value="1" {{ ($reportType ?? '5') == '1' ? 'selected' : '' }}>1</option>
-                                <option value="2" {{ ($reportType ?? '') == '2' ? 'selected' : '' }}>2</option>
-                                <option value="3" {{ ($reportType ?? '') == '3' ? 'selected' : '' }}>3</option>
-                                <option value="4" {{ ($reportType ?? '') == '4' ? 'selected' : '' }}>4</option>
-                                <option value="5" {{ ($reportType ?? '5') == '5' ? 'selected' : '' }}>5</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-2 mt-1">
-                    <!-- Row 3: Party -->
-                    <div class="col-md-6">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">Party</span>
-                            <select name="customer_id" class="form-select">
-                                <option value="">All</option>
-                                @foreach($customers ?? [] as $customer)
-                                    <option value="{{ $customer->id }}" {{ ($customerId ?? '') == $customer->id ? 'selected' : '' }}>
-                                        {{ $customer->code }} - {{ $customer->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-2 mt-2">
-                    <!-- Row 4: L/C/B -->
-                    <div class="col-md-3">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">L(ocal) / C(entral) / B(oth)</span>
-                            <select name="local_central" class="form-select" style="width: 50px;">
-                                <option value="B" {{ ($localCentral ?? 'B') == 'B' ? 'selected' : '' }}>B</option>
-                                <option value="L" {{ ($localCentral ?? '') == 'L' ? 'selected' : '' }}>L</option>
-                                <option value="C" {{ ($localCentral ?? '') == 'C' ? 'selected' : '' }}>C</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-2 mt-2">
-                    <!-- Row 5: Cancelled, Tax/Retail, Series -->
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">Cancelled [Y/N]</span>
-                            <select name="cancelled" class="form-select" style="width: 50px;">
-                                <option value="N" {{ ($cancelled ?? 'N') == 'N' ? 'selected' : '' }}>N</option>
-                                <option value="Y" {{ ($cancelled ?? '') == 'Y' ? 'selected' : '' }}>Y</option>
+                            <span class="input-group-text">Type</span>
+                            <select name="report_type" class="form-select text-uppercase">
+                                <option value="1" {{ ($reportType ?? '5') == '1' ? 'selected' : '' }}>1-Sale</option>
+                                <option value="2" {{ ($reportType ?? '') == '2' ? 'selected' : '' }}>2-Return</option>
+                                <option value="3" {{ ($reportType ?? '') == '3' ? 'selected' : '' }}>3-DN</option>
+                                <option value="4" {{ ($reportType ?? '') == '4' ? 'selected' : '' }}>4-CN</option>
+                                <option value="5" {{ ($reportType ?? '5') == '5' ? 'selected' : '' }}>5-All</option>
                             </select>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">T(ax) / R(etail)</span>
-                            <input type="text" name="tax_retail" class="form-control" value="{{ $taxRetail ?? '' }}" style="width: 50px;">
+                            <span class="input-group-text">L/C/B</span>
+                            <select name="local_central" class="form-select text-uppercase">
+                                <option value="B" {{ ($localCentral ?? 'B') == 'B' ? 'selected' : '' }}>B(oth)</option>
+                                <option value="L" {{ ($localCentral ?? '') == 'L' ? 'selected' : '' }}>L(ocal)</option>
+                                <option value="C" {{ ($localCentral ?? '') == 'C' ? 'selected' : '' }}>C(entral)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -106,13 +62,68 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-md-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Cancelled</span>
+                            <select name="cancelled" class="form-select text-uppercase">
+                                <option value="N" {{ ($cancelled ?? 'N') == 'N' ? 'selected' : '' }}>N</option>
+                                <option value="Y" {{ ($cancelled ?? '') == 'Y' ? 'selected' : '' }}>Y</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mt-1">
+                    <!-- Row 2: Party & Tax/Retail -->
+                    <div class="col-md-6">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Party</span>
+                            <select name="customer_id" class="form-select">
+                                <option value="">All</option>
+                                @foreach($customers ?? [] as $customer)
+                                    <option value="{{ $customer->id }}" {{ ($customerId ?? '') == $customer->id ? 'selected' : '' }}>
+                                        {{ $customer->code }} - {{ $customer->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">T/R</span>
+                            <select name="tax_retail" class="form-select text-uppercase">
+                                <option value="">All</option>
+                                <option value="T" {{ ($taxRetail ?? '') == 'T' ? 'selected' : '' }}>T(ax)</option>
+                                <option value="R" {{ ($taxRetail ?? '') == 'R' ? 'selected' : '' }}>R(etail)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
+                    </div>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($totals) && ($totals['total']['count'] ?? 0) > 0)
     <!-- Summary Cards -->
-    @if(isset($totals) && ($totals['total']['count'] ?? 0) > 0)
     <div class="row g-2 mb-2">
         <div class="col-md-4">
             <div class="card bg-success text-white">
@@ -139,9 +150,7 @@
             </div>
         </div>
     </div>
-    @endif
 
-    <!-- Data Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 50vh;">
@@ -225,17 +234,7 @@
                             <td class="text-end fw-bold">{{ number_format($totals['central']['net_amount'] ?? 0, 2) }}</td>
                         </tr>
                         @endif
-
-                        @if(!isset($sales) || $sales->count() == 0)
-                        <tr>
-                            <td colspan="12" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                Select filters to generate Local/Central Sale Register
-                            </td>
-                        </tr>
-                        @endif
                     </tbody>
-                    @if(isset($totals) && ($totals['total']['count'] ?? 0) > 0)
                     <tfoot class="table-dark fw-bold">
                         <tr>
                             <td colspan="7" class="text-end">Grand Total ({{ $totals['total']['count'] ?? 0 }} Bills):</td>
@@ -246,57 +245,56 @@
                             <td class="text-end">{{ number_format($totals['total']['net_amount'] ?? 0, 2) }}</td>
                         </tr>
                     </tfoot>
-                    @endif
                 </table>
             </div>
         </div>
     </div>
-
-    <!-- Action Buttons -->
-    <div class="card mt-2">
-        <div class="card-body py-2">
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()">
-                    <i class="bi bi-file-excel me-1"></i>Excel
-                </button>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-info btn-sm" onclick="viewReport()">
-                        <i class="bi bi-eye me-1"></i>View
-                    </button>
-                    <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">Close</a>
-                </div>
-            </div>
-        </div>
-    </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
 <script>
 function exportToExcel() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('export', 'excel');
     window.open('{{ route("admin.reports.sales.local-central-sale-register") }}?' + params.toString(), '_blank');
 }
 
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    window.open('{{ route("admin.reports.sales.local-central-sale-register") }}?' + params.toString(), 'LocalCentralRegister', 'width=1100,height=800,scrollbars=yes,resizable=yes');
+function printReport() {
+    window.open('{{ route("admin.reports.sales.local-central-sale-register") }}?print=1&' + $('#filterForm').serialize(), '_blank');
 }
+
+// Keyboard shortcuts
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
+});
 </script>
 @endpush
 
 @push('styles')
 <style>
-.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; min-width: auto; }
-.form-control, .form-select { font-size: 0.75rem; }
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.75rem; padding: 0.25rem 0.5rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.8rem; border-radius: 0; }
 .table th, .table td { padding: 0.25rem 0.4rem; font-size: 0.73rem; vertical-align: middle; }
-.btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
 .sticky-top { position: sticky; top: 0; z-index: 10; }
 </style>
 @endpush

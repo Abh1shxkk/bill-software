@@ -5,14 +5,14 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-warning fst-italic fw-bold" style="color: #856404 !important;">SALE BOOK WITH TCS</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">SALE BOOK WITH TCS</h4>
         </div>
     </div>
 
     <!-- Report Type Selection -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
             <div class="row g-2">
                 <div class="col-md-4">
@@ -20,10 +20,10 @@
                         <span class="fw-bold small">Format:</span>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="report_format_radio" id="format_detailed" value="D" {{ ($reportFormat ?? 'D') == 'D' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-warning btn-sm" for="format_detailed">Detailed</label>
+                            <label class="btn btn-outline-primary btn-sm" for="format_detailed">Detailed</label>
                             
                             <input type="radio" class="btn-check" name="report_format_radio" id="format_summarised" value="S" {{ ($reportFormat ?? '') == 'S' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-warning btn-sm" for="format_summarised">Summarised</label>
+                            <label class="btn btn-outline-primary btn-sm" for="format_summarised">Summarised</label>
                         </div>
                     </div>
                 </div>
@@ -32,10 +32,10 @@
                         <span class="fw-bold small">TCS:</span>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="tcs_filter_radio" id="tcs_with" value="T" {{ ($tcsFilter ?? 'A') == 'T' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-success btn-sm" for="tcs_with">With TCS</label>
+                            <label class="btn btn-outline-primary btn-sm" for="tcs_with">With TCS</label>
                             
                             <input type="radio" class="btn-check" name="tcs_filter_radio" id="tcs_without" value="W" {{ ($tcsFilter ?? '') == 'W' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-secondary btn-sm" for="tcs_without">Without TCS</label>
+                            <label class="btn btn-outline-primary btn-sm" for="tcs_without">Without TCS</label>
                             
                             <input type="radio" class="btn-check" name="tcs_filter_radio" id="tcs_all" value="A" {{ ($tcsFilter ?? 'A') == 'A' ? 'checked' : '' }}>
                             <label class="btn btn-outline-primary btn-sm" for="tcs_all">All</label>
@@ -47,13 +47,13 @@
                         <span class="fw-bold small">Sale Type:</span>
                         <div class="btn-group btn-group-sm" role="group">
                             <input type="radio" class="btn-check" name="sale_type_radio" id="sale_only" value="S" {{ ($saleType ?? 'B') == 'S' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-info btn-sm" for="sale_only">Sale</label>
+                            <label class="btn btn-outline-primary btn-sm" for="sale_only">Sale</label>
                             
                             <input type="radio" class="btn-check" name="sale_type_radio" id="return_only" value="R" {{ ($saleType ?? '') == 'R' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-danger btn-sm" for="return_only">Return</label>
+                            <label class="btn btn-outline-primary btn-sm" for="return_only">Return</label>
                             
                             <input type="radio" class="btn-check" name="sale_type_radio" id="sale_both" value="B" {{ ($saleType ?? 'B') == 'B' ? 'checked' : '' }}>
-                            <label class="btn btn-outline-dark btn-sm" for="sale_both">Both</label>
+                            <label class="btn btn-outline-primary btn-sm" for="sale_both">Both</label>
                         </div>
                     </div>
                 </div>
@@ -62,9 +62,9 @@
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.sales-book-tcs') }}">
                 <input type="hidden" name="report_format" id="hidden_report_format" value="{{ $reportFormat ?? 'D' }}">
                 <input type="hidden" name="tcs_filter" id="hidden_tcs_filter" value="{{ $tcsFilter ?? 'A' }}">
                 <input type="hidden" name="sale_type" id="hidden_sale_type" value="{{ $saleType ?? 'B' }}">
@@ -166,28 +166,29 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="row mt-2">
-                    <div class="col-md-12">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="bi bi-search"></i> Search
-                            </button>
-                            <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()">
-                                <i class="bi bi-file-excel"></i> Excel
-                            </button>
-                            <button type="button" class="btn btn-info btn-sm" onclick="viewReport()">
-                                <i class="bi bi-printer"></i> View
-                            </button>
-                            <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">Close</a>
-                        </div>
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-3 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($sales) && $sales->count() > 0)
     <!-- Summary Cards -->
-    @if(isset($sales) && $sales->count() > 0)
     <div class="row g-2 mb-2">
         <div class="col">
             <div class="card bg-primary text-white">
@@ -230,9 +231,7 @@
             </div>
         </div>
     </div>
-    @endif
 
-    <!-- Data Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 55vh;">
@@ -253,7 +252,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($sales ?? [] as $index => $sale)
+                        @foreach($sales as $index => $sale)
                         @php
                             $taxableAmount = $sale->nt_amount - ($sale->dis_amount ?? 0);
                             $tcsPercent = ($fromSource ?? 'T') == 'T' 
@@ -280,16 +279,8 @@
                             <td class="text-end text-danger fw-bold">{{ number_format($tcsAmount, 2) }}</td>
                             <td class="text-end fw-bold">{{ number_format($sale->net_amount ?? 0, 2) }}</td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="11" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                Select filters and click "Search" to generate Sale Book with TCS
-                            </td>
-                        </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
-                    @if(isset($sales) && $sales->count() > 0)
                     <tfoot class="table-dark fw-bold">
                         <tr>
                             <td colspan="6" class="text-end">Grand Total ({{ number_format($totals['count'] ?? 0) }} Bills):</td>
@@ -300,11 +291,11 @@
                             <td class="text-end">{{ number_format($totals['net_amount'] ?? 0, 2) }}</td>
                         </tr>
                     </tfoot>
-                    @endif
                 </table>
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
@@ -328,27 +319,44 @@ document.querySelectorAll('input[name="sale_type_radio"]').forEach(radio => {
 });
 
 function exportToExcel() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('export', 'excel');
     window.open('{{ route("admin.reports.sales.sales-book-tcs") }}?' + params.toString(), '_blank');
 }
 
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    window.open('{{ route("admin.reports.sales.sales-book-tcs") }}?' + params.toString(), 'SaleBookTCS', 'width=1150,height=800,scrollbars=yes,resizable=yes');
+function printReport() {
+    window.open('{{ route("admin.reports.sales.sales-book-tcs") }}?print=1&' + $('#filterForm').serialize(), '_blank');
 }
+
+// Keyboard shortcuts
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
+});
 </script>
 @endpush
 
 @push('styles')
 <style>
-.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; }
-.form-control, .form-select { font-size: 0.75rem; }
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.75rem; border-radius: 0; }
 .table th, .table td { padding: 0.3rem 0.4rem; font-size: 0.75rem; vertical-align: middle; }
 .btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
 .sticky-top { position: sticky; top: 0; z-index: 10; }

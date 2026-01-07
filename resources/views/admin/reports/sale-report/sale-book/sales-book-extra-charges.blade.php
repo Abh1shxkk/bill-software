@@ -5,16 +5,16 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #e2d5f1 0%, #d4c4e8 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-purple fst-italic fw-bold" style="color: #6f42c1;">SALE BOOK EXTRA CHARGES</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">SALE BOOK EXTRA CHARGES</h4>
         </div>
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.sales-book-extra-charges') }}">
                 <div class="row g-2">
                     <!-- Row 1: Date Range & Format -->
                     <div class="col-md-2">
@@ -125,7 +125,7 @@
 
                 <!-- Row 4: Display Options -->
                 <div class="row mt-2">
-                    <div class="col-md-8">
+                    <div class="col-md-6">
                         <div class="d-flex flex-wrap gap-3 align-items-center border rounded p-2 bg-light">
                             <div class="form-check form-check-inline">
                                 <input class="form-check-input" type="checkbox" name="tag_customer" id="tagCustomer" value="1" {{ ($tagCustomer ?? false) ? 'checked' : '' }}>
@@ -137,27 +137,32 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button type="submit" class="btn btn-primary btn-sm">
-                                <i class="bi bi-search"></i> Search
-                            </button>
-                            <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()">
-                                <i class="bi bi-file-excel"></i> Excel
-                            </button>
-                            <button type="button" class="btn btn-info btn-sm" onclick="viewReport()">
-                                <i class="bi bi-printer"></i> View
-                            </button>
-                            <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">Close</a>
-                        </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-3 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($sales) && $sales->count() > 0)
     <!-- Summary Cards -->
-    @if(isset($sales) && $sales->count() > 0)
     <div class="row g-2 mb-2">
         <div class="col">
             <div class="card bg-primary text-white">
@@ -216,9 +221,7 @@
             </div>
         </div>
     </div>
-    @endif
 
-    <!-- Data Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 55vh;">
@@ -241,7 +244,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($sales ?? [] as $index => $sale)
+                        @foreach($sales as $index => $sale)
                         <tr>
                             <td class="text-center">{{ $index + 1 }}</td>
                             <td>{{ $sale->sale_date->format('d-m-Y') }}</td>
@@ -261,16 +264,8 @@
                             <td class="text-end">{{ number_format($sale->tcs_amount ?? 0, 2) }}</td>
                             <td class="text-end fw-bold text-success">{{ number_format($sale->net_amount ?? 0, 2) }}</td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="13" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                Select filters and click "Search" to generate Extra Charges report
-                            </td>
-                        </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
-                    @if(isset($sales) && $sales->count() > 0)
                     <tfoot class="table-dark fw-bold">
                         <tr>
                             <td colspan="5" class="text-end">Grand Total ({{ number_format($totals['count'] ?? 0) }} Bills):</td>
@@ -284,38 +279,55 @@
                             <td class="text-end">{{ number_format($totals['net_amount'] ?? 0, 2) }}</td>
                         </tr>
                     </tfoot>
-                    @endif
                 </table>
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
 <script>
 function exportToExcel() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('export', 'excel');
     window.open('{{ route("admin.reports.sales.sales-book-extra-charges") }}?' + params.toString(), '_blank');
 }
 
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    window.open('{{ route("admin.reports.sales.sales-book-extra-charges") }}?' + params.toString(), 'ExtraCharges', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+function printReport() {
+    window.open('{{ route("admin.reports.sales.sales-book-extra-charges") }}?print=1&' + $('#filterForm').serialize(), '_blank');
 }
+
+// Keyboard shortcuts
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
+});
 </script>
 @endpush
 
 @push('styles')
 <style>
-.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; }
-.form-control, .form-select { font-size: 0.75rem; }
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.75rem; border-radius: 0; }
 .table th, .table td { padding: 0.3rem 0.4rem; font-size: 0.72rem; vertical-align: middle; }
 .btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
 .sticky-top { position: sticky; top: 0; z-index: 10; }

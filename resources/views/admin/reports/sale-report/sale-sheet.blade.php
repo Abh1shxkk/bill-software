@@ -5,16 +5,16 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-primary fst-italic fw-bold">SALE BOOK WITH ITEM DETAILS</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">SALE BOOK WITH ITEM DETAILS</h4>
         </div>
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.sale-sheet') }}">
                 <div class="row g-2 align-items-end">
                     <!-- Row 1: Date Range -->
                     <div class="col-md-2">
@@ -29,11 +29,7 @@
                             <input type="date" name="date_to" class="form-control" value="{{ $dateTo }}">
                         </div>
                     </div>
-                </div>
-
-                <div class="row g-2 mt-1">
-                    <!-- Row 2: Party -->
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Party</span>
                             <select name="customer_id" class="form-select">
@@ -46,25 +42,17 @@
                             </select>
                         </div>
                     </div>
-                </div>
-
-                <div class="row g-2 mt-1">
-                    <!-- Row 3: Report Type -->
-                    <div class="col-md-6">
+                    <div class="col-md-2">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">1. Sale Book / 2. Sales Return / 3. Expiry</span>
-                            <select name="report_type" class="form-select" style="width: 60px;">
-                                <option value="1" {{ ($reportType ?? '1') == '1' ? 'selected' : '' }}>1</option>
-                                <option value="2" {{ ($reportType ?? '') == '2' ? 'selected' : '' }}>2</option>
-                                <option value="3" {{ ($reportType ?? '') == '3' ? 'selected' : '' }}>3</option>
+                            <span class="input-group-text">Type</span>
+                            <select name="report_type" class="form-select text-uppercase">
+                                <option value="1" {{ ($reportType ?? '1') == '1' ? 'selected' : '' }}>1-Sale</option>
+                                <option value="2" {{ ($reportType ?? '') == '2' ? 'selected' : '' }}>2-Return</option>
+                                <option value="3" {{ ($reportType ?? '') == '3' ? 'selected' : '' }}>3-Expiry</option>
                             </select>
                         </div>
                     </div>
-                </div>
-
-                <div class="row g-2 mt-1">
-                    <!-- Row 4: Series -->
-                    <div class="col-md-4">
+                    <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Series</span>
                             <select name="series" class="form-select">
@@ -78,7 +66,7 @@
                 </div>
 
                 <!-- Filters Section -->
-                <fieldset class="border rounded p-2 mt-2">
+                <fieldset class="border rounded p-2 mt-2" style="background: #f8f9fa;">
                     <legend class="float-none w-auto px-2 text-primary small">Filters</legend>
                     <div class="row g-2">
                         <div class="col-md-3">
@@ -129,12 +117,31 @@
                         </div>
                     </div>
                 </fieldset>
+
+                <!-- Action Buttons -->
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
 
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($items) && count($items) > 0)
     <!-- Summary Cards -->
-    @if(isset($totals) && ($totals['items_count'] ?? 0) > 0)
     <div class="row g-2 mb-2">
         <div class="col">
             <div class="card bg-primary text-white">
@@ -177,9 +184,7 @@
             </div>
         </div>
     </div>
-    @endif
 
-    <!-- Data Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 50vh;">
@@ -226,7 +231,7 @@
                         <tr>
                             <td colspan="13" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                Select filters to generate Sale Book With Item Details
+                                Select filters and click "View" to generate Sale Book With Item Details
                             </td>
                         </tr>
                         @endforelse
@@ -248,58 +253,54 @@
             </div>
         </div>
     </div>
-
-    <!-- Action Buttons -->
-    <div class="card mt-2">
-        <div class="card-body py-2">
-            <div class="d-flex justify-content-between">
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()">
-                        <i class="bi bi-file-excel me-1"></i>Excel
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm">Format2</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm">Format 3</button>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-info btn-sm" onclick="viewReport()">
-                        <i class="bi bi-eye me-1"></i>View
-                    </button>
-                    <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">Close</a>
-                </div>
-            </div>
-        </div>
-    </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
 <script>
 function exportToExcel() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('export', 'excel');
     window.open('{{ route("admin.reports.sales.sale-sheet") }}?' + params.toString(), '_blank');
 }
 
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    window.open('{{ route("admin.reports.sales.sale-sheet") }}?' + params.toString(), 'SaleSheet', 'width=1100,height=800,scrollbars=yes,resizable=yes');
+function printReport() {
+    window.open('{{ route("admin.reports.sales.sale-sheet") }}?print=1&' + $('#filterForm').serialize(), '_blank');
 }
+
+// Keyboard shortcuts
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
+});
 </script>
 @endpush
 
 @push('styles')
 <style>
-.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; min-width: auto; }
-.form-control, .form-select { font-size: 0.75rem; }
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.75rem; padding: 0.25rem 0.5rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.8rem; border-radius: 0; }
 .table th, .table td { padding: 0.25rem 0.4rem; font-size: 0.73rem; vertical-align: middle; }
-.btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
 .sticky-top { position: sticky; top: 0; z-index: 10; }
-fieldset { background: #f8f9fa; }
+fieldset { border-radius: 0; }
 legend { font-size: 0.8rem; }
 </style>
 @endpush

@@ -179,7 +179,7 @@ class SalesReportController extends Controller
         }
 
         // Handle Print view - open in new window
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-book.sales-book-print', compact(
                 'sales', 'totals', 'customers', 'salesmen', 'seriesList', 'areas', 'routes', 'states', 'users',
                 'dateFrom', 'dateTo', 'reportType', 'reportFormat', 'cancelled', 'withBrExp', 'dayWiseTotal',
@@ -315,8 +315,8 @@ class SalesReportController extends Controller
         $routes = Route::select('id', 'name')->orderBy('name')->get();
         $states = State::select('id', 'name')->orderBy('name')->get();
 
-        // Handle Print view
-        if ($request->get('view_type') === 'print') {
+        // Handle Print view - open in new window
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-book.sales-book-gstr-print', compact(
                 'sales', 'totals', 'customers', 'salesmen', 'seriesList', 'areas', 'routes', 'states',
                 'dateFrom', 'dateTo', 'reportType', 'reportFormat', 'series', 'withSuppExp', 'withCustExp',
@@ -497,7 +497,7 @@ class SalesReportController extends Controller
         $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
 
         // Handle Print view
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sales-book-party-wise-print', compact(
                 'groupedSales', 'totals', 'customers', 'salesmen', 'seriesList',
                 'dateFrom', 'dateTo', 'reportType', 'series', 'customerId', 'selective', 'billWise',
@@ -591,7 +591,7 @@ class SalesReportController extends Controller
         $categories = \App\Models\ItemCategory::select('id', 'name')->orderBy('name')->get();
 
         // Handle Print view
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.day-sales-summary-item-wise-print', compact(
                 'items', 'totals', 'categories', 'dateFrom', 'dateTo', 'invoiceFrom', 'invoiceTo',
                 'localCentral', 'categoryId', 'showValue', 'withVat', 'saleType', 'orderBy', 'ascDesc', 'addFreeQty'
@@ -643,7 +643,7 @@ class SalesReportController extends Controller
         $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
 
         // Handle Print view
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sales-summary-print', compact(
                 'sales', 'grandTotals', 'seriesList', 'dateFrom', 'dateTo', 'series', 'numberFrom', 'numberTo'
             ));
@@ -698,7 +698,7 @@ class SalesReportController extends Controller
 
         $salesmen = SalesMan::select('id', 'name', 'code')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sales-bills-printing-print', compact(
                 'groupedSales', 'totals', 'salesmen', 'dateFrom', 'dateTo', 'salesmanId',
                 'printGridFormat', 'billSalesmanWise', 'remarks'
@@ -764,7 +764,7 @@ class SalesReportController extends Controller
         $routes = Route::select('id', 'name')->orderBy('name')->get();
         $states = State::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-sheet-print', compact(
                 'items', 'totals', 'customers', 'seriesList', 'salesmen', 'areas', 'routes', 'states',
                 'dateFrom', 'dateTo', 'customerId', 'reportType', 'series', 'salesmanId', 'areaId', 'routeId', 'stateId'
@@ -816,7 +816,7 @@ class SalesReportController extends Controller
 
         $companies = Company::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.dispatch-sheet-print', compact(
                 'groupedItems', 'totals', 'companies', 'dateFrom', 'dateTo', 'companyId', 'remarks'
             ));
@@ -903,7 +903,7 @@ class SalesReportController extends Controller
             'net_amount' => $items->sum('net_amount')
         ];
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-return-book-item-wise-print', compact(
                 'items', 'totals', 'itemsList', 'companies',
                 'dateFrom', 'dateTo', 'itemId', 'companyId'
@@ -979,7 +979,7 @@ class SalesReportController extends Controller
         $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $seriesList = SaleTransaction::distinct()->pluck('series')->filter();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.local-central-sale-register-print', compact(
                 'sales', 'localSales', 'centralSales', 'totals', 'customers', 'seriesList',
                 'dateFrom', 'dateTo', 'reportType', 'customerId', 'localCentral', 'cancelled', 'taxRetail', 'series'
@@ -1018,66 +1018,77 @@ class SalesReportController extends Controller
         $holdOnly = $request->get('hold_only', false); // Hold Challans Only
         $taggedIds = $request->get('tagged_ids', ''); // Tagged challan IDs
 
-        $query = SaleChallanTransaction::with([
-            'customer:id,name,code,area_code,route_code,area_name,route_name',
-            'salesman:id,name,code'
-        ])->whereBetween('challan_date', [$dateFrom, $dateTo]);
-
-        if ($customerId) $query->where('customer_id', $customerId);
-        if ($salesmanId) $query->where('salesman_id', $salesmanId);
-        
-        if ($routeId) {
-            $query->whereHas('customer', function($q) use ($routeId) {
-                $q->where('route_code', $routeId);
-            });
-        }
-        if ($areaId) {
-            $query->whereHas('customer', function($q) use ($areaId) {
-                $q->where('area_code', $areaId);
-            });
-        }
-        
-        if ($flag === 'C') $query->where('cash_flag', 'C');
-        if ($flag === 'R') $query->where('cash_flag', 'R');
-        
-        if ($day) {
-            $query->whereRaw('DAYNAME(challan_date) = ?', [$day]);
-        }
-        
-        if ($holdOnly) {
-            $query->where('status', 'hold');
-        }
-
-        // Order by
-        $query = match($orderBy) {
-            'name' => $query->orderBy(Customer::select('name')->whereColumn('customers.id', 'sale_challan_transactions.customer_id')),
-            'challan_no' => $query->orderBy('challan_no'),
-            default => $query->orderBy('challan_date')->orderBy('challan_no')
-        };
-
-        $challans = $query->get();
-
-        // Handle tagging
-        $taggedArray = $taggedIds ? explode(',', $taggedIds) : [];
-
-        $totals = [
-            'count' => $challans->count(),
-            'net_amount' => (float) $challans->sum('net_amount'),
-            'tagged_count' => count($taggedArray),
-            'tagged_amount' => (float) $challans->whereIn('id', $taggedArray)->sum('net_amount')
-        ];
-
+        // Get filter options for dropdowns
         $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $routes = Route::select('id', 'name')->orderBy('name')->get();
         $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
-            return view('admin.reports.sale-report.sale-challan-reports.sale-challan-book-print', compact(
-                'challans', 'totals', 'customers', 'salesmen', 'routes', 'areas', 'taggedArray',
-                'dateFrom', 'dateTo', 'customerId', 'salesmanId', 'routeId', 'areaId',
-                'flag', 'dsFormat', 'day', 'orderBy', 'holdOnly', 'taggedIds'
-            ));
+        $challans = collect();
+        $taggedArray = $taggedIds ? explode(',', $taggedIds) : [];
+        $totals = [
+            'count' => 0,
+            'net_amount' => 0,
+            'tagged_count' => count($taggedArray),
+            'tagged_amount' => 0
+        ];
+
+        // Only fetch data when view or print is requested
+        if ($request->has('view') || $request->has('print')) {
+            $query = SaleChallanTransaction::with([
+                'customer:id,name,code,area_code,route_code,area_name,route_name',
+                'salesman:id,name,code'
+            ])->whereBetween('challan_date', [$dateFrom, $dateTo]);
+
+            if ($customerId) $query->where('customer_id', $customerId);
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            
+            if ($routeId) {
+                $query->whereHas('customer', function($q) use ($routeId) {
+                    $q->where('route_code', $routeId);
+                });
+            }
+            if ($areaId) {
+                $query->whereHas('customer', function($q) use ($areaId) {
+                    $q->where('area_code', $areaId);
+                });
+            }
+            
+            if ($flag === 'C') $query->where('cash_flag', 'C');
+            if ($flag === 'R') $query->where('cash_flag', 'R');
+            
+            if ($day) {
+                $query->whereRaw('DAYNAME(challan_date) = ?', [$day]);
+            }
+            
+            if ($holdOnly) {
+                $query->where('status', 'hold');
+            }
+
+            // Order by
+            $query = match($orderBy) {
+                'name' => $query->orderBy(Customer::select('name')->whereColumn('customers.id', 'sale_challan_transactions.customer_id')),
+                'challan_no' => $query->orderBy('challan_no'),
+                default => $query->orderBy('challan_date')->orderBy('challan_no')
+            };
+
+            $challans = $query->get();
+
+            $totals = [
+                'count' => $challans->count(),
+                'net_amount' => (float) $challans->sum('net_amount'),
+                'tagged_count' => count($taggedArray),
+                'tagged_amount' => (float) $challans->whereIn('id', $taggedArray)->sum('net_amount')
+            ];
+
+            // Handle Print view - open in new window
+            if ($request->has('print')) {
+                return view('admin.reports.sale-report.sale-challan-reports.sale-challan-book-print', compact(
+                    'challans', 'totals', 'customers', 'salesmen', 'routes', 'areas', 'taggedArray',
+                    'dateFrom', 'dateTo', 'customerId', 'salesmanId', 'routeId', 'areaId',
+                    'flag', 'dsFormat', 'day', 'orderBy', 'holdOnly', 'taggedIds'
+                ));
+            }
         }
 
         return view('admin.reports.sale-report.sale-challan-reports.sale-challan-book', compact(
@@ -1100,47 +1111,58 @@ class SalesReportController extends Controller
         $areaId = $request->get('area_id');
         $flag = $request->get('flag', ''); // Cash/Credit flag
 
-        $query = SaleChallanTransaction::with([
-            'customer:id,name,code,mobile,area_code,route_code,area_name,route_name',
-            'salesman:id,name,code',
-            'saleTransaction:id,invoice_no,sale_date'
-        ])->where('is_invoiced', false)
-          ->whereBetween('challan_date', [$dateFrom, $dateTo]);
-
-        if ($customerId) $query->where('customer_id', $customerId);
-        if ($salesmanId) $query->where('salesman_id', $salesmanId);
-        
-        if ($routeId) {
-            $query->whereHas('customer', function($q) use ($routeId) {
-                $q->where('route_code', $routeId);
-            });
-        }
-        if ($areaId) {
-            $query->whereHas('customer', function($q) use ($areaId) {
-                $q->where('area_code', $areaId);
-            });
-        }
-        
-        if ($flag === 'C') $query->where('cash_flag', 'C');
-        if ($flag === 'R') $query->where('cash_flag', 'R');
-
-        $challans = $query->orderBy('challan_date')->orderBy('challan_no')->get();
-
-        $totals = [
-            'count' => $challans->count(),
-            'net_amount' => (float) $challans->sum('net_amount')
-        ];
-
+        // Get filter options for dropdowns
         $customers = Customer::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $salesmen = SalesMan::where('is_deleted', '!=', 1)->select('id', 'name', 'code')->orderBy('name')->get();
         $routes = Route::select('id', 'name')->orderBy('name')->get();
         $areas = Area::where('is_deleted', '!=', 1)->select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
-            return view('admin.reports.sale-report.sale-challan-reports.pending-challans-print', compact(
-                'challans', 'totals', 'customers', 'salesmen', 'routes', 'areas',
-                'dateFrom', 'dateTo', 'customerId', 'salesmanId', 'routeId', 'areaId', 'flag'
-            ));
+        $challans = collect();
+        $totals = [
+            'count' => 0,
+            'net_amount' => 0
+        ];
+
+        // Only fetch data when view or print is requested
+        if ($request->has('view') || $request->has('print')) {
+            $query = SaleChallanTransaction::with([
+                'customer:id,name,code,mobile,area_code,route_code,area_name,route_name',
+                'salesman:id,name,code',
+                'saleTransaction:id,invoice_no,sale_date'
+            ])->where('is_invoiced', false)
+              ->whereBetween('challan_date', [$dateFrom, $dateTo]);
+
+            if ($customerId) $query->where('customer_id', $customerId);
+            if ($salesmanId) $query->where('salesman_id', $salesmanId);
+            
+            if ($routeId) {
+                $query->whereHas('customer', function($q) use ($routeId) {
+                    $q->where('route_code', $routeId);
+                });
+            }
+            if ($areaId) {
+                $query->whereHas('customer', function($q) use ($areaId) {
+                    $q->where('area_code', $areaId);
+                });
+            }
+            
+            if ($flag === 'C') $query->where('cash_flag', 'C');
+            if ($flag === 'R') $query->where('cash_flag', 'R');
+
+            $challans = $query->orderBy('challan_date')->orderBy('challan_no')->get();
+
+            $totals = [
+                'count' => $challans->count(),
+                'net_amount' => (float) $challans->sum('net_amount')
+            ];
+
+            // Handle Print view - open in new window
+            if ($request->has('print')) {
+                return view('admin.reports.sale-report.sale-challan-reports.pending-challans-print', compact(
+                    'challans', 'totals', 'customers', 'salesmen', 'routes', 'areas',
+                    'dateFrom', 'dateTo', 'customerId', 'salesmanId', 'routeId', 'areaId', 'flag'
+                ));
+            }
         }
 
         return view('admin.reports.sale-report.sale-challan-reports.pending-challans', compact(
@@ -1207,7 +1229,7 @@ class SalesReportController extends Controller
         $areas = Area::select('id', 'name')->orderBy('name')->get();
         $routes = Route::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sales-stock-summary-print', compact(
                 'groupedSales', 'totals', 'salesmen', 'areas', 'routes',
                 'dateFrom', 'dateTo', 'reportType', 'vouType', 'showTotal', 'neverPrinted',
@@ -1310,7 +1332,7 @@ class SalesReportController extends Controller
         $areas = Area::select('id', 'name')->orderBy('name')->get();
         $routes = Route::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.customer-visit-status-print', compact(
                 'report', 'groupedReport', 'totals', 'salesmen', 'areas', 'routes',
                 'dateFrom', 'dateTo', 'salesmanId', 'visitFilter', 'groupBy', 'areaId', 'routeId'
@@ -1388,7 +1410,7 @@ class SalesReportController extends Controller
 
         $companies = Company::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.shortage-report-print', compact(
                 'shortageItems', 'totals', 'companies', 'dateFrom', 'dateTo', 'companyId', 'reportFormat'
             ));
@@ -1431,7 +1453,7 @@ class SalesReportController extends Controller
 
         $companies = Company::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-return-list-print', compact(
                 'returns', 'totals', 'companies', 'dateFrom', 'dateTo', 'companyId', 'remarks'
             ));
@@ -1601,7 +1623,7 @@ class SalesReportController extends Controller
         $routes = Route::select('id', 'name')->orderBy('name')->get();
         $states = State::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-book.tds-input-print', compact(
                 'sales', 'totals', 'customers', 'salesmen', 'areas', 'routes', 'states',
                 'dateFrom', 'dateTo', 'reportFormat', 'customerId', 'localCentral',
@@ -1663,7 +1685,7 @@ class SalesReportController extends Controller
 
         $states = State::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-book.tcs-eligibility-print', compact(
                 'parties', 'totals', 'states', 'dateFrom', 'dateTo', 'partyType',
                 'amountThreshold', 'localCentral', 'stateId'
@@ -1786,7 +1808,7 @@ class SalesReportController extends Controller
         $routes = Route::select('id', 'name')->orderBy('name')->get();
         $states = State::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-book.sales-book-tcs-print', compact(
                 'sales', 'returns', 'totals', 'customers', 'salesmen', 'areas', 'routes', 'states',
                 'dateFrom', 'dateTo', 'reportFormat', 'tcsFilter', 'fromSource', 'saleType',
@@ -1869,7 +1891,7 @@ class SalesReportController extends Controller
         $routes = Route::select('id', 'name')->orderBy('name')->get();
         $states = State::select('id', 'name')->orderBy('name')->get();
 
-        if ($request->get('view_type') === 'print') {
+        if ($request->has('print')) {
             return view('admin.reports.sale-report.sale-book.sales-book-extra-charges-print', compact(
                 'sales', 'totals', 'customers', 'salesmen', 'areas', 'routes', 'states',
                 'dateFrom', 'dateTo', 'reportFormat', 'localCentral', 'customerId', 'salesmanId',
@@ -7211,45 +7233,58 @@ class SalesReportController extends Controller
         $dateFrom = $request->get('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->get('date_to', Carbon::now()->format('Y-m-d'));
 
-        // Fetch sales with cash payment details (cash_flag = 'Y' means cash sale)
-        $query = SaleTransaction::with([
-            'customer:id,name,code,area_name,route_name',
-            'salesman:id,name,code'
-        ])
-        ->whereBetween('sale_date', [$dateFrom, $dateTo])
-        ->orderBy('sale_date')
-        ->orderBy('invoice_no');
-
-        $sales = $query->get();
-
-        // Calculate totals
+        $sales = collect();
         $totals = [
-            'count' => $sales->count(),
-            'net_amount' => $sales->sum('net_amount'),
-            'paid_amount' => $sales->sum('paid_amount'),
-            'balance_amount' => $sales->sum('balance_amount')
+            'count' => 0,
+            'net_amount' => 0,
+            'paid_amount' => 0,
+            'balance_amount' => 0
         ];
+        $dailySummary = collect();
 
-        // Group by date for daily summary
-        $dailySummary = $sales->groupBy(function($sale) {
-            return $sale->sale_date->format('Y-m-d');
-        })->map(function($daySales) {
-            return [
-                'count' => $daySales->count(),
-                'net_amount' => $daySales->sum('net_amount'),
-                'paid_amount' => $daySales->sum('paid_amount'),
-                'balance_amount' => $daySales->sum('balance_amount')
+        // Only fetch data when view or print is requested
+        if ($request->has('view') || $request->has('print') || $request->get('export') === 'excel') {
+            // Fetch sales with cash payment details
+            $query = SaleTransaction::with([
+                'customer:id,name,code,area_name,route_name',
+                'salesman:id,name,code'
+            ])
+            ->whereBetween('sale_date', [$dateFrom, $dateTo])
+            ->orderBy('sale_date')
+            ->orderBy('invoice_no');
+
+            $sales = $query->get();
+
+            // Calculate totals
+            $totals = [
+                'count' => $sales->count(),
+                'net_amount' => $sales->sum('net_amount'),
+                'paid_amount' => $sales->sum('paid_amount'),
+                'balance_amount' => $sales->sum('balance_amount')
             ];
-        });
 
-        if ($request->get('export') === 'excel') {
-            return $this->exportCashCollTrnfToExcel($sales, $totals, $dateFrom, $dateTo);
-        }
+            // Group by date for daily summary
+            $dailySummary = $sales->groupBy(function($sale) {
+                return $sale->sale_date->format('Y-m-d');
+            })->map(function($daySales) {
+                return [
+                    'count' => $daySales->count(),
+                    'net_amount' => $daySales->sum('net_amount'),
+                    'paid_amount' => $daySales->sum('paid_amount'),
+                    'balance_amount' => $daySales->sum('balance_amount')
+                ];
+            });
 
-        if ($request->get('view_type') === 'print') {
-            return view('admin.reports.sale-report.other-reports.cash-coll-trnf-sale-print', compact(
-                'sales', 'totals', 'dailySummary', 'dateFrom', 'dateTo'
-            ));
+            if ($request->get('export') === 'excel') {
+                return $this->exportCashCollTrnfToExcel($sales, $totals, $dateFrom, $dateTo);
+            }
+
+            // Handle Print view - open in new window
+            if ($request->has('print')) {
+                return view('admin.reports.sale-report.other-reports.cash-coll-trnf-sale-print', compact(
+                    'sales', 'totals', 'dailySummary', 'dateFrom', 'dateTo'
+                ));
+            }
         }
 
         return view('admin.reports.sale-report.other-reports.cash-coll-trnf-sale', compact(

@@ -5,16 +5,16 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-success fst-italic fw-bold">Sale Challan Book (Challan List)</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">SALE CHALLAN BOOK (CHALLAN LIST)</h4>
         </div>
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.sale-challan-book') }}">
                 <input type="hidden" name="tagged_ids" id="taggedIds" value="{{ $taggedIds }}">
                 
                 <div class="row g-2 align-items-end">
@@ -90,7 +90,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Flag</span>
-                            <select name="flag" class="form-select">
+                            <select name="flag" class="form-select text-uppercase">
                                 <option value="">All</option>
                                 <option value="C" {{ ($flag ?? '') == 'C' ? 'selected' : '' }}>Cash</option>
                                 <option value="R" {{ ($flag ?? '') == 'R' ? 'selected' : '' }}>Credit</option>
@@ -100,7 +100,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">(D)/(S)</span>
-                            <select name="ds_format" class="form-select" style="width: 50px;">
+                            <select name="ds_format" class="form-select text-uppercase" style="width: 50px;">
                                 <option value="D" {{ ($dsFormat ?? 'D') == 'D' ? 'selected' : '' }}>D</option>
                                 <option value="S" {{ ($dsFormat ?? '') == 'S' ? 'selected' : '' }}>S</option>
                             </select>
@@ -139,15 +139,29 @@
                     </div>
                 </div>
 
-                <div class="row g-2 mt-1">
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-primary btn-sm w-100">Ok</button>
+                <!-- Action Buttons -->
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($challans) && $challans->count() > 0)
     <!-- Summary Cards -->
     <div class="row g-2 mb-2">
         <div class="col">
@@ -170,7 +184,7 @@
             <div class="card bg-warning text-dark">
                 <div class="card-body py-2 px-2 text-center">
                     <small>Tagged</small>
-                    <h6 class="mb-0">{{ number_format($totals['tagged_count'] ?? 0) }}</h6>
+                    <h6 class="mb-0 tagged-count">{{ number_format($totals['tagged_count'] ?? 0) }}</h6>
                 </div>
             </div>
         </div>
@@ -178,13 +192,12 @@
             <div class="card bg-info text-white">
                 <div class="card-body py-2 px-2 text-center">
                     <small class="text-white-50">Tagged Amount</small>
-                    <h6 class="mb-0">₹{{ number_format($totals['tagged_amount'] ?? 0, 2) }}</h6>
+                    <h6 class="mb-0 tagged-amount">₹{{ number_format($totals['tagged_amount'] ?? 0, 2) }}</h6>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Data Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 55vh;">
@@ -240,23 +253,7 @@
             </div>
         </div>
     </div>
-
-    <!-- Action Buttons -->
-    <div class="card mt-2">
-        <div class="card-body py-2">
-            <div class="d-flex justify-content-between">
-                <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()">
-                    <i class="bi bi-file-excel me-1"></i>Excel
-                </button>
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-info btn-sm" onclick="viewReport()">
-                        <i class="bi bi-printer me-1"></i>Print (F7)
-                    </button>
-                    <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">Close</a>
-                </div>
-            </div>
-        </div>
-    </div>
+    @endif
 </div>
 @endsection
 
@@ -305,33 +302,44 @@ function updateTaggedSummary() {
         }
     });
     
-    // Update cards (simplified - would need proper selectors)
-    document.querySelectorAll('.card.bg-warning h6')[0].textContent = taggedIds.length;
-    document.querySelectorAll('.card.bg-info h6')[0].textContent = '₹' + taggedAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    // Update cards
+    document.querySelector('.tagged-count').textContent = taggedIds.length;
+    document.querySelector('.tagged-amount').textContent = '₹' + taggedAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 }
 
 function exportToExcel() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('export', 'excel');
     window.open('{{ route("admin.reports.sales.sale-challan-book") }}?' + params.toString(), '_blank');
 }
 
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    window.open('{{ route("admin.reports.sales.sale-challan-book") }}?' + params.toString(), 'SaleChallanBook', 'width=1100,height=800,scrollbars=yes,resizable=yes');
+function printReport() {
+    window.open('{{ route("admin.reports.sales.sale-challan-book") }}?print=1&' + $('#filterForm').serialize(), '_blank');
 }
 
 // Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
     if (e.key === 'F7') {
         e.preventDefault();
-        viewReport();
-    } else if (e.key === 'Escape') {
+        printReport();
+    }
+    if (e.key === 'Escape') {
         window.location.href = '{{ route("admin.reports.sales") }}';
     }
 });
@@ -340,11 +348,13 @@ document.addEventListener('keydown', function(e) {
 
 @push('styles')
 <style>
-.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; min-width: auto; }
-.form-control, .form-select { font-size: 0.75rem; }
-.table th, .table td { padding: 0.3rem 0.4rem; font-size: 0.75rem; vertical-align: middle; }
-.btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.75rem; padding: 0.25rem 0.5rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.8rem; border-radius: 0; }
+.table th, .table td { padding: 0.35rem 0.5rem; font-size: 0.8rem; vertical-align: middle; }
 .sticky-top { position: sticky; top: 0; z-index: 10; }
-.tag-btn { font-size: 0.8rem; font-weight: bold; line-height: 1; }
+.tag-btn { font-size: 0.8rem; font-weight: bold; line-height: 1; border-radius: 0; }
 </style>
 @endpush

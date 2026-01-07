@@ -5,22 +5,22 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-danger fst-italic fw-bold">-: Stock Sale Summary :-</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">STOCK SALE SUMMARY</h4>
         </div>
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.sales-stock-summary') }}">
                 <div class="row g-2 align-items-end">
                     <!-- Row 1 -->
                     <div class="col-md-1">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">S/R/C</span>
-                            <select name="report_type" class="form-select">
+                            <select name="report_type" class="form-select text-uppercase">
                                 <option value="S" {{ ($reportType ?? 'S') == 'S' ? 'selected' : '' }}>S</option>
                                 <option value="R" {{ ($reportType ?? '') == 'R' ? 'selected' : '' }}>R</option>
                                 <option value="C" {{ ($reportType ?? '') == 'C' ? 'selected' : '' }}>C</option>
@@ -39,10 +39,10 @@
                             <input type="date" name="date_to" class="form-control" value="{{ $dateTo }}">
                         </div>
                     </div>
-                    <div class="col-md-1">
+                    <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Show Total</span>
-                            <select name="show_total" class="form-select">
+                            <select name="show_total" class="form-select text-uppercase">
                                 <option value="Y" {{ ($showTotal ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
                                 <option value="N" {{ ($showTotal ?? '') == 'N' ? 'selected' : '' }}>N</option>
                             </select>
@@ -50,10 +50,29 @@
                     </div>
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text">Never Printed [Y/N]</span>
-                            <select name="never_printed" class="form-select">
+                            <span class="input-group-text">Never Printed</span>
+                            <select name="never_printed" class="form-select text-uppercase">
                                 <option value="Y" {{ ($neverPrinted ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
                                 <option value="N" {{ ($neverPrinted ?? '') == 'N' ? 'selected' : '' }}>N</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">S/A/R</span>
+                            <select name="group_by" class="form-select text-uppercase">
+                                <option value="S" {{ ($groupBy ?? 'S') == 'S' ? 'selected' : '' }}>S</option>
+                                <option value="A" {{ ($groupBy ?? '') == 'A' ? 'selected' : '' }}>A</option>
+                                <option value="R" {{ ($groupBy ?? '') == 'R' ? 'selected' : '' }}>R</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text">Across/Down</span>
+                            <select name="across_down" class="form-select text-uppercase">
+                                <option value="Y" {{ ($acrossDown ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
+                                <option value="N" {{ ($acrossDown ?? '') == 'N' ? 'selected' : '' }}>N</option>
                             </select>
                         </div>
                     </div>
@@ -61,10 +80,10 @@
 
                 <div class="row g-2 mt-1">
                     <!-- Row 2 -->
-                    <div class="col-md-1">
+                    <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Vou.Type</span>
-                            <input type="text" name="vou_type" class="form-control" value="{{ $vouType ?? '00' }}" style="width: 40px;">
+                            <input type="text" name="vou_type" class="form-control text-uppercase" value="{{ $vouType ?? '00' }}">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -80,7 +99,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Area</span>
                             <select name="area_id" class="form-select">
@@ -91,30 +110,7 @@
                             </select>
                         </div>
                     </div>
-                </div>
-
-                <div class="row g-2 mt-1">
-                    <!-- Row 3 -->
-                    <div class="col-md-2">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">S/A/R</span>
-                            <select name="group_by" class="form-select">
-                                <option value="S" {{ ($groupBy ?? 'S') == 'S' ? 'selected' : '' }}>S</option>
-                                <option value="A" {{ ($groupBy ?? '') == 'A' ? 'selected' : '' }}>A</option>
-                                <option value="R" {{ ($groupBy ?? '') == 'R' ? 'selected' : '' }}>R</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">Across/Down [Y/N]</span>
-                            <select name="across_down" class="form-select">
-                                <option value="Y" {{ ($acrossDown ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
-                                <option value="N" {{ ($acrossDown ?? '') == 'N' ? 'selected' : '' }}>N</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Route</span>
                             <select name="route_id" class="form-select">
@@ -125,15 +121,31 @@
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-1">
-                        <button type="submit" class="btn btn-primary btn-sm w-100">Ok</button>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Data Table -->
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($groupedSales) && count($groupedSales) > 0)
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 55vh;">
@@ -181,7 +193,7 @@
                         <tr>
                             <td colspan="6" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                Select filters and click "Ok" to generate Stock Sale Summary
+                                Select filters and click "View" to generate Stock Sale Summary
                             </td>
                         </tr>
                         @endforelse
@@ -191,15 +203,12 @@
         </div>
     </div>
 
-    <!-- Action Buttons & Totals -->
+    <!-- Totals Footer -->
     <div class="card mt-2">
         <div class="card-body py-2">
             <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex gap-2">
-                    <button type="button" class="btn btn-info btn-sm" onclick="viewReport()">View (F7)</button>
-                    <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">Close</a>
-                    <button type="button" class="btn btn-warning btn-sm">Modify Batch (F3)</button>
-                    <span class="text-primary fst-italic ms-2">TAG (+) / UNTAG (-)</span>
+                <div>
+                    <span class="text-primary fst-italic">TAG (+) / UNTAG (-)</span>
                 </div>
                 <div class="d-flex gap-4">
                     <div>
@@ -216,32 +225,52 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
 <script>
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    window.open('{{ route("admin.reports.sales.sales-stock-summary") }}?' + params.toString(), 'StockSaleSummary', 'width=1100,height=800,scrollbars=yes,resizable=yes');
+function exportToExcel() {
+    const params = new URLSearchParams($('#filterForm').serialize());
+    params.set('export', 'excel');
+    window.open('{{ route("admin.reports.sales.sales-stock-summary") }}?' + params.toString(), '_blank');
 }
 
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'F7') { e.preventDefault(); viewReport(); }
-    if (e.key === 'Escape') { window.location.href = '{{ route("admin.reports.sales") }}'; }
+function printReport() {
+    window.open('{{ route("admin.reports.sales.sales-stock-summary") }}?print=1&' + $('#filterForm').serialize(), '_blank');
+}
+
+// Keyboard shortcuts
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
 });
 </script>
 @endpush
 
 @push('styles')
 <style>
-.input-group-text { font-size: 0.65rem; padding: 0.15rem 0.3rem; min-width: auto; }
-.form-control, .form-select { font-size: 0.75rem; }
-.table th, .table td { padding: 0.25rem 0.4rem; font-size: 0.75rem; vertical-align: middle; }
-.btn-sm { font-size: 0.75rem; padding: 0.2rem 0.5rem; }
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.75rem; padding: 0.25rem 0.5rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.8rem; border-radius: 0; }
+.table th, .table td { padding: 0.35rem 0.5rem; font-size: 0.8rem; vertical-align: middle; }
 .sticky-top { position: sticky; top: 0; z-index: 10; }
 </style>
 @endpush
