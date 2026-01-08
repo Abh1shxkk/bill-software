@@ -8,6 +8,7 @@ use App\Models\StockAdjustmentItem;
 use App\Models\Item;
 use App\Models\Batch;
 use App\Models\StockLedger;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 
 class StockAdjustmentController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display stock adjustment transaction form
      */
@@ -85,6 +87,12 @@ class StockAdjustmentController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'stock_adjustment', 'adjustment_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $request->validate([
             'adjustment_date' => 'required|date',
             'items' => 'required|array|min:1',

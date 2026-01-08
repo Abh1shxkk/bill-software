@@ -8,11 +8,13 @@ use App\Models\CustomerReceiptItem;
 use App\Models\CustomerReceiptAdjustment;
 use App\Models\Customer;
 use App\Models\CashBankBook;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DepositSlipController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display the deposit slip index page.
      */
@@ -152,6 +154,12 @@ class DepositSlipController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'deposit_slip', 'deposit_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $validated = $request->validate([
             'customer_receipt_item_id' => 'required|exists:customer_receipt_items,id',
             'slip_no' => 'required|integer',

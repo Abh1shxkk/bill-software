@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\ChequeReturn;
 use App\Models\CustomerReceiptItem;
 use App\Models\Customer;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ChequeReturnController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display the cheque return unpaid index page.
      */
@@ -114,6 +116,12 @@ class ChequeReturnController extends Controller
      */
     public function returnCheque(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'cheque_return', 'return_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $validated = $request->validate([
             'customer_receipt_item_id' => 'required|exists:customer_receipt_items,id',
             'return_date' => 'required|date',

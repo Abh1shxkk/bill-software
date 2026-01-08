@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Item;
 use App\Models\SalesMan;
 use App\Models\Batch;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 
 class SaleChallanController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of the resource.
      */
@@ -108,6 +110,12 @@ class SaleChallanController extends Controller
             Log::info('Sale Challan Store Request', [
                 'data' => $request->all()
             ]);
+            
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'sale_challan', 'date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
             
             $validated = $request->validate([
                 'date' => 'required|date',

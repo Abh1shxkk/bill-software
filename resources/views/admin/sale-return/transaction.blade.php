@@ -2713,6 +2713,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     updateSeriesLabel();
 });
+
 </script>
 
 <style>

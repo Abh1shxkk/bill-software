@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Item;
 use App\Models\SalesMan;
 use App\Models\Batch;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 
 class SaleTransactionController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of the resource.
      */
@@ -60,14 +62,18 @@ class SaleTransactionController extends Controller
     public function getItems()
     {
         try {
-            $items = Item::select('id', 'name', 'bar_code', 'hsn_code', 'packing', 'company_id', 'company_short_name', 's_rate', 'mrp', 'cgst_percent', 'sgst_percent', 'cess_percent', 'unit', 'case_qty', 'box_qty')
+            $items = Item::select('id', 'name', 'bar_code', 'hsn_code', 'packing', 'company_id', 'company_short_name', 's_rate', 'mrp', 'cgst_percent', 'sgst_percent', 'cess_percent', 'unit', 'case_qty', 'box_qty', 'fixed_dis_percent')
                 ->with(['batches' => function($query) {
                     $query->where('is_deleted', 0);
-                }])
+                }, 'company:id,dis_on_sale_percent'])
                 ->get()
                 ->map(function($item) {
                     // Calculate total quantity from batches table
                     $totalQty = $item->getTotalQuantity(); // Uses batches table: sum(total_qty) where is_deleted = 0
+                    
+                    // Get discount - item discount takes priority over company discount
+                    $itemDiscount = floatval($item->fixed_dis_percent ?? 0);
+                    $companyDiscount = floatval($item->company->dis_on_sale_percent ?? 0);
                     
                     return [
                         'id' => $item->id,
@@ -75,6 +81,7 @@ class SaleTransactionController extends Controller
                         'bar_code' => $item->bar_code,
                         'hsn_code' => $item->hsn_code,
                         'packing' => $item->packing,
+                        'company_id' => $item->company_id,
                         'company_name' => $item->company_short_name ?? 'N/A',
                         'company' => $item->company_short_name ?? 'N/A',
                         's_rate' => $item->s_rate ?? 0,
@@ -87,6 +94,8 @@ class SaleTransactionController extends Controller
                         'box_qty' => $item->box_qty ?? 0,
                         'qty' => $totalQty, // 🔥 Total available quantity from batches table
                         'available_qty' => $totalQty, // Also include as available_qty for compatibility
+                        'fixed_dis_percent' => $itemDiscount, // Item-level discount
+                        'company_discount' => $companyDiscount, // Company-level discount
                     ];
                 });
             
@@ -110,6 +119,12 @@ class SaleTransactionController extends Controller
             Log::info('Sale Transaction Store Request', [
                 'data' => $request->all()
             ]);
+            
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'sale', 'date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
             
             // Validate request
             $validated = $request->validate([
@@ -1219,6 +1234,86 @@ class SaleTransactionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching customer due'
+            ], 500);
+        }
+    }
+
+    /**
+     * Save discount to company
+     */
+    public function saveCompanyDiscount(Request $request)
+    {
+        try {
+            $companyId = $request->input('company_id');
+            $discountPercent = $request->input('discount_percent');
+            
+            if (!$companyId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Company ID is required'
+                ], 400);
+            }
+            
+            $company = \App\Models\Company::find($companyId);
+            if (!$company) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Company not found'
+                ], 404);
+            }
+            
+            $company->dis_on_sale_percent = $discountPercent;
+            $company->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Company discount saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving company discount: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving company discount: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save discount to item
+     */
+    public function saveItemDiscount(Request $request)
+    {
+        try {
+            $itemId = $request->input('item_id');
+            $discountPercent = $request->input('discount_percent');
+            
+            if (!$itemId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item ID is required'
+                ], 400);
+            }
+            
+            $item = Item::find($itemId);
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item not found'
+                ], 404);
+            }
+            
+            $item->fixed_dis_percent = $discountPercent;
+            $item->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Item discount saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving item discount: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving item discount: ' . $e->getMessage()
             ], 500);
         }
     }

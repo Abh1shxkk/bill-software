@@ -2212,6 +2212,11 @@ function populateItemsTable(items) {
                 currentActiveRow = index;
                 isRowSelected = false;
                 
+                // Store original discount value when discount field gets focus
+                if (input.classList.contains('item-dis-percent')) {
+                    input.setAttribute('data-original-discount', input.value || '0');
+                }
+                
                 const itemCode = row.querySelector('input[name*="[code]"]').value;
                 
                 if (itemCode && itemCode.trim() !== '') {
@@ -2243,6 +2248,11 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
         input.addEventListener('focus', function(e) {
             currentActiveRow = rowIndex;
             isRowSelected = false;
+            
+            // Store original discount value when discount field gets focus
+            if (input.classList.contains('item-dis-percent')) {
+                input.setAttribute('data-original-discount', input.value || '0');
+            }
             
             // Get item code from current row
             const itemCode = row.querySelector('input[name*="[code]"]').value;
@@ -2283,19 +2293,30 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
                 }
                 // Check if this is the Dis% field
                 else if (input.classList.contains('item-dis-percent')) {
-                    console.log('Dis% Enter pressed, moving to S.Rate in calculation section');
-                    console.log('Current row index:', rowIndex);
-                    // Update current active row before moving to S.Rate
-                    currentActiveRow = rowIndex;
+                    console.log('Dis% Enter pressed');
                     
-                    // Calculate and save GST amounts for this row
-                    calculateAndSaveGstForRow(rowIndex);
+                    // Get current and original discount values
+                    const currentValue = parseFloat(input.value) || 0;
+                    const originalValue = parseFloat(input.getAttribute('data-original-discount') || 0);
                     
-                    // Move to S.Rate in calculation section
-                    const sRateField = document.getElementById('calc_s_rate');
-                    if (sRateField) {
-                        sRateField.focus();
-                        sRateField.select();
+                    // Show modal if discount value has CHANGED from original
+                    if (currentValue !== originalValue) {
+                        console.log('Discount changed from', originalValue, 'to', currentValue, '- showing modal');
+                        showDiscountOptionsModal(rowIndex, currentValue);
+                    } else {
+                        console.log('Discount unchanged, moving to S.Rate in calculation section');
+                        // Update current active row before moving to S.Rate
+                        currentActiveRow = rowIndex;
+                        
+                        // Calculate and save GST amounts for this row
+                        calculateAndSaveGstForRow(rowIndex);
+                        
+                        // Move to S.Rate in calculation section
+                        const sRateField = document.getElementById('calc_s_rate');
+                        if (sRateField) {
+                            sRateField.focus();
+                            sRateField.select();
+                        }
                     }
                 } else {
                     // Move to next input in same row
@@ -2840,6 +2861,11 @@ function addNewRow() {
         input.addEventListener('focus', function(e) {
             currentActiveRow = newIndex;
             isRowSelected = false;
+            
+            // Store original discount value when discount field gets focus
+            if (input.classList.contains('item-dis-percent')) {
+                input.setAttribute('data-original-discount', input.value || '0');
+            }
             
             const itemCode = row.querySelector('input[name*="[code]"]').value;
             
@@ -3516,6 +3542,45 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- Discount Options Modal -->
+<div id="discountOptionsBackdrop" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0, 0, 0, 0.7) !important; z-index: 99998 !important; opacity: 1 !important;"></div>
+<div id="discountOptionsModal" style="display: none; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; max-width: 400px !important; width: 90% !important; z-index: 99999 !important; background: #ffffff !important; border-radius: 8px !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important; opacity: 1 !important;">
+    <div style="padding: 1rem 1.5rem !important; background: #6c5ce7 !important; color: white !important; border-radius: 8px 8px 0 0 !important; display: flex !important; justify-content: space-between !important; align-items: center !important;">
+        <h5 style="margin: 0 !important; font-size: 1.1rem !important; font-weight: 600 !important; color: white !important;"><i class="bi bi-percent me-2"></i>Discount Options</h5>
+        <button type="button" style="background: transparent !important; border: none !important; color: white !important; font-size: 1.5rem !important; cursor: pointer !important;" onclick="closeDiscountOptionsModal()">×</button>
+    </div>
+    <div style="padding: 1.5rem !important; background: #ffffff !important;">
+        <div class="text-center mb-3">
+            <div class="mb-2">
+                <strong>Item:</strong> <span id="discountItemName" style="color: #0d6efd;">-</span>
+            </div>
+            <div class="mb-2">
+                <strong>Company:</strong> <span id="discountCompanyName" style="color: #0dcaf0;">-</span>
+            </div>
+            <div class="mb-3">
+                <strong>Action:</strong> <span id="discountValue" style="font-size: 1.25rem; font-weight: bold;">0%</span>
+            </div>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="button" id="discountBtnTemporary" class="btn btn-outline-secondary" onclick="applyDiscountOption('temporary')">
+                <i class="bi bi-clock me-2"></i> Temporary Change
+                <small class="d-block text-muted">Only for this transaction</small>
+            </button>
+            <button type="button" id="discountBtnCompany" class="btn btn-outline-info" onclick="applyDiscountOption('company')">
+                <i class="bi bi-building me-2"></i> Save to Company
+                <small class="d-block text-muted">Apply to all items of this company</small>
+            </button>
+            <button type="button" id="discountBtnItem" class="btn btn-outline-success" onclick="applyDiscountOption('item')">
+                <i class="bi bi-box-seam me-2"></i> Save to Item
+                <small class="d-block text-muted">Apply permanently to this item only</small>
+            </button>
+        </div>
+    </div>
+    <div style="padding: 1rem 1.5rem !important; background: #f8f9fa !important; border-top: 1px solid #dee2e6 !important; border-radius: 0 0 8px 8px !important; text-align: right !important;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeDiscountOptionsModal()">Cancel</button>
+    </div>
+</div>
+
 <script>
 // Add change event to supplier select
 document.addEventListener('DOMContentLoaded', function() {
@@ -3645,6 +3710,15 @@ function closePurchaseChallanModal() {
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
+    
+    // After closing challan modal, check if there are pending orders to show
+    const supplierId = document.getElementById('supplierSelect')?.value;
+    if (supplierId) {
+        // Small delay to allow modal close animation to complete
+        setTimeout(() => {
+            loadPendingOrders(supplierId);
+        }, 300);
+    }
 }
 
 // Function to load challan into purchase transaction
@@ -3781,6 +3855,11 @@ function addChallanItemRow(item, index) {
             currentActiveRow = index;
             isRowSelected = false;
             
+            // Store original discount value when discount field gets focus
+            if (input.classList.contains('item-dis-percent')) {
+                input.setAttribute('data-original-discount', input.value || '0');
+            }
+            
             const itemCode = row.querySelector('input[name*="[code]"]').value;
             
             if (itemCode && itemCode.trim() !== '') {
@@ -3797,6 +3876,284 @@ function addChallanItemRow(item, index) {
     
     console.log(`Challan item row ${index} added:`, item.item_name);
 }
+
+// ============================================
+// DISCOUNT OPTIONS MODAL FUNCTIONS
+// ============================================
+
+// Global variables for discount modal
+let currentDiscountRowIndex = null;
+let companyDiscounts = {}; // Store company discounts for current session
+
+// Show discount options modal
+function showDiscountOptionsModal(rowIndex, discountValue) {
+    currentDiscountRowIndex = rowIndex;
+    
+    // Get item and company info from the row
+    const row = document.querySelector(`#itemsTableBody tr:nth-child(${rowIndex + 1})`);
+    const itemName = row?.querySelector('input[name*="[name]"]')?.value || 'Unknown Item';
+    const companyName = row?.getAttribute('data-company-name') || 'Unknown Company';
+    
+    // Update modal content
+    document.getElementById('discountItemName').textContent = itemName;
+    document.getElementById('discountCompanyName').textContent = companyName;
+    
+    // Show appropriate message based on discount value
+    if (discountValue === 0) {
+        document.getElementById('discountValue').textContent = 'Remove Discount';
+        document.getElementById('discountValue').style.color = '#dc3545'; // Red color for removal
+    } else {
+        document.getElementById('discountValue').textContent = discountValue + '%';
+        document.getElementById('discountValue').style.color = '#28a745'; // Green color for setting
+    }
+    
+    // Show modal
+    document.getElementById('discountOptionsBackdrop').style.display = 'block';
+    document.getElementById('discountOptionsModal').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').classList.add('show');
+        document.getElementById('discountOptionsModal').classList.add('show');
+    }, 10);
+}
+
+// Close discount options modal
+function closeDiscountOptionsModal() {
+    document.getElementById('discountOptionsBackdrop').classList.remove('show');
+    document.getElementById('discountOptionsModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').style.display = 'none';
+        document.getElementById('discountOptionsModal').style.display = 'none';
+    }, 300);
+    
+    // Continue navigation after modal closes
+    if (currentDiscountRowIndex !== null) {
+        const rowIndex = currentDiscountRowIndex;
+        
+        // Update current active row
+        currentActiveRow = rowIndex;
+        
+        // Calculate and save GST amounts for this row
+        if (typeof calculateAndSaveGstForRow === 'function') {
+            calculateAndSaveGstForRow(rowIndex);
+        }
+        
+        // Move to S.Rate in calculation section
+        const sRateField = document.getElementById('calc_s_rate');
+        if (sRateField) {
+            sRateField.focus();
+            sRateField.select();
+        }
+    }
+    
+    currentDiscountRowIndex = null;
+}
+
+// Apply discount option
+function applyDiscountOption(option) {
+    const rowIndex = currentDiscountRowIndex;
+    const row = document.querySelector(`#itemsTableBody tr:nth-child(${rowIndex + 1})`);
+    const discountInput = row?.querySelector('input[name*="[dis_percent]"]');
+    const discountValue = parseFloat(discountInput?.value) || 0;
+    const itemId = row?.getAttribute('data-item-id');
+    const companyId = row?.getAttribute('data-company-id');
+    const companyName = row?.getAttribute('data-company-name') || '';
+    
+    // Determine if this is a removal (discount = 0)
+    const isRemoval = discountValue === 0;
+    const actionText = isRemoval ? 'removed' : `set to ${discountValue}%`;
+    
+    // Disable all buttons to prevent multiple clicks
+    disableDiscountModalButtons();
+    
+    switch(option) {
+        case 'temporary':
+            // Just close modal and continue
+            row?.setAttribute('data-original-discount', discountValue.toString());
+            showToast(`Discount ${actionText} temporarily`, 'success');
+            closeDiscountOptionsModal();
+            enableDiscountModalButtons();
+            break;
+            
+        case 'company':
+            // Save discount to company INSTANTLY to database
+            if (companyId) {
+                showToast('Saving discount to company...', 'info');
+                
+                saveDiscountToCompany(companyId, discountValue, function(success) {
+                    if (success) {
+                        companyDiscounts[companyId] = discountValue;
+                        applyCompanyDiscountToAllRows(companyId, discountValue);
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        
+                        if (isRemoval) {
+                            showToast(`✅ Discount removed for company: ${companyName}`, 'success');
+                        } else {
+                            showToast(`✅ Discount ${discountValue}% saved for company: ${companyName}`, 'success');
+                        }
+                    } else {
+                        showToast('❌ Failed to save discount to company', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Company not found for this item', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+            
+        case 'item':
+            // Save discount to item INSTANTLY to database
+            if (itemId) {
+                showToast('Saving discount to item...', 'info');
+                
+                saveDiscountToItem(itemId, discountValue, function(success) {
+                    if (success) {
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        
+                        if (isRemoval) {
+                            showToast('✅ Discount removed permanently for this item', 'success');
+                        } else {
+                            showToast(`✅ Discount ${discountValue}% saved permanently for this item`, 'success');
+                        }
+                    } else {
+                        showToast('❌ Failed to save discount to item', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Item ID not found', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+    }
+}
+
+// Disable discount modal buttons during save
+function disableDiscountModalButtons() {
+    const buttons = ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'];
+    buttons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+        }
+    });
+}
+
+// Enable discount modal buttons after save
+function enableDiscountModalButtons() {
+    const buttons = ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'];
+    buttons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        }
+    });
+}
+
+// Apply company discount to all rows with same company
+function applyCompanyDiscountToAllRows(companyId, discountValue) {
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    rows.forEach((row, index) => {
+        const rowCompanyId = row.getAttribute('data-company-id');
+        if (rowCompanyId == companyId) {
+            const discountInput = row.querySelector('input[name*="[dis_percent]"]');
+            if (discountInput) {
+                discountInput.value = discountValue;
+                row.setAttribute('data-original-discount', discountValue.toString());
+                calculateRowAmount(index);
+            }
+        }
+    });
+    updateSummarySection();
+}
+
+// Save discount to company via API - INSTANT SAVE with callback
+function saveDiscountToCompany(companyId, discountValue, callback) {
+    console.log('🔵 Saving company purchase discount:', { companyId, discountValue });
+    
+    fetch('{{ route("admin.purchase.saveCompanyDiscount") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            company_id: companyId,
+            discount_percent: discountValue
+        })
+    })
+    .then(response => {
+        console.log('📥 Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📦 Response data:', data);
+        if (data.success) {
+            console.log('✅ Company discount saved successfully:', data.message);
+            if (callback) callback(true);
+        } else {
+            console.error('❌ Failed to save company discount:', data.message);
+            alert('Error: ' + data.message);
+            if (callback) callback(false);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving company discount:', error);
+        alert('Network error: ' + error.message);
+        if (callback) callback(false);
+    });
+}
+
+// Save discount to item via API - INSTANT SAVE with callback
+function saveDiscountToItem(itemId, discountValue, callback) {
+    console.log('🔵 Saving item purchase discount:', { itemId, discountValue });
+    
+    fetch('{{ route("admin.purchase.saveItemDiscount") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            discount_percent: discountValue
+        })
+    })
+    .then(response => {
+        console.log('📥 Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📦 Response data:', data);
+        if (data.success) {
+            console.log('✅ Item discount saved successfully:', data.message);
+            if (callback) callback(true);
+        } else {
+            console.error('❌ Failed to save item discount:', data.message);
+            alert('Error: ' + data.message);
+            if (callback) callback(false);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving item discount:', error);
+        alert('Network error: ' + error.message);
+        if (callback) callback(false);
+    });
+}
+
+// Close modal on backdrop click
+document.getElementById('discountOptionsBackdrop')?.addEventListener('click', closeDiscountOptionsModal);
+
 </script>
 
 @endsection

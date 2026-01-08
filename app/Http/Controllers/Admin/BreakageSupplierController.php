@@ -12,11 +12,13 @@ use App\Models\BreakageSupplierReceivedTransactionItem;
 use App\Models\Item;
 use App\Models\Batch;
 use App\Models\Supplier;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class BreakageSupplierController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display index of issued transactions
      */
@@ -73,6 +75,12 @@ class BreakageSupplierController extends Controller
     public function storeIssued(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'breakage_supplier_issued', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
 
             $trnNo = BreakageSupplierIssuedTransaction::generateTrnNumber();
@@ -546,6 +554,12 @@ class BreakageSupplierController extends Controller
     public function storeReceived(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'breakage_supplier_received', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
             
             // Get next transaction number
@@ -1012,6 +1026,13 @@ class BreakageSupplierController extends Controller
     public function storeUnusedDump(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            // Using breakage_supplier_issued type as unused dump is similar
+            $dateError = $this->validateTransactionDate($request, 'breakage_supplier_issued', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
             
             // Generate transaction number

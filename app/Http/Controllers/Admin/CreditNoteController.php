@@ -8,6 +8,7 @@ use App\Models\CreditNoteItem;
 use App\Models\Supplier;
 use App\Models\Customer;
 use App\Models\SalesMan;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 
 class CreditNoteController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display credit note transaction form
      */
@@ -117,6 +119,12 @@ class CreditNoteController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'credit_note', 'header.credit_note_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $request->validate([
             'header.credit_note_date' => 'required|date',
             'header.credit_party_type' => 'required|in:S,C',

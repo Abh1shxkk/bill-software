@@ -1808,14 +1808,23 @@ function addRowEventListeners(row, rowIndex) {
     
     // Discount field - Enter finalizes row and moves to next
     if (discountInput) {
+        discountInput.addEventListener('focus', function() {
+            this.setAttribute('data-original-discount', this.value || '0');
+        });
+        
         discountInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                calculateRowAmount(rowIndex);
-                calculateTotal();
+                const currentValue = parseFloat(this.value) || 0;
+                const originalValue = parseFloat(this.getAttribute('data-original-discount') || 0);
                 
-                // Move to next row (this will mark row complete, turn green, and update summary)
-                moveToNextRow(rowIndex);
+                if (currentValue !== originalValue) {
+                    showDiscountOptionsModal(rowIndex, currentValue);
+                } else {
+                    calculateRowAmount(rowIndex);
+                    calculateTotal();
+                    moveToNextRow(rowIndex);
+                }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 navigateToRow(rowIndex - 1);
@@ -3707,6 +3716,173 @@ document.addEventListener('DOMContentLoaded', function() {
         alertBackdrop.addEventListener('click', closeAlert);
     }
 });
+
+// ============================================
+// DISCOUNT OPTIONS MODAL FUNCTIONS
+// ============================================
+
+let currentDiscountRowIndex = null;
+let companyDiscounts = {};
+
+function showDiscountOptionsModal(rowIndex, discountValue) {
+    currentDiscountRowIndex = rowIndex;
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    const itemName = row?.querySelector('input[name*="[item_name]"]')?.value || 'Unknown Item';
+    const companyName = row?.getAttribute('data-company-name') || 'Unknown Company';
+    
+    document.getElementById('discountItemName').textContent = itemName;
+    document.getElementById('discountCompanyName').textContent = companyName;
+    
+    if (discountValue === 0) {
+        document.getElementById('discountValue').textContent = 'Remove Discount';
+        document.getElementById('discountValue').style.color = '#dc3545';
+    } else {
+        document.getElementById('discountValue').textContent = discountValue + '%';
+        document.getElementById('discountValue').style.color = '#28a745';
+    }
+    
+    document.getElementById('discountOptionsBackdrop').style.display = 'block';
+    document.getElementById('discountOptionsModal').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').classList.add('show');
+        document.getElementById('discountOptionsModal').classList.add('show');
+    }, 10);
+}
+
+function closeDiscountOptionsModal() {
+    document.getElementById('discountOptionsBackdrop').classList.remove('show');
+    document.getElementById('discountOptionsModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').style.display = 'none';
+        document.getElementById('discountOptionsModal').style.display = 'none';
+    }, 300);
+    
+    if (currentDiscountRowIndex !== null) {
+        calculateRowAmount(currentDiscountRowIndex);
+        calculateTotal();
+        moveToNextRow(currentDiscountRowIndex);
+        currentDiscountRowIndex = null;
+    }
+}
+
+function applyDiscountOption(option) {
+    const rowIndex = currentDiscountRowIndex;
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    const discountValue = parseFloat(document.getElementById(`discount_${rowIndex}`)?.value) || 0;
+    const itemId = row?.getAttribute('data-item-id');
+    const companyId = row?.getAttribute('data-company-id');
+    const companyName = row?.getAttribute('data-company-name') || '';
+    
+    const isRemoval = discountValue === 0;
+    const actionText = isRemoval ? 'removed' : `set to ${discountValue}%`;
+    
+    disableDiscountModalButtons();
+    
+    switch(option) {
+        case 'temporary':
+            row?.setAttribute('data-original-discount', discountValue.toString());
+            showToast(`Discount ${actionText} temporarily`, 'success');
+            closeDiscountOptionsModal();
+            enableDiscountModalButtons();
+            break;
+            
+        case 'company':
+            if (companyId) {
+                showToast('Saving discount to company...', 'info');
+                saveDiscountToCompany(companyId, discountValue, function(success) {
+                    if (success) {
+                        companyDiscounts[companyId] = discountValue;
+                        applyCompanyDiscountToAllRows(companyId, discountValue);
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        showToast(isRemoval ? `✅ Discount removed for company: ${companyName}` : `✅ Discount ${discountValue}% saved for company: ${companyName}`, 'success');
+                    } else {
+                        showToast('❌ Failed to save discount to company', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Company not found for this item', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+            
+        case 'item':
+            if (itemId) {
+                showToast('Saving discount to item...', 'info');
+                saveDiscountToItem(itemId, discountValue, function(success) {
+                    if (success) {
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        showToast(isRemoval ? '✅ Discount removed permanently for this item' : `✅ Discount ${discountValue}% saved permanently for this item`, 'success');
+                    } else {
+                        showToast('❌ Failed to save discount to item', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Item ID not found', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+    }
+}
+
+function disableDiscountModalButtons() {
+    ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; }
+    });
+}
+
+function enableDiscountModalButtons() {
+    ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+    });
+}
+
+function applyCompanyDiscountToAllRows(companyId, discountValue) {
+    document.querySelectorAll('#itemsTableBody tr').forEach(row => {
+        if (row.getAttribute('data-company-id') == companyId) {
+            const rowIndex = row.getAttribute('data-row-index');
+            const discountInput = document.getElementById(`discount_${rowIndex}`);
+            if (discountInput) {
+                discountInput.value = discountValue;
+                row.setAttribute('data-original-discount', discountValue.toString());
+                calculateRowAmount(parseInt(rowIndex));
+            }
+        }
+    });
+    calculateTotal();
+}
+
+function saveDiscountToCompany(companyId, discountValue, callback) {
+    fetch('{{ route("admin.sale.saveCompanyDiscount") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        body: JSON.stringify({ company_id: companyId, discount_percent: discountValue })
+    })
+    .then(response => response.json())
+    .then(data => { if (callback) callback(data.success); })
+    .catch(error => { console.error('Error:', error); if (callback) callback(false); });
+}
+
+function saveDiscountToItem(itemId, discountValue, callback) {
+    fetch('{{ route("admin.sale.saveItemDiscount") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        body: JSON.stringify({ item_id: itemId, discount_percent: discountValue })
+    })
+    .then(response => response.json())
+    .then(data => { if (callback) callback(data.success); })
+    .catch(error => { console.error('Error:', error); if (callback) callback(false); });
+}
+
+document.getElementById('discountOptionsBackdrop')?.addEventListener('click', closeDiscountOptionsModal);
+
 </script>
 
 <!-- Toast Container -->
@@ -3728,6 +3904,45 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="alert-modal-footer">
             <button type="button" class="btn btn-primary" onclick="closeAlert()">OK</button>
         </div>
+    </div>
+</div>
+
+<!-- Discount Options Modal -->
+<div id="discountOptionsBackdrop" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0, 0, 0, 0.7) !important; z-index: 99998 !important; opacity: 1 !important;"></div>
+<div id="discountOptionsModal" style="display: none; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; max-width: 400px !important; width: 90% !important; z-index: 99999 !important; background: #ffffff !important; border-radius: 8px !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important; opacity: 1 !important;">
+    <div style="padding: 1rem 1.5rem !important; background: #6c5ce7 !important; color: white !important; border-radius: 8px 8px 0 0 !important; display: flex !important; justify-content: space-between !important; align-items: center !important;">
+        <h5 style="margin: 0 !important; font-size: 1.1rem !important; font-weight: 600 !important; color: white !important;"><i class="bi bi-percent me-2"></i>Discount Options</h5>
+        <button type="button" style="background: transparent !important; border: none !important; color: white !important; font-size: 1.5rem !important; cursor: pointer !important;" onclick="closeDiscountOptionsModal()">×</button>
+    </div>
+    <div style="padding: 1.5rem !important; background: #ffffff !important;">
+        <div class="text-center mb-3">
+            <div class="mb-2">
+                <strong>Item:</strong> <span id="discountItemName" style="color: #0d6efd;">-</span>
+            </div>
+            <div class="mb-2">
+                <strong>Company:</strong> <span id="discountCompanyName" style="color: #0dcaf0;">-</span>
+            </div>
+            <div class="mb-3">
+                <strong>Action:</strong> <span id="discountValue" style="font-size: 1.25rem; font-weight: bold;">0%</span>
+            </div>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="button" id="discountBtnTemporary" class="btn btn-outline-secondary" onclick="applyDiscountOption('temporary')">
+                <i class="bi bi-clock me-2"></i> Temporary Change
+                <small class="d-block text-muted">Only for this transaction</small>
+            </button>
+            <button type="button" id="discountBtnCompany" class="btn btn-outline-info" onclick="applyDiscountOption('company')">
+                <i class="bi bi-building me-2"></i> Save to Company
+                <small class="d-block text-muted">Apply to all items of this company</small>
+            </button>
+            <button type="button" id="discountBtnItem" class="btn btn-outline-success" onclick="applyDiscountOption('item')">
+                <i class="bi bi-box-seam me-2"></i> Save to Item
+                <small class="d-block text-muted">Apply permanently to this item only</small>
+            </button>
+        </div>
+    </div>
+    <div style="padding: 1rem 1.5rem !important; background: #f8f9fa !important; border-top: 1px solid #dee2e6 !important; border-radius: 0 0 8px 8px !important; text-align: right !important;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeDiscountOptionsModal()">Cancel</button>
     </div>
 </div>
 

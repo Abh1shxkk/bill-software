@@ -9,12 +9,14 @@ use App\Models\ReplacementNoteTransaction;
 use App\Models\ReplacementNoteTransactionItem;
 use App\Models\StockLedger;
 use App\Models\Supplier;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ReplacementNoteController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display list of replacement note transactions
      */
@@ -87,6 +89,12 @@ class ReplacementNoteController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'replacement_note', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
 
             // Generate RN number

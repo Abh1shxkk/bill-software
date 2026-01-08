@@ -11,11 +11,13 @@ use App\Models\SaleLedger;
 use App\Models\PurchaseLedger;
 use App\Models\Customer;
 use App\Models\Supplier;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class VoucherEntryController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of vouchers.
      */
@@ -77,6 +79,12 @@ class VoucherEntryController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'voucher_entry', 'voucher_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $validated = $request->validate([
             'voucher_date' => 'required|date',
             'voucher_type' => 'required|in:receipt,payment,contra,journal',

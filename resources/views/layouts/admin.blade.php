@@ -2027,6 +2027,9 @@
         })();
     </script>
 
+    <!-- Transaction Date Validator - Global Script -->
+    <script src="{{ asset('js/transaction-date-validator.js') }}"></script>
+
     @stack('scripts')
 
     <!-- Global Delete Confirmation Modal -->

@@ -13,9 +13,11 @@ use App\Models\StockLedger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Traits\ValidatesTransactionDate;
 
 class ClaimToSupplierController extends Controller
 {
+    use ValidatesTransactionDate;
     public function transaction()
     {
         $suppliers = Supplier::where('is_deleted', 0)->orderBy('name')->get();
@@ -119,6 +121,12 @@ class ClaimToSupplierController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date
+        $dateError = $this->validateTransactionDate($request, 'claim_to_supplier', 'claim_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+
         try {
             DB::beginTransaction();
 

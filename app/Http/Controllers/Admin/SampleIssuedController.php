@@ -16,9 +16,11 @@ use App\Models\MarketingManager;
 use App\Models\GeneralManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ValidatesTransactionDate;
 
 class SampleIssuedController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of sample issued transactions
      */
@@ -73,6 +75,12 @@ class SampleIssuedController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date
+        $dateError = $this->validateTransactionDate($request, 'sample_issued', 'transaction_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+
         try {
             DB::beginTransaction();
 

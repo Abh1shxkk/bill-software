@@ -8,9 +8,11 @@ use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use App\Traits\ValidatesTransactionDate;
 
 class PendingOrderItemController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index()
     {
         $items = PendingOrderItem::with('item')
@@ -27,6 +29,15 @@ class PendingOrderItemController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date (if date field exists in request)
+        if ($request->has('transaction_date') || $request->has('date')) {
+            $dateField = $request->has('transaction_date') ? 'transaction_date' : 'date';
+            $dateError = $this->validateTransactionDate($request, 'pending_order', $dateField);
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+        }
+
         $validated = $request->validate([
             'item_id' => 'required|exists:items,id',
             'action_type' => 'required|in:I,D',

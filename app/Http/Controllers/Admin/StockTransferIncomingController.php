@@ -9,12 +9,14 @@ use App\Models\StockTransferIncomingTransaction;
 use App\Models\StockTransferIncomingTransactionItem;
 use App\Models\StockLedger;
 use App\Models\Supplier;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StockTransferIncomingController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = StockTransferIncomingTransaction::with(['supplier:supplier_id,name']);
@@ -73,6 +75,12 @@ class StockTransferIncomingController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'stock_transfer_incoming', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
 
             $trfNo = StockTransferIncomingTransaction::generateTrfNumber();

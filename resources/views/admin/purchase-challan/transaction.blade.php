@@ -3506,6 +3506,15 @@ function closePurchaseChallanModal() {
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
+    
+    // After closing challan modal, check if there are pending orders to show
+    const supplierId = document.getElementById('supplierSelect')?.value;
+    if (supplierId) {
+        // Small delay to allow modal close animation to complete
+        setTimeout(() => {
+            loadPendingOrders(supplierId);
+        }, 300);
+    }
 }
 
 // Function to load challan into purchase transaction

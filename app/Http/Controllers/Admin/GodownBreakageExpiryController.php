@@ -10,9 +10,11 @@ use App\Models\Batch;
 use App\Models\StockLedger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ValidatesTransactionDate;
 
 class GodownBreakageExpiryController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of transactions
      */
@@ -63,6 +65,12 @@ class GodownBreakageExpiryController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date
+        $dateError = $this->validateTransactionDate($request, 'godown_breakage_expiry', 'transaction_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+
         try {
             DB::beginTransaction();
 

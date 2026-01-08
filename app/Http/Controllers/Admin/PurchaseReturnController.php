@@ -13,11 +13,13 @@ use App\Models\PurchaseReturnTransaction;
 use App\Models\PurchaseReturnTransactionItem;
 use App\Models\PurchaseReturnAdjustment;
 use App\Models\StockLedger;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class PurchaseReturnController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display purchase return transaction form
      */
@@ -215,6 +217,12 @@ class PurchaseReturnController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'purchase_return', 'return_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
 
             // Generate PR number

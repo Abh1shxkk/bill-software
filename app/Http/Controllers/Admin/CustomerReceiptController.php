@@ -12,12 +12,13 @@ use App\Models\Area;
 use App\Models\Route;
 use App\Models\CashBankBook;
 use App\Traits\CrudNotificationTrait;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CustomerReceiptController extends Controller
 {
-    use CrudNotificationTrait;
+    use CrudNotificationTrait, ValidatesTransactionDate;
 
     /**
      * Display a listing of the receipts (Index page).
@@ -74,6 +75,12 @@ class CustomerReceiptController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'customer_receipt', 'receipt_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $validated = $request->validate([
             'receipt_date' => 'required|date',
             'ledger' => 'nullable|string|max:10',

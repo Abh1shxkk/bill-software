@@ -11,12 +11,14 @@ use App\Models\StockLedger;
 use App\Models\Supplier;
 use App\Models\PurchaseReturnTransaction;
 use App\Models\ReplacementReceivedAdjustment;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ReplacementReceivedController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = ReplacementReceivedTransaction::with(['supplier:supplier_id,name']);
@@ -75,6 +77,12 @@ class ReplacementReceivedController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'replacement_received', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
 
             $rrNo = ReplacementReceivedTransaction::generateRRNumber();
