@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Item;
 use App\Models\Company;
+use App\Models\ItemCategory;
 use Illuminate\Http\Request;
 
 class InventoryReportController extends Controller
@@ -742,6 +743,8 @@ class InventoryReportController extends Controller
     public function itemLedgerPrinting(Request $request)
     {
         $items = Item::where('is_deleted', 0)->orderBy('name')->get();
+        $companies = Company::where('is_deleted', 0)->orderBy('name')->get();
+        $categories = ItemCategory::orderBy('name')->get();
         $reportData = collect();
         
         if ($request->has('view') || $request->has('export')) {
@@ -808,7 +811,7 @@ class InventoryReportController extends Controller
             }
         }
         
-        return view('admin.reports.inventory-report.item-reports.item-ledger-printing', compact('items', 'reportData'));
+        return view('admin.reports.inventory-report.item-reports.item-ledger-printing', compact('items', 'companies', 'categories', 'reportData'));
     }
 
     /**
@@ -1258,7 +1261,7 @@ class InventoryReportController extends Controller
     public function categoryWiseStockStatus(Request $request)
     {
         $companies = Company::where('is_deleted', 0)->orderBy('name')->get();
-        $categories = collect(); // Add Category model if exists
+        $categories = ItemCategory::orderBy('name')->get();
         $reportData = collect();
         $totals = ['total_qty' => 0, 'total_value' => 0];
         
@@ -1404,9 +1407,10 @@ class InventoryReportController extends Controller
     public function stockAndSalesAnalysis(Request $request)
     {
         $companies = Company::where('is_deleted', 0)->orderBy('name')->get();
+        $categories = ItemCategory::orderBy('name')->get();
         $reportData = collect();
         
-        return view('admin.reports.inventory-report.stock-reports.stock-and-sales-analysis', compact('companies', 'reportData'));
+        return view('admin.reports.inventory-report.stock-reports.stock-and-sales-analysis', compact('companies', 'categories', 'reportData'));
     }
 
     /**

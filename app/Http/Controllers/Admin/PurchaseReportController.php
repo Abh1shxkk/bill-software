@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use App\Models\User;
 use App\Models\Area;
 use App\Models\State;
+use App\Models\GeneralLedger;
 
 class PurchaseReportController extends Controller
 {
@@ -1436,6 +1437,7 @@ class PurchaseReportController extends Controller
         
         $suppliers = Supplier::select('supplier_id', 'name', 'code')->orderBy('name')->get();
         $customers = Customer::select('id', 'name', 'code')->orderBy('name')->get();
+        $generalLedgers = GeneralLedger::select('id', 'account_name', 'account_code')->orderBy('account_name')->get();
         
         $notes = collect();
         $totals = [
@@ -1542,14 +1544,14 @@ class PurchaseReportController extends Controller
         // Handle Print view
         if ($request->get('view_type') === 'print') {
             return view('admin.reports.purchase-report.debit-credit-note-print', compact(
-                'dateFrom', 'dateTo', 'suppliers', 'customers', 'notes', 'totals',
+                'dateFrom', 'dateTo', 'suppliers', 'customers', 'generalLedgers', 'notes', 'totals',
                 'partyType', 'noteType', 'customerCode', 'customerId', 'supplierCode', 
                 'supplierId', 'ledgerCode', 'ledgerId'
             ));
         }
         
         return view('admin.reports.purchase-report.debit-credit-note', compact(
-            'dateFrom', 'dateTo', 'suppliers', 'customers', 'notes', 'totals',
+            'dateFrom', 'dateTo', 'suppliers', 'customers', 'generalLedgers', 'notes', 'totals',
             'partyType', 'noteType', 'customerCode', 'customerId', 'supplierCode', 
             'supplierId', 'ledgerCode', 'ledgerId'
         ));

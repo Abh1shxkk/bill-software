@@ -37,6 +37,9 @@
                     <div class="col-md-4">
                         <select name="company_id" id="company_id" class="form-select form-select-sm">
                             <option value="">All</option>
+                            @foreach($companies ?? [] as $company)
+                                <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -120,6 +123,9 @@
                     <div class="col-md-4">
                         <select name="category_id" id="category_id" class="form-select form-select-sm">
                             <option value="">All</option>
+                            @foreach($categories ?? [] as $category)
+                                <option value="{{ $category->id }}" {{ request('category_id') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>

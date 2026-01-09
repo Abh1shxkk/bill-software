@@ -59,7 +59,7 @@
                         <select name="supplier_id" class="form-select form-select-sm" style="width: 250px;">
                             <option value="">-- All Suppliers --</option>
                             @foreach($suppliers ?? [] as $supplier)
-                                <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>{{ $supplier->name }}</option>
+                                <option value="{{ $supplier->supplier_id }}" {{ request('supplier_id') == $supplier->supplier_id ? 'selected' : '' }}>{{ $supplier->name }}</option>
                             @endforeach
                         </select>
                     </div>

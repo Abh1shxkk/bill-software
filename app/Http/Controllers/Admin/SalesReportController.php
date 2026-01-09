@@ -9146,10 +9146,15 @@ class SalesReportController extends Controller
         $query = SaleTransaction::with('customer:id,name,gst_number')
             ->whereBetween('sale_date', [$dateFrom, $dateTo]);
 
+        // Filter by sale type using cash_flag column
+        // 1 = Cash, 2 = Credit, 3 = All
         if ($saleType == '1') {
-            $query->where('payment_mode', 'cash');
+            $query->where('cash_flag', 'Y');
         } elseif ($saleType == '2') {
-            $query->where('payment_mode', 'credit');
+            $query->where(function($q) {
+                $q->where('cash_flag', 'N')
+                  ->orWhereNull('cash_flag');
+            });
         }
 
         $sales = $query->orderBy('sale_date')->orderBy('invoice_no')->get();

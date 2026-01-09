@@ -161,7 +161,8 @@ $(document).ready(function() {
 .form-control-sm { border: 1px solid #aaa; border-radius: 0; }
 .card { border-radius: 0; border: 1px solid #ccc; }
 .btn { border-radius: 0; }
-.table th, .table td { padding: 0.25rem 0.4rem; font-size: 0.8rem; vertical-align: middle; }
-.table thead th { font-weight: bold; }
+.table th, .table td { padding: 0.5rem 0.5rem; font-size: 0.85rem; vertical-align: middle; height: 32px; }
+.table thead th { font-weight: bold; height: 36px; }
+.table tbody tr { height: 32px; }
 </style>
 @endpush

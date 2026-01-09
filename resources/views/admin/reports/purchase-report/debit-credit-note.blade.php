@@ -97,11 +97,18 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">G.Ledger:</span>
-                            <input type="text" name="ledger_code" class="form-control" value="{{ $ledgerCode ?? '' }}" placeholder="00" style="max-width: 60px;">
+                            <input type="text" name="ledger_code" class="form-control text-uppercase" value="{{ $ledgerCode ?? '' }}" placeholder="00" style="max-width: 60px;">
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <input type="text" name="ledger_id" class="form-control form-control-sm" value="{{ $ledgerId ?? '' }}" placeholder="General Ledger Name">
+                        <select name="ledger_id" class="form-select form-select-sm">
+                            <option value="">Select an option</option>
+                            @foreach($generalLedgers ?? [] as $ledger)
+                                <option value="{{ $ledger->id }}" {{ ($ledgerId ?? '') == $ledger->id ? 'selected' : '' }}>
+                                    {{ $ledger->account_code ?? '' }} - {{ $ledger->account_name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex gap-2 justify-content-end">

@@ -1077,11 +1077,11 @@
               <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown">GST Reports</a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="{{ route('admin.reports.gst.form-3b') }}">Form 3B</a></li>
-                <li><a class="dropdown-item" href="#">GSTR-1</a></li>
-                <li><a class="dropdown-item" href="#">GSTR-2</a></li>
-                <li><a class="dropdown-item" href="#">GSTR-4</a></li>
-                <li><a class="dropdown-item" href="#">GSTR-4 (Annual)</a></li>
-                <li><a class="dropdown-item" href="#">Customer GST Detail Mail</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.gstr-1') }}">GSTR-1</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.gstr-2') }}">GSTR-2</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.gstr-4') }}">GSTR-4</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.gstr-4-annual') }}">GSTR-4 (Annual)</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.customer-gst-detail-mail') }}">Customer GST Detail Mail</a></li>
                 <li><a class="dropdown-item" href="#">Stock Trans - 1</a></li>
                 <li><a class="dropdown-item" href="#">Stock Trans - 2</a></li>
                 <li><a class="dropdown-item" href="#">WayBill Generation</a></li>

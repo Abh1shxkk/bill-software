@@ -18,6 +18,7 @@ use App\Models\SaleTransaction;
 use App\Models\CustomerLedger;
 use App\Models\CustomerReceipt;
 use App\Models\User;
+use App\Models\HsnCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -210,22 +211,61 @@ class ManagementReportController extends Controller
         $routes = Route::orderBy('name')->get();
         $reportData = collect();
         $ledgerData = collect();
+        $reportType = $request->report_type ?? 'D';
 
         if ($request->has('view') || $request->has('print')) {
-            $reportData = Customer::where('is_deleted', 0)
-                ->when($request->customer_code && $request->customer_code != '00', fn($q) => $q->where('id', $request->customer_code))
-                ->withSum('ledgers as balance', 'amount')
-                ->having('balance', '!=', 0)
-                ->orderBy('name')
-                ->get();
+            if ($reportType == 'D') {
+                // Detailed view - show invoice-wise data
+                $query = SaleTransaction::with('customer')
+                    ->whereRaw('COALESCE(net_amount, 0) > COALESCE(paid_amount, 0)');
+
+                if ($request->customer_code) {
+                    $query->where('customer_id', $request->customer_code);
+                }
+
+                if ($request->salesman_code) {
+                    $query->whereHas('customer', function($q) use ($request) {
+                        $q->where('salesman_id', $request->salesman_code);
+                    });
+                }
+
+                if ($request->area_code) {
+                    $query->whereHas('customer', function($q) use ($request) {
+                        $q->where('area_id', $request->area_code);
+                    });
+                }
+
+                if ($request->route_code) {
+                    $query->whereHas('customer', function($q) use ($request) {
+                        $q->where('route_id', $request->route_code);
+                    });
+                }
+
+                if ($request->as_on_date) {
+                    $query->where('sale_date', '<=', $request->as_on_date);
+                }
+
+                $reportData = $query->orderBy('customer_id')->orderBy('sale_date')->get();
+            } else {
+                // Summarised view - show customer-wise totals
+                $reportData = Customer::where('is_deleted', 0)
+                    ->when($request->customer_code, fn($q) => $q->where('id', $request->customer_code))
+                    ->when($request->salesman_code, fn($q) => $q->where('salesman_id', $request->salesman_code))
+                    ->when($request->area_code, fn($q) => $q->where('area_id', $request->area_code))
+                    ->when($request->route_code, fn($q) => $q->where('route_id', $request->route_code))
+                    ->withSum('ledgers as balance', 'amount')
+                    ->having('balance', '!=', 0)
+                    ->orderBy('name')
+                    ->get();
+            }
 
             if ($request->has('print')) {
-                return view('admin.reports.management-report.due-reports.due-list-account-ledger-print', compact('reportData'));
+                return view('admin.reports.management-report.due-reports.due-list-account-ledger-print', compact('reportData', 'reportType'));
             }
         }
 
         return view('admin.reports.management-report.due-reports.due-list-account-ledger', compact(
-            'customers', 'suppliers', 'salesmen', 'areas', 'routes', 'reportData', 'ledgerData'
+            'customers', 'suppliers', 'salesmen', 'areas', 'routes', 'reportData', 'ledgerData', 'reportType'
         ));
     }
 
@@ -3675,25 +3715,24 @@ class ManagementReportController extends Controller
                 try {
                     $salesQuery = DB::table('sale_transaction_items')
                         ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
-                        ->join('items', 'sale_transaction_items.item_id', '=', 'items.id')
                         ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                         ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
                         ->select(
-                            'items.hsn_code',
-                            'items.name as product_name',
+                            'sale_transaction_items.hsn_code',
+                            'sale_transaction_items.item_name as product_name',
                             'sale_transactions.sale_date',
                             'sale_transactions.invoice_no',
                             'customers.gst_no as customer_gst'
                         );
 
                     if ($hsn) {
-                        $salesQuery->where('items.hsn_code', 'like', $hsn . '%');
+                        $salesQuery->where('sale_transaction_items.hsn_code', 'like', $hsn . '%');
                     }
                     if ($itemCode) {
-                        $salesQuery->where('items.code', $itemCode);
+                        $salesQuery->where('sale_transaction_items.item_code', $itemCode);
                     }
 
-                    $salesQuery->orderBy('items.name')->orderBy('sale_transactions.sale_date');
+                    $salesQuery->orderBy('sale_transaction_items.item_name')->orderBy('sale_transactions.sale_date');
 
                     $sales = $salesQuery->get();
 
@@ -3718,25 +3757,24 @@ class ManagementReportController extends Controller
                 try {
                     $purchasesQuery = DB::table('purchase_transaction_items')
                         ->join('purchase_transactions', 'purchase_transaction_items.purchase_transaction_id', '=', 'purchase_transactions.id')
-                        ->join('items', 'purchase_transaction_items.item_id', '=', 'items.id')
                         ->leftJoin('suppliers', 'purchase_transactions.supplier_id', '=', 'suppliers.supplier_id')
                         ->whereBetween('purchase_transactions.bill_date', [$fromDate, $toDate])
                         ->select(
-                            'items.hsn_code',
-                            'items.name as product_name',
+                            'purchase_transaction_items.hsn_code',
+                            'purchase_transaction_items.item_name as product_name',
                             'purchase_transactions.bill_date',
                             'purchase_transactions.bill_no',
                             'suppliers.gst_no as supplier_gst'
                         );
 
                     if ($hsn) {
-                        $purchasesQuery->where('items.hsn_code', 'like', $hsn . '%');
+                        $purchasesQuery->where('purchase_transaction_items.hsn_code', 'like', $hsn . '%');
                     }
                     if ($itemCode) {
-                        $purchasesQuery->where('items.code', $itemCode);
+                        $purchasesQuery->where('purchase_transaction_items.item_code', $itemCode);
                     }
 
-                    $purchasesQuery->orderBy('items.name')->orderBy('purchase_transactions.bill_date');
+                    $purchasesQuery->orderBy('purchase_transaction_items.item_name')->orderBy('purchase_transactions.bill_date');
 
                     $purchases = $purchasesQuery->get();
 
@@ -3770,7 +3808,32 @@ class ManagementReportController extends Controller
             }
         }
 
-        return view('admin.reports.management-report.others.hsn-wise-sale-purchase-report', compact('reportData'));
+        $customers = Customer::where('is_deleted', 0)->orderBy('name')->get();
+        $suppliers = Supplier::where('is_deleted', 0)->orderBy('name')->get();
+        
+        // Get HSN codes from actual sale/purchase transaction items (hsn_code stored directly in items tables)
+        $saleHsnCodes = DB::table('sale_transaction_items')
+            ->whereNotNull('hsn_code')
+            ->where('hsn_code', '!=', '')
+            ->select('hsn_code')
+            ->distinct()
+            ->pluck('hsn_code');
+        
+        $purchaseHsnCodes = DB::table('purchase_transaction_items')
+            ->whereNotNull('hsn_code')
+            ->where('hsn_code', '!=', '')
+            ->select('hsn_code')
+            ->distinct()
+            ->pluck('hsn_code');
+        
+        // Combine and get unique HSN codes, convert to objects for blade compatibility
+        $hsnCodes = $saleHsnCodes->merge($purchaseHsnCodes)
+            ->unique()
+            ->sort()
+            ->values()
+            ->map(fn($code) => (object)['hsn_code' => $code]);
+
+        return view('admin.reports.management-report.others.hsn-wise-sale-purchase-report', compact('reportData', 'customers', 'suppliers', 'hsnCodes'));
     }
 
     // AJAX Lookup Methods

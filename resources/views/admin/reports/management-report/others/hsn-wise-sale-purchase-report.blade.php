@@ -44,16 +44,26 @@
                         <label class="fw-bold mb-0">Customer</label>
                     </div>
                     <div class="col-auto">
-                        <input type="text" name="customer" class="form-control form-control-sm" value="{{ request('customer') }}" style="width: 100px;" placeholder="Code">
+                        <input type="text" name="customer" class="form-control form-control-sm" value="{{ request('customer') }}" style="width: 60px;" placeholder="Code">
                     </div>
                     <div class="col-auto">
-                        <input type="text" name="customer_name" class="form-control form-control-sm" value="{{ request('customer_name') }}" style="width: 150px;" placeholder="Name" readonly>
+                        <select name="customer_id" class="form-select form-select-sm" style="width: 200px;">
+                            <option value="">-- Select --</option>
+                            @foreach($customers ?? [] as $customer)
+                                <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-auto">
                         <label class="fw-bold mb-0">Hsn</label>
                     </div>
                     <div class="col-auto">
-                        <input type="text" name="hsn" class="form-control form-control-sm" value="{{ request('hsn') }}" style="width: 120px;">
+                        <select name="hsn" class="form-select form-select-sm" style="width: 150px;">
+                            <option value="">-- All HSN --</option>
+                            @foreach($hsnCodes ?? [] as $hsnCode)
+                                <option value="{{ $hsnCode->hsn_code }}" {{ request('hsn') == $hsnCode->hsn_code ? 'selected' : '' }}>{{ $hsnCode->hsn_code }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div class="col-auto">
                         <label class="fw-bold mb-0">Tax</label>

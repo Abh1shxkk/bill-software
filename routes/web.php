@@ -401,6 +401,16 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         
         // GST Reports
         Route::get('reports/gst/form-3b', [\App\Http\Controllers\Admin\GstReportController::class, 'form3b'])->name('reports.gst.form-3b');
+        Route::get('reports/gst/gstr-1', [\App\Http\Controllers\Admin\GstReportController::class, 'gstr1'])->name('reports.gst.gstr-1');
+        Route::get('reports/gst/gstr-2', [\App\Http\Controllers\Admin\GstReportController::class, 'gstr2'])->name('reports.gst.gstr-2');
+        Route::get('reports/gst/gstr-4', [\App\Http\Controllers\Admin\GstReportController::class, 'gstr4'])->name('reports.gst.gstr-4');
+        Route::get('reports/gst/gstr-4-annual', [\App\Http\Controllers\Admin\GstReportController::class, 'gstr4Annual'])->name('reports.gst.gstr-4-annual');
+        Route::get('reports/gst/customer-gst-detail-mail', [\App\Http\Controllers\Admin\GstReportController::class, 'customerGstDetailMail'])->name('reports.gst.customer-gst-detail-mail');
+        Route::post('reports/gst/customer-gst-detail-mail', [\App\Http\Controllers\Admin\GstReportController::class, 'customerGstDetailMail'])->name('reports.gst.customer-gst-detail-mail.post');
+        Route::get('reports/gst/stock-trans-1', [\App\Http\Controllers\Admin\GstReportController::class, 'stockTrans1'])->name('reports.gst.stock-trans-1');
+        Route::get('reports/gst/stock-trans-2', [\App\Http\Controllers\Admin\GstReportController::class, 'stockTrans2'])->name('reports.gst.stock-trans-2');
+        Route::get('reports/gst/waybill-generation', [\App\Http\Controllers\Admin\GstReportController::class, 'waybillGeneration'])->name('reports.gst.waybill-generation');
+        Route::post('reports/gst/waybill-generation', [\App\Http\Controllers\Admin\GstReportController::class, 'waybillGeneration'])->name('reports.gst.waybill-generation.post');
         
         // Financial Reports
         Route::get('reports/financial/trial-balance', [\App\Http\Controllers\Admin\FinancialReportController::class, 'trialBalance'])->name('reports.financial.trial-balance');

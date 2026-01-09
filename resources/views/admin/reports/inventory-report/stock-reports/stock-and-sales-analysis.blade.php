@@ -151,11 +151,14 @@
                         <label class="fw-bold mb-0">Item Category :</label>
                     </div>
                     <div class="col-md-1">
-                        <input type="text" name="item_category_code" class="form-control form-control-sm text-center" value="{{ request('item_category_code', '00') }}" style="width: 50px;">
+                        <input type="text" name="item_category_code" class="form-control form-control-sm text-center text-uppercase" value="{{ request('item_category_code', '00') }}" style="width: 50px;">
                     </div>
                     <div class="col-md-3">
                         <select name="item_category" class="form-select form-select-sm">
                             <option value="">All</option>
+                            @foreach($categories ?? [] as $category)
+                                <option value="{{ $category->id }}" {{ request('item_category') == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                            @endforeach
                         </select>
                     </div>
                 </div>
