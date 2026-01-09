@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BankTransaction;
 use App\Models\CashBankBook;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 
 class BankTransactionController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = BankTransaction::with('bank');
@@ -39,6 +41,12 @@ class BankTransactionController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'cash_bank', 'transaction_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $request->validate([
             'transaction_date' => 'required|date',
             'transaction_type' => 'required|in:D,W',

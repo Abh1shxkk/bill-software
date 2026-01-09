@@ -7,6 +7,7 @@ use App\Models\Quotation;
 use App\Models\QuotationItem;
 use App\Models\Item;
 use App\Models\Customer;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 
 class QuotationController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index()
     {
         $quotations = Quotation::orderBy('quotation_date', 'desc')
@@ -34,6 +36,12 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'quotation', 'date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $validated = $request->validate([
             'date' => 'required|date',
             'customer_name' => 'nullable|string|max:255',

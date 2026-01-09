@@ -11,6 +11,7 @@ use App\Models\CreditNote;
 use App\Models\Supplier;
 use App\Models\Customer;
 use App\Models\SalesMan;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 
 class DebitNoteController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display debit note transaction form
      */
@@ -121,6 +123,12 @@ class DebitNoteController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'debit_note', 'header.debit_note_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $request->validate([
             'header.debit_note_date' => 'required|date',
             'header.debit_party_type' => 'required|in:S,C',

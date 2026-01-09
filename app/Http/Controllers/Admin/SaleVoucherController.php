@@ -10,9 +10,11 @@ use App\Models\SalesMan;
 use App\Models\HsnCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ValidatesTransactionDate;
 
 class SaleVoucherController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of vouchers.
      */
@@ -92,6 +94,12 @@ class SaleVoucherController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date
+        $dateError = $this->validateTransactionDate($request, 'sale_voucher', 'sale_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+
         $validated = $request->validate([
             'sale_date' => 'required|date',
             'due_date' => 'nullable|date',

@@ -8,11 +8,13 @@ use App\Models\MultiVoucherEntry;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\GeneralLedger;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MultiVoucherController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = MultiVoucher::with('entries');
@@ -41,6 +43,12 @@ class MultiVoucherController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'multi_voucher', 'voucher_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $request->validate(['voucher_date' => 'required|date']);
         try {
             DB::beginTransaction();

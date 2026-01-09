@@ -739,6 +739,10 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('sale/modification/{id}', [SaleTransactionController::class, 'getTransaction'])->name('sale.modification.transaction');
         Route::post('sale/modification/{id}', [SaleTransactionController::class, 'updateTransaction'])->name('sale.modification.update');
         
+        // Sale Discount Routes
+        Route::post('sale/save-company-discount', [SaleTransactionController::class, 'saveCompanyDiscount'])->name('sale.saveCompanyDiscount');
+        Route::post('sale/save-item-discount', [SaleTransactionController::class, 'saveItemDiscount'])->name('sale.saveItemDiscount');
+        
         // Sale Challan Routes
         Route::get('sale-challan/transaction', [SaleChallanController::class, 'transaction'])->name('sale-challan.transaction');
         Route::post('sale-challan/store', [SaleChallanController::class, 'store'])->name('sale-challan.store');
@@ -775,6 +779,10 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::put('purchase/transactions/{id}', [PurchaseTransactionController::class, 'update'])->name('purchase.transactions.update');
         Route::delete('purchase/transactions/{id}', [PurchaseTransactionController::class, 'destroy'])->name('purchase.transactions.destroy');
         Route::delete('purchase/{id}', [PurchaseTransactionController::class, 'destroy'])->name('purchase.destroy');
+        
+        // Purchase Discount Routes
+        Route::post('purchase/save-company-discount', [PurchaseTransactionController::class, 'saveCompanyDiscount'])->name('purchase.saveCompanyDiscount');
+        Route::post('purchase/save-item-discount', [PurchaseTransactionController::class, 'saveItemDiscount'])->name('purchase.saveItemDiscount');
         
         // Sale Return Routes
         Route::get('sale-return', [SaleReturnController::class, 'index'])->name('sale-return.index');
@@ -1259,6 +1267,11 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         
         // Hotkeys JSON API (for keyboard-shortcuts.js)
         Route::get('api/hotkeys', [\App\Http\Controllers\Admin\HotkeyController::class, 'getHotkeysJson'])->name('api.hotkeys');
+        
+        // Transaction Date Validation API
+        Route::post('api/validate-transaction-date', [\App\Http\Controllers\Api\TransactionDateController::class, 'validate'])->name('api.validate-transaction-date');
+        Route::get('api/transaction-date-range/{type}', [\App\Http\Controllers\Api\TransactionDateController::class, 'getDateRange'])->name('api.transaction-date-range');
+        Route::get('api/last-transaction-date/{type}', [\App\Http\Controllers\Api\TransactionDateController::class, 'getLastDate'])->name('api.last-transaction-date');
     });
     // Profile settings page
     Route::get('/profile', function () {

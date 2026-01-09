@@ -10,6 +10,7 @@ use App\Models\Supplier;
 use App\Models\Item;
 use App\Models\SalesMan;
 use App\Models\PendingOrder;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PurchaseChallanTransactionController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display purchase challan transaction form
      */
@@ -360,6 +362,12 @@ class PurchaseChallanTransactionController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'purchase_challan', 'header.challan_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         // Validate request
         $validated = $request->validate([
             'header.challan_date' => 'required|date',

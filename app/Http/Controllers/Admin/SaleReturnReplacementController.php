@@ -7,11 +7,13 @@ use App\Models\SaleReturnReplacementTransaction;
 use App\Models\SaleReturnReplacementItem;
 use App\Models\Customer;
 use App\Models\Item;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SaleReturnReplacementController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = SaleReturnReplacementTransaction::with(['customer']);
@@ -45,6 +47,12 @@ class SaleReturnReplacementController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'sale_return_replacement', 'trn_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $request->validate([
             'trn_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',

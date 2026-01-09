@@ -1113,11 +1113,52 @@
     </div>
 </div>
 
+<!-- Discount Options Modal -->
+<div id="discountOptionsBackdrop" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0, 0, 0, 0.7) !important; z-index: 99998 !important; opacity: 1 !important;"></div>
+<div id="discountOptionsModal" style="display: none; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; max-width: 400px !important; width: 90% !important; z-index: 99999 !important; background: #ffffff !important; border-radius: 8px !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important; opacity: 1 !important;">
+    <div style="padding: 1rem 1.5rem !important; background: #6c5ce7 !important; color: white !important; border-radius: 8px 8px 0 0 !important; display: flex !important; justify-content: space-between !important; align-items: center !important;">
+        <h5 style="margin: 0 !important; font-size: 1.1rem !important; font-weight: 600 !important; color: white !important;"><i class="bi bi-percent me-2"></i>Discount Options</h5>
+        <button type="button" style="background: transparent !important; border: none !important; color: white !important; font-size: 1.5rem !important; cursor: pointer !important;" onclick="closeDiscountOptionsModal()">×</button>
+    </div>
+    <div style="padding: 1.5rem !important; background: #ffffff !important;">
+        <div class="text-center mb-3">
+            <div class="mb-2">
+                <strong>Item:</strong> <span id="discountItemName" style="color: #0d6efd;">-</span>
+            </div>
+            <div class="mb-2">
+                <strong>Company:</strong> <span id="discountCompanyName" style="color: #0dcaf0;">-</span>
+            </div>
+            <div class="mb-3">
+                <strong>Action:</strong> <span id="discountValue" style="font-size: 1.25rem; font-weight: bold;">0%</span>
+            </div>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="button" id="discountBtnTemporary" class="btn btn-outline-secondary" onclick="applyDiscountOption('temporary')">
+                <i class="bi bi-clock me-2"></i> Temporary Change
+                <small class="d-block text-muted">Only for this transaction</small>
+            </button>
+            <button type="button" id="discountBtnCompany" class="btn btn-outline-info" onclick="applyDiscountOption('company')">
+                <i class="bi bi-building me-2"></i> Save to Company
+                <small class="d-block text-muted">Apply to all items of this company</small>
+            </button>
+            <button type="button" id="discountBtnItem" class="btn btn-outline-success" onclick="applyDiscountOption('item')">
+                <i class="bi bi-box-seam me-2"></i> Save to Item
+                <small class="d-block text-muted">Apply permanently to this item only</small>
+            </button>
+        </div>
+    </div>
+    <div style="padding: 1rem 1.5rem !important; background: #f8f9fa !important; border-top: 1px solid #dee2e6 !important; border-radius: 0 0 8px 8px !important; text-align: right !important;">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeDiscountOptionsModal()">Cancel</button>
+    </div>
+</div>
+
 <script>
 // Global variables
 let itemsData = [];
 let itemIndex = -1;
 let currentSelectedRowIndex = null;
+let currentDiscountRowIndex = null; // Track which row's discount is being edited
+let companyDiscounts = {}; // Store company-wise discounts for this session
 let pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
 let selectedChallanId = null; // Store selected challan ID for loading
@@ -2066,6 +2107,8 @@ function populateExistingRow(row, item, batch) {
     
     // Store item data in row attributes
     row.setAttribute('data-item-id', item.id);
+    row.setAttribute('data-company-id', item.company_id || '');
+    row.setAttribute('data-company-name', item.company_name || item.company || '');
     row.setAttribute('data-hsn-code', item.hsn_code || '');
     row.setAttribute('data-cgst', item.cgst_percent || 0);
     row.setAttribute('data-sgst', item.sgst_percent || 0);
@@ -2082,6 +2125,16 @@ function populateExistingRow(row, item, batch) {
     row.setAttribute('data-batch-cost-gst', batch.avg_cost_gst || batch.cost_gst || 0);
     row.setAttribute('data-batch-supplier', batch.supplier_name || '');
     row.setAttribute('data-batch-purchase-date', batch.purchase_date_display || batch.purchase_date || '');
+    
+    // Store original discount for change detection
+    const itemDiscount = getDiscountForItem(item.id, item.company_id);
+    row.setAttribute('data-original-discount', itemDiscount || '0');
+    
+    // Apply discount if available
+    const discountInput = document.getElementById(`discount_${rowIndex}`);
+    if (discountInput && itemDiscount > 0) {
+        discountInput.value = itemDiscount;
+    }
     
     // 🔥 IMPORTANT: Store batch ID for quantity reduction (must be number)
     const batchId = batch.id ? parseInt(batch.id) : '';
@@ -2105,8 +2158,11 @@ function addItemToTable(item, batch) {
     let targetRow;
     let targetRowIndex;
     
+    // Get discount for this item (from item or company)
+    const itemDiscount = getDiscountForItem(item.id, item.company_id);
+    
     if (existingEmptyRow) {
-        // Reuse existing empty row
+        // Reuse existing empty row (populateExistingRow handles discount)
         console.log('✅ Found empty row, reusing it');
         targetRowIndex = populateExistingRow(existingEmptyRow, item, batch);
         targetRow = existingEmptyRow;
@@ -2119,6 +2175,8 @@ function addItemToTable(item, batch) {
         targetRow = document.createElement('tr');
         targetRow.setAttribute('data-row-index', itemIndex);
         targetRow.setAttribute('data-item-id', item.id);
+        targetRow.setAttribute('data-company-id', item.company_id || '');
+        targetRow.setAttribute('data-company-name', item.company_name || item.company || '');
         targetRow.style.cursor = 'pointer';
         targetRow.addEventListener('click', function(e) {
             const clickedRow = e.currentTarget;
@@ -2142,6 +2200,9 @@ function addItemToTable(item, batch) {
             }
         }
         
+        // Apply discount value
+        const discountValue = itemDiscount > 0 ? itemDiscount : '';
+        
         targetRow.innerHTML = `
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px;" autocomplete="off"></td>
@@ -2150,7 +2211,7 @@ function addItemToTable(item, batch) {
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="${discountValue}" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="${parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2)}" step="0.01" style="font-size: 10px;" readonly></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][amount]" id="amount_${itemIndex}" value="0.00" style="font-size: 10px;" readonly></td>
             <td class="p-0 text-center">
@@ -2177,6 +2238,9 @@ function addItemToTable(item, batch) {
         targetRow.setAttribute('data-batch-cost-gst', batch.avg_cost_gst || batch.cost_gst || 0);
         targetRow.setAttribute('data-batch-supplier', batch.supplier_name || '');
         targetRow.setAttribute('data-batch-purchase-date', batch.purchase_date_display || batch.purchase_date || '');
+        
+        // Store original discount for change detection
+        targetRow.setAttribute('data-original-discount', discountValue || '0');
         
         // 🔥 IMPORTANT: Store batch ID for quantity reduction (must be number)
         const batchId = batch.id ? parseInt(batch.id) : '';
@@ -2282,16 +2346,35 @@ function addRowEventListeners(row, rowIndex) {
         });
     }
     
-    // Discount field - Enter finalizes row and moves to next
+    // Discount field - Enter shows discount options modal if value CHANGED from original
     if (discountInput) {
+        // Store original discount value when field gets focus
+        discountInput.addEventListener('focus', function() {
+            const rowIndex = parseInt(this.getAttribute('data-row'));
+            const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+            const originalDiscount = parseFloat(row?.getAttribute('data-original-discount') || this.value || 0);
+            // Store original value if not already stored
+            if (!row?.hasAttribute('data-original-discount')) {
+                row?.setAttribute('data-original-discount', this.value || '0');
+            }
+        });
+        
         discountInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                calculateRowAmount(rowIndex);
-                calculateTotal();
+                const currentValue = parseFloat(this.value) || 0;
+                const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+                const originalValue = parseFloat(row?.getAttribute('data-original-discount') || 0);
                 
-                // Move to next row (this will mark row complete, turn green, and update summary)
-                moveToNextRow(rowIndex);
+                // Show modal if discount value has CHANGED from original (including changing TO 0 to remove)
+                if (currentValue !== originalValue) {
+                    showDiscountOptionsModal(rowIndex, currentValue);
+                } else {
+                    // No change, just move to next row
+                    calculateRowAmount(rowIndex);
+                    calculateTotal();
+                    moveToNextRow(rowIndex);
+                }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 navigateToRow(rowIndex - 1);
@@ -2848,6 +2931,330 @@ function calculateSummary() {
     document.getElementById('net_amt').value = totalNet.toFixed(2);  // Final net amount
     document.getElementById('scm_percent').value = '0.00';  // Scm % (not used)
 }
+
+// ============================================
+// DISCOUNT OPTIONS MODAL FUNCTIONS
+// ============================================
+
+// Show discount options modal
+function showDiscountOptionsModal(rowIndex, discountValue) {
+    currentDiscountRowIndex = rowIndex;
+    
+    // Get item and company info from the row
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    const itemName = row?.querySelector('input[name*="[item_name]"]')?.value || 'Unknown Item';
+    const companyName = row?.getAttribute('data-company-name') || row?.querySelector('input[name*="[company_name]"]')?.value || 'Unknown Company';
+    
+    // Update modal content
+    document.getElementById('discountItemName').textContent = itemName;
+    document.getElementById('discountCompanyName').textContent = companyName;
+    
+    // Show appropriate message based on discount value
+    if (discountValue === 0) {
+        document.getElementById('discountValue').textContent = 'Remove Discount';
+        document.getElementById('discountValue').style.color = '#dc3545'; // Red color for removal
+    } else {
+        document.getElementById('discountValue').textContent = discountValue + '%';
+        document.getElementById('discountValue').style.color = '#28a745'; // Green color for setting
+    }
+    
+    // Show modal
+    document.getElementById('discountOptionsBackdrop').style.display = 'block';
+    document.getElementById('discountOptionsModal').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').classList.add('show');
+        document.getElementById('discountOptionsModal').classList.add('show');
+    }, 10);
+}
+
+// Close discount options modal
+function closeDiscountOptionsModal() {
+    document.getElementById('discountOptionsBackdrop').classList.remove('show');
+    document.getElementById('discountOptionsModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').style.display = 'none';
+        document.getElementById('discountOptionsModal').style.display = 'none';
+    }, 300);
+    
+    // Continue with row calculation and move to next
+    if (currentDiscountRowIndex !== null) {
+        calculateRowAmount(currentDiscountRowIndex);
+        calculateTotal();
+        moveToNextRow(currentDiscountRowIndex);
+        currentDiscountRowIndex = null;
+    }
+}
+
+// Apply discount option
+function applyDiscountOption(option) {
+    const rowIndex = currentDiscountRowIndex;
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    const discountValue = parseFloat(document.getElementById(`discount_${rowIndex}`)?.value) || 0;
+    const itemId = row?.getAttribute('data-item-id');
+    const companyId = row?.getAttribute('data-company-id');
+    const companyName = row?.getAttribute('data-company-name') || '';
+    
+    // Determine if this is a removal (discount = 0)
+    const isRemoval = discountValue === 0;
+    const actionText = isRemoval ? 'removed' : `set to ${discountValue}%`;
+    
+    // Disable all buttons to prevent multiple clicks
+    disableDiscountModalButtons();
+    
+    switch(option) {
+        case 'temporary':
+            // Just close modal and continue - discount already applied to this row
+            // Update original discount so it won't trigger modal again for same value
+            row?.setAttribute('data-original-discount', discountValue.toString());
+            showToast(`Discount ${actionText} temporarily`, 'success');
+            closeDiscountOptionsModal();
+            enableDiscountModalButtons();
+            break;
+            
+        case 'company':
+            // Save discount to company INSTANTLY to database
+            if (companyId) {
+                // Show loading state
+                showToast('Saving discount to company...', 'info');
+                
+                // Save to database FIRST (instant save)
+                saveDiscountToCompany(companyId, discountValue, function(success) {
+                    if (success) {
+                        // Store in session for this transaction
+                        companyDiscounts[companyId] = discountValue;
+                        
+                        // Apply to all existing rows with same company and update their original discount
+                        applyCompanyDiscountToAllRows(companyId, discountValue);
+                        
+                        // Update current row's original discount
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        
+                        if (isRemoval) {
+                            showToast(`✅ Discount removed for company: ${companyName}`, 'success');
+                        } else {
+                            showToast(`✅ Discount ${discountValue}% saved for company: ${companyName}`, 'success');
+                        }
+                    } else {
+                        showToast('❌ Failed to save discount to company', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Company not found for this item', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+            
+        case 'item':
+            // Save discount to item INSTANTLY to database
+            if (itemId) {
+                // Show loading state
+                showToast('Saving discount to item...', 'info');
+                
+                // Save to database FIRST (instant save)
+                saveDiscountToItem(itemId, discountValue, function(success) {
+                    if (success) {
+                        // Update original discount
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        
+                        if (isRemoval) {
+                            showToast('✅ Discount removed permanently for this item', 'success');
+                        } else {
+                            showToast(`✅ Discount ${discountValue}% saved permanently for this item`, 'success');
+                        }
+                    } else {
+                        showToast('❌ Failed to save discount to item', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Item ID not found', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+    }
+}
+
+// Disable discount modal buttons during save
+function disableDiscountModalButtons() {
+    const buttons = ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'];
+    buttons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+            btn.style.cursor = 'not-allowed';
+        }
+    });
+}
+
+// Enable discount modal buttons after save
+function enableDiscountModalButtons() {
+    const buttons = ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'];
+    buttons.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        }
+    });
+}
+
+// Apply company discount to all rows with same company
+function applyCompanyDiscountToAllRows(companyId, discountValue) {
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    rows.forEach(row => {
+        const rowCompanyId = row.getAttribute('data-company-id');
+        if (rowCompanyId == companyId) {
+            const rowIndex = row.getAttribute('data-row-index');
+            const discountInput = document.getElementById(`discount_${rowIndex}`);
+            if (discountInput && !discountInput.value) {
+                // Only apply if discount is not already set
+                discountInput.value = discountValue;
+                // Update original discount so it won't trigger modal again
+                row.setAttribute('data-original-discount', discountValue.toString());
+                calculateRowAmount(parseInt(rowIndex));
+            }
+        }
+    });
+    calculateTotal();
+    calculateSummary();
+}
+
+// Save discount to company via API - INSTANT SAVE with callback
+function saveDiscountToCompany(companyId, discountValue, callback) {
+    console.log('🔵 Saving company discount:', { companyId, discountValue });
+    
+    fetch('{{ route("admin.sale.saveCompanyDiscount") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            company_id: companyId,
+            discount_percent: discountValue
+        })
+    })
+    .then(response => {
+        console.log('📥 Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📦 Response data:', data);
+        if (data.success) {
+            console.log('✅ Company discount saved successfully:', data.message);
+            if (callback) callback(true);
+        } else {
+            console.error('❌ Failed to save company discount:', data.message);
+            alert('Error: ' + data.message);
+            if (callback) callback(false);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving company discount:', error);
+        alert('Network error: ' + error.message);
+        if (callback) callback(false);
+    });
+}
+
+// Save discount to item via API - INSTANT SAVE with callback
+function saveDiscountToItem(itemId, discountValue, callback) {
+    console.log('🔵 Saving item discount:', { itemId, discountValue });
+    
+    fetch('{{ route("admin.sale.saveItemDiscount") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            item_id: itemId,
+            discount_percent: discountValue
+        })
+    })
+    .then(response => {
+        console.log('📥 Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('📦 Response data:', data);
+        if (data.success) {
+            console.log('✅ Item discount saved successfully:', data.message);
+            if (callback) callback(true);
+        } else {
+            console.error('❌ Failed to save item discount:', data.message);
+            alert('Error: ' + data.message);
+            if (callback) callback(false);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Error saving item discount:', error);
+        alert('Network error: ' + error.message);
+        if (callback) callback(false);
+    });
+}
+
+// Get discount for item (checks item first, then company)
+function getDiscountForItem(itemId, companyId) {
+    // First check session company discounts
+    if (companyId && companyDiscounts[companyId]) {
+        return companyDiscounts[companyId];
+    }
+    
+    // Check from itemsData (loaded from server with discounts)
+    const item = itemsData.find(i => i.id == itemId);
+    if (item) {
+        // Item discount takes priority
+        if (item.fixed_dis_percent && parseFloat(item.fixed_dis_percent) > 0) {
+            return parseFloat(item.fixed_dis_percent);
+        }
+        // Then company discount
+        if (item.company_discount && parseFloat(item.company_discount) > 0) {
+            return parseFloat(item.company_discount);
+        }
+    }
+    
+    return 0;
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    // Try SweetAlert2 first
+    if (typeof Swal !== 'undefined') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        Toast.fire({
+            icon: type,
+            title: message
+        });
+        return;
+    }
+    
+    // Try toastr
+    if (typeof toastr !== 'undefined') {
+        toastr[type](message);
+        return;
+    }
+    
+    // Fallback to alert
+    alert(message);
+}
+
+// Close modal on backdrop click
+document.getElementById('discountOptionsBackdrop')?.addEventListener('click', closeDiscountOptionsModal);
 
 // Add new empty row
 function addNewRow() {

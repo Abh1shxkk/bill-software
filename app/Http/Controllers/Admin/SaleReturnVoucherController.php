@@ -9,9 +9,11 @@ use App\Models\Customer;
 use App\Models\HsnCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ValidatesTransactionDate;
 
 class SaleReturnVoucherController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = SaleReturnTransaction::with(['customer', 'items'])
@@ -73,6 +75,12 @@ class SaleReturnVoucherController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date
+        $dateError = $this->validateTransactionDate($request, 'sale_return_voucher', 'return_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+
         $validated = $request->validate([
             'return_date' => 'required|date',
             'customer_id' => 'required|exists:customers,id',

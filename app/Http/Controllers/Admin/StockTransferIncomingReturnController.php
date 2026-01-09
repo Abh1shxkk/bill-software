@@ -8,12 +8,14 @@ use App\Models\Item;
 use App\Models\StockTransferIncomingReturnTransaction;
 use App\Models\StockTransferIncomingReturnTransactionItem;
 use App\Models\StockLedger;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StockTransferIncomingReturnController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = StockTransferIncomingReturnTransaction::query();
@@ -67,6 +69,12 @@ class StockTransferIncomingReturnController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'stock_transfer_incoming_return', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             DB::beginTransaction();
 
             $trnNo = StockTransferIncomingReturnTransaction::generateTrnNumber();

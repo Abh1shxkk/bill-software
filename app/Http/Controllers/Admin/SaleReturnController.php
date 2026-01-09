@@ -7,10 +7,12 @@ use App\Models\Customer;
 use App\Models\Item;
 use App\Models\SaleReturnTransaction;
 use App\Models\SalesMan;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 
 class SaleReturnController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of sale return invoices
      */
@@ -405,6 +407,12 @@ class SaleReturnController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'sale_return', 'return_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             \DB::beginTransaction();
 
             // Validate request

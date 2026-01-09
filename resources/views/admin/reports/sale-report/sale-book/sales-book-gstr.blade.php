@@ -5,50 +5,50 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #d4edda 0%, #e8f5e9 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-success fst-italic fw-bold">SALE BOOK GSTR</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">SALE BOOK GSTR</h4>
         </div>
     </div>
 
     <!-- Report Type Selection -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
             <div class="d-flex align-items-center flex-wrap gap-1">
                 <span class="fw-bold small me-2">Type:</span>
                 <div class="btn-group btn-group-sm" role="group">
-                    <input type="radio" class="btn-check" name="report_type" id="type_sale" value="1" {{ ($reportType ?? '8') == '1' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_sale">1.Sale</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_sale" value="1" {{ ($reportType ?? '8') == '1' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_sale">1.Sale</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_return" value="2" {{ ($reportType ?? '') == '2' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_return">2.Sale Ret</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_return" value="2" {{ ($reportType ?? '') == '2' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_return">2.Sale Ret</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_dnote" value="3" {{ ($reportType ?? '') == '3' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_dnote">3.D.Note</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_dnote" value="3" {{ ($reportType ?? '') == '3' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_dnote">3.D.Note</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_cnote" value="4" {{ ($reportType ?? '') == '4' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_cnote">4.C.Note</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_cnote" value="4" {{ ($reportType ?? '') == '4' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_cnote">4.C.Note</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_consolidated" value="5" {{ ($reportType ?? '') == '5' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_consolidated">5.Consolidated</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_consolidated" value="5" {{ ($reportType ?? '') == '5' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_consolidated">5.Consolidated</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_all_cn_dn" value="6" {{ ($reportType ?? '') == '6' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_all_cn_dn">6.All CN_DN</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_all_cn_dn" value="6" {{ ($reportType ?? '') == '6' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_all_cn_dn">6.All CN_DN</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_expiry" value="7" {{ ($reportType ?? '') == '7' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_expiry">7.Expiry Sale</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_expiry" value="7" {{ ($reportType ?? '') == '7' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_expiry">7.Expiry Sale</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_voucher" value="8" {{ ($reportType ?? '8') == '8' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_voucher">8.Voucher Sale</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_voucher" value="8" {{ ($reportType ?? '8') == '8' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary btn-sm" for="type_voucher">8.Voucher Sale</label>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.sales-book-gstr') }}">
                 <input type="hidden" name="report_type" id="hidden_report_type" value="{{ $reportType ?? '8' }}">
                 
                 <div class="row g-2">
@@ -120,13 +120,13 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">WOST</span>
-                            <input type="text" name="wost" class="form-control" value="{{ $wost ?? '' }}" placeholder="">
+                            <input type="text" name="wost" class="form-control text-uppercase" value="{{ $wost ?? '' }}" placeholder="">
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Party Code</span>
-                            <input type="text" name="party_code" class="form-control" value="{{ $partyCode ?? '' }}" placeholder="00">
+                            <input type="text" name="party_code" class="form-control text-uppercase" value="{{ $partyCode ?? '' }}" placeholder="00">
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -229,32 +229,38 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="formatTwo()">
-                                Format-2
-                            </button>
-                            <button type="button" class="btn btn-info btn-sm" onclick="stateWiseSale()">
-                                State Wise Sale
-                            </button>
-                            <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()">
-                                Excel
-                            </button>
-                            <button type="button" class="btn btn-primary btn-sm" onclick="viewReport()">
-                                View
-                            </button>
-                            <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">
-                                Close
-                            </a>
-                        </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-3 fw-bold shadow-sm me-2" onclick="formatTwo()">
+                            Format-2
+                        </button>
+                        <button type="button" class="btn btn-light border px-3 fw-bold shadow-sm me-2" onclick="stateWiseSale()">
+                            State Wise
+                        </button>
+                        <button type="button" class="btn btn-light border px-3 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($sales) && $sales->count() > 0)
     <!-- Summary Cards -->
-    @if(isset($sales) && $sales->count() > 0)
     <div class="row g-2 mb-2">
         <div class="col">
             <div class="card bg-primary text-white">
@@ -313,13 +319,11 @@
             </div>
         </div>
     </div>
-    @endif
 
-    <!-- Data Table -->
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 55vh;">
-                <table class="table table-sm table-hover table-striped table-bordered mb-0" id="gstrTable">
+                <table class="table table-sm table-hover table-striped table-bordered mb-0">
                     <thead class="table-dark sticky-top">
                         <tr>
                             <th class="text-center" style="width: 35px;">#</th>
@@ -342,9 +346,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($sales ?? [] as $index => $sale)
+                        @foreach($sales as $index => $sale)
                         @php
-                            // Calculate GST from items
                             $taxable = $sale->items->sum('taxable_amount') ?: $sale->items->sum('amount') ?: $sale->nt_amount;
                             $cgst = $sale->items->sum('cgst_amount') ?: 0;
                             $sgst = $sale->items->sum('sgst_amount') ?: 0;
@@ -376,16 +379,8 @@
                             <td class="text-end">{{ number_format($igst, 2) }}</td>
                             <td class="text-end fw-bold">{{ number_format($sale->net_amount ?? 0, 2) }}</td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="15" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                Select filters and click "View" to generate GSTR report
-                            </td>
-                        </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
-                    @if(isset($sales) && $sales->count() > 0)
                     <tfoot class="table-dark fw-bold">
                         <tr>
                             <td colspan="{{ 6 + (($showArea ?? false) ? 1 : 0) + (($showSalesman ?? false) ? 1 : 0) }}" class="text-end">
@@ -398,89 +393,76 @@
                             <td class="text-end">{{ number_format($totals['net_amount'] ?? 0, 2) }}</td>
                         </tr>
                     </tfoot>
-                    @endif
                 </table>
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
 <script>
 // Sync report type radio buttons with hidden field
-document.querySelectorAll('input[name="report_type"]').forEach(radio => {
+document.querySelectorAll('input[name="report_type_radio"]').forEach(radio => {
     radio.addEventListener('change', function() {
         document.getElementById('hidden_report_type').value = this.value;
     });
 });
 
 function exportToExcel() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('export', 'excel');
     window.open('{{ route("admin.reports.sales.sales-book-gstr") }}?' + params.toString(), '_blank');
 }
 
 function stateWiseSale() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('group_by', 'state');
     window.location.href = '{{ route("admin.reports.sales.sales-book-gstr") }}?' + params.toString();
 }
 
 function formatTwo() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('format', '2');
     window.location.href = '{{ route("admin.reports.sales.sales-book-gstr") }}?' + params.toString();
 }
 
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    
-    const printWindow = window.open(
-        '{{ route("admin.reports.sales.sales-book-gstr") }}?' + params.toString(),
-        'SaleBookGSTR',
-        'width=1200,height=800,scrollbars=yes,resizable=yes'
-    );
-    
-    if (printWindow) {
-        printWindow.focus();
-    }
+function printReport() {
+    window.open('{{ route("admin.reports.sales.sales-book-gstr") }}?print=1&' + $('#filterForm').serialize(), '_blank');
 }
+
+// Keyboard shortcuts
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
+});
 </script>
 @endpush
 
 @push('styles')
 <style>
-.input-group-text {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.4rem;
-    min-width: fit-content;
-}
-.form-control, .form-select {
-    font-size: 0.75rem;
-}
-.table th, .table td {
-    padding: 0.3rem 0.4rem;
-    font-size: 0.75rem;
-    vertical-align: middle;
-}
-.btn-sm {
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-}
-.sticky-top {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.75rem; border-radius: 0; }
+.table th, .table td { padding: 0.3rem 0.4rem; font-size: 0.75rem; vertical-align: middle; }
+.btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+.sticky-top { position: sticky; top: 0; z-index: 10; }
 </style>
 @endpush

@@ -5,40 +5,41 @@
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
-    <div class="card mb-2" style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);">
+    <div class="card mb-2" style="background-color: #ffc4d0;">
         <div class="card-body py-2 text-center">
-            <h4 class="mb-0 text-danger fst-italic fw-bold">Party Wise Sale</h4>
+            <h4 class="mb-0 text-primary fst-italic fw-bold" style="font-family: 'Times New Roman', serif;">PARTY WISE SALE</h4>
         </div>
     </div>
 
     <!-- Report Type Selection -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
             <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold small">Report Type:</span>
                 <div class="btn-group btn-group-sm" role="group">
-                    <input type="radio" class="btn-check" name="report_type" id="type_sale" value="1" {{ ($reportType ?? '1') == '1' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-primary btn-sm" for="type_sale">1. Sale</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_sale" value="1" {{ ($reportType ?? '1') == '1' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary" for="type_sale">1. Sale</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_return" value="2" {{ ($reportType ?? '') == '2' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-danger btn-sm" for="type_return">2. Sale Return</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_return" value="2" {{ ($reportType ?? '') == '2' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary" for="type_return">2. Sale Return</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_dn" value="3" {{ ($reportType ?? '') == '3' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-warning btn-sm" for="type_dn">3. Debit Note</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_dn" value="3" {{ ($reportType ?? '') == '3' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary" for="type_dn">3. Debit Note</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_cn" value="4" {{ ($reportType ?? '') == '4' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-info btn-sm" for="type_cn">4. Credit Note</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_cn" value="4" {{ ($reportType ?? '') == '4' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary" for="type_cn">4. Credit Note</label>
                     
-                    <input type="radio" class="btn-check" name="report_type" id="type_consolidated" value="5" {{ ($reportType ?? '') == '5' ? 'checked' : '' }}>
-                    <label class="btn btn-outline-success btn-sm" for="type_consolidated">5. Consolidated Sale</label>
+                    <input type="radio" class="btn-check" name="report_type_radio" id="type_consolidated" value="5" {{ ($reportType ?? '') == '5' ? 'checked' : '' }}>
+                    <label class="btn btn-outline-primary" for="type_consolidated">5. Consolidated Sale</label>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Main Filters -->
-    <div class="card shadow-sm mb-2">
+    <div class="card shadow-sm mb-2" style="background-color: #f0f0f0;">
         <div class="card-body py-2">
-            <form method="GET" id="filterForm">
+            <form method="GET" id="filterForm" action="{{ route('admin.reports.sales.sales-book-party-wise') }}">
                 <input type="hidden" name="report_type" id="hidden_report_type" value="{{ $reportType ?? '1' }}">
                 
                 <div class="row g-2">
@@ -69,7 +70,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Selective</span>
-                            <select name="selective" class="form-select">
+                            <select name="selective" class="form-select text-uppercase">
                                 <option value="Y" {{ ($selective ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
                                 <option value="N" {{ ($selective ?? '') == 'N' ? 'selected' : '' }}>N</option>
                             </select>
@@ -78,7 +79,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Bill Wise</span>
-                            <select name="bill_wise" class="form-select">
+                            <select name="bill_wise" class="form-select text-uppercase">
                                 <option value="Y" {{ ($billWise ?? 'Y') == 'Y' ? 'selected' : '' }}>Y</option>
                                 <option value="N" {{ ($billWise ?? '') == 'N' ? 'selected' : '' }}>N</option>
                             </select>
@@ -87,7 +88,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">T/R</span>
-                            <select name="tax_retail" class="form-select">
+                            <select name="tax_retail" class="form-select text-uppercase">
                                 <option value="">All</option>
                                 <option value="T" {{ ($taxRetail ?? '') == 'T' ? 'selected' : '' }}>T(ax)</option>
                                 <option value="R" {{ ($taxRetail ?? '') == 'R' ? 'selected' : '' }}>R(etail)</option>
@@ -99,7 +100,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Tagged</span>
-                            <select name="tagged_parties" class="form-select">
+                            <select name="tagged_parties" class="form-select text-uppercase">
                                 <option value="N" {{ ($taggedParties ?? 'N') == 'N' ? 'selected' : '' }}>N</option>
                                 <option value="Y" {{ ($taggedParties ?? '') == 'Y' ? 'selected' : '' }}>Y</option>
                             </select>
@@ -108,7 +109,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Remove Tags</span>
-                            <select name="remove_tags" class="form-select">
+                            <select name="remove_tags" class="form-select text-uppercase">
                                 <option value="N" {{ ($removeTags ?? 'N') == 'N' ? 'selected' : '' }}>N</option>
                                 <option value="Y" {{ ($removeTags ?? '') == 'Y' ? 'selected' : '' }}>Y</option>
                             </select>
@@ -117,7 +118,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Flag</span>
-                            <input type="text" name="flag" class="form-control" value="{{ $flag ?? '' }}" placeholder="">
+                            <input type="text" name="flag" class="form-control text-uppercase" value="{{ $flag ?? '' }}" placeholder="">
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -138,7 +139,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Print Addr</span>
-                            <select name="print_address" class="form-select">
+                            <select name="print_address" class="form-select text-uppercase">
                                 <option value="N" {{ ($printAddress ?? 'N') == 'N' ? 'selected' : '' }}>N</option>
                                 <option value="Y" {{ ($printAddress ?? '') == 'Y' ? 'selected' : '' }}>Y</option>
                             </select>
@@ -147,7 +148,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Print S.Tax</span>
-                            <select name="print_stax" class="form-select">
+                            <select name="print_stax" class="form-select text-uppercase">
                                 <option value="N" {{ ($printStax ?? 'N') == 'N' ? 'selected' : '' }}>N</option>
                                 <option value="Y" {{ ($printStax ?? '') == 'Y' ? 'selected' : '' }}>Y</option>
                             </select>
@@ -156,7 +157,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">Sort By</span>
-                            <select name="sort_by" class="form-select">
+                            <select name="sort_by" class="form-select text-uppercase">
                                 <option value="P" {{ ($sortBy ?? 'P') == 'P' ? 'selected' : '' }}>P(arty)</option>
                                 <option value="A" {{ ($sortBy ?? '') == 'A' ? 'selected' : '' }}>A(mount)</option>
                             </select>
@@ -165,7 +166,7 @@
                     <div class="col-md-2">
                         <div class="input-group input-group-sm">
                             <span class="input-group-text">A/D</span>
-                            <select name="asc_desc" class="form-select">
+                            <select name="asc_desc" class="form-select text-uppercase">
                                 <option value="A" {{ ($ascDesc ?? 'A') == 'A' ? 'selected' : '' }}>A(sc)</option>
                                 <option value="D" {{ ($ascDesc ?? '') == 'D' ? 'selected' : '' }}>D(esc)</option>
                             </select>
@@ -204,20 +205,28 @@
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="row mt-2">
-                    <div class="col-md-12">
-                        <div class="d-flex gap-2 justify-content-end">
-                            <button type="button" class="btn btn-success btn-sm" onclick="exportToExcel()">Excel</button>
-                            <button type="button" class="btn btn-primary btn-sm" onclick="viewReport()">View</button>
-                            <a href="{{ route('admin.reports.sales') }}" class="btn btn-secondary btn-sm">Close</a>
-                        </div>
+                <div class="row mt-2" style="border-top: 2px solid #000; padding-top: 10px;">
+                    <div class="col-12 text-end">
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="exportToExcel()">
+                            <u>E</u>xcel
+                        </button>
+                        <button type="submit" name="view" value="1" class="btn btn-light border px-4 fw-bold shadow-sm me-2">
+                            <u>V</u>iew
+                        </button>
+                        <button type="button" class="btn btn-light border px-4 fw-bold shadow-sm me-2" onclick="printReport()">
+                            <u>P</u>rint
+                        </button>
+                        <a href="{{ route('admin.reports.sales') }}" class="btn btn-light border px-4 fw-bold shadow-sm">
+                            <u>C</u>lose
+                        </a>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Data Table -->
+    <!-- Data Table - Only show when view is clicked -->
+    @if(request()->has('view') && isset($groupedSales) && count($groupedSales) > 0)
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 50vh;">
@@ -301,42 +310,59 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
 @endsection
 
 @push('scripts')
 <script>
 // Sync report type radio buttons with hidden field
-document.querySelectorAll('input[name="report_type"]').forEach(radio => {
+document.querySelectorAll('input[name="report_type_radio"]').forEach(radio => {
     radio.addEventListener('change', function() {
         document.getElementById('hidden_report_type').value = this.value;
     });
 });
 
 function exportToExcel() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
+    const params = new URLSearchParams($('#filterForm').serialize());
     params.set('export', 'excel');
     window.open('{{ route("admin.reports.sales.sales-book-party-wise") }}?' + params.toString(), '_blank');
 }
 
-function viewReport() {
-    const form = document.getElementById('filterForm');
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-    params.set('view_type', 'print');
-    window.open('{{ route("admin.reports.sales.sales-book-party-wise") }}?' + params.toString(), 'PartyWiseSale', 'width=1100,height=800,scrollbars=yes,resizable=yes');
+function printReport() {
+    window.open('{{ route("admin.reports.sales.sales-book-party-wise") }}?print=1&' + $('#filterForm').serialize(), '_blank');
 }
+
+// Keyboard shortcuts
+$(document).on('keydown', function(e) {
+    if (e.altKey && e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        $('button[name="view"]').click();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'p') {
+        e.preventDefault();
+        printReport();
+    }
+    if (e.altKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.href = '{{ route("admin.reports.sales") }}';
+    }
+    if (e.altKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        exportToExcel();
+    }
+});
 </script>
 @endpush
 
 @push('styles')
 <style>
-.input-group-text { font-size: 0.7rem; padding: 0.2rem 0.4rem; }
-.form-control, .form-select { font-size: 0.75rem; }
-.table th, .table td { padding: 0.3rem 0.4rem; font-size: 0.75rem; vertical-align: middle; }
-.btn-sm { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+.form-control-sm, .form-select-sm { border: 1px solid #aaa; border-radius: 0; }
+.card { border-radius: 0; border: 1px solid #ccc; }
+.btn { border-radius: 0; }
+.input-group-text { font-size: 0.75rem; padding: 0.25rem 0.5rem; min-width: fit-content; border-radius: 0; }
+.form-control, .form-select { font-size: 0.8rem; border-radius: 0; }
+.table th, .table td { padding: 0.35rem 0.5rem; font-size: 0.8rem; vertical-align: middle; }
 .sticky-top { position: sticky; top: 0; z-index: 10; }
 </style>
 @endpush

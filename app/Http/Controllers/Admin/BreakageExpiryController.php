@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\SalesMan;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 
 class BreakageExpiryController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display list of breakage/expiry transactions
      */
@@ -190,6 +192,12 @@ class BreakageExpiryController extends Controller
     public function storeTransaction(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'breakage_expiry', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             // Validate the request
             $validated = $request->validate([
                 'customer_id' => 'required|exists:customers,id',

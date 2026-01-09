@@ -9,10 +9,12 @@ use App\Models\Item;
 use App\Models\Batch;
 use App\Models\Customer;
 use App\Models\StockLedger;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 
 class StockTransferOutgoingController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = StockTransferOutgoingTransaction::query();
@@ -98,6 +100,12 @@ class StockTransferOutgoingController extends Controller
     public function storeTransaction(Request $request)
     {
         try {
+            // Validate transaction date (no backdating, max 1 day future)
+            $dateError = $this->validateTransactionDate($request, 'stock_transfer_outgoing', 'transaction_date');
+            if ($dateError) {
+                return $this->dateValidationErrorResponse($dateError);
+            }
+            
             $validated = $request->validate([
                 'transaction_date' => 'required|date',
                 'items' => 'required|array|min:1',

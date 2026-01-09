@@ -11,12 +11,14 @@ use App\Models\HsnCode;
 use App\Models\GeneralLedger;
 use App\Models\CashBankBook;
 use App\Models\PurchaseLedger;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class VoucherPurchaseController extends Controller
 {
+    use ValidatesTransactionDate;
     public function index(Request $request)
     {
         $query = PurchaseVoucher::with(['supplier', 'items']);
@@ -74,6 +76,12 @@ class VoucherPurchaseController extends Controller
 
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'voucher_purchase', 'voucher_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $validated = $request->validate([
             'voucher_date' => 'required|date',
             'bill_no' => 'nullable|string|max:100',

@@ -8,11 +8,13 @@ use App\Models\SupplierPaymentItem;
 use App\Models\SupplierPaymentAdjustment;
 use App\Models\Supplier;
 use App\Models\CashBankBook;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class SupplierPaymentController extends Controller
 {
+    use ValidatesTransactionDate;
     /**
      * Display a listing of the payments (Index page).
      */
@@ -59,6 +61,12 @@ class SupplierPaymentController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'supplier_payment', 'payment_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         $validated = $request->validate([
             'payment_date' => 'required|date',
             'ledger' => 'nullable|string|max:10',

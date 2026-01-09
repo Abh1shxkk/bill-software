@@ -12,6 +12,7 @@ use App\Models\Supplier;
 use App\Models\Item;
 use App\Models\SalesMan;
 use App\Models\PendingOrder;
+use App\Traits\ValidatesTransactionDate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,8 @@ use Illuminate\Support\Facades\Auth;
 
 class PurchaseTransactionController extends Controller
 {
+    use ValidatesTransactionDate;
+
     /**
      * Display a listing of the resource.
      */
@@ -318,6 +321,12 @@ class PurchaseTransactionController extends Controller
      */
     public function store(Request $request)
     {
+        // Validate transaction date (no backdating, max 1 day future)
+        $dateError = $this->validateTransactionDate($request, 'purchase', 'header.bill_date');
+        if ($dateError) {
+            return $this->dateValidationErrorResponse($dateError);
+        }
+        
         // Validate request
         $validated = $request->validate([
             'header.bill_date' => 'required|date',
@@ -1024,6 +1033,88 @@ class PurchaseTransactionController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error fetching challan details: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save discount to company (for purchase)
+     */
+    public function saveCompanyDiscount(Request $request)
+    {
+        try {
+            $companyId = $request->input('company_id');
+            $discountPercent = $request->input('discount_percent');
+            
+            if (!$companyId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Company ID is required'
+                ], 400);
+            }
+            
+            $company = \App\Models\Company::find($companyId);
+            if (!$company) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Company not found'
+                ], 404);
+            }
+            
+            // For purchase, we save to pur_sc field (purchase scheme/discount)
+            $company->pur_sc = $discountPercent;
+            $company->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Company purchase discount saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving company purchase discount: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving company discount: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Save discount to item (for purchase)
+     */
+    public function saveItemDiscount(Request $request)
+    {
+        try {
+            $itemId = $request->input('item_id');
+            $discountPercent = $request->input('discount_percent');
+            
+            if (!$itemId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item ID is required'
+                ], 400);
+            }
+            
+            $item = Item::find($itemId);
+            if (!$item) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Item not found'
+                ], 404);
+            }
+            
+            // For purchase, we use the same fixed_dis_percent field
+            $item->fixed_dis_percent = $discountPercent;
+            $item->save();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Item purchase discount saved successfully'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving item purchase discount: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error saving item discount: ' . $e->getMessage()
             ], 500);
         }
     }
