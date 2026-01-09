@@ -1082,10 +1082,10 @@
                 <li><a class="dropdown-item" href="{{ route('admin.reports.gst.gstr-4') }}">GSTR-4</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.reports.gst.gstr-4-annual') }}">GSTR-4 (Annual)</a></li>
                 <li><a class="dropdown-item" href="{{ route('admin.reports.gst.customer-gst-detail-mail') }}">Customer GST Detail Mail</a></li>
-                <li><a class="dropdown-item" href="#">Stock Trans - 1</a></li>
-                <li><a class="dropdown-item" href="#">Stock Trans - 2</a></li>
-                <li><a class="dropdown-item" href="#">WayBill Generation</a></li>
-                <li><a class="dropdown-item" href="#">GSTR-9</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.stock-trans-1') }}">Stock Trans - 1</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.stock-trans-2') }}">Stock Trans - 2</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.waybill-generation') }}">WayBill Generation</a></li>
+                <li><a class="dropdown-item" href="{{ route('admin.reports.gst.gstr-9') }}">GSTR-9</a></li>
               </ul>
             </li>
           </ul>

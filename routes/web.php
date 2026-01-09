@@ -411,6 +411,8 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('reports/gst/stock-trans-2', [\App\Http\Controllers\Admin\GstReportController::class, 'stockTrans2'])->name('reports.gst.stock-trans-2');
         Route::get('reports/gst/waybill-generation', [\App\Http\Controllers\Admin\GstReportController::class, 'waybillGeneration'])->name('reports.gst.waybill-generation');
         Route::post('reports/gst/waybill-generation', [\App\Http\Controllers\Admin\GstReportController::class, 'waybillGeneration'])->name('reports.gst.waybill-generation.post');
+        Route::get('reports/gst/gstr-9', [\App\Http\Controllers\Admin\GstReportController::class, 'gstr9'])->name('reports.gst.gstr-9');
+        Route::post('reports/gst/gstr-9', [\App\Http\Controllers\Admin\GstReportController::class, 'gstr9'])->name('reports.gst.gstr-9.post');
         
         // Financial Reports
         Route::get('reports/financial/trial-balance', [\App\Http\Controllers\Admin\FinancialReportController::class, 'trialBalance'])->name('reports.financial.trial-balance');

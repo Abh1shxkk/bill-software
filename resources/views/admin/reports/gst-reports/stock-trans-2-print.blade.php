@@ -1,99 +1,47 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Stock Trans - 2 - Print</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trans - 2 Report</title>
     <style>
-        body { 
-            font-family: 'Times New Roman', serif; 
-            margin: 20px;
-            font-size: 11px;
-        }
-        .header { 
-            background-color: #e07020; 
-            font-style: italic; 
-            padding: 10px; 
-            text-align: center;
-            margin-bottom: 15px;
-            border: 1px solid #999;
-            color: white;
-        }
-        .header h2 {
-            margin: 0;
-        }
-        .period {
-            text-align: center;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .section-headers {
-            background-color: #c4a060;
-            padding: 5px;
-            margin-bottom: 0;
-            border: 1px solid #666;
-            border-bottom: none;
-        }
-        .section-headers table {
-            width: 100%;
-            border: none;
-        }
-        .section-headers td {
-            text-align: center;
-            font-weight: bold;
-            border: none;
-        }
-        table.data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        table.data-table th, table.data-table td {
-            border: 1px solid #000;
-            padding: 4px 6px;
-            text-align: left;
-        }
-        table.data-table th {
-            background-color: #c4a060;
-            font-weight: bold;
-        }
-        table.data-table tbody tr {
-            background-color: #ffffcc;
-        }
-        table.data-table tfoot tr {
-            background-color: #c4a060;
-            font-weight: bold;
-        }
-        .text-end {
-            text-align: right;
-        }
-        .text-center {
-            text-align: center;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 10px; padding: 10px; }
+        .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        .header h2 { font-size: 14px; margin-bottom: 3px; }
+        .header p { font-size: 10px; }
+        .sub-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 9px; font-weight: bold; }
+        .sub-header div { flex: 1; text-align: center; border: 1px solid #999; padding: 3px; background-color: #c4a060; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #333; padding: 3px 5px; text-align: left; }
+        th { background-color: #c4a060; font-weight: bold; font-size: 9px; }
+        td { font-size: 9px; }
+        .text-end { text-align: right; }
+        .text-center { text-align: center; }
+        .footer { margin-top: 10px; border-top: 1px solid #000; padding-top: 5px; }
+        .total-row { background-color: #f0f0f0; font-weight: bold; }
+        .totals-section { margin-top: 10px; }
+        .totals-section table { width: auto; }
+        .totals-section td { padding: 2px 10px; }
         @media print {
-            body { margin: 0; }
-            @page { margin: 0.5cm; size: landscape; }
+            body { padding: 5px; }
+            @page { size: landscape; margin: 5mm; }
         }
     </style>
 </head>
-<body onload="window.print()">
+<body>
     <div class="header">
-        <h2>Stock Trans - 2</h2>
-    </div>
-    
-    <div class="period">
-        Month: {{ date('F', mktime(0, 0, 0, $saleMonth, 1)) }} {{ $year }} | HSN: {{ $hsnType }}
+        <h2>STOCK TRANS - 2</h2>
+        <p>Month: {{ date('F', mktime(0, 0, 0, $saleMonth ?? date('n'), 1)) }} {{ $year ?? date('Y') }} | HSN: {{ $hsnType ?? 'Full' }}</p>
     </div>
 
-    <div class="section-headers">
-        <table>
-            <tr>
-                <td style="width: 35%;">Opening Stock For The TAX Period</td>
-                <td style="width: 45%;">Outward Supply Made</td>
-                <td style="width: 20%;">Balance Closing</td>
-            </tr>
-        </table>
+    <div class="sub-header">
+        <div>Opening Stock For The TAX Period</div>
+        <div>Outward Supply Made</div>
+        <div>Balance Closing</div>
     </div>
 
-    <table class="data-table">
+    <table>
         <thead>
             <tr>
                 <th style="width: 80px;">HSN</th>
@@ -112,48 +60,70 @@
             @forelse($reportData as $item)
             <tr>
                 <td>{{ $item['hsn_code'] }}</td>
-                <td>{{ $item['item_name'] }}</td>
-                <td class="text-end">{{ number_format($item['opening_qty'], 0) }}</td>
-                <td class="text-end">{{ number_format($item['qty'], 0) }}</td>
-                <td class="text-end">{{ number_format($item['value'], 2) }}</td>
-                <td class="text-end">{{ number_format($item['cgst'], 2) }}</td>
-                <td class="text-end">{{ number_format($item['sgst'], 2) }}</td>
-                <td class="text-end">{{ number_format($item['igst'], 2) }}</td>
-                <td class="text-end">{{ number_format($item['itc_allowed'], 2) }}</td>
-                <td class="text-end">{{ number_format($item['closing_qty'], 0) }}</td>
+                <td>{{ Str::limit($item['item_name'], 30) }}</td>
+                <td class="text-end">{{ number_format($item['opening_qty'] ?? 0, 0) }}</td>
+                <td class="text-end">{{ number_format($item['qty'] ?? 0, 0) }}</td>
+                <td class="text-end">{{ number_format($item['value'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($item['cgst'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($item['sgst'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($item['igst'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($item['itc_allowed'] ?? 0, 2) }}</td>
+                <td class="text-end">{{ number_format($item['closing_qty'] ?? 0, 0) }}</td>
             </tr>
             @empty
-            <tr><td colspan="10" class="text-center">No records found</td></tr>
+            <tr>
+                <td colspan="10" class="text-center">No data available</td>
+            </tr>
             @endforelse
         </tbody>
         <tfoot>
-            <tr>
-                <td colspan="2" class="text-end">Total Qty:</td>
-                <td class="text-end">{{ number_format($totals['opening_qty'] ?? 0, 0) }}</td>
-                <td class="text-end">{{ number_format($totals['qty'] ?? 0, 0) }}</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td class="text-end">{{ number_format($totals['closing_qty'] ?? 0, 0) }}</td>
-            </tr>
-            <tr>
-                <td colspan="2" class="text-end">Total Value:</td>
-                <td></td>
-                <td></td>
-                <td class="text-end">{{ number_format($totals['value'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($totals['cgst'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($totals['sgst'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($totals['igst'] ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format($totals['itc_allowed'] ?? 0, 2) }}</td>
-                <td></td>
+            <tr class="total-row">
+                <td colspan="2" class="text-end"><strong>TOTAL:</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['opening_qty'] ?? 0, 0) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['qty'] ?? 0, 0) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['value'] ?? 0, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['cgst'] ?? 0, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['sgst'] ?? 0, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['igst'] ?? 0, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['itc_allowed'] ?? 0, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totals['closing_qty'] ?? 0, 0) }}</strong></td>
             </tr>
         </tfoot>
     </table>
-    
-    <div style="margin-top: 10px; font-size: 10px; color: #666;">
-        Generated on: {{ now()->format('d-M-Y H:i:s') }}
+
+    <div class="totals-section">
+        <table>
+            <tr>
+                <td><strong>Total Qty:</strong></td>
+                <td>{{ number_format($totals['opening_qty'] ?? 0, 2) }}</td>
+                <td>{{ number_format($totals['qty'] ?? 0, 2) }}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>{{ number_format($totals['closing_qty'] ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td><strong>Total Value:</strong></td>
+                <td></td>
+                <td>{{ number_format($totals['value'] ?? 0, 2) }}</td>
+                <td>{{ number_format($totals['value2'] ?? 0, 2) }}</td>
+                <td>{{ number_format($totals['cgst'] ?? 0, 2) }}</td>
+                <td>{{ number_format($totals['sgst'] ?? 0, 2) }}</td>
+                <td>{{ number_format($totals['igst'] ?? 0, 2) }}</td>
+                <td>{{ number_format($totals['itc_allowed'] ?? 0, 2) }}</td>
+                <td></td>
+            </tr>
+        </table>
     </div>
+
+    <div class="footer">
+        <p style="font-size: 8px;">Printed on: {{ now()->format('d-M-Y h:i A') }}</p>
+    </div>
+
+    <script>
+        window.onload = function() { window.print(); }
+    </script>
 </body>
 </html>

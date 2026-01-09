@@ -882,9 +882,10 @@ class GstReportController extends Controller
         $totalStockValue = 0;
 
         // Default values
-        $asOnDate = $request->as_on_date ?? date('Y-m-d');
+        $asOnDay = $request->as_on_day ?? date('j');
         $saleMonth = $request->sale_month ?? date('n');
         $year = $request->year ?? date('Y');
+        $asOnDate = Carbon::createFromDate($year, $saleMonth, $asOnDay)->format('Y-m-d');
         $companyCode = $request->company_code ?? '';
         $divisionCode = $request->division_code ?? '';
         $reportType = $request->report_type ?? 'D'; // D = Detailed, S = Summarized
@@ -908,13 +909,13 @@ class GstReportController extends Controller
                     DB::raw('COALESCE(i.sgst_percent, 0) as sgst_percent'),
                     DB::raw('COALESCE(i.igst_percent, 0) as igst_percent'),
                     'c.name as company_name',
-                    'c.code as company_code'
+                    'c.id as company_id'
                 )
                 ->where('b.qty', '>', 0);
 
             // Apply company filter
             if (!empty($companyCode)) {
-                $query->where('c.code', $companyCode);
+                $query->where('c.id', $companyCode);
             }
 
             // Apply division filter (if exists)
@@ -986,10 +987,10 @@ class GstReportController extends Controller
         }
 
         // Get companies for dropdown
-        $companies = DB::table('companies')->select('code', 'name')->orderBy('name')->get();
+        $companies = DB::table('companies')->select('id', 'name', 'short_name')->orderBy('name')->get();
 
         return view('admin.reports.gst-reports.stock-trans-1', compact(
-            'reportData', 'totalStockValue', 'asOnDate', 'saleMonth', 'year',
+            'reportData', 'totalStockValue', 'asOnDate', 'asOnDay', 'saleMonth', 'year',
             'companyCode', 'divisionCode', 'reportType', 'hsnType', 'companies'
         ));
     }
@@ -1244,8 +1245,8 @@ class GstReportController extends Controller
         }
 
         // Get areas and routes for dropdowns
-        $areas = DB::table('areas')->select('id', 'code', 'name')->orderBy('name')->get();
-        $routes = DB::table('routes')->select('id', 'code', 'name')->orderBy('name')->get();
+        $areas = DB::table('areas')->select('id', 'name')->orderBy('name')->get();
+        $routes = DB::table('routes')->select('id', 'name')->orderBy('name')->get();
 
         return view('admin.reports.gst-reports.waybill-generation', compact(
             'reportData', 'recordCount', 'documentType', 'billAmtThreshold', 'salesmanCode',
@@ -1253,5 +1254,226 @@ class GstReportController extends Controller
             'hsnType', 'routeCode', 'gstFilter', 'orderBy', 'trnNo', 'trnDate',
             'ewayBillFrom', 'ewayBillTo', 'areas', 'routes'
         ));
+    }
+
+    /**
+     * GSTR-9 Annual Return Report
+     */
+    public function gstr9(Request $request)
+    {
+        // Default values
+        $year = $request->year ?? date('Y');
+        $useDateRange = $request->has('date_range');
+        $fromDate = $request->from_date ?? Carbon::createFromDate($year, 4, 1)->format('Y-m-d');
+        $toDate = $request->to_date ?? Carbon::createFromDate($year + 1, 3, 31)->format('Y-m-d');
+        $hsnType = $request->hsn ?? 'Full';
+        
+        // Checkbox options
+        $reduceUnregCndn = $request->has('reduce_unreg_cndn');
+        $reduceCustExpiry = $request->has('reduce_cust_expiry');
+        $zeroRatedRemove = $request->has('zero_rated_remove');
+        $addSupplierExpiry = $request->has('add_supplier_expiry');
+        $withUnregSupplier = $request->has('with_unreg_supplier');
+
+        $reportData = [];
+
+        if ($request->has('export')) {
+            // Calculate date range based on financial year
+            if (!$useDateRange) {
+                $fromDate = Carbon::createFromDate($year, 4, 1)->format('Y-m-d');
+                $toDate = Carbon::createFromDate($year + 1, 3, 31)->format('Y-m-d');
+            }
+
+            // Get Sales Data (B2B - Registered)
+            $b2bSales = DB::table('sale_transactions as st')
+                ->join('customers as c', 'st.customer_id', '=', 'c.id')
+                ->whereBetween('st.sale_date', [$fromDate, $toDate])
+                ->whereNotNull('c.gst_number')
+                ->where('c.gst_number', '!=', '')
+                ->whereRaw("LENGTH(c.gst_number) = 15")
+                ->select(
+                    DB::raw('COUNT(*) as invoice_count'),
+                    DB::raw('SUM(st.taxable_amount) as taxable_value'),
+                    DB::raw('SUM(st.cgst_amount) as cgst'),
+                    DB::raw('SUM(st.sgst_amount) as sgst'),
+                    DB::raw('SUM(st.igst_amount) as igst'),
+                    DB::raw('SUM(st.cess_amount) as cess')
+                )
+                ->first();
+
+            // Get Sales Data (B2C - Unregistered)
+            $b2cSales = DB::table('sale_transactions as st')
+                ->leftJoin('customers as c', 'st.customer_id', '=', 'c.id')
+                ->whereBetween('st.sale_date', [$fromDate, $toDate])
+                ->where(function($q) {
+                    $q->whereNull('c.gst_number')
+                      ->orWhere('c.gst_number', '')
+                      ->orWhereRaw("LENGTH(c.gst_number) != 15");
+                })
+                ->select(
+                    DB::raw('COUNT(*) as invoice_count'),
+                    DB::raw('SUM(st.taxable_amount) as taxable_value'),
+                    DB::raw('SUM(st.cgst_amount) as cgst'),
+                    DB::raw('SUM(st.sgst_amount) as sgst'),
+                    DB::raw('SUM(st.igst_amount) as igst'),
+                    DB::raw('SUM(st.cess_amount) as cess')
+                )
+                ->first();
+
+            // Get Purchase Data (Registered)
+            $b2bPurchases = DB::table('purchase_transactions as pt')
+                ->join('suppliers as s', 'pt.supplier_id', '=', 's.id')
+                ->whereBetween('pt.purchase_date', [$fromDate, $toDate])
+                ->whereNotNull('s.gst_number')
+                ->where('s.gst_number', '!=', '')
+                ->whereRaw("LENGTH(s.gst_number) = 15")
+                ->select(
+                    DB::raw('COUNT(*) as invoice_count'),
+                    DB::raw('SUM(pt.taxable_amount) as taxable_value'),
+                    DB::raw('SUM(pt.cgst_amount) as cgst'),
+                    DB::raw('SUM(pt.sgst_amount) as sgst'),
+                    DB::raw('SUM(pt.igst_amount) as igst'),
+                    DB::raw('SUM(pt.cess_amount) as cess')
+                )
+                ->first();
+
+            // Get Credit/Debit Notes
+            $creditNotes = DB::table('credit_note_transactions')
+                ->whereBetween('note_date', [$fromDate, $toDate])
+                ->select(
+                    DB::raw('COUNT(*) as count'),
+                    DB::raw('SUM(taxable_amount) as taxable_value'),
+                    DB::raw('SUM(cgst_amount) as cgst'),
+                    DB::raw('SUM(sgst_amount) as sgst'),
+                    DB::raw('SUM(igst_amount) as igst')
+                )
+                ->first();
+
+            $debitNotes = DB::table('debit_note_transactions')
+                ->whereBetween('note_date', [$fromDate, $toDate])
+                ->select(
+                    DB::raw('COUNT(*) as count'),
+                    DB::raw('SUM(taxable_amount) as taxable_value'),
+                    DB::raw('SUM(cgst_amount) as cgst'),
+                    DB::raw('SUM(sgst_amount) as sgst'),
+                    DB::raw('SUM(igst_amount) as igst')
+                )
+                ->first();
+
+            $reportData = [
+                'b2b_sales' => $b2bSales,
+                'b2c_sales' => $b2cSales,
+                'b2b_purchases' => $b2bPurchases,
+                'credit_notes' => $creditNotes,
+                'debit_notes' => $debitNotes,
+                'from_date' => $fromDate,
+                'to_date' => $toDate,
+            ];
+
+            // Export to Excel
+            return $this->exportGstr9ToExcel($reportData, $year);
+        }
+
+        // Generate years for dropdown (last 5 years)
+        $years = [];
+        $currentYear = date('Y');
+        for ($i = 0; $i < 5; $i++) {
+            $y = $currentYear - $i;
+            $years[$y] = $y . '-' . ($y + 1);
+        }
+
+        return view('admin.reports.gst-reports.gstr-9', compact(
+            'year', 'years', 'useDateRange', 'fromDate', 'toDate', 'hsnType',
+            'reduceUnregCndn', 'reduceCustExpiry', 'zeroRatedRemove', 
+            'addSupplierExpiry', 'withUnregSupplier', 'reportData'
+        ));
+    }
+
+    /**
+     * Export GSTR-9 to Excel
+     */
+    private function exportGstr9ToExcel($data, $year)
+    {
+        $filename = 'GSTR9_' . $year . '_' . date('Ymd_His') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        $callback = function() use ($data, $year) {
+            $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
+            
+            // Header
+            fputcsv($file, ['GSTR-9 Annual Return Report']);
+            fputcsv($file, ['Financial Year: ' . $year . '-' . ($year + 1)]);
+            fputcsv($file, ['Period: ' . $data['from_date'] . ' to ' . $data['to_date']]);
+            fputcsv($file, []);
+            
+            // Outward Supplies
+            fputcsv($file, ['PART II - DETAILS OF OUTWARD AND INWARD SUPPLIES']);
+            fputcsv($file, []);
+            fputcsv($file, ['4. Details of advances, inward and outward supplies']);
+            fputcsv($file, ['Nature of Supplies', 'Taxable Value', 'CGST', 'SGST', 'IGST', 'Cess']);
+            
+            // B2B Sales
+            fputcsv($file, [
+                'A) Supplies made to registered persons (B2B)',
+                number_format($data['b2b_sales']->taxable_value ?? 0, 2),
+                number_format($data['b2b_sales']->cgst ?? 0, 2),
+                number_format($data['b2b_sales']->sgst ?? 0, 2),
+                number_format($data['b2b_sales']->igst ?? 0, 2),
+                number_format($data['b2b_sales']->cess ?? 0, 2),
+            ]);
+            
+            // B2C Sales
+            fputcsv($file, [
+                'B) Supplies made to unregistered persons (B2C)',
+                number_format($data['b2c_sales']->taxable_value ?? 0, 2),
+                number_format($data['b2c_sales']->cgst ?? 0, 2),
+                number_format($data['b2c_sales']->sgst ?? 0, 2),
+                number_format($data['b2c_sales']->igst ?? 0, 2),
+                number_format($data['b2c_sales']->cess ?? 0, 2),
+            ]);
+            
+            fputcsv($file, []);
+            
+            // Credit/Debit Notes
+            fputcsv($file, ['5. Details of Credit/Debit Notes']);
+            fputcsv($file, [
+                'Credit Notes',
+                number_format($data['credit_notes']->taxable_value ?? 0, 2),
+                number_format($data['credit_notes']->cgst ?? 0, 2),
+                number_format($data['credit_notes']->sgst ?? 0, 2),
+                number_format($data['credit_notes']->igst ?? 0, 2),
+                '0.00',
+            ]);
+            fputcsv($file, [
+                'Debit Notes',
+                number_format($data['debit_notes']->taxable_value ?? 0, 2),
+                number_format($data['debit_notes']->cgst ?? 0, 2),
+                number_format($data['debit_notes']->sgst ?? 0, 2),
+                number_format($data['debit_notes']->igst ?? 0, 2),
+                '0.00',
+            ]);
+            
+            fputcsv($file, []);
+            
+            // Inward Supplies (Purchases)
+            fputcsv($file, ['6. Details of ITC availed']);
+            fputcsv($file, [
+                'Inward supplies from registered persons',
+                number_format($data['b2b_purchases']->taxable_value ?? 0, 2),
+                number_format($data['b2b_purchases']->cgst ?? 0, 2),
+                number_format($data['b2b_purchases']->sgst ?? 0, 2),
+                number_format($data['b2b_purchases']->igst ?? 0, 2),
+                number_format($data['b2b_purchases']->cess ?? 0, 2),
+            ]);
+            
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

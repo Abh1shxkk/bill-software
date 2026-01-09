@@ -1,95 +1,71 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Stock Trans - 1 (GST Trans) - Print</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trans - 1 Report</title>
     <style>
-        body { 
-            font-family: 'Times New Roman', serif; 
-            margin: 20px;
-            font-size: 11px;
-        }
-        .header { 
-            background-color: #ffc4d0; 
-            font-style: italic; 
-            padding: 10px; 
-            text-align: center;
-            margin-bottom: 15px;
-            border: 1px solid #999;
-        }
-        .header h2 {
-            margin: 0;
-            color: #800000;
-        }
-        .period {
-            text-align: center;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-        table th, table td {
-            border: 1px solid #000;
-            padding: 4px 6px;
-            text-align: left;
-        }
-        table th {
-            background-color: #cc6666;
-            color: white;
-            font-weight: bold;
-        }
-        table tbody tr {
-            background-color: #ffffcc;
-        }
-        table tfoot tr {
-            background-color: #d4d4d4;
-            font-weight: bold;
-        }
-        .text-end {
-            text-align: right;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .summary-row {
-            background-color: #ffcc99 !important;
-            font-weight: bold;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; font-size: 10px; padding: 10px; }
+        .header { text-align: center; margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 5px; }
+        .header h2 { font-size: 14px; margin-bottom: 3px; }
+        .header p { font-size: 10px; }
+        .filters { margin-bottom: 10px; font-size: 9px; }
+        .filters span { margin-right: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #333; padding: 3px 5px; text-align: left; }
+        th { background-color: #cc6666; color: white; font-weight: bold; font-size: 9px; }
+        td { font-size: 9px; }
+        .text-end { text-align: right; }
+        .text-center { text-align: center; }
+        .footer { margin-top: 10px; border-top: 1px solid #000; padding-top: 5px; }
+        .total-row { background-color: #f0f0f0; font-weight: bold; }
         @media print {
-            body { margin: 0; }
-            @page { margin: 0.5cm; size: landscape; }
+            body { padding: 5px; }
+            @page { size: landscape; margin: 5mm; }
         }
     </style>
 </head>
-<body onload="window.print()">
+<body>
     <div class="header">
-        <h2>GST Trans - Stock Trans 1</h2>
-    </div>
-    
-    <div class="period">
-        As On: {{ \Carbon\Carbon::parse($asOnDate)->format('d-M-Y') }} | 
-        Sale Month: {{ date('F', mktime(0, 0, 0, $saleMonth, 1)) }} {{ $year }}
+        <h2>STOCK TRANS - 1 (GST TRANS)</h2>
+        <p>As On: {{ \Carbon\Carbon::parse($asOnDate ?? now())->format('d-M-Y') }} | 
+           Sale Month: {{ date('F', mktime(0, 0, 0, $saleMonth ?? date('n'), 1)) }} {{ $year ?? date('Y') }}</p>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th style="width: 80px;">HSNCode</th>
-                <th style="width: 180px;">Item</th>
-                <th style="width: 60px;">Pack</th>
-                <th class="text-end" style="width: 70px;">Qty.</th>
-                <th class="text-end" style="width: 80px;">Cost Rate</th>
-                <th class="text-end" style="width: 90px;">Value</th>
-                <th class="text-end" style="width: 70px;">CGST</th>
-                <th class="text-end" style="width: 70px;">SGST</th>
-                <th class="text-end" style="width: 70px;">IGST</th>
-                <th class="text-end" style="width: 70px;">Sale Qty.</th>
+                <th style="width: 80px;">HSN Code</th>
+                <th style="width: 180px;">Item Name</th>
+                <th style="width: 50px;">Pack</th>
+                <th class="text-end" style="width: 60px;">Qty</th>
+                <th class="text-end" style="width: 70px;">Cost Rate</th>
+                <th class="text-end" style="width: 80px;">Value</th>
+                <th class="text-end" style="width: 60px;">CGST</th>
+                <th class="text-end" style="width: 60px;">SGST</th>
+                <th class="text-end" style="width: 60px;">IGST</th>
+                <th class="text-end" style="width: 60px;">Sale Qty</th>
             </tr>
         </thead>
         <tbody>
+            @php
+                $totalQty = 0;
+                $totalValue = 0;
+                $totalCgst = 0;
+                $totalSgst = 0;
+                $totalIgst = 0;
+                $totalSaleQty = 0;
+            @endphp
             @forelse($reportData as $item)
+            @php
+                $totalQty += $item['qty'] ?? 0;
+                $totalValue += $item['value'] ?? 0;
+                $totalCgst += $item['cgst'] ?? 0;
+                $totalSgst += $item['sgst'] ?? 0;
+                $totalIgst += $item['igst'] ?? 0;
+                $totalSaleQty += $item['sale_qty'] ?? 0;
+            @endphp
             <tr>
                 <td>{{ $item['hsn_code'] }}</td>
                 <td>{{ $item['item_name'] }}</td>
@@ -103,23 +79,32 @@
                 <td class="text-end">{{ number_format($item['sale_qty'], 0) }}</td>
             </tr>
             @empty
-            <tr><td colspan="10" class="text-center">No records found</td></tr>
+            <tr>
+                <td colspan="10" class="text-center">No data available</td>
+            </tr>
             @endforelse
         </tbody>
         <tfoot>
-            <tr class="summary-row">
-                <td colspan="5" class="text-end">Total Stock Value:</td>
-                <td class="text-end">{{ number_format($totalStockValue ?? 0, 2) }}</td>
-                <td class="text-end">{{ number_format(collect($reportData)->sum('cgst'), 2) }}</td>
-                <td class="text-end">{{ number_format(collect($reportData)->sum('sgst'), 2) }}</td>
-                <td class="text-end">{{ number_format(collect($reportData)->sum('igst'), 2) }}</td>
-                <td class="text-end">{{ number_format(collect($reportData)->sum('sale_qty'), 0) }}</td>
+            <tr class="total-row">
+                <td colspan="3" class="text-end"><strong>TOTAL:</strong></td>
+                <td class="text-end"><strong>{{ number_format($totalQty, 0) }}</strong></td>
+                <td class="text-end">-</td>
+                <td class="text-end"><strong>{{ number_format($totalValue, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totalCgst, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totalSgst, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totalIgst, 2) }}</strong></td>
+                <td class="text-end"><strong>{{ number_format($totalSaleQty, 0) }}</strong></td>
             </tr>
         </tfoot>
     </table>
-    
-    <div style="margin-top: 10px; font-size: 10px; color: #666;">
-        Generated on: {{ now()->format('d-M-Y H:i:s') }}
+
+    <div class="footer">
+        <p><strong>Total Stock Value:</strong> ₹{{ number_format($totalStockValue ?? $totalValue, 2) }}</p>
+        <p style="font-size: 8px; margin-top: 5px;">Printed on: {{ now()->format('d-M-Y h:i A') }}</p>
     </div>
+
+    <script>
+        window.onload = function() { window.print(); }
+    </script>
 </body>
 </html>
