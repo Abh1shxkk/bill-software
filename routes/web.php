@@ -57,6 +57,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SalesReportController;
 use App\Http\Controllers\Admin\PurchaseReportController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\DatabaseBackupController;
 use App\Http\Controllers\ProfileController;
 
 // Auth routes
@@ -90,6 +91,15 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('users/{user}/permissions', [UserController::class, 'permissions'])->name('users.permissions');
         Route::put('users/{user}/permissions', [UserController::class, 'updatePermissions'])->name('users.permissions.update');
         Route::post('users/multiple-delete', [UserController::class, 'multipleDelete'])->name('users.multiple-delete');
+        
+        // Database Backup Routes (Admin Only)
+        Route::get('database-backup', [DatabaseBackupController::class, 'index'])->name('database-backup.index');
+        Route::post('database-backup/export', [DatabaseBackupController::class, 'export'])->name('database-backup.export');
+        Route::post('database-backup/export-selective', [DatabaseBackupController::class, 'exportSelective'])->name('database-backup.export-selective');
+        Route::post('database-backup/import', [DatabaseBackupController::class, 'import'])->name('database-backup.import');
+        Route::post('database-backup/schedule', [DatabaseBackupController::class, 'saveSchedule'])->name('database-backup.schedule');
+        Route::get('database-backup/download/{filename}', [DatabaseBackupController::class, 'download'])->name('database-backup.download');
+        Route::delete('database-backup/{filename}', [DatabaseBackupController::class, 'destroy'])->name('database-backup.destroy');
         
         // Company routes - MUST be before resource route
         Route::post('companies/multiple-delete', [CompanyController::class, 'multipleDelete'])->name('companies.multiple-delete');

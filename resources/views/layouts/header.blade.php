@@ -1133,6 +1133,15 @@
           </a>
         </li>
         
+        @if(auth()->user()->isAdmin())
+        <!-- Database Backup (Admin Only) -->
+        <li class="nav-item">
+          <a class="nav-link" href="{{ route('admin.database-backup.index') }}" title="Database Backup" style="padding: 0.5rem 0.75rem;">
+            <i class="bi bi-database" style="font-size: 1.2rem;"></i>
+          </a>
+        </li>
+        @endif
+        
         <!-- Profile Dropdown -->
         <li class="nav-item dropdown d-none d-sm-inline">
         <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown"
