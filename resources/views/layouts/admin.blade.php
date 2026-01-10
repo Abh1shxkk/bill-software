@@ -1142,6 +1142,236 @@
             overflow: visible !important;
             contain: none !important;
         }
+
+        /* ============================================
+           PREMIUM SCROLLBAR STYLING - BILLION DOLLAR LOOK
+           Modern, sleek scrollbars like Apple/Stripe/Linear
+           ============================================ */
+        
+        /* Webkit Browsers (Chrome, Safari, Edge) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #c4c4c4 0%, #a8a8a8 100%);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #888888 0%, #666666 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        ::-webkit-scrollbar-thumb:active {
+            background: linear-gradient(180deg, #555555 0%, #333333 100%);
+        }
+
+        ::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
+        /* Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #b8b8b8 transparent;
+        }
+
+        /* Content area specific - slightly visible track */
+        .content::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 10px;
+            margin: 4px;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d0d0d0 0%, #b0b0b0 100%);
+            border-radius: 10px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        .content::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #999999 0%, #777777 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+        }
+
+        /* Table containers - thin elegant scrollbar */
+        .table-responsive::-webkit-scrollbar,
+        .table-container::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track,
+        .table-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb,
+        .table-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #c8c8c8 0%, #a0a0a0 100%);
+            border-radius: 6px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover,
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, #888888 0%, #666666 100%);
+        }
+
+        /* Modal body scrollbar - subtle */
+        .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d4d4d4 0%, #b4b4b4 100%);
+            border-radius: 6px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #a0a0a0 0%, #808080 100%);
+        }
+
+        /* Select2 dropdown scrollbar */
+        .select2-results__options::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .select2-results__options::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 6px;
+        }
+
+        .select2-results__options::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d0d0d0 0%, #b0b0b0 100%);
+            border-radius: 6px;
+        }
+
+        .select2-results__options::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #909090 0%, #707070 100%);
+        }
+
+        /* Card body scrollbar */
+        .card-body::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        .card-body::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 6px;
+        }
+
+        .card-body::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d8d8d8 0%, #b8b8b8 100%);
+            border-radius: 6px;
+        }
+
+        .card-body::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #a8a8a8 0%, #888888 100%);
+        }
+
+        /* Textarea scrollbar */
+        textarea::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        textarea::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 6px;
+        }
+
+        textarea::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d0d0d0 0%, #b0b0b0 100%);
+            border-radius: 6px;
+        }
+
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #a0a0a0 0%, #808080 100%);
+        }
+
+        /* Dark theme scrollbar for sidebar (already hidden but just in case) */
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Dropdown menu scrollbar */
+        .dropdown-menu::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 5px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #d4d4d4 0%, #b4b4b4 100%);
+            border-radius: 5px;
+        }
+
+        .dropdown-menu::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #a4a4a4 0%, #848484 100%);
+        }
+
+        /* Pre/Code block scrollbar */
+        pre::-webkit-scrollbar,
+        code::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+
+        pre::-webkit-scrollbar-track,
+        code::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 6px;
+        }
+
+        pre::-webkit-scrollbar-thumb,
+        code::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #c0c0c0 0%, #a0a0a0 100%);
+            border-radius: 6px;
+        }
+
+        pre::-webkit-scrollbar-thumb:hover,
+        code::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, #909090 0%, #707070 100%);
+        }
     </style>
     <!-- Flatpickr Date Picker - Minimal Theme -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
