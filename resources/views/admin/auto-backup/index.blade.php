@@ -369,7 +369,7 @@
                                                     </svg>
                                                 </a>
                                                 <button type="button" 
-                                                        class="btn btn-sm btn-outline-warning restore-btn me-1" 
+                                                        class="btn btn-sm btn-outline-warning me-1 restore-backup-btn" 
                                                         data-filename="{{ $backup->backup_filename }}"
                                                         data-day="{{ $backup->day_of_week }}"
                                                         data-date="{{ $backup->backup_date->format('Y-m-d') }}"
@@ -442,7 +442,8 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form id="restoreForm" method="POST" class="d-inline">
                     @csrf
-                    <button type="submit" class="btn btn-warning">
+                    <input type="hidden" name="filename" id="restoreFilenameInput" value="">
+                    <button type="submit" class="btn btn-warning" id="restoreSubmitBtn">
                         <i class="fas fa-undo me-1"></i> Restore Backup
                     </button>
                 </form>
@@ -455,11 +456,66 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Script loaded');
+    
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // Restore Button Click Handler
+    const restoreButtons = document.querySelectorAll('.restore-backup-btn');
+    console.log('Found restore buttons:', restoreButtons.length);
+    
+    restoreButtons.forEach((btn, index) => {
+        btn.addEventListener('click', function(e) {
+            console.log('Button clicked:', index);
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const filename = this.dataset.filename;
+            const day = this.dataset.day;
+            const date = this.dataset.date;
+            
+            console.log('Backup details:', {filename, day, date});
+            
+            // Update modal content
+            document.getElementById('restoreDay').textContent = day.charAt(0).toUpperCase() + day.slice(1);
+            document.getElementById('restoreDate').textContent = date;
+            document.getElementById('restoreFilename').textContent = filename;
+            
+            // Set form action with the correct URL
+            const restoreForm = document.getElementById('restoreForm');
+            const actionUrl = '{{ route("admin.auto-backup.restore", ":filename") }}'.replace(':filename', encodeURIComponent(filename));
+            restoreForm.action = actionUrl;
+            
+            console.log('Form action set to:', actionUrl);
+            
+            // Show the modal
+            try {
+                const restoreModal = new bootstrap.Modal(document.getElementById('restoreModal'));
+                restoreModal.show();
+                console.log('Modal shown');
+            } catch (error) {
+                console.error('Error showing modal:', error);
+                alert('Error: ' + error.message);
+            }
+            
+            return false;
+        });
+    });
+    
+    // Handle form submission
+    const restoreForm = document.getElementById('restoreForm');
+    if (restoreForm) {
+        restoreForm.addEventListener('submit', function(e) {
+            console.log('Form submitting to:', this.action);
+            const submitBtn = document.getElementById('restoreSubmitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Restoring...';
+        });
+    }
 
     // Auto Backup Toggle
     const toggleCheckbox = document.getElementById('autoBackupToggle');
@@ -499,24 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-
-    // Restore Button Handlers
-    const restoreModal = new bootstrap.Modal(document.getElementById('restoreModal'));
-    
-    document.querySelectorAll('.restore-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const filename = this.dataset.filename;
-            const day = this.dataset.day;
-            const date = this.dataset.date;
-            
-            document.getElementById('restoreDay').textContent = day.charAt(0).toUpperCase() + day.slice(1);
-            document.getElementById('restoreDate').textContent = date;
-            document.getElementById('restoreFilename').textContent = filename;
-            document.getElementById('restoreForm').action = '{{ url("admin/auto-backup/restore") }}/' + filename;
-            
-            restoreModal.show();
-        });
-    });
 
     // Delete Button Handlers
     document.querySelectorAll('.delete-btn').forEach(btn => {

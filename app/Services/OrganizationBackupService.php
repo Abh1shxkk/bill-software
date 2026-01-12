@@ -248,30 +248,33 @@ class OrganizationBackupService
             '.vscode',
         ];
         
-        // Root files to include
-        $includeFiles = [
-            '.env.example',
-            'composer.json',
-            'composer.lock',
-            'package.json',
-            'artisan',
-            '.htaccess',
-        ];
+        // Root files to include (Dynamic scan)
+        $rootFiles = glob($basePath . '/*');
+        foreach ($rootFiles as $fullPath) {
+            if (is_dir($fullPath)) continue; 
+            
+            $filename = basename($fullPath);
+            
+            $shouldExclude = false;
+            foreach ($excludePatterns as $pattern) {
+                if (fnmatch($pattern, $filename) || strpos($filename, $pattern) !== false) {
+                    $shouldExclude = true;
+                    break;
+                }
+            }
+            if ($filename === '.env') $shouldExclude = true;
+
+            if (!$shouldExclude) {
+                $zip->addFile($fullPath, 'code/' . $filename);
+                $filesAdded++;
+            }
+        }
 
         // Add directories
         foreach ($includeDirs as $dir) {
             $fullPath = $basePath . '/' . $dir;
             if (File::isDirectory($fullPath)) {
                 $filesAdded += $this->addDirectoryToZip($zip, $fullPath, 'code/' . $dir, $excludePatterns);
-            }
-        }
-
-        // Add root files
-        foreach ($includeFiles as $file) {
-            $fullPath = $basePath . '/' . $file;
-            if (File::exists($fullPath)) {
-                $zip->addFile($fullPath, 'code/' . $file);
-                $filesAdded++;
             }
         }
 
