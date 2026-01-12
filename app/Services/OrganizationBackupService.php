@@ -456,13 +456,20 @@ class OrganizationBackupService
             $zip->close();
 
             // Find JSON file
-            $jsonFiles = glob($extractPath . '/*.json');
-            if (empty($jsonFiles)) {
-                File::deleteDirectory($extractPath);
-                return ['success' => false, 'message' => 'No backup data found in archive'];
+            $jsonFile = $extractPath . '/database/database_backup.json';
+            
+            // Fallback for legacy backups (root level)
+            if (!File::exists($jsonFile)) {
+                $jsonFiles = glob($extractPath . '/*.json');
+                if (!empty($jsonFiles)) {
+                    $jsonFile = $jsonFiles[0];
+                } else {
+                    File::deleteDirectory($extractPath);
+                    return ['success' => false, 'message' => 'No backup data found in archive'];
+                }
             }
 
-            $content = File::get($jsonFiles[0]);
+            $content = File::get($jsonFile);
             $data = json_decode($content, true);
 
             if (!$data || !isset($data['tables'])) {
@@ -518,6 +525,12 @@ class OrganizationBackupService
                 }
             }
 
+            // Restore Code if present
+            $codeRestored = 0;
+            if (File::isDirectory($extractPath . '/code')) {
+                $codeRestored = $this->restoreCode($extractPath . '/code');
+            }
+
             DB::statement('SET FOREIGN_KEY_CHECKS = 1');
             
             // Cleanup
@@ -528,13 +541,15 @@ class OrganizationBackupService
                 'filename' => $filename,
                 'tables_restored' => $tablesRestored,
                 'records_restored' => $recordsRestored,
+                'code_files_restored' => $codeRestored,
             ]);
 
             return [
                 'success' => true,
-                'message' => "Backup restored successfully. {$tablesRestored} tables and {$recordsRestored} records restored.",
+                'message' => "Backup restored successfully. DB: {$tablesRestored} tables. Code: {$codeRestored} files restored.",
                 'tables_restored' => $tablesRestored,
                 'records_restored' => $recordsRestored,
+                'code_files_restored' => $codeRestored,
             ];
 
         } catch (\Exception $e) {
@@ -556,6 +571,63 @@ class OrganizationBackupService
     }
 
     /**
+     * Restore code files from extracted backup
+     */
+    protected function restoreCode(string $sourcePath): int
+    {
+        $filesRestored = 0;
+        $basePath = base_path();
+        
+        // Strict list of files to NEVER overwrite in root/public
+        $excludedFiles = [
+            '.env',
+            '.htaccess',
+            'index.php',
+            'server.php',
+            'web.config',
+            'public/index.php',
+            'public/.htaccess',
+        ];
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($sourcePath, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            // Get relative path from 'code/' directory
+            $relativePath = substr($item->getPathname(), strlen($sourcePath) + 1);
+            $relativePath = str_replace('\\', '/', $relativePath); // Normalize slashes for check
+            
+            // Skip exclusions
+            if (in_array($relativePath, $excludedFiles)) {
+                Log::info("Skipping restricted file during restore: {$relativePath}");
+                continue;
+            }
+
+            $targetPath = $basePath . '/' . $relativePath;
+            
+            if ($item->isDir()) {
+                if (!File::isDirectory($targetPath)) {
+                    File::makeDirectory($targetPath, 0755, true);
+                }
+            } else {
+                // Ensure directory exists
+                $dir = dirname($targetPath);
+                if (!File::isDirectory($dir)) {
+                    File::makeDirectory($dir, 0755, true);
+                }
+                
+                // Copy file (overwrite)
+                File::copy($item->getPathname(), $targetPath);
+                $filesRestored++;
+            }
+        }
+
+        return $filesRestored;
+    }
+
+    /**
      * Create a pre-restore backup before restoring
      */
     protected function createPreRestoreBackup(Organization $organization): array
@@ -570,11 +642,18 @@ class OrganizationBackupService
             
             $jsonFilename = "org_{$orgCode}_pre_restore_{$timestamp}.json";
             $jsonPath = $this->backupPath . '/' . $jsonFilename;
+            $tempDir = $this->backupPath . '/database';
+             if (!File::isDirectory($tempDir)) {
+                File::makeDirectory($tempDir, 0755, true);
+            }
+            // Put in database/ folder to match new structure
+             $jsonPath = $tempDir . '/database_backup.json';
             File::put($jsonPath, json_encode($backupData, JSON_PRETTY_PRINT));
             
             $zip = new ZipArchive();
             if ($zip->open($filepath, ZipArchive::CREATE) === true) {
-                $zip->addFile($jsonPath, $jsonFilename);
+                // Add correctly to database/ folder inside ZIP
+                $zip->addFile($jsonPath, 'database/database_backup.json');
                 $zip->close();
                 File::delete($jsonPath);
             }
