@@ -5,16 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\BackupSchedule;
 use App\Services\DatabaseBackupService;
+use App\Services\CodeBackupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
 class DatabaseBackupController extends Controller
 {
     protected DatabaseBackupService $backupService;
+    protected CodeBackupService $codeBackupService;
 
-    public function __construct(DatabaseBackupService $backupService)
+    public function __construct(DatabaseBackupService $backupService, CodeBackupService $codeBackupService)
     {
         $this->backupService = $backupService;
+        $this->codeBackupService = $codeBackupService;
     }
 
     /**
@@ -28,10 +31,19 @@ class DatabaseBackupController extends Controller
         }
 
         $backups = $this->backupService->getBackupHistory();
+        $codeBackups = $this->codeBackupService->getCodeBackupHistory();
         $schedule = BackupSchedule::first();
         $tableStats = $this->backupService->getTableStats();
+        $codeBackupInfo = $this->codeBackupService->getBackupInfo();
         
-        return view('admin.database-backup.index', compact('backups', 'schedule', 'tableStats'));
+        // Merge and sort all backups by date
+        $allBackups = array_merge(
+            array_map(fn($b) => array_merge($b, ['type' => $b['type'] ?? 'database']), $backups),
+            $codeBackups
+        );
+        usort($allBackups, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
+        
+        return view('admin.database-backup.index', compact('backups', 'codeBackups', 'allBackups', 'schedule', 'tableStats', 'codeBackupInfo'));
     }
 
     /**
@@ -269,4 +281,181 @@ class DatabaseBackupController extends Controller
             return back()->with('error', 'Selective backup failed: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Export code/files backup
+     */
+    public function exportCode(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Access denied. Admin only.');
+        }
+
+        $directories = $request->input('directories');
+        $options = [];
+        
+        if ($directories && is_array($directories)) {
+            $options['directories'] = $directories;
+        }
+
+        try {
+            $result = $this->codeBackupService->exportCode($options);
+
+            if ($result['success']) {
+                return response()->download(
+                    $result['path'],
+                    $result['filename'],
+                    ['Content-Type' => 'application/zip']
+                );
+            }
+
+            return back()->with('error', $result['message'] ?? 'Failed to create code backup.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Code backup failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export full backup (Database + Code)
+     */
+    public function exportFull(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Access denied. Admin only.');
+        }
+
+        try {
+            $result = $this->codeBackupService->exportFullBackup($this->backupService);
+
+            if ($result['success']) {
+                return response()->download(
+                    $result['path'],
+                    $result['filename'],
+                    ['Content-Type' => 'application/zip']
+                );
+            }
+
+            return back()->with('error', $result['message'] ?? 'Failed to create full backup.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Full backup failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Import/Restore - handles all backup types (database, code, or full)
+     */
+    public function importFull(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            abort(403, 'Access denied. Admin only.');
+        }
+
+        $request->validate([
+            'backup_file' => 'required|file|max:512000', // 500MB max
+            'restore_database' => 'nullable',
+            'restore_code' => 'nullable',
+        ]);
+
+        $file = $request->file('backup_file');
+        $tempDir = storage_path('app/temp');
+        
+        if (!File::exists($tempDir)) {
+            File::makeDirectory($tempDir, 0755, true);
+        }
+
+        $originalExtension = strtolower($file->getClientOriginalExtension());
+        $filename = 'restore_' . time() . '.' . $originalExtension;
+        $filepath = $tempDir . '/' . $filename;
+        
+        // Move file directly
+        $file->move($tempDir, $filename);
+
+        \Log::info('Import file uploaded', [
+            'original_name' => $file->getClientOriginalName(),
+            'path' => $filepath,
+            'exists' => File::exists($filepath),
+        ]);
+
+        if (!File::exists($filepath)) {
+            return back()->with('error', 'Failed to upload backup file.');
+        }
+
+        try {
+            // Identify backup type
+            $validation = $this->codeBackupService->validateAndIdentifyBackup($filepath);
+
+            \Log::info('Backup validation result', $validation);
+
+            if (!$validation['valid']) {
+                File::delete($filepath);
+                return back()->with('error', $validation['message']);
+            }
+
+            $type = $validation['type'];
+            $result = ['success' => false, 'message' => 'Unknown error'];
+
+            switch ($type) {
+                case 'database':
+                    \Log::info('Restoring database backup');
+                    $result = $this->backupService->importDatabase($filepath, true);
+                    break;
+
+                case 'code':
+                    \Log::info('Restoring code backup');
+                    $result = $this->codeBackupService->restoreCode($filepath, true);
+                    break;
+
+                case 'full':
+                    \Log::info('Restoring full backup');
+                    $restoreOptions = [
+                        'restore_database' => $request->has('restore_database') ? $request->boolean('restore_database') : true,
+                        'restore_code' => $request->has('restore_code') ? $request->boolean('restore_code') : true,
+                    ];
+                    \Log::info('Restore options', $restoreOptions);
+                    $result = $this->codeBackupService->restoreFullBackup(
+                        $filepath, 
+                        $this->backupService, 
+                        $restoreOptions
+                    );
+                    break;
+
+                default:
+                    File::delete($filepath);
+                    return back()->with('error', 'Unknown backup type: ' . $type);
+            }
+
+            // Cleanup temp file
+            if (File::exists($filepath)) {
+                File::delete($filepath);
+            }
+
+            \Log::info('Restore result', $result);
+
+            if ($result['success']) {
+                $message = $result['message'] ?? 'Restore completed successfully.';
+                
+                // Add post-restore instructions for code restore
+                if ($type === 'code' || $type === 'full') {
+                    $message .= ' Please clear browser cache and refresh the page.';
+                }
+                
+                return back()->with('success', $message);
+            }
+
+            return back()->with('error', $result['message'] ?? 'Restore failed.');
+
+        } catch (\Exception $e) {
+            \Log::error('Restore exception', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            if (File::exists($filepath)) {
+                File::delete($filepath);
+            }
+            return back()->with('error', 'Restore failed: ' . $e->getMessage());
+        }
+    }
 }
+

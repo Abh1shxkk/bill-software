@@ -96,7 +96,10 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::get('database-backup', [DatabaseBackupController::class, 'index'])->name('database-backup.index');
         Route::post('database-backup/export', [DatabaseBackupController::class, 'export'])->name('database-backup.export');
         Route::post('database-backup/export-selective', [DatabaseBackupController::class, 'exportSelective'])->name('database-backup.export-selective');
+        Route::post('database-backup/export-code', [DatabaseBackupController::class, 'exportCode'])->name('database-backup.export-code');
+        Route::post('database-backup/export-full', [DatabaseBackupController::class, 'exportFull'])->name('database-backup.export-full');
         Route::post('database-backup/import', [DatabaseBackupController::class, 'import'])->name('database-backup.import');
+        Route::post('database-backup/import-full', [DatabaseBackupController::class, 'importFull'])->name('database-backup.import-full');
         Route::post('database-backup/schedule', [DatabaseBackupController::class, 'saveSchedule'])->name('database-backup.schedule');
         Route::get('database-backup/download/{filename}', [DatabaseBackupController::class, 'download'])->name('database-backup.download');
         Route::delete('database-backup/{filename}', [DatabaseBackupController::class, 'destroy'])->name('database-backup.destroy');
