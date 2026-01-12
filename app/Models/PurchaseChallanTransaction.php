@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class PurchaseChallanTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
     protected $fillable = [
         'challan_no',

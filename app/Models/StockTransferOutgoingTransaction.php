@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class StockTransferOutgoingTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
     protected $fillable = [
         'sr_no',

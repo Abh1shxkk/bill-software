@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class StockAdjustmentItem extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'stock_adjustment_id',
         'item_id',

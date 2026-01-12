@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\BelongsToOrganization;
 
 class UserPermission extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'user_id',
         'permission_id',

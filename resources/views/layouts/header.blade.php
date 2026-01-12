@@ -1109,6 +1109,11 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
+              <a class="dropdown-item" href="{{ route('admin.organization.settings') }}">
+                <i class="bi bi-building me-2"></i>Organization Settings
+              </a>
+            </li>
+            <li>
               <a class="dropdown-item" href="{{ route('profile.settings') }}">
                 <i class="bi bi-gear me-2"></i>Settings
               </a>
@@ -1140,6 +1145,12 @@
             <i class="bi bi-database" style="font-size: 1.2rem;"></i>
           </a>
         </li>
+        <!-- Auto Backup (Admin Only) -->
+        <li class="nav-item">
+          <a class="nav-link" href="{{ route('admin.auto-backup.index') }}" title="Auto Daily Backup" style="padding: 0.5rem 0.75rem;">
+            <i class="bi bi-clock-history" style="font-size: 1.2rem;"></i>
+          </a>
+        </li>
         @endif
         
         <!-- Profile Dropdown -->
@@ -1158,6 +1169,12 @@
             <li>
               <hr class="dropdown-divider">
             </li>
+            @if(auth()->user()->isSuperAdmin())
+            <li><a class="dropdown-item" href="{{ route('superadmin.dashboard') }}"><i
+                  class="bi bi-shield-check me-2"></i>Super Admin Panel</a></li>
+            @endif
+            <li><a class="dropdown-item" href="{{ route('admin.organization.settings') }}"><i
+                  class="bi bi-building me-2"></i>Organization</a></li>
             <li><a class="dropdown-item" href="{{ route('profile.settings') }}"><i
                   class="bi bi-gear me-2"></i>Settings</a></li>
             <li>

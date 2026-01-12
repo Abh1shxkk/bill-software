@@ -26,7 +26,10 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (Auth::attempt(['username' => $credentials['username'], 'password' => $credentials['password']])) {
+        // Try login with username first
+        $loginField = filter_var($credentials['username'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+        
+        if (Auth::attempt([$loginField => $credentials['username'], 'password' => $credentials['password']])) {
             $user = Auth::user();
 
             // Check if user is active
@@ -37,7 +40,12 @@ class AuthController extends Controller
             }
 
             $request->session()->regenerate();
-            // All users go to admin dashboard
+            
+            // Super admin goes to super admin dashboard, others to admin dashboard
+            if ($user->isSuperAdmin()) {
+                return redirect()->intended('/superadmin/dashboard');
+            }
+            
             return redirect()->intended('/admin/dashboard');
         }
 

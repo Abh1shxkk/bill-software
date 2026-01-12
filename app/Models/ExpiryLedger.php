@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class ExpiryLedger extends Model
 {
+    use BelongsToOrganization;
+
     protected $table = 'expiry_ledger';
 
     protected $fillable = [

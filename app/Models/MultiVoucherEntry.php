@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class MultiVoucherEntry extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'multi_voucher_id', 'entry_date', 'debit_account_type', 'debit_account_id', 'debit_account_name',
         'credit_account_type', 'credit_account_id', 'credit_account_name', 'amount', 'dr_slcd', 'sort_order',

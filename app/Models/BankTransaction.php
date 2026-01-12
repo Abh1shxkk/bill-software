@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class BankTransaction extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'transaction_date', 'transaction_no', 'transaction_type', 'bank_id', 'bank_name',
         'cheque_no', 'amount', 'narration', 'status',

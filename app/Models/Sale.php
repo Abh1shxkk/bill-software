@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BelongsToOrganization;
 
 class Sale extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToOrganization;
 
     protected $fillable = [
         'series', 'date', 'invoice_no', 'due_date', 'customer_id', 'salesman_id',

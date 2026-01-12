@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Traits\BelongsToOrganization;
 
 class BreakageSupplierUnusedDumpTransaction extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, BelongsToOrganization;
 
     protected $fillable = [
         'trn_no',

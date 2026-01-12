@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class IncomeVoucherItem extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'income_voucher_id', 'hsn_code', 'amount', 'gst_percent',
         'cgst_percent', 'cgst_amount', 'sgst_percent', 'sgst_amount',

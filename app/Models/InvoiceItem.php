@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class InvoiceItem extends Model
 {
+    use BelongsToOrganization;
+
     protected $primaryKey = 'item_id';
 
     protected $fillable = [

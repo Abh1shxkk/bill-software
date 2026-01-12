@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class StockLedger extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'trans_no',
         'item_id',

@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class IncomeVoucher extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'voucher_date', 'voucher_no', 'local_inter', 'description',
         'customer_id', 'customer_name', 'gst_no', 'pan_no', 'city', 'pin', 'address',

@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -25,6 +26,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'organization_id',
+        'is_organization_owner',
         'profile_picture',
         'address',
         'telephone',
@@ -60,7 +63,16 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_organization_owner' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the organization this user belongs to
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class, 'organization_id');
     }
 
     /**
@@ -82,11 +94,84 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user is admin.
+     * Check if user is super admin (platform level).
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    /**
+     * Check if user is admin (organization level).
      */
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === 'admin' || $this->role === 'super_admin';
+    }
+
+    /**
+     * Check if user is organization admin (not super admin).
+     */
+    public function isOrganizationAdmin(): bool
+    {
+        return $this->role === 'admin' && !$this->isSuperAdmin();
+    }
+
+    /**
+     * Check if user is the owner of their organization.
+     */
+    public function isOrganizationOwner(): bool
+    {
+        return $this->is_organization_owner === true;
+    }
+
+    /**
+     * Check if user is manager.
+     */
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
+
+    /**
+     * Check if user is staff.
+     */
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff' || $this->role === 'user';
+    }
+
+    /**
+     * Check if user is readonly.
+     */
+    public function isReadonly(): bool
+    {
+        return $this->role === 'readonly';
+    }
+
+    /**
+     * Get current active license for user's organization
+     */
+    public function getActiveLicense(): ?License
+    {
+        if (!$this->organization_id) {
+            return null;
+        }
+
+        return $this->organization?->activeLicense;
+    }
+
+    /**
+     * Check if user's organization has a valid license
+     */
+    public function hasValidLicense(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true; // Super admin always has access
+        }
+
+        $license = $this->getActiveLicense();
+        return $license && $license->isValid();
     }
 
     /**
@@ -94,7 +179,12 @@ class User extends Authenticatable
      */
     public function hasPermission(string $module, string $action = 'view'): bool
     {
-        // Admin has all permissions
+        // Super admin has all permissions
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        // Admin has all permissions for their organization
         if ($this->isAdmin()) {
             return true;
         }
@@ -124,6 +214,9 @@ class User extends Authenticatable
      */
     public function canCreate(string $module): bool
     {
+        if ($this->isReadonly()) {
+            return false;
+        }
         return $this->hasPermission($module, 'create');
     }
 
@@ -132,6 +225,9 @@ class User extends Authenticatable
      */
     public function canEdit(string $module): bool
     {
+        if ($this->isReadonly()) {
+            return false;
+        }
         return $this->hasPermission($module, 'edit');
     }
 
@@ -140,6 +236,9 @@ class User extends Authenticatable
      */
     public function canDelete(string $module): bool
     {
+        if ($this->isReadonly()) {
+            return false;
+        }
         return $this->hasPermission($module, 'delete');
     }
 
@@ -148,7 +247,7 @@ class User extends Authenticatable
      */
     public function getPermissionsArray(): array
     {
-        if ($this->isAdmin()) {
+        if ($this->isAdmin() || $this->isSuperAdmin()) {
             return Permission::pluck('name')->mapWithKeys(function ($name) {
                 return [$name => ['view' => true, 'create' => true, 'edit' => true, 'delete' => true]];
             })->toArray();
@@ -162,5 +261,63 @@ class User extends Authenticatable
                 'delete' => (bool) $permission->pivot->can_delete,
             ]];
         })->toArray();
+    }
+
+    /**
+     * Get user's role display name
+     */
+    public function getRoleDisplayNameAttribute(): string
+    {
+        $roles = [
+            'super_admin' => 'Super Admin',
+            'admin' => 'Administrator',
+            'manager' => 'Manager',
+            'staff' => 'Staff',
+            'user' => 'User',
+            'readonly' => 'Read Only',
+        ];
+
+        return $roles[$this->role] ?? 'Unknown';
+    }
+
+    /**
+     * Get role badge class
+     */
+    public function getRoleBadgeClassAttribute(): string
+    {
+        $classes = [
+            'super_admin' => 'bg-danger',
+            'admin' => 'bg-primary',
+            'manager' => 'bg-info',
+            'staff' => 'bg-secondary',
+            'user' => 'bg-secondary',
+            'readonly' => 'bg-warning',
+        ];
+
+        return $classes[$this->role] ?? 'bg-secondary';
+    }
+
+    /**
+     * Scope to filter users by organization
+     */
+    public function scopeForOrganization($query, int $organizationId)
+    {
+        return $query->where('organization_id', $organizationId);
+    }
+
+    /**
+     * Scope to filter only super admins
+     */
+    public function scopeSuperAdmins($query)
+    {
+        return $query->where('role', 'super_admin');
+    }
+
+    /**
+     * Scope to filter only organization admins
+     */
+    public function scopeOrganizationAdmins($query)
+    {
+        return $query->where('role', 'admin')->whereNotNull('organization_id');
     }
 }

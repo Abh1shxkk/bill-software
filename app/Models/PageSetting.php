@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class PageSetting extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = ['key', 'value', 'group', 'label', 'type'];
 
     /**

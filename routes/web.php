@@ -67,6 +67,11 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register'])->name('register.perform');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Organization Self-Registration
+Route::get('/register/organization', [App\Http\Controllers\OrganizationRegistrationController::class, 'showRegistrationForm'])->name('register.organization.form');
+Route::post('/register/organization', [App\Http\Controllers\OrganizationRegistrationController::class, 'register'])->name('register.organization');
+
+
 Route::get('/', function () {
     // All logged-in users go to admin dashboard
     if (auth()->check()) {
@@ -75,8 +80,18 @@ Route::get('/', function () {
     return view('auth.login');
 });
 
-// Admin
-Route::middleware(['admin', 'module.access'])->group(function () {
+// License Routes (Requires Auth)
+Route::middleware(['auth'])->prefix('license')->name('license.')->group(function () {
+    Route::get('/required', [App\Http\Controllers\LicenseActivationController::class, 'required'])->name('required');
+    Route::get('/expired', [App\Http\Controllers\LicenseActivationController::class, 'expired'])->name('expired');
+    Route::get('/suspended', [App\Http\Controllers\LicenseActivationController::class, 'suspended'])->name('suspended');
+    Route::get('/activate', [App\Http\Controllers\LicenseActivationController::class, 'showActivationForm'])->name('activate.form');
+    Route::post('/activate', [App\Http\Controllers\LicenseActivationController::class, 'activate'])->name('activate');
+    Route::get('/status', [App\Http\Controllers\LicenseActivationController::class, 'status'])->name('status');
+});
+
+// Admin (with license check)
+Route::middleware(['admin', 'module.access', 'license'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::prefix('admin')->name('admin.')->group(function () {
         // User Management Routes (Admin Only - handled by module.access middleware)
@@ -103,6 +118,37 @@ Route::middleware(['admin', 'module.access'])->group(function () {
         Route::post('database-backup/schedule', [DatabaseBackupController::class, 'saveSchedule'])->name('database-backup.schedule');
         Route::get('database-backup/download/{filename}', [DatabaseBackupController::class, 'download'])->name('database-backup.download');
         Route::delete('database-backup/{filename}', [DatabaseBackupController::class, 'destroy'])->name('database-backup.destroy');
+        
+        // Auto Backup Routes (Automated Daily Backup on Admin Login)
+        Route::get('auto-backup', [\App\Http\Controllers\Admin\AutoBackupController::class, 'index'])->name('auto-backup.index');
+        Route::post('auto-backup/toggle', [\App\Http\Controllers\Admin\AutoBackupController::class, 'toggleAutoBackup'])->name('auto-backup.toggle');
+        Route::post('auto-backup/trigger', [\App\Http\Controllers\Admin\AutoBackupController::class, 'triggerManualBackup'])->name('auto-backup.trigger');
+        Route::get('auto-backup/download/{filename}', [\App\Http\Controllers\Admin\AutoBackupController::class, 'download'])->name('auto-backup.download');
+        Route::post('auto-backup/restore/{filename}', [\App\Http\Controllers\Admin\AutoBackupController::class, 'restore'])->name('auto-backup.restore');
+        Route::delete('auto-backup/{filename}', [\App\Http\Controllers\Admin\AutoBackupController::class, 'destroy'])->name('auto-backup.destroy');
+        Route::get('auto-backup/status', [\App\Http\Controllers\Admin\AutoBackupController::class, 'status'])->name('auto-backup.status');
+        
+        // Organization Settings Routes
+        Route::get('organization/settings', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'index'])->name('organization.settings');
+        Route::get('organization/edit-profile', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'editProfile'])->name('organization.edit-profile');
+        Route::put('organization/update-profile', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'updateProfile'])->name('organization.update-profile');
+        Route::get('organization/users', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'users'])->name('organization.users');
+        Route::get('organization/users/create', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'createUser'])->name('organization.create-user');
+        Route::post('organization/users', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'storeUser'])->name('organization.store-user');
+        Route::post('organization/users/{user}/toggle', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'toggleUserStatus'])->name('organization.toggle-user');
+        Route::delete('organization/users/{user}', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'removeUser'])->name('organization.remove-user');
+        Route::get('organization/license', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'license'])->name('organization.license');
+        Route::post('organization/license/request-renewal', [App\Http\Controllers\Admin\OrganizationSettingsController::class, 'requestRenewal'])->name('organization.request-renewal');
+        
+        // Branding/White-Label Routes
+        Route::get('organization/branding', [App\Http\Controllers\Admin\BrandingController::class, 'index'])->name('organization.branding');
+        Route::put('organization/branding', [App\Http\Controllers\Admin\BrandingController::class, 'update'])->name('organization.branding.update');
+        Route::get('organization/branding/reset', [App\Http\Controllers\Admin\BrandingController::class, 'reset'])->name('organization.branding.reset');
+        
+        // Audit Logs Routes
+        Route::get('audit-logs', [App\Http\Controllers\Admin\AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('audit-logs/export', [App\Http\Controllers\Admin\AuditLogController::class, 'export'])->name('audit-logs.export');
+        Route::get('audit-logs/{auditLog}', [App\Http\Controllers\Admin\AuditLogController::class, 'show'])->name('audit-logs.show');
         
         // Company routes - MUST be before resource route
         Route::post('companies/multiple-delete', [CompanyController::class, 'multipleDelete'])->name('companies.multiple-delete');

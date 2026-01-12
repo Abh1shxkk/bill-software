@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BreakageExpiryTransaction;
 use App\Models\SaleTransaction;
+use App\Traits\BelongsToOrganization;
 
 class BreakageExpiryAdjustment extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
     protected $fillable = [
         'breakage_expiry_transaction_id',

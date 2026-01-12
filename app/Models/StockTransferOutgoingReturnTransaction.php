@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class StockTransferOutgoingReturnTransaction extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
     protected $table = 'stock_transfer_outgoing_return_transactions';
 

@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class CustomerLedger extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'customer_id',
         'transaction_date',

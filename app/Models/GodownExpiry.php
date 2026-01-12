@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class GodownExpiry extends Model
 {
+    use BelongsToOrganization;
+
     protected $table = 'godown_expiry';
 
     protected $fillable = [

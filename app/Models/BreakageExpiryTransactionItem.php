@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class BreakageExpiryTransactionItem extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'breakage_expiry_transaction_id',
         'item_id',

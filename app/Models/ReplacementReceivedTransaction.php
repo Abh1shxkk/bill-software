@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class ReplacementReceivedTransaction extends Model
 {
+    use BelongsToOrganization;
+
     protected $table = 'replacement_received_transactions';
 
     protected $fillable = [

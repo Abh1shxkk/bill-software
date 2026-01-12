@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class GodownBreakageExpiryTransactionItem extends Model
 {
-    use HasFactory;
+    use HasFactory, BelongsToOrganization;
 
     protected $table = 'godown_breakage_expiry_transaction_items';
 

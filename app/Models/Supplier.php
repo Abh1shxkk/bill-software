@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class Supplier extends Model
 {
+    use BelongsToOrganization;
+
     protected $primaryKey = 'supplier_id';
     public $timestamps = false;
 

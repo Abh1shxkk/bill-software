@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class StockTransferIncomingReturnTransaction extends Model
 {
+    use BelongsToOrganization;
+
     protected $table = 'stock_transfer_incoming_return_transactions';
 
     protected $fillable = [

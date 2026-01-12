@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class PendingOrder extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'supplier_id',
         'order_no',

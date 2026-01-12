@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class BreakageSupplierReceivedAdjustment extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'received_transaction_id',
         'purchase_transaction_id',

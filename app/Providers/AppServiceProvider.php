@@ -5,11 +5,14 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use Illuminate\Auth\Events\Login;
 use App\Models\StockLedger;
 use App\Models\Batch;
 use App\Observers\StockLedgerObserver;
 use App\Observers\BatchObserver;
+use App\Listeners\TriggerAutoBackupOnLogin;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -52,6 +55,9 @@ class AppServiceProvider extends ServiceProvider
         StockLedger::observe(StockLedgerObserver::class);
         Batch::observe(BatchObserver::class);
 
+        // Register event listener for auto backup on admin login
+        Event::listen(Login::class, TriggerAutoBackupOnLogin::class);
+
         // Register Blade directives for permission checking
         Blade::if('canaccess', function ($module, $action = 'view') {
             return auth()->check() && auth()->user()->hasPermission($module, $action);
@@ -62,3 +68,4 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 }
+

@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class Invoice extends Model
 {
+    use BelongsToOrganization;
+
     protected $primaryKey = 'invoice_id';
 
     public function getRouteKeyName()

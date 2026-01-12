@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\BelongsToOrganization;
 
 class Item extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         // Company Information
         'company_id', 'company_short_name',

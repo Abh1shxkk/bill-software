@@ -50,6 +50,23 @@
         </div>
     </div>
 
+    {{-- License Status Warning --}}
+    @php
+        $license = auth()->user()->getActiveLicense();
+    @endphp
+    @if($license && $license->isExpiringSoon())
+    <div class="alert alert-warning alert-dismissible fade show mb-3" role="alert" style="border-radius: 12px;">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>License Expiring!</strong> Your license expires in {{ $license->daysUntilExpiry() }} days ({{ $license->expires_at->format('d M Y') }}).
+            </div>
+            <a href="{{ route('license.status') }}" class="btn btn-sm btn-warning">View Details</a>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+
     <!-- Quick Shortcuts -->
     <div class="card mb-3" style="border-radius: 12px;">
         <div class="card-body py-2">

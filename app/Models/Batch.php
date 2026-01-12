@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use App\Traits\BelongsToOrganization;
 
 class Batch extends Model
 {
+    use BelongsToOrganization;
+
     protected $fillable = [
         'purchase_transaction_id',
         'purchase_transaction_item_id',

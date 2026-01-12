@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use App\Traits\BelongsToOrganization;
 
 class CustomerDiscount extends Model
 {
+    use BelongsToOrganization;
+
     protected $table = 'customer_discounts';
 
     protected $fillable = [

@@ -471,7 +471,7 @@
 
                     <div class="auth-footer" style="justify-content: center; gap: 0.5rem;">
                         <span style="color: var(--text-secondary)">Don't have an account?</span>
-                        <a href="{{ route('register') }}" class="link highlight">Create account</a>
+                        <a href="{{ route('register.organization.form') }}" class="link highlight">Register Organization</a>
                     </div>
                 </form>
             </div>
