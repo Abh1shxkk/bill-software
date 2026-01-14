@@ -147,22 +147,21 @@
                         </div>
                         
                         <div class="row">
-                            <!-- Area Manager Code -->
-                            <div class="col-md-3 mb-3">
+                            <!-- Area Manager -->
+                            <div class="col-md-6 mb-3">
                                 <label for="area_mgr_code" class="form-label">Area Mgr.</label>
-                                <input type="text" class="form-control @error('area_mgr_code') is-invalid @enderror" 
-                                       id="area_mgr_code" name="area_mgr_code" value="{{ old('area_mgr_code', $salesMan->area_mgr_code) }}">
+                                <select class="form-select @error('area_mgr_code') is-invalid @enderror" 
+                                        id="area_mgr_code" name="area_mgr_code">
+                                    <option value="">-- Select Area Manager --</option>
+                                    @foreach($areaManagers ?? [] as $areaManager)
+                                        <option value="{{ $areaManager->id }}" 
+                                                data-name="{{ $areaManager->name }}"
+                                                {{ old('area_mgr_code', $salesMan->area_mgr_code) == $areaManager->id ? 'selected' : '' }}>
+                                            {{ $areaManager->code ? $areaManager->code . ' - ' : '' }}{{ $areaManager->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 @error('area_mgr_code')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            
-                            <!-- Area Manager Name -->
-                            <div class="col-md-3 mb-3">
-                                <label for="area_mgr_name" class="form-label">&nbsp;</label>
-                                <input type="text" class="form-control @error('area_mgr_name') is-invalid @enderror" 
-                                       id="area_mgr_name" name="area_mgr_name" value="{{ old('area_mgr_name', $salesMan->area_mgr_name) }}">
-                                @error('area_mgr_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>

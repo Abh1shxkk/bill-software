@@ -216,10 +216,14 @@
                             <h6 class="fw-bold mb-3">eWay Details</h6>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Transport</label>
-                                <div class="row g-2">
-                                    <div class="col-3"><input type="text" class="form-control" name="transport_code" value="{{ old('transport_code', '00') }}" placeholder="Code"></div>
-                                    <div class="col-9"><input type="text" class="form-control" name="transport_name" value="{{ old('transport_name', '0') }}" placeholder="Transport name"></div>
-                                </div>
+                                <select class="form-select" name="transport_code" id="transport_code">
+                                    <option value="">-- Select Transport --</option>
+                                    @foreach($transports ?? [] as $transport)
+                                        <option value="{{ $transport->id }}" {{ old('transport_code', $customer->transport_code ?? '') == $transport->id ? 'selected' : '' }}>
+                                            {{ $transport->alter_code ? $transport->alter_code . ' - ' : '' }}{{ $transport->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
                             <div class="mb-0">
                                 <label class="form-label fw-semibold">Distance (KM)</label>

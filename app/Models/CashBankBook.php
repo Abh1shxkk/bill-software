@@ -36,6 +36,9 @@ class CashBankBook extends Model
         'cheque_clearance_method',
         'flag',
         'receipts',
+        'transaction_date',
+        'transaction_type',
+        'particulars',
     ];
 
     protected $casts = [

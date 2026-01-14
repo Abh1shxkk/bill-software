@@ -91,6 +91,11 @@ class CashBankBookController extends Controller
         // Handle boolean fields
         $validated['input_gst_purchase'] = $request->has('input_gst_purchase');
         $validated['output_gst_income'] = $request->has('output_gst_income');
+        
+        // Set default values for required fields
+        $validated['transaction_date'] = $request->input('transaction_date', now()->toDateString());
+        $validated['transaction_type'] = $request->input('transaction_type', 'master');
+        $validated['particulars'] = $request->input('particulars', '');
 
         $cashBankBook = CashBankBook::create($validated);
         $this->notifyCreated($cashBankBook->name);

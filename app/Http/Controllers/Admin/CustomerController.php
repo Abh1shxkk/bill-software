@@ -78,7 +78,14 @@ class CustomerController extends Controller
             $countries = [];
         }
 
-        return view('admin.customers.create', compact('countries'));
+        // Fetch master data for dropdowns
+        $salesmen = \App\Models\SalesMan::orderBy('name')->get();
+        $areas = \App\Models\Area::active()->orderBy('name')->get();
+        $routes = \App\Models\Route::orderBy('name')->get();
+        $states = \App\Models\State::orderBy('name')->get();
+        $transports = \App\Models\TransportMaster::orderBy('name')->get();
+
+        return view('admin.customers.create', compact('countries', 'salesmen', 'areas', 'routes', 'states', 'transports'));
     }
 
     public function store(Request $request)
@@ -106,6 +113,9 @@ class CustomerController extends Controller
 
     public function show(Customer $customer)
     {
+        // Eager load relationships for displaying names
+        $customer->load(['salesman', 'area', 'route', 'state', 'transport']);
+        
         if (request()->ajax()) {
             return response()->json($customer);
         }
@@ -126,7 +136,14 @@ class CustomerController extends Controller
             $countries = [];
         }
 
-        return view('admin.customers.edit', compact('customer', 'countries'));
+        // Fetch master data for dropdowns
+        $salesmen = \App\Models\SalesMan::orderBy('name')->get();
+        $areas = \App\Models\Area::active()->orderBy('name')->get();
+        $routes = \App\Models\Route::orderBy('name')->get();
+        $states = \App\Models\State::orderBy('name')->get();
+        $transports = \App\Models\TransportMaster::orderBy('name')->get();
+
+        return view('admin.customers.edit', compact('customer', 'countries', 'salesmen', 'areas', 'routes', 'states', 'transports'));
     }
 
     public function update(Request $request, Customer $customer)

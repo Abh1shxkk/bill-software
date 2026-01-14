@@ -229,31 +229,47 @@
                                             <div class="row g-3">
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">Sales Man</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3"><input type="text" class="form-control" name="sales_man_code" value="{{ old('sales_man_code', '00') }}" placeholder="Code"></div>
-                                                        <div class="col-9"><input type="text" class="form-control" name="sales_man_name" value="{{ old('sales_man_name') }}" placeholder="Salesman name"></div>
-                                                    </div>
+                                                    <select class="form-select" name="sales_man_code" id="sales_man_code">
+                                                        <option value="">-- Select Salesman --</option>
+                                                        @foreach($salesmen ?? [] as $salesman)
+                                                            <option value="{{ $salesman->id }}" {{ old('sales_man_code') == $salesman->id ? 'selected' : '' }}>
+                                                                {{ $salesman->code ? $salesman->code . ' - ' : '' }}{{ $salesman->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">Area</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3"><input type="text" class="form-control" name="area_code" value="{{ old('area_code', '00') }}" placeholder="Code"></div>
-                                                        <div class="col-9"><input type="text" class="form-control" name="area_name" value="{{ old('area_name') }}" placeholder="Area name"></div>
-                                                    </div>
+                                                    <select class="form-select" name="area_code" id="area_code">
+                                                        <option value="">-- Select Area --</option>
+                                                        @foreach($areas ?? [] as $area)
+                                                            <option value="{{ $area->id }}" {{ old('area_code') == $area->id ? 'selected' : '' }}>
+                                                                {{ $area->alter_code ? $area->alter_code . ' - ' : '' }}{{ $area->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">Route</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3"><input type="text" class="form-control" name="route_code" value="{{ old('route_code', '00') }}" placeholder="Code"></div>
-                                                        <div class="col-9"><input type="text" class="form-control" name="route_name" value="{{ old('route_name') }}" placeholder="Route name"></div>
-                                                    </div>
+                                                    <select class="form-select" name="route_code" id="route_code">
+                                                        <option value="">-- Select Route --</option>
+                                                        @foreach($routes ?? [] as $route)
+                                                            <option value="{{ $route->id }}" {{ old('route_code') == $route->id ? 'selected' : '' }}>
+                                                                {{ $route->alter_code ? $route->alter_code . ' - ' : '' }}{{ $route->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">State</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3"><input type="text" class="form-control" name="state_code" value="{{ old('state_code', '00') }}" placeholder="Code"></div>
-                                                        <div class="col-9"><input type="text" class="form-control" name="state_name" value="{{ old('state_name') }}" placeholder="State name"></div>
-                                                    </div>
+                                                    <select class="form-select" name="state_code" id="state_code">
+                                                        <option value="">-- Select State --</option>
+                                                        @foreach($states ?? [] as $state)
+                                                            <option value="{{ $state->id }}" {{ old('state_code') == $state->id ? 'selected' : '' }}>
+                                                                {{ $state->alter_code ? $state->alter_code . ' - ' : '' }}{{ $state->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">Business Type</label>
@@ -371,6 +387,17 @@ document.addEventListener('DOMContentLoaded', function() {
         if (template && container) {
             container.innerHTML = template.innerHTML;
             loadedTabs[tabName] = true;
+            
+            // Reinitialize Select2 for dynamically loaded content
+            if (typeof $ !== 'undefined' && $.fn.select2) {
+                $(container).find('select').not('.no-select2, .select2-hidden-accessible').each(function() {
+                    $(this).select2({
+                        theme: 'bootstrap-5',
+                        placeholder: $(this).find('option:first').text(),
+                        allowClear: true
+                    });
+                });
+            }
         }
     }
 });

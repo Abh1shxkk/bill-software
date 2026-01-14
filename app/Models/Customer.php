@@ -178,6 +178,14 @@ class Customer extends Model
     }
 
     /**
+     * Relationship with SalesMan
+     */
+    public function salesman()
+    {
+        return $this->belongsTo(SalesMan::class, 'sales_man_code', 'id');
+    }
+
+    /**
      * Relationship with Area
      */
     public function area()
@@ -199,6 +207,14 @@ class Customer extends Model
     public function state()
     {
         return $this->belongsTo(State::class, 'state_code', 'id');
+    }
+
+    /**
+     * Relationship with Transport
+     */
+    public function transport()
+    {
+        return $this->belongsTo(TransportMaster::class, 'transport_code', 'id');
     }
 
 }

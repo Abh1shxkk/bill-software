@@ -13,14 +13,22 @@ class MarketingManager extends Model
         'name',
         'code',
         'address',
-        'telephone',
         'mobile',
         'email',
+        'designation',
+        'target_amount',
+        'reporting_to',
         'status',
-        'gen_mgr'
+        'is_deleted',
+        'created_date',
+        'modified_date'
     ];
 
     protected $casts = [
-        //
+        'target_amount' => 'decimal:2',
+        'is_deleted' => 'integer',
+        'created_date' => 'datetime',
+        'modified_date' => 'datetime'
     ];
 }
+

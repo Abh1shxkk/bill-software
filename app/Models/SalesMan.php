@@ -37,4 +37,13 @@ class SalesMan extends Model
         'created_date' => 'datetime',
         'modified_date' => 'datetime'
     ];
+
+    /**
+     * Relationship with AreaManager
+     */
+    public function areaManager()
+    {
+        return $this->belongsTo(AreaManager::class, 'area_mgr_code', 'id');
+    }
 }
+

@@ -111,14 +111,14 @@
 
         <div class="col-md-3 mb-3">
           <label for="birth_day" class="form-label">B' Day</label>
-          <input type="text" class="form-control" 
-                 id="birth_day" name="birth_day" value="{{ old('birth_day') }}" placeholder="DD/MM">
+          <input type="date" class="form-control" 
+                 id="birth_day" name="birth_day" value="{{ old('birth_day') }}">
         </div>
 
         <div class="col-md-3 mb-3">
           <label for="anniversary_day" class="form-label">A' Day</label>
-          <input type="text" class="form-control" 
-                 id="anniversary_day" name="anniversary_day" value="{{ old('anniversary_day') }}" placeholder="DD/MM">
+          <input type="date" class="form-control" 
+                 id="anniversary_day" name="anniversary_day" value="{{ old('anniversary_day') }}">
         </div>
       </div>
 

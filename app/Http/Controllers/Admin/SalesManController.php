@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SalesMan;
+use App\Models\AreaManager;
 use App\Traits\CrudNotificationTrait;
 use Illuminate\Http\Request;
 
@@ -37,7 +38,7 @@ class SalesManController extends Controller
             }
         }
 
-        $salesMen = $query->orderBy('created_at', 'desc')->paginate(10);
+        $salesMen = $query->with('areaManager')->orderBy('created_at', 'desc')->paginate(10);
 
         // Handle AJAX requests
         if ($request->ajax()) {
@@ -52,7 +53,8 @@ class SalesManController extends Controller
      */
     public function create()
     {
-        return view('admin.sales-men.create');
+        $areaManagers = AreaManager::orderBy('name')->get();
+        return view('admin.sales-men.create', compact('areaManagers'));
     }
 
     /**
@@ -90,7 +92,8 @@ class SalesManController extends Controller
      */
     public function edit(SalesMan $salesMan)
     {
-        return view('admin.sales-men.edit', compact('salesMan'));
+        $areaManagers = AreaManager::orderBy('name')->get();
+        return view('admin.sales-men.edit', compact('salesMan', 'areaManagers'));
     }
 
     /**

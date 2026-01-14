@@ -286,53 +286,53 @@
                                                 <!-- Sales Man -->
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">Sales Man</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3">
-                                                            <input type="text" class="form-control" name="sales_man_code" value="{{ old('sales_man_code', $customer->sales_man_code ?? '00') }}" placeholder="Code">
-                                                        </div>
-                                                        <div class="col-9">
-                                                            <input type="text" class="form-control" name="sales_man_name" value="{{ old('sales_man_name', $customer->sales_man_name) }}" placeholder="Salesman name">
-                                                        </div>
-                                                    </div>
+                                                    <select class="form-select" name="sales_man_code" id="sales_man_code">
+                                                        <option value="">-- Select Salesman --</option>
+                                                        @foreach($salesmen ?? [] as $salesman)
+                                                            <option value="{{ $salesman->id }}" {{ old('sales_man_code', $customer->sales_man_code) == $salesman->id ? 'selected' : '' }}>
+                                                                {{ $salesman->code ? $salesman->code . ' - ' : '' }}{{ $salesman->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
 
                                                 <!-- Area -->
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">Area</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3">
-                                                            <input type="text" class="form-control" name="area_code" value="{{ old('area_code', $customer->area_code ?? '00') }}" placeholder="Code">
-                                                        </div>
-                                                        <div class="col-9">
-                                                            <input type="text" class="form-control" name="area_name" value="{{ old('area_name', $customer->area_name) }}" placeholder="Area name">
-                                                        </div>
-                                                    </div>
+                                                    <select class="form-select" name="area_code" id="area_code">
+                                                        <option value="">-- Select Area --</option>
+                                                        @foreach($areas ?? [] as $area)
+                                                            <option value="{{ $area->id }}" {{ old('area_code', $customer->area_code) == $area->id ? 'selected' : '' }}>
+                                                                {{ $area->alter_code ? $area->alter_code . ' - ' : '' }}{{ $area->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
 
                                                 <!-- Route -->
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">Route</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3">
-                                                            <input type="text" class="form-control" name="route_code" value="{{ old('route_code', $customer->route_code ?? '00') }}" placeholder="Code">
-                                                        </div>
-                                                        <div class="col-9">
-                                                            <input type="text" class="form-control" name="route_name" value="{{ old('route_name', $customer->route_name) }}" placeholder="Route name">
-                                                        </div>
-                                                    </div>
+                                                    <select class="form-select" name="route_code" id="route_code">
+                                                        <option value="">-- Select Route --</option>
+                                                        @foreach($routes ?? [] as $route)
+                                                            <option value="{{ $route->id }}" {{ old('route_code', $customer->route_code) == $route->id ? 'selected' : '' }}>
+                                                                {{ $route->alter_code ? $route->alter_code . ' - ' : '' }}{{ $route->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
 
                                                 <!-- State -->
                                                 <div class="col-12">
                                                     <label class="form-label fw-semibold">State</label>
-                                                    <div class="row g-2">
-                                                        <div class="col-3">
-                                                            <input type="text" class="form-control" name="state_code" value="{{ old('state_code', $customer->state_code ?? '00') }}" placeholder="Code">
-                                                        </div>
-                                                        <div class="col-9">
-                                                            <input type="text" class="form-control" name="state_name" value="{{ old('state_name', $customer->state_name) }}" placeholder="State name">
-                                                        </div>
-                                                    </div>
+                                                    <select class="form-select" name="state_code" id="state_code">
+                                                        <option value="">-- Select State --</option>
+                                                        @foreach($states ?? [] as $state)
+                                                            <option value="{{ $state->id }}" {{ old('state_code', $customer->state_code) == $state->id ? 'selected' : '' }}>
+                                                                {{ $state->alter_code ? $state->alter_code . ' - ' : '' }}{{ $state->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
 
                                                 <!-- Business Type -->
@@ -666,14 +666,14 @@
                                                         <!-- Transport -->
                                                         <div class="mb-3">
                                                             <label class="form-label fw-semibold">Transport</label>
-                                                            <div class="row g-2">
-                                                                <div class="col-3">
-                                                                    <input type="text" class="form-control" name="transport_code" value="{{ old('transport_code', $customer->transport_code ?? '00') }}" placeholder="Code">
-                                                                </div>
-                                                                <div class="col-9">
-                                                                    <input type="text" class="form-control" name="transport_name" value="{{ old('transport_name', $customer->transport_name ?? '0') }}" placeholder="Transport name">
-                                                                </div>
-                                                            </div>
+                                                            <select class="form-select" name="transport_code" id="transport_code">
+                                                                <option value="">-- Select Transport --</option>
+                                                                @foreach($transports ?? [] as $transport)
+                                                                    <option value="{{ $transport->id }}" {{ old('transport_code', $customer->transport_code) == $transport->id ? 'selected' : '' }}>
+                                                                        {{ $transport->alter_code ? $transport->alter_code . ' - ' : '' }}{{ $transport->name }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
                                                         </div>
 
                                                         <!-- Distance -->
@@ -826,3 +826,22 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure Select2 properly displays pre-selected values
+    setTimeout(function() {
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            // Trigger change on dropdowns to ensure Select2 displays the selected value
+            ['#sales_man_code', '#area_code', '#route_code', '#state_code', '#transport_code'].forEach(function(selector) {
+                var $select = $(selector);
+                if ($select.length && $select.val()) {
+                    $select.trigger('change.select2');
+                }
+            });
+        }
+    }, 200);
+});
+</script>
+@endpush

@@ -143,7 +143,7 @@
             <td>{{ $salesMan->mobile }}</td>
             <td>{{ $salesMan->email }}</td>
             <td>{{ $salesMan->city }}</td>
-            <td>{{ $salesMan->area_mgr_name ?: '-' }}</td>
+            <td>{{ $salesMan->areaManager ? ($salesMan->areaManager->code ? $salesMan->areaManager->code . ' - ' : '') . $salesMan->areaManager->name : ($salesMan->area_mgr_name ?: '-') }}</td>
             <td class="text-end">
               <button class="btn btn-sm btn-outline-primary" onclick="viewSalesManDetails({{ $salesMan->id }})" title="View">
                 <i class="bi bi-eye"></i>

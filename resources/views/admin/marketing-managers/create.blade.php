@@ -72,11 +72,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="telephone" class="form-label">Telephone</label>
-                                    <input type="text" class="form-control @error('telephone') is-invalid @enderror" 
-                                           id="telephone" name="telephone" value="{{ old('telephone') }}" 
-                                           placeholder="Enter telephone number">
-                                    @error('telephone')
+                                    <label for="designation" class="form-label">Designation</label>
+                                    <input type="text" class="form-control @error('designation') is-invalid @enderror" 
+                                           id="designation" name="designation" value="{{ old('designation') }}" 
+                                           placeholder="Enter designation">
+                                    @error('designation')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -110,11 +110,11 @@
                             
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="status" class="form-label">Status</label>
-                                    <input type="text" class="form-control @error('status') is-invalid @enderror" 
-                                           id="status" name="status" value="{{ old('status') }}" 
-                                           placeholder="Enter status">
-                                    @error('status')
+                                    <label for="target_amount" class="form-label">Target Amount</label>
+                                    <input type="number" class="form-control @error('target_amount') is-invalid @enderror" 
+                                           id="target_amount" name="target_amount" value="{{ old('target_amount', '0.00') }}" 
+                                           placeholder="Enter target amount" step="0.01" min="0">
+                                    @error('target_amount')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
@@ -124,16 +124,23 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="gen_mgr" class="form-label">Gen.mgr.</label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control @error('gen_mgr') is-invalid @enderror" 
-                                               id="gen_mgr" name="gen_mgr" value="{{ old('gen_mgr') }}" 
-                                               placeholder="Enter general manager" readonly>
-                                        <button type="button" class="btn btn-outline-primary" onclick="openGeneralManagerModal()">
-                                            <i class="bi bi-search"></i> Select
-                                        </button>
-                                    </div>
-                                    @error('gen_mgr')
+                                    <label for="reporting_to" class="form-label">Reporting To</label>
+                                    <input type="text" class="form-control @error('reporting_to') is-invalid @enderror" 
+                                           id="reporting_to" name="reporting_to" value="{{ old('reporting_to') }}" 
+                                           placeholder="Enter reporting manager">
+                                    @error('reporting_to')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <input type="text" class="form-control @error('status') is-invalid @enderror" 
+                                           id="status" name="status" value="{{ old('status') }}" 
+                                           placeholder="Enter status">
+                                    @error('status')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>

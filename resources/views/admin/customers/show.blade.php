@@ -331,53 +331,49 @@
                                             <!-- Sales Man -->
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">Sales Man</label>
-                                                <div class="row g-2">
-                                                    <div class="col-3">
-                                                        <p class="form-control-plaintext">{{ $customer->sales_man_code ?? '00' }}</p>
-                                                    </div>
-                                                    <div class="col-9">
-                                                        <p class="form-control-plaintext">{{ $customer->sales_man_name ?? '-' }}</p>
-                                                    </div>
-                                                </div>
+                                                <p class="form-control-plaintext">
+                                                    @if($customer->salesman)
+                                                        {{ $customer->salesman->code ? $customer->salesman->code . ' - ' : '' }}{{ $customer->salesman->name }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </p>
                                             </div>
 
                                             <!-- Area -->
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">Area</label>
-                                                <div class="row g-2">
-                                                    <div class="col-3">
-                                                        <p class="form-control-plaintext">{{ $customer->area_code ?? '00' }}</p>
-                                                    </div>
-                                                    <div class="col-9">
-                                                        <p class="form-control-plaintext">{{ $customer->area_name ?? '-' }}</p>
-                                                    </div>
-                                                </div>
+                                                <p class="form-control-plaintext">
+                                                    @if($customer->area)
+                                                        {{ $customer->area->alter_code ? $customer->area->alter_code . ' - ' : '' }}{{ $customer->area->name }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </p>
                                             </div>
 
                                             <!-- Route -->
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">Route</label>
-                                                <div class="row g-2">
-                                                    <div class="col-3">
-                                                        <p class="form-control-plaintext">{{ $customer->route_code ?? '00' }}</p>
-                                                    </div>
-                                                    <div class="col-9">
-                                                        <p class="form-control-plaintext">{{ $customer->route_name ?? '-' }}</p>
-                                                    </div>
-                                                </div>
+                                                <p class="form-control-plaintext">
+                                                    @if($customer->route)
+                                                        {{ $customer->route->alter_code ? $customer->route->alter_code . ' - ' : '' }}{{ $customer->route->name }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </p>
                                             </div>
 
                                             <!-- State -->
                                             <div class="col-12">
                                                 <label class="form-label fw-semibold">State</label>
-                                                <div class="row g-2">
-                                                    <div class="col-3">
-                                                        <p class="form-control-plaintext">{{ $customer->state_code ?? '00' }}</p>
-                                                    </div>
-                                                    <div class="col-9">
-                                                        <p class="form-control-plaintext">{{ $customer->state_name ?? '-' }}</p>
-                                                    </div>
-                                                </div>
+                                                <p class="form-control-plaintext">
+                                                    @if($customer->state)
+                                                        {{ $customer->state->alter_code ? $customer->state->alter_code . ' - ' : '' }}{{ $customer->state->name }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </p>
                                             </div>
 
                                             <!-- Business Type -->
@@ -678,14 +674,13 @@
                                                     <!-- Transport -->
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Transport</label>
-                                                        <div class="row g-2">
-                                                            <div class="col-3">
-                                                                <p class="form-control-plaintext">{{ $customer->transport_code ?? '00' }}</p>
-                                                            </div>
-                                                            <div class="col-9">
-                                                                <p class="form-control-plaintext">{{ $customer->transport_name ?? '-' }}</p>
-                                                            </div>
-                                                        </div>
+                                                        <p class="form-control-plaintext">
+                                                            @if($customer->transport)
+                                                                {{ $customer->transport->alter_code ? $customer->transport->alter_code . ' - ' : '' }}{{ $customer->transport->name }}
+                                                            @else
+                                                                -
+                                                            @endif
+                                                        </p>
                                                     </div>
 
                                                     <!-- Distance -->

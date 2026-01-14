@@ -25,11 +25,11 @@ class MarketingManagerController extends Controller
                     $q->where('name', 'like', "%{$search}%")
                       ->orWhere('code', 'like', "%{$search}%")
                       ->orWhere('address', 'like', "%{$search}%")
-                      ->orWhere('telephone', 'like', "%{$search}%")
                       ->orWhere('mobile', 'like', "%{$search}%")
                       ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('designation', 'like', "%{$search}%")
                       ->orWhere('status', 'like', "%{$search}%")
-                      ->orWhere('gen_mgr', 'like', "%{$search}%");
+                      ->orWhere('reporting_to', 'like', "%{$search}%");
                 });
             } else {
                 $query->where($searchField, 'like', "%{$search}%");
@@ -72,22 +72,24 @@ class MarketingManagerController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
             'address' => 'nullable|string',
-            'telephone' => 'nullable|string|max:50',
             'mobile' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
+            'designation' => 'nullable|string|max:255',
+            'target_amount' => 'nullable|numeric|min:0',
+            'reporting_to' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:100',
-            'gen_mgr' => 'nullable|string|max:255',
         ]);
         try {
             $marketingManager = MarketingManager::create([
                 'name' => $request->name,
                 'code' => $request->code,
                 'address' => $request->address,
-                'telephone' => $request->telephone,
                 'mobile' => $request->mobile,
                 'email' => $request->email,
+                'designation' => $request->designation,
+                'target_amount' => $request->target_amount,
+                'reporting_to' => $request->reporting_to,
                 'status' => $request->status,
-                'gen_mgr' => $request->gen_mgr,
             ]);
             $this->notifyCreated($marketingManager->name ?? 'Marketing Manager');
             return redirect()->route('admin.marketing-managers.index');
@@ -108,11 +110,12 @@ class MarketingManagerController extends Controller
                 'name' => $marketingManager->name,
                 'code' => $marketingManager->code,
                 'address' => $marketingManager->address,
-                'telephone' => $marketingManager->telephone,
                 'mobile' => $marketingManager->mobile,
                 'email' => $marketingManager->email,
+                'designation' => $marketingManager->designation,
+                'target_amount' => $marketingManager->target_amount,
+                'reporting_to' => $marketingManager->reporting_to,
                 'status' => $marketingManager->status,
-                'gen_mgr' => $marketingManager->gen_mgr,
                 'created_at' => $marketingManager->created_at ? $marketingManager->created_at->format('M d, Y h:i A') : null,
                 'updated_at' => $marketingManager->updated_at ? $marketingManager->updated_at->format('M d, Y h:i A') : null,
             ]);
@@ -138,22 +141,24 @@ class MarketingManagerController extends Controller
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:50',
             'address' => 'nullable|string',
-            'telephone' => 'nullable|string|max:50',
             'mobile' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
+            'designation' => 'nullable|string|max:255',
+            'target_amount' => 'nullable|numeric|min:0',
+            'reporting_to' => 'nullable|string|max:255',
             'status' => 'nullable|string|max:100',
-            'gen_mgr' => 'nullable|string|max:255',
         ]);
         try {
             $marketingManager->update([
                 'name' => $request->name,
                 'code' => $request->code,
                 'address' => $request->address,
-                'telephone' => $request->telephone,
                 'mobile' => $request->mobile,
                 'email' => $request->email,
+                'designation' => $request->designation,
+                'target_amount' => $request->target_amount,
+                'reporting_to' => $request->reporting_to,
                 'status' => $request->status,
-                'gen_mgr' => $request->gen_mgr,
             ]);
             $this->notifyUpdated($marketingManager->name ?? 'Marketing Manager');
             return redirect()->route('admin.marketing-managers.index');
