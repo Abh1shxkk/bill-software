@@ -456,9 +456,14 @@ class CustomerLedgerController extends Controller
         $search = $request->get('search');
         $status = $request->get('status'); // 'sale', 'return', or empty for all
         $series = $request->get('series');
+        
+        // Get current organization ID
+        $orgId = auth()->user()->organization_id ?? 1;
 
-        // Fetch sale transactions
-        $salesQuery = SaleTransaction::where('customer_id', $customer->id)
+        // Fetch sale transactions - use withoutGlobalScopes to avoid binding issues in union
+        $salesQuery = SaleTransaction::withoutGlobalScopes()
+            ->where('customer_id', $customer->id)
+            ->where('sale_transactions.organization_id', $orgId)
             ->whereBetween('sale_date', [$fromDate, $toDate])
             ->when($search, function($query) use ($search) {
                 $query->where(function($q) use ($search) {
@@ -478,8 +483,10 @@ class CustomerLedgerController extends Controller
                 DB::raw("'sale' as type")
             ]);
 
-        // Fetch return transactions
-        $returnsQuery = SaleReturnTransaction::where('customer_id', $customer->id)
+        // Fetch return transactions - use withoutGlobalScopes to avoid binding issues in union
+        $returnsQuery = SaleReturnTransaction::withoutGlobalScopes()
+            ->where('customer_id', $customer->id)
+            ->where('sale_return_transactions.organization_id', $orgId)
             ->whereBetween('return_date', [$fromDate, $toDate])
             ->when($search, function($query) use ($search) {
                 $query->where(function($q) use ($search) {

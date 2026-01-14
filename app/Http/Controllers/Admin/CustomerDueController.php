@@ -26,9 +26,14 @@ class CustomerDueController extends Controller
         $type = request('type');
         $fromDate = request('from_date');
         $toDate = request('to_date');
+        
+        // Get current organization ID
+        $orgId = auth()->user()->organization_id ?? 1;
 
-        // Build queries for each transaction type
-        $saleQuery = SaleTransaction::where('customer_id', $customer->id)
+        // Build queries for each transaction type - use withoutGlobalScopes to avoid binding issues in union
+        $saleQuery = SaleTransaction::withoutGlobalScopes()
+            ->where('customer_id', $customer->id)
+            ->where('sale_transactions.organization_id', $orgId)
             ->select([
                 'id',
                 'series',
@@ -39,7 +44,9 @@ class CustomerDueController extends Controller
                 \DB::raw("'sale' as transaction_type")
             ]);
 
-        $saleReturnQuery = SaleReturnTransaction::where('customer_id', $customer->id)
+        $saleReturnQuery = SaleReturnTransaction::withoutGlobalScopes()
+            ->where('customer_id', $customer->id)
+            ->where('sale_return_transactions.organization_id', $orgId)
             ->select([
                 'id',
                 'series',
@@ -50,7 +57,9 @@ class CustomerDueController extends Controller
                 \DB::raw("'sale_return' as transaction_type")
             ]);
 
-        $breakageExpiryQuery = BreakageExpiryTransaction::where('customer_id', $customer->id)
+        $breakageExpiryQuery = BreakageExpiryTransaction::withoutGlobalScopes()
+            ->where('customer_id', $customer->id)
+            ->where('breakage_expiry_transactions.organization_id', $orgId)
             ->select([
                 'id',
                 'series',
@@ -118,7 +127,9 @@ class CustomerDueController extends Controller
         
         // Re-run the query for pagination with ordering
         if ($type === 'sale') {
-            $paginatedQuery = SaleTransaction::where('customer_id', $customer->id)
+            $paginatedQuery = SaleTransaction::withoutGlobalScopes()
+                ->where('customer_id', $customer->id)
+                ->where('sale_transactions.organization_id', $orgId)
                 ->select([
                     'id',
                     'series',
@@ -138,7 +149,9 @@ class CustomerDueController extends Controller
             if ($toDate) $paginatedQuery->whereDate('sale_date', '<=', $toDate);
             $transactions = $paginatedQuery->orderBy('sale_date', 'desc')->paginate($perPage)->withQueryString();
         } elseif ($type === 'sale_return') {
-            $paginatedQuery = SaleReturnTransaction::where('customer_id', $customer->id)
+            $paginatedQuery = SaleReturnTransaction::withoutGlobalScopes()
+                ->where('customer_id', $customer->id)
+                ->where('sale_return_transactions.organization_id', $orgId)
                 ->select([
                     'id',
                     'series',
@@ -158,7 +171,9 @@ class CustomerDueController extends Controller
             if ($toDate) $paginatedQuery->whereDate('return_date', '<=', $toDate);
             $transactions = $paginatedQuery->orderBy('return_date', 'desc')->paginate($perPage)->withQueryString();
         } elseif ($type === 'breakage_expiry') {
-            $paginatedQuery = BreakageExpiryTransaction::where('customer_id', $customer->id)
+            $paginatedQuery = BreakageExpiryTransaction::withoutGlobalScopes()
+                ->where('customer_id', $customer->id)
+                ->where('breakage_expiry_transactions.organization_id', $orgId)
                 ->select([
                     'id',
                     'series',
