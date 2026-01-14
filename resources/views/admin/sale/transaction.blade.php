@@ -539,6 +539,199 @@
     }
 </style>
 
+<!-- Save Options Modal CSS -->
+<style>
+    /* Save Options Modal */
+    .save-options-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.8);
+        width: 90%;
+        max-width: 500px;
+        z-index: 10000;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .save-options-modal.show {
+        display: block;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    
+    .save-options-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+    
+    .save-options-header {
+        padding: 1rem 1.5rem;
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .save-options-title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+    
+    .save-options-body {
+        padding: 1.5rem;
+    }
+    
+    .save-options-message {
+        text-align: center;
+        font-size: 14px;
+        margin-bottom: 1.5rem;
+        color: #333;
+    }
+    
+    .invoice-no-display {
+        background: #e8f5e9;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .invoice-no-label {
+        font-size: 12px;
+        color: #666;
+    }
+    
+    .invoice-no-value {
+        font-size: 18px;
+        font-weight: bold;
+        color: #28a745;
+    }
+    
+    .print-format-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .print-format-label {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #333;
+    }
+    
+    .print-format-options {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .print-format-option {
+        flex: 1;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    
+    .print-format-option:hover {
+        border-color: #007bff;
+        background: #f0f7ff;
+    }
+    
+    .print-format-option.selected {
+        border-color: #28a745;
+        background: #e8f5e9;
+    }
+    
+    .print-format-option input {
+        display: none;
+    }
+    
+    .print-format-icon {
+        font-size: 24px;
+        margin-bottom: 8px;
+    }
+    
+    .print-format-name {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    .print-format-desc {
+        font-size: 11px;
+        color: #666;
+    }
+    
+    .save-options-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+    
+    .save-options-btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .save-options-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .btn-save-only {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .btn-save-only:hover:not(:disabled) {
+        background: #5a6268;
+    }
+    
+    .btn-save-print {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+    }
+    
+    .btn-save-print:hover:not(:disabled) {
+        background: linear-gradient(135deg, #218838, #1db88e);
+    }
+    
+    .save-options-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .save-options-backdrop.show {
+        display: block;
+        opacity: 1;
+    }
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-receipt me-2"></i> Sale Transaction</h4>
@@ -3502,7 +3695,8 @@ function saveSale() {
     })
     .then(data => {
         if (data.success) {
-            showSuccessModalWithReload('Sale Transaction saved successfully!\n\nInvoice No: ' + data.invoice_no, 'Success');
+            // Show the save options modal with print format selection
+            showSaveOptionsModal(data.id, data.invoice_no);
         } else {
             showAlert('Error: ' + (data.message || 'Unknown error'), 'error', 'Save Failed');
         }
@@ -3863,5 +4057,147 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<!-- Save Options Modal Backdrop -->
+<div id="saveOptionsBackdrop" class="save-options-backdrop"></div>
+
+<!-- Save Options Modal -->
+<div id="saveOptionsModal" class="save-options-modal">
+    <div class="save-options-content">
+        <div class="save-options-header">
+            <h5 class="save-options-title">✅ Transaction Saved Successfully!</h5>
+            <button type="button" class="btn-close-modal" onclick="closeSaveOptionsModal()" style="background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+        <div class="save-options-body">
+            <div class="invoice-no-display">
+                <div class="invoice-no-label">Invoice Number</div>
+                <div class="invoice-no-value" id="savedInvoiceNo">INV-000001</div>
+            </div>
+            
+            <div class="save-options-message">
+                Would you like to print the invoice?
+            </div>
+            
+            <div class="print-format-section">
+                <div class="print-format-label">Select Print Format:</div>
+                <div class="print-format-options">
+                    <label class="print-format-option selected" id="formatOption1">
+                        <input type="radio" name="printFormat" value="1" checked>
+                        <div class="print-format-icon">📋</div>
+                        <div class="print-format-name">Full Page (A4)</div>
+                        <div class="print-format-desc">Full A4 format with detailed GST breakdown</div>
+                    </label>
+                    <label class="print-format-option" id="formatOption2">
+                        <input type="radio" name="printFormat" value="2">
+                        <div class="print-format-icon">📄</div>
+                        <div class="print-format-name">Half Page (A5)</div>
+                        <div class="print-format-desc">Compact A5 landscape format</div>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="save-options-footer">
+            <button type="button" class="save-options-btn btn-save-only" onclick="handleSaveOnly()">
+                <i class="bi bi-check-lg"></i> Done
+            </button>
+            <button type="button" class="save-options-btn btn-save-print" onclick="handleSaveAndPrint()">
+                <i class="bi bi-printer"></i> Print Invoice
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Save Options Modal Variables
+let savedTransactionId = null;
+let savedInvoiceNumber = null;
+
+// Show save options modal
+function showSaveOptionsModal(transactionId, invoiceNo) {
+    savedTransactionId = transactionId;
+    savedInvoiceNumber = invoiceNo;
+    
+    document.getElementById('savedInvoiceNo').textContent = invoiceNo;
+    
+    const modal = document.getElementById('saveOptionsModal');
+    const backdrop = document.getElementById('saveOptionsBackdrop');
+    
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+    
+    setTimeout(() => {
+        backdrop.classList.add('show');
+        modal.classList.add('show');
+    }, 10);
+}
+
+// Close save options modal
+function closeSaveOptionsModal() {
+    const modal = document.getElementById('saveOptionsModal');
+    const backdrop = document.getElementById('saveOptionsBackdrop');
+    
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+        backdrop.style.display = 'none';
+    }, 300);
+}
+
+// Handle format selection
+document.querySelectorAll('.print-format-option').forEach(option => {
+    option.addEventListener('click', function() {
+        document.querySelectorAll('.print-format-option').forEach(opt => opt.classList.remove('selected'));
+        this.classList.add('selected');
+        this.querySelector('input[type="radio"]').checked = true;
+    });
+});
+
+// Handle Save Only (Done button)
+function handleSaveOnly() {
+    closeSaveOptionsModal();
+    // Small delay to allow modal close animation
+    setTimeout(() => {
+        window.location.reload();
+    }, 300);
+}
+
+// Handle Save and Print
+function handleSaveAndPrint() {
+    if (!savedTransactionId) {
+        showToast('Transaction ID not found', 'error');
+        return;
+    }
+    
+    const selectedFormat = document.querySelector('input[name="printFormat"]:checked').value;
+    // Use Laravel's route helper with placeholder, then replace with actual ID
+    let printUrl = "{{ route('admin.sale.print', ['id' => '__ID__']) }}";
+    printUrl = printUrl.replace('__ID__', savedTransactionId);
+    printUrl = printUrl + '?format=' + selectedFormat + '&auto_print=true';
+    
+    // Open print page in new tab
+    window.open(printUrl, '_blank');
+    
+    // Close modal and reload after a short delay
+    closeSaveOptionsModal();
+    setTimeout(() => {
+        window.location.reload();
+    }, 500);
+}
+
+// Close modal on backdrop click
+document.getElementById('saveOptionsBackdrop')?.addEventListener('click', closeSaveOptionsModal);
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('saveOptionsModal');
+        if (modal && modal.classList.contains('show')) {
+            closeSaveOptionsModal();
+        }
+    }
+});
+</script>
 
 @endsection

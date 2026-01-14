@@ -1318,4 +1318,38 @@ class SaleTransactionController extends Controller
         }
     }
 
+    /**
+     * Print invoice in specified format
+     * Format 1: Full A4 Tax Invoice
+     * Format 2: Half Page (A5)
+     */
+    public function printInvoice($id, Request $request)
+    {
+        try {
+            $format = $request->get('format', 1);
+            $autoPrint = $request->get('auto_print', false);
+            
+            $transaction = SaleTransaction::with(['items', 'customer', 'salesman'])
+                ->findOrFail($id);
+            
+            $customer = $transaction->customer;
+            $organization = \App\Models\Organization::find(auth()->user()->organization_id);
+            
+            $viewName = $format == 2 
+                ? 'admin.sale.invoice-print-format2' 
+                : 'admin.sale.invoice-print-format1';
+            
+            return view($viewName, [
+                'transaction' => $transaction,
+                'customer' => $customer,
+                'organization' => $organization,
+                'autoPrint' => $autoPrint
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error printing invoice: ' . $e->getMessage());
+            return back()->with('error', 'Error printing invoice: ' . $e->getMessage());
+        }
+    }
+
 }

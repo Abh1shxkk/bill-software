@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Supplier;
 use App\Models\Item;
+use App\Models\Batch;
 use App\Models\SaleTransaction;
 use App\Models\PurchaseTransaction;
 use App\Models\SaleReturnTransaction;
@@ -17,6 +18,14 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    /**
+     * Get the current user's organization ID for filtering
+     */
+    private function getOrganizationId()
+    {
+        return auth()->user()->organization_id ?? null;
+    }
+
     public function index()
     {
         // Get current month and year
@@ -24,8 +33,11 @@ class DashboardController extends Controller
         $currentYear = Carbon::now()->year;
         $lastMonth = Carbon::now()->subMonth()->month;
         $lastMonthYear = Carbon::now()->subMonth()->year;
+        
+        // Get organization ID for filtering raw queries
+        $organizationId = $this->getOrganizationId();
 
-        // Total counts
+        // Total counts (Eloquent models with BelongsToOrganization trait auto-filter)
         $totalCustomers = Customer::count();
         $totalSuppliers = Supplier::count();
         $totalItems = Item::count();
@@ -62,22 +74,30 @@ class DashboardController extends Controller
             ->get();
 
         // Top customers by sales value
-        $topCustomers = DB::table('sale_transactions')
+        $topCustomersQuery = DB::table('sale_transactions')
             ->join('customers', 'sale_transactions.customer_id', '=', 'customers.id')
             ->select('customers.name', DB::raw('COUNT(*) as total_sales'), DB::raw('SUM(sale_transactions.net_amount) as total_amount'))
             ->groupBy('customers.id', 'customers.name')
             ->orderBy('total_amount', 'desc')
-            ->limit(5)
-            ->get();
+            ->limit(5);
+        
+        if ($organizationId) {
+            $topCustomersQuery->where('sale_transactions.organization_id', $organizationId);
+        }
+        $topCustomers = $topCustomersQuery->get();
 
         // Top selling items
-        $topItems = DB::table('sale_transaction_items')
+        $topItemsQuery = DB::table('sale_transaction_items')
             ->join('items', 'sale_transaction_items.item_id', '=', 'items.id')
             ->select('items.name', DB::raw('SUM(sale_transaction_items.qty) as total_quantity'))
             ->groupBy('items.id', 'items.name')
             ->orderBy('total_quantity', 'desc')
-            ->limit(5)
-            ->get();
+            ->limit(5);
+        
+        if ($organizationId) {
+            $topItemsQuery->where('sale_transaction_items.organization_id', $organizationId);
+        }
+        $topItems = $topItemsQuery->get();
 
         // Recent activities
         $recentActivities = $this->getRecentActivities();
@@ -88,13 +108,18 @@ class DashboardController extends Controller
         // Payment status distribution
         $paymentStatus = $this->getPaymentStatusDistribution();
 
-        // Low stock items (using batch-based inventory)
-        $lowStockItems = DB::table('batches')
+        // Low stock items (using batch-based inventory with organization filtering)
+        $lowStockItems = Batch::select(
+                'items.name',
+                DB::raw('SUM(batches.total_qty) as current_stock'),
+                'items.min_level as minimum_stock'
+            )
             ->join('items', 'batches.item_id', '=', 'items.id')
-            ->select('items.name', 
-                     DB::raw('SUM(batches.total_qty) as current_stock'),
-                     'items.min_level as minimum_stock')
             ->where('batches.is_deleted', 0)
+            ->when($organizationId, function ($query) use ($organizationId) {
+                $query->where('batches.organization_id', $organizationId)
+                      ->where('items.organization_id', $organizationId);
+            })
             ->groupBy('items.id', 'items.name', 'items.min_level')
             ->havingRaw('SUM(batches.total_qty) <= items.min_level')
             ->orderBy('current_stock', 'asc')
@@ -103,7 +128,7 @@ class DashboardController extends Controller
 
         // Category-wise sales distribution (for pie chart)
         // Note: items table has 'category' column (string), not category_id
-        $categorySales = DB::table('sale_transaction_items')
+        $categorySalesQuery = DB::table('sale_transaction_items')
             ->join('items', 'sale_transaction_items.item_id', '=', 'items.id')
             ->select(
                 DB::raw('COALESCE(NULLIF(items.category, ""), "Uncategorized") as category'),
@@ -111,11 +136,15 @@ class DashboardController extends Controller
             )
             ->groupBy('items.category')
             ->orderBy('total_amount', 'desc')
-            ->limit(5)
-            ->get();
+            ->limit(5);
+        
+        if ($organizationId) {
+            $categorySalesQuery->where('sale_transaction_items.organization_id', $organizationId);
+        }
+        $categorySales = $categorySalesQuery->get();
 
         // Salesman performance (for bar chart)
-        $salesmanPerformance = DB::table('sale_transactions')
+        $salesmanPerformanceQuery = DB::table('sale_transactions')
             ->join('sales_men', 'sale_transactions.salesman_id', '=', 'sales_men.id')
             ->select(
                 'sales_men.name',
@@ -126,8 +155,12 @@ class DashboardController extends Controller
             ->whereYear('sale_transactions.sale_date', Carbon::now()->year)
             ->groupBy('sales_men.id', 'sales_men.name')
             ->orderBy('total_amount', 'desc')
-            ->limit(5)
-            ->get();
+            ->limit(5);
+        
+        if ($organizationId) {
+            $salesmanPerformanceQuery->where('sale_transactions.organization_id', $organizationId);
+        }
+        $salesmanPerformance = $salesmanPerformanceQuery->get();
 
         // Today's quick stats
         $todayStats = [
@@ -198,6 +231,7 @@ class DashboardController extends Controller
     private function getRecentActivities()
     {
         $activities = [];
+        $organizationId = $this->getOrganizationId();
 
         // Recent sales
         $recentSale = SaleTransaction::with('customer')
@@ -242,14 +276,20 @@ class DashboardController extends Controller
             ];
         }
 
-        // Low stock alert (using batch-based inventory)
-        $lowStockCount = DB::table('batches')
+        // Low stock alert (using batch-based inventory with organization filtering)
+        $lowStockQuery = DB::table('batches')
             ->join('items', 'batches.item_id', '=', 'items.id')
             ->select('items.id')
             ->where('batches.is_deleted', 0)
             ->groupBy('items.id', 'items.min_level')
-            ->havingRaw('SUM(batches.total_qty) <= items.min_level')
-            ->count();
+            ->havingRaw('SUM(batches.total_qty) <= items.min_level');
+        
+        if ($organizationId) {
+            $lowStockQuery->where('batches.organization_id', $organizationId)
+                          ->where('items.organization_id', $organizationId);
+        }
+        $lowStockCount = $lowStockQuery->count();
+        
         if ($lowStockCount > 0) {
             $activities[] = [
                 'type' => 'alert',
@@ -299,11 +339,18 @@ class DashboardController extends Controller
 
     private function getPaymentStatusDistribution()
     {
+        $organizationId = $this->getOrganizationId();
+        
         // Get unique customers and their latest running balance
-        $customersWithBalance = DB::table('customer_ledgers')
+        $query = DB::table('customer_ledgers')
             ->select('customer_id', DB::raw('MAX(running_balance) as latest_balance'))
-            ->groupBy('customer_id')
-            ->get();
+            ->groupBy('customer_id');
+        
+        if ($organizationId) {
+            $query->where('organization_id', $organizationId);
+        }
+        
+        $customersWithBalance = $query->get();
 
         $totalDue = $customersWithBalance->where('latest_balance', '>', 0)->sum('latest_balance');
         $customersWithDue = $customersWithBalance->where('latest_balance', '>', 0)->count();

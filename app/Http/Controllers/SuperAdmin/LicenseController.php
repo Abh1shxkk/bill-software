@@ -102,7 +102,7 @@ class LicenseController extends Controller
             'max_users' => $validated['max_users'] ?? $plan?->max_users ?? 5,
             'max_items' => $validated['max_items'] ?? $plan?->max_items ?? 1000,
             'starts_at' => now(),
-            'expires_at' => now()->addDays($validated['validity_days']),
+            'expires_at' => now()->addDays((int) $validated['validity_days']),
             'notes' => $validated['notes'],
         ]);
 
@@ -130,9 +130,10 @@ class LicenseController extends Controller
             'days' => 'required|integer|min:1|max:3650',
         ]);
 
-        $this->licenseService->extendLicense($license, $validated['days']);
+        $days = (int) $validated['days'];
+        $this->licenseService->extendLicense($license, $days);
 
-        return back()->with('success', "License extended by {$validated['days']} days.");
+        return back()->with('success', "License extended by {$days} days.");
     }
 
     /**
@@ -172,7 +173,7 @@ class LicenseController extends Controller
 
         $this->licenseService->renewLicense($license, [
             'plan_type' => $validated['plan_type'],
-            'days' => $validated['validity_days'],
+            'days' => (int) $validated['validity_days'],
         ]);
 
         return back()->with('success', 'License has been renewed successfully.');
