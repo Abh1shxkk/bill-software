@@ -1981,17 +1981,17 @@ function saveWithoutCreditNote() {
 function saveWithCreditNote() {
     closeCreditNoteModal();
     
-    // Get customer ID and MRP value (gross amount without tax)
+    // Get customer ID and Payable Amount (net amount after all calculations)
     const customerId = document.querySelector('select[name="customer_id"]')?.value;
-    const mrpValue = parseFloat(document.getElementById('summary_mrp_value').value || 0);
+    const payableAmount = parseFloat(document.getElementById('calc_payable_amount').value || 0);
     
-    if (mrpValue <= 0) {
+    if (payableAmount <= 0) {
         showAlert('error', 'MRP value must be greater than 0 for credit note adjustment');
         return;
     }
     
     // Fetch customer's past sales for adjustment
-    fetchCustomerSales(customerId, mrpValue);
+    fetchCustomerSales(customerId, payableAmount);
 }
 
 // Submit Transaction (actual save)
@@ -2431,28 +2431,34 @@ function showAdjustmentModal(sales, netAmount) {
                             </thead>
                             <tbody>
                                 ${sales.map((sale, index) => {
-                                    const remainingBalance = parseFloat(sale.balance || sale.bill_amount || 0);
-                                    const preFilledAmount = existingAdjustments[sale.id] || '';
+                                    // Use bill_amount which is actually net_amount from backend
+                                    const netAmount = parseFloat(sale.bill_amount || 0);
+                                    const currentBalance = parseFloat(sale.balance || sale.bill_amount || 0);
+                                    const preFilledAmount = parseFloat(existingAdjustments[sale.id] || 0);
+                                    
+                                    // Calculate original bill amount: current balance + previous adjustment
+                                    const originalBillAmount = currentBalance + preFilledAmount;
+
                                     return `
                                     <tr>
                                         <td style="text-align: center;">${index + 1}</td>
                                         <td style="text-align: center;">${sale.trans_no}</td>
                                         <td style="text-align: center;">${sale.date}</td>
-                                        <td style="text-align: right; font-weight: bold; color: #0d6efd;">${remainingBalance.toFixed(2)}</td>
+                                        <td style="text-align: right; font-weight: bold; color: #0d6efd;">${originalBillAmount.toFixed(2)}</td>
                                         <td style="text-align: center;">
                                             <input type="number" class="form-control form-control-sm adjustment-input" 
                                                    id="adj_${sale.id}" 
                                                    data-sale-id="${sale.id}"
-                                                   data-balance="${remainingBalance}"
-                                                   max="${remainingBalance}"
+                                                   data-balance="${originalBillAmount}"
+                                                   data-bill-amount="${originalBillAmount}"
+                                                   max="${originalBillAmount}"
                                                    step="0.01" 
                                                    style="width: 90px; font-size: 10px;"
-                                                   value="${preFilledAmount}"
-                                                   oninput="updateRemainingBalance(${sale.id})"
+                                                   value="${preFilledAmount > 0 ? preFilledAmount.toFixed(2) : ''}"
                                                    placeholder="0.00">
                                         </td>
                                         <td style="text-align: right; font-weight: bold;" id="remaining_${sale.id}">
-                                            <span style="color: #28a745;">${remainingBalance.toFixed(2)}</span>
+                                            <span style="color: #28a745;">${currentBalance.toFixed(2)}</span>
                                         </td>
                                     </tr>
                                 `;
@@ -2498,6 +2504,27 @@ function showAdjustmentModal(sales, netAmount) {
     
     // Add modal to body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add event listeners using event delegation for adjustment inputs
+    const adjustmentModal = document.getElementById('adjustmentModal');
+    if (adjustmentModal) {
+        // Event delegation for all adjustment inputs
+        adjustmentModal.addEventListener('input', function(e) {
+            if (e.target.classList.contains('adjustment-input')) {
+                const saleId = e.target.getAttribute('data-sale-id');
+                console.log('Input event triggered for sale ID:', saleId);
+                updateRemainingBalance(saleId);
+            }
+        });
+        
+        adjustmentModal.addEventListener('change', function(e) {
+            if (e.target.classList.contains('adjustment-input')) {
+                const saleId = e.target.getAttribute('data-sale-id');
+                console.log('Change event triggered for sale ID:', saleId);
+                updateRemainingBalance(saleId);
+            }
+        });
+    }
     
     // Show modal with animation
     setTimeout(() => {
@@ -2681,13 +2708,28 @@ function autoDistributeAmount() {
 
 // Update Remaining Balance for Individual Row
 function updateRemainingBalance(saleId) {
-    const input = document.getElementById(`adj_${saleId}`);
-    const remainingCell = document.getElementById(`remaining_${saleId}`);
+    // Convert to string for consistent ID matching
+    const id = String(saleId);
+    const input = document.getElementById(`adj_${id}`);
+    const remainingCell = document.getElementById(`remaining_${id}`);
     
-    if (!input || !remainingCell) return;
+    console.log('updateRemainingBalance called for ID:', id);
+    console.log('Input element:', input);
+    console.log('Remaining cell:', remainingCell);
+    
+    if (!input) {
+        console.error('Input not found for ID:', id);
+        return;
+    }
+    if (!remainingCell) {
+        console.error('Remaining cell not found for ID:', id);
+        return;
+    }
     
     const currentBalance = parseFloat(input.getAttribute('data-balance') || 0);
     const adjustedAmount = parseFloat(input.value || 0);
+    
+    console.log('Current balance:', currentBalance, 'Adjusted amount:', adjustedAmount);
     
     // Validate adjustment amount
     if (adjustedAmount > currentBalance) {
@@ -2697,6 +2739,7 @@ function updateRemainingBalance(saleId) {
     }
     
     const remainingBalance = currentBalance - adjustedAmount;
+    console.log('New remaining balance:', remainingBalance);
     
     // Update remaining balance with color coding
     let color = '#28a745'; // Green for positive
@@ -2706,7 +2749,7 @@ function updateRemainingBalance(saleId) {
         color = '#ffc107'; // Yellow for low balance
     }
     
-    remainingCell.innerHTML = `\u003cspan style="color: ${color};"\u003e${remainingBalance.toFixed(2)}\u003c/span\u003e`;
+    remainingCell.innerHTML = `<span style="color: ${color};">${remainingBalance.toFixed(2)}</span>`;
     
     // Also update total adjustment balance
     updateAdjustmentBalance();
@@ -2718,53 +2761,48 @@ function updateAdjustmentBalance() {
     let totalAdjusted = 0;
     
     inputs.forEach(input => {
-        const adjusted = parseFloat(input.value || 0);
+        const adjustedAmount = parseFloat(input.value || 0);
         const saleId = input.getAttribute('data-sale-id');
-        const originalBalance = parseFloat(input.getAttribute('data-balance'));
-        const maxBalance = originalBalance;
+        const originalBalance = parseFloat(input.getAttribute('data-balance') || 0);
         
-        // Allow any adjustment amount (positive or negative for increase/decrease)
+        totalAdjusted += adjustedAmount;
         
-        totalAdjusted += parseFloat(input.value || 0);
+        // Update remaining balance cell (use 'remaining_' not 'balance_')
+        const newBalance = originalBalance - adjustedAmount;
+        const remainingCell = document.getElementById(`remaining_${saleId}`);
         
-        // Update balance column and hide row if balance becomes 0
-        const newBalance = originalBalance - parseFloat(input.value || 0);
-        const balanceCell = document.getElementById(`balance_${saleId}`);
-        const row = input.closest('tr');
-        
-        if (balanceCell) {
-            balanceCell.textContent = newBalance.toFixed(2);
-        }
-        
-        // Show all rows (don't hide any transactions)
-        row.style.display = '';
-        
-        // Color code the balance based on value
-        if (newBalance < 0) {
-            balanceCell.style.color = '#dc3545'; // Red for negative (increase)
-            balanceCell.style.fontWeight = 'bold';
-        } else if (newBalance === 0) {
-            balanceCell.style.color = '#28a745'; // Green for zero
-            balanceCell.style.fontWeight = 'bold';
-        } else {
-            balanceCell.style.color = '#0d6efd'; // Blue for positive
-            balanceCell.style.fontWeight = 'normal';
+        if (remainingCell) {
+            // Color code the balance based on value
+            let color = '#28a745'; // Green for positive
+            if (newBalance <= 0) {
+                color = '#6c757d'; // Gray for zero
+            } else if (newBalance < originalBalance * 0.3) {
+                color = '#ffc107'; // Yellow for low balance
+            }
+            remainingCell.innerHTML = `<span style="color: ${color}; font-weight: bold;">${newBalance.toFixed(2)}</span>`;
         }
     });
     
-    // Update remaining balance
-    const remainingBalance = window.netAmount - totalAdjusted;
-    document.getElementById('adjustmentBalance').textContent = remainingBalance.toFixed(2);
-    
-    // Change color if over-adjusted
-    const balanceSpan = document.getElementById('adjustmentBalance').parentElement;
-    if (remainingBalance < 0) {
-        balanceSpan.style.color = '#dc3545';
-    } else if (remainingBalance === 0) {
-        balanceSpan.style.color = '#28a745';
-    } else {
-        balanceSpan.style.color = '#0d6efd';
+    // Update remaining adjustment balance at the bottom
+    const adjustmentBalanceEl = document.getElementById('adjustmentBalance');
+    if (adjustmentBalanceEl && typeof window.netAmount !== 'undefined') {
+        const remainingBalance = window.netAmount - totalAdjusted;
+        adjustmentBalanceEl.textContent = remainingBalance.toFixed(2);
+        
+        // Change color based on remaining balance
+        const balanceSpan = adjustmentBalanceEl.parentElement;
+        if (balanceSpan) {
+            if (remainingBalance < 0) {
+                balanceSpan.style.color = '#dc3545'; // Red for over-adjusted
+            } else if (remainingBalance === 0) {
+                balanceSpan.style.color = '#28a745'; // Green for fully adjusted
+            } else {
+                balanceSpan.style.color = '#0d6efd'; // Blue for partial
+            }
+        }
     }
+    
+    console.log('Total adjusted:', totalAdjusted, 'Net amount:', window.netAmount);
 }
 
 // Close Adjustment Modal
@@ -2788,22 +2826,33 @@ function closeAdjustmentModal() {
 
 // Save Adjustment and Submit Form
 function saveAdjustment() {
+    console.log('=== saveAdjustment called ===');
+    
     // Collect adjustment data
     const inputs = document.querySelectorAll('.adjustment-input');
     const adjustments = [];
     
+    console.log('Found adjustment inputs:', inputs.length);
+    
     inputs.forEach(input => {
         const adjusted = parseFloat(input.value || 0);
+        const saleId = input.getAttribute('data-sale-id');
+        console.log(`Input for sale ${saleId}: value = ${adjusted}`);
+        
         if (adjusted > 0) {
             adjustments.push({
-                sale_id: input.getAttribute('data-sale-id'),
+                sale_id: saleId,
                 adjusted_amount: adjusted
             });
         }
     });
     
+    console.log('Collected adjustments:', JSON.stringify(adjustments));
+    
     // Check if fully adjusted
     const remainingBalance = parseFloat(document.getElementById('adjustmentBalance').textContent);
+    console.log('Remaining balance:', remainingBalance);
+    
     if (remainingBalance != 0) {
         if (!confirm(`Balance remaining is Rs ${remainingBalance.toFixed(2)}. Do you want to continue?`)) {
             return;
@@ -2812,6 +2861,8 @@ function saveAdjustment() {
     
     // Close modal and submit
     closeAdjustmentModal();
+    
+    console.log('Calling submitTransaction with withCreditNote=true, adjustments:', adjustments);
     submitTransaction(true, adjustments);
 }
 </script>

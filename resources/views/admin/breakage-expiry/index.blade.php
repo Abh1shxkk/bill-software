@@ -60,9 +60,9 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($transactions ?? [] as $transaction)
+            @forelse($transactions ?? [] as $transaction)
                 <tr>
-                    <td>{{ $loop->iteration }}</td>
+                    <td>{{ ($transactions->currentPage() - 1) * $transactions->perPage() + $loop->iteration }}</td>
                     <td>{{ $transaction->transaction_date->format('d/m/Y') }}</td>
                     <td><strong>{{ $transaction->sr_no }}</strong></td>
                     <td>{{ $transaction->customer_name ?? '-' }}</td>
@@ -99,8 +99,13 @@
 
     <!-- Pagination -->
     @if(isset($transactions) && $transactions->hasPages())
-    <div class="card-footer">
-        {{ $transactions->links() }}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="text-muted small">
+            Showing {{ $transactions->firstItem() }} to {{ $transactions->lastItem() }} of {{ $transactions->total() }} results
+        </div>
+        <div>
+            {{ $transactions->appends(request()->query())->links() }}
+        </div>
     </div>
     @endif
 </div>

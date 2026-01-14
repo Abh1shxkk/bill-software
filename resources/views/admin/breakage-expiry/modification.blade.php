@@ -2354,8 +2354,8 @@ function saveTransaction() {
         return;
     }
     
-    // Store MRP value (gross amount without tax) globally for adjustment modal
-    window.netAmount = parseFloat(document.getElementById('summary_mrp_value').value || 0);
+    // Store Payable Amount globally for adjustment modal
+    window.netAmount = parseFloat(document.getElementById('calc_payable_amount').value || 0);
     
     // Show credit note modal
     showCreditNoteModal();
@@ -2586,6 +2586,7 @@ function fetchCustomerSales(customerId) {
 }
 
 // Show Adjustment Modal
+// Show Adjustment Modal
 function showAdjustmentModal(sales, customer) {
     if (!sales || sales.length === 0) {
         showAlert('warning', 'No outstanding sales found for this customer');
@@ -2608,7 +2609,7 @@ function showAdjustmentModal(sales, customer) {
                         <small style="color: #6c757d;">Outstanding Sales: ${sales.length} invoice(s)</small>
                     </div>
                     <div style="text-align: right;">
-                        <div style="font-size: 14px; color: #495057;">MRP Value (Without Tax)</div>
+                        <div style="font-size: 14px; color: #495057;">Payable Amount</div>
                         <div style="font-size: 18px; font-weight: bold; color: #28a745;">₹ ${netAmount.toFixed(2)}</div>
                     </div>
                 </div>
@@ -2619,37 +2620,44 @@ function showAdjustmentModal(sales, customer) {
                     <table class="table table-sm table-bordered mb-0" style="font-size: 11px;">
                         <thead style="background: #e9ecef; position: sticky; top: 0;">
                             <tr>
-                                <th style="width: 120px;">Invoice No</th>
-                                <th style="width: 80px;">Date</th>
-                                <th style="width: 90px; text-align: right;">Bill Amount</th>
-                                <th style="width: 90px; text-align: center;">Adjust Amount</th>
-                                <th style="width: 90px; text-align: right;">Balance</th>
+                                <th style="width: 50px; text-align: center;">SR.NO.</th>
+                                <th style="width: 120px; text-align: center;">Invoice No</th>
+                                <th style="width: 80px; text-align: center;">Date</th>
+                                <th style="width: 90px; text-align: right;">BILL AMT.</th>
+                                <th style="width: 90px; text-align: center;">ADJUST AMT.</th>
+                                <th style="width: 90px; text-align: right;">REMAINING BAL.</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${sales.map(sale => {
+                            ${sales.map((sale, index) => {
                                 const billAmount = parseFloat(sale.bill_amount || 0);
                                 const currentBalance = parseFloat(sale.balance || sale.bill_amount || 0);
-                                const preFilledAmount = existingAdjustments[sale.id] || '';
+                                const preFilledAmount = parseFloat(existingAdjustments[sale.id] || 0);
+                                
+                                // Calculate original bill amount: current balance + previous adjustment
+                                const originalBillAmount = currentBalance + preFilledAmount;
+                                
                                 return `
                                 <tr>
-                                    <td>${sale.trans_no}</td>
-                                    <td>${sale.date}</td>
-                                    <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${billAmount.toFixed(2)}</td>
+                                    <td style="text-align: center;">${index + 1}</td>
+                                    <td style="text-align: center;">${sale.trans_no}</td>
+                                    <td style="text-align: center;">${sale.date}</td>
+                                    <td style="text-align: right; font-weight: bold; color: #0d6efd;">${originalBillAmount.toFixed(2)}</td>
                                     <td style="text-align: center;">
                                         <input type="number" class="form-control form-control-sm adjustment-input" 
                                                id="adj_${sale.id}" 
                                                data-sale-id="${sale.id}"
-                                               data-bill-amount="${billAmount}"
-                                               data-balance="${currentBalance}"
-                                               max="${billAmount}"
+                                               data-balance="${originalBillAmount}"
+                                               data-bill-amount="${originalBillAmount}"
+                                               max="${originalBillAmount}"
                                                step="0.01" 
-                                               style="width: 80px; font-size: 10px;"
-                                               value="${preFilledAmount}"
-                                               onchange="updateAdjustmentBalance()"
+                                               style="width: 90px; font-size: 10px;"
+                                               value="${preFilledAmount > 0 ? preFilledAmount.toFixed(2) : ''}"
                                                placeholder="0.00">
                                     </td>
-                                    <td style="text-align: right; font-weight: bold;" id="balance_${sale.id}"><span style="color: #28a745;">₹ ${currentBalance.toFixed(2)}</span></td>
+                                    <td style="text-align: right; font-weight: bold;" id="remaining_${sale.id}">
+                                        <span style="color: #28a745;">${currentBalance.toFixed(2)}</span>
+                                    </td>
                                 </tr>
                             `}).join('')}
                         </tbody>
@@ -2659,13 +2667,13 @@ function showAdjustmentModal(sales, customer) {
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                         <span style="font-weight: bold; color: #dc3545;">EXIT : &lt;ESC &gt;</span>
                         <span style="font-weight: bold; font-size: 16px; color: #0d6efd;">
-                            MRP VALUE TO ADJUST (Rs) : <span id="adjustmentBalance">₹ ${netAmount.toFixed(2)}</span>
+                            ADJUST AMOUNT (Rs) : <span id="adjustmentBalance">${netAmount.toFixed(2)}</span>
                         </span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <label style="font-weight: bold; color: #495057;">Auto Adjust MRP Value:</label>
+                        <label style="font-weight: bold; color: #495057;">Auto Adjust Amount:</label>
                         <input type="number" id="autoAdjustAmount" class="form-control form-control-sm" 
-                               style="width: 120px;" step="0.01" placeholder="Enter MRP value"
+                               style="width: 120px;" step="0.01" placeholder="Enter amount"
                                onchange="autoDistributeAmount()">
                         <button type="button" class="btn btn-info btn-sm" onclick="autoDistributeAmount()">
                             <i class="bi bi-magic me-1"></i>Auto Distribute
@@ -2688,9 +2696,29 @@ function showAdjustmentModal(sales, customer) {
         const modal = document.getElementById('adjustmentModal');
         modal.classList.add('show');
         
+        // Add event listeners using event delegation
+        const adjustmentContent = document.getElementById('adjustmentContent');
+        if (adjustmentContent) {
+            adjustmentContent.addEventListener('input', function(e) {
+                if (e.target.classList.contains('adjustment-input')) {
+                    const saleId = e.target.getAttribute('data-sale-id');
+                    updateRemainingBalance(saleId);
+                }
+            });
+            
+            adjustmentContent.addEventListener('change', function(e) {
+                if (e.target.classList.contains('adjustment-input')) {
+                    const saleId = e.target.getAttribute('data-sale-id');
+                    updateRemainingBalance(saleId);
+                }
+            });
+        }
+        
         // Update balance display after pre-filling
         if (Object.keys(existingAdjustments).length > 0) {
-            updateAdjustmentBalance();
+            Object.keys(existingAdjustments).forEach(saleId => {
+                updateRemainingBalance(saleId);
+            });
         }
         
         // Remove any existing ESC listeners first
@@ -2739,6 +2767,40 @@ function showAdjustmentModal(sales, customer) {
     }
 }
 
+// Update Remaining Balance for Individual Row
+function updateRemainingBalance(saleId) {
+    const id = String(saleId);
+    const input = document.getElementById(`adj_${id}`);
+    const remainingCell = document.getElementById(`remaining_${id}`);
+    
+    if (!input || !remainingCell) return;
+    
+    const currentBalance = parseFloat(input.getAttribute('data-balance') || 0);
+    const adjustedAmount = parseFloat(input.value || 0);
+    
+    // Validate adjustment amount
+    if (adjustedAmount > currentBalance) {
+        input.value = currentBalance.toFixed(2);
+        showAlert('warning', 'Adjustment amount cannot exceed current balance');
+        return;
+    }
+    
+    const remainingBalance = currentBalance - adjustedAmount;
+    
+    // Update remaining balance with color coding
+    let color = '#28a745'; // Green for positive
+    if (remainingBalance === 0) {
+        color = '#6c757d'; // Gray for zero
+    } else if (remainingBalance < currentBalance * 0.3) {
+        color = '#ffc107'; // Yellow for low balance
+    }
+    
+    remainingCell.innerHTML = `<span style="color: ${color};">${remainingBalance.toFixed(2)}</span>`;
+    
+    // Also update total adjustment balance
+    updateAdjustmentBalance();
+}
+
 // Auto Distribute Amount Across Transactions
 function autoDistributeAmount() {
     const totalAmount = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
@@ -2751,9 +2813,11 @@ function autoDistributeAmount() {
     // Clear all existing adjustments first
     document.querySelectorAll('.adjustment-input').forEach(input => {
         input.value = '';
+        const saleId = input.getAttribute('data-sale-id');
+        updateRemainingBalance(saleId);
     });
     
-    // Get all transactions sorted by balance (highest first for better distribution)
+    // Get all transactions sorted by balance
     const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
     const transactions = inputs.map(input => ({
         input: input,
@@ -2770,6 +2834,8 @@ function autoDistributeAmount() {
         const adjustAmount = Math.min(remainingAmount, transaction.balance);
         transaction.input.value = adjustAmount.toFixed(2);
         remainingAmount -= adjustAmount;
+        
+        updateRemainingBalance(transaction.saleId);
     });
     
     // If still amount remaining, show warning
@@ -2778,9 +2844,6 @@ function autoDistributeAmount() {
     } else {
         showAlert('success', `₹${totalAmount.toFixed(2)} distributed successfully across ${transactions.length} transaction(s)`);
     }
-    
-    // Update the balance display
-    updateAdjustmentBalance();
 }
 
 // Update Adjustment Balance
@@ -2789,52 +2852,27 @@ function updateAdjustmentBalance() {
     let totalAdjusted = 0;
     
     inputs.forEach(input => {
-        const adjusted = parseFloat(input.value || 0);
-        const saleId = input.getAttribute('data-sale-id');
-        const billAmount = parseFloat(input.getAttribute('data-bill-amount'));
-        const maxBalance = billAmount;
-        
-        // Allow any adjustment amount (positive or negative for increase/decrease)
-        
         totalAdjusted += parseFloat(input.value || 0);
-        
-        // Update balance column: Balance = Bill Amount - Adjusted Amount
-        const newBalance = billAmount - parseFloat(input.value || 0);
-        const balanceCell = document.getElementById(`balance_${saleId}`);
-        const row = input.closest('tr');
-        
-        if (balanceCell) {
-            balanceCell.innerHTML = `<span style="color: #28a745;">₹ ${newBalance.toFixed(2)}</span>`;
-        }
-        
-        // Show all rows (don't hide any transactions)
-        row.style.display = '';
-        
-        // Color code the balance based on value
-        if (newBalance < 0) {
-            balanceCell.style.color = '#dc3545'; // Red for negative (increase)
-            balanceCell.style.fontWeight = 'bold';
-        } else if (newBalance === 0) {
-            balanceCell.style.color = '#28a745'; // Green for zero
-            balanceCell.style.fontWeight = 'bold';
-        } else {
-            balanceCell.style.color = '#0d6efd'; // Blue for positive
-            balanceCell.style.fontWeight = 'normal';
-        }
     });
     
-    // Update remaining balance
-    const remainingBalance = window.netAmount - totalAdjusted;
-    document.getElementById('adjustmentBalance').textContent = `₹ ${remainingBalance.toFixed(2)}`;
+    // Update remaining adjustment balance at the bottom
+    const remainingBalance = (window.netAmount || 0) - totalAdjusted;
+    const adjustmentBalanceEl = document.getElementById('adjustmentBalance');
     
-    // Change color if over-adjusted
-    const balanceSpan = document.getElementById('adjustmentBalance').parentElement;
-    if (remainingBalance < 0) {
-        balanceSpan.style.color = '#dc3545';
-    } else if (remainingBalance === 0) {
-        balanceSpan.style.color = '#28a745';
-    } else {
-        balanceSpan.style.color = '#0d6efd';
+    if (adjustmentBalanceEl) {
+        adjustmentBalanceEl.textContent = `${remainingBalance.toFixed(2)}`;
+        
+        // Change color based on remaining balance
+        const balanceSpan = adjustmentBalanceEl.parentElement;
+        if (balanceSpan) {
+            if (remainingBalance < 0) {
+                balanceSpan.style.color = '#dc3545'; // Red for over-adjusted
+            } else if (remainingBalance === 0) {
+                balanceSpan.style.color = '#28a745'; // Green for fully adjusted
+            } else {
+                balanceSpan.style.color = '#0d6efd'; // Blue for partial
+            }
+        }
     }
 }
 

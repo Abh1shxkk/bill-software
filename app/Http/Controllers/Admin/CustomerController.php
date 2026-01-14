@@ -391,12 +391,16 @@ class CustomerController extends Controller
                 ->limit(50) // Limit to recent 50 transactions
                 ->get()
                 ->map(function($sale) {
+                    // If balance is NULL/0, use bill_amount as balance (no adjustments made yet)
+                    $billAmount = $sale->bill_amount ?? 0;
+                    $balance = $sale->balance ?? $billAmount; // Fallback to bill_amount, not 0
+                    
                     return [
                         'id' => $sale->id,
                         'trans_no' => ($sale->series ?? 'S') . ' / ' . ($sale->invoice_no ?? '---'),
                         'date' => $sale->transaction_date ? \Carbon\Carbon::parse($sale->transaction_date)->format('d-M-y') : '---',
-                        'bill_amount' => $sale->bill_amount ?? 0,
-                        'balance' => $sale->balance ?? 0,
+                        'bill_amount' => $billAmount,
+                        'balance' => $balance,
                     ];
                 });
 

@@ -60,33 +60,108 @@ if (!function_exists('numberToIndianWords')) {
         }
         body {
             font-family: Arial, sans-serif;
-            font-size: 9px;
+            font-size: 8px;
             line-height: 1.1;
             background: #e0e0e0;
             padding: 20px;
         }
         
-        /* A5 Landscape Paper Container */
         .a5-paper {
             width: 210mm;
             min-height: 148mm;
             margin: 0 auto;
             background: #fff;
             box-shadow: 0 0 15px rgba(0,0,0,0.3);
-            padding: 5mm;
+            padding: 3mm;
         }
         
-        .main-border {
-            border: 2px solid #000;
+        table {
+            border-collapse: collapse;
+            width: 100%;
         }
-        .w-100 { width: 100%; }
+        
+        .main-table {
+            border: 1.5px solid #000;
+        }
+        
+        .main-table td, .main-table th {
+            border: 1px solid #000;
+            padding: 2px 3px;
+            vertical-align: top;
+        }
+        
+        .no-border { border: none !important; }
+        .border-bottom { border-bottom: 1px solid #000 !important; }
+        .border-right { border-right: 1px solid #000 !important; }
+        
         .text-center { text-align: center; }
         .text-right { text-align: right; }
+        .text-left { text-align: left; }
         .text-bold { font-weight: bold; }
-        .border-bottom { border-bottom: 1px solid #000; }
-        .border-right { border-right: 1px solid #000; }
-        .border-left { border-left: 1px solid #000; }
-        .border-top { border-top: 1px solid #000; }
+        
+        .company-name {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .invoice-title {
+            font-weight: bold;
+            font-size: 9px;
+            text-decoration: underline;
+        }
+        
+        .items-table th {
+            background: #fff;
+            font-weight: bold;
+            font-size: 8px;
+            padding: 2px 1px;
+            text-align: center;
+            border: 1px solid #000;
+            border-bottom: 1px solid #000;
+        }
+        
+        .items-table td {
+            font-size: 8px;
+            padding: 1px 2px;
+            border-left: 1px solid #000;
+            border-right: none;
+            border-top: none;
+            border-bottom: none;
+        }
+        
+        .items-table td:last-child {
+            border-right: 1px solid #000;
+        }
+        
+        .totals-row td {
+            font-weight: bold;
+            font-size: 8px;
+            padding: 2px 3px;
+            border: 1px solid #000;
+        }
+        
+        .grand-total {
+            background: #ccc;
+            font-size: 10px !important;
+            font-weight: bold;
+        }
+        
+        .footer-section {
+            font-size: 7px;
+        }
+        
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background: #28a745;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
         
         @media print {
             body {
@@ -104,367 +179,214 @@ if (!function_exists('numberToIndianWords')) {
                 display: none !important;
             }
         }
-        
-        /* Layout Grid */
-        .container {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        /* Top Header Area */
-        .top-header {
-            display: flex;
-            border-bottom: 1px solid #000;
-        }
-        .top-header-left {
-            width: 40%;
-            padding: 2px 5px;
-            font-size: 8px;
-        }
-        .top-header-center {
-            width: 30%;
-            text-align: center;
-            font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .top-header-right {
-            width: 30%;
-            display: flex;
-        }
-        
-        /* Bill Details Table inside header */
-        .bill-details-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9px;
-        }
-        .bill-details-table td {
-            border: 1px solid #000;
-            border-top: none;
-            border-right: none;
-            border-bottom: none;
-            padding: 2px;
-        }
-        
-        /* Info Section (Company | Customer) */
-        .info-section {
-            display: flex;
-            border-bottom: 1px solid #000;
-        }
-        .company-info {
-            width: 50%; /* Adjusted split */
-            padding: 5px;
-            border-right: 1px solid #000;
-        }
-        .customer-info {
-            width: 50%;
-            padding: 5px;
-        }
-        
-        .company-name {
-            font-size: 14px;
-            font-weight: bold;
-            color: #000;
-            margin-bottom: 5px;
-        }
-        
-        /* Items Table */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .items-table th {
-            border: 1px solid #000;
-            border-top: none;
-            border-left: none;
-            padding: 2px;
-            background: #fff;
-            font-weight: bold;
-            font-size: 9px;
-            text-align: center;
-        }
-        .items-table th:last-child {
-            border-right: none;
-        }
-        
-        .items-table td {
-            border-right: 1px solid #000;
-            padding: 2px 4px;
-            font-size: 9px;
-            vertical-align: top;
-        }
-        .items-table td:last-child {
-            border-right: none;
-        }
-        
-        /* Fixed height for items area to push footer down and show vertical lines */
-        .items-container {
-            /* minimal height control via empty rows */
-        }
-        
-        /* GST Summary */
-        .gst-summary {
-            border-top: 1px solid #000;
-            font-size: 8px;
-            padding: 2px 5px;
-        }
-        
-        /* Footer Totals */
-        .totals-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-top: 1px solid #000;
-        }
-        .totals-table td {
-            border: 1px solid #000;
-            padding: 3px 5px;
-            text-align: right;
-            font-weight: bold;
-            font-size: 9px;
-        }
-        /* Remove outer borders of totals table to blend */
-        .totals-table tr td:first-child { border-left: none; }
-        .totals-table tr td:last-child { border-right: none; }
-        
-        .amount-words-row {
-            border-top: 1px solid #000;
-            padding: 3px 5px;
-            font-weight: bold;
-            font-size: 9px;
-            font-style: italic;
-        }
-        
-        .bank-details {
-            border-top: 1px solid #000;
-            padding: 3px 5px;
-            font-size: 9px;
-            font-weight: bold;
-        }
-        
-        .bottom-footer {
-            display: flex;
-            border-top: 1px solid #000;
-        }
-        .terms {
-            width: 60%;
-            padding: 5px;
-            border-right: 1px solid #000;
-            font-size: 8px;
-        }
-        .signature {
-            width: 40%;
-            padding: 5px;
-            text-align: center;
-            font-size: 9px;
-            font-weight: bold;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            min-height: 40px; /* Space for signature */
-        }
-
-        .print-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 5px 10px;
-            background: #28a745;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-        }
-        @media print {
-            .print-btn { display: none; }
-        }
     </style>
 </head>
 <body>
     <button class="print-btn" onclick="window.print()">🖨️ Print</button>
 
     <div class="a5-paper">
-    <div class="main-border">
-        <!-- Header -->
-        <div class="top-header">
-            <div class="top-header-left">
-                Original/Duplicate/Triplicate Copy
-            </div>
-            <div class="top-header-center">
-                <span style="text-decoration: underline;">** TAX INVOICE ({{ $transaction->cash_flag == 'Y' ? 'CASH' : 'CREDIT' }}) **</span>
-            </div>
-            <div class="top-header-right">
-                <table class="bill-details-table">
-                    <tr>
-                        <td style="width: 30%; font-weight: bold;">Bill No.</td>
-                        <td style="width: 70%; font-weight: bold;">{{ $transaction->invoice_no }}</td>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold;">Dated</td>
-                        <td style="font-weight: bold;">{{ $transaction->sale_date ? $transaction->sale_date->format('d/m/Y') : '' }} <span style="float:right">Page: 1 of 1</span></td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <!-- Info Section -->
-        <div class="info-section">
-            <div class="company-info">
-                <div class="company-name">{{ strtoupper($organization->name ?? 'COMPANY NAME') }}</div>
-                <div>{{ $organization->address ?? '' }}</div>
-                <div>{{ $organization->city ?? '' }}</div>
-                <div>Phone : {{ $organization->phone ?? '' }}</div>
-                <div style="font-weight: bold; margin-top: 2px;">D.L.No. : {{ $organization->dl_no ?? '' }} @if($organization->dl_no_1 ?? false), {{ $organization->dl_no_1 }}@endif</div>
-                <div style="font-weight: bold;">GST No. : {{ $organization->gst_no ?? '' }} <span style="float: right;">State Code : {{ $organization->state_code ?? '09' }}</span></div>
-                @if($organization->fssai_no ?? false)<div>FSSAI No. : {{ $organization->fssai_no }}</div>@endif
-                <div style="margin-top: 2px;">
-                    E-mail : {{ $organization->email ?? '' }}
-                    <span style="float: right; font-weight: bold;">PAN : {{ $organization->pan_no ?? '' }}</span>
-                </div>
-            </div>
-            <div class="customer-info">
-                <div style="font-weight: bold; font-size: 11px; margin-bottom: 2px;">To, {{ strtoupper($customer->name ?? 'CUSTOMER') }}</div>
-                <div style="margin-bottom: 5px;">{{ $customer->address ?? '' }}</div>
-                
-                <div style="font-weight: bold;">D.L. No.: {{ $customer->dl_number ?? '' }}</div>
-                <div style="font-weight: bold;">GST : {{ $customer->gst_number ?? '' }} <span style="float: right;">, State Code : {{ $customer->state_code ?? '09' }}</span></div>
-                <div style="font-weight: bold;">Tel : {{ $customer->mobile ?? '' }}</div>
-                <div style="text-align: right; font-weight: bold; margin-top: 5px;">PAN: {{ $customer->pan_no ?? '' }}</div>
-            </div>
-        </div>
-
-        <!-- Items Table -->
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th style="width: 25px;">Sr.</th>
-                    <th style="text-align: left; padding-left: 5px;">PARTICULARS</th>
-                    <th style="width: 35px;">QTY.</th>
-                    <th style="width: 30px;">Free</th>
-                    <th style="width: 35px;">PACK</th>
-                    <th style="width: 50px;">HSN</th>
-                    <th style="width: 55px;">Batch No.</th>
-                    <th style="width: 35px;">Exp.</th>
-                    <th style="width: 45px;">MRP.</th>
-                    <th style="width: 45px;">Rate</th>
-                    <th style="width: 30px;">Scm</th>
-                    <th style="width: 30px;">DIS</th>
-                    <th style="width: 25px;">GST</th>
-                    <th style="width: 60px;">Net Amt.</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php 
-                    $totalQty = 0; 
-                    $itemsCount = count($transaction->items);
-                    // Calculate filler rows needed. Assuming approx 12-14 rows fit comfortably.
-                    $minRows = 12;
-                    $fillerRows = max(0, $minRows - $itemsCount);
-                @endphp
-                @foreach($transaction->items as $index => $item)
-                @php $totalQty += $item->qty ?? 0; @endphp
-                <tr style="height: 15px;">
-                    <td class="text-center">{{ $index + 1 }}.</td>
-                    <td>{{ $item->item_name }}</td>
-                    <td class="text-right">{{ number_format($item->qty ?? 0, 2) }}</td>
-                    <td class="text-center">{{ $item->free_qty ?? '-' }}</td>
-                    <td class="text-center">{{ $item->packing ?? '1*1' }}</td>
-                    <td class="text-center">{{ $item->hsn_code ?? '' }}</td>
-                    <td class="text-center">{{ $item->batch_no ?? '' }}</td>
-                    <td class="text-center">{{ $item->expiry_date ?? '' }}</td>
-                    <td class="text-right">{{ number_format($item->mrp ?? 0, 2) }}</td>
-                    <td class="text-right">{{ number_format($item->sale_rate ?? 0, 2) }}</td>
-                    <td class="text-center">{{ $item->scheme ?? '-' }}</td>
-                    <td class="text-right">{{ number_format($item->discount_percent ?? 0, 2) }}</td>
-                    <td class="text-center">{{ number_format(($item->cgst_percent ?? 0) + ($item->sgst_percent ?? 0), 0) }}</td>
-                    <td class="text-right">{{ number_format($item->amount ?? 0, 2) }}</td>
-                </tr>
-                @endforeach
-                
-                <!-- Filler Rows to maintain vertical lines -->
-                @for($i = 0; $i < $fillerRows; $i++)
-                <tr style="height: 15px;">
-                    <td>&nbsp;</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                @endfor
-            </tbody>
-        </table>
-
-        <!-- GST Summary -->
-        @php
-            $cgst = ($transaction->tax_amount ?? 0) / 2;
-            $sgst = ($transaction->tax_amount ?? 0) / 2;
-            $taxableAmount = ($transaction->nt_amount ?? 0) - ($transaction->dis_amount ?? 0);
-        @endphp
-        <div class="gst-summary">
-            SGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($sgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;6%&gt; 0.00 on 0.00 &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
-            <br>
-            CGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($cgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;6%&gt; 0.00 on 0.00 &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
-        </div>
-
-        <!-- Totals -->
-        <table class="totals-table">
+        <table class="main-table">
+            <!-- Row 1: Top Header -->
             <tr>
-                <td style="text-align: left; width: 10%;">No of Items: {{ $itemsCount }}</td>
-                <td style="width: 10%; border-left: 1px solid #000;">Gross Amt</td>
-                <td style="width: 10%;">{{ number_format($transaction->nt_amount ?? 0, 2) }}</td>
-                <td style="width: 8%; border-left: 1px solid #000;">Scm. Amt</td>
-                <td style="width: 8%;">{{ number_format($transaction->scm_amount ?? 0, 2) }}</td>
-                <td style="width: 8%; border-left: 1px solid #000;">Disc. Amt</td>
-                <td style="width: 8%;">{{ number_format($transaction->dis_amount ?? 0, 2) }}</td>
-                <td style="width: 8%; border-left: 1px solid #000;">Taxable Amt.</td>
-                <td style="width: 8%;">{{ number_format($taxableAmount, 2) }}</td>
-                <td style="width: 8%; border-left: 1px solid #000;">CGST Amt</td>
-                <td style="width: 8%;">{{ number_format($cgst, 2) }}</td>
-                <td style="width: 8%; border-left: 1px solid #000;">SGST Amt</td>
-                <td style="width: 8%;">{{ number_format($sgst, 2) }}</td>
-                <td style="width: 8%; border-left: 1px solid #000;">IGST Amt</td>
-                <td style="width: 8%;">0.00</td>
-                <td style="width: 10%; border-left: 1px solid #000;">Inv. Amt.</td>
-                <td style="background: #ccc; width: 15%; font-size: 11px;">{{ number_format($transaction->net_amount ?? 0, 2) }}</td>
+                <td colspan="5" style="width: 35%; font-size: 7px; border: none; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px; vertical-align: middle;">
+                    Original/Duplicate/Triplicate Copy
+                </td>
+                <td colspan="4" style="width: 30%; border: none; border-left: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; text-align: center; vertical-align: middle;">
+                    <span class="invoice-title">** TAX INVOICE ({{ $transaction->cash_flag == 'Y' ? 'CASH' : 'CREDIT' }}) **</span>
+                </td>
+                <td colspan="5" style="width: 35%; border: none; border-bottom: 1px solid #000; padding: 3px;">
+                    <table style="width: 100%; border: none;">
+                        <tr>
+                            <td style="border: none; font-weight: bold; font-size: 8px; width: 25%;">Bill No.</td>
+                            <td style="border: none; font-weight: bold; font-size: 8px;">{{ $transaction->invoice_no }}</td>
+                            <td style="border: none; text-align: right; font-size: 7px;" rowspan="2">Page: 1 of 1</td>
+                        </tr>
+                        <tr>
+                            <td style="border: none; font-weight: bold; font-size: 8px;">Dated</td>
+                            <td style="border: none; font-weight: bold; font-size: 8px;">{{ $transaction->sale_date ? $transaction->sale_date->format('d/m/Y') : '' }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            
+            <!-- Row 2: Company & Customer Info -->
+            <tr>
+                <td colspan="7" style="border: none; border-right: 1px solid #000; border-bottom: 1px solid #000; padding: 3px; font-size: 8px; vertical-align: top;">
+                    <div class="company-name">{{ strtoupper($organization->name ?? 'COMPANY NAME') }}</div>
+                    <div>{{ $organization->address ?? '' }}</div>
+                    <div>{{ $organization->city ?? '' }}</div>
+                    <div>Phone : {{ $organization->phone ?? '' }}</div>
+                    <div class="text-bold">D.L.No. : {{ $organization->dl_no ?? '' }} @if($organization->dl_no_1 ?? false), {{ $organization->dl_no_1 }}@endif</div>
+                    <div class="text-bold">GST No. : {{ $organization->gst_no ?? '' }} <span style="float: right;">State Code : {{ substr($organization->gst_no ?? '09', 0, 2) }}</span></div>
+                    @if($organization->food_license ?? false)<div>FASSAI No. : {{ $organization->food_license }}</div>@endif
+                    <div style="margin-top: 2px;">
+                        E-mail : {{ $organization->email ?? '' }}
+                        <span style="float: right;" class="text-bold">PAN : {{ $organization->pan_no ?? '' }}</span>
+                    </div>
+                </td>
+                <td colspan="7" style="border: none; border-bottom: 1px solid #000; padding: 3px; font-size: 8px; vertical-align: top;">
+                    <div class="text-bold" style="font-size: 10px;">To, {{ strtoupper($customer->name ?? 'CUSTOMER') }}</div>
+                    <div>{{ $customer->address ?? '' }}</div>
+                    @if($customer->city ?? false)<div>{{ $customer->city }}</div>@endif
+                    <br>
+                    <div class="text-bold">D.L. No.: {{ $customer->dl_number ?? '' }} @if($customer->dl_number1 ?? false), {{ $customer->dl_number1 }}@endif</div>
+                    <div class="text-bold">GST:{{ $customer->gst_number ?? '' }} <span style="float: right;">, State Code : {{ $customer->state_code ?? substr($customer->gst_number ?? '09', 0, 2) }}</span></div>
+                    <div class="text-bold">Tel : {{ $customer->mobile ?? $customer->telephone_office ?? '' }}</div>
+                    <div class="text-right text-bold" style="margin-top: 3px;">PAN: {{ $customer->pan_number ?? '' }}</div>
+                </td>
+            </tr>
+            
+            <!-- Row 3: Items Header -->
+            <tr class="items-table">
+                <th style="width: 20px;">Sr.</th>
+                <th style="text-align: left; padding-left: 3px;">PARTICULARS</th>
+                <th style="width: 32px;">QTY.</th>
+                <th style="width: 25px;">Free</th>
+                <th style="width: 30px;">PACK</th>
+                <th style="width: 45px;">HSN</th>
+                <th style="width: 50px;">Batch No.</th>
+                <th style="width: 30px;">Exp.</th>
+                <th style="width: 40px;">MRP.</th>
+                <th style="width: 40px;">Rate</th>
+                <th style="width: 25px;">Scm</th>
+                <th style="width: 28px;">DIS</th>
+                <th style="width: 22px;">GST</th>
+                <th style="width: 50px;">Net Amt.</th>
+            </tr>
+            
+            <!-- Items Rows -->
+            @php 
+                $totalQty = 0;
+                $itemsCount = count($transaction->items);
+                $minRows = 8;
+                $fillerRows = max(0, $minRows - $itemsCount);
+            @endphp
+            @foreach($transaction->items as $index => $item)
+            @php $totalQty += $item->qty ?? 0; @endphp
+            <tr class="items-table">
+                <td class="text-center">{{ $index + 1 }}.</td>
+                <td class="text-left">{{ $item->mrp ?? '' }} | {{ $item->item_name }}</td>
+                <td class="text-right">{{ number_format($item->qty ?? 0, 2) }}</td>
+                <td class="text-center">{{ $item->free_qty && $item->free_qty > 0 ? number_format($item->free_qty, 0) : '-' }}</td>
+                <td class="text-center">{{ $item->packing ?? '1*1' }}</td>
+                <td class="text-center">{{ $item->hsn_code ?? '' }}</td>
+                <td class="text-center">{{ $item->batch_no ?? '' }}</td>
+                <td class="text-center">{{ $item->expiry_date ?? '' }}</td>
+                <td class="text-right">{{ number_format($item->mrp ?? 0, 2) }}</td>
+                <td class="text-right">{{ number_format($item->sale_rate ?? 0, 2) }}</td>
+                <td class="text-center">{{ $item->scheme ?? '-' }}</td>
+                <td class="text-right">{{ number_format($item->discount_percent ?? 0, 2) }}</td>
+                <td class="text-center">{{ number_format($item->gst_percent ?? (($item->cgst_percent ?? 0) + ($item->sgst_percent ?? 0)), 0) }}</td>
+                <td class="text-right">{{ number_format($item->net_amount ?? $item->amount ?? 0, 2) }}</td>
+            </tr>
+            @endforeach
+            
+            <!-- Filler Rows to maintain vertical lines -->
+            @for($i = 0; $i < $fillerRows; $i++)
+            <tr class="items-table">
+                <td>&nbsp;</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            @endfor
+            
+            <!-- GST Summary Row -->
+            @php
+                $cgst = 0;
+                $sgst = 0;
+                $taxableAmount = 0;
+                foreach($transaction->items as $item) {
+                    $cgst += $item->cgst_amount ?? 0;
+                    $sgst += $item->sgst_amount ?? 0;
+                    $taxableAmount += ($item->amount ?? 0) - ($item->tax_amount ?? 0);
+                }
+                if($cgst == 0 && $sgst == 0) {
+                    $cgst = ($transaction->tax_amount ?? 0) / 2;
+                    $sgst = ($transaction->tax_amount ?? 0) / 2;
+                }
+                if($taxableAmount == 0) {
+                    $taxableAmount = ($transaction->nt_amount ?? 0) - ($transaction->dis_amount ?? 0);
+                }
+            @endphp
+            <tr>
+                <td colspan="14" style="font-size: 7px; padding: 1px 3px;">
+                    SGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($sgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;6%&gt; 0.00 on 0.00 &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
+                </td>
             </tr>
             <tr>
-                <td colspan="2" style="text-align: right;">Total :</td>
-                <td>{{ number_format($transaction->nt_amount, 2) }}</td>
-                <td colspan="12"></td>
-                <td>R/Off</td>
-                <td style="background: #ccc;"></td>
+                <td colspan="14" style="font-size: 7px; padding: 1px 3px;">
+                    CGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($cgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;6%&gt; 0.00 on 0.00 &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
+                </td>
+            </tr>
+            
+            <!-- Totals Row -->
+            <tr class="totals-row">
+                <td colspan="2" class="text-left">No of Items : {{ $itemsCount }}</td>
+                <td class="text-center">Gross Amt</td>
+                <td colspan="2" class="text-right">{{ number_format($transaction->nt_amount ?? 0, 2) }}</td>
+                <td class="text-center">Scm. Amt</td>
+                <td class="text-right">{{ number_format($transaction->scm_amount ?? 0, 2) }}</td>
+                <td class="text-center">Disc. Amt</td>
+                <td class="text-right">{{ number_format($transaction->dis_amount ?? 0, 2) }}</td>
+                <td class="text-center">Taxable Amt.</td>
+                <td class="text-right">{{ number_format($taxableAmount, 2) }}</td>
+                <td class="text-center">CGST Amt</td>
+                <td class="text-right">{{ number_format($cgst, 2) }}</td>
+                <td class="text-center">SGST Amt</td>
+            </tr>
+            <tr class="totals-row">
+                <td colspan="2" class="text-right">Total :</td>
+                <td class="text-right">{{ number_format($transaction->nt_amount ?? 0, 2) }}</td>
+                <td colspan="2"></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>{{ number_format($sgst, 2) }}</td>
+                <td class="text-center">IGST Amt</td>
+                <td class="text-right">0.00</td>
+                <td class="text-center">Inv. Amt.<br>R/Off</td>
+                <td colspan="2" class="grand-total text-right">{{ number_format($transaction->net_amount ?? 0, 2) }}</td>
+            </tr>
+            
+            <!-- Amount in Words -->
+            <tr>
+                <td colspan="12" style="font-weight: bold; font-style: italic; padding: 2px 3px; font-size: 8px;">
+                    Rupees: {{ ucwords(numberToIndianWords($transaction->net_amount ?? 0)) }} Only
+                </td>
+                <td colspan="2" class="text-right text-bold">E.&.O.E.</td>
+            </tr>
+            
+            <!-- Bank Details -->
+            <tr>
+                <td colspan="14" style="font-size: 7px; font-weight: bold; padding: 2px 3px;">
+                    Bank : {{ strtoupper($organization->bank ?? 'PUNJAB NATIONAL BANK') }}, Branch :{{ strtoupper($organization->branch ?? 'PRAHLAD NAGAR MEERUT') }}, A/c No.:{{ $organization->account_no ?? '04141131001026' }}, IFSC :{{ $organization->ifsc_code ?? 'PUNB0041410' }}
+                </td>
+            </tr>
+            
+            <!-- Footer: Terms & Signature -->
+            <tr>
+                <td colspan="7" class="footer-section" style="vertical-align: top; padding: 3px;">
+                    <u>Terms & Conditions :-</u><br>
+                    ( EasySol, For Demo : 9319312226,7500641054 )
+                </td>
+                <td colspan="7" class="text-right" style="vertical-align: top; padding: 3px; font-size: 8px;">
+                    <div class="text-bold">For {{ strtoupper($organization->name ?? 'COMPANY NAME') }}</div>
+                    <br><br>
+                    <div>Auth. Sign.</div>
+                </td>
             </tr>
         </table>
-        
-        <div class="amount-words-row">
-            Rupees: {{ ucwords(numberToIndianWords($transaction->net_amount ?? 0)) }} Only
-            <span style="float: right">E.&.O.E.</span>
-        </div>
-        
-        <div class="bank-details">
-            Bank : {{ strtoupper($organization->bank ?? 'BANK NAME') }}, Branch :{{ strtoupper($organization->branch ?? 'BRANCH') }}, A/c No.:{{ $organization->account_no ?? '' }}, IFSC :{{ $organization->ifsc_code ?? '' }}
-        </div>
-        
-        <div class="bottom-footer">
-            <div class="terms">
-                <u>Terms & Conditions :-</u><br>
-                ( EasySol, For Demo : 9319312226,7500641054 )
-            </div>
-            <div class="signature">
-                <div>For {{ strtoupper($organization->name ?? 'COMPANY NAME') }}</div>
-                <div>Auth. Sign.</div>
-            </div>
-        </div>
-    </div>
     </div>
     
     <script>

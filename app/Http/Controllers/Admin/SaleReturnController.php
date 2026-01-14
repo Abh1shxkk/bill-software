@@ -202,16 +202,23 @@ class SaleReturnController extends Controller
      */
     public function transaction()
     {
-        // Get next SR number based on existing sale return transactions
-        $lastReturn = SaleReturnTransaction::orderBy('id', 'desc')->first();
+        // Get next SR number by finding the maximum sr_no in all existing records
+        // This prevents duplicate key errors when records are deleted or inserted out of order
+        $maxNumber = 0;
         
-        if ($lastReturn) {
-            // Extract number from last SR number (e.g., SR0001 -> 1)
-            $lastNumber = (int) substr($lastReturn->sr_no, 2);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
+        $allReturns = SaleReturnTransaction::whereNotNull('sr_no')->pluck('sr_no');
+        
+        foreach ($allReturns as $srNo) {
+            // Extract numeric part from sr_no (e.g., SR0001 -> 1, SR123 -> 123)
+            if (preg_match('/SR(\d+)/i', $srNo, $matches)) {
+                $number = (int) $matches[1];
+                if ($number > $maxNumber) {
+                    $maxNumber = $number;
+                }
+            }
         }
+        
+        $nextNumber = $maxNumber + 1;
         $nextSRNo = 'SR' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         
         // Get customers, salesmen, and items
@@ -422,6 +429,28 @@ class SaleReturnController extends Controller
                 'sr_no' => 'required',
             ]);
 
+            // Check if sr_no already exists and generate a new unique one if needed
+            $srNo = $request->sr_no;
+            if (SaleReturnTransaction::where('sr_no', $srNo)->exists()) {
+                // Generate a new unique SR number by finding the maximum
+                $maxNumber = 0;
+                $allReturns = SaleReturnTransaction::whereNotNull('sr_no')->pluck('sr_no');
+                
+                foreach ($allReturns as $existingSrNo) {
+                    if (preg_match('/SR(\d+)/i', $existingSrNo, $matches)) {
+                        $number = (int) $matches[1];
+                        if ($number > $maxNumber) {
+                            $maxNumber = $number;
+                        }
+                    }
+                }
+                
+                $nextNumber = $maxNumber + 1;
+                $srNo = 'SR' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+                
+                \Log::info("SR No duplicate detected. Original: {$request->sr_no}, Generated new: {$srNo}");
+            }
+
             // Get customer name
             $customerName = '';
             if ($request->customer_id) {
@@ -438,7 +467,7 @@ class SaleReturnController extends Controller
 
             // Create sale return transaction
             $saleReturn = SaleReturnTransaction::create([
-                'sr_no' => $request->sr_no,
+                'sr_no' => $srNo,
                 'series' => $request->series ?? 'SR',
                 'return_date' => $request->return_date,
                 'customer_id' => $request->customer_id,
@@ -702,15 +731,23 @@ class SaleReturnController extends Controller
      */
     public function modification()
     {
-        // Get next SR number (same logic as transaction)
-        $lastReturn = SaleReturnTransaction::orderBy('id', 'desc')->first();
+        // Get next SR number by finding the maximum sr_no in all existing records
+        // This prevents duplicate key errors when records are deleted or inserted out of order
+        $maxNumber = 0;
         
-        if ($lastReturn) {
-            $lastNumber = (int) substr($lastReturn->sr_no, 2);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
+        $allReturns = SaleReturnTransaction::whereNotNull('sr_no')->pluck('sr_no');
+        
+        foreach ($allReturns as $srNo) {
+            // Extract numeric part from sr_no (e.g., SR0001 -> 1, SR123 -> 123)
+            if (preg_match('/SR(\d+)/i', $srNo, $matches)) {
+                $number = (int) $matches[1];
+                if ($number > $maxNumber) {
+                    $maxNumber = $number;
+                }
+            }
         }
+        
+        $nextNumber = $maxNumber + 1;
         $nextSRNo = 'SR' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         
         // Get customers, salesmen, and items (same as transaction)
