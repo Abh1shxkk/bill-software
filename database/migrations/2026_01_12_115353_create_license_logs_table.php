@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('license_logs')) {
+            return; // Table already exists, skip
+        }
+        
         Schema::create('license_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('license_id')->constrained('licenses')->onDelete('cascade');

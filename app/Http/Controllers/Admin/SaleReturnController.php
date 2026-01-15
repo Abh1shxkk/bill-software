@@ -202,11 +202,15 @@ class SaleReturnController extends Controller
      */
     public function transaction()
     {
-        // Get next SR number by finding the maximum sr_no in all existing records
+        // Get next SR number by finding the maximum sr_no in all existing records (per organization)
         // This prevents duplicate key errors when records are deleted or inserted out of order
+        $orgId = auth()->user()->organization_id ?? 1;
         $maxNumber = 0;
         
-        $allReturns = SaleReturnTransaction::whereNotNull('sr_no')->pluck('sr_no');
+        $allReturns = SaleReturnTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->whereNotNull('sr_no')
+            ->pluck('sr_no');
         
         foreach ($allReturns as $srNo) {
             // Extract numeric part from sr_no (e.g., SR0001 -> 1, SR123 -> 123)
@@ -432,9 +436,13 @@ class SaleReturnController extends Controller
             // Check if sr_no already exists and generate a new unique one if needed
             $srNo = $request->sr_no;
             if (SaleReturnTransaction::where('sr_no', $srNo)->exists()) {
-                // Generate a new unique SR number by finding the maximum
+                // Generate a new unique SR number by finding the maximum (per organization)
+                $orgId = auth()->user()->organization_id ?? 1;
                 $maxNumber = 0;
-                $allReturns = SaleReturnTransaction::whereNotNull('sr_no')->pluck('sr_no');
+                $allReturns = SaleReturnTransaction::withoutGlobalScopes()
+                    ->where('organization_id', $orgId)
+                    ->whereNotNull('sr_no')
+                    ->pluck('sr_no');
                 
                 foreach ($allReturns as $existingSrNo) {
                     if (preg_match('/SR(\d+)/i', $existingSrNo, $matches)) {
@@ -731,11 +739,15 @@ class SaleReturnController extends Controller
      */
     public function modification()
     {
-        // Get next SR number by finding the maximum sr_no in all existing records
+        // Get next SR number by finding the maximum sr_no in all existing records (per organization)
         // This prevents duplicate key errors when records are deleted or inserted out of order
+        $orgId = auth()->user()->organization_id ?? 1;
         $maxNumber = 0;
         
-        $allReturns = SaleReturnTransaction::whereNotNull('sr_no')->pluck('sr_no');
+        $allReturns = SaleReturnTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->whereNotNull('sr_no')
+            ->pluck('sr_no');
         
         foreach ($allReturns as $srNo) {
             // Extract numeric part from sr_no (e.g., SR0001 -> 1, SR123 -> 123)

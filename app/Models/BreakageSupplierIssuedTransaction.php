@@ -38,7 +38,12 @@ class BreakageSupplierIssuedTransaction extends Model
 
     public static function generateTrnNumber()
     {
-        $lastTransaction = self::orderBy('id', 'desc')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastTransaction = self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         $nextNumber = $lastTransaction ? ((int)$lastTransaction->trn_no + 1) : 1;
         return (string)$nextNumber;
     }

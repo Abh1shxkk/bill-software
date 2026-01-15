@@ -50,7 +50,8 @@ class SaleReturnReplacementTransaction extends Model
 
     public static function getNextTrnNo()
     {
-        $maxTrnNo = self::max('trn_no');
+        $orgId = auth()->user()->organization_id ?? 1;
+        $maxTrnNo = self::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no');
         return $maxTrnNo ? $maxTrnNo + 1 : 1;
     }
 }

@@ -78,7 +78,8 @@ class PurchaseVoucher extends Model
 
     public static function getNextVoucherNo()
     {
-        $maxNo = self::max('voucher_no');
+        $orgId = auth()->user()->organization_id ?? 1;
+        $maxNo = self::withoutGlobalScopes()->where('organization_id', $orgId)->max('voucher_no');
         return ($maxNo ?? 0) + 1;
     }
 }

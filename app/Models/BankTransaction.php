@@ -26,7 +26,8 @@ class BankTransaction extends Model
 
     public static function getNextTransactionNo()
     {
-        $last = self::orderByDesc('transaction_no')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        $last = self::withoutGlobalScopes()->where('organization_id', $orgId)->orderByDesc('transaction_no')->first();
         return $last ? $last->transaction_no + 1 : 1;
     }
 

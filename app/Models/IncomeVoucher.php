@@ -35,7 +35,8 @@ class IncomeVoucher extends Model
 
     public static function getNextVoucherNo()
     {
-        $lastVoucher = self::orderByDesc('voucher_no')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        $lastVoucher = self::withoutGlobalScopes()->where('organization_id', $orgId)->orderByDesc('voucher_no')->first();
         return $lastVoucher ? $lastVoucher->voucher_no + 1 : 1;
     }
 }

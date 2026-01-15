@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('sample_issued_transaction_items')) {
+            return; // Table already exists, skip
+        }
+        
         Schema::create('sample_issued_transaction_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('sample_issued_transaction_id');

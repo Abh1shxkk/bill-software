@@ -84,7 +84,13 @@ class ClaimToSupplierTransaction extends Model
 
     public static function generateClaimNumber()
     {
-        $lastClaim = self::withTrashed()->orderBy('id', 'desc')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastClaim = self::withTrashed()
+            ->withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         
         if ($lastClaim) {
             $lastNumber = (int) substr($lastClaim->claim_no, 3);

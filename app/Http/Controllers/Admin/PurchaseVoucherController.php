@@ -62,8 +62,13 @@ class PurchaseVoucherController extends Controller
         $suppliers = Supplier::orderBy('name')->get();
         $hsnCodes = HsnCode::orderBy('hsn_code')->get();
         
-        // Get next trn_no (same sequence as Purchase module - padded format)
-        $lastTransaction = PurchaseTransaction::orderBy('id', 'desc')->first();
+        // Get next trn_no (same sequence as Purchase module - padded format, per organization)
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastTransaction = PurchaseTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         $lastTrnNo = $lastTransaction ? intval($lastTransaction->trn_no) : 0;
         $nextTrnNo = str_pad($lastTrnNo + 1, 6, '0', STR_PAD_LEFT);  // Format: 000044
         $nextBillNo = $nextTrnNo;  // Default bill no same as trn_no
@@ -74,12 +79,17 @@ class PurchaseVoucherController extends Controller
     }
 
     /**
-     * Generate next bill number - same sequence as Purchase module
+     * Generate next bill number - same sequence as Purchase module (per organization)
      */
     private function generateBillNo()
     {
+        $orgId = auth()->user()->organization_id ?? 1;
+        
         // Use the same sequence as main Purchase module (trn_no)
-        $lastTransaction = PurchaseTransaction::orderBy('id', 'desc')->first();
+        $lastTransaction = PurchaseTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         $nextNumber = $lastTransaction ? (intval($lastTransaction->trn_no) + 1) : 1;
         return str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
@@ -113,8 +123,13 @@ class PurchaseVoucherController extends Controller
             $netAmount = $grossAmount + $totalTax;
             $netAmount = round($netAmount);
 
-            // Get next trn_no (same sequence as Purchase module - padded format)
-            $lastTransaction = PurchaseTransaction::orderBy('id', 'desc')->first();
+            // Get next trn_no (same sequence as Purchase module - padded format, per organization)
+            $orgId = auth()->user()->organization_id ?? 1;
+            
+            $lastTransaction = PurchaseTransaction::withoutGlobalScopes()
+                ->where('organization_id', $orgId)
+                ->orderBy('id', 'desc')
+                ->first();
             $lastTrnNo = $lastTransaction ? intval($lastTransaction->trn_no) : 0;
             $nextTrnNo = $lastTrnNo + 1;
             $paddedTrnNo = str_pad($nextTrnNo, 6, '0', STR_PAD_LEFT);  // Format: 000044

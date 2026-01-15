@@ -538,8 +538,13 @@ class BreakageSupplierController extends Controller
     // Keep existing methods for other transaction types
     public function receivedTransaction()
     {
-        // Get next transaction number
-        $lastTrn = BreakageSupplierReceivedTransaction::orderBy('id', 'desc')->first();
+        // Get next transaction number (per organization)
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastTrn = BreakageSupplierReceivedTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         $trnNo = $lastTrn ? (int)$lastTrn->trn_no + 1 : 1;
         
         // Get suppliers list
@@ -562,8 +567,13 @@ class BreakageSupplierController extends Controller
             
             DB::beginTransaction();
             
-            // Get next transaction number
-            $lastTrn = BreakageSupplierReceivedTransaction::orderBy('id', 'desc')->first();
+            // Get next transaction number (per organization)
+            $orgId = auth()->user()->organization_id ?? 1;
+            
+            $lastTrn = BreakageSupplierReceivedTransaction::withoutGlobalScopes()
+                ->where('organization_id', $orgId)
+                ->orderBy('id', 'desc')
+                ->first();
             $trnNo = $lastTrn ? (int)$lastTrn->trn_no + 1 : 1;
             
             // Create transaction
@@ -972,8 +982,13 @@ class BreakageSupplierController extends Controller
 
     public function unusedDumpTransaction()
     {
-        // Get next transaction number
-        $lastTrn = BreakageSupplierUnusedDumpTransaction::orderBy('id', 'desc')->first();
+        // Get next transaction number (per organization)
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastTrn = BreakageSupplierUnusedDumpTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         $trnNo = $lastTrn ? (int)$lastTrn->trn_no + 1 : 1;
         
         return view('admin.breakage-supplier.unused-dump-transaction', compact('trnNo'));
@@ -1035,8 +1050,13 @@ class BreakageSupplierController extends Controller
             
             DB::beginTransaction();
             
-            // Generate transaction number
-            $lastTransaction = BreakageSupplierUnusedDumpTransaction::orderBy('id', 'desc')->first();
+            // Generate transaction number (per organization)
+            $orgId = auth()->user()->organization_id ?? 1;
+            
+            $lastTransaction = BreakageSupplierUnusedDumpTransaction::withoutGlobalScopes()
+                ->where('organization_id', $orgId)
+                ->orderBy('id', 'desc')
+                ->first();
             $lastNumber = $lastTransaction ? intval(substr($lastTransaction->trn_no, -6)) : 0;
             $trnNo = 'UDUMP-' . str_pad($lastNumber + 1, 6, '0', STR_PAD_LEFT);
             

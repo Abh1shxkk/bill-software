@@ -59,7 +59,11 @@ class ReplacementNoteTransaction extends Model
 
     public static function generateRNNumber()
     {
-        $lastTransaction = self::orderBy('id', 'desc')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        $lastTransaction = self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         
         if ($lastTransaction) {
             $lastNumber = (int) substr($lastTransaction->rn_no, 2);

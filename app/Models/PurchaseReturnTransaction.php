@@ -98,7 +98,11 @@ class PurchaseReturnTransaction extends Model
      */
     public static function generatePRNumber()
     {
-        $lastReturn = self::orderBy('id', 'desc')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        $lastReturn = self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         
         if ($lastReturn) {
             $lastNumber = (int) substr($lastReturn->pr_no, 2);

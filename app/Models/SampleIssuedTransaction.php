@@ -55,15 +55,18 @@ class SampleIssuedTransaction extends Model
     }
 
     /**
-     * Generate unique transaction number
+     * Generate unique transaction number (per organization)
      */
     public static function generateTrnNumber(): string
     {
+        $orgId = auth()->user()->organization_id ?? 1;
         $prefix = 'SI';
         $year = date('y');
         $month = date('m');
         
-        $lastTransaction = self::where('trn_no', 'LIKE', "{$prefix}{$year}{$month}%")
+        $lastTransaction = self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('trn_no', 'LIKE', "{$prefix}{$year}{$month}%")
             ->orderBy('trn_no', 'desc')
             ->first();
         

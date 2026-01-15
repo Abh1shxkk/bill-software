@@ -20,7 +20,8 @@ class MultiVoucher extends Model
 
     public static function getNextVoucherNo()
     {
-        $last = self::orderByDesc('voucher_no')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        $last = self::withoutGlobalScopes()->where('organization_id', $orgId)->orderByDesc('voucher_no')->first();
         return $last ? $last->voucher_no + 1 : 1;
     }
 }

@@ -61,8 +61,9 @@ class CustomerReceiptController extends Controller
         $routes = Route::orderBy('name')->get();
         $banks = CashBankBook::orderBy('name')->get();
         
-        // Get next transaction number
-        $nextTrnNo = CustomerReceipt::max('trn_no') + 1;
+        // Get next transaction number (per organization)
+        $orgId = auth()->user()->organization_id ?? 1;
+        $nextTrnNo = CustomerReceipt::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no') + 1;
         if ($nextTrnNo < 1) $nextTrnNo = 1;
 
         return view('admin.customer-receipt.transaction', compact(
@@ -104,8 +105,9 @@ class CustomerReceiptController extends Controller
         try {
             DB::beginTransaction();
 
-            // Get next transaction number
-            $nextTrnNo = CustomerReceipt::max('trn_no') + 1;
+            // Get next transaction number (per organization)
+            $orgId = auth()->user()->organization_id ?? 1;
+            $nextTrnNo = CustomerReceipt::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no') + 1;
             if ($nextTrnNo < 1) $nextTrnNo = 1;
 
             // Get day name
@@ -274,8 +276,9 @@ class CustomerReceiptController extends Controller
         $routes = Route::orderBy('name')->get();
         $banks = CashBankBook::orderBy('name')->get();
         
-        // Get next transaction number
-        $nextTrnNo = CustomerReceipt::max('trn_no') + 1;
+        // Get next transaction number (per organization)
+        $orgId = auth()->user()->organization_id ?? 1;
+        $nextTrnNo = CustomerReceipt::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no') + 1;
         if ($nextTrnNo < 1) $nextTrnNo = 1;
 
         return view('admin.customer-receipt.modification', compact(
@@ -764,7 +767,8 @@ class CustomerReceiptController extends Controller
      */
     public function getNextTrnNo()
     {
-        $nextTrnNo = CustomerReceipt::max('trn_no') + 1;
+        $orgId = auth()->user()->organization_id ?? 1;
+        $nextTrnNo = CustomerReceipt::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no') + 1;
         if ($nextTrnNo < 1) $nextTrnNo = 1;
 
         return response()->json([

@@ -431,21 +431,25 @@ class StockAdjustmentController extends Controller
     }
 
     /**
-     * Generate transaction number
-     */
-    private function generateTrnNo()
-    {
-        $lastAdjustment = StockAdjustment::withTrashed()
-            ->orderBy('id', 'desc')
-            ->first();
+ * Generate transaction number (per organization)
+ */
+private function generateTrnNo()
+{
+    $orgId = auth()->user()->organization_id ?? 1;
+    
+    $lastAdjustment = StockAdjustment::withTrashed()
+        ->withoutGlobalScopes()
+        ->where('organization_id', $orgId)
+        ->orderBy('id', 'desc')
+        ->first();
 
-        if ($lastAdjustment) {
-            $lastNumber = intval(preg_replace('/[^0-9]/', '', $lastAdjustment->trn_no));
-            return $lastNumber + 1;
-        }
-
-        return 1;
+    if ($lastAdjustment) {
+        $lastNumber = intval(preg_replace('/[^0-9]/', '', $lastAdjustment->trn_no));
+        return $lastNumber + 1;
     }
+
+    return 1;
+}
 
     /**
      * Create stock ledger entry for adjustment

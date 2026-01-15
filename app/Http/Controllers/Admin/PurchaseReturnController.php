@@ -47,17 +47,22 @@ class PurchaseReturnController extends Controller
     }
 
     /**
-     * Get next transaction number
+     * Get next transaction number (per organization)
      */
     public function getNextTransactionNumber()
     {
         // Check if purchase_return_transactions table exists
         if (!DB::getSchemaBuilder()->hasTable('purchase_return_transactions')) {
-            return response()->json(['next_trn_no' => 1]);
+            return response()->json(['next_trn_no' => 'PR0001']);
         }
+        
+        $orgId = auth()->user()->organization_id ?? 1;
 
-        // Get the last transaction from purchase_return_transactions table
-        $lastTransaction = PurchaseReturnTransaction::orderBy('id', 'desc')->first();
+        // Get the last transaction from purchase_return_transactions table for this org
+        $lastTransaction = PurchaseReturnTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
 
         if ($lastTransaction && $lastTransaction->pr_no) {
             // Extract number from PR0001, PR0002 format

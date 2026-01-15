@@ -33,6 +33,7 @@ class ItemController extends Controller
         $dateTo = request('date_to');
 
         $items = Item::query()
+            ->select('items.*') // Ensure all item columns are selected
             ->with('company') // Eager load company relationship
             ->addSelect([
                 // Calculate total_units from batches table (actual available stock)
@@ -47,7 +48,7 @@ class ItemController extends Controller
                     // Search across all fields
                     $query->where(function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%")
-                            ->orWhere('code', 'like', "%{$search}%")
+                            ->orWhere('id', 'like', "%{$search}%")
                             ->orWhere('bar_code', 'like', "%{$search}%")
                             ->orWhere('location', 'like', "%{$search}%")
                             ->orWhere('packing', 'like', "%{$search}%")
@@ -57,7 +58,7 @@ class ItemController extends Controller
                     });
                 } else {
                     // Search in specific field - ensure field name is valid
-                    $validFields = ['name', 'bar_code', 'location', 'packing', 'mrp', 'code', 'hsn_code'];
+                    $validFields = ['name', 'bar_code', 'location', 'packing', 'mrp', 'id', 'hsn_code'];
                     if (in_array($searchField, $validFields)) {
                         $query->where($searchField, 'like', "%{$search}%");
                     }

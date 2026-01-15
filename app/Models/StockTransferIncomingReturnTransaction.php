@@ -57,7 +57,11 @@ class StockTransferIncomingReturnTransaction extends Model
 
     public static function generateTrnNumber()
     {
+        $orgId = auth()->user()->organization_id ?? 1;
+        
         $lastTransaction = self::whereNotNull('trn_no')
+            ->withoutGlobalScopes()
+            ->where('organization_id', $orgId)
             ->orderBy('id', 'desc')
             ->first();
 

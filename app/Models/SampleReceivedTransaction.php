@@ -55,27 +55,30 @@ class SampleReceivedTransaction extends Model
     }
 
     /**
-     * Generate unique transaction number
-     */
-    public static function generateTrnNumber(): string
-    {
-        $prefix = 'SR';
-        $year = date('y');
-        $month = date('m');
-        
-        $lastTransaction = self::where('trn_no', 'LIKE', "{$prefix}{$year}{$month}%")
-            ->orderBy('trn_no', 'desc')
-            ->first();
-        
-        if ($lastTransaction) {
-            $lastNumber = (int) substr($lastTransaction->trn_no, -4);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        return $prefix . $year . $month . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+ * Generate unique transaction number (per organization)
+ */
+public static function generateTrnNumber(): string
+{
+    $orgId = auth()->user()->organization_id ?? 1;
+    $prefix = 'SR';
+    $year = date('y');
+    $month = date('m');
+    
+    $lastTransaction = self::withoutGlobalScopes()
+        ->where('organization_id', $orgId)
+        ->where('trn_no', 'LIKE', "{$prefix}{$year}{$month}%")
+        ->orderBy('trn_no', 'desc')
+        ->first();
+    
+    if ($lastTransaction) {
+        $lastNumber = (int) substr($lastTransaction->trn_no, -4);
+        $newNumber = $lastNumber + 1;
+    } else {
+        $newNumber = 1;
     }
+    
+    return $prefix . $year . $month . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+}
 
     /**
      * Get party type options

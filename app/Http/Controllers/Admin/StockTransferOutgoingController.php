@@ -473,7 +473,11 @@ class StockTransferOutgoingController extends Controller
 
     private function generateSrNo($series = 'STO')
     {
-        $lastTransaction = StockTransferOutgoingTransaction::where('series', $series)
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastTransaction = StockTransferOutgoingTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('series', $series)
             ->orderBy('id', 'desc')
             ->first();
 

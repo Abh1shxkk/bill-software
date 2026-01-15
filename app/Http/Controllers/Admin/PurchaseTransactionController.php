@@ -846,11 +846,17 @@ class PurchaseTransactionController extends Controller
     }
 
     /**
-     * Generate next transaction number
+     * Generate next transaction number (per organization)
      */
     private function generateTrnNo()
     {
-        $lastTransaction = PurchaseTransaction::orderBy('id', 'desc')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastTransaction = PurchaseTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
+            
         $nextNumber = $lastTransaction ? (intval($lastTransaction->trn_no) + 1) : 1;
         return str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }

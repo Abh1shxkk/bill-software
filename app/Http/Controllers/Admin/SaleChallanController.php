@@ -761,11 +761,16 @@ class SaleChallanController extends Controller
     }
 
     /**
-     * Generate next challan number
+     * Generate next challan number (per organization)
      */
     private function generateChallanNo()
     {
-        $lastTransaction = SaleChallanTransaction::orderBy('id', 'desc')->first();
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        $lastTransaction = SaleChallanTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         $nextNumber = $lastTransaction ? (intval(preg_replace('/[^0-9]/', '', $lastTransaction->challan_no)) + 1) : 1;
         return 'SCH-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }

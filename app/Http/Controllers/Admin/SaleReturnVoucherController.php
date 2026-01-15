@@ -58,21 +58,25 @@ class SaleReturnVoucherController extends Controller
     }
 
     /**
-     * Generate next SR No - same sequence as Sale Return module
-     */
-    private function generateInvoiceNo()
-    {
-        // Use same sr_no sequence as Sale Return module (SR0001, SR0002, etc.)
-        $lastReturn = SaleReturnTransaction::orderBy('id', 'desc')->first();
-        if ($lastReturn && $lastReturn->sr_no) {
-            $lastNumber = (int) preg_replace('/[^0-9]/', '', $lastReturn->sr_no);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
-        return 'SR' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+ * Generate next SR No - same sequence as Sale Return module (per organization)
+ */
+private function generateInvoiceNo()
+{
+    $orgId = auth()->user()->organization_id ?? 1;
+    
+    // Use same sr_no sequence as Sale Return module (SR0001, SR0002, etc.)
+    $lastReturn = SaleReturnTransaction::withoutGlobalScopes()
+        ->where('organization_id', $orgId)
+        ->orderBy('id', 'desc')
+        ->first();
+    if ($lastReturn && $lastReturn->sr_no) {
+        $lastNumber = (int) preg_replace('/[^0-9]/', '', $lastReturn->sr_no);
+        $nextNumber = $lastNumber + 1;
+    } else {
+        $nextNumber = 1;
     }
-
+    return 'SR' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+}
     public function store(Request $request)
     {
         // Validate transaction date

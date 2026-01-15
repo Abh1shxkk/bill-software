@@ -48,27 +48,30 @@ class GodownBreakageExpiryTransaction extends Model
     }
 
     /**
-     * Generate next transaction number
-     */
-    public static function generateTrnNumber()
-    {
-        $prefix = 'GBE';
-        $year = date('y');
-        $month = date('m');
-        
-        $lastTransaction = self::where('trn_no', 'LIKE', "{$prefix}{$year}{$month}%")
-            ->orderBy('trn_no', 'desc')
-            ->first();
-        
-        if ($lastTransaction) {
-            $lastNumber = (int)substr($lastTransaction->trn_no, -3);
-            $newNumber = $lastNumber + 1;
-        } else {
-            $newNumber = 1;
-        }
-        
-        return $prefix . $year . $month . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+ * Generate next transaction number (per organization)
+ */
+public static function generateTrnNumber()
+{
+    $orgId = auth()->user()->organization_id ?? 1;
+    $prefix = 'GBE';
+    $year = date('y');
+    $month = date('m');
+    
+    $lastTransaction = self::withoutGlobalScopes()
+        ->where('organization_id', $orgId)
+        ->where('trn_no', 'LIKE', "{$prefix}{$year}{$month}%")
+        ->orderBy('trn_no', 'desc')
+        ->first();
+    
+    if ($lastTransaction) {
+        $lastNumber = (int)substr($lastTransaction->trn_no, -3);
+        $newNumber = $lastNumber + 1;
+    } else {
+        $newNumber = 1;
     }
+    
+    return $prefix . $year . $month . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+}
 
     /**
      * Get breakage/expiry types

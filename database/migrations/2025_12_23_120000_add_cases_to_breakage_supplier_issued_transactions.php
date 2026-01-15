@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('breakage_supplier_issued_transactions', 'cases')) {
+            return; // Column already exists, skip
+        }
+        
         Schema::table('breakage_supplier_issued_transactions', function (Blueprint $table) {
             $table->decimal('cases', 15, 2)->default(0)->nullable()->after('total_qty');
         });

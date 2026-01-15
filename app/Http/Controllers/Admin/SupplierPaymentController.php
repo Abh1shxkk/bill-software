@@ -50,7 +50,8 @@ class SupplierPaymentController extends Controller
         $suppliers = Supplier::where('is_deleted', 0)->orderBy('name')->get();
         $banks = CashBankBook::orderBy('name')->get();
         
-        $nextTrnNo = SupplierPayment::max('trn_no') + 1;
+        $orgId = auth()->user()->organization_id ?? 1;
+        $nextTrnNo = SupplierPayment::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no') + 1;
         if ($nextTrnNo < 1) $nextTrnNo = 1;
 
         return view('admin.supplier-payment.transaction', compact('suppliers', 'banks', 'nextTrnNo'));
@@ -80,7 +81,8 @@ class SupplierPaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            $nextTrnNo = SupplierPayment::max('trn_no') + 1;
+            $orgId = auth()->user()->organization_id ?? 1;
+            $nextTrnNo = SupplierPayment::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no') + 1;
             if ($nextTrnNo < 1) $nextTrnNo = 1;
 
             $dayName = date('l', strtotime($validated['payment_date']));
@@ -467,7 +469,8 @@ class SupplierPaymentController extends Controller
      */
     public function getNextTrnNo()
     {
-        $nextTrnNo = SupplierPayment::max('trn_no') + 1;
+        $orgId = auth()->user()->organization_id ?? 1;
+        $nextTrnNo = SupplierPayment::withoutGlobalScopes()->where('organization_id', $orgId)->max('trn_no') + 1;
         if ($nextTrnNo < 1) $nextTrnNo = 1;
 
         return response()->json([

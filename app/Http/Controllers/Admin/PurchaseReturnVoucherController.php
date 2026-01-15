@@ -56,12 +56,17 @@ class PurchaseReturnVoucherController extends Controller
     }
 
     /**
-     * Generate next PR No - same sequence as Purchase Return module
+     * Generate next PR No - same sequence as Purchase Return module (per organization)
      */
     private function generateInvoiceNo()
     {
+        $orgId = auth()->user()->organization_id ?? 1;
+        
         // Use same pr_no sequence as Purchase Return module (PR0001, PR0002, etc.)
-        $lastReturn = PurchaseReturnTransaction::orderBy('id', 'desc')->first();
+        $lastReturn = PurchaseReturnTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->orderBy('id', 'desc')
+            ->first();
         if ($lastReturn && $lastReturn->pr_no) {
             $lastNumber = (int) preg_replace('/[^0-9]/', '', $lastReturn->pr_no);
             $nextNumber = $lastNumber + 1;

@@ -77,17 +77,21 @@ class SaleVoucherController extends Controller
     }
 
     /**
-     * Generate next invoice number matching Sale module format
-     */
-    private function generateInvoiceNo()
-    {
-        // Only consider invoices with proper INV-XXXXXX format
-        $lastTransaction = SaleTransaction::where('invoice_no', 'LIKE', 'INV-%')
-            ->orderByRaw('CAST(SUBSTRING(invoice_no, 5) AS UNSIGNED) DESC')
-            ->first();
-        $nextNumber = $lastTransaction ? (intval(preg_replace('/[^0-9]/', '', $lastTransaction->invoice_no)) + 1) : 1;
-        return 'INV-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
-    }
+ * Generate next invoice number matching Sale module format (per organization)
+ */
+private function generateInvoiceNo()
+{
+    $orgId = auth()->user()->organization_id ?? 1;
+    
+    // Only consider invoices with proper INV-XXXXXX format
+    $lastTransaction = SaleTransaction::withoutGlobalScopes()
+        ->where('organization_id', $orgId)
+        ->where('invoice_no', 'LIKE', 'INV-%')
+        ->orderByRaw('CAST(SUBSTRING(invoice_no, 5) AS UNSIGNED) DESC')
+        ->first();
+    $nextNumber = $lastTransaction ? (intval(preg_replace('/[^0-9]/', '', $lastTransaction->invoice_no)) + 1) : 1;
+    return 'INV-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+}
 
     /**
      * Store a newly created voucher.
