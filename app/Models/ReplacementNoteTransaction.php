@@ -60,18 +60,28 @@ class ReplacementNoteTransaction extends Model
     public static function generateRNNumber()
     {
         $orgId = auth()->user()->organization_id ?? 1;
-        $lastTransaction = self::withoutGlobalScopes()
-            ->where('organization_id', $orgId)
-            ->orderBy('id', 'desc')
-            ->first();
         
-        if ($lastTransaction) {
-            $lastNumber = (int) substr($lastTransaction->rn_no, 2);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
+        // Get the maximum RN number by extracting the numeric part
+        $maxNumber = self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('rn_no', 'LIKE', 'RN%')
+            ->selectRaw("MAX(CAST(SUBSTRING(rn_no, 3) AS UNSIGNED)) as max_num")
+            ->value('max_num');
+        
+        $nextNumber = ($maxNumber ?? 0) + 1;
+        
+        // Generate number and check if it already exists (race condition protection)
+        $rnNo = 'RN' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        
+        // Double-check to avoid duplicates
+        while (self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('rn_no', $rnNo)
+            ->exists()) {
+            $nextNumber++;
+            $rnNo = 'RN' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         }
         
-        return 'RN' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+        return $rnNo;
     }
 }

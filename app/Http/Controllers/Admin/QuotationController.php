@@ -277,6 +277,63 @@ class QuotationController extends Controller
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+    
+    /**
+     * Search items with AJAX pagination for better performance
+     */
+    public function searchItems(Request $request)
+    {
+        $search = $request->get('q', '');
+        $page = $request->get('page', 1);
+        $perPage = 30;
+        
+        try {
+            $query = Item::select('id', 'name', 'bar_code', 'hsn_code', 'packing', 'company_short_name', 's_rate', 'mrp', 'unit')
+                ->where(function($q) {
+                    $q->where('is_deleted', 0)
+                      ->orWhere('is_deleted', '0')
+                      ->orWhereNull('is_deleted');
+                });
+            
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('bar_code', 'LIKE', "%{$search}%")
+                      ->orWhere('company_short_name', 'LIKE', "%{$search}%");
+                });
+            }
+            
+            $total = $query->count();
+            $items = $query->orderBy('name')
+                ->skip(($page - 1) * $perPage)
+                ->take($perPage)
+                ->get()
+                ->map(function($item) {
+                    return [
+                        'id' => $item->id,
+                        'name' => $item->name,
+                        'bar_code' => $item->bar_code ?? '',
+                        'packing' => $item->packing ?? '',
+                        'company_name' => $item->company_short_name ?? '',
+                        's_rate' => $item->s_rate ?? 0,
+                        'mrp' => $item->mrp ?? 0,
+                        'unit' => $item->unit ?? '1',
+                    ];
+                });
+            
+            return response()->json([
+                'results' => $items,
+                'pagination' => [
+                    'more' => ($page * $perPage) < $total
+                ],
+                'total' => $total
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Item search error: ' . $e->getMessage());
+            return response()->json(['results' => [], 'pagination' => ['more' => false]]);
+        }
+    }
 
     public function getBatches($itemId)
     {

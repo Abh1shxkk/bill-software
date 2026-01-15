@@ -99,12 +99,10 @@
                             </div>
                             <div class="col-12">
                                 <label for="partySelect" class="form-label">Party Name <span class="text-danger">*</span></label>
-                                <select class="form-select" id="partySelect" name="debit_party_id">
-                                    <option value="">Select Party</option>
-                                    @foreach($suppliers as $supplier)
-                                        <option value="{{ $supplier->supplier_id }}" data-type="S">{{ $supplier->name }}</option>
-                                    @endforeach
+                                <select class="form-select no-select2" id="partySelect" name="debit_party_id">
+                                    <option value="">Type to search...</option>
                                 </select>
+                                <small class="text-muted">Start typing to search for suppliers</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="salesmanSelect" class="form-label">Sales Man</label>
@@ -395,20 +393,97 @@
 <script>
 let hsnRowCount = 0;
 let currentDebitNoteId = null;
+let currentPartyType = 'S'; // S = Supplier, C = Customer
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     
+    // Initialize Select2 AJAX for party dropdown
+    initPartySelect2();
+    
     document.getElementById('debitNoteDate').addEventListener('change', updateDayName);
     
     document.querySelectorAll('input[name="debit_party_type"]').forEach(radio => {
-        radio.addEventListener('change', updatePartyDropdown);
+        radio.addEventListener('change', function() {
+            currentPartyType = this.value;
+            updatePartyDropdown();
+        });
     });
     
     @if($preloadDebitNoteNo)
         searchDebitNote();
     @endif
 });
+
+// Initialize Select2 with AJAX for party dropdown
+function initPartySelect2() {
+    const $partySelect = $('#partySelect');
+    
+    // Destroy existing Select2 if any
+    if ($partySelect.hasClass('select2-hidden-accessible')) {
+        $partySelect.select2('destroy');
+    }
+    
+    // Clear the select
+    $partySelect.empty().append('<option value="">Type to search...</option>');
+    
+    const searchUrl = '{{ route("admin.debit-note.search-parties") }}';
+    console.log('Initializing Party Select2 with URL:', searchUrl, 'Party Type:', currentPartyType);
+    
+    $partySelect.select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: currentPartyType === 'S' ? 'Search supplier...' : 'Search customer...',
+        allowClear: true,
+        minimumInputLength: 0,
+        ajax: {
+            url: searchUrl,
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                console.log('Making AJAX request with:', params.term, currentPartyType);
+                return {
+                    q: params.term || '',
+                    party_type: currentPartyType,
+                    page: params.page || 1
+                };
+            },
+            processResults: function(data, params) {
+                console.log('Received results:', data);
+                params.page = params.page || 1;
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination ? data.pagination.more : false
+                    }
+                };
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error, xhr.responseText);
+            },
+            cache: true
+        },
+        language: {
+            searching: function() {
+                return 'Searching...';
+            },
+            noResults: function() {
+                return 'No results found';
+            },
+            loadingMore: function() {
+                return 'Loading more...';
+            },
+            errorLoading: function() {
+                return 'Error loading results';
+            }
+        }
+    }).on('select2:select', function(e) {
+        const selectedData = e.params.data;
+        if (selectedData) {
+            console.log('Selected party:', selectedData);
+        }
+    });
+}
 
 function updateDayName() {
     const dateInput = document.getElementById('debitNoteDate');
@@ -420,20 +495,17 @@ function updateDayName() {
 }
 
 function updatePartyDropdown() {
-    const partyType = document.querySelector('input[name="debit_party_type"]:checked').value;
-    const partySelect = document.getElementById('partySelect');
+    // Clear current selection
+    $('#partySelect').val(null).trigger('change');
     
-    partySelect.innerHTML = '<option value="">Select Party</option>';
-    
-    if (partyType === 'S') {
-        @foreach($suppliers as $supplier)
-            partySelect.innerHTML += '<option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>';
-        @endforeach
-    } else {
-        @foreach($customers as $customer)
-            partySelect.innerHTML += '<option value="{{ $customer->id }}">{{ $customer->name }}</option>';
-        @endforeach
+    // Update help text
+    const helpText = document.querySelector('#partySelect + small');
+    if (helpText) {
+        helpText.textContent = currentPartyType === 'S' ? 'Start typing to search for suppliers' : 'Start typing to search for customers';
     }
+    
+    // Reinitialize Select2 with updated party type
+    initPartySelect2();
 }
 
 function searchDebitNote() {
@@ -459,53 +531,46 @@ function searchDebitNote() {
 }
 
 function populateDebitNoteData(dn) {
+    console.log('Populating debit note data:', dn);
+    
     document.getElementById('debitNoteId').value = dn.id;
     document.getElementById('debitNoteNo').value = dn.debit_note_no;
     document.getElementById('debitNoteDate').value = dn.debit_note_date ? dn.debit_note_date.split('T')[0] : '';
     updateDayName();
     
+    // Set party type
+    currentPartyType = dn.debit_party_type || 'S';
     if (dn.debit_party_type === 'C') {
         document.getElementById('partyCustomer').checked = true;
-        updatePartyDropdown();
     } else {
         document.getElementById('partySupplier').checked = true;
-        updatePartyDropdown();
     }
     
-    setTimeout(() => {
-        const partySelect = document.getElementById('partySelect');
-        const partyId = dn.debit_party_id || '';
-        if (partySelect) {
-            const hasOption = Array.from(partySelect.options).some(o => o.value == partyId);
-            if (!hasOption && partyId) {
-                const opt = document.createElement('option');
-                opt.value = partyId;
-                // Prefer saved name; fallback to relation names
-                const partyName = dn.debit_party_name || dn?.supplier?.name || dn?.customer?.name || 'Selected Party';
-                opt.text = partyName;
-                partySelect.add(opt);
-            }
-            partySelect.value = partyId;
+    // Initialize Select2 with the current party type
+    initPartySelect2();
+    
+    // Pre-select the party in Select2 - use setTimeout to ensure Select2 is fully initialized
+    setTimeout(function() {
+        if (dn.debit_party_id && dn.debit_party_name) {
+            const $partySelect = $('#partySelect');
+            // Clear existing options first
+            $partySelect.empty();
+            // Create and append the option
+            const newOption = new Option(dn.debit_party_name, dn.debit_party_id, true, true);
+            $partySelect.append(newOption).trigger('change');
+            console.log('Pre-selected party:', dn.debit_party_name, dn.debit_party_id);
+        }
+        
+        // Set salesman and reason using jQuery for Select2 compatibility
+        if (dn.salesman_id) {
+            $('#salesmanSelect').val(dn.salesman_id).trigger('change');
+            console.log('Pre-selected salesman:', dn.salesman_id);
+        }
+        if (dn.reason) {
+            $('#reason').val(dn.reason).trigger('change');
+            console.log('Pre-selected reason:', dn.reason);
         }
     }, 100);
-    
-    // Ensure salesman is selectable even if not in current list (e.g., inactive/deleted)
-    (function ensureSalesman() {
-        const salesmanSelect = document.getElementById('salesmanSelect');
-        const salesmanId = dn.salesman_id || '';
-        if (salesmanSelect) {
-            const hasOption = Array.from(salesmanSelect.options).some(o => o.value == salesmanId);
-            if (!hasOption && salesmanId) {
-                const opt = document.createElement('option');
-                opt.value = salesmanId;
-                const smName = dn?.salesman?.name || 'Selected Salesman';
-                opt.text = smName;
-                salesmanSelect.add(opt);
-            }
-            salesmanSelect.value = salesmanId;
-        }
-    })();
-    document.getElementById('reason').value = dn.reason || '';
     
     if (dn.credit_account_type === 'S') {
         document.getElementById('accountSale').checked = true;
@@ -680,8 +745,10 @@ function updateDebitNote() {
         }
     });
     
-    const partySelect = document.getElementById('partySelect');
-    const partyName = partySelect?.options[partySelect?.selectedIndex]?.text || '';
+    // Get party name from Select2 selected data
+    const $partySelect = $('#partySelect');
+    const selectedData = $partySelect.select2('data')[0];
+    const partyName = selectedData ? selectedData.text : '';
     
     const data = {
         header: {

@@ -281,8 +281,26 @@ class ReplacementNoteController extends Controller
     public function getDetails($id)
     {
         try {
-            $transaction = ReplacementNoteTransaction::with(['items.batch:id,s_rate,mrp,location', 'supplier:supplier_id,name'])
-                ->findOrFail($id);
+            // First check if record exists at all (without global scope)
+            $exists = ReplacementNoteTransaction::withoutGlobalScopes()->find($id);
+            
+            if (!$exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction not found with ID: ' . $id
+                ], 404);
+            }
+            
+            // Now check with global scope (organization filter)
+            $transaction = ReplacementNoteTransaction::with(['items.batch', 'supplier:supplier_id,name'])
+                ->find($id);
+            
+            if (!$transaction) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction #' . $id . ' belongs to a different organization'
+                ], 403);
+            }
 
             // Add s_rate from batch to items
             $items = $transaction->items->map(function($item) {
@@ -298,6 +316,7 @@ class ReplacementNoteController extends Controller
                 'items' => $items
             ]);
         } catch (\Exception $e) {
+            \Log::error('Replacement Note getDetails Error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error loading transaction: ' . $e->getMessage()

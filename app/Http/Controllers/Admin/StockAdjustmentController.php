@@ -402,7 +402,7 @@ class StockAdjustmentController extends Controller
                 'adjustment' => [
                     'id' => $stockAdjustment->id,
                     'trn_no' => $stockAdjustment->trn_no,
-                    'adjustment_date' => $stockAdjustment->adjustment_date,
+                    'adjustment_date' => $stockAdjustment->adjustment_date ? $stockAdjustment->adjustment_date->format('Y-m-d') : null,
                     'remarks' => $stockAdjustment->remarks,
                     'total_amount' => $stockAdjustment->total_amount,
                     'items' => $formattedItems

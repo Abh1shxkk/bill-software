@@ -204,11 +204,14 @@
 @push('scripts')
 <script>
 let currentRowIndex = 0;
-let itemsData = [];
+let itemsData = []; // Kept for storing selected items for batch processing
 let selectedRowIndex = null;
+let currentPage = 1;
+let isLoadingItems = false;
+let hasMoreItems = true;
+let currentSearchTerm = '';
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadItems();
     addNewRow();
 });
 
@@ -234,11 +237,96 @@ function updateCustomerName() {
     }
 }
 
-function loadItems() {
-    fetch('{{ route("admin.quotation.getItems") }}')
+// Debounce helper
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// Search items via AJAX
+function searchItemsAjax(search = '', page = 1) {
+    if (isLoadingItems) return;
+    isLoadingItems = true;
+    
+    const tbody = document.getElementById('itemsListBody');
+    if (page === 1) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center"><i class="bi bi-hourglass-split"></i> Loading...</td></tr>';
+    }
+    
+    fetch(`{{ route("admin.quotation.searchItems") }}?q=${encodeURIComponent(search)}&page=${page}`)
         .then(response => response.json())
-        .then(data => { itemsData = data || []; })
-        .catch(error => console.error('Error loading items:', error));
+        .then(data => {
+            const items = data.results || [];
+            hasMoreItems = data.pagination?.more || false;
+            
+            if (page === 1) {
+                tbody.innerHTML = '';
+                itemsData = []; // Clear stored items for new search
+            }
+            
+            if (items.length === 0 && page === 1) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items found</td></tr>';
+                return;
+            }
+            
+            // Store items for batch processing
+            items.forEach(item => {
+                if (!itemsData.find(i => i.id === item.id)) {
+                    itemsData.push(item);
+                }
+            });
+            
+            // Render items
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'item-row';
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => selectItem(item.id);
+                tr.innerHTML = `
+                    <td>${item.bar_code || ''}</td>
+                    <td>${item.name || ''}</td>
+                    <td>${item.packing || ''}</td>
+                    <td>${item.company_name || ''}</td>
+                    <td class="text-end">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
+                    <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            isLoadingItems = false;
+        })
+        .catch(error => {
+            console.error('Error searching items:', error);
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading items</td></tr>';
+            isLoadingItems = false;
+        });
+}
+
+// Debounced search handler
+const debouncedSearch = debounce(function(search) {
+    currentSearchTerm = search;
+    currentPage = 1;
+    hasMoreItems = true;
+    searchItemsAjax(search, 1);
+}, 300);
+
+function filterItems() {
+    const search = document.getElementById('itemSearchInput').value;
+    debouncedSearch(search);
+}
+
+// Handle scroll for infinite loading
+function handleItemsScroll(event) {
+    const container = event.target;
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 50) {
+        if (hasMoreItems && !isLoadingItems) {
+            currentPage++;
+            searchItemsAjax(currentSearchTerm, currentPage);
+        }
+    }
 }
 
 function addNewRow() {
@@ -342,6 +430,9 @@ function handleCodeKeydown(event, rowIndex) {
 
 function showItemModal(rowIndex) {
     selectedRowIndex = rowIndex;
+    currentSearchTerm = '';
+    currentPage = 1;
+    hasMoreItems = true;
     
     let html = `
         <div class="batch-modal-backdrop show" id="itemModalBackdrop"></div>
@@ -352,9 +443,9 @@ function showItemModal(rowIndex) {
             </div>
             <div class="modal-body-custom">
                 <div class="mb-3">
-                    <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by name or code..." onkeyup="filterItems()">
+                    <input type="text" class="form-control" id="itemSearchInput" placeholder="Type to search by name or code..." onkeyup="filterItems()">
                 </div>
-                <div class="table-responsive" style="max-height: 300px;">
+                <div class="table-responsive" style="max-height: 300px;" onscroll="handleItemsScroll(event)">
                     <table class="table table-bordered table-sm" style="font-size: 11px;">
                         <thead class="table-success" style="position: sticky; top: 0;">
                             <tr>
@@ -377,32 +468,8 @@ function showItemModal(rowIndex) {
     
     document.body.insertAdjacentHTML('beforeend', html);
     document.getElementById('itemSearchInput')?.focus();
-    renderItemsList();
-}
-
-function renderItemsList(filter = '') {
-    const tbody = document.getElementById('itemsListBody');
-    const filtered = itemsData.filter(item => 
-        !filter || 
-        item.name?.toLowerCase().includes(filter.toLowerCase()) ||
-        item.bar_code?.toLowerCase().includes(filter.toLowerCase())
-    );
-    
-    tbody.innerHTML = filtered.map(item => `
-        <tr class="item-row" onclick="selectItem(${item.id})" style="cursor: pointer;">
-            <td>${item.bar_code || ''}</td>
-            <td>${item.name || ''}</td>
-            <td>${item.packing || ''}</td>
-            <td>${item.company_name || ''}</td>
-            <td class="text-end">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
-        </tr>
-    `).join('');
-}
-
-function filterItems() {
-    const search = document.getElementById('itemSearchInput').value;
-    renderItemsList(search);
+    // Load initial items
+    searchItemsAjax('', 1);
 }
 
 function selectItem(itemId) {
@@ -553,6 +620,12 @@ function closeBatchModal() {
 
 // Add Items Modal - allows selecting multiple items at once
 function showAddItemsModal() {
+    // Reset state
+    addItemsPage = 1;
+    hasMoreAddItems = true;
+    addItemsSearchTerm = '';
+    addItemsData = [];
+    
     let html = `
         <div class="batch-modal-backdrop show" id="addItemsModalBackdrop"></div>
         <div class="batch-modal show" id="addItemsModal" style="max-width: 900px;">
@@ -562,11 +635,11 @@ function showAddItemsModal() {
             </div>
             <div class="modal-body-custom">
                 <div class="mb-3">
-                    <input type="text" class="form-control" id="addItemsSearchInput" placeholder="Search by name or code..." onkeyup="filterAddItems()">
+                    <input type="text" class="form-control" id="addItemsSearchInput" placeholder="Type to search by name or code..." onkeyup="filterAddItems()">
                 </div>
-                <div class="table-responsive" style="max-height: 350px;">
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                     <table class="table table-bordered table-sm" style="font-size: 11px;">
-                        <thead class="table-success" style="position: sticky; top: 0;">
+                        <thead class="table-success" style="position: sticky; top: 0; z-index: 1;">
                             <tr>
                                 <th style="width: 40px;"><input type="checkbox" id="selectAllItems" onchange="toggleSelectAllItems()"></th>
                                 <th>Code</th>
@@ -575,11 +648,17 @@ function showAddItemsModal() {
                                 <th>Company</th>
                                 <th class="text-end">Rate</th>
                                 <th class="text-end">MRP</th>
-                                <th class="text-end">Qty</th>
+                                <th style="width: 80px;" class="text-end">Qty</th>
                             </tr>
                         </thead>
                         <tbody id="addItemsListBody"></tbody>
                     </table>
+                </div>
+                <div class="text-center mt-2" id="loadMoreContainer" style="display: none;">
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadMoreAddItems()">
+                        <i class="bi bi-arrow-down-circle"></i> Load More Items
+                    </button>
+                    <span id="addItemsCount" class="ms-2 text-muted small"></span>
                 </div>
             </div>
             <div class="modal-footer-custom">
@@ -592,34 +671,118 @@ function showAddItemsModal() {
     
     document.body.insertAdjacentHTML('beforeend', html);
     document.getElementById('addItemsSearchInput')?.focus();
-    renderAddItemsList();
+    // Load initial items via AJAX
+    searchAddItemsAjax('', 1);
 }
 
-function renderAddItemsList(filter = '') {
-    const tbody = document.getElementById('addItemsListBody');
-    const filtered = itemsData.filter(item => 
-        !filter || 
-        item.name?.toLowerCase().includes(filter.toLowerCase()) ||
-        item.bar_code?.toLowerCase().includes(filter.toLowerCase())
-    );
+// Variables for Add Items modal
+let addItemsPage = 1;
+let isLoadingAddItems = false;
+let hasMoreAddItems = true;
+let addItemsSearchTerm = '';
+let addItemsData = []; // Store loaded items for this modal
+
+// Search items for Add Items modal
+function searchAddItemsAjax(search = '', page = 1) {
+    if (isLoadingAddItems) return;
+    isLoadingAddItems = true;
     
-    tbody.innerHTML = filtered.map(item => `
-        <tr class="item-row">
-            <td class="text-center"><input type="checkbox" class="item-checkbox" data-item-id="${item.id}"></td>
-            <td>${item.bar_code || ''}</td>
-            <td>${item.name || ''}</td>
-            <td>${item.packing || ''}</td>
-            <td>${item.company_name || ''}</td>
-            <td class="text-end">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
-            <td><input type="number" class="form-control form-control-sm text-end item-qty" data-item-id="${item.id}" value="1" min="1" step="0.001" style="width: 70px;"></td>
-        </tr>
-    `).join('');
+    const tbody = document.getElementById('addItemsListBody');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    const itemsCountSpan = document.getElementById('addItemsCount');
+    
+    if (page === 1) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center"><i class="bi bi-hourglass-split"></i> Loading...</td></tr>';
+        addItemsData = [];
+        if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+    }
+    
+    fetch(`{{ route("admin.quotation.searchItems") }}?q=${encodeURIComponent(search)}&page=${page}`)
+        .then(response => response.json())
+        .then(data => {
+            const items = data.results || [];
+            hasMoreAddItems = data.pagination?.more || false;
+            const total = data.total || 0;
+            
+            if (page === 1) {
+                tbody.innerHTML = '';
+            }
+            
+            if (items.length === 0 && page === 1) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No items found</td></tr>';
+                if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+                isLoadingAddItems = false;
+                return;
+            }
+            
+            // Store items for selection
+            items.forEach(item => {
+                if (!addItemsData.find(i => i.id === item.id)) {
+                    addItemsData.push(item);
+                }
+            });
+            
+            // Render items
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'item-row';
+                tr.innerHTML = `
+                    <td class="text-center"><input type="checkbox" class="item-checkbox" data-item-id="${item.id}"></td>
+                    <td>${item.bar_code || ''}</td>
+                    <td>${item.name || ''}</td>
+                    <td>${item.packing || ''}</td>
+                    <td>${item.company_name || ''}</td>
+                    <td class="text-end">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
+                    <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
+                    <td><input type="number" class="form-control form-control-sm text-end item-qty" data-item-id="${item.id}" value="1" min="1" step="0.001" style="width: 70px;"></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Show/hide Load More button
+            if (loadMoreContainer) {
+                loadMoreContainer.style.display = hasMoreAddItems ? 'block' : 'none';
+            }
+            
+            // Update count
+            if (itemsCountSpan) {
+                itemsCountSpan.textContent = `Showing ${addItemsData.length} of ${total} items`;
+            }
+            
+            isLoadingAddItems = false;
+        })
+        .catch(error => {
+            console.error('Error searching items:', error);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading items</td></tr>';
+            if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+            isLoadingAddItems = false;
+        });
 }
+
+// Load More button handler
+function loadMoreAddItems() {
+    if (hasMoreAddItems && !isLoadingAddItems) {
+        addItemsPage++;
+        searchAddItemsAjax(addItemsSearchTerm, addItemsPage);
+    }
+}
+
+// Debounced search for Add Items modal
+const debouncedAddItemsSearch = debounce(function(search) {
+    addItemsSearchTerm = search;
+    addItemsPage = 1;
+    hasMoreAddItems = true;
+    searchAddItemsAjax(search, 1);
+}, 300);
 
 function filterAddItems() {
     const search = document.getElementById('addItemsSearchInput').value;
-    renderAddItemsList(search);
+    debouncedAddItemsSearch(search);
+}
+
+// Keep scroll handler for convenience (optional auto-load)
+function handleAddItemsScroll(event) {
+    // Disabled - using Load More button instead
 }
 
 function toggleSelectAllItems() {
@@ -639,7 +802,8 @@ function addSelectedItems() {
     window.pendingItems = [];
     selectedCheckboxes.forEach(checkbox => {
         const itemId = parseInt(checkbox.dataset.itemId);
-        const item = itemsData.find(i => i.id === itemId);
+        // Use addItemsData which contains the AJAX-loaded items
+        const item = addItemsData.find(i => i.id === itemId);
         if (item) {
             const qtyInput = document.querySelector(`.item-qty[data-item-id="${itemId}"]`);
             const qty = parseFloat(qtyInput?.value) || 1;

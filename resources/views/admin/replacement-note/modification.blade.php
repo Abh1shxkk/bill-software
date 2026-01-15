@@ -165,15 +165,27 @@ function loadItems() {
 }
 
 function loadTransaction(id) {
+    console.log('Loading transaction ID:', id);
     fetch(`{{ url('admin/replacement-note/details') }}/${id}`)
-        .then(r => r.json())
+        .then(r => {
+            if (!r.ok) throw new Error('Network response not ok: ' + r.status);
+            return r.json();
+        })
         .then(d => {
+            console.log('Transaction data received:', d);
             if (d.success) {
                 populateForm(d.transaction, d.items);
                 currentTransactionId = id;
                 document.getElementById('deleteBtn').disabled = false;
+            } else {
+                console.error('Failed to load transaction:', d.message);
+                alert('Failed to load transaction: ' + (d.message || 'Unknown error'));
             }
-        }).catch(e => console.error(e));
+        })
+        .catch(e => {
+            console.error('Load transaction error:', e);
+            alert('Error loading transaction: ' + e.message);
+        });
 }
 
 function populateForm(t, items) {

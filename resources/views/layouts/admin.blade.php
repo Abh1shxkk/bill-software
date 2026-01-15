@@ -1542,6 +1542,7 @@
     @vite(['resources/js/app.js'])
     @csrf
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="base-url" content="{{ rtrim(config('app.url'), '/') }}">
 </head>
 
 <body>
@@ -2258,7 +2259,7 @@
     </script>
 
     <!-- Transaction Date Validator - Global Script -->
-    <script src="{{ asset('js/transaction-date-validator.js') }}"></script>
+    <script src="{{ asset('js/transaction-date-validator.js') }}?v={{ time() }}"></script>
 
     @stack('scripts')
 

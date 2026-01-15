@@ -63,17 +63,29 @@ class ReplacementReceivedTransaction extends Model
 
     public static function generateRRNumber()
     {
-        $lastTransaction = self::whereNotNull('rr_no')
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if (!$lastTransaction || !$lastTransaction->rr_no) {
-            return 'RR00001';
-        }
-
-        $lastNumber = (int) substr($lastTransaction->rr_no, 2);
-        $newNumber = $lastNumber + 1;
+        $orgId = auth()->user()->organization_id ?? 1;
         
-        return 'RR' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+        // Get the maximum RR number by extracting the numeric part
+        $maxNumber = self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('rr_no', 'LIKE', 'RR%')
+            ->selectRaw("MAX(CAST(SUBSTRING(rr_no, 3) AS UNSIGNED)) as max_num")
+            ->value('max_num');
+        
+        $nextNumber = ($maxNumber ?? 0) + 1;
+        
+        // Generate number and check if it already exists (race condition protection)
+        $rrNo = 'RR' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        
+        // Double-check to avoid duplicates
+        while (self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('rr_no', $rrNo)
+            ->exists()) {
+            $nextNumber++;
+            $rrNo = 'RR' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        }
+        
+        return $rrNo;
     }
 }

@@ -46,16 +46,16 @@ class TransactionDateValidator
         'cash_bank' => ['table' => 'bank_transactions', 'date_column' => 'transaction_date'],
         
         // Notes
-        'credit_note' => ['table' => 'credit_notes', 'date_column' => 'note_date'],
-        'debit_note' => ['table' => 'debit_notes', 'date_column' => 'note_date'],
+        'credit_note' => ['table' => 'credit_notes', 'date_column' => 'credit_note_date'],
+        'debit_note' => ['table' => 'debit_notes', 'date_column' => 'debit_note_date'],
         'replacement_note' => ['table' => 'replacement_note_transactions', 'date_column' => 'transaction_date'],
         'replacement_received' => ['table' => 'replacement_received_transactions', 'date_column' => 'transaction_date'],
         
         // Stock
         'stock_adjustment' => ['table' => 'stock_adjustments', 'date_column' => 'adjustment_date'],
-        'stock_transfer_outgoing' => ['table' => 'stock_transfer_outgoing_transactions', 'date_column' => 'transfer_date'],
+        'stock_transfer_outgoing' => ['table' => 'stock_transfer_outgoing_transactions', 'date_column' => 'transaction_date'],
         'stock_transfer_outgoing_return' => ['table' => 'stock_transfer_outgoing_return_transactions', 'date_column' => 'return_date'],
-        'stock_transfer_incoming' => ['table' => 'stock_transfer_incoming_transactions', 'date_column' => 'transfer_date'],
+        'stock_transfer_incoming' => ['table' => 'stock_transfer_incoming_transactions', 'date_column' => 'transaction_date'],
         'stock_transfer_incoming_return' => ['table' => 'stock_transfer_incoming_return_transactions', 'date_column' => 'return_date'],
         
         // Samples

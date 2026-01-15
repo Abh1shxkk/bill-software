@@ -1046,6 +1046,7 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('credit-note/invoices', [CreditNoteController::class, 'invoices'])->name('credit-note.invoices');
         Route::get('credit-note/fetch/{creditNoteNo}', [CreditNoteController::class, 'fetchByNumber'])->name('credit-note.fetch');
         Route::get('credit-note/next-number', [CreditNoteController::class, 'getNextCreditNoteNo'])->name('credit-note.next-number');
+        Route::get('credit-note/search-parties', [CreditNoteController::class, 'searchParties'])->name('credit-note.search-parties');
         Route::post('credit-note/store', [CreditNoteController::class, 'store'])->name('credit-note.store');
         Route::post('credit-note/party-invoices', [CreditNoteController::class, 'getPartyInvoices'])->name('credit-note.party-invoices');
         Route::get('credit-note/{id}/adjustments', [CreditNoteController::class, 'getAdjustments'])->name('credit-note.adjustments');
@@ -1060,6 +1061,7 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('debit-note/invoices', [DebitNoteController::class, 'invoices'])->name('debit-note.invoices');
         Route::get('debit-note/fetch/{debitNoteNo}', [DebitNoteController::class, 'fetchByNumber'])->name('debit-note.fetch');
         Route::get('debit-note/next-number', [DebitNoteController::class, 'getNextDebitNoteNo'])->name('debit-note.next-number');
+        Route::get('debit-note/search-parties', [DebitNoteController::class, 'searchParties'])->name('debit-note.search-parties');
         Route::post('debit-note/store', [DebitNoteController::class, 'store'])->name('debit-note.store');
         Route::put('debit-note/{id}', [DebitNoteController::class, 'update'])->name('debit-note.update');
         Route::delete('debit-note/{id}', [DebitNoteController::class, 'destroy'])->name('debit-note.destroy');
@@ -1116,6 +1118,7 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('quotation/transaction', [\App\Http\Controllers\Admin\QuotationController::class, 'transaction'])->name('quotation.transaction');
         Route::get('quotation/modification', [\App\Http\Controllers\Admin\QuotationController::class, 'modification'])->name('quotation.modification');
         Route::get('quotation/get-items', [\App\Http\Controllers\Admin\QuotationController::class, 'getItems'])->name('quotation.getItems');
+        Route::get('quotation/search-items', [\App\Http\Controllers\Admin\QuotationController::class, 'searchItems'])->name('quotation.searchItems');
         Route::get('quotation/get-batches/{itemId}', [\App\Http\Controllers\Admin\QuotationController::class, 'getBatches'])->name('quotation.getBatches');
         Route::get('quotation/get-quotations', [\App\Http\Controllers\Admin\QuotationController::class, 'getQuotations'])->name('quotation.getQuotations');
         Route::post('quotation', [\App\Http\Controllers\Admin\QuotationController::class, 'store'])->name('quotation.store');

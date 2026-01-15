@@ -25,12 +25,11 @@ class DebitNoteController extends Controller
      */
     public function transaction()
     {
-        $suppliers = Supplier::where('is_deleted', '!=', 1)->orderBy('name')->get();
-        $customers = Customer::where('is_deleted', '!=', 1)->orderBy('name')->get();
+        // Suppliers/Customers will be loaded via AJAX search to avoid performance issues with large datasets
         $salesmen = SalesMan::all();
         $nextDebitNoteNo = $this->generateDebitNoteNo();
         
-        return view('admin.debit-note.transaction', compact('suppliers', 'customers', 'salesmen', 'nextDebitNoteNo'));
+        return view('admin.debit-note.transaction', compact('salesmen', 'nextDebitNoteNo'));
     }
 
     /**
@@ -38,14 +37,13 @@ class DebitNoteController extends Controller
      */
     public function modification(Request $request, $debit_note_no = null)
     {
-        $suppliers = Supplier::where('is_deleted', '!=', 1)->orderBy('name')->get();
-        $customers = Customer::where('is_deleted', '!=', 1)->orderBy('name')->get();
+        // Suppliers/Customers will be loaded via AJAX search to avoid performance issues
         $salesmen = SalesMan::all();
         
         // Support both route param and query param ?debit_note_no=
         $preloadDebitNoteNo = $debit_note_no ?: $request->query('debit_note_no');
         
-        return view('admin.debit-note.modification', compact('suppliers', 'customers', 'salesmen', 'preloadDebitNoteNo'));
+        return view('admin.debit-note.modification', compact('salesmen', 'preloadDebitNoteNo'));
     }
 
     /**
@@ -390,20 +388,29 @@ class DebitNoteController extends Controller
     }
 
     /**
-     * Generate debit note number
+     * Generate debit note number (organization-specific with prefix)
      */
     private function generateDebitNoteNo()
     {
+        $orgId = auth()->user()->organization_id ?? 1;
+        
+        // Get the highest debit note number for this organization
         $lastDebitNote = DebitNote::withTrashed()
+            ->withoutGlobalScopes()
+            ->where('organization_id', $orgId)
             ->orderBy('id', 'desc')
             ->first();
 
         if ($lastDebitNote) {
+            // Extract number from debit_note_no (handles formats like "DN-000001" or just "1")
             $lastNumber = intval(preg_replace('/[^0-9]/', '', $lastDebitNote->debit_note_no));
-            return $lastNumber + 1;
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
         }
-
-        return 1;
+        
+        // Return formatted number with prefix
+        return 'DN-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -833,6 +840,84 @@ class DebitNoteController extends Controller
                 'success' => false,
                 'message' => 'Error fetching past adjustments'
             ], 500);
+        }
+    }
+    
+    /**
+     * Search parties (suppliers or customers) for AJAX dropdown
+     */
+    public function searchParties(Request $request)
+    {
+        $partyType = $request->get('party_type', 'S'); // S = Supplier, C = Customer
+        $search = $request->get('q', '');
+        $page = $request->get('page', 1);
+        $perPage = 20;
+        
+        try {
+            if ($partyType === 'S') {
+                $query = Supplier::where('is_deleted', '!=', 1);
+                
+                if ($search) {
+                    $query->where(function($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                          ->orWhere('code', 'LIKE', "%{$search}%")
+                          ->orWhere('address', 'LIKE', "%{$search}%");
+                    });
+                }
+                
+                $total = $query->count();
+                $parties = $query->orderBy('name')
+                    ->skip(($page - 1) * $perPage)
+                    ->take($perPage)
+                    ->get(['supplier_id', 'name', 'code', 'address']);
+                
+                // Format for Select2
+                $results = $parties->map(function($party) {
+                    return [
+                        'id' => $party->supplier_id,
+                        'text' => $party->name . ($party->code ? " [{$party->code}]" : ''),
+                        'name' => $party->name,
+                        'code' => $party->code ?? ''
+                    ];
+                });
+            } else {
+                $query = Customer::where('is_deleted', '!=', 1);
+                
+                if ($search) {
+                    $query->where(function($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                          ->orWhere('code', 'LIKE', "%{$search}%")
+                          ->orWhere('city', 'LIKE', "%{$search}%");
+                    });
+                }
+                
+                $total = $query->count();
+                $parties = $query->orderBy('name')
+                    ->skip(($page - 1) * $perPage)
+                    ->take($perPage)
+                    ->get(['id', 'name', 'code', 'city']);
+                
+                // Format for Select2
+                $results = $parties->map(function($party) {
+                    return [
+                        'id' => $party->id,
+                        'text' => $party->name . ($party->city ? " ({$party->city})" : ''),
+                        'name' => $party->name,
+                        'code' => $party->code ?? ''
+                    ];
+                });
+            }
+            
+            return response()->json([
+                'results' => $results,
+                'pagination' => [
+                    'more' => ($page * $perPage) < $total
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Party search error: ' . $e->getMessage());
+            return response()->json(['results' => [], 'pagination' => ['more' => false]]);
         }
     }
 }

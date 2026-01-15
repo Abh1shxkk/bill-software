@@ -99,12 +99,10 @@
                             </div>
                             <div class="col-12">
                                 <label for="partySelect" class="form-label">Party Name <span class="text-danger">*</span></label>
-                                <select class="form-select" id="partySelect" name="credit_party_id">
-                                    <option value="">Select Party</option>
-                                    @foreach($suppliers as $supplier)
-                                        <option value="{{ $supplier->supplier_id }}" data-type="S">{{ $supplier->name }}</option>
-                                    @endforeach
+                                <select class="form-select no-select2" id="partySelect" name="credit_party_id">
+                                    <option value="">Type to search...</option>
                                 </select>
+                                <small class="text-muted">Start typing to search for suppliers</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="salesmanSelect" class="form-label">Sales Man</label>
@@ -377,14 +375,21 @@
 @push('scripts')
 <script>
 let hsnRowCount = 0;
+let currentPartyType = 'S'; // S = Supplier, C = Customer
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     
+    // Initialize Select2 AJAX for party dropdown
+    initPartySelect2();
+    
     document.getElementById('creditNoteDate').addEventListener('change', updateDayName);
     
     document.querySelectorAll('input[name="credit_party_type"]').forEach(radio => {
-        radio.addEventListener('change', updatePartyDropdown);
+        radio.addEventListener('change', function() {
+            currentPartyType = this.value;
+            updatePartyDropdown();
+        });
     });
     
     // Auto-load if preload credit note no is provided
@@ -392,6 +397,76 @@ document.addEventListener('DOMContentLoaded', function() {
         searchCreditNote();
     @endif
 });
+
+// Initialize Select2 with AJAX for party dropdown
+function initPartySelect2() {
+    const $partySelect = $('#partySelect');
+    
+    // Destroy existing Select2 if any
+    if ($partySelect.hasClass('select2-hidden-accessible')) {
+        $partySelect.select2('destroy');
+    }
+    
+    // Clear the select
+    $partySelect.empty().append('<option value="">Type to search...</option>');
+    
+    const searchUrl = '{{ route("admin.credit-note.search-parties") }}';
+    console.log('Initializing Party Select2 with URL:', searchUrl, 'Party Type:', currentPartyType);
+    
+    $partySelect.select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: currentPartyType === 'S' ? 'Search supplier...' : 'Search customer...',
+        allowClear: true,
+        minimumInputLength: 0,
+        ajax: {
+            url: searchUrl,
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                console.log('Making AJAX request with:', params.term, currentPartyType);
+                return {
+                    q: params.term || '',
+                    party_type: currentPartyType,
+                    page: params.page || 1
+                };
+            },
+            processResults: function(data, params) {
+                console.log('Received results:', data);
+                params.page = params.page || 1;
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination ? data.pagination.more : false
+                    }
+                };
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error, xhr.responseText);
+            },
+            cache: true
+        },
+        language: {
+            searching: function() {
+                return 'Searching...';
+            },
+            noResults: function() {
+                return 'No results found';
+            },
+            loadingMore: function() {
+                return 'Loading more...';
+            },
+            errorLoading: function() {
+                return 'Error loading results';
+            }
+        }
+    }).on('select2:select', function(e) {
+        const selectedData = e.params.data;
+        if (selectedData) {
+            console.log('Selected party:', selectedData);
+        }
+    });
+}
 
 function updateDayName() {
     const dateInput = document.getElementById('creditNoteDate');
@@ -404,19 +479,18 @@ function updateDayName() {
 
 function updatePartyDropdown() {
     const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
-    const partySelect = document.getElementById('partySelect');
     
-    partySelect.innerHTML = '<option value="">Select Party</option>';
+    // Clear current selection
+    $('#partySelect').val(null).trigger('change');
     
-    if (partyType === 'S') {
-        @foreach($suppliers as $supplier)
-            partySelect.innerHTML += '<option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>';
-        @endforeach
-    } else {
-        @foreach($customers as $customer)
-            partySelect.innerHTML += '<option value="{{ $customer->id }}">{{ $customer->name }}</option>';
-        @endforeach
+    // Update placeholder and help text
+    const helpText = document.querySelector('#partySelect + small');
+    if (helpText) {
+        helpText.textContent = partyType === 'S' ? 'Start typing to search for suppliers' : 'Start typing to search for customers';
     }
+    
+    // Reinitialize Select2 with updated party type
+    initPartySelect2();
 }
 
 function searchCreditNote() {
@@ -442,26 +516,72 @@ function searchCreditNote() {
 }
 
 function populateCreditNoteData(cn) {
+    console.log('Populating credit note data:', cn);
+    
+    // Helper function to format date for input[type=date]
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        // Handle ISO format (2025-12-03T18:30:00.000000Z)
+        if (dateStr.includes('T')) {
+            return dateStr.split('T')[0];
+        }
+        // Handle format like "2025-12-03"
+        if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return dateStr;
+        }
+        // Try to parse and format
+        try {
+            const date = new Date(dateStr);
+            return date.toISOString().split('T')[0];
+        } catch (e) {
+            console.error('Date parsing error:', e, dateStr);
+            return '';
+        }
+    }
+    
     document.getElementById('creditNoteId').value = cn.id;
     document.getElementById('creditNoteNo').value = cn.credit_note_no;
-    document.getElementById('creditNoteDate').value = cn.credit_note_date ? cn.credit_note_date.split('T')[0] : '';
+    
+    const formattedDate = formatDateForInput(cn.credit_note_date);
+    console.log('Credit note date:', cn.credit_note_date, '-> formatted:', formattedDate);
+    document.getElementById('creditNoteDate').value = formattedDate;
     updateDayName();
     
     // Set party type
+    currentPartyType = cn.credit_party_type || 'S';
+    console.log('Party type:', currentPartyType, 'Party ID:', cn.credit_party_id, 'Party Name:', cn.credit_party_name);
+    
     if (cn.credit_party_type === 'C') {
         document.getElementById('partyCustomer').checked = true;
-        updatePartyDropdown();
     } else {
         document.getElementById('partySupplier').checked = true;
-        updatePartyDropdown();
     }
     
-    setTimeout(() => {
-        document.getElementById('partySelect').value = cn.credit_party_id || '';
-    }, 100);
+    // Initialize Select2 with the current party type
+    initPartySelect2();
     
-    document.getElementById('salesmanSelect').value = cn.salesman_id || '';
-    document.getElementById('reason').value = cn.reason || '';
+    // Pre-select the party in Select2 - use setTimeout to ensure Select2 is fully initialized
+    setTimeout(function() {
+        if (cn.credit_party_id && cn.credit_party_name) {
+            const $partySelect = $('#partySelect');
+            // Clear existing options first
+            $partySelect.empty();
+            // Create and append the option
+            const newOption = new Option(cn.credit_party_name, cn.credit_party_id, true, true);
+            $partySelect.append(newOption).trigger('change');
+            console.log('Pre-selected party:', cn.credit_party_name, cn.credit_party_id);
+        }
+        
+        // Set salesman and reason using jQuery for Select2 compatibility
+        if (cn.salesman_id) {
+            $('#salesmanSelect').val(cn.salesman_id).trigger('change');
+            console.log('Pre-selected salesman:', cn.salesman_id);
+        }
+        if (cn.reason) {
+            $('#reason').val(cn.reason).trigger('change');
+            console.log('Pre-selected reason:', cn.reason);
+        }
+    }, 100);
     
     // Debit account
     if (cn.debit_account_type === 'S') {
@@ -474,10 +594,10 @@ function populateCreditNoteData(cn) {
     
     document.getElementById('accountNo').value = cn.debit_account_no || '';
     document.getElementById('invRefNo').value = cn.inv_ref_no || '';
-    document.getElementById('invoiceDate').value = cn.invoice_date ? cn.invoice_date.split('T')[0] : '';
+    document.getElementById('invoiceDate').value = formatDateForInput(cn.invoice_date);
     document.getElementById('gstVno').value = cn.gst_vno || '';
     document.getElementById('partyTrnNo').value = cn.party_trn_no || '';
-    document.getElementById('partyTrnDate').value = cn.party_trn_date ? cn.party_trn_date.split('T')[0] : '';
+    document.getElementById('partyTrnDate').value = formatDateForInput(cn.party_trn_date);
     document.getElementById('amount').value = cn.amount || 0;
     
     // Summary
@@ -494,6 +614,8 @@ function populateCreditNoteData(cn) {
     tbody.innerHTML = '';
     hsnRowCount = 0;
     
+    console.log('Credit note items:', cn.items);
+    
     if (cn.items && cn.items.length > 0) {
         cn.items.forEach((item, index) => {
             addHsnRowWithData(item);
@@ -505,6 +627,8 @@ function populateCreditNoteData(cn) {
     document.getElementById('updateBtn').disabled = false;
     document.getElementById('deleteCreditNoteBtn').style.display = 'inline-block';
     document.getElementById('adjustmentBtn').style.display = 'inline-block';
+    
+    console.log('Credit note data populated successfully');
 }
 
 function addHsnRow() {
@@ -634,7 +758,10 @@ function updateCreditNote() {
     });
     
     const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
-    const partyName = document.getElementById('partySelect').options[document.getElementById('partySelect').selectedIndex]?.text || '';
+    // Get party name from Select2 selected data
+    const $partySelect = $('#partySelect');
+    const selectedData = $partySelect.select2('data')[0];
+    const partyName = selectedData ? selectedData.text : '';
     
     const data = {
         header: {

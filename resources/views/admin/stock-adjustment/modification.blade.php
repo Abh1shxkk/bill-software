@@ -609,7 +609,7 @@ function searchTransaction() {
 function loadTransactionData(adjustment) {
     currentAdjustmentId = adjustment.id;
     document.getElementById('adjustmentId').value = adjustment.id;
-    document.getElementById('adjustmentDate').value = adjustment.adjustment_date.split('T')[0];
+    document.getElementById('adjustmentDate').value = adjustment.adjustment_date ? adjustment.adjustment_date.split('T')[0] : '';
     document.getElementById('adjustmentDate').disabled = false;
     document.getElementById('remarks').value = adjustment.remarks || '';
     document.getElementById('remarks').disabled = false;

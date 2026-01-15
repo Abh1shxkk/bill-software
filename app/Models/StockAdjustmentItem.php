@@ -44,4 +44,9 @@ class StockAdjustmentItem extends Model
     {
         return $this->belongsTo(Item::class);
     }
+
+    public function batch()
+    {
+        return $this->belongsTo(Batch::class);
+    }
 }
