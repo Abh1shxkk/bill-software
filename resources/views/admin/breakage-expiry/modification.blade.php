@@ -1543,6 +1543,12 @@ function addInvoiceItemToTable(item, index) {
     calculateRowAmount(rowIndex);
 }
 
+// Pagination state for items
+let itemsCurrentPage = 1;
+let itemsPerPage = 50;
+let itemsHasMore = true;
+let itemsLoading = false;
+
 // Open Item Selection Modal (kept for backward compatibility if needed)
 function openItemSelectionModal() {
     // Check if customer is selected
@@ -1553,17 +1559,30 @@ function openItemSelectionModal() {
         return;
     }
     
-    // Load items if not already loaded
-    if (itemsData.length === 0) {
-        loadItems();
-    } else {
-        showItemModal();
-    }
+    // Reset pagination state and load first page
+    itemsCurrentPage = 1;
+    itemsHasMore = true;
+    itemsLoading = false;
+    itemsData = [];
+    
+    loadPaginatedItems(itemsCurrentPage, true);
 }
 
-// Load Items from Database
-function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}', {
+// Load Items from Database with Pagination
+function loadPaginatedItems(page, isInitial = false) {
+    if (itemsLoading || (!itemsHasMore && !isInitial)) return;
+    
+    itemsLoading = true;
+    
+    // Show loading indicator if not initial
+    if (!isInitial) {
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+    }
+    
+    const url = `{{ route("admin.items.all") }}?page=${page}&per_page=${itemsPerPage}`;
+    
+    fetch(url, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -1572,18 +1591,64 @@ function loadItems() {
     })
     .then(response => response.json())
     .then(data => {
-        itemsData = data.items || [];
-        showItemModal();
+        itemsLoading = false;
+        
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        const items = data.items || [];
+        
+        // Check if we have pagination info
+        if (data.pagination) {
+            itemsHasMore = data.pagination.has_more || (page < data.pagination.last_page);
+        } else {
+            // Legacy: no pagination, all items returned
+            itemsHasMore = false;
+        }
+        
+        // Store loaded items
+        itemsData = itemsData.concat(items);
+        
+        if (isInitial) {
+            // Show modal with initial items
+            showPaginatedItemModal(items);
+        } else {
+            // Append items to existing table
+            appendItemsToTable(items);
+        }
+        
+        // Update records info
+        updateItemsRecordsInfo();
+        
+        itemsCurrentPage++;
     })
     .catch(error => {
+        itemsLoading = false;
         console.error('Error loading items:', error);
-        alert('Error loading items. Please try again.');
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        if (isInitial) {
+            showAlert('error', 'Error loading items. Please try again.');
+        }
     });
 }
 
-// Display Items in Modal
+// Load Items (legacy - kept for backward compatibility)
+function loadItems() {
+    // Reset and load paginated
+    itemsCurrentPage = 1;
+    itemsHasMore = true;
+    itemsLoading = false;
+    itemsData = [];
+    loadPaginatedItems(itemsCurrentPage, true);
+}
+
+// Display Items in Modal (legacy - still used for search filtering)
 function displayItems(items) {
     const tbody = document.getElementById('itemsListBody');
+    if (!tbody) return;
     
     if (items.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items found</td></tr>';
@@ -1591,7 +1656,7 @@ function displayItems(items) {
     }
     
     let html = '';
-    items.forEach(item => {
+    items.forEach((item, index) => {
         html += `
             <tr style="padding: 2px;">
                 <td style="padding: 4px;">${item.id || ''}</td>
@@ -1611,8 +1676,63 @@ function displayItems(items) {
     tbody.innerHTML = html;
 }
 
-// Show Item Selection Modal
-function showItemModal() {
+// Append items to the modal table (for infinite scroll)
+function appendItemsToTable(items) {
+    const tbody = document.getElementById('itemsListBody');
+    if (!tbody) return;
+    
+    items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.style.padding = '2px';
+        row.innerHTML = `
+            <td style="padding: 4px;">${item.id || ''}</td>
+            <td style="padding: 4px;">${item.name || ''}</td>
+            <td style="padding: 4px;">${item.packing || ''}</td>
+            <td class="text-end" style="padding: 4px;">₹${parseFloat(item.mrp || 0).toFixed(2)}</td>
+            <td class="text-end" style="padding: 4px;">${parseFloat(item.total_qty || 0).toFixed(2)}</td>
+            <td class="text-center" style="padding: 4px;">
+                <button type="button" class="btn btn-sm btn-primary" style="padding: 2px 6px; font-size: 10px;" onclick='selectItem(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                    <i class="bi bi-check-circle"></i> Select
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Update items records info
+function updateItemsRecordsInfo() {
+    const infoEl = document.getElementById('itemsRecordsInfo');
+    if (!infoEl) return;
+    
+    const loadedCount = itemsData.length;
+    if (itemsHasMore) {
+        infoEl.textContent = `Showing ${loadedCount} items (scroll for more)`;
+    } else {
+        infoEl.textContent = `Showing all ${loadedCount} items`;
+    }
+}
+
+// Setup infinite scroll for items modal
+function setupItemsInfiniteScroll() {
+    const scrollContainer = document.getElementById('itemsScrollContainer');
+    if (!scrollContainer) return;
+    
+    scrollContainer.addEventListener('scroll', function() {
+        // Check if scrolled near bottom
+        if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50) {
+            // Load more items if available
+            if (itemsHasMore && !itemsLoading) {
+                loadPaginatedItems(itemsCurrentPage, false);
+            }
+        }
+    });
+}
+
+// Show Item Selection Modal with Pagination
+function showPaginatedItemModal(items) {
+    const totalInfo = itemsHasMore ? `Showing first ${items.length} items (scroll for more)` : `Showing all ${items.length} items`;
+    
     const modalHTML = `
         <div class="item-modal-backdrop" id="itemModalBackdrop" onclick="closeItemModal()"></div>
         <div class="item-modal" id="itemModal">
@@ -1625,7 +1745,7 @@ function showItemModal() {
                     <div class="mb-3">
                         <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by item name or code..." onkeyup="filterItems()">
                     </div>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;" id="itemsScrollContainer">
                         <table class="table table-bordered table-hover table-sm" style="font-size: 11px; margin-bottom: 0;">
                             <thead class="table-light" style="position: sticky; top: 0; z-index: 10; background: #e9ecef;">
                                 <tr>
@@ -1639,9 +1759,15 @@ function showItemModal() {
                             </thead>
                             <tbody id="itemsListBody"></tbody>
                         </table>
+                        <!-- Loading indicator -->
+                        <div id="itemsLoadingIndicator" style="display: none; text-align: center; padding: 15px; color: #6c757d;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2">Loading more items...</span>
+                        </div>
                     </div>
                 </div>
                 <div class="item-modal-footer">
+                    <small class="text-muted me-auto" id="itemsRecordsInfo">${totalInfo}</small>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
                 </div>
             </div>
@@ -1658,9 +1784,18 @@ function showItemModal() {
     setTimeout(() => {
         document.getElementById('itemModalBackdrop').classList.add('show');
         document.getElementById('itemModal').classList.add('show');
+        
+        // Setup infinite scroll
+        setupItemsInfiniteScroll();
     }, 10);
     
-    displayItems(itemsData);
+    displayItems(items);
+}
+
+// Show Item Selection Modal (legacy - kept for backward compatibility)
+function showItemModal() {
+    // Use paginated modal with current data
+    showPaginatedItemModal(itemsData);
 }
 
 // Close Item Modal

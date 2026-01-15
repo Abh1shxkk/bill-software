@@ -1270,12 +1270,43 @@ function closeInsertOrdersModal() {
     }, 300);
 }
 
-// Open modal with all items from items module (new functionality)
+// Open modal with all items from items module (OPTIMIZED with pagination)
+// Global state for item pagination
+let itemsCurrentPage = 1;
+let itemsPerPage = 50;
+let itemsHasMore = true;
+let itemsLoading = false;
+let allLoadedItems = [];
+
 function openAllItemsModal() {
     showAlert('info', 'Loading items...');
     
-    // Fetch all items from the items module
-    fetch('{{ route("admin.items.all") }}', {
+    // Reset pagination state
+    itemsCurrentPage = 1;
+    itemsHasMore = true;
+    itemsLoading = false;
+    allLoadedItems = [];
+    
+    // Fetch first page of items
+    fetchPaginatedItems(itemsCurrentPage, true);
+}
+
+// Fetch paginated items from server
+function fetchPaginatedItems(page, isInitial = false) {
+    if (itemsLoading || (!itemsHasMore && !isInitial)) return;
+    
+    itemsLoading = true;
+    
+    // Show loading indicator
+    if (!isInitial) {
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+    }
+    
+    // Use existing items/all route with pagination params
+    const url = `{{ route("admin.items.all") }}?page=${page}&per_page=${itemsPerPage}`;
+    
+    fetch(url, {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -1284,20 +1315,60 @@ function openAllItemsModal() {
     })
     .then(response => response.json())
     .then(data => {
+        itemsLoading = false;
+        
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
         if (data.success && data.items) {
-            showItemSelectionModal(data.items);
+            const items = data.items;
+            
+            // Check if we have pagination info
+            if (data.pagination) {
+                itemsHasMore = data.pagination.has_more || (page < data.pagination.last_page);
+            } else {
+                // If no pagination info, assume all items are returned (legacy)
+                itemsHasMore = false;
+            }
+            
+            // Store loaded items
+            allLoadedItems = allLoadedItems.concat(items);
+            
+            if (isInitial) {
+                // Create and show the modal with initial items
+                showPaginatedItemSelectionModal(items);
+            } else {
+                // Append items to existing table
+                appendItemsToTable(items);
+            }
+            
+            // Update records info
+            updateItemsRecordsInfo();
+            
+            itemsCurrentPage++;
         } else {
-            showAlert('error', 'Failed to load items.');
+            if (isInitial) {
+                showAlert('error', 'Failed to load items.');
+            }
         }
     })
     .catch(error => {
+        itemsLoading = false;
         console.error('Error:', error);
-        showAlert('error', 'An error occurred while loading items.');
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        if (isInitial) {
+            showAlert('error', 'An error occurred while loading items.');
+        }
     });
 }
 
-// Show item selection modal
-function showItemSelectionModal(items) {
+// Show item selection modal with pagination support
+function showPaginatedItemSelectionModal(items) {
+    const totalInfo = itemsHasMore ? `Showing first ${items.length} items (scroll for more)` : `Showing all ${items.length} items`;
+    
     const modalHTML = `
         <div class="insert-orders-modal-backdrop" id="insertOrdersModalBackdrop" onclick="closeInsertOrdersModal()"></div>
         <div class="insert-orders-modal item-selection-modal" id="insertOrdersModal">
@@ -1315,7 +1386,7 @@ function showItemSelectionModal(items) {
                                style="font-size: 11px;">
                     </div>
                     
-                    <div style="max-height: 400px; overflow-y: auto;">
+                    <div style="max-height: 400px; overflow-y: auto;" id="itemsScrollContainer">
                         <table class="table table-bordered" style="font-size: 10px; margin-bottom: 0; width: 100%;" id="itemsSelectionTable">
                             <thead style="position: sticky; top: 0; background: #0d6efd; color: white; z-index: 10;">
                                 <tr>
@@ -1327,28 +1398,18 @@ function showItemSelectionModal(items) {
                                     <th style="width: 100px; text-align: center;">Action</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${items.map((item, index) => `
-                                    <tr class="item-row" data-item-name="${(item.name || '').toLowerCase()}">
-                                        <td style="text-align: center;">${index + 1}</td>
-                                        <td>${item.code || ''}</td>
-                                        <td>${item.name || ''}</td>
-                                        <td style="text-align: right;">${parseFloat(item.mrp || 0).toFixed(2)}</td>
-                                        <td style="text-align: right;">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
-                                        <td style="text-align: center;">
-                                            <button type="button" class="btn btn-sm btn-primary" 
-                                                    onclick='selectItemBatch(${JSON.stringify(item).replace(/'/g, "\\'")})'
-                                                    style="font-size: 9px; padding: 2px 6px; white-space: nowrap;">
-                                                <i class="bi bi-box-seam"></i> Batch
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `).join('')}
+                            <tbody id="itemsSelectionTableBody">
                             </tbody>
                         </table>
+                        <!-- Loading indicator -->
+                        <div id="itemsLoadingIndicator" style="display: none; text-align: center; padding: 15px; color: #6c757d;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2">Loading more items...</span>
+                        </div>
                     </div>
                 </div>
                 <div class="insert-orders-modal-footer">
+                    <small class="text-muted me-auto" id="itemsRecordsInfo">${totalInfo}</small>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="closeInsertOrdersModal()">Close</button>
                 </div>
             </div>
@@ -1364,11 +1425,83 @@ function showItemSelectionModal(items) {
     // Add modal to body
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     
+    // Add initial items to table
+    appendItemsToTable(items);
+    
     // Show modal with animation
     setTimeout(() => {
         document.getElementById('insertOrdersModalBackdrop').classList.add('show');
         document.getElementById('insertOrdersModal').classList.add('show');
+        
+        // Setup infinite scroll after modal is visible
+        setupItemsInfiniteScroll();
     }, 10);
+}
+
+// Append items to the selection table
+function appendItemsToTable(items) {
+    const tbody = document.getElementById('itemsSelectionTableBody');
+    if (!tbody) return;
+    
+    const startIndex = tbody.children.length;
+    
+    items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.className = 'item-row';
+        row.setAttribute('data-item-name', (item.name || '').toLowerCase());
+        row.innerHTML = `
+            <td style="text-align: center;">${startIndex + index + 1}</td>
+            <td>${item.code || ''}</td>
+            <td>${item.name || ''}</td>
+            <td style="text-align: right;">${parseFloat(item.mrp || 0).toFixed(2)}</td>
+            <td style="text-align: right;">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
+            <td style="text-align: center;">
+                <button type="button" class="btn btn-sm btn-primary" 
+                        onclick='selectItemBatch(${JSON.stringify(item).replace(/'/g, "\\'")})'
+                        style="font-size: 9px; padding: 2px 6px; white-space: nowrap;">
+                    <i class="bi bi-box-seam"></i> Batch
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Update items records info
+function updateItemsRecordsInfo() {
+    const infoEl = document.getElementById('itemsRecordsInfo');
+    if (!infoEl) return;
+    
+    const loadedCount = allLoadedItems.length;
+    if (itemsHasMore) {
+        infoEl.textContent = `Showing ${loadedCount} items (scroll for more)`;
+    } else {
+        infoEl.textContent = `Showing all ${loadedCount} items`;
+    }
+}
+
+// Setup infinite scroll for items
+function setupItemsInfiniteScroll() {
+    const scrollContainer = document.getElementById('itemsScrollContainer');
+    if (!scrollContainer) return;
+    
+    scrollContainer.addEventListener('scroll', function() {
+        // Check if scrolled near bottom
+        if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50) {
+            // Load more items if available
+            if (itemsHasMore && !itemsLoading) {
+                fetchPaginatedItems(itemsCurrentPage, false);
+            }
+        }
+    });
+}
+
+// Show item selection modal (legacy - kept for backward compatibility)
+function showItemSelectionModal(items) {
+    // Use the new paginated modal
+    allLoadedItems = items;
+    itemsHasMore = false; // All items loaded
+    showPaginatedItemSelectionModal(items);
 }
 
 // Filter items in the selection table

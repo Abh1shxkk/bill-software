@@ -1162,13 +1162,75 @@ function setSelectOption(selectElement, value, displayText) {
 
 // Load items from server
 function loadItems() {
-    fetch('{{ route("admin.sale-challan.getItems") }}')
+    // Items are now loaded on-demand when modal opens (with pagination)
+    // This function is kept for backward compatibility
+    console.log('Items will be loaded on-demand when modal opens');
+}
+
+// Pagination state for items
+let itemsCurrentPage = 1;
+let itemsPerPage = 50;
+let itemsHasMore = true;
+let itemsLoading = false;
+
+// Load paginated items
+function loadPaginatedItems(page, isInitial = false) {
+    if (itemsLoading || (!itemsHasMore && !isInitial)) return;
+    
+    itemsLoading = true;
+    
+    // Show loading indicator if not initial
+    if (!isInitial) {
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+    }
+    
+    const url = `{{ route("admin.sale-challan.getItems") }}?page=${page}&per_page=${itemsPerPage}`;
+    fetch(url)
         .then(response => response.json())
         .then(data => {
-            itemsData = data;
-            console.log('Items loaded:', itemsData.length);
+            itemsLoading = false;
+            
+            // Hide loading indicator
+            const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            
+            // Handle both array and paginated response formats
+            let items = [];
+            if (Array.isArray(data)) {
+                items = data;
+                itemsHasMore = false; // Legacy format - all items returned
+            } else if (data.items) {
+                items = data.items;
+                if (data.pagination) {
+                    itemsHasMore = data.pagination.has_more || (page < data.pagination.last_page);
+                } else {
+                    itemsHasMore = false;
+                }
+            }
+            
+            // Store loaded items
+            itemsData = itemsData.concat(items);
+            
+            if (isInitial) {
+                console.log('Items loaded:', items.length);
+                displayItemsInModalPaginated(items);
+                setupItemsInfiniteScroll();
+            } else {
+                appendItemsToModalTable(items);
+            }
+            
+            // Update records info
+            updateItemsRecordsInfo();
+            
+            itemsCurrentPage++;
         })
-        .catch(error => console.error('Error loading items:', error));
+        .catch(error => {
+            itemsLoading = false;
+            const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+            console.error('Error loading items:', error);
+        });
 }
 
 // Update invoice type based on series
@@ -1255,13 +1317,19 @@ async function openChooseItemsModal() {
     const modal = document.getElementById('chooseItemsModal');
     const backdrop = document.getElementById('chooseItemsBackdrop');
     
-    // Load and display items
-    displayItemsInModal();
+    // Reset pagination state and load items
+    itemsCurrentPage = 1;
+    itemsHasMore = true;
+    itemsLoading = false;
+    itemsData = [];
     
-    // Show modal
+    // Show modal first
     setTimeout(() => {
         modal.classList.add('show');
         backdrop.classList.add('show');
+        
+        // Then load paginated items
+        loadPaginatedItems(itemsCurrentPage, true);
     }, 10);
 }
 
@@ -1273,17 +1341,22 @@ function closeChooseItemsModal() {
     backdrop.classList.remove('show');
 }
 
-// Display items in modal
+// Display items in modal (legacy - for backward compatibility)
 function displayItemsInModal() {
+    displayItemsInModalPaginated(itemsData);
+}
+
+// Display items in modal with pagination support
+function displayItemsInModalPaginated(items) {
     const tbody = document.getElementById('chooseItemsBody');
     tbody.innerHTML = '';
     
-    if (itemsData.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No items found</td></tr>';
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Loading items...</td></tr>';
         return;
     }
     
-    itemsData.forEach(item => {
+    items.forEach(item => {
         const row = document.createElement('tr');
         row.style.cursor = 'pointer';
         
@@ -1317,6 +1390,96 @@ function displayItemsInModal() {
         });
         
         tbody.appendChild(row);
+    });
+    
+    // Add loading indicator after table if not present
+    const tableContainer = document.querySelector('#chooseItemsModal .table-responsive');
+    if (tableContainer && !document.getElementById('itemsLoadingIndicator')) {
+        tableContainer.setAttribute('id', 'itemsScrollContainer');
+        tableContainer.insertAdjacentHTML('beforeend', `
+            <div id="itemsLoadingIndicator" style="display: none; text-align: center; padding: 15px; color: #6c757d;">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="ms-2">Loading more items...</span>
+            </div>
+        `);
+    }
+    
+    // Add records info to modal footer if not present
+    const modalFooter = document.querySelector('#chooseItemsModal .pending-orders-footer');
+    if (modalFooter && !document.getElementById('itemsRecordsInfo')) {
+        modalFooter.insertAdjacentHTML('afterbegin', `<small class="text-muted me-auto" id="itemsRecordsInfo"></small>`);
+    }
+    
+    updateItemsRecordsInfo();
+}
+
+// Append items to modal table (for infinite scroll)
+function appendItemsToModalTable(items) {
+    const tbody = document.getElementById('chooseItemsBody');
+    if (!tbody) return;
+    
+    items.forEach(item => {
+        const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        
+        const company = item.company_name || item.company || 'N/A';
+        const pack = item.packing || 'N/A';
+        const qty = item.qty || item.available_qty || 0;
+        
+        row.innerHTML = `
+            <td>${item.name || 'N/A'}</td>
+            <td>${item.hsn_code || 'N/A'}</td>
+            <td>${pack}</td>
+            <td>${company}</td>
+            <td>${qty}</td>
+        `;
+        
+        row.addEventListener('click', function() {
+            selectItemFromModal(item);
+        });
+        
+        row.addEventListener('mouseenter', function() {
+            if (!this.classList.contains('item-row-selected')) {
+                this.style.backgroundColor = '#f8f9fa';
+            }
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('item-row-selected')) {
+                this.style.backgroundColor = '';
+            }
+        });
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Update items records info
+function updateItemsRecordsInfo() {
+    const infoEl = document.getElementById('itemsRecordsInfo');
+    if (!infoEl) return;
+    
+    const loadedCount = itemsData.length;
+    if (itemsHasMore) {
+        infoEl.textContent = `Showing ${loadedCount} items (scroll for more)`;
+    } else {
+        infoEl.textContent = `Showing all ${loadedCount} items`;
+    }
+}
+
+// Setup infinite scroll for items modal
+function setupItemsInfiniteScroll() {
+    const scrollContainer = document.getElementById('itemsScrollContainer');
+    if (!scrollContainer) return;
+    
+    scrollContainer.addEventListener('scroll', function() {
+        // Check if scrolled near bottom
+        if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50) {
+            // Load more items if available
+            if (itemsHasMore && !itemsLoading) {
+                loadPaginatedItems(itemsCurrentPage, false);
+            }
+        }
     });
 }
 

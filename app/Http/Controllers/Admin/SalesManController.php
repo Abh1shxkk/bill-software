@@ -80,6 +80,9 @@ class SalesManController extends Controller
         ]);
 
         $validated['created_date'] = now();
+        
+        // Ensure area_mgr_code is never null (database constraint)
+        $validated['area_mgr_code'] = $validated['area_mgr_code'] ?? '';
 
         $salesMan = SalesMan::create($validated);
         $this->notifyCreated($salesMan->name);
@@ -116,6 +119,9 @@ class SalesManController extends Controller
             'monthly_target' => 'nullable|numeric|min:0',
             'status' => 'nullable|string|max:255',
         ]);
+
+        // Ensure area_mgr_code is never null (database constraint)
+        $validated['area_mgr_code'] = $validated['area_mgr_code'] ?? '';
 
         $salesMan->update($validated);
         $this->notifyUpdated($salesMan->name);

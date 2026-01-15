@@ -474,11 +474,17 @@ class ItemController extends Controller
 
     /**
      * Get all items for insert modal in purchase/sale transactions
+     * Supports optional pagination via ?page=X&per_page=Y query params
      */
-    public function getAllItems()
+    public function getAllItems(Request $request)
     {
         try {
-            $items = Item::select(
+            // Check if pagination is requested
+            $perPage = $request->input('per_page', null);
+            $page = $request->input('page', 1);
+            
+            // Build the base query with optimized batch quantity using withSum
+            $query = Item::select(
                     'id as code',
                     'id', 
                     'name', 
@@ -496,16 +502,20 @@ class ItemController extends Controller
                     'company_id'
                 )
                 ->with('company:id,name,short_name')
+                // Optimized: Use withSum instead of N+1 queries for batch quantities
+                ->withSum(['batches as total_qty' => function($q) {
+                    $q->where('is_deleted', 0);
+                }], 'qty')
                 ->where('is_deleted', '!=', 1)
-                ->orderBy('name', 'asc')
-                ->get()
-                ->map(function($item) {
-                    // Get total qty from all batches for this item
-                    $totalQty = \App\Models\Batch::where('item_id', $item->id)
-                        ->where('is_deleted', 0)
-                        ->sum('qty');
-                    
-                    // Get company short_name
+                ->orderBy('name', 'asc');
+            
+            // If pagination is requested
+            if ($perPage) {
+                $perPage = min((int)$perPage, 100); // Max 100 per page
+                $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+                
+                // Transform the paginated items
+                $items = $paginator->getCollection()->map(function($item) {
                     $companyShortName = '';
                     if ($item->company) {
                         $companyShortName = $item->company->short_name ?: $item->company->name ?: '';
@@ -528,9 +538,50 @@ class ItemController extends Controller
                         'location' => $item->location,
                         'company_name' => $companyShortName,
                         'company_short_name' => $companyShortName,
-                        'total_qty' => $totalQty
+                        'total_qty' => $item->total_qty ?? 0
                     ];
                 });
+                
+                return response()->json([
+                    'success' => true,
+                    'items' => $items,
+                    'pagination' => [
+                        'current_page' => $paginator->currentPage(),
+                        'per_page' => $paginator->perPage(),
+                        'total' => $paginator->total(),
+                        'last_page' => $paginator->lastPage(),
+                        'has_more' => $paginator->hasMorePages()
+                    ]
+                ]);
+            }
+            
+            // Legacy: Return all items (no pagination)
+            $items = $query->get()->map(function($item) {
+                $companyShortName = '';
+                if ($item->company) {
+                    $companyShortName = $item->company->short_name ?: $item->company->name ?: '';
+                }
+                
+                return [
+                    'code' => $item->code,
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'mrp' => $item->mrp,
+                    's_rate' => $item->s_rate,
+                    'ws_rate' => $item->ws_rate,
+                    'pur_rate' => $item->pur_rate,
+                    'hsn_code' => $item->hsn_code,
+                    'cgst_percent' => $item->cgst_percent,
+                    'sgst_percent' => $item->sgst_percent,
+                    'cess_percent' => $item->cess_percent,
+                    'packing' => $item->packing,
+                    'unit' => $item->unit,
+                    'location' => $item->location,
+                    'company_name' => $companyShortName,
+                    'company_short_name' => $companyShortName,
+                    'total_qty' => $item->total_qty ?? 0
+                ];
+            });
             
             return response()->json([
                 'success' => true,
@@ -1763,5 +1814,4 @@ class ItemController extends Controller
         return ['has_relations' => false, 'message' => ''];
     }
 }
-
 

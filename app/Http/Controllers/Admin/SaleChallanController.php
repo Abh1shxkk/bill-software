@@ -57,41 +57,70 @@ class SaleChallanController extends Controller
     }
 
     /**
-     * Get all items for Choose Items modal
+     * Get all items for Choose Items modal (with pagination and search support)
      */
-    public function getItems()
+    public function getItems(Request $request)
     {
         try {
-            $items = Item::select('id', 'name', 'bar_code', 'hsn_code', 'packing', 'company_id', 'company_short_name', 's_rate', 'mrp', 'cgst_percent', 'sgst_percent', 'cess_percent', 'unit', 'case_qty', 'box_qty')
-                ->with(['batches' => function($query) {
-                    $query->where('is_deleted', 0);
-                }])
-                ->get()
-                ->map(function($item) {
-                    $totalQty = $item->getTotalQuantity();
-                    
-                    return [
-                        'id' => $item->id,
-                        'name' => $item->name,
-                        'bar_code' => $item->bar_code,
-                        'hsn_code' => $item->hsn_code,
-                        'packing' => $item->packing,
-                        'company_name' => $item->company_short_name ?? 'N/A',
-                        'company' => $item->company_short_name ?? 'N/A',
-                        's_rate' => $item->s_rate ?? 0,
-                        'mrp' => $item->mrp ?? 0,
-                        'cgst_percent' => $item->cgst_percent ?? 0,
-                        'sgst_percent' => $item->sgst_percent ?? 0,
-                        'cess_percent' => $item->cess_percent ?? 0,
-                        'unit' => $item->unit ?? '1',
-                        'case_qty' => $item->case_qty ?? 0,
-                        'box_qty' => $item->box_qty ?? 0,
-                        'qty' => $totalQty,
-                        'available_qty' => $totalQty,
-                    ];
-                });
+            $page = $request->input('page', 1);
+            $perPage = $request->input('per_page', 50);
+            $search = $request->input('search', '');
             
-            return response()->json($items);
+            // Build query
+            $query = Item::select('id', 'name', 'bar_code', 'hsn_code', 'packing', 'company_id', 'company_short_name', 's_rate', 'mrp', 'cgst_percent', 'sgst_percent', 'cess_percent', 'unit', 'case_qty', 'box_qty')
+                ->with(['batches' => function($q) {
+                    $q->where('is_deleted', 0);
+                }]);
+            
+            // Apply search filter
+            if (!empty($search)) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('hsn_code', 'LIKE', "%{$search}%")
+                      ->orWhere('company_short_name', 'LIKE', "%{$search}%")
+                      ->orWhere('bar_code', 'LIKE', "%{$search}%");
+                });
+            }
+            
+            // Paginate
+            $paginator = $query->paginate($perPage, ['*'], 'page', $page);
+            
+            // Map items
+            $items = $paginator->getCollection()->map(function($item) {
+                $totalQty = $item->getTotalQuantity();
+                
+                return [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'bar_code' => $item->bar_code,
+                    'hsn_code' => $item->hsn_code,
+                    'packing' => $item->packing,
+                    'company_name' => $item->company_short_name ?? 'N/A',
+                    'company' => $item->company_short_name ?? 'N/A',
+                    's_rate' => $item->s_rate ?? 0,
+                    'mrp' => $item->mrp ?? 0,
+                    'cgst_percent' => $item->cgst_percent ?? 0,
+                    'sgst_percent' => $item->sgst_percent ?? 0,
+                    'cess_percent' => $item->cess_percent ?? 0,
+                    'unit' => $item->unit ?? '1',
+                    'case_qty' => $item->case_qty ?? 0,
+                    'box_qty' => $item->box_qty ?? 0,
+                    'qty' => $totalQty,
+                    'available_qty' => $totalQty,
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'items' => $items,
+                'pagination' => [
+                    'current_page' => $paginator->currentPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'last_page' => $paginator->lastPage(),
+                    'has_more' => $paginator->hasMorePages()
+                ]
+            ]);
         } catch (\Exception $e) {
             Log::error('Error fetching items: ' . $e->getMessage());
             return response()->json([
