@@ -54,9 +54,9 @@ class TransactionDateValidator
         // Stock
         'stock_adjustment' => ['table' => 'stock_adjustments', 'date_column' => 'adjustment_date'],
         'stock_transfer_outgoing' => ['table' => 'stock_transfer_outgoing_transactions', 'date_column' => 'transaction_date'],
-        'stock_transfer_outgoing_return' => ['table' => 'stock_transfer_outgoing_return_transactions', 'date_column' => 'return_date'],
+        'stock_transfer_outgoing_return' => ['table' => 'stock_transfer_outgoing_return_transactions', 'date_column' => 'transaction_date'],
         'stock_transfer_incoming' => ['table' => 'stock_transfer_incoming_transactions', 'date_column' => 'transaction_date'],
-        'stock_transfer_incoming_return' => ['table' => 'stock_transfer_incoming_return_transactions', 'date_column' => 'return_date'],
+        'stock_transfer_incoming_return' => ['table' => 'stock_transfer_incoming_return_transactions', 'date_column' => 'transaction_date'],
         
         // Samples
         'sample_issued' => ['table' => 'sample_issued_transactions', 'date_column' => 'transaction_date'],

@@ -437,19 +437,26 @@ class StockTransferOutgoingReturnController extends Controller
     {
         $orgId = auth()->user()->organization_id ?? 1;
         
-        $lastTransaction = StockTransferOutgoingReturnTransaction::withoutGlobalScopes()
+        // Get max number using SQL to avoid counting issues
+        $maxNumber = StockTransferOutgoingReturnTransaction::withoutGlobalScopes()
             ->where('organization_id', $orgId)
             ->where('series', $series)
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if ($lastTransaction) {
-            $lastNumber = (int) substr($lastTransaction->sr_no, strlen($series) + 1);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
+            ->where('sr_no', 'LIKE', $series . '-%')
+            ->selectRaw("MAX(CAST(SUBSTRING(sr_no, " . (strlen($series) + 2) . ") AS UNSIGNED)) as max_num")
+            ->value('max_num');
+        
+        $nextNumber = ($maxNumber ?? 0) + 1;
+        $srNo = $series . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        
+        // Double-check to avoid duplicates
+        while (StockTransferOutgoingReturnTransaction::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('sr_no', $srNo)
+            ->exists()) {
+            $nextNumber++;
+            $srNo = $series . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
         }
 
-        return $series . '-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        return $srNo;
     }
 }

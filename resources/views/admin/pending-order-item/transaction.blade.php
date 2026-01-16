@@ -173,6 +173,8 @@ function closeItemModal() {
     document.getElementById('itemBackdrop')?.remove();
 }
 
+let isSubmitting = false;
+
 function saveItem() {
     const itemId = document.getElementById('item_id').value;
     const actionType = document.getElementById('action_type').value;
@@ -187,6 +189,16 @@ function saveItem() {
         alert('Please enter a valid quantity');
         return;
     }
+    
+    // Prevent double submission
+    if (isSubmitting) { return; }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const saveBtn = document.querySelector('button[onclick="saveItem()"]');
+    const originalBtnHtml = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
     
     fetch('{{ route("admin.pending-order-item.store") }}', {
         method: 'POST',
@@ -206,13 +218,22 @@ function saveItem() {
         if (result.success) {
             alert('Item saved successfully!');
             resetForm();
+            isSubmitting = false;
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalBtnHtml;
         } else {
             alert('Error: ' + result.message);
+            isSubmitting = false;
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = originalBtnHtml;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error saving item');
+        isSubmitting = false;
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalBtnHtml;
     });
 }
 

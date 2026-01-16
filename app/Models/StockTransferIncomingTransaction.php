@@ -65,17 +65,28 @@ class StockTransferIncomingTransaction extends Model
 
     public static function generateTrfNumber()
     {
-        $lastTransaction = self::whereNotNull('trf_no')
-            ->orderBy('id', 'desc')
-            ->first();
-
-        if (!$lastTransaction || !$lastTransaction->trf_no) {
-            return 'STI00001';
-        }
-
-        $lastNumber = (int) substr($lastTransaction->trf_no, 3);
-        $newNumber = $lastNumber + 1;
+        $orgId = auth()->user()->organization_id ?? 1;
         
-        return 'STI' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+        // Get max number using SQL to avoid counting issues
+        $maxNumber = self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->whereNotNull('trf_no')
+            ->where('trf_no', 'LIKE', 'STI%')
+            ->selectRaw("MAX(CAST(SUBSTRING(trf_no, 4) AS UNSIGNED)) as max_num")
+            ->value('max_num');
+
+        $nextNumber = ($maxNumber ?? 0) + 1;
+        $trfNo = 'STI' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        
+        // Double-check to avoid duplicates
+        while (self::withoutGlobalScopes()
+            ->where('organization_id', $orgId)
+            ->where('trf_no', $trfNo)
+            ->exists()) {
+            $nextNumber++;
+            $trfNo = 'STI' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        }
+        
+        return $trfNo;
     }
 }

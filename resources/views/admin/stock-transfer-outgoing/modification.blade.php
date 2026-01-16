@@ -805,11 +805,25 @@ function cancelModification() {
     }
 }
 
+let isSubmitting = false;
+
 function updateTransaction() {
     if (!loadedTransactionId) {
         alert('Please load a transaction first');
         return;
     }
+    
+    // Prevent double submission
+    if (isSubmitting) {
+        return;
+    }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const updateBtn = document.querySelector('button[onclick="updateTransaction()"]');
+    const originalBtnHtml = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
     
     const form = document.getElementById('stockTransferOutgoingForm');
     
@@ -833,12 +847,16 @@ function updateTransaction() {
     
     if (items.length === 0) {
         alert('Please add at least one item');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
     const data = {
         _token: '{{ csrf_token() }}',
         transaction_date: form.querySelector('[name="transaction_date"]').value,
+        transfer_to: form.querySelector('[name="transfer_to"]').value,
         transfer_to_name: form.querySelector('[name="transfer_to_name"]').value,
         remarks: form.querySelector('[name="remarks"]').value,
         gr_no: form.querySelector('[name="gr_no"]').value,
@@ -849,7 +867,7 @@ function updateTransaction() {
         items: items
     };
     
-    fetch(`{{ url('admin/stock-transfer-outgoing') }}/${loadedTransactionId}`, {
+    fetch(`{{ url('admin/stock-transfer-outgoing/transaction') }}/${loadedTransactionId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -864,11 +882,17 @@ function updateTransaction() {
             window.location.href = '{{ route("admin.stock-transfer-outgoing.index") }}';
         } else {
             alert('Error: ' + result.message);
+            isSubmitting = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalBtnHtml;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error updating transaction');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
     });
 }
 

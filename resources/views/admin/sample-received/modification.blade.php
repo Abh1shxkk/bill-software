@@ -977,11 +977,25 @@ function deleteSelectedItem() {
     }
 }
 
+let isSubmitting = false;
+
 function updateTransaction() {
     if (!loadedTransactionId) {
         alert('Please load an invoice first using the "Load Invoice" button');
         return;
     }
+    
+    // Prevent double submission
+    if (isSubmitting) {
+        return;
+    }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const updateBtn = document.querySelector('button[onclick="updateTransaction()"]');
+    const originalBtnHtml = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
     
     const form = document.getElementById('srForm');
     const formData = new FormData(form);
@@ -989,6 +1003,9 @@ function updateTransaction() {
     const rows = document.querySelectorAll('#itemsTableBody tr');
     if (rows.length === 0) {
         alert('Please add at least one item');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
@@ -1017,11 +1034,17 @@ function updateTransaction() {
             window.location.href = '{{ route("admin.sample-received.index") }}';
         } else {
             alert(data.message || 'Error updating transaction');
+            isSubmitting = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalBtnHtml;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error updating transaction');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
     });
 }
 

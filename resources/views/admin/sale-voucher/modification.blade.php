@@ -581,15 +581,30 @@ function clearForm() {
     calculateTotals();
 }
 
+let isSubmitting = false;
+
 function updateVoucher() {
     if (!currentVoucherId) {
         alert('Please load a voucher first');
         return;
     }
     
+    // Prevent double submission
+    if (isSubmitting) { return; }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const updateBtn = document.getElementById('btnUpdate');
+    const originalBtnHtml = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
+    
     const customerId = document.getElementById('customerSelect').value;
     if (!customerId) {
         alert('Please select a customer');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
@@ -615,6 +630,9 @@ function updateVoucher() {
     
     if (items.length === 0) {
         alert('Please add at least one item');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
@@ -643,11 +661,17 @@ function updateVoucher() {
             loadVouchersForModal(); // Refresh list
         } else {
             alert('Error: ' + result.message);
+            isSubmitting = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalBtnHtml;
         }
     })
     .catch(e => {
         console.error(e);
         alert('Error updating voucher');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
     });
 }
 

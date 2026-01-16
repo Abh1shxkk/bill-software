@@ -930,15 +930,32 @@ function deleteSelectedItem() {
     }
 }
 
+let isSubmitting = false;
+
 function updateTransaction() {
     if (!currentTransactionId) {
         alert('Please load a transaction to modify');
         return;
     }
     
+    // Prevent double submission
+    if (isSubmitting) {
+        return;
+    }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const updateBtn = document.querySelector('button[onclick="updateTransaction()"]');
+    const originalBtnHtml = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    
     const name = document.getElementById('name').value;
     if (!name) {
         alert('Please select a supplier');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
@@ -970,6 +987,9 @@ function updateTransaction() {
     
     if (items.length === 0) {
         alert('Please add at least one item with valid batch and quantity');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
@@ -1010,11 +1030,17 @@ function updateTransaction() {
             window.location.reload();
         } else {
             alert(result.message || 'Error updating transaction');
+            isSubmitting = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalBtnHtml;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error updating transaction');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
     });
 }
 

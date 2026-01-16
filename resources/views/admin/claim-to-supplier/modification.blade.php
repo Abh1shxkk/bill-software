@@ -1354,15 +1354,28 @@ function addItemRowFromData(item) {
     rowIndex++;
 }
 
+let isSubmitting = false;
+
 function updateTransaction() {
     if (!currentClaimId) {
         alert('No claim loaded for update');
         return;
     }
     
+    // Prevent double submission
+    if (isSubmitting) { return; }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const $updateBtn = $('#saveBtn');
+    const originalBtnText = $updateBtn.text();
+    $updateBtn.prop('disabled', true).text('Updating...');
+    
     const supplierId = $('#supplier_id').val();
     if (!supplierId) {
         alert('Please select a supplier');
+        isSubmitting = false;
+        $updateBtn.prop('disabled', false).text(originalBtnText);
         return;
     }
     
@@ -1400,6 +1413,8 @@ function updateTransaction() {
     
     if (items.length === 0) {
         alert('Please add at least one item');
+        isSubmitting = false;
+        $updateBtn.prop('disabled', false).text(originalBtnText);
         return;
     }
     
@@ -1428,10 +1443,14 @@ function updateTransaction() {
                 window.location.reload();
             } else {
                 alert('Error: ' + response.message);
+                isSubmitting = false;
+                $updateBtn.prop('disabled', false).text(originalBtnText);
             }
         },
         error: function(xhr) {
             alert('Error updating claim: ' + (xhr.responseJSON?.message || 'Unknown error'));
+            isSubmitting = false;
+            $updateBtn.prop('disabled', false).text(originalBtnText);
         }
     });
 }

@@ -482,8 +482,21 @@ function calculateTotalAmount() {
 function removeRow(rowIndex) { document.getElementById(`row-${rowIndex}`)?.remove(); calculateTotalAmount(); }
 function deleteSelectedItem() { if (selectedRowIndex !== null) { removeRow(selectedRowIndex); selectedRowIndex = null; } }
 
+let isSubmitting = false;
+
 function updateTransaction() {
     if (!loadedTransactionId) { alert('Please load an invoice first'); return; }
+    
+    // Prevent double submission
+    if (isSubmitting) { return; }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const updateBtn = document.querySelector('button[onclick="updateTransaction()"]');
+    const originalBtnHtml = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Updating...';
+    
     const formData = new FormData(document.getElementById('gbeForm'));
     let totalQty = 0;
     document.querySelectorAll('#itemsTableBody tr').forEach(row => { totalQty += parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0; });
@@ -496,7 +509,19 @@ function updateTransaction() {
     .then(response => response.json())
     .then(data => {
         if (data.success) { alert(data.message); window.location.href = '{{ route("admin.godown-breakage-expiry.index") }}'; }
-        else { alert(data.message || 'Error updating'); }
+        else { 
+            alert(data.message || 'Error updating');
+            isSubmitting = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalBtnHtml;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
     });
 }
 

@@ -812,11 +812,25 @@ function cancelModification() {
     }
 }
 
+let isSubmitting = false;
+
 function updateTransaction() {
     if (!loadedTransactionId) {
         alert('Please load a transaction first');
         return;
     }
+    
+    // Prevent double submission
+    if (isSubmitting) {
+        return;
+    }
+    isSubmitting = true;
+    
+    // Disable button and show loading
+    const updateBtn = document.querySelector('button[onclick="updateTransaction()"]');
+    const originalBtnHtml = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
     
     const form = document.getElementById('stockTransferOutgoingForm');
     
@@ -840,6 +854,9 @@ function updateTransaction() {
     
     if (items.length === 0) {
         alert('Please add at least one item');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
@@ -873,11 +890,17 @@ function updateTransaction() {
             window.location.href = '{{ route("admin.stock-transfer-outgoing-return.index") }}';
         } else {
             alert('Error: ' + result.message);
+            isSubmitting = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalBtnHtml;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('Error updating transaction');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
     });
 }
 

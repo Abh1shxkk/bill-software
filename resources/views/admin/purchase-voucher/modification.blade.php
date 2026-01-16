@@ -338,21 +338,61 @@ function clearForm() {
     calculateTotals();
 }
 
+let isSubmitting = false;
+
 function updateVoucher() {
     if (!currentVoucherId) { alert('Load a voucher first'); return; }
+    
+    // Prevent double submission
+    if (isSubmitting) { return; }
+    isSubmitting = true;
+    
+    const updateBtn = document.getElementById('btnUpdate');
+    const originalBtnHtml = updateBtn.innerHTML;
+    updateBtn.disabled = true;
+    updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
+    
     const sid = document.getElementById('supplierSelect').value;
-    if (!sid) { alert('Select a supplier'); return; }
+    if (!sid) { 
+        alert('Select a supplier'); 
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
+        return; 
+    }
     const items = [];
     document.querySelectorAll('#hsnTableBody tr').forEach(r => {
         const h = r.querySelector('.hsn-code').value, a = parseFloat(r.querySelector('.amount').value)||0;
         if (h && a > 0) items.push({ hsn_code: h, amount: a, gst_percent: parseFloat(r.querySelector('.gst-percent').value)||0, cgst_percent: parseFloat(r.querySelector('.cgst-percent').value)||0, cgst_amount: parseFloat(r.querySelector('.cgst-amount').value)||0, sgst_percent: parseFloat(r.querySelector('.sgst-percent').value)||0, sgst_amount: parseFloat(r.querySelector('.sgst-amount').value)||0, qty: parseInt(r.querySelector('.qty').value)||0 });
     });
-    if (!items.length) { alert('Add at least one item'); return; }
+    if (!items.length) { 
+        alert('Add at least one item'); 
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
+        return; 
+    }
     fetch(`{{ url('admin/purchase-voucher') }}/${currentVoucherId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body: JSON.stringify({ bill_date: document.getElementById('billDate').value, supplier_id: sid, remarks: document.getElementById('remarks').value, items })
-    }).then(r => r.json()).then(res => { if (res.success) { alert('Updated!'); loadVouchersForModal(); } else alert('Error: ' + res.message); });
+    }).then(r => r.json()).then(res => { 
+        if (res.success) { 
+            alert('Updated!'); 
+            loadVouchersForModal(); 
+        } else {
+            alert('Error: ' + res.message);
+            isSubmitting = false;
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = originalBtnHtml;
+        }
+    }).catch(e => {
+        console.error(e);
+        alert('Error updating voucher');
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
+    });
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeHsnModal(); closeInvoiceModal(); } });
