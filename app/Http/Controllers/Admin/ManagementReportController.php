@@ -21,9 +21,11 @@ use App\Models\User;
 use App\Models\HsnCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ReportHelperTrait;
 
 class ManagementReportController extends Controller
 {
+    use ReportHelperTrait;
     // Due Reports
     public function dueList(Request $request)
     {
@@ -801,7 +803,9 @@ class ManagementReportController extends Controller
             $fromDate = $request->from_date ?? date('Y-m-d');
             $toDate = $request->to_date ?? date('Y-m-d');
 
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                 ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
@@ -932,7 +936,9 @@ class ManagementReportController extends Controller
             $toDate = $request->to_date ?? date('Y-m-d');
 
             // Get transactions with items grouped by company
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                 ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
@@ -1050,7 +1056,9 @@ class ManagementReportController extends Controller
             $toDate = $request->to_date ?? date('Y-m-d');
 
             // Build query for company-wise gross profit
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                 ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
@@ -1289,7 +1297,9 @@ class ManagementReportController extends Controller
             $fromDate = $request->from_date ?? date('Y-m-d');
             $toDate = $request->to_date ?? date('Y-m-d');
 
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                 ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
@@ -1401,7 +1411,9 @@ class ManagementReportController extends Controller
             $toDate = $request->to_date ?? date('Y-m-d');
 
             // Group by supplier through batch -> purchase_transaction -> supplier
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
                 ->leftJoin('purchase_transactions', 'batches.purchase_transaction_id', '=', 'purchase_transactions.id')
@@ -1504,7 +1516,9 @@ class ManagementReportController extends Controller
             }
 
             // Build query - group by item's commodity/salt field
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
                 ->leftJoin('items', 'sale_transaction_items.item_id', '=', 'items.id')
@@ -1572,7 +1586,9 @@ class ManagementReportController extends Controller
             $toDate = $request->to_date ?? date('Y-m-d');
             $minLossPercent = (float) ($request->min_loss_percent ?? 0);
 
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('batches', 'sale_transaction_items.batch_id', '=', 'batches.id')
                 ->leftJoin('items', 'sale_transaction_items.item_id', '=', 'items.id')
@@ -1659,7 +1675,9 @@ class ManagementReportController extends Controller
             $fromDate = $request->from_date ?? date('Y-m-d');
             $toDate = $request->to_date ?? date('Y-m-d');
 
+            $orgId = $this->getOrganizationId();
             $query = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->leftJoin('sales_men', 'sale_transactions.salesman_id', '=', 'sales_men.id')
                 ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
@@ -2080,7 +2098,9 @@ class ManagementReportController extends Controller
 
             // Get items that have NOT been sold within the date range
             // First, get all item IDs that WERE sold in the date range
+            $orgId = $this->getOrganizationId();
             $soldItemIds = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
                 ->distinct()
@@ -2109,6 +2129,7 @@ class ManagementReportController extends Controller
             foreach ($items as $item) {
                 // Get last sale date for this item
                 $lastSale = DB::table('sale_transaction_items')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                     ->where('sale_transaction_items.item_id', $item->id)
                     ->orderBy('sale_transactions.sale_date', 'desc')
@@ -2121,6 +2142,7 @@ class ManagementReportController extends Controller
                 // Supplier filter - check if item was purchased from this supplier
                 if ($request->supplier_id) {
                     $hasSupplierPurchase = DB::table('batches')
+                        ->where('organization_id', $orgId)
                         ->where('item_id', $item->id)
                         ->where('supplier_id', $request->supplier_id)
                         ->exists();
@@ -2208,7 +2230,9 @@ class ManagementReportController extends Controller
             $withBatchDetail = $request->with_batch_detail == 1;
 
             // Get sale quantities for all items within date range
+            $orgId = $this->getOrganizationId();
             $salesData = DB::table('sale_transaction_items')
+                ->where('sale_transactions.organization_id', $orgId)
                 ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                 ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
                 ->select(
@@ -2243,6 +2267,7 @@ class ManagementReportController extends Controller
 
                 // Get last sale date
                 $lastSale = DB::table('sale_transaction_items')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                     ->where('sale_transaction_items.item_id', $item->id)
                     ->orderBy('sale_transactions.sale_date', 'desc')
@@ -2336,7 +2361,9 @@ class ManagementReportController extends Controller
 
             if ($reportType == 'S') {
                 // Salesman-wise performance
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('sale_transactions')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->leftJoin('sales_men', 'sale_transactions.salesman_id', '=', 'sales_men.id')
                     ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                     ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
@@ -2371,7 +2398,9 @@ class ManagementReportController extends Controller
 
             } else {
                 // Customer-wise performance
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('sale_transactions')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                     ->leftJoin('sales_men', 'sale_transactions.salesman_id', '=', 'sales_men.id')
                     ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
@@ -2421,12 +2450,14 @@ class ManagementReportController extends Controller
                 // Get return amount for this entity
                 if ($reportType == 'S') {
                     $returnAmount = DB::table('sale_return_transactions')
+                        ->where('sale_return_transactions.organization_id', $orgId)
                         ->join('sale_transactions', 'sale_return_transactions.sale_transaction_id', '=', 'sale_transactions.id')
                         ->whereBetween('sale_return_transactions.sr_date', [$fromDate, $toDate])
                         ->where('sale_transactions.salesman_id', $entityId)
                         ->sum('sale_return_transactions.net_amount');
                 } else {
                     $returnAmount = DB::table('sale_return_transactions')
+                        ->where('organization_id', $orgId)
                         ->whereBetween('sr_date', [$fromDate, $toDate])
                         ->where('customer_id', $entityId)
                         ->sum('net_amount');
@@ -2439,11 +2470,13 @@ class ManagementReportController extends Controller
                 // Get outstanding
                 if ($reportType == 'C') {
                     $outstanding = DB::table('customer_ledgers')
+                        ->where('organization_id', $orgId)
                         ->where('customer_id', $entityId)
                         ->sum(DB::raw('debit - credit'));
                 } else {
                     // For salesman, sum outstanding of all customers under this salesman
                     $outstanding = DB::table('customer_ledgers')
+                        ->where('customer_ledgers.organization_id', $orgId)
                         ->join('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
                         ->where('customers.sales_man_code', $entityId)
                         ->sum(DB::raw('customer_ledgers.debit - customer_ledgers.credit'));
@@ -2484,9 +2517,11 @@ class ManagementReportController extends Controller
         if ($request->has('view') || $request->has('print')) {
             $fromDate = $request->from_date ?? date('Y-m-d');
             $toDate = $request->to_date ?? date('Y-m-d');
+            $orgId = $this->getOrganizationId();
 
             // Sales
             $sales = DB::table('sale_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('sale_date', [$fromDate, $toDate])
                 ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
                 ->first();
@@ -2500,6 +2535,7 @@ class ManagementReportController extends Controller
 
             // Cash Sales
             $cashSales = DB::table('sale_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('sale_date', [$fromDate, $toDate])
                 ->where('cash_flag', 'Y')
                 ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
@@ -2514,6 +2550,7 @@ class ManagementReportController extends Controller
 
             // Credit Sales
             $creditSales = DB::table('sale_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('sale_date', [$fromDate, $toDate])
                 ->where(function($q) {
                     $q->where('cash_flag', '!=', 'Y')
@@ -2531,6 +2568,7 @@ class ManagementReportController extends Controller
 
             // Sale Returns
             $saleReturns = DB::table('sale_return_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('return_date', [$fromDate, $toDate])
                 ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
                 ->first();
@@ -2544,6 +2582,7 @@ class ManagementReportController extends Controller
 
             // Purchases
             $purchases = DB::table('purchase_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('bill_date', [$fromDate, $toDate])
                 ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
                 ->first();
@@ -2557,6 +2596,7 @@ class ManagementReportController extends Controller
 
             // Cash Purchases
             $cashPurchases = DB::table('purchase_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('bill_date', [$fromDate, $toDate])
                 ->where('cash_flag', 'Y')
                 ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
@@ -2571,6 +2611,7 @@ class ManagementReportController extends Controller
 
             // Credit Purchases
             $creditPurchases = DB::table('purchase_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('bill_date', [$fromDate, $toDate])
                 ->where(function($q) {
                     $q->where('cash_flag', '!=', 'Y')
@@ -2588,6 +2629,7 @@ class ManagementReportController extends Controller
 
             // Purchase Returns
             $purchaseReturns = DB::table('purchase_return_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('return_date', [$fromDate, $toDate])
                 ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
                 ->first();
@@ -2602,6 +2644,7 @@ class ManagementReportController extends Controller
             // Customer Receipts
             try {
                 $customerReceipts = DB::table('customer_ledgers')
+                    ->where('organization_id', $orgId)
                     ->whereBetween('transaction_date', [$fromDate, $toDate])
                     ->where('transaction_type', 'LIKE', '%receipt%')
                     ->selectRaw('SUM(ABS(amount)) as total, COUNT(*) as count')
@@ -2625,6 +2668,7 @@ class ManagementReportController extends Controller
             // Supplier Payments
             try {
                 $supplierPayments = DB::table('supplier_ledgers')
+                    ->where('organization_id', $orgId)
                     ->whereBetween('transaction_date', [$fromDate, $toDate])
                     ->where('transaction_type', 'LIKE', '%payment%')
                     ->selectRaw('SUM(ABS(amount)) as total, COUNT(*) as count')
@@ -2648,6 +2692,7 @@ class ManagementReportController extends Controller
             // Sale Challans (if table exists)
             try {
                 $saleChallans = DB::table('sale_challan_transactions')
+                    ->where('organization_id', $orgId)
                     ->whereBetween('challan_date', [$fromDate, $toDate])
                     ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
                     ->first();
@@ -2665,6 +2710,7 @@ class ManagementReportController extends Controller
             // Purchase Challans (if table exists)
             try {
                 $purchaseChallans = DB::table('purchase_challan_transactions')
+                    ->where('organization_id', $orgId)
                     ->whereBetween('challan_date', [$fromDate, $toDate])
                     ->selectRaw('SUM(net_amount) as total, COUNT(*) as count')
                     ->first();
@@ -2710,7 +2756,9 @@ class ManagementReportController extends Controller
 
             foreach ($prescriptions as $prescription) {
                 // For each prescription, get the last sold items to this customer
+                $orgId = $this->getOrganizationId();
                 $lastSaleItems = DB::table('sale_transaction_items')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                     ->join('items', 'sale_transaction_items.item_id', '=', 'items.id')
                     ->where('sale_transactions.customer_id', $prescription->customer_id)
@@ -2748,7 +2796,9 @@ class ManagementReportController extends Controller
             // If no prescriptions found, try to get from sale transactions directly
             // for items that have a schedule (prescription required items)
             if (count($reportData) == 0) {
+                $orgId = $this->getOrganizationId();
                 $saleItems = DB::table('sale_transaction_items')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                     ->join('items', 'sale_transaction_items.item_id', '=', 'items.id')
                     ->join('customers', 'sale_transactions.customer_id', '=', 'customers.id')
@@ -2794,19 +2844,23 @@ class ManagementReportController extends Controller
             if ($ledgerCode == 'CL') {
                 // Customer Ledger Mismatch
                 $customers = Customer::where('is_deleted', 0)->orderBy('code')->get();
+                $orgId = $this->getOrganizationId();
 
                 foreach ($customers as $customer) {
                     // Get ledger balance (sum of all transactions)
                     $ledgerBalance = DB::table('customer_ledgers')
+                        ->where('organization_id', $orgId)
                         ->where('customer_id', $customer->id)
                         ->sum('amount');
 
                     // Get due list amount (from customer dues: debit - credit)
                     try {
                         $dueDebit = DB::table('customer_dues')
+                            ->where('organization_id', $orgId)
                             ->where('customer_id', $customer->id)
                             ->sum('debit');
                         $dueCredit = DB::table('customer_dues')
+                            ->where('organization_id', $orgId)
                             ->where('customer_id', $customer->id)
                             ->sum('credit');
                         $dueListAmount = (float) $dueDebit - (float) $dueCredit;
@@ -2818,6 +2872,7 @@ class ManagementReportController extends Controller
                     if ($dueListAmount == 0) {
                         try {
                             $dueListAmount = DB::table('sale_transactions')
+                                ->where('organization_id', $orgId)
                                 ->where('customer_id', $customer->id)
                                 ->sum('balance_amount');
                         } catch (\Exception $e) {
@@ -2843,11 +2898,13 @@ class ManagementReportController extends Controller
             } else {
                 // Supplier Ledger Mismatch
                 $suppliers = Supplier::where('is_deleted', 0)->orderBy('code')->get();
+                $orgId = $this->getOrganizationId();
 
                 foreach ($suppliers as $supplier) {
                     // Get ledger balance
                     try {
                         $ledgerBalance = DB::table('supplier_ledgers')
+                            ->where('organization_id', $orgId)
                             ->where('supplier_id', $supplier->supplier_id)
                             ->sum('amount');
                     } catch (\Exception $e) {
@@ -2856,6 +2913,7 @@ class ManagementReportController extends Controller
 
                     // Get due list amount from purchase transactions
                     $dueListAmount = DB::table('purchase_transactions')
+                        ->where('organization_id', $orgId)
                         ->where('supplier_id', $supplier->supplier_id)
                         ->sum('balance_amount');
 
@@ -2900,7 +2958,9 @@ class ManagementReportController extends Controller
 
             if ($type == 'C') {
                 // Customer Sales - show sale transactions with due amounts
+                $orgId = $this->getOrganizationId();
                 $transactions = DB::table('sale_transactions')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                     ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
                     ->select(
@@ -2924,6 +2984,7 @@ class ManagementReportController extends Controller
                     // Get due amount from customer_dues for this transaction
                     try {
                         $dueRecord = DB::table('customer_dues')
+                            ->where('organization_id', $orgId)
                             ->where('customer_id', $trn->customer_id)
                             ->where('trans_no', $trn->invoice_no)
                             ->first();
@@ -2945,7 +3006,9 @@ class ManagementReportController extends Controller
                 }
             } else {
                 // Supplier Purchases - show purchase transactions with due amounts
+                $orgId = $this->getOrganizationId();
                 $transactions = DB::table('purchase_transactions')
+                    ->where('purchase_transactions.organization_id', $orgId)
                     ->leftJoin('suppliers', 'purchase_transactions.supplier_id', '=', 'suppliers.supplier_id')
                     ->whereBetween('purchase_transactions.bill_date', [$fromDate, $toDate])
                     ->select(
@@ -2969,6 +3032,7 @@ class ManagementReportController extends Controller
                     // Get due amount from supplier ledger
                     try {
                         $dueAmount = DB::table('supplier_ledgers')
+                            ->where('organization_id', $orgId)
                             ->where('supplier_id', $trn->supplier_id)
                             ->where('trans_no', $trn->bill_no)
                             ->sum('amount');
@@ -3027,6 +3091,7 @@ class ManagementReportController extends Controller
             }
 
             // For each user and date, check for activity
+            $orgId = $this->getOrganizationId();
             foreach ($selectedUsers as $user) {
                 $presentCount = 0;
                 $absentCount = 0;
@@ -3040,6 +3105,7 @@ class ManagementReportController extends Controller
                     // Check sale transactions created by user
                     try {
                         $saleActivity = DB::table('sale_transactions')
+                            ->where('organization_id', $orgId)
                             ->where('created_by', $user->user_id)
                             ->whereDate('created_at', $date)
                             ->selectRaw('MIN(created_at) as first_time, MAX(created_at) as last_time')
@@ -3058,6 +3124,7 @@ class ManagementReportController extends Controller
                     if (!$hasActivity) {
                         try {
                             $purchaseActivity = DB::table('purchase_transactions')
+                                ->where('organization_id', $orgId)
                                 ->where('created_by', $user->user_id)
                                 ->whereDate('created_at', $date)
                                 ->selectRaw('MIN(created_at) as first_time, MAX(created_at) as last_time')
@@ -3138,8 +3205,10 @@ class ManagementReportController extends Controller
             $customerName = $request->customer_name;
 
             // Get modified/updated sale transactions
+            $orgId = $this->getOrganizationId();
             if ($type == 'ALL' || $type == 'SALE') {
                 $saleQuery = DB::table('sale_transactions')
+                    ->where('sale_transactions.organization_id', $orgId)
                     ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                     ->leftJoin('users', 'sale_transactions.updated_by', '=', 'users.user_id')
                     ->whereBetween('sale_transactions.updated_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
@@ -3183,6 +3252,7 @@ class ManagementReportController extends Controller
             // Get modified purchase transactions
             if ($type == 'ALL' || $type == 'PURCHASE') {
                 $purchaseQuery = DB::table('purchase_transactions')
+                    ->where('purchase_transactions.organization_id', $orgId)
                     ->leftJoin('suppliers', 'purchase_transactions.supplier_id', '=', 'suppliers.supplier_id')
                     ->leftJoin('users', 'purchase_transactions.updated_by', '=', 'users.user_id')
                     ->whereBetween('purchase_transactions.updated_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
@@ -3224,6 +3294,7 @@ class ManagementReportController extends Controller
             if ($type == 'ALL' || $type == 'SALE_RETURN') {
                 try {
                     $srQuery = DB::table('sale_return_transactions')
+                        ->where('sale_return_transactions.organization_id', $orgId)
                         ->leftJoin('customers', 'sale_return_transactions.customer_id', '=', 'customers.id')
                         ->leftJoin('users', 'sale_return_transactions.updated_by', '=', 'users.user_id')
                         ->whereBetween('sale_return_transactions.updated_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
@@ -3289,11 +3360,13 @@ class ManagementReportController extends Controller
             $typeCode = $request->type_code ?? $request->type ?? '6';
 
             // 1 = Customer, 2 = Supplier, 3 = Item, 4 = Company, 5 = Salesman, 6 = All
+            $orgId = $this->getOrganizationId();
 
             // Get Customer records
             if ($typeCode == '1' || $typeCode == '6') {
                 try {
                     $customers = DB::table('customers')
+                        ->where('customers.organization_id', $orgId)
                         ->leftJoin('users', 'customers.updated_by', '=', 'users.user_id')
                         ->select(
                             'customers.code',
@@ -3327,6 +3400,7 @@ class ManagementReportController extends Controller
             if ($typeCode == '2' || $typeCode == '6') {
                 try {
                     $suppliers = DB::table('suppliers')
+                        ->where('suppliers.organization_id', $orgId)
                         ->leftJoin('users', 'suppliers.updated_by', '=', 'users.user_id')
                         ->select(
                             'suppliers.code',
@@ -3360,6 +3434,7 @@ class ManagementReportController extends Controller
             if ($typeCode == '3' || $typeCode == '6') {
                 try {
                     $items = DB::table('items')
+                        ->where('items.organization_id', $orgId)
                         ->leftJoin('users', 'items.updated_by', '=', 'users.user_id')
                         ->select(
                             'items.code',
@@ -3393,6 +3468,7 @@ class ManagementReportController extends Controller
             if ($typeCode == '4' || $typeCode == '6') {
                 try {
                     $companies = DB::table('companies')
+                        ->where('companies.organization_id', $orgId)
                         ->leftJoin('users', 'companies.updated_by', '=', 'users.user_id')
                         ->select(
                             'companies.code',
@@ -3426,6 +3502,7 @@ class ManagementReportController extends Controller
             if ($typeCode == '5' || $typeCode == '6') {
                 try {
                     $salesmen = DB::table('sales_men')
+                        ->where('sales_men.organization_id', $orgId)
                         ->leftJoin('users', 'sales_men.updated_by', '=', 'users.user_id')
                         ->select(
                             'sales_men.code',
@@ -3481,6 +3558,7 @@ class ManagementReportController extends Controller
             // Generate date range
             $startDate = \Carbon\Carbon::parse($fromDate);
             $endDate = \Carbon\Carbon::parse($toDate);
+            $orgId = $this->getOrganizationId();
 
             if ($type == 'C') {
                 // Customer Ledger Summary
@@ -3490,6 +3568,7 @@ class ManagementReportController extends Controller
                 // Get opening balance (sum of all transactions before fromDate)
                 try {
                     $openingBalance = DB::table($tableName)
+                        ->where('organization_id', $orgId)
                         ->where($dateColumn, '<', $fromDate)
                         ->sum('amount');
                 } catch (\Exception $e) {
@@ -3505,6 +3584,7 @@ class ManagementReportController extends Controller
                     try {
                         // Get debit and credit for this date
                         $dayData = DB::table($tableName)
+                            ->where('organization_id', $orgId)
                             ->whereDate($dateColumn, $dateStr)
                             ->selectRaw("
                                 SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as debit,
@@ -3542,6 +3622,7 @@ class ManagementReportController extends Controller
                 // Get opening balance
                 try {
                     $openingBalance = DB::table($tableName)
+                        ->where('organization_id', $orgId)
                         ->where($dateColumn, '<', $fromDate)
                         ->sum('amount');
                 } catch (\Exception $e) {
@@ -3556,6 +3637,7 @@ class ManagementReportController extends Controller
 
                     try {
                         $dayData = DB::table($tableName)
+                            ->where('organization_id', $orgId)
                             ->whereDate($dateColumn, $dateStr)
                             ->selectRaw("
                                 SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END) as debit,
@@ -3604,6 +3686,7 @@ class ManagementReportController extends Controller
 
             // Get all active users
             $users = User::where('is_active', 1)->orderBy('full_name')->get();
+            $orgId = $this->getOrganizationId();
 
             foreach ($users as $user) {
                 $sales = 0;
@@ -3616,6 +3699,7 @@ class ManagementReportController extends Controller
                 // Count sales created by user
                 try {
                     $sales = DB::table('sale_transactions')
+                        ->where('organization_id', $orgId)
                         ->where('created_by', $user->user_id)
                         ->whereBetween('sale_date', [$fromDate, $toDate])
                         ->count();
@@ -3624,6 +3708,7 @@ class ManagementReportController extends Controller
                 // Count purchases created by user
                 try {
                     $purchases = DB::table('purchase_transactions')
+                        ->where('organization_id', $orgId)
                         ->where('created_by', $user->user_id)
                         ->whereBetween('bill_date', [$fromDate, $toDate])
                         ->count();
@@ -3632,6 +3717,7 @@ class ManagementReportController extends Controller
                 // Count sale returns created by user
                 try {
                     $saleReturns = DB::table('sale_return_transactions')
+                        ->where('organization_id', $orgId)
                         ->where('created_by', $user->user_id)
                         ->whereBetween('return_date', [$fromDate, $toDate])
                         ->count();
@@ -3640,6 +3726,7 @@ class ManagementReportController extends Controller
                 // Count purchase returns created by user
                 try {
                     $purchaseReturns = DB::table('purchase_return_transactions')
+                        ->where('organization_id', $orgId)
                         ->where('created_by', $user->user_id)
                         ->whereBetween('return_date', [$fromDate, $toDate])
                         ->count();
@@ -3648,6 +3735,7 @@ class ManagementReportController extends Controller
                 // Count receipts created by user
                 try {
                     $receipts = DB::table('customer_ledgers')
+                        ->where('organization_id', $orgId)
                         ->where('created_by', $user->user_id)
                         ->where('transaction_type', 'Receipt')
                         ->whereBetween('transaction_date', [$fromDate, $toDate])
@@ -3657,6 +3745,7 @@ class ManagementReportController extends Controller
                 // Count payments created by user
                 try {
                     $payments = DB::table('supplier_ledgers')
+                        ->where('organization_id', $orgId)
                         ->where('created_by', $user->user_id)
                         ->where('transaction_type', 'Payment')
                         ->whereBetween('transaction_date', [$fromDate, $toDate])
@@ -3711,9 +3800,11 @@ class ManagementReportController extends Controller
             $companyGstin = $company->gst_no ?? '';
 
             // Get Sales (if type is 1 or 3)
+            $orgId = $this->getOrganizationId();
             if ($reportType == '1' || $reportType == '3') {
                 try {
                     $salesQuery = DB::table('sale_transaction_items')
+                        ->where('sale_transactions.organization_id', $orgId)
                         ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
                         ->leftJoin('customers', 'sale_transactions.customer_id', '=', 'customers.id')
                         ->whereBetween('sale_transactions.sale_date', [$fromDate, $toDate])
@@ -3756,6 +3847,7 @@ class ManagementReportController extends Controller
             if ($reportType == '2' || $reportType == '3') {
                 try {
                     $purchasesQuery = DB::table('purchase_transaction_items')
+                        ->where('purchase_transactions.organization_id', $orgId)
                         ->join('purchase_transactions', 'purchase_transaction_items.purchase_transaction_id', '=', 'purchase_transactions.id')
                         ->leftJoin('suppliers', 'purchase_transactions.supplier_id', '=', 'suppliers.supplier_id')
                         ->whereBetween('purchase_transactions.bill_date', [$fromDate, $toDate])
@@ -3812,17 +3904,22 @@ class ManagementReportController extends Controller
         $suppliers = Supplier::where('is_deleted', 0)->orderBy('name')->get();
         
         // Get HSN codes from actual sale/purchase transaction items (hsn_code stored directly in items tables)
+        $orgIdForHsn = $this->getOrganizationId();
         $saleHsnCodes = DB::table('sale_transaction_items')
-            ->whereNotNull('hsn_code')
-            ->where('hsn_code', '!=', '')
-            ->select('hsn_code')
+            ->join('sale_transactions', 'sale_transaction_items.sale_transaction_id', '=', 'sale_transactions.id')
+            ->where('sale_transactions.organization_id', $orgIdForHsn)
+            ->whereNotNull('sale_transaction_items.hsn_code')
+            ->where('sale_transaction_items.hsn_code', '!=', '')
+            ->select('sale_transaction_items.hsn_code')
             ->distinct()
             ->pluck('hsn_code');
         
         $purchaseHsnCodes = DB::table('purchase_transaction_items')
-            ->whereNotNull('hsn_code')
-            ->where('hsn_code', '!=', '')
-            ->select('hsn_code')
+            ->join('purchase_transactions', 'purchase_transaction_items.purchase_transaction_id', '=', 'purchase_transactions.id')
+            ->where('purchase_transactions.organization_id', $orgIdForHsn)
+            ->whereNotNull('purchase_transaction_items.hsn_code')
+            ->where('purchase_transaction_items.hsn_code', '!=', '')
+            ->select('purchase_transaction_items.hsn_code')
             ->distinct()
             ->pluck('hsn_code');
         

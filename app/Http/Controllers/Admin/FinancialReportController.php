@@ -14,9 +14,11 @@ use App\Models\Voucher;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ReportHelperTrait;
 
 class FinancialReportController extends Controller
 {
+    use ReportHelperTrait;
     /**
      * Trial Balance Report
      */

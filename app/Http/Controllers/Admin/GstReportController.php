@@ -13,9 +13,11 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Traits\ReportHelperTrait;
 
 class GstReportController extends Controller
 {
+    use ReportHelperTrait;
     /**
      * GSTR-3B / Form 3B Report
      */
@@ -248,7 +250,9 @@ class GstReportController extends Controller
 
             // HSN Summary
             if ($newHsnSummary) {
+                $orgId = $this->getOrganizationId();
                 $hsnSummary = DB::table('sale_transaction_items as sti')
+                    ->where('st.organization_id', $orgId)
                     ->join('sale_transactions as st', 'sti.sale_transaction_id', '=', 'st.id')
                     ->join('items as i', 'sti.item_id', '=', 'i.id')
                     ->whereBetween('st.sale_date', [$startDate, $endDate])
@@ -435,7 +439,9 @@ class GstReportController extends Controller
             });
 
             // HSN Summary for Purchases
+            $orgId = $this->getOrganizationId();
             $hsnSummary = DB::table('purchase_transaction_items as pti')
+                ->where('pt.organization_id', $orgId)
                 ->join('purchase_transactions as pt', 'pti.purchase_transaction_id', '=', 'pt.id')
                 ->join('items as i', 'pti.item_id', '=', 'i.id')
                 ->whereBetween('pt.bill_date', [$startDate, $endDate])
@@ -893,7 +899,9 @@ class GstReportController extends Controller
 
         if ($request->has('generate') || $request->has('print')) {
             // Build query for items with stock and GST details
+            $orgId = $this->getOrganizationId();
             $query = DB::table('batches as b')
+                ->where('b.organization_id', $orgId)
                 ->join('items as i', 'b.item_id', '=', 'i.id')
                 ->leftJoin('companies as c', 'i.company_id', '=', 'c.id')
                 ->select(
@@ -938,6 +946,7 @@ class GstReportController extends Controller
                 // Get sale quantity for the period
                 $saleQty = DB::table('sale_transaction_items as sti')
                     ->join('sale_transactions as st', 'sti.sale_transaction_id', '=', 'st.id')
+                    ->where('st.organization_id', auth()->user()->organization_id ?? 1)
                     ->where('sti.item_id', function($q) use ($item) {
                         $q->select('id')->from('items')->where('name', $item->item_name)->limit(1);
                     })
@@ -987,7 +996,8 @@ class GstReportController extends Controller
         }
 
         // Get companies for dropdown
-        $companies = DB::table('companies')->select('id', 'name', 'short_name')->orderBy('name')->get();
+        $orgIdForCompanies = $this->getOrganizationId();
+        $companies = DB::table('companies')->where('organization_id', $orgIdForCompanies)->select('id', 'name', 'short_name')->orderBy('name')->get();
 
         return view('admin.reports.gst-reports.stock-trans-1', compact(
             'reportData', 'totalStockValue', 'asOnDate', 'asOnDay', 'saleMonth', 'year',
@@ -1022,9 +1032,11 @@ class GstReportController extends Controller
             // Calculate period dates
             $periodStart = Carbon::createFromDate($year, $saleMonth, 1)->startOfMonth();
             $periodEnd = Carbon::createFromDate($year, $saleMonth, 1)->endOfMonth();
+            $orgId = $this->getOrganizationId();
 
             // Get items grouped by HSN code
             $itemsQuery = DB::table('items as i')
+                ->where('i.organization_id', $orgId)
                 ->leftJoin('companies as c', 'i.company_id', '=', 'c.id')
                 ->select(
                     'i.id',
@@ -1041,21 +1053,24 @@ class GstReportController extends Controller
 
             $items = $itemsQuery->get();
 
-            $reportData = $items->map(function($item) use ($periodStart, $periodEnd) {
+            $reportData = $items->map(function($item) use ($periodStart, $periodEnd, $orgId) {
                 // Opening Stock: Sum of batches created before period start
                 $openingQty = DB::table('batches')
+                    ->where('organization_id', $orgId)
                     ->where('item_id', $item->id)
                     ->where('created_at', '<', $periodStart)
                     ->sum('qty');
 
                 // Current stock in batches
                 $currentQty = DB::table('batches')
+                    ->where('organization_id', $orgId)
                     ->where('item_id', $item->id)
                     ->sum('qty');
 
                 // Outward Supply Made (Sales during the period)
                 $outwardData = DB::table('sale_transaction_items as sti')
                     ->join('sale_transactions as st', 'sti.sale_transaction_id', '=', 'st.id')
+                    ->where('st.organization_id', $orgId)
                     ->where('sti.item_id', $item->id)
                     ->whereBetween('st.sale_date', [$periodStart, $periodEnd])
                     ->selectRaw('
@@ -1231,7 +1246,8 @@ class GstReportController extends Controller
             $recordCount = $reportData->count();
 
             // Get company info for eWayBill From
-            $companySettings = DB::table('settings')->first();
+            $orgIdForSettings = $this->getOrganizationId();
+            $companySettings = DB::table('settings')->where('organization_id', $orgIdForSettings)->first();
             if ($companySettings) {
                 $ewayBillFrom = [
                     'pincode' => $companySettings->pin_code ?? '',
@@ -1245,8 +1261,9 @@ class GstReportController extends Controller
         }
 
         // Get areas and routes for dropdowns
-        $areas = DB::table('areas')->select('id', 'name')->orderBy('name')->get();
-        $routes = DB::table('routes')->select('id', 'name')->orderBy('name')->get();
+        $orgIdForLookup = $this->getOrganizationId();
+        $areas = DB::table('areas')->where('organization_id', $orgIdForLookup)->select('id', 'name')->orderBy('name')->get();
+        $routes = DB::table('routes')->where('organization_id', $orgIdForLookup)->select('id', 'name')->orderBy('name')->get();
 
         return view('admin.reports.gst-reports.waybill-generation', compact(
             'reportData', 'recordCount', 'documentType', 'billAmtThreshold', 'salesmanCode',
@@ -1285,7 +1302,9 @@ class GstReportController extends Controller
             }
 
             // Get Sales Data (B2B - Registered)
+            $orgId = $this->getOrganizationId();
             $b2bSales = DB::table('sale_transactions as st')
+                ->where('st.organization_id', $orgId)
                 ->join('customers as c', 'st.customer_id', '=', 'c.id')
                 ->whereBetween('st.sale_date', [$fromDate, $toDate])
                 ->whereNotNull('c.gst_number')
@@ -1303,6 +1322,7 @@ class GstReportController extends Controller
 
             // Get Sales Data (B2C - Unregistered)
             $b2cSales = DB::table('sale_transactions as st')
+                ->where('st.organization_id', $orgId)
                 ->leftJoin('customers as c', 'st.customer_id', '=', 'c.id')
                 ->whereBetween('st.sale_date', [$fromDate, $toDate])
                 ->where(function($q) {
@@ -1322,6 +1342,7 @@ class GstReportController extends Controller
 
             // Get Purchase Data (Registered)
             $b2bPurchases = DB::table('purchase_transactions as pt')
+                ->where('pt.organization_id', $orgId)
                 ->join('suppliers as s', 'pt.supplier_id', '=', 's.id')
                 ->whereBetween('pt.purchase_date', [$fromDate, $toDate])
                 ->whereNotNull('s.gst_number')
@@ -1339,6 +1360,7 @@ class GstReportController extends Controller
 
             // Get Credit/Debit Notes
             $creditNotes = DB::table('credit_note_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('note_date', [$fromDate, $toDate])
                 ->select(
                     DB::raw('COUNT(*) as count'),
@@ -1350,6 +1372,7 @@ class GstReportController extends Controller
                 ->first();
 
             $debitNotes = DB::table('debit_note_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('note_date', [$fromDate, $toDate])
                 ->select(
                     DB::raw('COUNT(*) as count'),

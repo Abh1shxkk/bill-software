@@ -17,10 +17,12 @@ use App\Models\Item;
 use App\Models\HsnCode;
 use App\Models\GeneralLedger;
 use App\Models\TransportMaster;
+use App\Traits\ReportHelperTrait;
 use Illuminate\Http\Request;
 
 class OtherReportController extends Controller
 {
+    use ReportHelperTrait;
     /**
      * Customer/Supplier List Report
      */

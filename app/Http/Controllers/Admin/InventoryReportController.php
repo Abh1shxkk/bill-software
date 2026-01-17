@@ -7,9 +7,11 @@ use App\Models\Item;
 use App\Models\Company;
 use App\Models\ItemCategory;
 use Illuminate\Http\Request;
+use App\Traits\ReportHelperTrait;
 
 class InventoryReportController extends Controller
 {
+    use ReportHelperTrait;
     /**
      * Inventory Reports Index
      */

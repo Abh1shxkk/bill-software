@@ -12,9 +12,11 @@ use App\Models\Route;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Traits\ReportHelperTrait;
 
 class ReceiptPaymentReportController extends Controller
 {
+    use ReportHelperTrait;
     // Receipt from Customer Report
     public function receiptFromCustomer(Request $request)
     {
@@ -35,7 +37,9 @@ class ReceiptPaymentReportController extends Controller
             $orderBy = $request->order_by ?? 'Date';
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('customer_ledgers')
+                    ->where('customer_ledgers.organization_id', $orgId)
                     ->leftJoin('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
                     ->where('customer_ledgers.transaction_type', 'Receipt')
                     ->whereBetween('customer_ledgers.transaction_date', [$fromDate, $toDate]);
@@ -168,7 +172,9 @@ class ReceiptPaymentReportController extends Controller
             $chequeNo = $request->cheque_no;
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('supplier_ledgers')
+                    ->where('supplier_ledgers.organization_id', $orgId)
                     ->leftJoin('suppliers', 'supplier_ledgers.supplier_id', '=', 'suppliers.supplier_id')
                     ->where('supplier_ledgers.transaction_type', 'Payment')
                     ->whereBetween('supplier_ledgers.transaction_date', [$fromDate, $toDate]);
@@ -279,7 +285,9 @@ class ReceiptPaymentReportController extends Controller
             $toDate = $request->to_date ?? date('Y-m-d');
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('customer_ledgers')
+                    ->where('customer_ledgers.organization_id', $orgId)
                     ->leftJoin('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
                     ->where('customer_ledgers.payment_mode', 'Cheque')
                     ->whereNotNull('customer_ledgers.cheque_date')
@@ -343,7 +351,9 @@ class ReceiptPaymentReportController extends Controller
             $orderBy = $request->order_by ?? 'D';
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('customer_ledgers')
+                    ->where('customer_ledgers.organization_id', $orgId)
                     ->leftJoin('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
                     ->where('customer_ledgers.payment_mode', 'Cheque')
                     ->where(function($q) {
@@ -404,7 +414,9 @@ class ReceiptPaymentReportController extends Controller
             $chequeNo = $request->cheque_no;
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('customer_ledgers')
+                    ->where('customer_ledgers.organization_id', $orgId)
                     ->leftJoin('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
                     ->where('customer_ledgers.transaction_type', 'Receipt')
                     ->whereBetween('customer_ledgers.transaction_date', [$fromDate, $toDate]);
@@ -483,7 +495,9 @@ class ReceiptPaymentReportController extends Controller
             $toDate = $request->to_date ?? date('Y-m-d');
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('customer_ledgers')
+                    ->where('customer_ledgers.organization_id', $orgId)
                     ->leftJoin('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
                     ->leftJoin('sales_men', 'customers.salesman_id', '=', 'sales_men.id')
                     ->where('customer_ledgers.transaction_type', 'Receipt')
@@ -543,7 +557,9 @@ class ReceiptPaymentReportController extends Controller
 
             try {
                 // Query pay-in slips - adjust table name based on your schema
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('pay_in_slips')
+                    ->where('organization_id', $orgId)
                     ->whereBetween('slip_date', [$fromDate, $toDate]);
 
                 if ($request->bank_id) {
@@ -584,7 +600,9 @@ class ReceiptPaymentReportController extends Controller
 
             try {
                 // Query currency details for the date - adjust table name based on your schema
+                $orgId = $this->getOrganizationId();
                 $currencies = DB::table('currency_details')
+                    ->where('organization_id', $orgId)
                     ->where('transaction_date', $reportDate)
                     ->get();
 
@@ -624,7 +642,9 @@ class ReceiptPaymentReportController extends Controller
             $endDate = $toYear . '-03-31';
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('customer_ledgers')
+                    ->where('customer_ledgers.organization_id', $orgId)
                     ->leftJoin('customers', 'customer_ledgers.customer_id', '=', 'customers.id')
                     ->where('customer_ledgers.transaction_type', 'Receipt')
                     ->whereBetween('customer_ledgers.transaction_date', [$startDate, $endDate]);
@@ -735,7 +755,9 @@ class ReceiptPaymentReportController extends Controller
             $sortBy = $request->sort_by ?? 'party';
 
             try {
+                $orgId = $this->getOrganizationId();
                 $query = DB::table('supplier_ledgers')
+                    ->where('supplier_ledgers.organization_id', $orgId)
                     ->leftJoin('suppliers', 'supplier_ledgers.supplier_id', '=', 'suppliers.supplier_id')
                     ->where('supplier_ledgers.transaction_type', 'Payment')
                     ->whereBetween('supplier_ledgers.transaction_date', [$fromDate, $toDate]);

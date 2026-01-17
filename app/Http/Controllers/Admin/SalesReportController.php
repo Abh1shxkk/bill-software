@@ -22,9 +22,11 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Traits\ReportHelperTrait;
 
 class SalesReportController extends Controller
 {
+    use ReportHelperTrait;
     /**
      * Display the sales report dashboard/index with all report options
      */

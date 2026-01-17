@@ -19,9 +19,11 @@ use App\Models\User;
 use App\Models\Area;
 use App\Models\State;
 use App\Models\GeneralLedger;
+use App\Traits\ReportHelperTrait;
 
 class PurchaseReportController extends Controller
 {
+    use ReportHelperTrait;
     /**
      * Display the purchase report dashboard
      */
@@ -2573,7 +2575,9 @@ class PurchaseReportController extends Controller
             $input['net_total'] = $input['net_cgst'] + $input['net_sgst'] + $input['net_igst'];
             
             // OUTPUT GST - Sales (tax_amount split 50/50 for CGST/SGST as approximation)
+            $orgId = $this->getOrganizationId();
             $salesGst = DB::table('sale_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('sale_date', [$dateFrom, $dateTo])
                 ->selectRaw('SUM(COALESCE(tax_amount, 0)) as total_tax')
                 ->first();
@@ -2747,7 +2751,9 @@ class PurchaseReportController extends Controller
 
         if ($formSubmitted) {
             // 3.1(a) Outward taxable supplies - Sales
+            $orgId = $this->getOrganizationId();
             $salesGst = DB::table('sale_transactions')
+                ->where('organization_id', $orgId)
                 ->whereBetween('sale_date', [$dateFrom, $dateTo])
                 ->selectRaw('SUM(COALESCE(tax_amount, 0)) as total_tax')
                 ->first();

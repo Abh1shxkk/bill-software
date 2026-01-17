@@ -15,10 +15,12 @@ use App\Models\Item;
 use App\Models\Route;
 use App\Models\Salesman;
 use App\Models\Supplier;
+use App\Traits\ReportHelperTrait;
 use Illuminate\Http\Request;
 
 class BreakageExpiryReportController extends Controller
 {
+    use ReportHelperTrait;
     // Breakage/Expiry from Customer - Pending
     public function fromCustomerPending(Request $request)
     {

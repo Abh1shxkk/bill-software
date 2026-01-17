@@ -16,11 +16,13 @@ use App\Models\Salesman;
 use App\Models\Supplier;
 use App\Models\StockAdjustment;
 use App\Models\SaleReturnReplacementTransaction;
+use App\Traits\ReportHelperTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class MiscTransactionReportController extends Controller
 {
+    use ReportHelperTrait;
     // Misc Transaction Book
     public function miscTransactionBook(Request $request)
     {
