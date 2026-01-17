@@ -22,6 +22,18 @@
   .action-btns form {
     margin: 0;
   }
+  
+  /* Receipt Mode Button */
+  .btn-purple {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+    color: white;
+  }
+  .btn-purple:hover {
+    background-color: #5a32a3;
+    border-color: #5a32a3;
+    color: white;
+  }
 </style>
 <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
   <div class="d-flex align-items-start gap-3">
@@ -144,6 +156,12 @@
                 <a class="btn btn-sm btn-outline-info" href="{{ route('admin.customers.expiry-ledger',$customer) }}" title="Expiry Ledger">
                   <i class="bi bi-receipt-cutoff"></i>
                 </a>
+                <button type="button" class="btn btn-sm {{ $customer->deals_with_item_desc_receipt ? 'btn-purple' : 'btn-outline-secondary' }} toggle-receipt-mode" 
+                        data-customer-id="{{ $customer->id }}" 
+                        data-toggle-url="{{ route('admin.customers.toggle-item-desc-receipt', $customer) }}"
+                        title="{{ $customer->deals_with_item_desc_receipt ? 'Receipt Mode ON - Click to disable' : 'Enable Receipt Mode' }}">
+                  <i class="bi {{ $customer->deals_with_item_desc_receipt ? 'bi-file-earmark-check-fill' : 'bi-file-earmark-check' }}"></i>
+                </button>
                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.customers.show',$customer) }}" title="View">
                   <i class="bi bi-eye"></i>
                 </a>
@@ -539,5 +557,71 @@ function confirmMultipleDeleteCustomers() {
     }
   });
 }
+
+// Toggle receipt mode for customer (AJAX)
+document.addEventListener('click', function(e) {
+  const toggleBtn = e.target.closest('.toggle-receipt-mode');
+  if (!toggleBtn) return;
+  
+  e.preventDefault();
+  
+  const url = toggleBtn.getAttribute('data-toggle-url');
+  const customerId = toggleBtn.getAttribute('data-customer-id');
+  
+  // Disable button during request
+  toggleBtn.disabled = true;
+  toggleBtn.style.opacity = '0.6';
+  
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      // Update button appearance
+      const icon = toggleBtn.querySelector('i');
+      if (data.status) {
+        // Enabled
+        toggleBtn.classList.remove('btn-outline-secondary');
+        toggleBtn.classList.add('btn-purple');
+        icon.classList.remove('bi-file-earmark-check');
+        icon.classList.add('bi-file-earmark-check-fill');
+        toggleBtn.title = 'Receipt Mode ON - Click to disable';
+      } else {
+        // Disabled
+        toggleBtn.classList.remove('btn-purple');
+        toggleBtn.classList.add('btn-outline-secondary');
+        icon.classList.remove('bi-file-earmark-check-fill');
+        icon.classList.add('bi-file-earmark-check');
+        toggleBtn.title = 'Enable Receipt Mode';
+      }
+      
+      // Show success toast
+      if (window.crudNotification) {
+        crudNotification.showToast('success', 'Success', data.message);
+      }
+    } else {
+      // Show error toast
+      if (window.crudNotification) {
+        crudNotification.showToast('error', 'Error', data.message || 'Failed to update');
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Toggle error:', error);
+    if (window.crudNotification) {
+      crudNotification.showToast('error', 'Error', 'Failed to update customer');
+    }
+  })
+  .finally(() => {
+    toggleBtn.disabled = false;
+    toggleBtn.style.opacity = '1';
+  });
+});
 </script>
 @endpush

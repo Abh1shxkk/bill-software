@@ -126,7 +126,8 @@ class Customer extends Model
     'created_by',
     'modified_by',
     'is_deleted',
-    'deleted_at'
+    'deleted_at',
+    'deals_with_item_desc_receipt'
 ];
 
     /**

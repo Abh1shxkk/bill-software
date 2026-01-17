@@ -554,4 +554,30 @@ class CustomerController extends Controller
 
         return response()->json(null);
     }
+
+    /**
+     * Toggle item description receipt flag for a customer (AJAX)
+     */
+    public function toggleItemDescReceipt(Customer $customer)
+    {
+        try {
+            $customer->deals_with_item_desc_receipt = !$customer->deals_with_item_desc_receipt;
+            $customer->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => $customer->deals_with_item_desc_receipt 
+                    ? 'Customer "' . $customer->name . '" marked for Item Description Receipt mode.'
+                    : 'Customer "' . $customer->name . '" removed from Item Description Receipt mode.',
+                'status' => $customer->deals_with_item_desc_receipt
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to toggle item desc receipt: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update customer. Please try again.'
+            ], 500);
+        }
+    }
 }

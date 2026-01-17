@@ -163,6 +163,7 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('customers/{customer}/challans', [CustomerController::class, 'challans'])->name('customers.challans');
         Route::resource('customers', CustomerController::class);
         Route::get('customers-all', [CustomerController::class, 'getAllCustomers'])->name('customers.all');
+        Route::post('customers/{customer}/toggle-item-desc-receipt', [CustomerController::class, 'toggleItemDescReceipt'])->name('customers.toggle-item-desc-receipt');
         
         // Customer Features Routes
         Route::get('customers/{customer}/ledger', [CustomerLedgerController::class, 'index'])->name('customers.ledger');
@@ -796,6 +797,7 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::post('sale/transaction', [SaleTransactionController::class, 'store'])->name('sale.store');
         Route::get('sale/get-items', [SaleTransactionController::class, 'getItems'])->name('sale.getItems');
         Route::get('sale/next-invoice-no', [SaleTransactionController::class, 'getNextInvoiceNo'])->name('sale.next-invoice-no');
+        Route::get('sale/next-temp-invoice-no', [SaleTransactionController::class, 'getNextTempInvoiceNo'])->name('sale.transaction.get-next-temp-invoice-no');
         Route::get('sale/customer/{customerId}/due', [SaleTransactionController::class, 'getCustomerDue'])->name('sale.customer.due');
         
         // Sale Invoices Routes

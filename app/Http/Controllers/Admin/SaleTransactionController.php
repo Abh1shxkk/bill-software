@@ -126,20 +126,33 @@ class SaleTransactionController extends Controller
                 return $this->dateValidationErrorResponse($dateError);
             }
             
-            // Validate request
-            $validated = $request->validate([
-                'date' => 'required|date',
-                'customer_id' => 'required|exists:customers,id',
-                'invoice_no' => 'required|string|max:100',
-                'items' => 'required|array|min:1',
-                'items.*.qty' => 'required|numeric|min:0',
-                'items.*.rate' => 'required|numeric|min:0',
-            ]);
+            // Check if this is a TEMP (receipt-only) transaction
+            $isTempTransaction = $request->input('series') === 'TEMP';
+            
+            // Different validation for TEMP vs normal transactions
+            if ($isTempTransaction) {
+                // TEMP transactions don't require items
+                $validated = $request->validate([
+                    'date' => 'required|date',
+                    'customer_id' => 'required|exists:customers,id',
+                    'invoice_no' => 'required|string|max:100',
+                ]);
+            } else {
+                // Normal transactions require items
+                $validated = $request->validate([
+                    'date' => 'required|date',
+                    'customer_id' => 'required|exists:customers,id',
+                    'invoice_no' => 'required|string|max:100',
+                    'items' => 'required|array|min:1',
+                    'items.*.qty' => 'required|numeric|min:0',
+                    'items.*.rate' => 'required|numeric|min:0',
+                ]);
+            }
             
             // No need to validate item_code - it's optional
             // Items can be saved with just name, even without code
             
-            Log::info('Validation passed');
+            Log::info('Validation passed', ['is_temp' => $isTempTransaction]);
             
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed', [
@@ -156,11 +169,37 @@ class SaleTransactionController extends Controller
         DB::beginTransaction();
         
         try {
-            $itemsData = $request->input('items');
+            $itemsData = $request->input('items', []);
             $challanId = $request->input('challan_id'); // Challan ID if converting from challan
             
-            // Auto-generate unique invoice number (ignore frontend input)
-            $invoiceNo = $this->generateInvoiceNo();
+            // Generate appropriate invoice number based on series
+            if ($isTempTransaction) {
+                $invoiceNo = $this->generateTempInvoiceNo();
+            } else {
+                $invoiceNo = $this->generateInvoiceNo();
+            }
+            
+            // Handle receipt file upload for TEMP transactions
+            $receiptPath = null;
+            if ($isTempTransaction && $request->hasFile('receipt_file')) {
+                $customerId = $request->input('customer_id');
+                $file = $request->file('receipt_file');
+                
+                // Get customer name for folder
+                $customer = \App\Models\Customer::find($customerId);
+                $customerName = $customer ? preg_replace('/[^A-Za-z0-9\-]/', '_', $customer->name) : 'Unknown';
+                
+                // Create folder name: CustomerName_Date (e.g., "Aryan_Medical_Store_17-01-2026")
+                $currentDate = date('d-m-Y');
+                $folderName = $customerName . '_' . $currentDate;
+                
+                // Generate unique filename
+                $filename = 'receipt_' . time() . '_' . $file->getClientOriginalName();
+                
+                // Store in: public/receipts/CustomerName_Date/filename
+                $receiptPath = $file->storeAs("public/receipts/{$folderName}", $filename);
+                $receiptPath = str_replace('public/', 'storage/', $receiptPath);
+            }
             
             // Create Master Record (using summary data from frontend)
             $transaction = SaleTransaction::create([
@@ -174,6 +213,8 @@ class SaleTransactionController extends Controller
                 'transfer_flag' => $request->input('transfer', 'N'),
                 'remarks' => $request->input('remarks'),
                 'challan_id' => $challanId, // Link to challan if converting
+                'receipt_path' => $receiptPath, // Receipt path for TEMP transactions
+                'receipt_description' => $request->input('receipt_description'),
                 
                 // Summary amounts (from frontend calculations)
                 'nt_amount' => $request->input('nt_amount', 0),
@@ -188,15 +229,19 @@ class SaleTransactionController extends Controller
                 'excise_amount' => $request->input('excise_amount', 0),
                 
                 // Payment info - If Cash='Y', payment received so balance=0, else balance=net_amount
-                'paid_amount' => $request->input('cash', 'N') === 'Y' ? $request->input('net_amount', 0) : 0,
-                'balance_amount' => $request->input('cash', 'N') === 'Y' ? 0 : $request->input('net_amount', 0),
-                'payment_status' => $request->input('cash', 'N') === 'Y' ? 'paid' : 'pending',
+                // For TEMP transactions, no payment is recorded yet
+                'paid_amount' => $isTempTransaction ? 0 : ($request->input('cash', 'N') === 'Y' ? $request->input('net_amount', 0) : 0),
+                'balance_amount' => $isTempTransaction ? 0 : ($request->input('cash', 'N') === 'Y' ? 0 : $request->input('net_amount', 0)),
+                'payment_status' => $isTempTransaction ? 'pending' : ($request->input('cash', 'N') === 'Y' ? 'paid' : 'pending'),
                 
-                'status' => 'completed',
+                // TEMP transactions are marked as 'pending' until items are added
+                'status' => $isTempTransaction ? 'pending' : 'completed',
                 'created_by' => Auth::id(),
             ]);
             
-            // Create Detail Records (Items)
+            // Create Detail Records (Items) - Only if items exist
+            // TEMP transactions may not have items initially
+            if (!empty($itemsData)) {
             foreach ($itemsData as $index => $itemData) {
                 // 🔥 DEBUG: Log batch_id
                 Log::info('Processing sale item', [
@@ -390,6 +435,7 @@ class SaleTransactionController extends Controller
                     }
                 } // End of else (not from challan)
             }
+            } // End of if (!empty($itemsData))
             
             // Mark challan as invoiced if this sale was converted from a challan
             if ($challanId) {
@@ -850,9 +896,28 @@ class SaleTransactionController extends Controller
             
             DB::beginTransaction();
             
+            // Check if this is a TEMP transaction being converted to a real invoice
+            $wasTemp = $transaction->series === 'TEMP' || str_starts_with($transaction->invoice_no, 'TEMP-');
+            $newSeries = $request->input('series', 'SB');
+            $newInvoiceNo = $transaction->invoice_no;
+            
+            // If it was a TEMP transaction and is being modified with actual items,
+            // generate a new proper invoice number
+            if ($wasTemp && $newSeries !== 'TEMP') {
+                $newInvoiceNo = $this->generateInvoiceNo();
+                $newSeries = 'SB'; // Default series for regular invoices
+                
+                Log::info('Converting TEMP transaction to regular invoice', [
+                    'old_invoice_no' => $transaction->invoice_no,
+                    'new_invoice_no' => $newInvoiceNo,
+                    'transaction_id' => $transaction->id
+                ]);
+            }
+            
             // Update master record
             $transaction->update([
-                'series' => $request->input('series', 'SB'),
+                'invoice_no' => $newInvoiceNo,
+                'series' => $newSeries,
                 'sale_date' => $request->input('date'),
                 'due_date' => $request->input('due_date'),
                 'customer_id' => $request->input('customer_id'),
@@ -1017,10 +1082,16 @@ class SaleTransactionController extends Controller
             
             DB::commit();
             
+            $message = 'Sale transaction updated successfully';
+            if ($wasTemp && $newSeries !== 'TEMP') {
+                $message = 'Transaction converted from temporary to Invoice No: ' . $newInvoiceNo;
+            }
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Sale transaction updated successfully',
+                'message' => $message,
                 'invoice_no' => $transaction->invoice_no,
+                'converted_from_temp' => $wasTemp && $newSeries !== 'TEMP',
             ]);
             
         } catch (\Exception $e) {
@@ -1048,6 +1119,43 @@ private function generateInvoiceNo()
         ->first();
     $nextNumber = $lastTransaction ? (intval(preg_replace('/[^0-9]/', '', $lastTransaction->invoice_no)) + 1) : 1;
     return 'INV-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+}
+
+/**
+ * Generate TEMP series invoice number (API endpoint)
+ */
+public function getNextTempInvoiceNo()
+{
+    try {
+        $nextInvoiceNo = $this->generateTempInvoiceNo();
+        
+        return response()->json([
+            'success' => true,
+            'next_invoice_no' => $nextInvoiceNo
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error generating TEMP invoice number'
+        ], 500);
+    }
+}
+
+/**
+ * Generate TEMP series invoice number (per organization)
+ */
+private function generateTempInvoiceNo()
+{
+    $orgId = auth()->user()->organization_id ?? 1;
+    
+    // Only consider invoices with TEMP-XXXXXX format
+    $lastTransaction = SaleTransaction::withoutGlobalScopes()
+        ->where('organization_id', $orgId)
+        ->where('invoice_no', 'LIKE', 'TEMP-%')
+        ->orderByRaw('CAST(SUBSTRING(invoice_no, 6) AS UNSIGNED) DESC')
+        ->first();
+    $nextNumber = $lastTransaction ? (intval(preg_replace('/[^0-9]/', '', $lastTransaction->invoice_no)) + 1) : 1;
+    return 'TEMP-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 }
 
     /**

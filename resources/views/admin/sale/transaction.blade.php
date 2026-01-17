@@ -67,6 +67,18 @@
         border-radius: 3px;
     }
     
+    /* Receipt Mode Button */
+    .btn-purple {
+        background-color: #6f42c1 !important;
+        border-color: #6f42c1 !important;
+        color: white !important;
+    }
+    .btn-purple:hover {
+        background-color: #5a32a3 !important;
+        border-color: #5a32a3 !important;
+        color: white !important;
+    }
+    
     .table-compact {
         font-size: 10px;
         margin-bottom: 0;
@@ -770,10 +782,10 @@
                     
                     <div class="field-group">
                         <label>Customer:</label>
-                        <select class="form-control" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" onchange="updateCustomerName(); fetchCustomerDue();">
+                        <select class="form-control" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" onchange="updateCustomerName(); fetchCustomerDue(); checkChooseItemsButtonState();">
                             <option value="">Select Customer</option>
                             @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
+                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-receipt-mode="{{ $customer->deals_with_item_desc_receipt ? '1' : '0' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -864,6 +876,24 @@
             </div>
 
             
+            <!-- Uploaded Receipts Section - Only visible for receipt-mode customers -->
+            <div id="uploadedReceiptsSection" class="bg-white border rounded p-3 mb-2" style="display: none; border-color: #6f42c1 !important;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0" style="color: #6f42c1; font-size: 13px;">
+                        <i class="bi bi-file-earmark-image me-2"></i>Uploaded Receipts
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-purple" onclick="openReceiptUploadModal()" style="font-size: 11px; border-color: #6f42c1; color: #6f42c1;">
+                        <i class="bi bi-cloud-upload"></i> Upload More
+                    </button>
+                </div>
+                <div id="uploadedReceiptsContainer" class="d-flex flex-wrap gap-2">
+                    <!-- Uploaded receipts will be displayed here -->
+                    <div class="text-muted small" id="noReceiptsMessage" style="font-size: 11px;">
+                        <i class="bi bi-info-circle me-1"></i>No receipts uploaded yet. Click "Choose Items" or "Upload More" to add receipts.
+                    </div>
+                </div>
+            </div>
+
             <!-- Items Table -->
             <div class="bg-white border rounded p-2 mb-2">
                 <div class="table-responsive" style="overflow-y: auto;" id="itemsTableContainer">
@@ -1306,6 +1336,149 @@
     </div>
 </div>
 
+<!-- Receipt Upload Modal Backdrop -->
+<div id="receiptUploadBackdrop" class="pending-orders-backdrop"></div>
+
+<!-- Receipt Upload Modal -->
+<div id="receiptUploadModal" class="pending-orders-modal" style="max-width: 650px;">
+    <div class="pending-orders-content">
+        <div class="pending-orders-header" style="background: #6f42c1; padding: 10px 15px;">
+            <h5 class="pending-orders-title" style="font-size: 14px; color: white;"><i class="bi bi-file-earmark-image me-2"></i> Upload Item Receipt</h5>
+            <button type="button" class="btn-close-modal" onclick="closeReceiptUploadModal()" title="Close" style="color: white;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="pending-orders-body" style="padding: 15px;">
+            <div class="alert alert-info mb-3 py-2" style="font-size: 11px;">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>This customer is set for Item Description Receipt mode.</strong> Upload the receipt image and enter item details below.
+            </div>
+            
+            <!-- Upload Options Tabs -->
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-sm btn-purple flex-fill" id="uploadTabBtn" onclick="showUploadTab()" style="font-size: 11px;">
+                    <i class="bi bi-cloud-upload"></i> Upload File
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="scanTabBtn" onclick="showScanTab()" style="font-size: 11px;">
+                    <i class="bi bi-camera"></i> Camera
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="scannerTabBtn" onclick="showScannerTab()" style="font-size: 11px;">
+                    <i class="bi bi-printer"></i> Scanner
+                </button>
+            </div>
+            
+            <!-- File Upload Area -->
+            <div id="receiptDropZone" style="border: 2px dashed #6f42c1; border-radius: 8px; padding: 30px; text-align: center; background: #f8f5fc; cursor: pointer; margin-bottom: 15px; transition: all 0.3s;" 
+                 ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" onclick="document.getElementById('receiptFileInput').click()">
+                <i class="bi bi-cloud-upload" style="font-size: 48px; color: #6f42c1;"></i>
+                <div style="font-size: 14px; font-weight: 600; margin-top: 10px; color: #6f42c1;">Drag & Drop Receipt Image</div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">or click to browse (JPG, PNG, PDF - Max 5MB)</div>
+                <input type="file" id="receiptFileInput" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+            
+            <!-- Camera Scan Area -->
+            <div id="cameraScanArea" style="display: none; margin-bottom: 15px;">
+                <div id="cameraContainer" style="border: 2px solid #6f42c1; border-radius: 8px; overflow: hidden; background: #000; position: relative;">
+                    <video id="cameraVideo" style="width: 100%; max-height: 300px; display: block;" playsinline autoplay></video>
+                    <canvas id="cameraCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="d-flex justify-content-center gap-2 mt-2">
+                    <button type="button" class="btn btn-success btn-sm" onclick="capturePhoto()" style="font-size: 11px;">
+                        <i class="bi bi-camera-fill"></i> Capture
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="stopCamera()" style="font-size: 11px;">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Physical Scanner Area -->
+            <div id="physicalScannerArea" style="display: none; margin-bottom: 15px;">
+                <!-- Scanner Service Status -->
+                <div id="scannerServiceStatus" class="alert alert-info py-2 mb-3" style="font-size: 11px;">
+                    <i class="bi bi-hourglass-split me-1"></i> Checking scanner service...
+                </div>
+                
+                <!-- Scanner Selection -->
+                <div class="mb-3">
+                    <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">
+                        <i class="bi bi-printer me-1"></i> Select Scanner:
+                    </label>
+                    <select id="scannerSelect" class="form-control form-select" style="font-size: 12px;" disabled>
+                        <option value="">-- Detecting Scanners --</option>
+                    </select>
+                </div>
+                
+                <!-- Scan Quality Options -->
+                <div class="mb-3">
+                    <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">Scan Quality:</label>
+                    <div class="d-flex gap-2">
+                        <label class="form-check" style="font-size: 11px;">
+                            <input type="radio" name="scanQuality" value="150" class="form-check-input"> Fast (150 DPI)
+                        </label>
+                        <label class="form-check" style="font-size: 11px;">
+                            <input type="radio" name="scanQuality" value="300" class="form-check-input" checked> Standard (300 DPI)
+                        </label>
+                        <label class="form-check" style="font-size: 11px;">
+                            <input type="radio" name="scanQuality" value="600" class="form-check-input"> High (600 DPI)
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Scan Button -->
+                <div class="text-center">
+                    <button type="button" id="triggerScanBtn" class="btn btn-purple" onclick="triggerScan()" style="font-size: 12px;" disabled>
+                        <i class="bi bi-printer-fill"></i> Scan Receipt
+                    </button>
+                </div>
+                
+                <!-- Scan Progress -->
+                <div id="scanProgress" class="text-center mt-3" style="display: none;">
+                    <div class="spinner-border text-purple spinner-border-sm"></div>
+                    <span style="font-size: 12px; margin-left: 8px;">Scanning... Please wait</span>
+                </div>
+                
+                <!-- Fallback: Manual File Selection -->
+                <div class="mt-3 pt-3 border-top">
+                    <div style="font-size: 11px; color: #666; text-align: center;">
+                        <i class="bi bi-folder2-open me-1"></i>
+                        Or <a href="javascript:void(0)" onclick="openScanFolder()" style="color: #6f42c1;">import from scan folder</a>
+                        <input type="file" id="scanFolderInput" accept="image/*,.pdf" style="display: none;" onchange="handleScanFolderSelect(event)">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview Area -->
+            <div id="receiptPreviewArea" style="display: none; margin-bottom: 15px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span style="font-weight: 600; font-size: 12px;">Selected File:</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearReceiptFile()" style="font-size: 10px; padding: 2px 8px;">
+                        <i class="bi bi-x"></i> Remove
+                    </button>
+                </div>
+                <div id="receiptPreviewContainer" style="border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; background: white;">
+                    <img id="receiptPreviewImg" src="" alt="Receipt Preview" style="max-width: 100%; max-height: 200px; display: none;">
+                    <div id="receiptPdfName" style="display: none; font-size: 12px;"><i class="bi bi-file-pdf text-danger me-2"></i><span id="receiptFileName"></span></div>
+                </div>
+            </div>
+            
+            <!-- Item Description Input -->
+            <div class="mb-3">
+                <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">Item Description / Remarks:</label>
+                <textarea id="receiptItemDescription" class="form-control" rows="3" placeholder="Enter item details or description from the receipt..." style="font-size: 12px;"></textarea>
+            </div>
+        </div>
+        <div class="pending-orders-footer" style="padding: 10px 15px;">
+            <button type="button" class="btn btn-success btn-sm" id="submitReceiptBtn" onclick="submitReceiptAndContinue()" style="font-size: 11px;">
+                <i class="bi bi-check-circle"></i> Submit & Continue
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeReceiptUploadModal()" style="font-size: 11px;">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Discount Options Modal -->
 <div id="discountOptionsBackdrop" style="display: none; position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0, 0, 0, 0.7) !important; z-index: 99998 !important; opacity: 1 !important;"></div>
 <div id="discountOptionsModal" style="display: none; position: fixed !important; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important; max-width: 400px !important; width: 90% !important; z-index: 99999 !important; background: #ffffff !important; border-radius: 8px !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important; opacity: 1 !important;">
@@ -1472,24 +1645,144 @@ function updateDayName() {
     }
 }
 
-// Check if Choose Items button should be enabled
+// Check if Choose Items button should be enabled and show/hide receipt section
 function checkChooseItemsButtonState() {
-    const customerId = document.getElementById('customerSelect')?.value;
+    const customerSelect = document.getElementById('customerSelect');
+    const customerId = customerSelect?.value;
     const chooseItemsBtn = document.getElementById('chooseItemsBtn');
+    const receiptsSection = document.getElementById('uploadedReceiptsSection');
+    const seriesSelect = document.getElementById('seriesSelect');
+    const invoiceNoInput = document.getElementById('invoiceNo');
+    
+    // Check if selected customer is in receipt mode
+    let isReceiptMode = false;
+    if (customerId && customerSelect) {
+        const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+        isReceiptMode = selectedOption?.getAttribute('data-receipt-mode') === '1';
+    }
+    
+    // Show/hide receipts section based on customer receipt mode
+    if (receiptsSection) {
+        if (customerId && isReceiptMode) {
+            receiptsSection.style.display = 'block';
+        } else {
+            receiptsSection.style.display = 'none';
+            // Clear uploaded receipts when switching to a non-receipt customer
+            clearAllReceipts();
+        }
+    }
+    
+    // Handle TEMP series for receipt-mode customers
+    if (seriesSelect && invoiceNoInput) {
+        if (customerId && isReceiptMode) {
+            // Switch to TEMP series
+            // Store original series if not already stored
+            if (!window.originalSeries) {
+                window.originalSeries = seriesSelect.value;
+                window.originalInvoiceNo = invoiceNoInput.value;
+            }
+            
+            // Check if TEMP option exists, if not add it
+            let tempOption = seriesSelect.querySelector('option[value="TEMP"]');
+            if (!tempOption) {
+                tempOption = document.createElement('option');
+                tempOption.value = 'TEMP';
+                tempOption.textContent = 'TEMP';
+                tempOption.style.color = '#6f42c1';
+                seriesSelect.appendChild(tempOption);
+            }
+            
+            seriesSelect.value = 'TEMP';
+            seriesSelect.style.backgroundColor = '#f8f5fc';
+            seriesSelect.style.color = '#6f42c1';
+            seriesSelect.style.fontWeight = 'bold';
+            
+            // Generate TEMP invoice number
+            generateTempInvoiceNo();
+        } else if (window.originalSeries) {
+            // Restore original series
+            seriesSelect.value = window.originalSeries;
+            invoiceNoInput.value = window.originalInvoiceNo;
+            seriesSelect.style.backgroundColor = '';
+            seriesSelect.style.color = '';
+            seriesSelect.style.fontWeight = '600';
+            
+            window.originalSeries = null;
+            window.originalInvoiceNo = null;
+        }
+    }
     
     if (chooseItemsBtn) {
         if (customerId) {
             // Customer selected - enable button (visual only)
             chooseItemsBtn.classList.remove('btn-secondary', 'btn-warning');
-            chooseItemsBtn.classList.add('btn-info');
+            
+            // If receipt mode, style button differently
+            if (isReceiptMode) {
+                chooseItemsBtn.classList.remove('btn-info');
+                chooseItemsBtn.classList.add('btn-purple');
+                chooseItemsBtn.innerHTML = '<i class="bi bi-cloud-upload"></i> Upload Receipt';
+                chooseItemsBtn.style.color = 'white';
+            } else {
+                chooseItemsBtn.classList.remove('btn-purple');
+                chooseItemsBtn.classList.add('btn-info');
+                chooseItemsBtn.innerHTML = '<i class="bi bi-list-check"></i> Choose Items';
+                chooseItemsBtn.style.color = '';
+            }
+            
             chooseItemsBtn.style.opacity = '1';
-            chooseItemsBtn.title = 'Click to choose items';
+            chooseItemsBtn.title = isReceiptMode ? 'Click to upload receipt' : 'Click to choose items';
         } else {
             // Customer not selected - show as warning (but keep clickable for validation message)
-            chooseItemsBtn.classList.remove('btn-info');
+            chooseItemsBtn.classList.remove('btn-info', 'btn-purple');
             chooseItemsBtn.classList.add('btn-warning');
+            chooseItemsBtn.innerHTML = '<i class="bi bi-list-check"></i> Choose Items';
+            chooseItemsBtn.style.color = '';
             chooseItemsBtn.style.opacity = '0.7';
             chooseItemsBtn.title = 'Please select Customer first';
+        }
+    }
+}
+
+// Generate TEMP series invoice number
+function generateTempInvoiceNo() {
+    const invoiceNoInput = document.getElementById('invoiceNo');
+    
+    // Fetch next TEMP invoice number from server
+    fetch('{{ route("admin.sale.transaction.get-next-temp-invoice-no") }}', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            invoiceNoInput.value = data.next_invoice_no;
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching TEMP invoice number:', error);
+        // Fallback: generate client-side
+        const timestamp = Date.now();
+        invoiceNoInput.value = 'TEMP-' + timestamp.toString().slice(-6);
+    });
+}
+
+// Clear all uploaded receipts
+function clearAllReceipts() {
+    uploadedReceipts = [];
+    const container = document.getElementById('uploadedReceiptsContainer');
+    if (container) {
+        // Remove all receipt cards
+        const cards = container.querySelectorAll('.receipt-card');
+        cards.forEach(card => card.remove());
+        
+        // Show "no receipts" message
+        const noReceiptsMsg = document.getElementById('noReceiptsMessage');
+        if (noReceiptsMsg) {
+            noReceiptsMsg.style.display = 'block';
         }
     }
 }
@@ -1497,10 +1790,21 @@ function checkChooseItemsButtonState() {
 // Open Choose Items Modal
 function openChooseItemsModal() {
     // Validate: Customer must be selected
-    const customerId = document.getElementById('customerSelect')?.value;
+    const customerSelect = document.getElementById('customerSelect');
+    const customerId = customerSelect?.value;
     if (!customerId) {
         showAlert('Please select Customer first!\n\nCustomer selection is required before choosing items.', 'warning', 'Customer Required');
-        document.getElementById('customerSelect').focus();
+        customerSelect.focus();
+        return;
+    }
+    
+    // Check if customer is in receipt mode
+    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+    const isReceiptMode = selectedOption.getAttribute('data-receipt-mode') === '1';
+    
+    if (isReceiptMode) {
+        // Open receipt upload modal instead of items modal
+        openReceiptUploadModal();
         return;
     }
     
@@ -1600,6 +1904,605 @@ function closePendingChallanModal() {
     backdrop.classList.remove('show');
     selectedChallanId = null;
     document.getElementById('loadChallanBtn').disabled = true;
+}
+
+// ========================================
+// Receipt Upload Modal Functions
+// ========================================
+let selectedReceiptFile = null;
+
+// Open receipt upload modal
+function openReceiptUploadModal() {
+    const modal = document.getElementById('receiptUploadModal');
+    const backdrop = document.getElementById('receiptUploadBackdrop');
+    
+    // Reset the form
+    clearReceiptFile();
+    document.getElementById('receiptItemDescription').value = '';
+    
+    setTimeout(() => {
+        modal.classList.add('show');
+        backdrop.classList.add('show');
+    }, 10);
+}
+
+// Close receipt upload modal
+function closeReceiptUploadModal() {
+    const modal = document.getElementById('receiptUploadModal');
+    const backdrop = document.getElementById('receiptUploadBackdrop');
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+    clearReceiptFile();
+    stopCamera(); // Stop camera when closing modal
+    showUploadTab(); // Reset to upload tab
+}
+
+// Camera stream reference
+let cameraStream = null;
+
+// Show upload tab
+function showUploadTab() {
+    document.getElementById('uploadTabBtn').classList.add('btn-purple');
+    document.getElementById('uploadTabBtn').classList.remove('btn-outline-secondary');
+    document.getElementById('scanTabBtn').classList.remove('btn-purple');
+    document.getElementById('scanTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('scannerTabBtn').classList.remove('btn-purple');
+    document.getElementById('scannerTabBtn').classList.add('btn-outline-secondary');
+    
+    document.getElementById('receiptDropZone').style.display = 'block';
+    document.getElementById('cameraScanArea').style.display = 'none';
+    document.getElementById('physicalScannerArea').style.display = 'none';
+    stopCamera();
+}
+
+// Show scan tab and start camera
+function showScanTab() {
+    document.getElementById('scanTabBtn').classList.add('btn-purple');
+    document.getElementById('scanTabBtn').classList.remove('btn-outline-secondary');
+    document.getElementById('uploadTabBtn').classList.remove('btn-purple');
+    document.getElementById('uploadTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('scannerTabBtn').classList.remove('btn-purple');
+    document.getElementById('scannerTabBtn').classList.add('btn-outline-secondary');
+    
+    document.getElementById('receiptDropZone').style.display = 'none';
+    document.getElementById('cameraScanArea').style.display = 'block';
+    document.getElementById('physicalScannerArea').style.display = 'none';
+    
+    startCamera();
+}
+
+// Start camera
+async function startCamera() {
+    try {
+        const video = document.getElementById('cameraVideo');
+        
+        // Request camera access with preference for rear camera (for mobile)
+        const constraints = {
+            video: {
+                facingMode: { ideal: 'environment' }, // Prefer rear camera
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+        
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = cameraStream;
+        
+    } catch (error) {
+        console.error('Camera access error:', error);
+        showAlert('Could not access camera. Please check permissions or try uploading a file instead.', 'warning', 'Camera Error');
+        showUploadTab();
+    }
+}
+
+// Stop camera
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    const video = document.getElementById('cameraVideo');
+    if (video) {
+        video.srcObject = null;
+    }
+}
+
+// Capture photo from camera
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    
+    if (!video.srcObject) {
+        showAlert('Camera not ready. Please try again.', 'warning', 'Capture Error');
+        return;
+    }
+    
+    // Set canvas dimensions to match video
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw video frame to canvas
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    // Convert canvas to blob/file
+    canvas.toBlob(function(blob) {
+        // Create a File object from the blob
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const capturedFile = new File([blob], `receipt_scan_${timestamp}.jpg`, { type: 'image/jpeg' });
+        
+        // Process the captured image
+        processReceiptFile(capturedFile);
+        
+        // Stop camera and switch to preview
+        stopCamera();
+        
+        showAlert('Receipt captured successfully!', 'success', 'Photo Captured');
+    }, 'image/jpeg', 0.9);
+}
+
+// ========================================
+// Physical Scanner Integration Functions
+// ========================================
+const SCANNER_SERVICE_URL = 'http://localhost:51234';
+let scannerServiceConnected = false;
+let availableScanners = [];
+
+// Show scanner tab
+function showScannerTab() {
+    // Update tab button states
+    document.getElementById('scannerTabBtn').classList.add('btn-purple');
+    document.getElementById('scannerTabBtn').classList.remove('btn-outline-secondary');
+    document.getElementById('uploadTabBtn').classList.remove('btn-purple');
+    document.getElementById('uploadTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('scanTabBtn').classList.remove('btn-purple');
+    document.getElementById('scanTabBtn').classList.add('btn-outline-secondary');
+    
+    // Show/hide areas
+    document.getElementById('receiptDropZone').style.display = 'none';
+    document.getElementById('cameraScanArea').style.display = 'none';
+    document.getElementById('physicalScannerArea').style.display = 'block';
+    
+    // Stop camera if running
+    stopCamera();
+    
+    // Check scanner service connection
+    checkScannerService();
+}
+
+// Check if scanner service is running
+async function checkScannerService() {
+    const statusDiv = document.getElementById('scannerServiceStatus');
+    const scannerSelect = document.getElementById('scannerSelect');
+    const triggerScanBtn = document.getElementById('triggerScanBtn');
+    
+    try {
+        const response = await fetch(`${SCANNER_SERVICE_URL}/api/status`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            signal: AbortSignal.timeout(3000)
+        });
+        
+        if (response.ok) {
+            scannerServiceConnected = true;
+            statusDiv.className = 'alert alert-success py-2 mb-3';
+            statusDiv.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Scanner service connected';
+            
+            // Detect available scanners
+            detectScanners();
+        } else {
+            throw new Error('Service not responding');
+        }
+    } catch (error) {
+        scannerServiceConnected = false;
+        statusDiv.className = 'alert alert-warning py-2 mb-3';
+        statusDiv.innerHTML = `
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> 
+            Scanner service not running. 
+            <a href="javascript:void(0)" onclick="downloadScannerService()" style="color: inherit; text-decoration: underline;">Download Scanner Service</a>
+            or use the <a href="javascript:void(0)" onclick="openScanFolder()" style="color: inherit; text-decoration: underline;">manual import</a> option below.
+        `;
+        scannerSelect.innerHTML = '<option value="">-- Service Not Available --</option>';
+        scannerSelect.disabled = true;
+        triggerScanBtn.disabled = true;
+    }
+}
+
+// Detect available scanners
+async function detectScanners() {
+    const scannerSelect = document.getElementById('scannerSelect');
+    const triggerScanBtn = document.getElementById('triggerScanBtn');
+    
+    scannerSelect.innerHTML = '<option value="">-- Detecting Scanners --</option>';
+    scannerSelect.disabled = true;
+    
+    try {
+        const response = await fetch(`${SCANNER_SERVICE_URL}/api/scanners`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            availableScanners = data.scanners || [];
+            
+            if (availableScanners.length > 0) {
+                scannerSelect.innerHTML = '';
+                availableScanners.forEach((scanner, index) => {
+                    const option = document.createElement('option');
+                    option.value = scanner.id || index;
+                    option.textContent = scanner.name || `Scanner ${index + 1}`;
+                    scannerSelect.appendChild(option);
+                });
+                scannerSelect.disabled = false;
+                triggerScanBtn.disabled = false;
+            } else {
+                scannerSelect.innerHTML = '<option value="">-- No Scanners Found --</option>';
+                triggerScanBtn.disabled = true;
+            }
+        }
+    } catch (error) {
+        console.error('Error detecting scanners:', error);
+        scannerSelect.innerHTML = '<option value="">-- Detection Failed --</option>';
+        triggerScanBtn.disabled = true;
+    }
+}
+
+// Trigger scan operation
+async function triggerScan() {
+    const scannerSelect = document.getElementById('scannerSelect');
+    const progressDiv = document.getElementById('scanProgress');
+    const triggerScanBtn = document.getElementById('triggerScanBtn');
+    
+    const selectedScanner = scannerSelect.value;
+    const dpi = document.querySelector('input[name="scanQuality"]:checked')?.value || '200';
+    
+    // Show progress
+    progressDiv.style.display = 'block';
+    triggerScanBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${SCANNER_SERVICE_URL}/api/scan`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                scanner_id: selectedScanner || 'default',
+                dpi: parseInt(dpi),
+                color_mode: 'color',
+                format: 'jpeg'
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.success && data.image) {
+                // Convert base64 to File
+                const byteCharacters = atob(data.image);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/jpeg' });
+                
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const scannedFile = new File([blob], `scanned_receipt_${timestamp}.jpg`, { type: 'image/jpeg' });
+                
+                // Process the scanned image (shows in preview area within modal)
+                processReceiptFile(scannedFile);
+                
+                // Also add to the uploaded receipts section
+                addReceiptToPreviewSection(scannedFile);
+                
+                // Close the modal after successful scan
+                closeReceiptUploadModal();
+                
+                // Show success message
+                showAlert('Receipt scanned successfully! (' + Math.round(data.size / 1024) + ' KB)', 'success', 'Scan Complete');
+            } else {
+                throw new Error(data.message || 'Scan failed');
+            }
+        } else {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Scan request failed');
+        }
+    } catch (error) {
+        console.error('Scan error:', error);
+        showAlert('Scan failed: ' + error.message + '. Try using the manual import option.', 'error', 'Scan Error');
+    } finally {
+        progressDiv.style.display = 'none';
+        triggerScanBtn.disabled = false;
+    }
+}
+
+// Download scanner service installer
+function downloadScannerService() {
+    // Open download page or direct download
+    window.open('/scanner-service/BillScannerService-Setup.exe', '_blank');
+    showAlert('Download started. After installation, restart this page and the scanner service will connect automatically.', 'info', 'Download Started');
+}
+
+// Open scan folder for manual file selection
+function openScanFolder() {
+    document.getElementById('scanFolderInput').click();
+}
+
+// Handle file selection from scan folder
+function handleScanFolderSelect(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        processReceiptFile(files[0]);
+        showAlert('Receipt imported successfully!', 'success', 'Import Complete');
+    }
+}
+
+// Handle drag over
+function handleDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = document.getElementById('receiptDropZone');
+    dropZone.style.borderColor = '#28a745';
+    dropZone.style.background = '#f0fff0';
+}
+
+// Handle drag leave
+function handleDragLeave(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = document.getElementById('receiptDropZone');
+    dropZone.style.borderColor = '#6f42c1';
+    dropZone.style.background = '#f8f5fc';
+}
+
+// Handle file drop
+function handleFileDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    handleDragLeave(event);
+    
+    const files = event.dataTransfer.files;
+    if (files.length > 0) {
+        processReceiptFile(files[0]);
+    }
+}
+
+// Handle file select
+function handleFileSelect(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        processReceiptFile(files[0]);
+    }
+}
+
+// Process receipt file
+function processReceiptFile(file) {
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('File size exceeds 5MB limit. Please select a smaller file.', 'warning', 'File Too Large');
+        return;
+    }
+    
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+        showAlert('Invalid file type. Please upload an image (JPG, PNG) or PDF.', 'warning', 'Invalid File');
+        return;
+    }
+    
+    selectedReceiptFile = file;
+    
+    // Show preview
+    const previewArea = document.getElementById('receiptPreviewArea');
+    const previewImg = document.getElementById('receiptPreviewImg');
+    const pdfName = document.getElementById('receiptPdfName');
+    const fileName = document.getElementById('receiptFileName');
+    const dropZone = document.getElementById('receiptDropZone');
+    
+    previewArea.style.display = 'block';
+    dropZone.style.display = 'none';
+    
+    if (file.type.startsWith('image/')) {
+        // Image preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        pdfName.style.display = 'none';
+    } else {
+        // PDF preview
+        previewImg.style.display = 'none';
+        pdfName.style.display = 'block';
+        fileName.textContent = file.name;
+    }
+}
+
+// Clear receipt file
+function clearReceiptFile() {
+    selectedReceiptFile = null;
+    
+    const previewArea = document.getElementById('receiptPreviewArea');
+    const previewImg = document.getElementById('receiptPreviewImg');
+    const dropZone = document.getElementById('receiptDropZone');
+    const fileInput = document.getElementById('receiptFileInput');
+    
+    previewArea.style.display = 'none';
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+    dropZone.style.display = 'block';
+    fileInput.value = '';
+}
+
+// Submit receipt and continue
+function submitReceiptAndContinue() {
+    const description = document.getElementById('receiptItemDescription').value.trim();
+    
+    if (!selectedReceiptFile) {
+        showAlert('Please select a receipt file to upload.', 'warning', 'No File Selected');
+        return;
+    }
+    
+    // Store the receipt info in the form
+    const form = document.getElementById('saleTransactionForm');
+    
+    // Create hidden input for receipt description if it doesn't exist
+    let descInput = form.querySelector('input[name="receipt_description"]');
+    if (!descInput) {
+        descInput = document.createElement('input');
+        descInput.type = 'hidden';
+        descInput.name = 'receipt_description';
+        form.appendChild(descInput);
+    }
+    descInput.value = description;
+    
+    // Store file reference for upload during form submission
+    window.pendingReceiptFile = selectedReceiptFile;
+    
+    // Add receipt to the preview section
+    addReceiptToPreviewSection(selectedReceiptFile, description);
+    
+    // Close modal
+    closeReceiptUploadModal();
+    
+    // Show success message
+    showAlert('Receipt uploaded successfully!', 'success', 'Receipt Added');
+    
+    // Add a visual indicator that receipt mode is active
+    const chooseItemsBtn = document.getElementById('chooseItemsBtn');
+    if (chooseItemsBtn) {
+        chooseItemsBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add More Receipts';
+        chooseItemsBtn.classList.remove('btn-info', 'btn-warning');
+        chooseItemsBtn.classList.add('btn-purple');
+        chooseItemsBtn.style.color = 'white';
+    }
+}
+
+// Array to store uploaded receipts
+let uploadedReceipts = [];
+
+// Add receipt to the preview section
+function addReceiptToPreviewSection(file, description) {
+    const section = document.getElementById('uploadedReceiptsSection');
+    const container = document.getElementById('uploadedReceiptsContainer');
+    const noReceiptsMsg = document.getElementById('noReceiptsMessage');
+    
+    // Show the receipts section
+    if (section) {
+        section.style.display = 'block';
+    }
+    
+    // Hide the "no receipts" message
+    if (noReceiptsMsg) {
+        noReceiptsMsg.style.display = 'none';
+    }
+    
+    // Create receipt index
+    const receiptIndex = uploadedReceipts.length;
+    
+    // Store receipt data
+    uploadedReceipts.push({
+        file: file,
+        description: description,
+        index: receiptIndex
+    });
+    
+    // Create receipt card
+    const receiptCard = document.createElement('div');
+    receiptCard.className = 'receipt-card';
+    receiptCard.id = `receipt-card-${receiptIndex}`;
+    receiptCard.style.cssText = 'position: relative; border: 1px solid #dee2e6; border-radius: 8px; padding: 8px; background: white; width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);';
+    
+    // Create thumbnail
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            receiptCard.innerHTML = `
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeReceipt(${receiptIndex})" 
+                        style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; padding: 0; font-size: 10px; z-index: 10;">
+                    <i class="bi bi-x"></i>
+                </button>
+                <img src="${e.target.result}" alt="Receipt ${receiptIndex + 1}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="viewReceiptFull(${receiptIndex})">
+                <div style="font-size: 10px; margin-top: 5px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${description || file.name}">
+                    ${description || file.name}
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // PDF icon
+        receiptCard.innerHTML = `
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeReceipt(${receiptIndex})" 
+                    style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; padding: 0; font-size: 10px; z-index: 10;">
+                <i class="bi bi-x"></i>
+            </button>
+            <div style="width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 4px;">
+                <i class="bi bi-file-pdf" style="font-size: 48px; color: #dc3545;"></i>
+            </div>
+            <div style="font-size: 10px; margin-top: 5px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${description || file.name}">
+                ${description || file.name}
+            </div>
+        `;
+    }
+    
+    container.appendChild(receiptCard);
+}
+
+// Remove receipt from preview
+function removeReceipt(index) {
+    const card = document.getElementById(`receipt-card-${index}`);
+    if (card) {
+        card.remove();
+    }
+    
+    // Mark as removed (keep index structure)
+    if (uploadedReceipts[index]) {
+        uploadedReceipts[index] = null;
+    }
+    
+    // Check if all receipts are removed
+    const activeReceipts = uploadedReceipts.filter(r => r !== null);
+    if (activeReceipts.length === 0) {
+        const noReceiptsMsg = document.getElementById('noReceiptsMessage');
+        if (noReceiptsMsg) {
+            noReceiptsMsg.style.display = 'block';
+        }
+        
+        // Reset Choose Items button
+        const chooseItemsBtn = document.getElementById('chooseItemsBtn');
+        if (chooseItemsBtn) {
+            chooseItemsBtn.innerHTML = '<i class="bi bi-list-check"></i> Choose Items';
+            chooseItemsBtn.classList.remove('btn-purple');
+            chooseItemsBtn.classList.add('btn-info');
+            chooseItemsBtn.style.color = '';
+        }
+    }
+}
+
+// View receipt in full size (simple modal)
+function viewReceiptFull(index) {
+    const receipt = uploadedReceipts[index];
+    if (!receipt || !receipt.file) return;
+    
+    if (receipt.file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Create simple fullscreen preview
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+            overlay.onclick = () => overlay.remove();
+            overlay.innerHTML = `
+                <img src="${e.target.result}" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+                <button type="button" style="position: absolute; top: 20px; right: 20px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer;">×</button>
+            `;
+            document.body.appendChild(overlay);
+        };
+        reader.readAsDataURL(receipt.file);
+    }
 }
 
 // Skip challan and open items modal
@@ -3624,8 +4527,14 @@ function saveSale() {
         }
     });
     
-    // Validate items
-    if (items.length === 0) {
+    // Validate items - TEMP transactions (receipt-mode) can save without items
+    const seriesSelect = document.getElementById('seriesSelect');
+    const seriesValue = seriesSelect?.value || '';
+    const isTempTransaction = seriesValue === 'TEMP' || seriesValue.toUpperCase() === 'TEMP';
+    
+    console.log('📝 Series check:', { seriesValue, isTempTransaction, itemsCount: items.length });
+    
+    if (items.length === 0 && !isTempTransaction) {
         showAlert('Please add at least one item.\n\nUse "Choose Items" button to add items.', 'warning', 'Items Required');
         return;
     }

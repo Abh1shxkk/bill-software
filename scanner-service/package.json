@@ -1,0 +1,19 @@
+{
+    "name": "bill-scanner-service",
+    "version": "1.0.0",
+    "description": "Local scanner service for Bill Software - Enables web-based scanning",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.0"
+    },
+    "author": "Bill Software",
+    "license": "MIT"
+}
