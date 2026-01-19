@@ -207,6 +207,11 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::post('customers/{customer}/copy-discount', [CustomerCopyDiscountController::class, 'store'])->name('customers.copy-discount.store');
         Route::get('api/customer-discounts/{customerId}', [CustomerCopyDiscountController::class, 'getCustomerDiscounts'])->name('api.customer-discounts');
         
+        // OCR API Routes for Receipt Text Extraction
+        Route::post('api/ocr/extract', [\App\Http\Controllers\Api\OCRController::class, 'extractText'])->name('api.ocr.extract');
+        Route::post('api/ocr/search-items', [\App\Http\Controllers\Api\OCRController::class, 'searchItems'])->name('api.ocr.search-items');
+        Route::get('api/ocr/status', [\App\Http\Controllers\Api\OCRController::class, 'status'])->name('api.ocr.status');
+        
         // Item routes - MUST be before resource route
         Route::get('items/search', [ItemController::class, 'search'])->name('items.search');
         Route::get('items/all', [ItemController::class, 'getAllItems'])->name('items.all');

@@ -2483,25 +2483,114 @@ function removeReceipt(index) {
     }
 }
 
-// View receipt in full size (simple modal)
+// View receipt in full size with OCR preview
 function viewReceiptFull(index) {
     const receipt = uploadedReceipts[index];
     if (!receipt || !receipt.file) return;
     
     if (receipt.file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            // Create simple fullscreen preview
-            const overlay = document.createElement('div');
-            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer;';
-            overlay.onclick = () => overlay.remove();
-            overlay.innerHTML = `
-                <img src="${e.target.result}" style="max-width: 90%; max-height: 90%; object-fit: contain;">
-                <button type="button" style="position: absolute; top: 20px; right: 20px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer;">×</button>
-            `;
-            document.body.appendChild(overlay);
-        };
-        reader.readAsDataURL(receipt.file);
+        // Open advanced OCR preview modal
+        if (typeof openReceiptOCRPreview === 'function') {
+            openReceiptOCRPreview(receipt.file, {
+                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                csrfToken: '{{ csrf_token() }}',
+                onItemsSelected: function(items) {
+                    // Add selected items to the sale transaction
+                    items.forEach(item => {
+                        addItemFromOCR(item);
+                    });
+                }
+            });
+        } else {
+            // Fallback to simple overlay if OCR module not loaded
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+                overlay.onclick = () => overlay.remove();
+                overlay.innerHTML = `
+                    <img src="${e.target.result}" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+                    <button type="button" style="position: absolute; top: 20px; right: 20px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer;">×</button>
+                `;
+                document.body.appendChild(overlay);
+            };
+            reader.readAsDataURL(receipt.file);
+        }
+    }
+}
+
+// Add item from OCR selection to the sale transaction
+function addItemFromOCR(item) {
+    console.log('Adding item from OCR:', item);
+    
+    // Check if item already exists in the table
+    const existingRows = document.querySelectorAll(`#itemsTableBody tr[data-item-id="${item.id}"]`);
+    if (existingRows && existingRows.length > 0) {
+        // Check if any row has actual data
+        for (let row of existingRows) {
+            const qtyInput = row.querySelector('input[name*="[qty]"]');
+            if (qtyInput && parseFloat(qtyInput.value || 0) > 0) {
+                showAlert(`"${item.name}" is already in the list.`, 'info', 'Item Exists');
+                return;
+            }
+        }
+    }
+    
+    // Prepare item object with all required fields
+    const itemData = {
+        id: item.id,
+        name: item.name || '',
+        packing: item.packing || '',
+        company_id: item.company_id || '',
+        company_name: item.company_short_name || item.company?.short_name || item.company?.name || '',
+        company_short_name: item.company_short_name || item.company?.short_name || '',
+        mrp: parseFloat(item.mrp || 0),
+        s_rate: parseFloat(item.s_rate || 0),
+        ws_rate: parseFloat(item.ws_rate || 0),
+        hsn_code: item.hsn_code || '',
+        cgst_percent: parseFloat(item.cgst_percent || 0),
+        sgst_percent: parseFloat(item.sgst_percent || 0),
+        igst_percent: parseFloat(item.igst_percent || 0),
+        bar_code: item.bar_code || '',
+        unit: item.unit || 'PCS',
+        case_qty: item.case_qty || 0,
+        box_qty: item.box_qty || 0,
+        cess_percent: item.cess_percent || 0
+    };
+    
+    // Create a default batch object (OCR items may not have batch info)
+    const batchData = {
+        id: '',
+        batch_no: '',
+        expiry_date: '',
+        expiry_display: '',
+        avg_s_rate: parseFloat(item.s_rate || 0),
+        s_rate: parseFloat(item.s_rate || 0),
+        avg_mrp: parseFloat(item.mrp || 0),
+        mrp: parseFloat(item.mrp || 0),
+        avg_pur_rate: 0,
+        pur_rate: 0,
+        avg_cost_gst: 0,
+        cost_gst: 0,
+        supplier_name: '',
+        purchase_date: '',
+        purchase_date_display: ''
+    };
+    
+    // Add item using the existing addItemToTable function
+    if (typeof addItemToTable === 'function') {
+        try {
+            addItemToTable(itemData, batchData);
+            showAlert(`"${item.name}" added to the sale.`, 'success', 'Item Added');
+            console.log('Item added successfully:', item.name);
+        } catch (e) {
+            console.error('Error adding item to table:', e);
+            showAlert(`Error adding "${item.name}": ${e.message}`, 'error', 'Error');
+        }
+    } else {
+        console.error('addItemToTable function not found');
+        showAlert('Could not add item - function not available', 'error', 'Error');
     }
 }
 
@@ -5108,5 +5197,8 @@ document.addEventListener('keydown', function(e) {
     }
 });
 </script>
+
+<!-- Receipt OCR Preview Module -->
+<script src="{{ asset('js/receipt-ocr-preview.js') }}"></script>
 
 @endsection

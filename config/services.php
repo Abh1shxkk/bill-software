@@ -39,4 +39,14 @@ return [
     'api_key' => env('LOCATION_API_KEY', ''),
 ],
 
+    // OCR Services for Receipt Text Extraction
+    'space_ocr' => [
+        'url' => env('SPACE_OCR_URL', 'https://api.ocr.space/parse/image'),
+        'key' => env('SPACE_OCR_KEY', ''),
+    ],
+
+    'google_vision' => [
+        'key' => env('GOOGLE_VISION_KEY', ''),
+    ],
+
 ];
