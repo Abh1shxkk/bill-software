@@ -2581,12 +2581,11 @@ function viewReceiptFull(index) {
             openReceiptOCRPreview(receipt.file, {
                 ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
                 itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                batchApiUrl: '{{ url("admin/api/item-batches") }}',
                 csrfToken: '{{ csrf_token() }}',
-                onItemsSelected: function(items) {
-                    // Add selected items to the sale transaction
-                    items.forEach(item => {
-                        addItemFromOCR(item);
-                    });
+                onItemsSelected: function(selectedItems) {
+                    // The event listener handles items, but this callback is also available
+                    console.log('📷 Items selected via callback:', selectedItems);
                 }
             });
         } else {
@@ -5611,8 +5610,9 @@ document.addEventListener('keydown', function(e) {
 })();
 </script>
 
-<!-- Receipt OCR Preview Module -->
-<script src="{{ asset('js/receipt-ocr-preview.js') }}"></script>
+
+<!-- Receipt OCR Preview Module with Batch Selection -->
+@include('admin.sale.partials.receipt-ocr-preview')
 
 <!-- ============================================ -->
 <!-- KEYBOARD NAVIGATION SYSTEM -->
@@ -6395,6 +6395,82 @@ document.addEventListener('keydown', function(e) {
     console.log('   In Modals: ↑↓ Navigate | Enter Select | F → Search | Esc → Close');
     
 })();
+
+// ============================================
+// OCR ITEMS SELECTED EVENT LISTENER
+// ============================================
+// Listen for items selected from OCR Receipt Preview modal
+window.addEventListener('ocrItemsSelected', function(e) {
+    const selectedItems = e.detail.items;
+    console.log('📷 OCR Items Selected:', selectedItems);
+    
+    if (selectedItems && selectedItems.length > 0) {
+        selectedItems.forEach((selection, index) => {
+            const item = selection.item;
+            const batch = selection.batch;
+            
+            // Transform item to match expected format for addItemToTable
+            const itemData = {
+                id: item.id,
+                name: item.name,
+                bar_code: item.bar_code || item.barcode || '',
+                packing: item.packing || '',
+                hsn_code: item.hsn_code || '',
+                s_rate: parseFloat(item.s_rate || 0),
+                ws_rate: parseFloat(item.ws_rate || 0),
+                mrp: parseFloat(item.mrp || 0),
+                cgst_percent: parseFloat(item.cgst_percent || 0),
+                sgst_percent: parseFloat(item.sgst_percent || 0),
+                cess_percent: parseFloat(item.cess_percent || 0),
+                case_qty: parseFloat(item.case_qty || 0),
+                box_qty: parseFloat(item.box_qty || 0),
+                unit: item.unit || '1',
+                company_name: item.company_name || item.company || '',
+                company_id: item.company_id || ''
+            };
+            
+            // Transform batch to match expected format (or create default if no batch)
+            const batchData = batch ? {
+                id: batch.id || '',
+                batch_no: batch.batch_no || '',
+                expiry_display: batch.expiry_display || '',
+                expiry_date: batch.expiry_date || '',
+                avg_s_rate: parseFloat(batch.s_rate || batch.avg_s_rate || item.s_rate || 0),
+                avg_mrp: parseFloat(batch.mrp || batch.avg_mrp || item.mrp || 0),
+                avg_pur_rate: parseFloat(batch.pur_rate || batch.avg_pur_rate || 0),
+                avg_cost_gst: parseFloat(batch.cost_gst || batch.avg_cost_gst || 0),
+                total_qty: parseFloat(batch.qty || batch.total_qty || 0),
+                supplier_name: batch.supplier_name || ''
+            } : {
+                // Default empty batch if no batch selected - use item rates
+                id: '',
+                batch_no: '',
+                expiry_display: '',
+                expiry_date: '',
+                avg_s_rate: parseFloat(item.s_rate || 0),
+                avg_mrp: parseFloat(item.mrp || 0),
+                avg_pur_rate: 0,
+                avg_cost_gst: 0,
+                total_qty: 0,
+                supplier_name: ''
+            };
+            
+            console.log(`📦 Adding item ${index + 1}: ${itemData.name}`, batch ? `with batch ${batchData.batch_no}` : 'without batch');
+            
+            // Small delay between additions for UI stability
+            setTimeout(() => {
+                addItemToTable(itemData, batchData);
+            }, index * 150);
+        });
+        
+        // Show success toast after all items are added
+        setTimeout(() => {
+            showToast(`Added ${selectedItems.length} item(s) from OCR`, 'success', 'Items Added');
+        }, selectedItems.length * 150 + 100);
+    }
+});
+
+console.log('📷 OCR Integration Loaded - Items from receipt will be added to transaction table');
 </script>
 
 @endsection

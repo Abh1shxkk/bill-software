@@ -30,6 +30,9 @@ class OCRController extends Controller
     public function extractText(Request $request)
     {
         try {
+            // Increase execution time for OCR processing
+            set_time_limit(180);
+            
             $request->validate([
                 'image' => 'required|string', // Base64 image data
                 'selection' => 'nullable|array',
@@ -49,6 +52,15 @@ class OCRController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid image data'
+                ], 400);
+            }
+            
+            // Check image size early - reject very large images
+            $imageSizeMB = strlen($imageContent) / (1024 * 1024);
+            if ($imageSizeMB > 10) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Image too large (' . round($imageSizeMB, 2) . 'MB). Please select a smaller area.'
                 ], 400);
             }
 
@@ -120,57 +132,142 @@ class OCRController extends Controller
      */
     protected function callOCRSpaceApi($imageContent)
     {
-        try {
-            $base64Image = 'data:image/jpeg;base64,' . base64_encode($imageContent);
-            
-            Log::info('Calling OCR.space API with key: ' . substr($this->ocrApiKey, 0, 5) . '...');
-
-            $response = Http::timeout(60)
-                ->asForm()
-                ->post($this->ocrApiUrl, [
-                    'apikey' => $this->ocrApiKey,
-                    'base64Image' => $base64Image,
-                    'language' => 'eng',
-                    'isOverlayRequired' => 'false',
-                    'detectOrientation' => 'true',
-                    'scale' => 'true',
-                    'OCREngine' => '2',
-                ]);
-
-            Log::info('OCR.space response status: ' . $response->status());
-            
-            if ($response->successful()) {
-                $data = $response->json();
+        $maxRetries = 2;
+        $lastException = null;
+        
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                // Optimize image to reduce size for API (max 1MB for free tier)
+                $optimizedImage = $this->optimizeImageForOCR($imageContent);
                 
-                Log::info('OCR.space response data: ' . json_encode($data));
+                $base64Image = 'data:image/jpeg;base64,' . base64_encode($optimizedImage);
                 
-                if (isset($data['ParsedResults'][0]['ParsedText'])) {
-                    return $data['ParsedResults'][0]['ParsedText'];
-                }
-
-                if (isset($data['ErrorMessage'])) {
-                    $errorMsg = is_array($data['ErrorMessage']) 
-                        ? implode(', ', $data['ErrorMessage']) 
-                        : $data['ErrorMessage'];
-                    Log::error('OCR.space error: ' . $errorMsg);
-                    throw new \Exception('OCR.space API error: ' . $errorMsg);
+                // Check image size (OCR.space free tier limit is 1MB)
+                $imageSizeKB = strlen($optimizedImage) / 1024;
+                Log::info("OCR Image size: {$imageSizeKB}KB (Attempt {$attempt}/{$maxRetries})");
+                
+                if ($imageSizeKB > 1024) {
+                    Log::warning('Image size exceeds 1MB limit, may fail on free tier');
                 }
                 
-                if (isset($data['IsErroredOnProcessing']) && $data['IsErroredOnProcessing']) {
-                    $errorDetail = $data['ParsedResults'][0]['ErrorMessage'] ?? 'Unknown processing error';
-                    Log::error('OCR.space processing error: ' . $errorDetail);
-                    throw new \Exception('OCR processing error: ' . $errorDetail);
+                Log::info('Calling OCR.space API with key: ' . substr($this->ocrApiKey, 0, 5) . '...');
+
+                $response = Http::timeout(120) // Increased timeout to 120 seconds
+                    ->retry(2, 5000) // Retry up to 2 times with 5 second delay
+                    ->asForm()
+                    ->post($this->ocrApiUrl, [
+                        'apikey' => $this->ocrApiKey,
+                        'base64Image' => $base64Image,
+                        'language' => 'eng',
+                        'isOverlayRequired' => 'false',
+                        'detectOrientation' => 'true',
+                        'scale' => 'true',
+                        'OCREngine' => '2', // Engine 2 is more accurate
+                    ]);
+
+                Log::info('OCR.space response status: ' . $response->status());
+                
+                if ($response->successful()) {
+                    $data = $response->json();
+                    
+                    Log::info('OCR.space response data: ' . json_encode($data));
+                    
+                    if (isset($data['ParsedResults'][0]['ParsedText'])) {
+                        return $data['ParsedResults'][0]['ParsedText'];
+                    }
+
+                    if (isset($data['ErrorMessage'])) {
+                        $errorMsg = is_array($data['ErrorMessage']) 
+                            ? implode(', ', $data['ErrorMessage']) 
+                            : $data['ErrorMessage'];
+                        Log::error('OCR.space error: ' . $errorMsg);
+                        throw new \Exception('OCR.space API error: ' . $errorMsg);
+                    }
+                    
+                    if (isset($data['IsErroredOnProcessing']) && $data['IsErroredOnProcessing']) {
+                        $errorDetail = $data['ParsedResults'][0]['ErrorMessage'] ?? 'Unknown processing error';
+                        Log::error('OCR.space processing error: ' . $errorDetail);
+                        throw new \Exception('OCR processing error: ' . $errorDetail);
+                    }
+                } else {
+                    Log::error('OCR.space HTTP error: ' . $response->status() . ' - ' . $response->body());
+                    throw new \Exception('OCR.space API HTTP error: ' . $response->status());
                 }
-            } else {
-                Log::error('OCR.space HTTP error: ' . $response->status() . ' - ' . $response->body());
-                throw new \Exception('OCR.space API HTTP error: ' . $response->status());
+
+                return false;
+                
+            } catch (\Exception $e) {
+                $lastException = $e;
+                Log::error("OCR.space attempt {$attempt} failed: " . $e->getMessage());
+                
+                if ($attempt < $maxRetries) {
+                    Log::info("Retrying OCR request in 1 second...");
+                    sleep(1);
+                }
             }
-
-            return false;
+        }
+        
+        throw $lastException ?? new \Exception('OCR request failed after multiple attempts');
+    }
+    
+    /**
+     * Optimize image for OCR API (reduce size while maintaining quality)
+     */
+    protected function optimizeImageForOCR($imageContent)
+    {
+        try {
+            // Check if GD is available
+            if (!function_exists('imagecreatefromstring')) {
+                Log::warning('GD library not available, using original image');
+                return $imageContent;
+            }
+            
+            // Create image from content
+            $image = @imagecreatefromstring($imageContent);
+            
+            if (!$image) {
+                Log::warning('Could not create image from content, using original');
+                return $imageContent;
+            }
+            
+            $originalWidth = imagesx($image);
+            $originalHeight = imagesy($image);
+            
+            // Reduce max dimension for faster processing
+            $maxDimension = 1500; // Reduced from 2000 for faster processing
+            
+            if ($originalWidth > $maxDimension || $originalHeight > $maxDimension) {
+                // Calculate new dimensions
+                $ratio = min($maxDimension / $originalWidth, $maxDimension / $originalHeight);
+                $newWidth = (int)($originalWidth * $ratio);
+                $newHeight = (int)($originalHeight * $ratio);
+                
+                // Create resized image - use faster method
+                $resized = imagecreatetruecolor($newWidth, $newHeight);
+                
+                // Use faster resize for speed
+                imagecopyresized($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+                imagedestroy($image);
+                $image = $resized;
+                
+                Log::info("Image resized from {$originalWidth}x{$originalHeight} to {$newWidth}x{$newHeight}");
+            }
+            
+            // Output as JPEG with quality 75 (faster, smaller file)
+            ob_start();
+            imagejpeg($image, null, 75);
+            $optimized = ob_get_clean();
+            imagedestroy($image);
+            
+            $originalSize = strlen($imageContent) / 1024;
+            $newSize = strlen($optimized) / 1024;
+            Log::info("Image optimized: {$originalSize}KB -> {$newSize}KB");
+            
+            return $optimized;
             
         } catch (\Exception $e) {
-            Log::error('OCR.space exception: ' . $e->getMessage());
-            throw $e;
+            Log::error('Image optimization failed: ' . $e->getMessage());
+            return $imageContent; // Return original if optimization fails
         }
     }
 
