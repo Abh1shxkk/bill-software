@@ -67,6 +67,26 @@
         border-radius: 3px;
     }
     
+    /* Receipt Mode Button */
+    .btn-purple {
+        background-color: #6f42c1 !important;
+        border-color: #6f42c1 !important;
+        color: white !important;
+    }
+    .btn-purple:hover {
+        background-color: #5a32a3 !important;
+        border-color: #5a32a3 !important;
+        color: white !important;
+    }
+    .btn-outline-purple {
+        border-color: #6f42c1 !important;
+        color: #6f42c1 !important;
+    }
+    .btn-outline-purple:hover {
+        background-color: #6f42c1 !important;
+        color: white !important;
+    }
+    
     .table-compact {
         font-size: 10px;
         margin-bottom: 0;
@@ -661,6 +681,24 @@
             </div>
 
             
+            <!-- Uploaded Receipts Section - Only visible for receipt-mode customers -->
+            <div id="uploadedReceiptsSection" class="bg-white border rounded p-3 mb-2" style="display: none; border-color: #6f42c1 !important;">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0" style="color: #6f42c1; font-size: 13px;">
+                        <i class="bi bi-file-earmark-image me-2"></i>Uploaded Receipts
+                    </h6>
+                    <button type="button" class="btn btn-sm btn-outline-purple" onclick="openReceiptUploadModal()" style="font-size: 11px; border-color: #6f42c1; color: #6f42c1;">
+                        <i class="bi bi-cloud-upload"></i> Upload More
+                    </button>
+                </div>
+                <div id="uploadedReceiptsContainer" class="d-flex flex-wrap gap-2">
+                    <!-- Uploaded receipts will be displayed here -->
+                    <div class="text-muted small" id="noReceiptsMessage" style="font-size: 11px;">
+                        <i class="bi bi-info-circle me-1"></i>No receipts uploaded yet. Click "Choose Items" or "Upload More" to add receipts.
+                    </div>
+                </div>
+            </div>
+
             <!-- Items Table -->
             <div class="bg-white border rounded p-2 mb-2">
                 <div class="table-responsive" style="overflow-y: auto;" id="itemsTableContainer">
@@ -4032,6 +4070,456 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
 </div>
 
 <!-- ============================================ -->
+<!-- RECEIPT UPLOAD MODAL FUNCTIONS -->
+<!-- ============================================ -->
+<script>
+let selectedReceiptFile = null;
+
+function openReceiptUploadModal() {
+    const modal = document.getElementById('receiptUploadModal');
+    const backdrop = document.getElementById('receiptUploadBackdrop');
+    clearReceiptFile();
+    document.getElementById('receiptItemDescription').value = '';
+    setTimeout(() => {
+        modal.classList.add('show');
+        backdrop.classList.add('show');
+    }, 10);
+}
+
+function closeReceiptUploadModal() {
+    const modal = document.getElementById('receiptUploadModal');
+    const backdrop = document.getElementById('receiptUploadBackdrop');
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+    clearReceiptFile();
+    stopCamera();
+    showUploadTab();
+}
+
+let cameraStream = null;
+
+function showUploadTab() {
+    document.getElementById('uploadTabBtn').classList.add('btn-purple');
+    document.getElementById('uploadTabBtn').classList.remove('btn-outline-secondary');
+    document.getElementById('scanTabBtn').classList.remove('btn-purple');
+    document.getElementById('scanTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('scannerTabBtn').classList.remove('btn-purple');
+    document.getElementById('scannerTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('receiptDropZone').style.display = 'block';
+    document.getElementById('cameraScanArea').style.display = 'none';
+    document.getElementById('physicalScannerArea').style.display = 'none';
+    stopCamera();
+}
+
+function showScanTab() {
+    document.getElementById('scanTabBtn').classList.add('btn-purple');
+    document.getElementById('scanTabBtn').classList.remove('btn-outline-secondary');
+    document.getElementById('uploadTabBtn').classList.remove('btn-purple');
+    document.getElementById('uploadTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('scannerTabBtn').classList.remove('btn-purple');
+    document.getElementById('scannerTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('receiptDropZone').style.display = 'none';
+    document.getElementById('cameraScanArea').style.display = 'block';
+    document.getElementById('physicalScannerArea').style.display = 'none';
+    startCamera();
+}
+
+async function startCamera() {
+    try {
+        const video = document.getElementById('cameraVideo');
+        const constraints = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } };
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = cameraStream;
+    } catch (error) {
+        console.error('Camera access error:', error);
+        showAlert('Could not access camera.', 'warning', 'Camera Error');
+        showUploadTab();
+    }
+}
+
+function stopCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    const video = document.getElementById('cameraVideo');
+    if (video) video.srcObject = null;
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    if (!video.srcObject) {
+        showAlert('Camera not ready.', 'warning', 'Capture Error');
+        return;
+    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(function(blob) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const capturedFile = new File([blob], `receipt_scan_${timestamp}.jpg`, { type: 'image/jpeg' });
+        
+        // Add to preview section
+        addReceiptToPreviewSection(capturedFile, 'Camera Capture');
+        
+        // Close modal
+        closeReceiptUploadModal();
+        
+        // Open OCR preview immediately
+        if (typeof openReceiptOCRPreview === 'function') {
+            openReceiptOCRPreview(capturedFile, {
+                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                batchApiUrl: '{{ url("admin/api/item-batches") }}',
+                csrfToken: '{{ csrf_token() }}'
+            });
+        } else {
+            showAlert('Receipt captured! Click on it to extract items.', 'success', 'Photo Captured');
+        }
+    }, 'image/jpeg', 0.9);
+}
+
+const SCANNER_SERVICE_URL = 'http://localhost:51234';
+let scannerServiceConnected = false;
+let availableScanners = [];
+
+function showScannerTab() {
+    document.getElementById('scannerTabBtn').classList.add('btn-purple');
+    document.getElementById('scannerTabBtn').classList.remove('btn-outline-secondary');
+    document.getElementById('uploadTabBtn').classList.remove('btn-purple');
+    document.getElementById('uploadTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('scanTabBtn').classList.remove('btn-purple');
+    document.getElementById('scanTabBtn').classList.add('btn-outline-secondary');
+    document.getElementById('receiptDropZone').style.display = 'none';
+    document.getElementById('cameraScanArea').style.display = 'none';
+    document.getElementById('physicalScannerArea').style.display = 'block';
+    stopCamera();
+    checkScannerService();
+}
+
+async function checkScannerService() {
+    const statusDiv = document.getElementById('scannerServiceStatus');
+    const scannerSelect = document.getElementById('scannerSelect');
+    const triggerScanBtn = document.getElementById('triggerScanBtn');
+    try {
+        const response = await fetch(`${SCANNER_SERVICE_URL}/api/status`, { method: 'GET', headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(3000) });
+        if (response.ok) {
+            scannerServiceConnected = true;
+            statusDiv.className = 'alert alert-success py-2 mb-3';
+            statusDiv.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Scanner service connected';
+            detectScanners();
+        } else throw new Error('Service not responding');
+    } catch (error) {
+        scannerServiceConnected = false;
+        statusDiv.className = 'alert alert-warning py-2 mb-3';
+        statusDiv.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> Scanner service not running.`;
+        scannerSelect.innerHTML = '<option value="">-- Service Not Available --</option>';
+        scannerSelect.disabled = true;
+        triggerScanBtn.disabled = true;
+    }
+}
+
+async function detectScanners() {
+    const scannerSelect = document.getElementById('scannerSelect');
+    const triggerScanBtn = document.getElementById('triggerScanBtn');
+    scannerSelect.innerHTML = '<option value="">-- Detecting Scanners --</option>';
+    scannerSelect.disabled = true;
+    try {
+        const response = await fetch(`${SCANNER_SERVICE_URL}/api/scanners`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+        if (response.ok) {
+            const data = await response.json();
+            availableScanners = data.scanners || [];
+            if (availableScanners.length > 0) {
+                scannerSelect.innerHTML = '';
+                availableScanners.forEach((scanner, index) => {
+                    const option = document.createElement('option');
+                    option.value = scanner.id || index;
+                    option.textContent = scanner.name || `Scanner ${index + 1}`;
+                    scannerSelect.appendChild(option);
+                });
+                scannerSelect.disabled = false;
+                triggerScanBtn.disabled = false;
+            } else {
+                scannerSelect.innerHTML = '<option value="">-- No Scanners Found --</option>';
+                triggerScanBtn.disabled = true;
+            }
+        }
+    } catch (error) {
+        console.error('Error detecting scanners:', error);
+        scannerSelect.innerHTML = '<option value="">-- Detection Failed --</option>';
+        triggerScanBtn.disabled = true;
+    }
+}
+
+async function triggerScan() {
+    const scannerSelect = document.getElementById('scannerSelect');
+    const progressDiv = document.getElementById('scanProgress');
+    const triggerScanBtn = document.getElementById('triggerScanBtn');
+    const selectedScanner = scannerSelect.value;
+    const dpi = document.querySelector('input[name="scanQuality"]:checked')?.value || '200';
+    progressDiv.style.display = 'block';
+    triggerScanBtn.disabled = true;
+    try {
+        const response = await fetch(`${SCANNER_SERVICE_URL}/api/scan`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ scanner_id: selectedScanner || 'default', dpi: parseInt(dpi), color_mode: 'color', format: 'jpeg' })
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.image) {
+                const byteCharacters = atob(data.image);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/jpeg' });
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const scannedFile = new File([blob], `scanned_receipt_${timestamp}.jpg`, { type: 'image/jpeg' });
+                
+                // Add to preview section
+                addReceiptToPreviewSection(scannedFile, 'Scanned Receipt');
+                
+                // Close modal
+                closeReceiptUploadModal();
+                
+                // Open OCR preview immediately
+                if (typeof openReceiptOCRPreview === 'function') {
+                    openReceiptOCRPreview(scannedFile, {
+                        ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+                        itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                        batchApiUrl: '{{ url("admin/api/item-batches") }}',
+                        csrfToken: '{{ csrf_token() }}'
+                    });
+                } else {
+                    showAlert('Receipt scanned! Click on it to extract items.', 'success', 'Scan Complete');
+                }
+            } else throw new Error(data.message || 'Scan failed');
+        } else throw new Error('Scan request failed');
+    } catch (error) {
+        console.error('Scan error:', error);
+        showAlert('Scan failed: ' + error.message, 'error', 'Scan Error');
+    } finally {
+        progressDiv.style.display = 'none';
+        triggerScanBtn.disabled = false;
+    }
+}
+
+function openScanFolder() { document.getElementById('scanFolderInput').click(); }
+function handleScanFolderSelect(event) {
+    const files = event.target.files;
+    if (files.length > 0) {
+        const file = files[0];
+        
+        // Add to preview section
+        addReceiptToPreviewSection(file, 'Imported Receipt');
+        
+        // Close modal if open
+        const modal = document.getElementById('receiptUploadModal');
+        if (modal && modal.classList.contains('show')) {
+            closeReceiptUploadModal();
+        }
+        
+        // Open OCR preview immediately
+        if (typeof openReceiptOCRPreview === 'function') {
+            openReceiptOCRPreview(file, {
+                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                batchApiUrl: '{{ url("admin/api/item-batches") }}',
+                csrfToken: '{{ csrf_token() }}'
+            });
+        } else {
+            showAlert('Receipt imported! Click on it to extract items.', 'success', 'Import Complete');
+        }
+    }
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = document.getElementById('receiptDropZone');
+    dropZone.style.borderColor = '#28a745';
+    dropZone.style.background = '#f0fff0';
+}
+
+function handleDragLeave(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dropZone = document.getElementById('receiptDropZone');
+    dropZone.style.borderColor = '#6f42c1';
+    dropZone.style.background = '#f8f5fc';
+}
+
+function handleFileDrop(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    handleDragLeave(event);
+    const files = event.dataTransfer.files;
+    if (files.length > 0) processReceiptFile(files[0]);
+}
+
+function handleFileSelect(event) {
+    const files = event.target.files;
+    if (files.length > 0) processReceiptFile(files[0]);
+}
+
+function processReceiptFile(file) {
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('File size exceeds 5MB limit.', 'warning', 'File Too Large');
+        return;
+    }
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+        showAlert('Invalid file type.', 'warning', 'Invalid File');
+        return;
+    }
+    selectedReceiptFile = file;
+    const previewArea = document.getElementById('receiptPreviewArea');
+    const previewImg = document.getElementById('receiptPreviewImg');
+    const pdfName = document.getElementById('receiptPdfName');
+    const fileName = document.getElementById('receiptFileName');
+    const dropZone = document.getElementById('receiptDropZone');
+    previewArea.style.display = 'block';
+    dropZone.style.display = 'none';
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+        pdfName.style.display = 'none';
+    } else {
+        previewImg.style.display = 'none';
+        pdfName.style.display = 'block';
+        fileName.textContent = file.name;
+    }
+}
+
+function clearReceiptFile() {
+    selectedReceiptFile = null;
+    const previewArea = document.getElementById('receiptPreviewArea');
+    const previewImg = document.getElementById('receiptPreviewImg');
+    const dropZone = document.getElementById('receiptDropZone');
+    const fileInput = document.getElementById('receiptFileInput');
+    previewArea.style.display = 'none';
+    previewImg.src = '';
+    previewImg.style.display = 'none';
+    dropZone.style.display = 'block';
+    fileInput.value = '';
+}
+
+function submitReceiptAndContinue() {
+    const description = document.getElementById('receiptItemDescription').value.trim();
+    if (!selectedReceiptFile) {
+        showAlert('Please select a receipt file.', 'warning', 'No File Selected');
+        return;
+    }
+    
+    // Add receipt to preview section
+    addReceiptToPreviewSection(selectedReceiptFile, description);
+    
+    // Close the upload modal
+    closeReceiptUploadModal();
+    
+    // Open OCR preview immediately for item extraction
+    if (typeof openReceiptOCRPreview === 'function') {
+        openReceiptOCRPreview(selectedReceiptFile, {
+            ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+            itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+            batchApiUrl: '{{ url("admin/api/item-batches") }}',
+            csrfToken: '{{ csrf_token() }}'
+        });
+    } else {
+        showAlert('Receipt uploaded! Click on it to extract items.', 'success', 'Receipt Added');
+    }
+}
+
+let uploadedReceipts = [];
+
+function addReceiptToPreviewSection(file, description) {
+    const section = document.getElementById('uploadedReceiptsSection');
+    const container = document.getElementById('uploadedReceiptsContainer');
+    const noReceiptsMsg = document.getElementById('noReceiptsMessage');
+    if (section) section.style.display = 'block';
+    if (noReceiptsMsg) noReceiptsMsg.style.display = 'none';
+    const receiptIndex = uploadedReceipts.length;
+    uploadedReceipts.push({ file: file, description: description, index: receiptIndex });
+    const receiptCard = document.createElement('div');
+    receiptCard.className = 'receipt-card';
+    receiptCard.id = `receipt-card-${receiptIndex}`;
+    receiptCard.style.cssText = 'position: relative; border: 1px solid #dee2e6; border-radius: 8px; padding: 8px; background: white; width: 150px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);';
+    if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            receiptCard.innerHTML = `
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeReceipt(${receiptIndex})" 
+                        style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; padding: 0; font-size: 10px; z-index: 10;">
+                    <i class="bi bi-x"></i>
+                </button>
+                <img src="${e.target.result}" alt="Receipt ${receiptIndex + 1}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 4px; cursor: pointer;" onclick="viewReceiptFull(${receiptIndex})">
+                <div style="font-size: 10px; margin-top: 5px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${description || file.name}">
+                    ${description || file.name}
+                </div>
+            `;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        receiptCard.innerHTML = `
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeReceipt(${receiptIndex})" 
+                    style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; padding: 0; font-size: 10px; z-index: 10;">
+                <i class="bi bi-x"></i>
+            </button>
+            <div style="width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; background: #f8f9fa; border-radius: 4px;">
+                <i class="bi bi-file-pdf" style="font-size: 48px; color: #dc3545;"></i>
+            </div>
+            <div style="font-size: 10px; margin-top: 5px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${description || file.name}">
+                ${description || file.name}
+            </div>
+        `;
+    }
+    container.appendChild(receiptCard);
+}
+
+function removeReceipt(index) {
+    const card = document.getElementById(`receipt-card-${index}`);
+    if (card) card.remove();
+    if (uploadedReceipts[index]) uploadedReceipts[index] = null;
+    const activeReceipts = uploadedReceipts.filter(r => r !== null);
+    if (activeReceipts.length === 0) {
+        const noReceiptsMsg = document.getElementById('noReceiptsMessage');
+        if (noReceiptsMsg) noReceiptsMsg.style.display = 'block';
+    }
+}
+
+function viewReceiptFull(index) {
+    const receipt = uploadedReceipts[index];
+    if (!receipt || !receipt.file) return;
+    if (receipt.file.type.startsWith('image/')) {
+        if (typeof openReceiptOCRPreview === 'function') {
+            openReceiptOCRPreview(receipt.file, {
+                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                batchApiUrl: '{{ url("admin/api/item-batches") }}',
+                csrfToken: '{{ csrf_token() }}'
+            });
+        } else {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+                overlay.onclick = () => overlay.remove();
+                overlay.innerHTML = `<img src="${e.target.result}" style="max-width: 90%; max-height: 90%; object-fit: contain;"><button type="button" style="position: absolute; top: 20px; right: 20px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer;">×</button>`;
+                document.body.appendChild(overlay);
+            };
+            reader.readAsDataURL(receipt.file);
+        }
+    }
+}
+</script>
+
+<!-- ============================================ -->
 <!-- KEYBOARD NAVIGATION SYSTEM FOR MODIFICATION -->
 <!-- ============================================ -->
 <script>
@@ -4779,35 +5267,8 @@ function openReceiptForOCR(imageSrc) {
 function openReceiptScanner() {
     console.log('📷 Opening receipt scanner');
     
-    // Create file input for image upload
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.capture = 'environment'; // Use back camera on mobile
-    
-    fileInput.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        console.log('📷 File selected:', file.name, file.type);
-        
-        // Open OCR preview with the selected image
-        if (typeof openReceiptOCRPreview === 'function') {
-            openReceiptOCRPreview(file, {
-                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-                batchApiUrl: '{{ url("admin/api/item-batches") }}',
-                csrfToken: '{{ csrf_token() }}',
-                onItemsSelected: function(selectedItems) {
-                    console.log('📷 Items selected via callback:', selectedItems);
-                }
-            });
-        } else {
-            showAlert('OCR Preview module not loaded. Please refresh the page.', 'warning', 'Module Not Ready');
-        }
-    };
-    
-    fileInput.click();
+    // Open the receipt upload modal instead of direct file input
+    openReceiptUploadModal();
 }
 
 // Listen for OCR items selected event (for modification page)
@@ -4906,6 +5367,149 @@ window.addEventListener('ocrItemsSelected', function(event) {
     }, selectedItems.length * 150 + 200);
 });
 </script>
+
+<!-- Receipt Upload Modal Backdrop -->
+<div id="receiptUploadBackdrop" class="pending-orders-backdrop"></div>
+
+<!-- Receipt Upload Modal -->
+<div id="receiptUploadModal" class="pending-orders-modal" style="max-width: 650px;">
+    <div class="pending-orders-content">
+        <div class="pending-orders-header" style="background: #6f42c1; padding: 10px 15px;">
+            <h5 class="pending-orders-title" style="font-size: 14px; color: white;"><i class="bi bi-file-earmark-image me-2"></i> Upload Item Receipt</h5>
+            <button type="button" class="btn-close-modal" onclick="closeReceiptUploadModal()" title="Close" style="color: white;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="pending-orders-body" style="padding: 15px;">
+            <div class="alert alert-info mb-3 py-2" style="font-size: 11px;">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>This customer is set for Item Description Receipt mode.</strong> Upload the receipt image and enter item details below.
+            </div>
+            
+            <!-- Upload Options Tabs -->
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-sm btn-purple flex-fill" id="uploadTabBtn" onclick="showUploadTab()" style="font-size: 11px;">
+                    <i class="bi bi-cloud-upload"></i> Upload File
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="scanTabBtn" onclick="showScanTab()" style="font-size: 11px;">
+                    <i class="bi bi-camera"></i> Camera
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary flex-fill" id="scannerTabBtn" onclick="showScannerTab()" style="font-size: 11px;">
+                    <i class="bi bi-printer"></i> Scanner
+                </button>
+            </div>
+            
+            <!-- File Upload Area -->
+            <div id="receiptDropZone" style="border: 2px dashed #6f42c1; border-radius: 8px; padding: 30px; text-align: center; background: #f8f5fc; cursor: pointer; margin-bottom: 15px; transition: all 0.3s;" 
+                 ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleFileDrop(event)" onclick="document.getElementById('receiptFileInput').click()">
+                <i class="bi bi-cloud-upload" style="font-size: 48px; color: #6f42c1;"></i>
+                <div style="font-size: 14px; font-weight: 600; margin-top: 10px; color: #6f42c1;">Drag & Drop Receipt Image</div>
+                <div style="font-size: 11px; color: #666; margin-top: 5px;">or click to browse (JPG, PNG, PDF - Max 5MB)</div>
+                <input type="file" id="receiptFileInput" accept="image/*,.pdf" style="display: none;" onchange="handleFileSelect(event)">
+            </div>
+            
+            <!-- Camera Scan Area -->
+            <div id="cameraScanArea" style="display: none; margin-bottom: 15px;">
+                <div id="cameraContainer" style="border: 2px solid #6f42c1; border-radius: 8px; overflow: hidden; background: #000; position: relative;">
+                    <video id="cameraVideo" style="width: 100%; max-height: 300px; display: block;" playsinline autoplay></video>
+                    <canvas id="cameraCanvas" style="display: none;"></canvas>
+                </div>
+                <div class="d-flex justify-content-center gap-2 mt-2">
+                    <button type="button" class="btn btn-success btn-sm" onclick="capturePhoto()" style="font-size: 11px;">
+                        <i class="bi bi-camera-fill"></i> Capture
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="stopCamera()" style="font-size: 11px;">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Physical Scanner Area -->
+            <div id="physicalScannerArea" style="display: none; margin-bottom: 15px;">
+                <!-- Scanner Service Status -->
+                <div id="scannerServiceStatus" class="alert alert-info py-2 mb-3" style="font-size: 11px;">
+                    <i class="bi bi-hourglass-split me-1"></i> Checking scanner service...
+                </div>
+                
+                <!-- Scanner Selection -->
+                <div class="mb-3">
+                    <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">
+                        <i class="bi bi-printer me-1"></i> Select Scanner:
+                    </label>
+                    <select id="scannerSelect" class="form-control form-select" style="font-size: 12px;" disabled>
+                        <option value="">-- Detecting Scanners --</option>
+                    </select>
+                </div>
+                
+                <!-- Scan Quality Options -->
+                <div class="mb-3">
+                    <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">Scan Quality:</label>
+                    <div class="d-flex gap-2">
+                        <label class="form-check" style="font-size: 11px;">
+                            <input type="radio" name="scanQuality" value="150" class="form-check-input"> Fast (150 DPI)
+                        </label>
+                        <label class="form-check" style="font-size: 11px;">
+                            <input type="radio" name="scanQuality" value="300" class="form-check-input" checked> Standard (300 DPI)
+                        </label>
+                        <label class="form-check" style="font-size: 11px;">
+                            <input type="radio" name="scanQuality" value="600" class="form-check-input"> High (600 DPI)
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Scan Button -->
+                <div class="text-center">
+                    <button type="button" id="triggerScanBtn" class="btn btn-purple" onclick="triggerScan()" style="font-size: 12px;" disabled>
+                        <i class="bi bi-printer-fill"></i> Scan Receipt
+                    </button>
+                </div>
+                
+                <!-- Scan Progress -->
+                <div id="scanProgress" class="text-center mt-3" style="display: none;">
+                    <div class="spinner-border text-purple spinner-border-sm"></div>
+                    <span style="font-size: 12px; margin-left: 8px;">Scanning... Please wait</span>
+                </div>
+                
+                <!-- Fallback: Manual File Selection -->
+                <div class="mt-3 pt-3 border-top">
+                    <div style="font-size: 11px; color: #666; text-align: center;">
+                        <i class="bi bi-folder2-open me-1"></i>
+                        Or <a href="javascript:void(0)" onclick="openScanFolder()" style="color: #6f42c1;">import from scan folder</a>
+                        <input type="file" id="scanFolderInput" accept="image/*,.pdf" style="display: none;" onchange="handleScanFolderSelect(event)">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preview Area -->
+            <div id="receiptPreviewArea" style="display: none; margin-bottom: 15px;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span style="font-weight: 600; font-size: 12px;">Selected File:</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearReceiptFile()" style="font-size: 10px; padding: 2px 8px;">
+                        <i class="bi bi-x"></i> Remove
+                    </button>
+                </div>
+                <div id="receiptPreviewContainer" style="border: 1px solid #dee2e6; border-radius: 4px; padding: 10px; background: white;">
+                    <img id="receiptPreviewImg" src="" alt="Receipt Preview" style="max-width: 100%; max-height: 200px; display: none;">
+                    <div id="receiptPdfName" style="display: none; font-size: 12px;"><i class="bi bi-file-pdf text-danger me-2"></i><span id="receiptFileName"></span></div>
+                </div>
+            </div>
+            
+            <!-- Item Description Input -->
+            <div class="mb-3">
+                <label style="font-weight: 600; font-size: 12px; display: block; margin-bottom: 5px;">Item Description / Remarks:</label>
+                <textarea id="receiptItemDescription" class="form-control" rows="3" placeholder="Enter item details or description from the receipt..." style="font-size: 12px;"></textarea>
+            </div>
+        </div>
+        <div class="pending-orders-footer" style="padding: 10px 15px;">
+            <button type="button" class="btn btn-success btn-sm" id="submitReceiptBtn" onclick="submitReceiptAndContinue()" style="font-size: 11px;">
+                <i class="bi bi-check-circle"></i> Submit & Continue
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeReceiptUploadModal()" style="font-size: 11px;">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- Include OCR Preview Module with Batch Selection -->
 @include('admin.sale.partials.receipt-ocr-preview')
