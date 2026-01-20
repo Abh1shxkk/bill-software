@@ -919,10 +919,30 @@
                 </table>
             </div>
             
+            <!-- TEMP Transaction Receipt Section (only shown for TEMP transactions) -->
+            <div id="tempReceiptSection" class="card mb-3" style="display: none;">
+                <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="bi bi-image"></i> Scanned Receipts</h6>
+                    <span class="badge bg-dark" id="tempReceiptCount">0 receipts</span>
+                </div>
+                <div class="card-body" id="tempReceiptImages" style="max-height: 200px; overflow-y: auto;">
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                        <p class="mb-0 mt-2">No receipts attached</p>
+                    </div>
+                </div>
+                <div class="card-footer d-flex gap-2 justify-content-between">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openReceiptScanner()">
+                        <i class="bi bi-camera"></i> Scan More Receipts
+                    </button>
+                    <small class="text-muted align-self-center">Click on receipt to open OCR preview</small>
+                </div>
+            </div>
+            
             <!-- Action Buttons -->
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-primary btn-sm" onclick="saveSale()">
-                    <i class="bi bi-save"></i> Save
+                <button type="button" class="btn btn-primary btn-sm" id="saveBtn" onclick="saveSale()">
+                    <i class="bi bi-save"></i> <span id="saveBtnText">Save</span>
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.reload()">
                     <i class="bi bi-x-circle"></i> Cancel
@@ -3244,6 +3264,71 @@ async function populateFormWithTransaction(transaction) {
             console.log('Final check - Salesman dropdown value:', finalSalesmanSelect.value, finalSalesmanSelect.options[finalSalesmanSelect.selectedIndex]?.text);
         }
     }, 200);
+    
+    // ============================================
+    // TEMP TRANSACTION HANDLING
+    // ============================================
+    const isTemp = transaction.is_temp || transaction.series === 'TEMP' || (transaction.invoice_no && transaction.invoice_no.startsWith('TEMP-'));
+    
+    if (isTemp) {
+        console.log('🔶 TEMP Transaction detected - activating finalize mode');
+        
+        // Show receipt section
+        const receiptSection = document.getElementById('tempReceiptSection');
+        if (receiptSection) {
+            receiptSection.style.display = 'block';
+        }
+        
+        // Change save button to Finalize
+        const saveBtnText = document.getElementById('saveBtnText');
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtnText) {
+            saveBtnText.textContent = 'Finalize Invoice';
+        }
+        if (saveBtn) {
+            saveBtn.classList.remove('btn-primary');
+            saveBtn.classList.add('btn-warning');
+            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> <span id="saveBtnText">Finalize Invoice</span>';
+        }
+        
+        // Set series to SB for finalization (will get new invoice number)
+        const seriesSelect = document.getElementById('seriesSelect');
+        if (seriesSelect) {
+            seriesSelect.value = 'SB';
+            updateInvoiceType();
+        }
+        
+        // Load receipt images if available
+        if (transaction.receipt_path && transaction.receipt_path.trim() !== '') {
+            displayTempReceiptImages(transaction.receipt_path);
+        } else {
+            // No receipt path - show helpful message
+            const container = document.getElementById('tempReceiptImages');
+            const countBadge = document.getElementById('tempReceiptCount');
+            if (container) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-camera" style="font-size: 2rem; color: #ffc107;"></i>
+                        <p class="mb-1 mt-2" style="font-weight: 500;">No receipts were stored</p>
+                        <small>This transaction was created before receipt storage was enabled.<br>Use "Scan More Receipts" to add receipts now.</small>
+                    </div>
+                `;
+            }
+            if (countBadge) {
+                countBadge.textContent = '0 receipts';
+            }
+        }
+        
+        // Store that this is a temp finalization
+        window.isTempFinalization = true;
+    } else {
+        // Normal transaction - hide receipt section
+        const receiptSection = document.getElementById('tempReceiptSection');
+        if (receiptSection) {
+            receiptSection.style.display = 'none';
+        }
+        window.isTempFinalization = false;
+    }
 }
 
 // Format date for display
@@ -4574,5 +4659,255 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
     
 })();
 </script>
+
+<!-- ============================================ -->
+<!-- TEMP TRANSACTION RECEIPT HANDLING -->
+<!-- ============================================ -->
+<script>
+// Display receipt images for TEMP transactions
+function displayTempReceiptImages(receiptPath) {
+    const container = document.getElementById('tempReceiptImages');
+    const countBadge = document.getElementById('tempReceiptCount');
+    
+    if (!container) return;
+    
+    // Better null/empty check
+    if (!receiptPath || receiptPath.trim() === '' || receiptPath === 'null' || receiptPath === 'undefined') {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-camera" style="font-size: 2rem; color: #ffc107;"></i>
+                <p class="mb-1 mt-2" style="font-weight: 500;">No receipts stored</p>
+                <small>Use "Scan More Receipts" to add receipts.</small>
+            </div>
+        `;
+        if (countBadge) countBadge.textContent = '0 receipts';
+        return;
+    }
+    
+    console.log('📷 Receipt path from database:', receiptPath);
+    
+    // Parse single or multiple paths (comma separated)
+    const paths = receiptPath.split(',').map(p => p.trim()).filter(p => p && p !== 'null' && p !== 'undefined');
+    
+    console.log('📷 Parsed paths:', paths);
+    
+    if (paths.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-camera" style="font-size: 2rem; color: #ffc107;"></i>
+                <p class="mb-1 mt-2" style="font-weight: 500;">No receipts stored</p>
+                <small>Use "Scan More Receipts" to add receipts.</small>
+            </div>
+        `;
+        if (countBadge) countBadge.textContent = '0 receipts';
+        return;
+    }
+    
+    // Build image gallery
+    // Get base path for the application (handles subdirectory installations)
+    const basePath = '{{ url('/') }}';
+    
+    let html = '<div class="d-flex flex-wrap gap-2">';
+    paths.forEach((path, index) => {
+        // Handle storage path - prepend base URL for subdirectory support
+        let imgSrc = path;
+        if (!path.startsWith('http')) {
+            // Remove leading slash if present, then prepend base path
+            imgSrc = basePath + '/' + path.replace(/^\//, '');
+        }
+        
+        console.log(`📷 Receipt ${index + 1} - Path: ${path}, URL: ${imgSrc}`);
+        
+        html += `
+            <div class="receipt-thumb" style="position: relative; width: 150px; height: 120px;">
+                <img src="${imgSrc}" 
+                     alt="Receipt ${index + 1}" 
+                     style="width: 150px; height: 100px; object-fit: cover; border-radius: 8px 8px 0 0; cursor: pointer; border: 2px solid #ddd; border-bottom: none;"
+                     onclick="openReceiptForOCR('${imgSrc}')"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'width: 150px; height: 100px; background: #f5f5f5; border-radius: 8px 8px 0 0; border: 2px dashed #ccc; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: not-allowed;\\'><i class=\\'bi bi-image\\' style=\\'font-size: 24px; color: #999;\\'></i><small style=\\'color: #999; margin-top: 5px;\\'>File not found</small></div><div style=\\'background: rgba(0,0,0,0.6); color: white; font-size: 10px; text-align: center; border-radius: 0 0 6px 6px; padding: 3px;\\'>Receipt ${index + 1}</div>';">
+                <div style="background: rgba(0,0,0,0.6); color: white; font-size: 10px; text-align: center; border-radius: 0 0 6px 6px; padding: 3px;">
+                    Receipt ${index + 1}
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+    if (countBadge) countBadge.textContent = paths.length + ' receipt' + (paths.length > 1 ? 's' : '');
+}
+
+// Open receipt in OCR preview modal
+function openReceiptForOCR(imageSrc) {
+    console.log('📷 Opening receipt for OCR:', imageSrc);
+    
+    // Check if OCR preview function exists
+    if (typeof openReceiptOCRPreview === 'function') {
+        // Create a mock file object for the image
+        fetch(imageSrc)
+            .then(response => response.blob())
+            .then(blob => {
+                const file = new File([blob], 'receipt.jpg', { type: blob.type });
+                openReceiptOCRPreview(file, {
+                    ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+                    itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                    batchApiUrl: '{{ url("admin/api/item-batches") }}',
+                    csrfToken: '{{ csrf_token() }}',
+                    onItemsSelected: function(selectedItems) {
+                        console.log('📷 Items selected via callback:', selectedItems);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading image for OCR:', error);
+                showAlert('Error loading image for OCR preview', 'error', 'Load Failed');
+            });
+    } else {
+        // Fallback - just show the image in a modal
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; display: flex; align-items: center; justify-content: center; cursor: pointer;';
+        overlay.onclick = () => overlay.remove();
+        overlay.innerHTML = `
+            <img src="${imageSrc}" style="max-width: 90%; max-height: 90%; object-fit: contain;">
+            <button type="button" style="position: absolute; top: 20px; right: 20px; background: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer;">×</button>
+        `;
+        document.body.appendChild(overlay);
+    }
+}
+
+// Open receipt scanner (camera/file upload)
+function openReceiptScanner() {
+    console.log('📷 Opening receipt scanner');
+    
+    // Create file input for image upload
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.capture = 'environment'; // Use back camera on mobile
+    
+    fileInput.onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        console.log('📷 File selected:', file.name, file.type);
+        
+        // Open OCR preview with the selected image
+        if (typeof openReceiptOCRPreview === 'function') {
+            openReceiptOCRPreview(file, {
+                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
+                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
+                batchApiUrl: '{{ url("admin/api/item-batches") }}',
+                csrfToken: '{{ csrf_token() }}',
+                onItemsSelected: function(selectedItems) {
+                    console.log('📷 Items selected via callback:', selectedItems);
+                }
+            });
+        } else {
+            showAlert('OCR Preview module not loaded. Please refresh the page.', 'warning', 'Module Not Ready');
+        }
+    };
+    
+    fileInput.click();
+}
+
+// Listen for OCR items selected event (for modification page)
+window.addEventListener('ocrItemsSelected', function(event) {
+    const selectedItems = event.detail?.items || [];
+    
+    if (selectedItems.length === 0) return;
+    
+    console.log('📷 OCR Items received in modification:', selectedItems);
+    
+    // Add each item to the table
+    selectedItems.forEach((selection, index) => {
+        setTimeout(() => {
+            const item = selection.item;
+            const batch = selection.batch;
+            
+            if (!item) return;
+            
+            // Prepare item data for addItemRow (or similar function)
+            const itemData = {
+                id: item.id,
+                name: item.name || '',
+                bar_code: item.bar_code || '',
+                packing: item.packing || '',
+                company_id: item.company_id || '',
+                company_name: item.company_short_name || '',
+                mrp: parseFloat(item.mrp || 0),
+                s_rate: parseFloat(item.s_rate || 0),
+                hsn_code: item.hsn_code || '',
+                cgst_percent: parseFloat(item.cgst_percent || 0),
+                sgst_percent: parseFloat(item.sgst_percent || 0),
+                cess_percent: parseFloat(item.cess_percent || 0),
+                unit: item.unit || 'PCS'
+            };
+            
+            const batchData = batch ? {
+                id: batch.id,
+                batch_no: batch.batch_no || '',
+                expiry_date: batch.expiry_date || '',
+                expiry_display: batch.expiry_display || '',
+                avg_s_rate: parseFloat(batch.avg_s_rate || batch.s_rate || item.s_rate || 0),
+                avg_mrp: parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0)
+            } : {
+                id: '',
+                batch_no: '',
+                expiry_date: '',
+                expiry_display: '',
+                avg_s_rate: parseFloat(item.s_rate || 0),
+                avg_mrp: parseFloat(item.mrp || 0)
+            };
+            
+            // Use the existing addItemToTable or similar function
+            if (typeof addItemToTable === 'function') {
+                addItemToTable(itemData, batchData);
+            } else {
+                // Fallback: Add a new row manually
+                addNewRow();
+                // Fill in the last row
+                const tbody = document.getElementById('itemsTableBody');
+                const lastRow = tbody.lastElementChild;
+                if (lastRow) {
+                    const rowIdx = lastRow.getAttribute('data-row-index');
+                    const codeInput = lastRow.querySelector(`input[name*="[code]"]`);
+                    const nameInput = lastRow.querySelector(`input[name*="[item_name]"]`);
+                    const batchInput = lastRow.querySelector(`input[name*="[batch]"]`);
+                    const expiryInput = lastRow.querySelector(`input[name*="[expiry]"]`);
+                    const rateInput = lastRow.querySelector(`input[name*="[rate]"]`);
+                    const mrpInput = lastRow.querySelector(`input[name*="[mrp]"]`);
+                    
+                    if (codeInput) codeInput.value = itemData.bar_code;
+                    if (nameInput) nameInput.value = itemData.name;
+                    if (batchInput) batchInput.value = batchData.batch_no;
+                    if (expiryInput) expiryInput.value = batchData.expiry_display;
+                    if (rateInput) rateInput.value = batchData.avg_s_rate;
+                    if (mrpInput) mrpInput.value = batchData.avg_mrp;
+                    
+                    // Store attributes
+                    lastRow.setAttribute('data-item-id', itemData.id);
+                    lastRow.setAttribute('data-batch-id', batchData.id);
+                    lastRow.setAttribute('data-hsn-code', itemData.hsn_code);
+                    lastRow.setAttribute('data-cgst', itemData.cgst_percent);
+                    lastRow.setAttribute('data-sgst', itemData.sgst_percent);
+                    lastRow.setAttribute('data-cess', itemData.cess_percent);
+                    lastRow.setAttribute('data-packing', itemData.packing);
+                    lastRow.setAttribute('data-unit', itemData.unit);
+                    lastRow.setAttribute('data-company', itemData.company_name);
+                }
+            }
+        }, index * 150);
+    });
+    
+    // Show success message
+    setTimeout(() => {
+        showAlert(`${selectedItems.length} item(s) added from OCR scan`, 'success', 'Items Added');
+        updateSummary();
+    }, selectedItems.length * 150 + 200);
+});
+</script>
+
+<!-- Include OCR Preview Module with Batch Selection -->
+@include('admin.sale.partials.receipt-ocr-preview')
 
 @endsection

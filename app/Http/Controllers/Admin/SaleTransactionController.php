@@ -169,7 +169,12 @@ class SaleTransactionController extends Controller
         DB::beginTransaction();
         
         try {
+            // Handle items - may be array (JSON request) or JSON string (FormData request)
             $itemsData = $request->input('items', []);
+            if (is_string($itemsData)) {
+                $itemsData = json_decode($itemsData, true) ?? [];
+            }
+            
             $challanId = $request->input('challan_id'); // Challan ID if converting from challan
             
             // Generate appropriate invoice number based on series
@@ -180,10 +185,11 @@ class SaleTransactionController extends Controller
             }
             
             // Handle receipt file upload for TEMP transactions
-            $receiptPath = null;
-            if ($isTempTransaction && $request->hasFile('receipt_file')) {
+            $receiptPaths = [];
+            $receiptDescriptions = [];
+            
+            if ($isTempTransaction) {
                 $customerId = $request->input('customer_id');
-                $file = $request->file('receipt_file');
                 
                 // Get customer name for folder
                 $customer = \App\Models\Customer::find($customerId);
@@ -193,13 +199,43 @@ class SaleTransactionController extends Controller
                 $currentDate = date('d-m-Y');
                 $folderName = $customerName . '_' . $currentDate;
                 
-                // Generate unique filename
-                $filename = 'receipt_' . time() . '_' . $file->getClientOriginalName();
+                // Handle single receipt file (legacy support)
+                if ($request->hasFile('receipt_file')) {
+                    $file = $request->file('receipt_file');
+                    $filename = 'receipt_' . time() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs("receipts/{$folderName}", $filename, 'public');
+                    $receiptPaths[] = 'storage/' . $path;
+                    
+                    Log::info('📷 Single receipt file uploaded', ['path' => end($receiptPaths)]);
+                }
                 
-                // Store in: public/receipts/CustomerName_Date/filename
-                $receiptPath = $file->storeAs("public/receipts/{$folderName}", $filename);
-                $receiptPath = str_replace('public/', 'storage/', $receiptPath);
+                // Handle multiple receipt files
+                if ($request->hasFile('receipt_files')) {
+                    $files = $request->file('receipt_files');
+                    $descriptions = $request->input('receipt_descriptions', []);
+                    
+                    foreach ($files as $index => $file) {
+                        $filename = 'receipt_' . time() . '_' . ($index + 1) . '_' . $file->getClientOriginalName();
+                        $path = $file->storeAs("receipts/{$folderName}", $filename, 'public');
+                        $receiptPaths[] = 'storage/' . $path;
+                        
+                        if (isset($descriptions[$index])) {
+                            $receiptDescriptions[] = $descriptions[$index];
+                        }
+                        
+                        Log::info('📷 Multiple receipt file uploaded', [
+                            'index' => $index,
+                            'path' => end($receiptPaths)
+                        ]);
+                    }
+                }
             }
+            
+            // Combine receipt paths as comma-separated string
+            $receiptPath = !empty($receiptPaths) ? implode(',', $receiptPaths) : null;
+            $receiptDescription = !empty($receiptDescriptions) 
+                ? implode(' | ', $receiptDescriptions) 
+                : $request->input('receipt_description');
             
             // Create Master Record (using summary data from frontend)
             $transaction = SaleTransaction::create([
@@ -214,7 +250,7 @@ class SaleTransactionController extends Controller
                 'remarks' => $request->input('remarks'),
                 'challan_id' => $challanId, // Link to challan if converting
                 'receipt_path' => $receiptPath, // Receipt path for TEMP transactions
-                'receipt_description' => $request->input('receipt_description'),
+                'receipt_description' => $receiptDescription,
                 
                 // Summary amounts (from frontend calculations)
                 'nt_amount' => $request->input('nt_amount', 0),
@@ -776,6 +812,10 @@ class SaleTransactionController extends Controller
                     'tax_amount' => $transaction->tax_amount,
                     'net_amount' => $transaction->net_amount,
                     'scm_percent' => $transaction->scm_percent,
+                    // TEMP transaction fields
+                    'is_temp' => $transaction->series === 'TEMP' || str_starts_with($transaction->invoice_no, 'TEMP-'),
+                    'receipt_path' => $transaction->receipt_path,
+                    'receipt_description' => $transaction->receipt_description,
                     'items' => $transaction->items->map(function($item) {
                         return [
                             'item_code' => $item->item_code,
@@ -842,6 +882,10 @@ class SaleTransactionController extends Controller
                     'tax_amount' => $transaction->tax_amount,
                     'net_amount' => $transaction->net_amount,
                     'scm_percent' => $transaction->scm_percent,
+                    // TEMP transaction fields
+                    'is_temp' => $transaction->series === 'TEMP' || str_starts_with($transaction->invoice_no, 'TEMP-'),
+                    'receipt_path' => $transaction->receipt_path,
+                    'receipt_description' => $transaction->receipt_description,
                     'items' => $transaction->items->map(function($item) {
                         return [
                             'item_id' => $item->item_id,

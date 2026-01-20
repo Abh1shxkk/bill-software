@@ -4754,15 +4754,77 @@ function saveSale() {
     console.log('Full Payload:', payload);
     console.log('===================================');
     
+    // Check if we have a pending receipt file to upload (TEMP transaction mode)
+    const hasPendingReceipt = window.pendingReceiptFile && isTempTransaction;
+    
+    // Also check uploadedReceipts array for multiple receipts
+    const hasUploadedReceipts = typeof uploadedReceipts !== 'undefined' && 
+                                 uploadedReceipts.filter(r => r !== null && r !== undefined).length > 0;
+    
+    let fetchOptions;
+    
+    if (hasPendingReceipt || hasUploadedReceipts) {
+        // Use FormData to upload receipt files
+        const formData = new FormData();
+        
+        // Add all payload fields to FormData
+        Object.keys(payload).forEach(key => {
+            if (key === 'items') {
+                // Items needs to be serialized
+                formData.append('items', JSON.stringify(payload.items));
+            } else if (key !== '_token') {
+                formData.append(key, payload[key] ?? '');
+            }
+        });
+        
+        // Add CSRF token
+        formData.append('_token', document.querySelector('input[name="_token"]').value);
+        
+        // Add single pending receipt file if exists
+        if (hasPendingReceipt) {
+            formData.append('receipt_file', window.pendingReceiptFile);
+            console.log('📷 Attaching pending receipt file:', window.pendingReceiptFile.name);
+        }
+        
+        // Add all uploaded receipts if they exist
+        if (hasUploadedReceipts) {
+            let receiptCount = 0;
+            uploadedReceipts.forEach((receipt, index) => {
+                if (receipt && receipt.file) {
+                    formData.append(`receipt_files[${receiptCount}]`, receipt.file);
+                    if (receipt.description) {
+                        formData.append(`receipt_descriptions[${receiptCount}]`, receipt.description);
+                    }
+                    console.log(`📷 Attaching receipt ${receiptCount + 1}:`, receipt.file.name);
+                    receiptCount++;
+                }
+            });
+        }
+        
+        fetchOptions = {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                'Accept': 'application/json'
+            },
+            body: formData
+        };
+        
+        console.log('📷 Using FormData for receipt upload (TEMP transaction)');
+    } else {
+        // Standard JSON request
+        fetchOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            },
+            body: JSON.stringify(payload)
+        };
+    }
+    
     // Send to server
-    fetch('{{ route("admin.sale.store") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
-        },
-        body: JSON.stringify(payload)
-    })
+    fetch('{{ route("admin.sale.store") }}', fetchOptions)
     .then(async response => {
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
@@ -4792,6 +4854,9 @@ function saveSale() {
     })
     .then(data => {
         if (data.success) {
+            // Clear pending receipt after successful save
+            window.pendingReceiptFile = null;
+            
             // Show the save options modal with print format selection
             showSaveOptionsModal(data.id, data.invoice_no);
         } else {

@@ -73,11 +73,21 @@
       </thead>
       <tbody id="sale-table-body">
         @forelse($sales ?? [] as $sale)
-          <tr>
+          @php
+            $isTemp = $sale->series === 'TEMP' || str_starts_with($sale->invoice_no ?? '', 'TEMP-');
+          @endphp
+          <tr class="{{ $isTemp ? 'table-warning' : '' }}">
             <td>{{ ($sales->currentPage() - 1) * $sales->perPage() + $loop->iteration }}</td>
             <td>{{ $sale->sale_date ? $sale->sale_date->format('d/m/Y') : '-' }}</td>
             <td>{{ $sale->customer->name ?? '-' }}</td>
-            <td>{{ $sale->invoice_no ?? '-' }}</td>
+            <td>
+              {{ $sale->invoice_no ?? '-' }}
+              @if($isTemp)
+                <span class="badge bg-warning text-dark ms-1" title="Temporary Transaction - Needs Finalization">
+                  <i class="bi bi-clock"></i> TEMP
+                </span>
+              @endif
+            </td>
             <td>{{ $sale->salesman->name ?? '-' }}</td>
             <td>{{ $sale->due_date ? $sale->due_date->format('d/m/Y') : '-' }}</td>
             <td class="text-end">
@@ -87,9 +97,17 @@
               <a class="btn btn-sm btn-outline-info" href="{{ route('admin.sale.show', $sale->id) }}" title="View Sale Details">
                 <i class="bi bi-eye"></i>
               </a>
-              <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.sale.modification') }}?invoice_no={{ $sale->invoice_no }}" title="Edit Sale">
-                <i class="bi bi-pencil"></i>
-              </a>
+              @if($isTemp)
+                {{-- TEMP Transaction: Show Finalize button --}}
+                <a class="btn btn-sm btn-warning" href="{{ route('admin.sale.modification') }}?invoice_no={{ $sale->invoice_no }}&mode=finalize" title="Finalize Transaction">
+                  <i class="bi bi-check-circle"></i>
+                </a>
+              @else
+                {{-- Normal Transaction: Show Edit button --}}
+                <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.sale.modification') }}?invoice_no={{ $sale->invoice_no }}" title="Edit Sale">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              @endif
               <button type="button" class="btn btn-sm btn-outline-danger delete-sale" 
                       data-sale-id="{{ $sale->id }}" 
                       data-invoice-no="{{ $sale->invoice_no }}" 
