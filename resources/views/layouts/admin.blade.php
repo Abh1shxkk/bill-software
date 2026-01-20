@@ -2236,7 +2236,7 @@
             };
 
             function initDatePickers(root) {
-                (root || document).querySelectorAll('input[type="date"]:not([data-fp])').forEach(el => {
+                (root || document).querySelectorAll('input[type="date"]:not([data-fp]):not(.no-flatpickr)').forEach(el => {
                     const val = el.value;
                     el.type = 'text';
                     el.setAttribute('data-fp', '1');
@@ -2914,8 +2914,10 @@
     @include('layouts.partials.keyboard-shortcuts-inline')
     @include('layouts.partials.index-shortcuts-inline')
     
-    <!-- Transaction Shortcuts - End key to save -->
+    <!-- Transaction Shortcuts - End key to save (excluded from sale transaction which has its own) -->
+    @if(!request()->routeIs('admin.sale.transaction'))
     @include('layouts.partials.transaction-shortcuts')
+    @endif
 </body>
 
 </html>

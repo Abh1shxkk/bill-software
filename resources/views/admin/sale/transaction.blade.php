@@ -742,6 +742,68 @@
         display: block;
         opacity: 1;
     }
+    
+    /* ============================================ */
+    /* SEARCHABLE DROPDOWN STYLES */
+    /* ============================================ */
+    .searchable-dropdown {
+        position: relative;
+    }
+    
+    .searchable-dropdown-input {
+        width: 100%;
+        cursor: text;
+    }
+    
+    .searchable-dropdown-input:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .searchable-dropdown-list .dropdown-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.15s;
+    }
+    
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    
+    .searchable-dropdown-list .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+    
+    .searchable-dropdown-list .dropdown-item.selected {
+        background-color: #e7f3ff;
+        font-weight: 600;
+    }
+    
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -776,18 +838,34 @@
                     
                     <div class="field-group">
                         <label>Sale Date</label>
-                        <input type="date" class="form-control" name="date" id="saleDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()">
+                        <input type="date" class="form-control no-flatpickr" name="date" id="saleDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()">
                         <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
                     </div>
                     
                     <div class="field-group">
                         <label>Customer:</label>
-                        <select class="form-control" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" onchange="updateCustomerName(); fetchCustomerDue(); checkChooseItemsButtonState();">
-                            <option value="">Select Customer</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-receipt-mode="{{ $customer->deals_with_item_desc_receipt ? '1' : '0' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                            @endforeach
-                        </select>
+                        <!-- Searchable Customer Dropdown -->
+                        <div class="searchable-dropdown" id="customerDropdownWrapper" style="position: relative; width: 250px;">
+                            <input type="text" 
+                                   class="form-control searchable-dropdown-input" 
+                                   id="customerSearchInput" 
+                                   placeholder="Type to search customer..."
+                                   autocomplete="off"
+                                   style="width: 100%;">
+                            <input type="hidden" name="customer_id" id="customerSelect" value="">
+                            <div class="searchable-dropdown-list" id="customerDropdownList" style="display: none;">
+                                <div class="dropdown-item" data-value="" data-name="" data-receipt-mode="0">Select Customer</div>
+                                @foreach($customers as $customer)
+                                    <div class="dropdown-item" 
+                                         data-value="{{ $customer->id }}" 
+                                         data-name="{{ $customer->name }}"
+                                         data-code="{{ $customer->code ?? '' }}"
+                                         data-receipt-mode="{{ $customer->deals_with_item_desc_receipt ? '1' : '0' }}">
+                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -801,7 +879,7 @@
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man:</label>
-                            <select class="form-control" name="salesman_id" id="salesmanSelect" autocomplete="off" onchange="updateSalesmanName()">
+                            <select class="form-control no-select2" name="salesman_id" id="salesmanSelect" autocomplete="off" onchange="updateSalesmanName()">
                                 <option value="">Select</option>
                                 @foreach($salesmen as $salesman)
                                     <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->code ?? '' }}</option>
@@ -821,13 +899,13 @@
                             <div class="col-md-6">
                                 <div class="field-group">
                                     <label style="width: 80px;">Due Date</label>
-                                    <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}">
+                                    <input type="date" class="form-control no-flatpickr" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label>Cash:</label>
-                                    <select class="form-control" name="cash" id="cash" style="width: 60px;">
+                                    <select class="form-control no-select2" name="cash" id="cash" style="width: 60px;">
                                         <option value="N" selected>N</option>
                                         <option value="Y">Y</option>
                                     </select>
@@ -836,7 +914,7 @@
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label>Transfer:</label>
-                                    <select class="form-control" name="transfer" id="transfer" style="width: 60px;">
+                                    <select class="form-control no-select2" name="transfer" id="transfer" style="width: 60px;">
                                         <option value="N" selected>N</option>
                                         <option value="Y">Y</option>
                                     </select>
@@ -1179,7 +1257,7 @@
         </div>
         <div class="pending-orders-body">
             <div class="p-3">
-                <input type="text" class="form-control mb-3" id="itemSearchInput" placeholder="Search by Name, HSN Code, Company..." autocomplete="off" style="font-size: 12px;">
+                <input type="text" class="form-control mb-3" id="itemSearchInput" placeholder="Search by Name, HSN Code, Company... (Press Enter to select first)" autocomplete="off" style="font-size: 12px;" oninput="filterItemsInModal()">
             </div>
             <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                 <table class="table table-bordered table-hover mb-0" style="font-size: 11px;">
@@ -1647,18 +1725,22 @@ function updateDayName() {
 
 // Check if Choose Items button should be enabled and show/hide receipt section
 function checkChooseItemsButtonState() {
-    const customerSelect = document.getElementById('customerSelect');
-    const customerId = customerSelect?.value;
+    const customerHiddenInput = document.getElementById('customerSelect');
+    const customerId = customerHiddenInput?.value;
     const chooseItemsBtn = document.getElementById('chooseItemsBtn');
     const receiptsSection = document.getElementById('uploadedReceiptsSection');
     const seriesSelect = document.getElementById('seriesSelect');
     const invoiceNoInput = document.getElementById('invoiceNo');
     
-    // Check if selected customer is in receipt mode
+    // Check if selected customer is in receipt mode (from searchable dropdown)
     let isReceiptMode = false;
-    if (customerId && customerSelect) {
-        const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-        isReceiptMode = selectedOption?.getAttribute('data-receipt-mode') === '1';
+    if (customerId) {
+        // Find selected item in dropdown list
+        const dropdownList = document.getElementById('customerDropdownList');
+        if (dropdownList) {
+            const selectedItem = dropdownList.querySelector(`.dropdown-item[data-value="${customerId}"]`);
+            isReceiptMode = selectedItem?.dataset.receiptMode === '1';
+        }
     }
     
     // Show/hide receipts section based on customer receipt mode
@@ -1790,17 +1872,22 @@ function clearAllReceipts() {
 // Open Choose Items Modal
 function openChooseItemsModal() {
     // Validate: Customer must be selected
-    const customerSelect = document.getElementById('customerSelect');
-    const customerId = customerSelect?.value;
+    const customerHiddenInput = document.getElementById('customerSelect');
+    const customerSearchInput = document.getElementById('customerSearchInput');
+    const customerId = customerHiddenInput?.value;
     if (!customerId) {
         showAlert('Please select Customer first!\n\nCustomer selection is required before choosing items.', 'warning', 'Customer Required');
-        customerSelect.focus();
+        if (customerSearchInput) customerSearchInput.focus();
         return;
     }
     
-    // Check if customer is in receipt mode
-    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-    const isReceiptMode = selectedOption.getAttribute('data-receipt-mode') === '1';
+    // Check if customer is in receipt mode (from searchable dropdown)
+    let isReceiptMode = false;
+    const dropdownList = document.getElementById('customerDropdownList');
+    if (dropdownList) {
+        const selectedItem = dropdownList.querySelector(`.dropdown-item[data-value="${customerId}"]`);
+        isReceiptMode = selectedItem?.dataset.receiptMode === '1';
+    }
     
     if (isReceiptMode) {
         // Open receipt upload modal instead of items modal
@@ -2612,6 +2699,13 @@ function openItemsModalDirectly() {
     setTimeout(() => {
         modal.classList.add('show');
         backdrop.classList.add('show');
+        
+        // Focus search input for keyboard navigation
+        const searchInput = document.getElementById('itemSearchInput');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+        }
     }, 10);
 }
 
@@ -2856,6 +2950,12 @@ function openBatchSelectionModal(item) {
     setTimeout(() => {
         modal.classList.add('show');
         backdrop.classList.add('show');
+        
+        // Focus search input for keyboard navigation
+        const searchInput = document.getElementById('batchSearchInput');
+        if (searchInput) {
+            searchInput.focus();
+        }
     }, 10);
 }
 
@@ -5187,18 +5287,1114 @@ function handleSaveAndPrint() {
 // Close modal on backdrop click
 document.getElementById('saveOptionsBackdrop')?.addEventListener('click', closeSaveOptionsModal);
 
-// Close on Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const modal = document.getElementById('saveOptionsModal');
-        if (modal && modal.classList.contains('show')) {
-            closeSaveOptionsModal();
+// ============================================
+// SAVE OPTIONS MODAL KEYBOARD NAVIGATION
+// ============================================
+
+/**
+ * Check if Save Options Modal is open
+ */
+function isSaveOptionsModalOpen() {
+    const modal = document.getElementById('saveOptionsModal');
+    return modal && modal.classList.contains('show');
+}
+
+/**
+ * Select print format option (1 = Full Page A4, 2 = Half Page A5)
+ */
+function selectPrintFormat(formatValue) {
+    const options = document.querySelectorAll('.print-format-option');
+    options.forEach(opt => {
+        opt.classList.remove('selected');
+        const radio = opt.querySelector('input[type="radio"]');
+        if (radio && radio.value === String(formatValue)) {
+            opt.classList.add('selected');
+            radio.checked = true;
         }
+    });
+}
+
+/**
+ * Toggle between print formats
+ */
+function togglePrintFormat(direction) {
+    const currentSelected = document.querySelector('.print-format-option.selected input[type="radio"]');
+    const currentValue = currentSelected ? currentSelected.value : '1';
+    
+    if (direction === 'next') {
+        selectPrintFormat(currentValue === '1' ? '2' : '1');
+    } else {
+        selectPrintFormat(currentValue === '2' ? '1' : '2');
+    }
+}
+
+/**
+ * Handle keyboard in Save Options Modal
+ * Note: Transaction is ALREADY SAVED when this modal appears.
+ * This modal is just asking if you want to print before continuing.
+ */
+function handleSaveOptionsModalKeyboard(e) {
+    switch (e.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+            e.preventDefault();
+            togglePrintFormat('prev');
+            break;
+            
+        case 'ArrowRight':
+        case 'ArrowDown':
+            e.preventDefault();
+            togglePrintFormat('next');
+            break;
+            
+        case '1':
+            e.preventDefault();
+            selectPrintFormat('1');
+            break;
+            
+        case '2':
+            e.preventDefault();
+            selectPrintFormat('2');
+            break;
+            
+        case 'Enter':
+            // Default: Print Invoice and reload
+            e.preventDefault();
+            handleSaveAndPrint();
+            break;
+            
+        case 'd':
+        case 'D':
+            // Done: Close modal and reload (prepare for next transaction)
+            e.preventDefault();
+            handleSaveOnly();
+            break;
+            
+        case 'p':
+        case 'P':
+            // Print Invoice
+            e.preventDefault();
+            handleSaveAndPrint();
+            break;
+            
+        case 'Escape':
+            // Just close modal without reloading (stay on same page)
+            e.preventDefault();
+            closeSaveOptionsModal();
+            break;
+    }
+}
+
+// Global keyboard handler for Save Options Modal
+document.addEventListener('keydown', function(e) {
+    if (isSaveOptionsModalOpen()) {
+        handleSaveOptionsModalKeyboard(e);
     }
 });
 </script>
 
+<!-- ============================================ -->
+<!-- SEARCHABLE DROPDOWN SYSTEM -->
+<!-- ============================================ -->
+<script>
+(function() {
+    'use strict';
+    
+    // ============================================
+    // CUSTOMER SEARCHABLE DROPDOWN
+    // ============================================
+    
+    const customerInput = document.getElementById('customerSearchInput');
+    const customerHiddenInput = document.getElementById('customerSelect');
+    const customerDropdownList = document.getElementById('customerDropdownList');
+    
+    if (!customerInput || !customerDropdownList) {
+        console.warn('Customer searchable dropdown elements not found');
+        return;
+    }
+    
+    let highlightedIndex = -1;
+    let isDropdownOpen = false;
+    
+    /**
+     * Get all visible dropdown items
+     */
+    function getVisibleItems() {
+        return Array.from(customerDropdownList.querySelectorAll('.dropdown-item:not(.hidden)'));
+    }
+    
+    /**
+     * Show dropdown
+     */
+    function showDropdown() {
+        customerDropdownList.style.display = 'block';
+        isDropdownOpen = true;
+        highlightedIndex = -1;
+    }
+    
+    /**
+     * Hide dropdown
+     */
+    function hideDropdown() {
+        customerDropdownList.style.display = 'none';
+        isDropdownOpen = false;
+        highlightedIndex = -1;
+        // Remove all highlights
+        customerDropdownList.querySelectorAll('.dropdown-item').forEach(item => {
+            item.classList.remove('highlighted');
+        });
+    }
+    
+    /**
+     * Filter dropdown items based on search text
+     */
+    function filterItems(searchText) {
+        const items = customerDropdownList.querySelectorAll('.dropdown-item');
+        const search = searchText.toLowerCase().trim();
+        
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            const code = (item.dataset.code || '').toLowerCase();
+            const name = (item.dataset.name || '').toLowerCase();
+            
+            if (search === '' || text.includes(search) || code.includes(search) || name.includes(search)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+        
+        // Reset highlight after filtering
+        highlightedIndex = -1;
+        items.forEach(item => item.classList.remove('highlighted'));
+    }
+    
+    /**
+     * Highlight item at index
+     */
+    function highlightItem(index) {
+        const visibleItems = getVisibleItems();
+        
+        // Remove all highlights
+        visibleItems.forEach(item => item.classList.remove('highlighted'));
+        
+        if (index >= 0 && index < visibleItems.length) {
+            highlightedIndex = index;
+            visibleItems[index].classList.add('highlighted');
+            visibleItems[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+    
+    /**
+     * Select an item
+     */
+    function selectItem(item) {
+        const value = item.dataset.value;
+        const name = item.dataset.name;
+        const code = item.dataset.code || '';
+        const receiptMode = item.dataset.receiptMode;
+        
+        // Set hidden input value
+        customerHiddenInput.value = value;
+        
+        // Set display text
+        if (value) {
+            customerInput.value = code ? `${code} - ${name}` : name;
+        } else {
+            customerInput.value = '';
+        }
+        
+        // Mark as selected
+        customerDropdownList.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+        
+        // Hide dropdown
+        hideDropdown();
+        
+        // Trigger change events for dependent functionality
+        if (typeof updateCustomerName === 'function') updateCustomerName();
+        if (typeof fetchCustomerDue === 'function') fetchCustomerDue();
+        if (typeof checkChooseItemsButtonState === 'function') checkChooseItemsButtonState();
+        
+        console.log(`✅ Customer selected: ${name} (ID: ${value})`);
+    }
+    
+    // ============================================
+    // EVENT LISTENERS
+    // ============================================
+    
+    // Focus - show dropdown
+    customerInput.addEventListener('focus', function() {
+        showDropdown();
+        filterItems(this.value);
+    });
+    
+    // Input - filter as user types
+    customerInput.addEventListener('input', function() {
+        showDropdown();
+        filterItems(this.value);
+    });
+    
+    // Keyboard navigation
+    customerInput.addEventListener('keydown', function(e) {
+        if (!isDropdownOpen) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                showDropdown();
+                filterItems(this.value);
+            }
+            return;
+        }
+        
+        const visibleItems = getVisibleItems();
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                if (highlightedIndex < visibleItems.length - 1) {
+                    highlightItem(highlightedIndex + 1);
+                } else {
+                    highlightItem(0); // Wrap to first
+                }
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                if (highlightedIndex > 0) {
+                    highlightItem(highlightedIndex - 1);
+                } else {
+                    highlightItem(visibleItems.length - 1); // Wrap to last
+                }
+                break;
+                
+            case 'Enter':
+                e.preventDefault();
+                if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                    selectItem(visibleItems[highlightedIndex]);
+                } else if (visibleItems.length > 0) {
+                    // Select first visible item if none highlighted
+                    selectItem(visibleItems[0]);
+                }
+                break;
+                
+            case 'Escape':
+                e.preventDefault();
+                hideDropdown();
+                break;
+                
+            case 'Tab':
+                // Allow tab to move focus, but select current if highlighted
+                if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                    selectItem(visibleItems[highlightedIndex]);
+                }
+                hideDropdown();
+                break;
+        }
+    });
+    
+    // Click on dropdown item
+    customerDropdownList.addEventListener('click', function(e) {
+        const item = e.target.closest('.dropdown-item');
+        if (item) {
+            selectItem(item);
+        }
+    });
+    
+    // Click outside to close
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#customerDropdownWrapper')) {
+            hideDropdown();
+        }
+    });
+    
+    console.log('🔍 Searchable Customer Dropdown Initialized');
+    
+})();
+</script>
+
 <!-- Receipt OCR Preview Module -->
 <script src="{{ asset('js/receipt-ocr-preview.js') }}"></script>
+
+<!-- ============================================ -->
+<!-- KEYBOARD NAVIGATION SYSTEM -->
+<!-- ============================================ -->
+<script>
+(function() {
+    'use strict';
+    
+    // ============================================
+    // CONFIGURATION
+    // ============================================
+    const CONFIG = {
+        // Selectors for focusable elements in tab order
+        focusableSelector: [
+            'input:not([type="hidden"]):not([readonly]):not([disabled]):not(.readonly-field)',
+            'select:not([disabled])',
+            'textarea:not([readonly]):not([disabled])',
+            'button:not([disabled]):not(.btn-close-modal)'
+        ].join(', '),
+        
+        // Special selectors for items table
+        tableInputSelector: '#itemsTableBody input:not([readonly]):not([disabled])',
+        tableRowSelector: '#itemsTableBody tr',
+        
+        // Modals
+        modalSelectors: '.pending-orders-modal.show, .choose-items-modal.show, .alert-modal.show, .save-options-modal.show'
+    };
+    
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+    
+    /**
+     * Get all visible focusable elements in order
+     */
+    function getFocusableElements(container = document) {
+        const elements = Array.from(container.querySelectorAll(CONFIG.focusableSelector));
+        const filtered = elements.filter(el => {
+            // Check visibility
+            const style = window.getComputedStyle(el);
+            if (style.display === 'none' || style.visibility === 'hidden' || el.offsetParent === null) {
+                console.log('🚫 Hidden element skipped:', el.id || el.name || el.tagName);
+                return false;
+            }
+            // Skip elements in hidden modals
+            const modal = el.closest('.pending-orders-modal, .choose-items-modal, .alert-modal, .save-options-modal');
+            if (modal && !modal.classList.contains('show')) {
+                return false;
+            }
+            return true;
+        });
+        
+        // Debug: Log all focusable elements
+        console.log('📋 Focusable elements in order:', filtered.map((el, i) => `${i}: ${el.tagName}#${el.id || el.name || 'no-id'}`));
+        
+        return filtered;
+    }
+    
+    /**
+     * Check if any modal is currently open
+     */
+    function isModalOpen() {
+        return document.querySelector(CONFIG.modalSelectors) !== null;
+    }
+    
+    /**
+     * Check if element is inside items table
+     */
+    function isInItemsTable(element) {
+        return element.closest('#itemsTableBody') !== null;
+    }
+    
+    /**
+     * Get table cell info for an element
+     */
+    function getTableCellInfo(element) {
+        const td = element.closest('td');
+        const tr = element.closest('tr');
+        if (!td || !tr) return null;
+        
+        const tbody = tr.closest('tbody');
+        const cells = Array.from(tr.querySelectorAll('td'));
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        return {
+            element,
+            td,
+            tr,
+            tbody,
+            colIndex: cells.indexOf(td),
+            rowIndex: rows.indexOf(tr),
+            totalCols: cells.length,
+            totalRows: rows.length
+        };
+    }
+    
+    /**
+     * Focus next element in the form
+     */
+    /**
+     * Focus next element in the form (skipping buttons for Enter-based navigation)
+     * @param {Element} currentElement - The currently focused element
+     * @param {number} direction - 1 for forward, -1 for backward
+     * @param {boolean} skipButtons - If true, skip button elements (default: true for Enter-based nav)
+     */
+    function focusNextElement(currentElement, direction = 1, skipButtons = true) {
+        const focusable = getFocusableElements();
+        let currentIndex = focusable.indexOf(currentElement);
+        
+        console.log(`🎯 focusNextElement called:`);
+        console.log(`   Current element: ${currentElement.tagName}#${currentElement.id || currentElement.name || 'no-id'}`);
+        console.log(`   Current index: ${currentIndex}`);
+        console.log(`   Direction: ${direction > 0 ? 'forward' : 'backward'}`);
+        console.log(`   Skip buttons: ${skipButtons}`);
+        
+        if (currentIndex === -1) {
+            console.log('   ❌ Current element not found in focusable list!');
+            return false;
+        }
+        
+        let nextIndex = currentIndex + direction;
+        
+        // Skip buttons if requested
+        while (skipButtons && nextIndex >= 0 && nextIndex < focusable.length) {
+            const nextEl = focusable[nextIndex];
+            if (nextEl.tagName !== 'BUTTON') {
+                break;
+            }
+            console.log(`   ⏭️ Skipping button: ${nextEl.id || 'no-id'}`);
+            nextIndex += direction;
+        }
+        
+        console.log(`   Next index: ${nextIndex}`);
+        
+        if (nextIndex >= 0 && nextIndex < focusable.length) {
+            const nextEl = focusable[nextIndex];
+            console.log(`   ✅ Moving to: ${nextEl.tagName}#${nextEl.id || nextEl.name || 'no-id'}`);
+            nextEl.focus();
+            
+            // Select text for input fields
+            if (nextEl.tagName === 'INPUT' && nextEl.type !== 'checkbox' && nextEl.type !== 'radio') {
+                nextEl.select();
+            }
+            return true;
+        }
+        console.log('   ❌ No next element available');
+        return false;
+    }
+    
+    /**
+     * Focus input in a specific table cell
+     */
+    function focusTableCell(rowIndex, colIndex) {
+        const tbody = document.getElementById('itemsTableBody');
+        if (!tbody) return false;
+        
+        const rows = tbody.querySelectorAll('tr');
+        if (rowIndex < 0 || rowIndex >= rows.length) return false;
+        
+        const cells = rows[rowIndex].querySelectorAll('td');
+        if (colIndex < 0 || colIndex >= cells.length) return false;
+        
+        const input = cells[colIndex].querySelector('input:not([readonly]):not([disabled]), select:not([disabled])');
+        if (input) {
+            input.focus();
+            if (input.select) input.select();
+            return true;
+        }
+        return false;
+    }
+    
+    // ============================================
+    // KEYBOARD EVENT HANDLERS
+    // ============================================
+    
+    /**
+     * Handle ENTER key - move to next field
+     * For SELECT elements: Arrow Down/Up to change selection, Enter confirms and moves to next
+     */
+    function handleEnterKey(e) {
+        const activeEl = document.activeElement;
+        const tagName = activeEl?.tagName?.toLowerCase();
+        
+        // Don't interfere with buttons
+        if (tagName === 'button') return;
+        
+        // Don't interfere with textarea (allow new lines)
+        if (tagName === 'textarea') return;
+        
+        // If in items table, handle specially
+        if (isInItemsTable(activeEl)) {
+            e.preventDefault();
+            const cellInfo = getTableCellInfo(activeEl);
+            if (cellInfo) {
+                // Try to move to next column
+                const nextCol = cellInfo.colIndex + 1;
+                if (nextCol < cellInfo.totalCols - 1) { // -1 to skip action column
+                    if (focusTableCell(cellInfo.rowIndex, nextCol)) return;
+                }
+                // At end of row, move to first input of next row
+                if (cellInfo.rowIndex < cellInfo.totalRows - 1) {
+                    if (focusTableCell(cellInfo.rowIndex + 1, 0)) return;
+                }
+                // At last row, add new row if addNewRow function exists
+                if (typeof addNewRow === 'function') {
+                    addNewRow();
+                    setTimeout(() => focusTableCell(cellInfo.rowIndex + 1, 0), 50);
+                }
+            }
+            return;
+        }
+        
+        // For SELECT elements - Enter confirms selection and moves to next field
+        // User should use Arrow Down/Up to change selection (native behavior)
+        if (tagName === 'select') {
+            e.preventDefault();
+            if (e.shiftKey) {
+                focusNextElement(activeEl, -1);
+            } else {
+                focusNextElement(activeEl, 1);
+            }
+            return;
+        }
+        
+        // For regular INPUT elements
+        if (tagName === 'input') {
+            e.preventDefault();
+            
+            if (e.shiftKey) {
+                focusNextElement(activeEl, -1); // Move backward
+            } else {
+                focusNextElement(activeEl, 1); // Move forward
+            }
+        }
+    }
+    
+    /**
+     * Handle SPACE key - open dropdown for select elements
+     * This is a helper to remind users they can use Space to open dropdowns
+     */
+    function handleSpaceKey(e) {
+        const activeEl = document.activeElement;
+        const tagName = activeEl?.tagName?.toLowerCase();
+        
+        // For SELECT elements, Space opens the dropdown - let native behavior work
+        if (tagName === 'select') {
+            // Don't prevent default - let native dropdown open
+            return;
+        }
+    }
+    
+    /**
+     * Handle ARROW keys - table navigation
+     */
+    function handleArrowKeys(e) {
+        const activeEl = document.activeElement;
+        
+        // Only handle arrow keys in items table
+        if (!isInItemsTable(activeEl)) return;
+        
+        const cellInfo = getTableCellInfo(activeEl);
+        if (!cellInfo) return;
+        
+        let handled = false;
+        
+        switch (e.key) {
+            case 'ArrowDown':
+                // Move to same column, next row
+                if (cellInfo.rowIndex < cellInfo.totalRows - 1) {
+                    handled = focusTableCell(cellInfo.rowIndex + 1, cellInfo.colIndex);
+                }
+                break;
+                
+            case 'ArrowUp':
+                // Move to same column, previous row
+                if (cellInfo.rowIndex > 0) {
+                    handled = focusTableCell(cellInfo.rowIndex - 1, cellInfo.colIndex);
+                }
+                break;
+                
+            case 'ArrowRight':
+                // Move to next column (only if at end of text or no text selection)
+                if (activeEl.tagName === 'INPUT') {
+                    const cursorAtEnd = activeEl.selectionStart === activeEl.value.length;
+                    if (cursorAtEnd && cellInfo.colIndex < cellInfo.totalCols - 2) {
+                        handled = focusTableCell(cellInfo.rowIndex, cellInfo.colIndex + 1);
+                    }
+                }
+                break;
+                
+            case 'ArrowLeft':
+                // Move to previous column (only if at start of text)
+                if (activeEl.tagName === 'INPUT') {
+                    const cursorAtStart = activeEl.selectionStart === 0;
+                    if (cursorAtStart && cellInfo.colIndex > 0) {
+                        handled = focusTableCell(cellInfo.rowIndex, cellInfo.colIndex - 1);
+                    }
+                }
+                break;
+        }
+        
+        if (handled) {
+            e.preventDefault();
+        }
+    }
+    
+    /**
+     * Handle END key - Save transaction
+     */
+    function handleEndKey(e) {
+        const activeEl = document.activeElement;
+        const tagName = activeEl?.tagName?.toLowerCase();
+        
+        // Allow normal End key in textarea
+        if (tagName === 'textarea') return;
+        
+        // Allow normal End key in input (move to end of text)
+        if (tagName === 'input' && activeEl.type === 'text') {
+            // Only prevent if Ctrl is pressed (Ctrl+End = save)
+            if (!e.ctrlKey) return;
+        }
+        
+        e.preventDefault();
+        
+        // Trigger save function
+        if (typeof saveSale === 'function') {
+            saveSale();
+        }
+    }
+    
+    /**
+     * Handle Ctrl+S - Save transaction
+     */
+    function handleCtrlS(e) {
+        e.preventDefault();
+        if (typeof saveSale === 'function') {
+            saveSale();
+        }
+    }
+    
+    /**
+     * Handle Ctrl+I - Open Choose Items modal
+     */
+    function handleCtrlI(e) {
+        e.preventDefault();
+        if (typeof openChooseItemsModal === 'function') {
+            openChooseItemsModal();
+        }
+    }
+    
+    /**
+     * Handle ESCAPE key - Close modals
+     */
+    function handleEscapeKey(e) {
+        // Close modals in order of priority
+        if (typeof closeAlert === 'function') {
+            const alertModal = document.getElementById('alertModal');
+            if (alertModal?.classList.contains('show')) {
+                closeAlert();
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        if (typeof closeSaveOptionsModal === 'function') {
+            const saveModal = document.getElementById('saveOptionsModal');
+            if (saveModal?.classList.contains('show')) {
+                closeSaveOptionsModal();
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        if (typeof closeBatchSelectionModal === 'function') {
+            const batchModal = document.getElementById('batchSelectionModal');
+            if (batchModal?.classList.contains('show')) {
+                closeBatchSelectionModal();
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        if (typeof closeChooseItemsModal === 'function') {
+            const itemsModal = document.getElementById('chooseItemsModal');
+            if (itemsModal?.classList.contains('show')) {
+                closeChooseItemsModal();
+                e.preventDefault();
+                return;
+            }
+        }
+        
+        if (typeof closePendingChallanModal === 'function') {
+            const challanModal = document.getElementById('pendingChallanModal');
+            if (challanModal?.classList.contains('show')) {
+                closePendingChallanModal();
+                e.preventDefault();
+                return;
+            }
+        }
+    }
+    
+    // ============================================
+    // MODAL KEYBOARD NAVIGATION
+    // ============================================
+    
+    // Track selected row index in modals
+    let chooseItemsSelectedIndex = -1;
+    let batchSelectedIndex = -1;
+    
+    /**
+     * Check if Choose Items Modal is open
+     */
+    function isChooseItemsModalOpen() {
+        const modal = document.getElementById('chooseItemsModal');
+        return modal && modal.classList.contains('show');
+    }
+    
+    /**
+     * Check if Batch Selection Modal is open
+     */
+    function isBatchModalOpen() {
+        const modal = document.getElementById('batchSelectionModal');
+        return modal && modal.classList.contains('show');
+    }
+    
+    /**
+     * Navigate items in Choose Items Modal
+     */
+    function navigateChooseItemsModal(direction) {
+        const rows = document.querySelectorAll('#chooseItemsBody tr:not([style*="display: none"])');
+        if (rows.length === 0) return;
+        
+        // Remove previous selection
+        rows.forEach(r => r.classList.remove('item-row-selected'));
+        
+        // Calculate new index
+        if (direction === 'down') {
+            chooseItemsSelectedIndex = (chooseItemsSelectedIndex + 1) % rows.length;
+        } else if (direction === 'up') {
+            chooseItemsSelectedIndex = chooseItemsSelectedIndex <= 0 ? rows.length - 1 : chooseItemsSelectedIndex - 1;
+        }
+        
+        // Select row
+        const selectedRow = rows[chooseItemsSelectedIndex];
+        if (selectedRow) {
+            selectedRow.classList.add('item-row-selected');
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+    
+    /**
+     * Select the currently highlighted item in Choose Items Modal
+     */
+    function selectCurrentChooseItem() {
+        const rows = document.querySelectorAll('#chooseItemsBody tr:not([style*="display: none"])');
+        if (chooseItemsSelectedIndex >= 0 && chooseItemsSelectedIndex < rows.length) {
+            rows[chooseItemsSelectedIndex].click();
+        }
+    }
+    
+    /**
+     * Navigate batches in Batch Selection Modal
+     */
+    function navigateBatchModal(direction) {
+        const rows = document.querySelectorAll('#batchSelectionBody tr:not([style*="display: none"])');
+        if (rows.length === 0) return;
+        
+        // Remove previous selection
+        rows.forEach(r => r.classList.remove('item-row-selected'));
+        
+        // Calculate new index
+        if (direction === 'down') {
+            batchSelectedIndex = (batchSelectedIndex + 1) % rows.length;
+        } else if (direction === 'up') {
+            batchSelectedIndex = batchSelectedIndex <= 0 ? rows.length - 1 : batchSelectedIndex - 1;
+        }
+        
+        // Select row
+        const selectedRow = rows[batchSelectedIndex];
+        if (selectedRow) {
+            selectedRow.classList.add('item-row-selected');
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            // Trigger click to populate batch details
+            selectedRow.click();
+        }
+    }
+    
+    /**
+     * Select the currently highlighted batch and add to table
+     */
+    function selectCurrentBatch() {
+        if (window.selectedBatch && typeof selectBatchFromModal === 'function') {
+            selectBatchFromModal(window.selectedBatch);
+        }
+    }
+    
+    /**
+     * Handle keyboard in Choose Items Modal
+     */
+    function handleChooseItemsModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                navigateChooseItemsModal('down');
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                navigateChooseItemsModal('up');
+                break;
+                
+            case 'Enter':
+                // If search input is focused, select first visible item
+                if (document.activeElement.id === 'itemSearchInput') {
+                    e.preventDefault();
+                    const visibleRows = document.querySelectorAll('#chooseItemsBody tr:not([style*="display: none"])');
+                    if (visibleRows.length > 0) {
+                        chooseItemsSelectedIndex = 0;
+                        visibleRows[0].click();
+                    }
+                    return;
+                }
+                e.preventDefault();
+                selectCurrentChooseItem();
+                break;
+                
+            case 'f':
+            case 'F':
+                // F key focuses search box (without Ctrl)
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('itemSearchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+    
+    /**
+     * Handle keyboard in Batch Selection Modal
+     */
+    function handleBatchModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                navigateBatchModal('down');
+                break;
+                
+            case 'ArrowUp':
+                e.preventDefault();
+                navigateBatchModal('up');
+                break;
+                
+            case 'Enter':
+                // If search input is focused, navigate to first visible batch then select it
+                if (document.activeElement.id === 'batchSearchInput') {
+                    e.preventDefault();
+                    const visibleRows = document.querySelectorAll('#batchSelectionBody tr:not([style*="display: none"])');
+                    if (visibleRows.length > 0) {
+                        // Click first batch to select it
+                        visibleRows[0].click();
+                        batchSelectedIndex = 0;
+                        // Then confirm selection and add to table
+                        setTimeout(() => {
+                            if (window.selectedBatch) {
+                                selectBatchFromModal(window.selectedBatch);
+                            }
+                        }, 50);
+                    }
+                    return;
+                }
+                e.preventDefault();
+                selectCurrentBatch();
+                break;
+                
+            case 'f':
+            case 'F':
+                // F key focuses search box (without Ctrl)
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('batchSearchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+    
+    // ============================================
+    // MAIN KEYBOARD EVENT LISTENER
+    // ============================================
+    
+    document.addEventListener('keydown', function(e) {
+        // Check if modals are open and handle their keyboard navigation
+        if (isChooseItemsModalOpen()) {
+            handleChooseItemsModalKeyboard(e);
+            
+            // Handle Escape for modals
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeChooseItemsModal();
+                chooseItemsSelectedIndex = -1;
+            }
+            return;
+        }
+        
+        if (isBatchModalOpen()) {
+            handleBatchModalKeyboard(e);
+            
+            // Handle Escape for modals
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeBatchSelectionModal();
+                batchSelectedIndex = -1;
+            }
+            return;
+        }
+        
+        // Handle specific key combinations for main form
+        switch (e.key) {
+            case 'Enter':
+                handleEnterKey(e);
+                break;
+                
+            case 'ArrowDown':
+            case 'ArrowUp':
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                handleArrowKeys(e);
+                break;
+                
+            case 'End':
+                handleEndKey(e);
+                break;
+                
+            case 'Escape':
+                handleEscapeKey(e);
+                break;
+                
+            case 's':
+            case 'S':
+                if (e.ctrlKey) {
+                    handleCtrlS(e);
+                }
+                break;
+                
+            case 'i':
+            case 'I':
+                if (e.ctrlKey) {
+                    handleCtrlI(e);
+                }
+                break;
+        }
+    }, true); // Use capture phase for priority
+    
+    // ============================================
+    // MODAL OPEN HOOKS - Focus search and reset selection
+    // ============================================
+    
+    // Hook into Choose Items Modal open
+    const originalOpenItemsModal = window.openItemsModalDirectly;
+    if (typeof originalOpenItemsModal === 'function') {
+        window.openItemsModalDirectly = function() {
+            originalOpenItemsModal.apply(this, arguments);
+            chooseItemsSelectedIndex = -1;
+            // Focus search input after modal opens
+            setTimeout(() => {
+                const searchInput = document.getElementById('itemSearchInput');
+                if (searchInput) searchInput.focus();
+            }, 100);
+        };
+    }
+    
+    // Hook into Batch Selection Modal open
+    const originalOpenBatchModal = window.openBatchSelectionModal;
+    if (typeof originalOpenBatchModal === 'function') {
+        window.openBatchSelectionModal = function() {
+            originalOpenBatchModal.apply(this, arguments);
+            batchSelectedIndex = -1;
+            // Focus search input after modal opens
+            setTimeout(() => {
+                const searchInput = document.getElementById('batchSearchInput');
+                if (searchInput) searchInput.focus();
+            }, 100);
+        };
+    }
+    
+    // ============================================
+    // AUTO-FOCUS FIRST FIELD ON PAGE LOAD
+    // ============================================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Focus series select on page load after a short delay
+        setTimeout(function() {
+            const seriesSelect = document.getElementById('seriesSelect');
+            if (seriesSelect) {
+                seriesSelect.focus();
+            }
+        }, 200);
+    });
+    
+    // ============================================
+    // VISUAL FOCUS INDICATOR FOR KEYBOARD USERS
+    // ============================================
+    
+    // Add visual focus styles
+    const focusStyle = document.createElement('style');
+    focusStyle.textContent = `
+        /* Enhanced focus styles for keyboard navigation */
+        .form-control:focus,
+        select:focus,
+        input:focus {
+            outline: 2px solid #0d6efd !important;
+            outline-offset: 1px;
+            box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        }
+        
+        /* Remove focus outline for mouse users */
+        .form-control:focus:not(:focus-visible),
+        select:focus:not(:focus-visible),
+        input:focus:not(:focus-visible) {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Items table row focus indicator */
+        #itemsTableBody tr:focus-within {
+            background-color: #e7f3ff !important;
+        }
+        
+        #itemsTableBody tr:focus-within td {
+            background-color: #e7f3ff !important;
+        }
+        
+        /* Native select styling for keyboard */
+        select.no-select2 {
+            cursor: pointer;
+            appearance: menulist;
+            -webkit-appearance: menulist;
+            -moz-appearance: menulist;
+        }
+        
+        select.no-select2:focus {
+            border-color: #86b7fe;
+        }
+        
+        /* Native date input styling */
+        input[type="date"].no-flatpickr {
+            cursor: pointer;
+        }
+        
+        input[type="date"].no-flatpickr:focus {
+            border-color: #86b7fe;
+        }
+        
+        /* Modal row selection highlight */
+        #chooseItemsBody tr.item-row-selected,
+        #batchSelectionBody tr.item-row-selected {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+        
+        #chooseItemsBody tr.item-row-selected td,
+        #batchSelectionBody tr.item-row-selected td {
+            background-color: #007bff !important;
+            color: white !important;
+        }
+    `;
+    document.head.appendChild(focusStyle);
+    
+    console.log('🎹 Keyboard Navigation System Loaded');
+    console.log('   Enter → Next field | Shift+Enter → Previous field');
+    console.log('   Arrow Keys → Navigate dropdown/table');
+    console.log('   End → Save | Ctrl+S → Save | Ctrl+I → Choose Items');
+    console.log('   In Modals: ↑↓ Navigate | Enter Select | F → Search | Esc → Close');
+    
+})();
+</script>
 
 @endsection
