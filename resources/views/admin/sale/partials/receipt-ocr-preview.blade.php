@@ -147,6 +147,14 @@ class ReceiptOCRPreview {
                                     <h6><i class="bi bi-box-seam"></i> Matched Items</h6>
                                     <span class="badge bg-secondary" id="ocrMatchedCount">0</span>
                                 </div>
+                                <div class="ocr-search-box" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6;">
+                                    <div style="position: relative;">
+                                        <input type="text" id="ocrItemSearch" class="form-control form-control-sm" placeholder="🔍 Search in matched items..." style="padding-left: 10px; border-radius: 20px; font-size: 12px;">
+                                        <button type="button" id="ocrClearSearch" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: none; background: transparent; color: #adb5bd; cursor: pointer; display: none;" title="Clear search">
+                                            <i class="bi bi-x-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
                                 <div class="matched-items-area" id="ocrMatchedItems">
                                     <div class="empty-state">
                                         <i class="bi bi-search"></i>
@@ -688,6 +696,31 @@ class ReceiptOCRPreview {
                 this.fitToScreen();
             }
         });
+
+        // Live search in matched items
+        const searchInput = document.getElementById('ocrItemSearch');
+        const clearBtn = document.getElementById('ocrClearSearch');
+        let searchTimeout = null;
+        
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            
+            // Show/hide clear button
+            clearBtn.style.display = query.length > 0 ? 'block' : 'none';
+            
+            // Debounce for better performance
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.filterMatchedItems(query);
+            }, 150);
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            clearBtn.style.display = 'none';
+            this.filterMatchedItems('');
+            searchInput.focus();
+        });
     }
 
     open(imageData) {
@@ -1089,8 +1122,8 @@ class ReceiptOCRPreview {
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    search_terms: searchTerms,
-                    limit: 20
+                    search_terms: searchTerms
+                    // No limit - show ALL matched items
                 })
             });
 
@@ -1098,7 +1131,12 @@ class ReceiptOCRPreview {
 
             if (result.success && result.items && result.items.length > 0) {
                 this.displayMatchedItems(result.items);
-                matchedCount.textContent = result.items.length;
+                // Show "30 of X" format if there are more matches
+                if (result.total_matches && result.total_matches > result.items.length) {
+                    matchedCount.innerHTML = `<span style="font-weight: bold;">${result.items.length}</span> <span style="font-size: 10px; color: #6c757d;">of ${result.total_matches}</span>`;
+                } else {
+                    matchedCount.textContent = result.items.length;
+                }
             } else {
                 matchedItemsArea.innerHTML = `
                     <div class="empty-state">
@@ -1152,7 +1190,8 @@ class ReceiptOCRPreview {
             for (const word of words) {
                 // Clean the word
                 let cleanWord = word.replace(/[^\w.-]/g, '').trim();
-                if (cleanWord.length >= 3 && /^[a-zA-Z]/.test(cleanWord)) {
+                // Match items with 4+ characters for better medicine name matching
+                if (cleanWord.length >= 4 && /^[a-zA-Z]/.test(cleanWord)) {
                     terms.push(cleanWord);
                 }
             }
@@ -1169,14 +1208,34 @@ class ReceiptOCRPreview {
         this.itemBatches = {};
         this.selectedBatches = {};
 
-        const html = items.map((item, index) => `
-            <div class="matched-item-card" data-item-index="${index}" data-item-id="${item.id}">
+        const html = items.map((item, index) => {
+            // Color code based on match score
+            const score = item.match_score || 0;
+            let scoreColor = '#6c757d'; // gray
+            let scoreBg = '#f8f9fa';
+            if (score >= 70) {
+                scoreColor = '#198754'; // green
+                scoreBg = '#d1e7dd';
+            } else if (score >= 50) {
+                scoreColor = '#ffc107'; // yellow
+                scoreBg = '#fff3cd';
+            } else if (score >= 30) {
+                scoreColor = '#fd7e14'; // orange
+                scoreBg = '#ffe5d0';
+            }
+            
+            return `
+            <div class="matched-item-card" data-item-index="${index}" data-item-id="${item.id}" data-match-score="${score}">
                 <input type="checkbox" class="matched-item-checkbox" data-item-id="${item.id}" onclick="event.stopPropagation(); receiptOCR.toggleItemSelection(${index})">
                 <div class="matched-item-info" onclick="receiptOCR.toggleItemSelection(${index})">
-                    <div class="matched-item-name" title="${this.escapeHtml(item.name)}">${this.escapeHtml(item.name)}</div>
+                    <div class="matched-item-name" title="${this.escapeHtml(item.name)}">
+                        ${this.escapeHtml(item.name)}
+                        ${score > 0 ? `<span style="display: inline-block; padding: 1px 6px; margin-left: 5px; font-size: 10px; border-radius: 10px; background: ${scoreBg}; color: ${scoreColor}; font-weight: bold;">${score}%</span>` : ''}
+                    </div>
                     <div class="matched-item-details">
                         ${item.packing ? `<span><i class="bi bi-box"></i> ${item.packing}</span>` : ''}
                         ${item.company_short_name ? `<span><i class="bi bi-building"></i> ${item.company_short_name}</span>` : ''}
+                        ${item.matched_term ? `<span style="color: #0d6efd; font-size: 10px;"><i class="bi bi-search"></i> "${item.matched_term}"</span>` : ''}
                     </div>
                     <div class="selected-batch-info" id="selectedBatchInfo_${index}" style="display: none;">
                         <span class="batch-badge"><i class="bi bi-layers"></i> <span id="batchBadgeText_${index}"></span></span>
@@ -1189,10 +1248,71 @@ class ReceiptOCRPreview {
                     <div class="matched-item-price">₹${parseFloat(item.mrp || item.s_rate || 0).toFixed(2)}</div>
                 </div>
             </div>
-        `).join('');
+        `}).join('');
 
         document.getElementById('ocrMatchedItems').innerHTML = html;
         this.updateAddItemsButton();
+    }
+
+    // Live search filter for matched items
+    filterMatchedItems(query) {
+        const cards = document.querySelectorAll('.matched-item-card');
+        let visibleCount = 0;
+        
+        cards.forEach((card, index) => {
+            const item = this.extractedItems[index];
+            if (!item) return;
+            
+            const itemName = (item.name || '').toLowerCase();
+            const packing = (item.packing || '').toLowerCase();
+            const company = (item.company_short_name || '').toLowerCase();
+            const matchedTerm = (item.matched_term || '').toLowerCase();
+            const barcode = (item.bar_code || '').toLowerCase();
+            
+            // Check if any field matches the query
+            const matches = query === '' || 
+                itemName.includes(query) || 
+                packing.includes(query) || 
+                company.includes(query) ||
+                matchedTerm.includes(query) ||
+                barcode.includes(query);
+            
+            if (matches) {
+                card.style.display = '';
+                visibleCount++;
+                
+                // Highlight matching text if there's a query
+                if (query) {
+                    const nameEl = card.querySelector('.matched-item-name');
+                    if (nameEl) {
+                        const originalName = item.name;
+                        const regex = new RegExp(`(${this.escapeRegex(query)})`, 'gi');
+                        const highlightedName = originalName.replace(regex, '<mark style="background: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>');
+                        
+                        // Get the score badge part
+                        const scoreBadge = nameEl.querySelector('span');
+                        const scoreBadgeHTML = scoreBadge ? scoreBadge.outerHTML : '';
+                        nameEl.innerHTML = highlightedName + ' ' + scoreBadgeHTML;
+                    }
+                }
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Update visible count display
+        const matchedCount = document.getElementById('ocrMatchedCount');
+        if (query) {
+            matchedCount.innerHTML = `<span style="font-weight: bold;">${visibleCount}</span> <span style="font-size: 10px; color: #6c757d;">filtered</span>`;
+        } else {
+            // Reset to original count
+            matchedCount.textContent = this.extractedItems.length;
+        }
+    }
+    
+    // Helper to escape regex special characters
+    escapeRegex(string) {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     toggleItemSelection(index) {

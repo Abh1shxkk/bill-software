@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Services\GeminiOCRService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -16,12 +17,14 @@ class OCRController extends Controller
      */
     protected $ocrApiUrl;
     protected $ocrApiKey;
+    protected $geminiService;
 
-    public function __construct()
+    public function __construct(GeminiOCRService $geminiService)
     {
         // These should be set in your .env file
         $this->ocrApiUrl = config('services.space_ocr.url', 'https://api.ocr.space/parse/image');
         $this->ocrApiKey = config('services.space_ocr.key', '');
+        $this->geminiService = $geminiService;
     }
 
     /**
@@ -64,8 +67,16 @@ class OCRController extends Controller
                 ], 400);
             }
 
-            // Call OCR API
-            $extractedText = $this->callOCRApi($imageContent);
+            // Check if Gemini should be used (priority: Gemini > OCR.space > Tesseract > Google Vision)
+            $useGemini = $request->input('use_gemini', true); // Default to Gemini if available
+            
+            if ($useGemini && $this->geminiService->isAvailable()) {
+                Log::info('Using Gemini for text extraction');
+                $extractedText = $this->geminiService->extractText($imageContent);
+            } else {
+                // Call OCR API (fallback to existing services)
+                $extractedText = $this->callOCRApi($imageContent);
+            }
 
             if ($extractedText === false) {
                 return response()->json([
@@ -341,81 +352,97 @@ class OCRController extends Controller
     }
 
     /**
-     * Search items based on extracted text
+     * Search items based on extracted text with SMART SCORING
+     * Returns top 30 items with highest match probability
      */
     public function searchItems(Request $request)
     {
         try {
             $request->validate([
                 'search_terms' => 'required|array',
-                'limit' => 'nullable|integer|max:50'
+                'limit' => 'nullable|integer|max:100'
             ]);
 
             $searchTerms = $request->input('search_terms', []);
-            $limit = $request->input('limit', 20);
+            $limit = $request->input('limit', 30); // Default 30 best matches
             
             // Get organization_id from authenticated user
             $organizationId = auth()->user()->organization_id ?? null;
 
-            Log::info('OCR Item Search - Terms: ' . json_encode($searchTerms) . ', Org: ' . $organizationId);
+            Log::info('OCR Smart Search - Terms: ' . json_encode($searchTerms) . ', Org: ' . $organizationId);
 
-            $items = collect();
-
+            // Clean search terms (4+ characters only)
+            $cleanedTerms = [];
             foreach ($searchTerms as $term) {
-                // Clean and prepare search term
                 $term = trim($term);
-                if (strlen($term) < 2) continue;
-                
-                // Remove extra spaces and special characters for search
+                if (strlen($term) < 4) continue;
                 $cleanTerm = preg_replace('/[^a-zA-Z0-9\s]/', '', $term);
                 $cleanTerm = preg_replace('/\s+/', ' ', trim($cleanTerm));
-                
-                Log::info('OCR Item Search - Searching for term: ' . $cleanTerm);
+                if (strlen($cleanTerm) >= 4) {
+                    $cleanedTerms[] = strtolower($cleanTerm);
+                }
+            }
+            $cleanedTerms = array_unique($cleanedTerms);
 
-                // Search items by name with flexible matching
-                $results = Item::where('organization_id', $organizationId)
-                    ->where('is_deleted', 0)
-                    ->where(function($query) use ($cleanTerm, $term) {
-                        // Match anywhere in name (case-insensitive)
-                        $query->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($cleanTerm) . '%'])
-                            // Or match start of name
-                            ->orWhereRaw('LOWER(name) LIKE ?', [strtolower($cleanTerm) . '%'])
-                            // Or match by bar code
-                            ->orWhere('bar_code', 'LIKE', "%{$term}%");
-                        
-                        // Also try each word separately for multi-word searches
-                        $words = explode(' ', $cleanTerm);
-                        if (count($words) > 1) {
-                            foreach ($words as $word) {
-                                if (strlen($word) >= 3) {
-                                    $query->orWhereRaw('LOWER(name) LIKE ?', ['%' . strtolower($word) . '%']);
-                                }
-                            }
-                        }
-                    })
-                    ->select([
-                        'id', 'name', 'packing', 'company_id', 'company_short_name',
-                        'mrp', 's_rate', 'ws_rate', 'hsn_code', 'cgst_percent', 
-                        'sgst_percent', 'igst_percent', 'bar_code', 'unit'
-                    ])
-                    ->with(['company:id,short_name,name'])
-                    ->limit(15)
-                    ->get();
-
-                Log::info('OCR Item Search - Found ' . $results->count() . ' items for term: ' . $cleanTerm);
-
-                $items = $items->merge($results);
+            if (empty($cleanedTerms)) {
+                return response()->json([
+                    'success' => true,
+                    'items' => [],
+                    'count' => 0
+                ]);
             }
 
-            // Remove duplicates and limit results
-            $uniqueItems = $items->unique('id')->take($limit)->values();
+            // Get all items for this organization
+            $allItems = Item::where('organization_id', $organizationId)
+                ->where('is_deleted', 0)
+                ->select([
+                    'id', 'name', 'packing', 'company_id', 'company_short_name',
+                    'mrp', 's_rate', 'ws_rate', 'hsn_code', 'cgst_percent', 
+                    'sgst_percent', 'igst_percent', 'bar_code', 'unit'
+                ])
+                ->with(['company:id,short_name,name'])
+                ->get();
+
+            // Calculate match score for each item
+            $scoredItems = [];
             
-            Log::info('OCR Item Search - Total unique items: ' . $uniqueItems->count());
+            foreach ($allItems as $item) {
+                $itemName = strtolower($item->name);
+                $maxScore = 0;
+                $matchedTerm = '';
+                
+                foreach ($cleanedTerms as $term) {
+                    $score = $this->calculateMatchScore($itemName, $term, $item->bar_code ?? '');
+                    
+                    if ($score > $maxScore) {
+                        $maxScore = $score;
+                        $matchedTerm = $term;
+                    }
+                }
+                
+                // Only include items with score > 0
+                if ($maxScore > 0) {
+                    $itemArray = $item->toArray();
+                    $itemArray['match_score'] = $maxScore;
+                    $itemArray['matched_term'] = $matchedTerm;
+                    $scoredItems[] = $itemArray;
+                }
+            }
+
+            // Sort by score (highest first) and take top 30
+            usort($scoredItems, function($a, $b) {
+                return $b['match_score'] <=> $a['match_score'];
+            });
+
+            $topItems = array_slice($scoredItems, 0, $limit);
+            
+            Log::info('OCR Smart Search - Found ' . count($scoredItems) . ' matches, returning top ' . count($topItems));
 
             return response()->json([
                 'success' => true,
-                'items' => $uniqueItems,
-                'count' => $uniqueItems->count()
+                'items' => $topItems,
+                'count' => count($topItems),
+                'total_matches' => count($scoredItems)
             ]);
 
         } catch (\Exception $e) {
@@ -426,6 +453,103 @@ class OCRController extends Controller
                 'message' => 'Error searching items: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Calculate match score between item name and search term
+     * Higher score = better match probability
+     * 
+     * Scoring:
+     * - Exact match: 100 points
+     * - Item name starts with term: 90 points
+     * - Item name contains term: 70 points
+     * - First 4 characters match: 60 points
+     * - Word in item matches term: 50 points
+     * - Barcode match: 80 points
+     * - Partial match (40%+ overlap): 30-50 points
+     */
+    protected function calculateMatchScore(string $itemName, string $searchTerm, string $barcode = ''): int
+    {
+        $score = 0;
+        $itemName = strtolower(trim($itemName));
+        $searchTerm = strtolower(trim($searchTerm));
+        
+        // Exact match
+        if ($itemName === $searchTerm) {
+            return 100;
+        }
+        
+        // Barcode exact match
+        if (!empty($barcode) && strtolower($barcode) === $searchTerm) {
+            return 95;
+        }
+        
+        // Item name starts with search term
+        if (strpos($itemName, $searchTerm) === 0) {
+            return 90;
+        }
+        
+        // Barcode contains search term
+        if (!empty($barcode) && strpos(strtolower($barcode), $searchTerm) !== false) {
+            return 80;
+        }
+        
+        // Item name contains search term
+        if (strpos($itemName, $searchTerm) !== false) {
+            return 70;
+        }
+        
+        // First 4 characters match (important for medicine names)
+        $termFirst4 = substr($searchTerm, 0, 4);
+        if (strlen($termFirst4) >= 4 && strpos($itemName, $termFirst4) === 0) {
+            return 60;
+        }
+        
+        // Any word in item name starts with first 4 characters
+        $itemWords = explode(' ', $itemName);
+        foreach ($itemWords as $word) {
+            if (strlen($word) >= 4) {
+                $wordFirst4 = substr($word, 0, 4);
+                if ($wordFirst4 === $termFirst4) {
+                    return 55;
+                }
+            }
+        }
+        
+        // Check if search term matches start of any word in item name
+        foreach ($itemWords as $word) {
+            if (strpos($word, $searchTerm) === 0) {
+                return 50;
+            }
+        }
+        
+        // Check reverse - item word at start of search term
+        foreach ($itemWords as $word) {
+            if (strlen($word) >= 4 && strpos($searchTerm, $word) === 0) {
+                return 45;
+            }
+        }
+        
+        // Partial match using similar_text percentage
+        similar_text($itemName, $searchTerm, $percent);
+        if ($percent >= 60) {
+            return 40;
+        } elseif ($percent >= 40) {
+            return 30;
+        }
+        
+        // Levenshtein distance for close matches (only for similar length strings)
+        $lenDiff = abs(strlen($itemName) - strlen($searchTerm));
+        if ($lenDiff <= 5) {
+            $distance = levenshtein($searchTerm, substr($itemName, 0, strlen($searchTerm) + 5));
+            if ($distance <= 2) {
+                return 35;
+            } elseif ($distance <= 4) {
+                return 25;
+            }
+        }
+        
+        return 0;
     }
 
     /**
@@ -455,10 +579,239 @@ class OCRController extends Controller
             'name' => 'Google Cloud Vision'
         ];
 
+        // Check Gemini
+        $services['gemini'] = [
+            'available' => $this->geminiService->isAvailable(),
+            'name' => 'Google Gemini AI',
+            'features' => ['multi_receipt', 'auto_align', 'smart_matching']
+        ];
+
         return response()->json([
             'success' => true,
             'services' => $services,
             'active' => collect($services)->first(fn($s) => $s['available'])['name'] ?? null
         ]);
+    }
+
+    /**
+     * Analyze receipt using Gemini AI (full analysis)
+     */
+    public function analyzeWithGemini(Request $request)
+    {
+        try {
+            set_time_limit(180);
+            
+            if (!$this->geminiService->isAvailable()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gemini API is not configured. Please add GEMINI_API_KEY to your .env file.'
+                ], 400);
+            }
+
+            $request->validate([
+                'image' => 'required|string',
+            ]);
+
+            $imageData = $request->input('image');
+            
+            // Remove data URL prefix if present
+            if (strpos($imageData, 'data:image') === 0) {
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+            }
+
+            $imageContent = base64_decode($imageData);
+            
+            if (!$imageContent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid image data'
+                ], 400);
+            }
+
+            // Perform full analysis with Gemini
+            $analysis = $this->geminiService->analyzeReceipt($imageContent, ['mode' => 'full_analysis']);
+
+            return response()->json([
+                'success' => true,
+                'analysis' => $analysis,
+                'message' => 'Receipt analyzed successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Gemini analysis error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error analyzing receipt: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Detect and extract multiple receipts from single scan
+     */
+    public function detectMultipleReceipts(Request $request)
+    {
+        try {
+            set_time_limit(180);
+            
+            if (!$this->geminiService->isAvailable()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gemini API is not configured.'
+                ], 400);
+            }
+
+            $request->validate([
+                'image' => 'required|string',
+            ]);
+
+            $imageData = $request->input('image');
+            
+            if (strpos($imageData, 'data:image') === 0) {
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+            }
+
+            $imageContent = base64_decode($imageData);
+            
+            if (!$imageContent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid image data'
+                ], 400);
+            }
+
+            $result = $this->geminiService->analyzeReceipt($imageContent, ['mode' => 'multi_receipt']);
+
+            return response()->json([
+                'success' => true,
+                'multiple_receipts_detected' => $result['multiple_receipts_detected'] ?? false,
+                'receipt_count' => $result['receipt_count'] ?? 0,
+                'receipts' => $result['receipts'] ?? [],
+                'message' => 'Multi-receipt detection completed'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Multi-receipt detection error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error detecting receipts: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Check image quality and get alignment suggestions
+     */
+    public function checkImageQuality(Request $request)
+    {
+        try {
+            set_time_limit(180);
+            
+            if (!$this->geminiService->isAvailable()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gemini API is not configured.'
+                ], 400);
+            }
+
+            $request->validate([
+                'image' => 'required|string',
+            ]);
+
+            $imageData = $request->input('image');
+            
+            if (strpos($imageData, 'data:image') === 0) {
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+            }
+
+            $imageContent = base64_decode($imageData);
+            
+            if (!$imageContent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid image data'
+                ], 400);
+            }
+
+            $quality = $this->geminiService->analyzeImageQuality($imageContent);
+
+            return response()->json([
+                'success' => true,
+                'quality' => $quality,
+                'message' => 'Image quality analyzed'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Image quality check error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error checking image quality: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Extract structured items from receipt using Gemini
+     */
+    public function extractItemsWithGemini(Request $request)
+    {
+        try {
+            set_time_limit(180);
+            
+            if (!$this->geminiService->isAvailable()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gemini API is not configured.'
+                ], 400);
+            }
+
+            $request->validate([
+                'image' => 'required|string',
+            ]);
+
+            $imageData = $request->input('image');
+            
+            if (strpos($imageData, 'data:image') === 0) {
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+            }
+
+            $imageContent = base64_decode($imageData);
+            
+            if (!$imageContent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid image data'
+                ], 400);
+            }
+
+            // Extract items
+            $result = $this->geminiService->extractItems($imageContent);
+            
+            // Match with database items if organization_id provided
+            $organizationId = auth()->user()->organization_id ?? null;
+            $matchedItems = [];
+            
+            if ($organizationId && isset($result['items'])) {
+                $matchedItems = $this->geminiService->matchWithDatabaseItems($result['items'], $organizationId);
+            }
+
+            return response()->json([
+                'success' => true,
+                'extracted' => $result,
+                'matched_items' => $matchedItems,
+                'message' => 'Items extracted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Gemini item extraction error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error extracting items: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

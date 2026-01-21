@@ -212,6 +212,12 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::post('api/ocr/search-items', [\App\Http\Controllers\Api\OCRController::class, 'searchItems'])->name('api.ocr.search-items');
         Route::get('api/ocr/status', [\App\Http\Controllers\Api\OCRController::class, 'status'])->name('api.ocr.status');
         
+        // Gemini AI-powered OCR Routes
+        Route::post('api/ocr/gemini/analyze', [\App\Http\Controllers\Api\OCRController::class, 'analyzeWithGemini'])->name('api.ocr.gemini.analyze');
+        Route::post('api/ocr/gemini/detect-multiple', [\App\Http\Controllers\Api\OCRController::class, 'detectMultipleReceipts'])->name('api.ocr.gemini.detect-multiple');
+        Route::post('api/ocr/gemini/check-quality', [\App\Http\Controllers\Api\OCRController::class, 'checkImageQuality'])->name('api.ocr.gemini.check-quality');
+        Route::post('api/ocr/gemini/extract-items', [\App\Http\Controllers\Api\OCRController::class, 'extractItemsWithGemini'])->name('api.ocr.gemini.extract-items');
+        
         // Item routes - MUST be before resource route
         Route::get('items/search', [ItemController::class, 'search'])->name('items.search');
         Route::get('items/all', [ItemController::class, 'getAllItems'])->name('items.all');

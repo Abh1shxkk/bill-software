@@ -49,4 +49,10 @@ return [
         'key' => env('GOOGLE_VISION_KEY', ''),
     ],
 
+    // Google Gemini for AI-powered OCR
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY', ''),
+        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash-exp'), // Latest experimental model
+    ],
+
 ];
