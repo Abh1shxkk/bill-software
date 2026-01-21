@@ -819,6 +819,13 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('sale/modification/{id}', [SaleTransactionController::class, 'getTransaction'])->name('sale.modification.transaction');
         Route::post('sale/modification/{id}', [SaleTransactionController::class, 'updateTransaction'])->name('sale.modification.update');
         
+        // Email OTP routes
+        Route::post('sale/transaction/{id}/send-otp', [SaleTransactionController::class, 'sendEmailOtp'])->name('sale.send-otp');
+        Route::post('sale/transaction/{id}/verify-otp-send-email', [SaleTransactionController::class, 'verifyOtpAndSendEmail'])->name('sale.verify-otp-send-email');
+        
+        // WhatsApp share route
+        Route::post('sale/transaction/{id}/share-whatsapp', [SaleTransactionController::class, 'shareOnWhatsApp'])->name('sale.share-whatsapp');
+        
         // Sale Discount Routes
         Route::post('sale/save-company-discount', [SaleTransactionController::class, 'saveCompanyDiscount'])->name('sale.saveCompanyDiscount');
         Route::post('sale/save-item-discount', [SaleTransactionController::class, 'saveItemDiscount'])->name('sale.saveItemDiscount');

@@ -72,6 +72,14 @@
                                         @enderror
                                     </div>
                                     <div class="col-md-12 mb-3">
+                                        <label class="form-label">Notification Email</label>
+                                        <input type="email" class="form-control @error('notification_email') is-invalid @enderror" name="notification_email" value="{{ old('notification_email', $user->notification_email) }}" placeholder="Leave blank to use primary email">
+                                        <div class="form-text">Email address for transaction notifications. If not set, notifications will be sent to your primary email.</div>
+                                        @error('notification_email')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-12 mb-3">
                                         <label class="form-label">Telephone</label>
                                         <input type="text" class="form-control @error('telephone') is-invalid @enderror" name="telephone" value="{{ old('telephone', $user->telephone) }}" placeholder="Enter phone number">
                                         @error('telephone')

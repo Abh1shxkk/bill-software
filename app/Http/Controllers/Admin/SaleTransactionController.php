@@ -782,6 +782,7 @@ class SaleTransactionController extends Controller
             
             $transaction = SaleTransaction::with(['items', 'customer', 'salesman'])
                 ->where('invoice_no', $invoiceNo)
+                ->where('organization_id', auth()->user()->organization_id)
                 ->first();
             
             if (!$transaction) {
@@ -1129,6 +1130,30 @@ class SaleTransactionController extends Controller
             $message = 'Sale transaction updated successfully';
             if ($wasTemp && $newSeries !== 'TEMP') {
                 $message = 'Transaction converted from temporary to Invoice No: ' . $newInvoiceNo;
+                
+                // Send email notification
+                try {
+                    $user = Auth::user();
+                    $notificationEmail = $user->notification_email ?? $user->email;
+                    
+                    if ($notificationEmail) {
+                        \Illuminate\Support\Facades\Mail::to($notificationEmail)->send(
+                            new \App\Mail\TransactionFinalizedMail($transaction->fresh(['items', 'customer', 'salesman']))
+                        );
+                        
+                        Log::info('Transaction finalization email sent', [
+                            'transaction_id' => $transaction->id,
+                            'invoice_no' => $newInvoiceNo,
+                            'email' => $notificationEmail
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    // Don't fail the transaction if email fails
+                    Log::error('Failed to send transaction email', [
+                        'error' => $e->getMessage(),
+                        'transaction_id' => $transaction->id
+                    ]);
+                }
             }
             
             return response()->json([
@@ -1506,6 +1531,290 @@ private function generateTempInvoiceNo()
             Log::error('Error printing invoice: ' . $e->getMessage());
             return back()->with('error', 'Error printing invoice: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Send OTP for email verification before sending transaction email
+     */
+    public function sendEmailOtp($id)
+    {
+        try {
+            $user = Auth::user();
+            $notificationEmail = $user->notification_email ?? $user->email;
+            
+            if (!$notificationEmail) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No notification email configured. Please update your profile settings.'
+                ], 400);
+            }
+            
+            // Generate 6-digit OTP
+            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            
+            // Delete old OTPs for this user
+            \DB::table('email_otps')
+                ->where('user_id', $user->user_id)
+                ->where('verified', false)
+                ->delete();
+            
+            // Store OTP in database
+            \DB::table('email_otps')->insert([
+                'user_id' => $user->user_id,
+                'email' => $notificationEmail,
+                'otp' => $otp,
+                'expires_at' => now()->addMinutes(10),
+                'verified' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
+            // Send OTP email
+            \Illuminate\Support\Facades\Mail::to($notificationEmail)->send(
+                new \App\Mail\OtpMail($otp, $user->full_name ?? $user->username)
+            );
+            
+            Log::info('OTP sent for transaction email', [
+                'user_id' => $user->user_id,
+                'email' => $notificationEmail,
+                'transaction_id' => $id
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'OTP sent to your email: ' . $notificationEmail,
+                'email' => $notificationEmail
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to send OTP', [
+                'error' => $e->getMessage(),
+                'transaction_id' => $id
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send OTP: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Verify OTP and send transaction email
+     */
+    public function verifyOtpAndSendEmail(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'otp' => 'required|string|size:6'
+            ]);
+            
+            $user = Auth::user();
+            $notificationEmail = $user->notification_email ?? $user->email;
+            
+            // Find valid OTP
+            $otpRecord = \DB::table('email_otps')
+                ->where('user_id', $user->user_id)
+                ->where('email', $notificationEmail)
+                ->where('otp', $validated['otp'])
+                ->where('verified', false)
+                ->where('expires_at', '>', now())
+                ->first();
+            
+            if (!$otpRecord) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid or expired OTP. Please try again.'
+                ], 400);
+            }
+            
+            // Mark OTP as verified
+            \DB::table('email_otps')
+                ->where('id', $otpRecord->id)
+                ->update(['verified' => true]);
+            
+            // Now send the transaction email
+            $transaction = SaleTransaction::with(['items', 'customer', 'salesman'])->findOrFail($id);
+            
+            \Illuminate\Support\Facades\Mail::to($notificationEmail)->send(
+                new \App\Mail\TransactionFinalizedMail($transaction)
+            );
+            
+            Log::info('Transaction email sent after OTP verification', [
+                'transaction_id' => $transaction->id,
+                'invoice_no' => $transaction->invoice_no,
+                'email' => $notificationEmail,
+                'user_id' => $user->user_id
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Email sent successfully!',
+                'email' => $notificationEmail
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Failed to verify OTP and send email', [
+                'error' => $e->getMessage(),
+                'transaction_id' => $id
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send email: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Share transaction on WhatsApp
+     */
+    public function shareOnWhatsApp($id)
+    {
+        try {
+            $transaction = SaleTransaction::with(['items', 'customer', 'salesman'])->findOrFail($id);
+            
+            // Check if customer has phone number
+            if (!$transaction->customer || !$transaction->customer->mobile) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Customer phone number not found. Please update customer details.'
+                ], 400);
+            }
+            
+            // Generate PDF and get shareable link
+            $pdfData = $this->generateShareablePDF($transaction);
+            
+            // Format phone number
+            $phone = preg_replace('/[^0-9]/', '', $transaction->customer->mobile);
+            if (!str_starts_with($phone, '91') && strlen($phone) == 10) {
+                $phone = '91' . $phone;
+            }
+            
+            // Create WhatsApp message
+            $message = $this->createWhatsAppMessage($transaction, $pdfData['url']);
+            
+            // Log share activity
+            \Log::info('WhatsApp share initiated', [
+                'transaction_id' => $transaction->id,
+                'invoice_no' => $transaction->invoice_no,
+                'customer' => $transaction->customer->name,
+                'phone' => $phone
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'whatsapp_url' => "https://wa.me/{$phone}?text=" . urlencode($message),
+                'pdf_url' => $pdfData['url'],
+                'phone' => $phone
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to prepare WhatsApp share', [
+                'error' => $e->getMessage(),
+                'transaction_id' => $id
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to prepare WhatsApp share: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Generate shareable PDF and return public URL
+     */
+    private function generateShareablePDF($transaction)
+    {
+        // Find receipt image path
+        $receiptImagePath = null;
+        
+        if ($transaction->receipt_path) {
+            $receiptPath = $transaction->receipt_path;
+            $pathsToTry = [
+                public_path($receiptPath),
+                storage_path('app/public/' . str_replace('storage/', '', $receiptPath)),
+            ];
+            
+            foreach ($pathsToTry as $path) {
+                if (file_exists($path)) {
+                    $receiptImagePath = $path;
+                    break;
+                }
+            }
+        }
+        
+        // Generate PDF
+        $pdf = \PDF::loadView('pdf.invoice-with-receipt', [
+            'transaction' => $transaction,
+            'receiptImagePath' => $receiptImagePath
+        ]);
+        
+        $pdf->setPaper('a4', 'portrait');
+        
+        // Create temp directory if it doesn't exist
+        $tempDir = public_path('temp/invoices');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        
+        // Save PDF to public/temp/invoices
+        $filename = 'invoice_' . $transaction->invoice_no . '_' . time() . '.pdf';
+        $path = $tempDir . '/' . $filename;
+        $pdf->save($path);
+        
+        // Generate public URL
+        $url = url('temp/invoices/' . $filename);
+        
+        return [
+            'url' => $url,
+            'filename' => $filename,
+            'path' => $path
+        ];
+    }
+    
+    /**
+     * Create formatted WhatsApp message
+     */
+    private function createWhatsAppMessage($transaction, $pdfUrl)
+    {
+        $customerName = $transaction->customer->name ?? 'Customer';
+        $invoiceNo = $transaction->invoice_no;
+        $date = $transaction->sale_date->format('d-m-Y');
+        $total = number_format($transaction->net_amount, 2);
+        
+        $message = "Hi *{$customerName}*,\n\n";
+        $message .= "Your invoice is ready! 📄\n\n";
+        $message .= "📋 *Invoice Details:*\n";
+        $message .= "• Invoice No: {$invoiceNo}\n";
+        $message .= "• Date: {$date}\n";
+        $message .= "• Total Amount: ₹{$total}\n\n";
+        
+        // Add top 5 items
+        if ($transaction->items && $transaction->items->count() > 0) {
+            $message .= "📦 *Items:*\n";
+            foreach ($transaction->items->take(5) as $item) {
+                $qty = $item->qty;
+                if ($item->free_qty > 0) {
+                    $qty .= ' + ' . $item->free_qty . ' Free';
+                }
+                $message .= "• {$item->item_name} - {$qty} × ₹" . number_format($item->sale_rate, 2) . "\n";
+            }
+            
+            if ($transaction->items->count() > 5) {
+                $remaining = $transaction->items->count() - 5;
+                $message .= "• ... and {$remaining} more item(s)\n";
+            }
+            $message .= "\n";
+        }
+        
+        $message .= "📥 *Download PDF Invoice:*\n";
+        $message .= "{$pdfUrl}\n\n";
+        $message .= "Thank you for your business! 🙏\n";
+        $message .= "- " . config('app.name');
+        
+        return $message;
     }
 
 }

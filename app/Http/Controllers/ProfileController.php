@@ -14,6 +14,7 @@ class ProfileController extends Controller
             'full_name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users,username,'.$user->user_id.',user_id',
             'email' => 'required|email|max:255|unique:users,email,'.$user->user_id.',user_id',
+            'notification_email' => 'nullable|email|max:255',
             'profile_picture' => 'nullable|image|max:2048',
             'address' => 'nullable|string|max:500',
             'telephone' => 'nullable|string|max:50',

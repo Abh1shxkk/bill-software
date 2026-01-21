@@ -9,10 +9,16 @@
     </h4>
     <div class="text-muted small">Complete details of sale transaction</div>
   </div>
-  <div>
+  <div class="d-flex gap-2">
     <a href="{{ route('admin.sale.invoices') }}" class="btn btn-outline-secondary">
       <i class="bi bi-arrow-left"></i> Back to Invoices
     </a>
+    <button type="button" class="btn btn-success" id="sendEmailBtn">
+      <i class="bi bi-envelope"></i> Send Email
+    </button>
+    <button type="button" class="btn btn-success" id="shareWhatsAppBtn" style="background-color: #25D366; border-color: #25D366;">
+      <i class="bi bi-whatsapp"></i> Share on WhatsApp
+    </button>
     <a href="{{ route('admin.sale.modification') }}?invoice_no={{ $transaction->invoice_no }}" class="btn btn-primary">
       <i class="bi bi-pencil"></i> Edit Sale
     </a>
@@ -260,3 +266,226 @@
 </style>
 @endpush
 
+@push('scripts')
+<!-- OTP Verification Modal -->
+<div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="otpModalLabel">
+          <i class="bi bi-shield-lock me-2"></i>Email Verification
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center mb-4">
+          <div class="mb-3">
+            <i class="bi bi-envelope-check" style="font-size: 48px; color: #007bff;"></i>
+          </div>
+          <p class="mb-2">We've sent a 6-digit OTP to:</p>
+          <p class="fw-bold text-primary" id="otpEmailDisplay"></p>
+          <small class="text-muted">Valid for 10 minutes</small>
+        </div>
+        
+        <div class="mb-3">
+          <label for="otpInput" class="form-label">Enter OTP</label>
+          <input type="text" 
+                 class="form-control form-control-lg text-center" 
+                 id="otpInput" 
+                 maxlength="6" 
+                 placeholder="000000"
+                 style="letter-spacing: 10px; font-size: 24px; font-family: monospace;">
+          <div class="invalid-feedback" id="otpError"></div>
+        </div>
+        
+        <div class="alert alert-info" role="alert">
+          <i class="bi bi-info-circle me-2"></i>
+          <small>Didn't receive the OTP? Check your spam folder or click "Resend OTP"</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="resendOtpBtn">
+          <i class="bi bi-arrow-clockwise me-2"></i>Resend OTP
+        </button>
+        <button type="button" class="btn btn-primary" id="verifyOtpBtn">
+          <i class="bi bi-check-circle me-2"></i>Verify & Send Email
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sendEmailBtn = document.getElementById('sendEmailBtn');
+    const otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+    const otpInput = document.getElementById('otpInput');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+    const resendOtpBtn = document.getElementById('resendOtpBtn');
+    const transactionId = '{{ $transaction->id }}';
+    let userEmail = '';
+    
+    if (sendEmailBtn) {
+        sendEmailBtn.addEventListener('click', function() {
+            sendOtp();
+        });
+    }
+    
+    // Send OTP
+    function sendOtp() {
+        const btn = sendEmailBtn;
+        const originalHtml = btn.innerHTML;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending OTP...';
+        
+        fetch('{{ route("admin.sale.send-otp", $transaction->id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                userEmail = data.email;
+                document.getElementById('otpEmailDisplay').textContent = data.email;
+                otpInput.value = '';
+                otpInput.classList.remove('is-invalid');
+                otpModal.show();
+                
+                // Focus on OTP input
+                setTimeout(() => otpInput.focus(), 500);
+            } else {
+                alert('❌ ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('❌ Failed to send OTP. Please try again.');
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        });
+    }
+    
+    // Verify OTP and Send Email
+    if (verifyOtpBtn) {
+        verifyOtpBtn.addEventListener('click', function() {
+            const otp = otpInput.value.trim();
+            
+            if (otp.length !== 6) {
+                otpInput.classList.add('is-invalid');
+                document.getElementById('otpError').textContent = 'Please enter a 6-digit OTP';
+                return;
+            }
+            
+            const originalHtml = verifyOtpBtn.innerHTML;
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verifying...';
+            
+            fetch('{{ route("admin.sale.verify-otp-send-email", $transaction->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ otp: otp })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    otpModal.hide();
+                    alert('✅ ' + data.message + '\nSent to: ' + data.email);
+                } else {
+                    otpInput.classList.add('is-invalid');
+                    document.getElementById('otpError').textContent = data.message;
+                }
+            })
+            .catch(error => {
+                alert('❌ Failed to verify OTP. Please try again.');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.innerHTML = originalHtml;
+            });
+        });
+    }
+    
+    // Resend OTP
+    if (resendOtpBtn) {
+        resendOtpBtn.addEventListener('click', function() {
+            otpModal.hide();
+            setTimeout(() => sendOtp(), 300);
+        });
+    }
+    
+    // Allow only numbers in OTP input
+    if (otpInput) {
+        otpInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            if (this.value.length > 0) {
+                this.classList.remove('is-invalid');
+            }
+        });
+        
+        // Auto-submit on 6 digits
+        otpInput.addEventListener('input', function(e) {
+            if (this.value.length === 6) {
+                verifyOtpBtn.click();
+            }
+        });
+    }
+});
+</script>
+
+<!-- WhatsApp Share Handler -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const shareWhatsAppBtn = document.getElementById('shareWhatsAppBtn');
+    
+    if (shareWhatsAppBtn) {
+        shareWhatsAppBtn.addEventListener('click', function() {
+            const btn = this;
+            const originalHtml = btn.innerHTML;
+            
+            // Disable button and show loading state
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Preparing...';
+            
+            fetch('{{ route("admin.sale.share-whatsapp", $transaction->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Open WhatsApp in new tab
+                    window.open(data.whatsapp_url, '_blank');
+                    
+                    // Show success message
+                    alert('✅ WhatsApp opened!\n\nMessage prepared for: ' + data.phone + '\n\nReview and click Send in WhatsApp.');
+                } else {
+                    alert('❌ ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('❌ Failed to prepare WhatsApp share. Please try again.');
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            });
+        });
+    }
+});
+</script>
+@endpush
