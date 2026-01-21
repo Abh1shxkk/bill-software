@@ -560,7 +560,7 @@ class BatchController extends Controller
             'item_name',
             'batch_no',
             'expiry_date',
-            DB::raw('SUM(total_qty) as total_qty'),
+            DB::raw('SUM(qty) as total_qty'), // 🔥 FIX: Use qty field (current stock) for consistency with Available Batches
             DB::raw('AVG(pur_rate) as avg_pur_rate'),
             DB::raw('AVG(s_rate) as avg_s_rate'),
             DB::raw('AVG(mrp) as avg_mrp'),

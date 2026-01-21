@@ -809,6 +809,7 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('sale/invoices', [SaleTransactionController::class, 'invoices'])->name('sale.invoices');
         Route::get('sale/{id}', [SaleTransactionController::class, 'show'])->where('id', '[0-9]+')->name('sale.show');
         Route::delete('sale/{id}', [SaleTransactionController::class, 'destroy'])->where('id', '[0-9]+')->name('sale.destroy');
+        Route::post('sale/{id}/delete', [SaleTransactionController::class, 'destroy'])->where('id', '[0-9]+')->name('sale.destroy.post');
         Route::get('sale/{id}/print', [SaleTransactionController::class, 'printInvoice'])->where('id', '[0-9]+')->name('sale.print');
         
         // Sale Modification Routes

@@ -325,15 +325,29 @@ document.addEventListener('DOMContentLoaded', function(){
     confirmBtn.disabled = true;
     confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
     
-    fetch(`/admin/sale/${saleId}`, {
-      method: 'DELETE',
+    // Create FormData for method spoofing
+    const formData = new FormData();
+    formData.append('_method', 'DELETE');
+    
+    // Construct URL using the current page's base path
+    const baseUrl = '{{ url("/admin/sale") }}';
+    const deleteUrl = `${baseUrl}/${saleId}`;
+    
+    fetch(deleteUrl, {
+      method: 'POST',
       headers: {
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
         'X-Requested-With': 'XMLHttpRequest',
         'Accept': 'application/json'
-      }
+      },
+      body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    })
     .then(data => {
       if(data.success) {
         modal.hide();
@@ -343,7 +357,8 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     })
     .catch(error => {
-      alert('Error deleting sale invoice');
+      console.error('Delete error:', error);
+      alert('Error deleting sale invoice: ' + error.message);
     })
     .finally(() => {
       confirmBtn.disabled = false;

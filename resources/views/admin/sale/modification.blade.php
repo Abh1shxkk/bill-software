@@ -1128,8 +1128,17 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-load transaction if invoice_no is provided in URL
     const urlParams = new URLSearchParams(window.location.search);
     const invoiceNoParam = urlParams.get('invoice_no');
+    const modeParam = urlParams.get('mode');
     
-    if (invoiceNoParam) {
+    // 🔥 FIX: If mode=finalize, the transaction was just finalized and the TEMP invoice 
+    // no longer exists. Clear URL params and don't try to load it.
+    if (modeParam === 'finalize') {
+        // Clear URL parameters to prevent the error on page load
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+        console.log('✅ Transaction finalized - cleared URL parameters');
+        // Don't try to load the old invoice number
+    } else if (invoiceNoParam) {
         const invoiceNoInput = document.getElementById('invoiceNo');
         if (invoiceNoInput) {
             invoiceNoInput.value = invoiceNoParam;
@@ -1478,6 +1487,7 @@ function loadBatchesForItem(itemId) {
 }
 
 // Display batches in modal (Sale transaction format with correct columns)
+// Shows ALL batches from the Batch table (qty field = current remaining stock)
 function displayBatchesInModal(batches) {
     const tbody = document.getElementById('batchSelectionBody');
     tbody.innerHTML = '';

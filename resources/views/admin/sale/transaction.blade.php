@@ -485,6 +485,18 @@
         border-left-color: #e0a800;
     }
     
+    .toast-notification.success {
+        background: #28a745;
+        color: white;
+        border-left-color: #1e7e34;
+    }
+    
+    .toast-notification.info {
+        background: #17a2b8;
+        color: white;
+        border-left-color: #117a8b;
+    }
+    
     .toast-notification.show {
         transform: translateX(0);
         opacity: 1;
@@ -3004,6 +3016,7 @@ function loadBatchesForItem(itemId) {
 }
 
 // Display batches in modal (Sale transaction format with correct columns)
+// Shows ALL batches from the Batch table (qty field = current remaining stock)
 function displayBatchesInModal(batches) {
     const tbody = document.getElementById('batchSelectionBody');
     tbody.innerHTML = '';
@@ -4956,6 +4969,14 @@ function showToast(message, type = 'error', title = null) {
     
     let defaultTitle, icon;
     switch(type) {
+        case 'success':
+            defaultTitle = 'Success';
+            icon = '✅';
+            break;
+        case 'info':
+            defaultTitle = 'Info';
+            icon = 'ℹ️';
+            break;
         case 'warning':
             defaultTitle = 'Warning';
             icon = '⚠️';
