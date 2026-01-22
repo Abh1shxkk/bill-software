@@ -255,6 +255,12 @@
     
     // Arrow Up/Down navigation (not when typing)
     if (!isTyping && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      // Skip if a modal is open (let modal handle its own navigation)
+      const openModal = document.querySelector('.pending-orders-modal.show, .modal.show, [class*="modal"].show');
+      if (openModal) {
+        return; // Let the modal's keyboard handler take over
+      }
+      
       const rows = getAllRows();
       if (rows.length === 0) {
         showToast('No rows available');

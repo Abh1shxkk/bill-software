@@ -1113,6 +1113,90 @@
     </div>
 </div>
 
+<!-- Date Range Modal Backdrop -->
+<div id="dateRangeBackdrop" class="pending-orders-backdrop"></div>
+
+<!-- Date Range Modal -->
+<div id="dateRangeModal" class="pending-orders-modal" style="max-width: 450px;">
+    <div class="pending-orders-content">
+        <div class="pending-orders-header" style="background: #0d6efd;">
+            <h5 class="pending-orders-title"><i class="bi bi-calendar-range me-2"></i>Filter by Date Range</h5>
+            <button type="button" class="btn-close-modal" onclick="closeDateRangeModal()" title="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="pending-orders-body" style="padding: 20px;">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" style="font-weight: 600;">From Date</label>
+                    <input type="date" class="form-control" id="filterFromDate">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" style="font-weight: 600;">To Date</label>
+                    <input type="date" class="form-control" id="filterToDate">
+                </div>
+            </div>
+        </div>
+        <div class="pending-orders-footer">
+            <button type="button" class="btn btn-primary btn-sm" onclick="filterInvoicesByDate()">
+                <i class="bi bi-search"></i> Apply Filter
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeDateRangeModal()">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Invoices Modal Backdrop -->
+<div id="invoicesBackdrop" class="pending-orders-backdrop"></div>
+
+<!-- Invoices Modal -->
+<div id="invoicesModal" class="pending-orders-modal" style="max-width: 1000px;">
+    <div class="pending-orders-content">
+        <div class="pending-orders-header" style="background: #198754;">
+            <h5 class="pending-orders-title" id="invoicesModalTitle"><i class="bi bi-receipt me-2"></i>Select Invoice to Modify</h5>
+            <button type="button" class="btn-close-modal" onclick="closeInvoicesModal()" title="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="pending-orders-body">
+            <div class="p-3 border-bottom bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <input type="text" class="form-control" id="invoiceSearchInput" placeholder="Search by Invoice No, Customer..." style="max-width: 300px; font-size: 12px;" oninput="filterInvoicesInModal()">
+                    <span class="text-muted" style="font-size: 12px;" id="invoicesTotal">Total: 0 invoice(s)</span>
+                </div>
+                <div class="text-muted mt-2" style="font-size: 11px;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Use <kbd>↑</kbd> <kbd>↓</kbd> to navigate, <kbd>Enter</kbd> to select, <kbd>Esc</kbd> to close
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-bordered table-hover mb-0" style="font-size: 11px;">
+                    <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+                        <tr>
+                            <th style="width: 100px; text-align: center;">Invoice No</th>
+                            <th style="width: 100px; text-align: center;">Date</th>
+                            <th style="width: 200px;">Customer</th>
+                            <th style="width: 100px; text-align: right;">Amount</th>
+                            <th style="width: 80px; text-align: center;">Status</th>
+                            <th style="width: 80px; text-align: center;">Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesTableBody">
+                        <tr><td colspan="6" class="text-center text-muted">Click "All Invoices" or "Filter by Date" to load invoices</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="pending-orders-footer">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeInvoicesModal()">
+                <i class="bi bi-x-circle"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 // Global variables
 let itemsData = [];
@@ -2775,6 +2859,8 @@ function clearFormAfterSave() {
 // Close modals on backdrop click
 document.getElementById('chooseItemsBackdrop')?.addEventListener('click', closeChooseItemsModal);
 document.getElementById('batchSelectionBackdrop')?.addEventListener('click', closeBatchSelectionModal);
+document.getElementById('dateRangeBackdrop')?.addEventListener('click', closeDateRangeModal);
+document.getElementById('invoicesBackdrop')?.addEventListener('click', closeInvoicesModal);
 
 // Close modals on Escape key
 document.addEventListener('keydown', function(e) {
@@ -2907,6 +2993,52 @@ async function loadInvoices(fromDate = null, toDate = null) {
         console.error('Error loading invoices:', error);
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading invoices</td></tr>';
         showAlert('Error loading invoices: ' + error.message, 'error', 'Load Failed');
+    }
+}
+
+// Select Invoice from the modal and load it
+function selectInvoice(invoiceId) {
+    console.log('📄 Selecting invoice with ID:', invoiceId);
+    
+    // Close the modal
+    closeInvoicesModal();
+    
+    // Fetch the transaction by ID and load it
+    fetch(`{{ url('/admin/sale/modification/get') }}/${invoiceId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Failed to load invoice');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.transaction) {
+                // Set the invoice number in the input field
+                const invoiceNoInput = document.getElementById('invoiceNo');
+                if (invoiceNoInput) {
+                    invoiceNoInput.value = data.transaction.invoice_no;
+                }
+                // Populate the form with transaction data
+                populateFormWithTransaction(data.transaction);
+                showAlert('Invoice loaded successfully!\n\nYou can now modify the transaction or add more items.', 'success', 'Invoice Loaded');
+            } else {
+                showAlert('Failed to load invoice: ' + (data.message || 'Unknown error'), 'error', 'Load Failed');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading invoice:', error);
+            showAlert('Error loading invoice: ' + error.message, 'error', 'Load Failed');
+        });
+}
+
+// Format date for display (dd/mm/yyyy)
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-GB');
+    } catch (e) {
+        return dateStr;
     }
 }
 
@@ -3849,6 +3981,40 @@ document.addEventListener('DOMContentLoaded', function() {
         alertBackdrop.addEventListener('click', closeAlert);
     }
 });
+
+// Close alert modal with Enter or Escape key
+document.addEventListener('keydown', function(e) {
+    const alertModal = document.getElementById('alertModal');
+    if (alertModal && alertModal.classList.contains('show')) {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Check if it's a reload modal (has reloadPageAfterSuccess button)
+            const reloadBtn = alertModal.querySelector('button[onclick*="reloadPageAfterSuccess"]');
+            if (reloadBtn && e.key === 'Enter') {
+                reloadPageAfterSuccess();
+                return;
+            }
+            
+            // Check if it's a confirmation modal (has Yes/No buttons)
+            const yesBtn = alertModal.querySelector('button[onclick*="handleConfirmYes"]');
+            const noBtn = alertModal.querySelector('button[onclick*="handleConfirmCancel"]');
+            
+            if (yesBtn && noBtn) {
+                // For confirm dialogs, Enter = Yes, Escape = No
+                if (e.key === 'Enter') {
+                    handleConfirmYes();
+                } else {
+                    handleConfirmCancel();
+                }
+            } else {
+                // For simple alerts, both Enter and Escape close it
+                closeAlert();
+            }
+        }
+    }
+}, true); // Use capture phase to run before other handlers
 
 // ============================================
 // DISCOUNT OPTIONS MODAL FUNCTIONS
@@ -5034,10 +5200,120 @@ function viewReceiptFull(index) {
     }
     
     // ============================================
+    // INVOICES MODAL KEYBOARD NAVIGATION
+    // ============================================
+    
+    let invoicesSelectedIndex = -1;
+    
+    function isInvoicesModalOpen() {
+        const modal = document.getElementById('invoicesModal');
+        return modal && modal.classList.contains('show');
+    }
+    
+    function navigateInvoicesModal(direction) {
+        const rows = document.querySelectorAll('#invoicesTableBody tr:not([style*="display: none"])');
+        if (rows.length === 0) return;
+        
+        // Remove previous selection
+        rows.forEach(r => r.classList.remove('item-row-selected'));
+        
+        if (direction === 'down') {
+            invoicesSelectedIndex = Math.min(invoicesSelectedIndex + 1, rows.length - 1);
+        } else if (direction === 'up') {
+            invoicesSelectedIndex = Math.max(invoicesSelectedIndex - 1, 0);
+        }
+        
+        if (invoicesSelectedIndex >= 0 && invoicesSelectedIndex < rows.length) {
+            const selectedRow = rows[invoicesSelectedIndex];
+            selectedRow.classList.add('item-row-selected');
+            selectedRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
+    
+    function selectCurrentInvoice() {
+        const rows = document.querySelectorAll('#invoicesTableBody tr:not([style*="display: none"])');
+        if (invoicesSelectedIndex >= 0 && invoicesSelectedIndex < rows.length) {
+            rows[invoicesSelectedIndex].click();
+        }
+    }
+    
+    function handleInvoicesModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                navigateInvoicesModal('down');
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                navigateInvoicesModal('up');
+                break;
+            case 'Enter':
+                if (document.activeElement.id === 'invoiceSearchInput') {
+                    e.preventDefault();
+                    const visibleRows = document.querySelectorAll('#invoicesTableBody tr:not([style*="display: none"])');
+                    if (visibleRows.length > 0) {
+                        invoicesSelectedIndex = 0;
+                        visibleRows[0].click();
+                    }
+                    return;
+                }
+                e.preventDefault();
+                selectCurrentInvoice();
+                break;
+            case 'f':
+            case 'F':
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('invoiceSearchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+    
+    // Filter invoices in the modal based on search input
+    function filterInvoicesInModal() {
+        const searchText = document.getElementById('invoiceSearchInput')?.value?.toLowerCase() || '';
+        const rows = document.querySelectorAll('#invoicesTableBody tr');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const invoiceNo = (row.cells[0]?.textContent || '').toLowerCase();
+            const customer = (row.cells[2]?.textContent || '').toLowerCase();
+            
+            if (invoiceNo.includes(searchText) || customer.includes(searchText)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Reset selection index after filtering
+        invoicesSelectedIndex = -1;
+        
+        // Update visible count in footer
+        const totalEl = document.getElementById('invoicesTotal');
+        if (totalEl) {
+            totalEl.textContent = `Total: ${visibleCount} invoice(s)`;
+        }
+    }
+    
+    // ============================================
     // MAIN KEYBOARD EVENT LISTENER
     // ============================================
     
     document.addEventListener('keydown', function(e) {
+        // Check alert modal first (highest priority)
+        const alertModal = document.getElementById('alertModal');
+        if (alertModal && alertModal.classList.contains('show')) {
+            // Alert modal has its own handler, let it handle
+            return;
+        }
+        
         // Check if modals are open and handle their keyboard navigation
         if (isChooseItemsModalOpen()) {
             handleChooseItemsModalKeyboard(e);
@@ -5055,6 +5331,16 @@ function viewReceiptFull(index) {
                 e.preventDefault();
                 closeBatchSelectionModal();
                 batchSelectedIndex = -1;
+            }
+            return;
+        }
+        
+        if (isInvoicesModalOpen()) {
+            handleInvoicesModalKeyboard(e);
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                closeInvoicesModal();
+                invoicesSelectedIndex = -1;
             }
             return;
         }
