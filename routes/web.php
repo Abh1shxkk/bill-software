@@ -218,6 +218,11 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::post('api/ocr/gemini/check-quality', [\App\Http\Controllers\Api\OCRController::class, 'checkImageQuality'])->name('api.ocr.gemini.check-quality');
         Route::post('api/ocr/gemini/extract-items', [\App\Http\Controllers\Api\OCRController::class, 'extractItemsWithGemini'])->name('api.ocr.gemini.extract-items');
         
+        // Image Straightening/Deskewing Routes
+        Route::post('api/ocr/straighten-image', [\App\Http\Controllers\Api\OCRController::class, 'straightenImage'])->name('api.ocr.straighten-image');
+        Route::get('api/ocr/straighten-status', [\App\Http\Controllers\Api\OCRController::class, 'straightenStatus'])->name('api.ocr.straighten-status');
+        
+
         // Item routes - MUST be before resource route
         Route::get('items/search', [ItemController::class, 'search'])->name('items.search');
         Route::get('items/all', [ItemController::class, 'getAllItems'])->name('items.all');

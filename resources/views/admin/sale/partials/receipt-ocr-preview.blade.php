@@ -101,8 +101,30 @@ class ReceiptOCRPreview {
                             </div>
                             <div class="toolbar-divider"></div>
                             <div class="toolbar-group">
-                                <button type="button" class="toolbar-btn" id="ocrClearSelection" title="Clear Selection">
+                                <button type="button" class="toolbar-btn" id="ocrRotateLeft15" title="Rotate Left 15°">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                                <button type="button" class="toolbar-btn" id="ocrRotateLeft5" title="Rotate Left 5°">
+                                    <i class="bi bi-arrow-counterclockwise" style="font-size:12px;"></i>
+                                </button>
+                                <span class="rotation-angle-display" id="ocrRotationDisplay" title="Current Rotation" style="display: inline-block; min-width: 40px; text-align: center; font-size: 13px; font-weight: 500; color: #6c757d; padding: 0 8px;">0°</span>
+                                <button type="button" class="toolbar-btn" id="ocrRotateRight5" title="Rotate Right 5°">
+                                    <i class="bi bi-arrow-clockwise" style="font-size:12px;"></i>
+                                </button>
+                                <button type="button" class="toolbar-btn" id="ocrRotateRight15" title="Rotate Right 15°">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                                <button type="button" class="toolbar-btn" id="ocrRotateReset" title="Reset Rotation">
                                     <i class="bi bi-x-circle"></i>
+                                </button>
+                            </div>
+                            <div class="toolbar-divider"></div>
+                            <div class="toolbar-group">
+                                <button type="button" class="toolbar-btn" id="ocrAutoStraighten" title="Auto Straighten (Python/OpenCV)">
+                                    <i class="bi bi-magic"></i>
+                                </button>
+                                <button type="button" class="toolbar-btn" id="ocrApplyStraighten" title="Apply Straightening">
+                                    <i class="bi bi-check-circle"></i>
                                 </button>
                             </div>
                         </div>
@@ -118,6 +140,13 @@ class ReceiptOCRPreview {
                             <div class="receipt-ocr-canvas-container" id="ocrCanvasContainer">
                                 <canvas id="ocrCanvas"></canvas>
                                 <div class="selection-overlay" id="ocrSelectionOverlay" style="display: none;"></div>
+                                <div class="ocr-processing-overlay" id="ocrProcessingOverlay" style="display: none;">
+                                    <div class="processing-content">
+                                        <div class="spinner-border text-light" role="status" style="width: 3rem; height: 3rem;"></div>
+                                        <p id="ocrProcessingText">Straightening receipt...</p>
+                                        <small id="ocrProcessingSubtext">Detecting tilt angle</small>
+                                    </div>
+                                </div>
                             </div>
                             <div class="receipt-ocr-instructions">
                                 <i class="bi bi-info-circle"></i>
@@ -638,6 +667,74 @@ class ReceiptOCRPreview {
                     border-color: #28a745;
                     background: #f0fff4;
                 }
+                
+                /* Processing Overlay Styles */
+                .ocr-processing-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(26, 26, 46, 0.95);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 100;
+                }
+                
+                .ocr-processing-overlay .processing-content {
+                    text-align: center;
+                    color: white;
+                }
+                
+                .ocr-processing-overlay .processing-content p {
+                    margin: 16px 0 8px 0;
+                    font-size: 16px;
+                    font-weight: 600;
+                }
+                
+                .ocr-processing-overlay .processing-content small {
+                    color: #aaa;
+                    font-size: 12px;
+                }
+                
+                .toolbar-btn.processing {
+                    animation: spin 1s linear infinite;
+                }
+                
+                @keyframes spin {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                
+                .straighten-success-toast {
+                    position: absolute;
+                    bottom: 60px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: linear-gradient(135deg, #28a745, #20c997);
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 20px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+                    animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.5s forwards;
+                    z-index: 200;
+                }
+                
+                @keyframes slideUp {
+                    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+                }
+                
+                @keyframes fadeOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
             </style>
         `;
 
@@ -660,7 +757,20 @@ class ReceiptOCRPreview {
         document.getElementById('ocrModePan').addEventListener('click', () => this.setMode('pan'));
 
         // Clear selection
-        document.getElementById('ocrClearSelection').addEventListener('click', () => this.clearSelection());
+        document.getElementById('ocrClearSelection')?.addEventListener('click', () => this.clearSelection());
+
+        // Manual rotation buttons
+        document.getElementById('ocrRotateLeft15')?.addEventListener('click', () => this.rotateImage(15));
+        document.getElementById('ocrRotateLeft5')?.addEventListener('click', () => this.rotateImage(5));
+        document.getElementById('ocrRotateRight5')?.addEventListener('click', () => this.rotateImage(-5));
+        document.getElementById('ocrRotateRight15')?.addEventListener('click', () => this.rotateImage(-15));
+        document.getElementById('ocrRotateReset')?.addEventListener('click', () => this.resetRotation());
+        
+        // Auto-straighten button (if exists)
+        document.getElementById('ocrAutoStraighten')?.addEventListener('click', () => this.straightenImage());
+        
+        // Apply straightening button - saves current rotation
+        document.getElementById('ocrApplyStraighten')?.addEventListener('click', () => this.applyStraightening());
 
         // Extract text button
         document.getElementById('ocrExtractBtn').addEventListener('click', () => this.extractText());
@@ -738,28 +848,285 @@ class ReceiptOCRPreview {
         this.loadImage(imageData);
     }
 
-    loadImage(imageData) {
+    loadImage(imageData, skipStraighten = false) {
+        // Store original image data for re-processing
+        this.originalImageData = imageData;
+        
+        // Convert to proper format first
+        let imageSrc = imageData;
+        if (typeof imageData === 'string') {
+            if (!imageData.startsWith('data:')) {
+                imageSrc = 'data:image/jpeg;base64,' + imageData;
+            }
+        } else if (imageData instanceof Blob || imageData instanceof File) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.loadImage(e.target.result, skipStraighten);
+            };
+            reader.readAsDataURL(imageData);
+            return;
+        }
+
+        // Reset rotation tracking
+        this.currentRotation = 0;
+        this.updateRotationDisplay();
+
+        // Auto-crop receipt by default (unless explicitly skipped)
+        if (!skipStraighten) {
+            this.autoStraightenImage(imageSrc);
+        } else {
+            // Load image directly without processing
+            this.loadImageDirect(imageSrc);
+        }
+    }
+
+    /**
+     * Auto-straighten image on initial load
+     */
+    async autoStraightenImage(imageData) {
+        const overlay = document.getElementById('ocrProcessingOverlay');
+        const processingText = document.getElementById('ocrProcessingText');
+        const processingSubtext = document.getElementById('ocrProcessingSubtext');
+        
+        try {
+            // Show processing overlay
+            overlay.style.display = 'flex';
+            processingText.textContent = 'Analyzing receipt...';
+            processingSubtext.textContent = 'Detecting tilt angle';
+            
+            // Call the straighten API
+            const response = await fetch('{{ route("admin.api.ocr.straighten-image") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.options.csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ image: imageData })
+            });
+
+            const result = await response.json();
+            
+            if (result.success && result.processed_image) {
+                // Update processing text
+                processingText.textContent = 'Processing complete!';
+                processingSubtext.textContent = result.was_processed 
+                    ? `Straightened by ${Math.abs(result.tilt_angle || 0).toFixed(1)}°`
+                    : 'Image is already straight';
+                
+                // Short delay to show the message
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Load the processed image
+                this.image = new Image();
+                this.image.onload = () => {
+                    overlay.style.display = 'none';
+                    this.fitToScreen();
+                    this.render();
+                    
+                    // Show success toast if image was straightened
+                    if (result.was_processed) {
+                        this.showStraightenToast(result.tilt_angle);
+                    }
+                };
+                this.image.onerror = () => {
+                    console.error('Failed to load processed image');
+                    overlay.style.display = 'none';
+                    // Fallback to original
+                    this.loadImageDirect(imageData);
+                };
+                this.image.src = result.processed_image;
+            } else {
+                console.warn('Straightening failed, using original image:', result.message);
+                overlay.style.display = 'none';
+                this.loadImageDirect(imageData);
+            }
+            
+        } catch (error) {
+            console.error('Auto-straighten error:', error);
+            overlay.style.display = 'none';
+            // Fallback to original image
+            this.loadImageDirect(imageData);
+        }
+    }
+
+    /**
+     * Load image directly without processing
+     */
+    loadImageDirect(imageData) {
         this.image = new Image();
         this.image.onload = () => {
             this.fitToScreen();
             this.render();
         };
+        this.image.src = imageData;
+    }
 
-        // Handle different image data formats
-        if (typeof imageData === 'string') {
-            if (imageData.startsWith('data:')) {
-                this.image.src = imageData;
-            } else {
-                // Assume base64
-                this.image.src = 'data:image/jpeg;base64,' + imageData;
-            }
-        } else if (imageData instanceof Blob || imageData instanceof File) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                this.image.src = e.target.result;
-            };
-            reader.readAsDataURL(imageData);
+    /**
+     * Manual straighten button handler
+     */
+    async straightenImage() {
+        if (!this.originalImageData) return;
+        
+        const btn = document.getElementById('ocrAutoStraighten');
+        const icon = btn.querySelector('i');
+        
+        // Start spinning animation
+        btn.classList.add('processing');
+        btn.disabled = true;
+        
+        // Get current image as base64
+        let imageData = this.originalImageData;
+        if (typeof imageData === 'string' && !imageData.startsWith('data:')) {
+            imageData = 'data:image/jpeg;base64,' + imageData;
         }
+        
+        await this.autoStraightenImage(imageData);
+        
+        // Stop spinning
+        btn.classList.remove('processing');
+        btn.disabled = false;
+    }
+
+    /**
+     * Show success toast after straightening
+     */
+    showStraightenToast(angle) {
+        const container = document.getElementById('ocrCanvasContainer');
+        const existingToast = container.querySelector('.straighten-success-toast');
+        if (existingToast) existingToast.remove();
+        
+        const toast = document.createElement('div');
+        toast.className = 'straighten-success-toast';
+        toast.innerHTML = `
+            <i class="bi bi-check-circle-fill"></i>
+            <span>Image rotated by ${Math.abs(angle || 0).toFixed(1)}°</span>
+        `;
+        container.appendChild(toast);
+        
+        // Remove after animation
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    /**
+     * Manual rotation - rotate image by specified degrees
+     * Positive = counter-clockwise, Negative = clockwise
+     */
+    rotateImage(degrees) {
+        if (!this.image) return;
+        
+        // Track cumulative rotation
+        this.currentRotation = (this.currentRotation || 0) + degrees;
+        
+        // Update rotation display
+        this.updateRotationDisplay();
+        
+        // Create a canvas to rotate the image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Calculate new dimensions after rotation
+        const radians = (Math.abs(this.currentRotation) * Math.PI) / 180;
+        const sin = Math.abs(Math.sin(radians));
+        const cos = Math.abs(Math.cos(radians));
+        const newWidth = this.image.naturalWidth * cos + this.image.naturalHeight * sin;
+        const newHeight = this.image.naturalWidth * sin + this.image.naturalHeight * cos;
+        
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        
+        // Fill with white background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Move to center, rotate, draw image
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((this.currentRotation * Math.PI) / 180);
+        ctx.drawImage(this.image, -this.image.naturalWidth / 2, -this.image.naturalHeight / 2);
+        
+        // Create new image from rotated canvas
+        const rotatedImage = new Image();
+        rotatedImage.onload = () => {
+            this.image = rotatedImage;
+            this.fitToScreen();
+            this.render();
+            this.showStraightenToast(degrees);
+        };
+        rotatedImage.src = canvas.toDataURL('image/jpeg', 0.95);
+    }
+
+    /**
+     * Update rotation angle display
+     */
+    updateRotationDisplay() {
+        const display = document.getElementById('ocrRotationDisplay');
+        if (display) {
+            const angle = this.currentRotation || 0;
+            display.textContent = `${angle.toFixed(1)}°`;
+            display.style.color = angle === 0 ? '#6c757d' : '#0d6efd';
+            display.style.fontWeight = angle === 0 ? 'normal' : 'bold';
+        }
+    }
+
+    /**
+     * Reset rotation to original image
+     */
+    resetRotation() {
+        this.currentRotation = 0;
+        this.updateRotationDisplay();
+        if (this.originalImageData) {
+            // Reload original image without straightening
+            this.loadImage(this.originalImageData, true);
+        }
+    }
+
+    /**
+     * Apply current rotation permanently
+     * This makes the current rotated image the new "original"
+     */
+    applyStraightening() {
+        if (!this.image || !this.currentRotation || this.currentRotation === 0) {
+            this.showToast('No rotation to apply', 'warning');
+            return;
+        }
+
+        // Convert current canvas to data URL
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = this.image.naturalWidth;
+        canvas.height = this.image.naturalHeight;
+        ctx.drawImage(this.image, 0, 0);
+        
+        const newImageData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // Update original image data
+        this.originalImageData = newImageData;
+        
+        // Reset rotation counter
+        const appliedRotation = this.currentRotation;
+        this.currentRotation = 0;
+        this.updateRotationDisplay();
+        
+        this.showToast(`Applied ${appliedRotation.toFixed(1)}° rotation`, 'success');
+    }
+
+    /**
+     * Show toast notification
+     */
+    showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type} position-fixed`;
+        toast.style.cssText = 'top: 80px; right: 20px; z-index: 99999; min-width: 250px; animation: slideInRight 0.3s;';
+        toast.innerHTML = `
+            <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'}"></i>
+            ${message}
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideOutRight 0.3s';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
     }
 
     close() {

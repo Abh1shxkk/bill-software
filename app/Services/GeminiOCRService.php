@@ -248,7 +248,47 @@ Return your response in this exact JSON format:
 }
 PROMPT;
 
+            case 'detect_boundaries':
+                return <<<PROMPT
+CRITICAL TASK: Analyze this scanned document image and ACCURATELY detect the tilt/rotation angle of the receipt paper.
+
+Look carefully at the image:
+1. Find where the actual receipt/bill PAPER is located
+2. Look at the TEXT LINES on the receipt - are they horizontal or at an angle?
+3. Look at the EDGES of the receipt paper - are they parallel to the image edges or tilted?
+
+MEASURING THE TILT ANGLE:
+- Draw an imaginary line along the TOP EDGE of the receipt paper
+- Measure the angle between this line and the horizontal
+- If the RIGHT side of the receipt is HIGHER than the left: the angle is POSITIVE (clockwise tilt)
+- If the LEFT side of the receipt is HIGHER than the right: the angle is NEGATIVE (counter-clockwise tilt)
+
+EXAMPLES:
+- Receipt perfectly straight: tilt_angle_degrees = 0
+- Receipt rotated 15 degrees clockwise: tilt_angle_degrees = 15
+- Receipt rotated 20 degrees counter-clockwise: tilt_angle_degrees = -20
+
+For the corners, provide coordinates as PERCENTAGES of the image dimensions (0-100).
+
+BE VERY CAREFUL: Even a small tilt of 5-10 degrees is significant and MUST be detected.
+
+Return your response in this exact JSON format:
+{
+  "is_receipt_detected": true/false,
+  "corners": {
+    "top_left": { "x": number (0-100), "y": number (0-100) },
+    "top_right": { "x": number (0-100), "y": number (0-100) },
+    "bottom_right": { "x": number (0-100), "y": number (0-100) },
+    "bottom_left": { "x": number (0-100), "y": number (0-100) }
+  },
+  "tilt_angle_degrees": number (MUST be accurate - positive, negative, or 0),
+  "has_dark_background": true/false,
+  "confidence": number (0-100)
+}
+PROMPT;
+
             case 'extract_items':
+
                 return <<<PROMPT
 Extract all product/item information from this receipt image.
 

@@ -69,12 +69,24 @@ class OCRController extends Controller
 
             // Check if Gemini should be used (priority: Gemini > OCR.space > Tesseract > Google Vision)
             $useGemini = $request->input('use_gemini', true); // Default to Gemini if available
+            $extractedText = null;
             
             if ($useGemini && $this->geminiService->isAvailable()) {
-                Log::info('Using Gemini for text extraction');
-                $extractedText = $this->geminiService->extractText($imageContent);
-            } else {
-                // Call OCR API (fallback to existing services)
+                try {
+                    Log::info('Using Gemini for text extraction');
+                    $extractedText = $this->geminiService->extractText($imageContent);
+                } catch (\Exception $geminiError) {
+                    // If Gemini fails (e.g., rate limit 429), fallback to OCR.space
+                    Log::warning('Gemini OCR failed, falling back to OCR.space', [
+                        'error' => $geminiError->getMessage()
+                    ]);
+                    $extractedText = null;
+                }
+            }
+            
+            // Fallback to OCR.space if Gemini didn't work
+            if ($extractedText === null || $extractedText === false) {
+                Log::info('Using OCR.space for text extraction');
                 $extractedText = $this->callOCRApi($imageContent);
             }
 
@@ -811,6 +823,106 @@ class OCRController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error extracting items: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Straighten a tilted/crooked receipt image
+     * 
+     * @route POST /admin/api/ocr/straighten-image
+     */
+    public function straightenImage(Request $request)
+    {
+        try {
+            set_time_limit(180);
+            
+            $request->validate([
+                'image' => 'required|string',
+            ]);
+
+            $imageData = $request->input('image');
+            
+            // Remove data URL prefix if present
+            if (strpos($imageData, 'data:image') === 0) {
+                $imageData = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
+            }
+
+            $imageContent = base64_decode($imageData);
+            
+            if (!$imageContent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid image data'
+                ], 400);
+            }
+
+            // Check image size
+            $imageSizeMB = strlen($imageContent) / (1024 * 1024);
+            if ($imageSizeMB > 15) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Image too large (' . round($imageSizeMB, 2) . 'MB). Maximum is 15MB.'
+                ], 400);
+            }
+
+            Log::info('OCR Straighten: Processing image', [
+                'size_kb' => strlen($imageContent) / 1024
+            ]);
+
+            // Use ImageDeskewService to process the image
+            $deskewService = new \App\Services\ImageDeskewService($this->geminiService);
+            $result = $deskewService->processReceiptImage($imageContent);
+
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'processed_image' => 'data:image/jpeg;base64,' . $result['image'],
+                    'tilt_angle' => $result['tilt_angle'] ?? 0,
+                    'was_processed' => $result['was_processed'] ?? false,
+                    'message' => $result['message'] ?? 'Image processed'
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message'] ?? 'Failed to process image',
+                    'original_image' => 'data:image/jpeg;base64,' . base64_encode($imageContent)
+                ], 500);
+            }
+
+        } catch (\Exception $e) {
+            Log::error('OCR Straighten error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error straightening image: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get available image processing capabilities
+     * 
+     * @route GET /admin/api/ocr/straighten-status
+     */
+    public function straightenStatus()
+    {
+        try {
+            $deskewService = new \App\Services\ImageDeskewService($this->geminiService);
+            $processors = $deskewService->getAvailableProcessors();
+
+            return response()->json([
+                'success' => true,
+                'available' => $processors['gd'] || $processors['imagick'],
+                'processors' => $processors,
+                'message' => 'Straightening capability check complete'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'available' => false,
+                'message' => 'Error checking capabilities: ' . $e->getMessage()
             ], 500);
         }
     }
