@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Enter key - move to next field
         if (e.key === 'Enter') {
+            // Don't interfere if any modal is open (pending orders, alert/confirm, etc.)
+            const hasModalOpen = document.querySelector('.pending-orders-modal.show, #pendingOrdersModal.show, #alertModal.show');
+            if (hasModalOpen) {
+                return; // Let the modal's keyboard handler handle this
+            }
+            
             // Don't interfere with buttons - let them click
             if (tagName === 'button') {
                 return;
@@ -102,7 +108,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Don't interfere with autocomplete/datalist dropdowns
-            if (activeElement?.list || document.querySelector('.ui-autocomplete:visible, .tt-menu:visible, .awesomplete > ul:not([hidden])')) {
+            // Check for visible autocomplete menus using proper visibility detection
+            const hasVisibleAutocomplete = (function() {
+                const selectors = ['.ui-autocomplete', '.tt-menu', '.awesomplete > ul', '.searchable-dropdown-list'];
+                for (const sel of selectors) {
+                    try {
+                        const el = document.querySelector(sel);
+                        if (el && el.offsetParent !== null && getComputedStyle(el).display !== 'none') {
+                            return true;
+                        }
+                    } catch (e) { /* ignore selector errors */ }
+                }
+                return false;
+            })();
+            if (activeElement?.list || hasVisibleAutocomplete) {
                 return;
             }
             
@@ -150,6 +169,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Arrow key navigation (Ctrl+Arrow)
     document.addEventListener('keydown', function(e) {
+        // Don't interfere if any modal is open
+        const hasModalOpen = document.querySelector('.pending-orders-modal.show, #pendingOrdersModal.show, #alertModal.show, .searchable-dropdown-list[style*="display: block"]');
+        if (hasModalOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+            return; // Let the modal/dropdown handle arrow keys
+        }
+        
         const activeElement = document.activeElement;
         const tagName = activeElement?.tagName?.toLowerCase();
         
