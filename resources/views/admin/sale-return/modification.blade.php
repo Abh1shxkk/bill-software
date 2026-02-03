@@ -2847,6 +2847,11 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     // Show loading
     showAlert('info', isUpdate ? 'Updating sale return...' : 'Saving sale return transaction...');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Submit via AJAX
     fetch(url, {
         method: 'POST',

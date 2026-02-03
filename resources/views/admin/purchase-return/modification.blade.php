@@ -2510,6 +2510,11 @@ Do you still want to add this batch to the return?`;
             adjustments: adjustments
         };
         
+        // 🔥 Mark as saving to prevent exit confirmation dialog
+        if (typeof window.markAsSaving === 'function') {
+            window.markAsSaving();
+        }
+        
         // Submit to server
         fetch('{{ route("admin.purchase-return.store") }}', {
             method: 'POST',

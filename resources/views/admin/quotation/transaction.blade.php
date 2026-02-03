@@ -1136,6 +1136,11 @@ function saveQuotation() {
         _token: '{{ csrf_token() }}'
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.quotation.store") }}', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },

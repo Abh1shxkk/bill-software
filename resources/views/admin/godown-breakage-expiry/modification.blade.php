@@ -685,6 +685,11 @@ function updateTransaction() {
     formData.append('total_qty', totalQty);
     formData.set('_method', 'PUT');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/godown-breakage-expiry') }}/${loadedTransactionId}`, {
         method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
     })

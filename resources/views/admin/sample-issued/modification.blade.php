@@ -1143,6 +1143,11 @@ function updateTransaction() {
         }
     }
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/sample-issued') }}/${loadedTransactionId}`, {
         method: 'POST',
         body: formData,

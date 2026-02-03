@@ -364,6 +364,9 @@
     // Escape handler
     function escapeHandler_{{ str_replace('-', '_', $id) }}(e) {
         if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
             closeBatchModal_{{ str_replace('-', '_', $id) }}();
         }
     }

@@ -2301,6 +2301,11 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     // Show loading
     showAlert('info', 'Saving transaction...');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Submit
     fetch('{{ route("admin.breakage-expiry.transaction.store") }}', {
         method: 'POST',

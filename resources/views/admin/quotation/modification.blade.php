@@ -590,6 +590,11 @@ function updateQuotation() {
     });
     if (items.length === 0) { alert('Please add at least one item'); return; }
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/quotation') }}/${loadedQuotationId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },

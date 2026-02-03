@@ -845,6 +845,11 @@ function saveTransaction() {
         items: items
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.stock-transfer-incoming-return.store") }}', {
         method: 'POST',
         headers: {

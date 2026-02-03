@@ -2747,6 +2747,11 @@ function savePurchase() {
     console.log('Full Payload:', payload);
     console.log('===================================');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // 4. Send to backend
     const saveUrl = '{{ url('/admin/purchase/transaction/store') }}';
     console.log('💾 Saving to URL:', saveUrl);

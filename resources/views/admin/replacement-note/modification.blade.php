@@ -485,6 +485,11 @@ function saveTransaction() {
     });
     if (items.length === 0) { alert('Please add items'); return; }
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/replacement-note/update') }}/${currentTransactionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },

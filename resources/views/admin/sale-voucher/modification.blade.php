@@ -645,6 +645,11 @@ function updateVoucher() {
         items: items
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/sale-voucher') }}/${currentVoucherId}`, {
         method: 'PUT',
         headers: {

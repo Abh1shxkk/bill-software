@@ -624,10 +624,13 @@
                 <div class="d-flex gap-3">
                     <!-- Left Side - Invoice & Salesman -->
                     <div style="width: 250px;">
-                        <div class="field-group mb-2">
+                        <div class="field-group mb-1">
                             <label style="width: 70px;">Inv.No.:</label>
-                            <input type="text" class="form-control" name="invoice_no" id="invoiceNo" value="" placeholder="Type invoice no." style="background-color: #fff8dc;">
+                            <input type="text" class="form-control" name="invoice_no" id="invoiceNo" value="" placeholder="Type or press Enter" style="background-color: #fff8dc;">
                             <input type="hidden" id="transactionId" value="">
+                        </div>
+                        <div class="text-muted mb-2" style="font-size: 10px; margin-left: 70px;">
+                            <kbd>Enter</kbd> with value = Load | <kbd>Enter</kbd> empty = Browse
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man:</label>
@@ -1103,6 +1106,7 @@ let itemIndex = -1;
 let currentSelectedRowIndex = null;
 let pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
+let pendingBatchChangeRowIndex = null; // 🔥 Store row index when batch field is cleared for batch change
 
 // Load items on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -1142,12 +1146,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load transaction on Enter key
         invoiceNoInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
+                console.log('📋 invoiceNo keydown Enter detected, value:', this.value);
                 e.preventDefault();
+                e.stopPropagation();
                 const invoiceNo = this.value.trim();
                 if (invoiceNo && invoiceNo !== 'Loading...') {
+                    console.log('🔄 Loading transaction for:', invoiceNo);
                     loadTransactionByInvoiceNo(invoiceNo);
                 } else if (!invoiceNo) {
                     // If empty, open invoices modal
+                    console.log('📦 Opening invoices modal (empty field)');
                     openAllInvoicesModal();
                 }
             }
@@ -1903,6 +1911,129 @@ function fetchItemByBarcodeAndOpenBatchModal(barcode, rowIndex) {
         });
 }
 
+// 🔥 NEW: Open batch modal for changing batch on existing row
+function openBatchChangeModal(rowIndex) {
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    if (!row) {
+        console.error('Row not found for batch change:', rowIndex);
+        return;
+    }
+    
+    const itemId = row.getAttribute('data-item-id');
+    const nameInput = row.querySelector('input[name*="[item_name]"]');
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    
+    if (!itemId) {
+        console.warn('No item in row, cannot change batch');
+        return;
+    }
+    
+    // Build item object from row data
+    const item = {
+        id: parseInt(itemId),
+        name: nameInput ? nameInput.value : '',
+        bar_code: codeInput ? codeInput.value : '',
+        hsn_code: row.getAttribute('data-hsn-code') || '',
+        cgst_percent: parseFloat(row.getAttribute('data-cgst')) || 0,
+        sgst_percent: parseFloat(row.getAttribute('data-sgst')) || 0,
+        cess_percent: parseFloat(row.getAttribute('data-cess')) || 0,
+        packing: row.getAttribute('data-packing') || '',
+        unit: row.getAttribute('data-unit') || '',
+        company_name: row.getAttribute('data-company') || '',
+        case_qty: parseInt(row.getAttribute('data-case-qty')) || 0,
+        box_qty: parseInt(row.getAttribute('data-box-qty')) || 0
+    };
+    
+    console.log('🔄 Opening batch change modal for row:', rowIndex, 'item:', item.name);
+    
+    // Store the row index for batch change
+    window.pendingBatchChangeRowIndex = rowIndex;
+    window.pendingItemSelection = item;
+    
+    // Open batch modal
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
+    } else if (typeof openBatchSelectionModal === 'function') {
+        openBatchSelectionModal(item);
+    }
+}
+
+// 🔥 NEW: Update existing row with new batch data
+function updateRowWithNewBatch(rowIndex, batch) {
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    if (!row) {
+        console.error('Row not found for batch update:', rowIndex);
+        return;
+    }
+    
+    console.log('🔄 Updating row', rowIndex, 'with new batch:', batch.batch_no);
+    
+    // Get input fields
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expiryInput = row.querySelector('input[name*="[expiry]"]');
+    const rateInput = row.querySelector('input[name*="[rate]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    
+    // Use batch's sale rate if available
+    const rate = parseFloat(batch.avg_s_rate || batch.s_rate || 0);
+    
+    // Format expiry date for display
+    let expiryDisplay = '';
+    if (batch.expiry_display) {
+        expiryDisplay = batch.expiry_display;
+    } else if (batch.expiry_date) {
+        try {
+            const date = new Date(batch.expiry_date);
+            expiryDisplay = date.toLocaleDateString('en-GB', { month: '2-digit', year: '2-digit' }).replace('/', '/');
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    // Update fields
+    if (batchInput) batchInput.value = batch.batch_no || '';
+    if (expiryInput) expiryInput.value = expiryDisplay;
+    if (rateInput) rateInput.value = rate.toFixed(2);
+    if (mrpInput) mrpInput.value = parseFloat(batch.avg_mrp || batch.mrp || 0).toFixed(2);
+    
+    // Update batch-related data attributes
+    row.setAttribute('data-batch-id', batch.id ? parseInt(batch.id) : '');
+    row.setAttribute('data-batch-purchase-rate', batch.avg_pur_rate || batch.pur_rate || 0);
+    row.setAttribute('data-batch-cost-gst', batch.avg_cost_gst || batch.cost_gst || 0);
+    row.setAttribute('data-batch-supplier', batch.supplier_name || '');
+    row.setAttribute('data-batch-purchase-date', batch.purchase_date_display || batch.purchase_date || '');
+    
+    // Recalculate row amount
+    calculateRowAmount(rowIndex);
+    
+    // Update row color
+    if (typeof updateRowColor === 'function') {
+        updateRowColor(rowIndex);
+    }
+    
+    // Update detailed summary
+    if (typeof updateDetailedSummary === 'function') {
+        updateDetailedSummary(rowIndex);
+    }
+    
+    // Recalculate totals
+    calculateTotal();
+    if (typeof calculateSummary === 'function') {
+        calculateSummary();
+    }
+    
+    // Focus on qty field
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+    
+    console.log('✅ Row batch updated successfully');
+}
+
 // Populate a specific row with item and batch data (for barcode entry)
 function populateRowWithItemAndBatch(rowIndex, item, batch) {
     const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
@@ -2117,6 +2248,25 @@ function addRowEventListeners(row, rowIndex) {
         batchInput.addEventListener('blur', function() {
             updateDetailedSummary(rowIndex);
         });
+        
+        // 🔥 NEW: Allow batch change by clearing batch field and pressing Enter
+        batchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const batchValue = this.value.trim();
+                const itemId = row.getAttribute('data-item-id');
+                
+                // If batch field is cleared AND row has an item, open batch modal for change
+                if (!batchValue && itemId) {
+                    console.log('🔄 Batch field cleared, opening batch modal for row:', rowIndex);
+                    openBatchChangeModal(rowIndex);
+                }
+            }
+        });
+        
+        // Add visual hint that batch can be changed
+        batchInput.style.cursor = 'pointer';
+        batchInput.title = 'Clear and press Enter to change batch';
     }
     
     // Listen for expiry changes
@@ -2834,6 +2984,11 @@ function saveSale() {
     console.log('Full Payload:', payload);
     console.log('===================================');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Send to server
     fetch('{{ route("admin.sale.store") }}', {
         method: 'POST',
@@ -3013,6 +3168,15 @@ async function filterInvoicesByDate() {
 // Open All Invoices Modal
 function openAllInvoicesModal() {
     loadInvoices(); // Load all invoices without date filter
+    
+    // Focus search field after modal opens
+    setTimeout(function() {
+        const searchInput = document.getElementById('invoiceSearchInput');
+        if (searchInput) {
+            searchInput.focus();
+            searchInput.select();
+        }
+    }, 300);
 }
 
 // Close Invoices Modal
@@ -3022,6 +3186,20 @@ function closeInvoicesModal() {
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
+    
+    // Reset selection index
+    if (typeof invoicesSelectedIndex !== 'undefined') {
+        invoicesSelectedIndex = -1;
+    }
+    
+    // Focus back to invoice no. field
+    setTimeout(function() {
+        const invoiceNoInput = document.getElementById('invoiceNo');
+        if (invoiceNoInput) {
+            invoiceNoInput.focus();
+            invoiceNoInput.select();
+        }
+    }, 100);
 }
 
 // Load Invoices (with optional date filter)
@@ -3485,7 +3663,15 @@ async function populateFormWithTransaction(transaction) {
             // Store batch_id if available
             if (item.batch_id) {
                 newRow.setAttribute('data-batch-id', item.batch_id);
+                // 🔥 Track original batch ID for stock restoration when batch is changed
+                newRow.setAttribute('data-original-batch-id', item.batch_id);
             }
+            
+            // 🔥 Track original quantity for stock calculations
+            newRow.setAttribute('data-original-qty', item.qty || 0);
+            
+            // 🔥 Mark row as existing item (loaded from database)
+            newRow.setAttribute('data-is-existing', 'true');
             
             // Mark row as complete
             newRow.setAttribute('data-complete', 'true');
@@ -3684,11 +3870,25 @@ async function updateSale(transactionId) {
                 batchId = null;
             }
             
+            // 🔥 Get original batch and qty for smart stock adjustment
+            let originalBatchId = row.getAttribute('data-original-batch-id');
+            if (originalBatchId) {
+                originalBatchId = parseInt(originalBatchId);
+                if (isNaN(originalBatchId)) originalBatchId = null;
+            } else {
+                originalBatchId = null;
+            }
+            const originalQty = parseFloat(row.getAttribute('data-original-qty')) || 0;
+            const isExisting = row.getAttribute('data-is-existing') === 'true';
+            
             items.push({
                 item_code: itemCode || '',
                 item_name: itemName || '',
                 batch: row.querySelector('input[name*="[batch]"]')?.value?.trim() || '',
                 batch_id: batchId,
+                original_batch_id: originalBatchId,  // 🔥 For smart stock adjustment
+                original_qty: originalQty,           // 🔥 For smart stock adjustment
+                is_existing: isExisting,             // 🔥 Flag to identify existing items
                 expiry: row.querySelector('input[name*="[expiry]"]')?.value || null,
                 qty: qty,
                 free_qty: parseFloat(row.querySelector('input[name*="[free_qty]"]')?.value) || 0,
@@ -3717,6 +3917,11 @@ async function updateSale(transactionId) {
     console.log('=== UPDATING SALE TRANSACTION ===');
     console.log('Transaction ID:', transactionId);
     console.log('Payload:', payload);
+    
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
     
     try {
         const url = `{{ url('/admin/sale/modification') }}/${transactionId}`;
@@ -4942,11 +5147,38 @@ function viewReceiptFull(index) {
         const activeEl = document.activeElement;
         const tagName = activeEl.tagName.toLowerCase();
         
+        console.log('🔍 handleEnterKey called, activeEl.id:', activeEl.id, 'tagName:', tagName);
+        
         // Don't interfere with buttons
         if (tagName === 'button') return;
         
         // Don't interfere with textarea (allow new lines)
         if (tagName === 'textarea') return;
+        
+        // 🔥 Don't interfere with Invoice No. field - it has its own Enter handler
+        if (activeEl.id === 'invoiceNo') {
+            console.log('✅ Skipping handleEnterKey for invoiceNo field');
+            return;
+        }
+        
+        // 🔥 NEW: Check if this is a batch field being cleared for batch change
+        // If batch field is empty and row has an item, open batch modal
+        if (activeEl.name && activeEl.name.includes('[batch]')) {
+            const batchValue = activeEl.value.trim();
+            const row = activeEl.closest('tr');
+            const itemId = row ? row.getAttribute('data-item-id') : null;
+            
+            if (!batchValue && itemId) {
+                e.preventDefault();
+                e.stopPropagation();
+                const rowIndex = parseInt(row.getAttribute('data-row-index'));
+                console.log('🔄 Enter on empty batch field, opening batch modal for row:', rowIndex);
+                if (typeof openBatchChangeModal === 'function') {
+                    openBatchChangeModal(rowIndex);
+                }
+                return;
+            }
+        }
         
         // If in items table, handle specially
         if (isInItemsTable(activeEl)) {
@@ -5409,6 +5641,8 @@ function viewReceiptFull(index) {
             handleChooseItemsModalKeyboard(e);
             if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 closeChooseItemsModal();
                 chooseItemsSelectedIndex = -1;
             }
@@ -5419,6 +5653,8 @@ function viewReceiptFull(index) {
             handleBatchModalKeyboard(e);
             if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 closeBatchSelectionModal();
                 batchSelectedIndex = -1;
             }
@@ -5429,6 +5665,8 @@ function viewReceiptFull(index) {
             handleInvoicesModalKeyboard(e);
             if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 closeInvoicesModal();
                 invoicesSelectedIndex = -1;
             }
@@ -5951,6 +6189,7 @@ window.closeBatchSelectionModal = function() {
     }
     pendingItemSelection = null;
     window.pendingBarcodeRowIndex = null;
+    window.pendingBatchChangeRowIndex = null; // 🔥 Clear batch change row index
 };
 
 // Callback when item and batch are selected from new modal component
@@ -5961,8 +6200,15 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     window.selectedBatch = batch;
     pendingItemSelection = item;
     
-    // Check if this is from barcode entry (existing row) or Choose Items modal (new row)
-    if (window.pendingBarcodeRowIndex !== null) {
+    // 🔥 NEW: Check if this is a batch change on existing row (highest priority)
+    if (window.pendingBatchChangeRowIndex !== null) {
+        // Batch change on existing row
+        console.log('🔄 Bridge: Changing batch on existing row, index:', window.pendingBatchChangeRowIndex);
+        if (typeof updateRowWithNewBatch === 'function') {
+            updateRowWithNewBatch(window.pendingBatchChangeRowIndex, batch);
+        }
+        window.pendingBatchChangeRowIndex = null;
+    } else if (window.pendingBarcodeRowIndex !== null) {
         // From barcode entry - populate existing row
         console.log('📱 Bridge: Populating existing row from barcode, index:', window.pendingBarcodeRowIndex);
         if (typeof populateRowWithItemAndBatch === 'function') {

@@ -2548,6 +2548,11 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     // Show loading
     showAlert('info', 'Saving sale return transaction...');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Submit via AJAX
     fetch('{{ route("admin.sale-return.store") }}', {
         method: 'POST',

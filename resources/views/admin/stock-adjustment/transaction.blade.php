@@ -603,6 +603,11 @@ function saveTransaction() {
     saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving...';
     saveBtn.disabled = true;
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.stock-adjustment.store") }}', {
         method: 'POST',
         headers: {

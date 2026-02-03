@@ -1268,6 +1268,11 @@ function saveWithAdjustments() {
 
 // Submit Transaction to Server
 function submitTransaction() {
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.replacement-received.store") }}', {
         method: 'POST',
         headers: {

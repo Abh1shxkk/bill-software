@@ -1086,6 +1086,11 @@ function updateTransaction() {
         items: items
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/stock-transfer-incoming-return') }}/${currentTransactionId}`, {
         method: 'POST',
         headers: {

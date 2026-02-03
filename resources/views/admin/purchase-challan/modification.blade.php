@@ -3197,6 +3197,11 @@ function updatePurchaseChallan() {
     const updateUrl = `{{ url('/admin/purchase-challan') }}/${challanId}`;
     console.log('💾 Updating URL:', updateUrl);
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(updateUrl, {
         method: 'PUT',
         headers: {

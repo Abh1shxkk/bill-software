@@ -352,9 +352,40 @@
     function handleKeyDown(event) {
         // ESC key - Go back (works globally on all pages)
         if (event.key === 'Escape' && !event.ctrlKey && !event.shiftKey && !event.altKey) {
-            const openModals = document.querySelectorAll('.modal.show');
-            if (openModals.length > 0) {
-                return;
+            // Check if exit confirmation modal is open - close it
+            const exitConfirmModal = document.getElementById('exitConfirmModal');
+            if (exitConfirmModal && exitConfirmModal.classList.contains('show')) {
+                return; // Let the exit-confirmation script handle it
+            }
+            
+            // Check for other open modals (not exit confirmation)
+            // Includes Bootstrap modals, custom modals with -modal suffix, and common transaction modals
+            const openModals = document.querySelectorAll('.modal.show, [class*="-modal"].show, [id$="Modal"].show, [id$="Backdrop"].show');
+            let hasOtherModal = false;
+            for (let modal of openModals) {
+                if (modal.id !== 'exitConfirmModal' && modal.id !== 'exitConfirmModalBackdrop') {
+                    hasOtherModal = true;
+                    break;
+                }
+            }
+            
+            // Also check for specific known modals by ID
+            const knownModalIds = [
+                'chooseItemsModal', 'batchSelectionModal', 'alertModal', 'saveOptionsModal',
+                'pendingChallanModal', 'itemSelectionModal', 'mrpSelectionModal', 'noBatchModal',
+                'godownBreakageModal', 'godownExpiryModal', 'replacementModal', 'claimModal',
+                'invoicesModal', 'dateRangeModal', 'allInvoicesModal'
+            ];
+            for (let modalId of knownModalIds) {
+                const modal = document.getElementById(modalId);
+                if (modal && modal.classList.contains('show')) {
+                    hasOtherModal = true;
+                    break;
+                }
+            }
+            
+            if (hasOtherModal) {
+                return; // Let the modal handle ESC
             }
 
             const helpPanel = document.getElementById('shortcut-help-panel');
@@ -367,6 +398,18 @@
             }
 
             if (isDashboardPage()) {
+                return;
+            }
+
+            // Check for unsaved changes on transaction/modification pages - show custom modal
+            if (typeof window.hasUnsavedChanges === 'function' && window.hasUnsavedChanges()) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (typeof window.showExitConfirmModal === 'function') {
+                    window.showExitConfirmModal(function() {
+                        window.history.back();
+                    });
+                }
                 return;
             }
 

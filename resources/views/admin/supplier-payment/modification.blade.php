@@ -851,6 +851,11 @@ function updatePayment() {
     
     const payload = { payment_date: document.getElementById('paymentDate').value, ledger: document.getElementById('ledger').value, bank_code: document.getElementById('bankSelect').value, tds_amount: 0, currency_detail: document.getElementById('currencyDetail').checked, items: items, adjustments: adjustmentData };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/supplier-payment') }}/${currentPayment.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },

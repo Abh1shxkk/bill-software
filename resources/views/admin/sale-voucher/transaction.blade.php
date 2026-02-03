@@ -468,6 +468,11 @@ function saveVoucher() {
         items: items
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.sale-voucher.store") }}', {
         method: 'POST',
         headers: {

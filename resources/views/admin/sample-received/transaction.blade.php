@@ -788,6 +788,11 @@ function saveTransaction() {
     formData.append('total_qty', totalQty);
     formData.append('total_amount', document.getElementById('net_amount').value);
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.sample-received.store") }}', {
         method: 'POST',
         body: formData,

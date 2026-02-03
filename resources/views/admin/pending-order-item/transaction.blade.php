@@ -260,6 +260,11 @@ function saveItem() {
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.pending-order-item.store") }}', {
         method: 'POST',
         headers: {

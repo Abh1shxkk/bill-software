@@ -778,6 +778,11 @@ function updateDebitNote() {
         items: items
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/debit-note') }}/${debitNoteId}`, {
         method: 'PUT',
         headers: {

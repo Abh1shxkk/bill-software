@@ -892,6 +892,11 @@ function saveWithAdjustments() {
 }
 
 function submitTransaction() {
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/replacement-received/update') }}/${currentTransactionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },

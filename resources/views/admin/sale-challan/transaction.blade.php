@@ -2983,6 +2983,11 @@ function saveChallan() {
     console.log('Full Payload:', payload);
     console.log('===================================');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Send to server
     fetch('{{ route("admin.sale-challan.store") }}', {
         method: 'POST',

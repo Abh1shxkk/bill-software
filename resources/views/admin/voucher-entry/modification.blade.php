@@ -345,6 +345,11 @@ function updateVoucher() {
         _token: '{{ csrf_token() }}'
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/voucher-entry') }}/${currentVoucherId}`, {
         method: 'PUT',
         headers: {

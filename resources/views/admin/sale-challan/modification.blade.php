@@ -2746,6 +2746,11 @@ function saveSale() {
     console.log('Full Payload:', payload);
     console.log('===================================');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Send to server
     fetch('{{ route("admin.sale-challan.store") }}', {
         method: 'POST',
@@ -3535,6 +3540,11 @@ async function updateSale(transactionId) {
     console.log('=== UPDATING SALE TRANSACTION ===');
     console.log('Transaction ID:', transactionId);
     console.log('Payload:', payload);
+    
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
     
     try {
         const url = `{{ url('/admin/sale/modification') }}/${transactionId}`;

@@ -982,26 +982,65 @@ class SaleTransactionController extends Controller
                 'updated_by' => Auth::id(),
             ]);
             
-            // Get old items to restore batch quantities
+            // 🔥 SMART STOCK ADJUSTMENT: Only adjust stock when batch actually changes
+            // Build a map of old items by batch_id for comparison
             $oldItems = $transaction->items()->get();
-            
-            // Restore batch quantities for old items
+            $oldItemsByBatchId = [];
             foreach ($oldItems as $oldItem) {
                 if ($oldItem->batch_id) {
-                    $batch = Batch::find($oldItem->batch_id);
-                    if ($batch) {
-                        $restoredQty = floatval($oldItem->qty);
-                        $batch->total_qty = $batch->total_qty + $restoredQty;
-                        $batch->qty = $batch->qty + $restoredQty;
-                        $batch->save();
-                        
-                        Log::info('✅ Restored batch quantity for old item', [
-                            'batch_id' => $batch->id,
-                            'batch_no' => $batch->batch_no,
-                            'restored_qty' => $restoredQty,
-                            'new_total_qty' => $batch->total_qty
-                        ]);
+                    if (!isset($oldItemsByBatchId[$oldItem->batch_id])) {
+                        $oldItemsByBatchId[$oldItem->batch_id] = 0;
                     }
+                    $oldItemsByBatchId[$oldItem->batch_id] += floatval($oldItem->qty);
+                }
+            }
+            
+            // Build a map of new items by batch_id
+            $newItemsByBatchId = [];
+            foreach ($request->input('items') as $itemData) {
+                $batchId = $itemData['batch_id'] ?? null;
+                $qty = floatval($itemData['qty'] ?? 0);
+                if ($batchId && $qty > 0) {
+                    if (!isset($newItemsByBatchId[$batchId])) {
+                        $newItemsByBatchId[$batchId] = 0;
+                    }
+                    $newItemsByBatchId[$batchId] += $qty;
+                }
+            }
+            
+            // Calculate net stock changes for each batch
+            $allBatchIds = array_unique(array_merge(array_keys($oldItemsByBatchId), array_keys($newItemsByBatchId)));
+            
+            foreach ($allBatchIds as $batchId) {
+                $oldQty = $oldItemsByBatchId[$batchId] ?? 0;
+                $newQty = $newItemsByBatchId[$batchId] ?? 0;
+                $netChange = $oldQty - $newQty; // Positive = restore stock, Negative = reduce stock
+                
+                if ($netChange == 0) {
+                    Log::info('🔄 Same batch with same qty - no stock adjustment needed', [
+                        'batch_id' => $batchId,
+                        'qty' => $oldQty
+                    ]);
+                    continue; // 🔥 Skip if same batch and same qty
+                }
+                
+                $batch = Batch::find($batchId);
+                if ($batch) {
+                    $oldTotalQty = $batch->total_qty;
+                    $oldQtyField = $batch->qty;
+                    
+                    $batch->total_qty = $batch->total_qty + $netChange;
+                    $batch->qty = max(0, $batch->qty + $netChange);
+                    $batch->save();
+                    
+                    Log::info('✅ Smart stock adjustment applied', [
+                        'batch_id' => $batchId,
+                        'batch_no' => $batch->batch_no,
+                        'old_total_qty' => $oldTotalQty,
+                        'net_change' => $netChange,
+                        'new_total_qty' => $batch->total_qty,
+                        'action' => $netChange > 0 ? 'RESTORED' : 'REDUCED'
+                    ]);
                 }
             }
             
@@ -1045,54 +1084,10 @@ class SaleTransactionController extends Controller
                 
                 $netAmount = $amountAfterDiscount + $taxAmount;
                 
-                // Reduce batch quantity if batch_id is provided
+                // 🔥 NOTE: Stock adjustment already done above using smart diff calculation
+                // No need to reduce batch quantity here - it's already handled
+                
                 $batchId = $itemData['batch_id'] ?? null;
-                if ($batchId) {
-                    $batch = Batch::find($batchId);
-                    if ($batch) {
-                        $soldQty = floatval($qty);
-                        
-                        Log::info('Attempting to reduce batch quantity', [
-                            'batch_id' => $batchId,
-                            'batch_no' => $batch->batch_no,
-                            'current_total_qty' => $batch->total_qty,
-                            'current_qty' => $batch->qty,
-                            'sold_qty' => $soldQty
-                        ]);
-                        
-                        // Check if sufficient quantity available
-                        if ($batch->total_qty >= $soldQty) {
-                            // Reduce batch quantity
-                            $oldTotalQty = $batch->total_qty;
-                            $oldQty = $batch->qty;
-                            
-                            $batch->total_qty = $batch->total_qty - $soldQty;
-                            $batch->qty = max(0, $batch->qty - $soldQty);
-                            
-                            $saved = $batch->save();
-                            
-                            if ($saved) {
-                                Log::info('✅ Batch quantity reduced successfully', [
-                                    'batch_id' => $batchId,
-                                    'batch_no' => $batch->batch_no,
-                                    'item_name' => $batch->item_name,
-                                    'old_total_qty' => $oldTotalQty,
-                                    'old_qty' => $oldQty,
-                                    'sold_qty' => $soldQty,
-                                    'new_total_qty' => $batch->total_qty,
-                                    'new_qty' => $batch->qty
-                                ]);
-                            }
-                        } else {
-                            Log::warning('⚠️ Insufficient batch quantity', [
-                                'batch_id' => $batchId,
-                                'batch_no' => $batch->batch_no,
-                                'available_qty' => $batch->total_qty,
-                                'requested_qty' => $soldQty
-                            ]);
-                        }
-                    }
-                }
                 
                 SaleTransactionItem::create([
                     'sale_transaction_id' => $transaction->id,

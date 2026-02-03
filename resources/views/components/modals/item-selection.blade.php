@@ -217,18 +217,13 @@
                     </tbody>
                 </table>
                 
-                {{-- Load More Button --}}
+                {{-- Load More Spinner (auto-triggers on scroll) --}}
                 <div id="{{ $id }}LoadMore" class="text-center py-3" style="display: none; background: #f8f9fa; border-top: 1px solid #dee2e6;">
-                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadMoreItems_{{ str_replace('-', '_', $id) }}()">
-                        <i class="bi bi-arrow-down-circle me-1"></i> Load More Items
-                        <span id="{{ $id }}LoadMoreCount" class="badge bg-primary ms-1">0</span>
-                    </button>
-                </div>
-                
-                {{-- Loading More Indicator --}}
-                <div id="{{ $id }}LoadingMore" class="text-center py-2" style="display: none; background: #f8f9fa;">
-                    <div class="spinner-border spinner-border-sm text-primary"></div>
-                    <span class="ms-2 text-muted">Loading more items...</span>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                        <span class="text-muted">Loading more items...</span>
+                        <span id="{{ $id }}LoadMoreCount" class="badge bg-secondary ms-2" style="font-size: 10px;">0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -304,6 +299,9 @@
     // Escape handler
     function escapeHandler_{{ str_replace('-', '_', $id) }}(e) {
         if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
             closeItemModal_{{ str_replace('-', '_', $id) }}();
         }
     }
@@ -367,7 +365,7 @@
         }
     };
     
-    // Update Load More button visibility and count
+    // Update Load More spinner visibility and count
     function updateLoadMoreButton_{{ str_replace('-', '_', $id) }}() {
         var loadMoreDiv = document.getElementById('{{ $id }}LoadMore');
         var loadMoreCount = document.getElementById('{{ $id }}LoadMoreCount');
@@ -382,6 +380,43 @@
             }
         }
     }
+    
+    // Setup Intersection Observer for auto-loading
+    var loadMoreObserver_{{ str_replace('-', '_', $id) }} = null;
+    function setupLoadMoreObserver_{{ str_replace('-', '_', $id) }}() {
+        var loadMoreDiv = document.getElementById('{{ $id }}LoadMore');
+        if (!loadMoreDiv) return;
+        
+        // Disconnect previous observer if exists
+        if (loadMoreObserver_{{ str_replace('-', '_', $id) }}) {
+            loadMoreObserver_{{ str_replace('-', '_', $id) }}.disconnect();
+        }
+        
+        // Create new Intersection Observer
+        loadMoreObserver_{{ str_replace('-', '_', $id) }} = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting && hasMore_{{ str_replace('-', '_', $id) }} && !isLoading_{{ str_replace('-', '_', $id) }}) {
+                    loadMoreItems_{{ str_replace('-', '_', $id) }}();
+                }
+            });
+        }, {
+            root: document.getElementById('{{ $id }}TableContainer'),
+            rootMargin: '50px',
+            threshold: 0.1
+        });
+        
+        loadMoreObserver_{{ str_replace('-', '_', $id) }}.observe(loadMoreDiv);
+    }
+    
+    // Initialize observer when modal opens
+    var originalOpenModal_{{ str_replace('-', '_', $id) }} = window.openItemModal_{{ str_replace('-', '_', $id) }};
+    window.openItemModal_{{ str_replace('-', '_', $id) }} = function() {
+        originalOpenModal_{{ str_replace('-', '_', $id) }}();
+        // Setup observer after a small delay to ensure DOM is ready
+        setTimeout(function() {
+            setupLoadMoreObserver_{{ str_replace('-', '_', $id) }}();
+        }, 100);
+    };
     
     // Display items in table
     window.displayItems_{{ str_replace('-', '_', $id) }} = function(itemsToDisplay) {

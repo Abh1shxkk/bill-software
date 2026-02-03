@@ -791,6 +791,11 @@ function updateCreditNote() {
         items: items
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/credit-note') }}/${creditNoteId}`, {
         method: 'PUT',
         headers: {

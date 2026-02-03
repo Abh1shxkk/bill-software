@@ -2752,6 +2752,11 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     // Log the data being sent for debugging
     console.log('Submitting transaction data:', data);
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Submit
     fetch(url, {
         method: method,

@@ -372,6 +372,10 @@ function updateVoucher() {
         updateBtn.innerHTML = originalBtnHtml;
         return; 
     }
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
     fetch(`{{ url('admin/purchase-voucher') }}/${currentVoucherId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },

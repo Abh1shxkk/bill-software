@@ -2663,6 +2663,11 @@ function savePurchaseChallan() {
     const saveUrl = '{{ route('admin.purchase-challan.store') }}';
     console.log('💾 Saving to URL:', saveUrl);
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(saveUrl, {
         method: 'POST',
         headers: {

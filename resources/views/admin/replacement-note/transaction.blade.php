@@ -1145,6 +1145,11 @@ function saveTransaction() {
         items: items
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.replacement-note.store") }}', {
         method: 'POST',
         headers: {

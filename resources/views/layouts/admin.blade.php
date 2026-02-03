@@ -2684,6 +2684,15 @@
         });
     </script>
     
+    <!-- Exit Confirmation Modal for Transaction/Modification Pages - MUST load before keyboard shortcuts -->
+    @php
+        $currentPath = request()->path();
+        $shouldShowExitConfirm = str_contains($currentPath, 'transaction') || str_contains($currentPath, 'modification');
+    @endphp
+    @if($shouldShowExitConfirm)
+    @include('layouts.partials.exit-confirmation')
+    @endif
+    
     <!-- Global Keyboard Shortcuts (EasySol-style) - Press F1 for help -->
     @include('layouts.partials.keyboard-shortcuts-config')
     @include('layouts.partials.index-shortcuts-config')

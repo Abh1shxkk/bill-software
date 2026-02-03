@@ -259,6 +259,10 @@ function updateVoucher() {
         amount: parseFloat(document.getElementById('grossDisplay').value) || 0, total_gst: parseFloat(document.getElementById('totalGstDisplay').textContent) || 0, net_amount: parseFloat(document.getElementById('netAmtDisplay').textContent) || 0,
         round_off: parseFloat(document.getElementById('creditRoff').textContent) || 0, total_credit: parseFloat(document.getElementById('totalCreditAmt').textContent) || 0, tds_percent: parseFloat(document.getElementById('tdsPercent').value) || 0,
         tds_amount: parseFloat(document.getElementById('tdsAmount').value) || 0, debit_account_id: document.getElementById('debitAccountId').value, total_debit: parseFloat(document.getElementById('totalDebitAmt').textContent) || 0, items, accounts, _token: '{{ csrf_token() }}' };
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
     fetch(`{{ url('admin/voucher-income') }}/${currentVoucherId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify(formData) })
         .then(r => r.json()).then(data => { if (data.success) alert('Updated!'); else alert('Error: ' + data.message); }).catch(e => alert('Failed'));
 }

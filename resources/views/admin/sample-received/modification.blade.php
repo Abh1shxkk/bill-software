@@ -1112,6 +1112,11 @@ function updateTransaction() {
     // Ensure _method is set to PUT for Laravel method spoofing
     formData.set('_method', 'PUT');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/sample-received') }}/${loadedTransactionId}`, {
         method: 'POST',
         body: formData,

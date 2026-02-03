@@ -957,6 +957,11 @@ function saveTransaction() {
     
     formData.append('total_qty', totalQty);
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.godown-breakage-expiry.store") }}', {
         method: 'POST',
         body: formData,

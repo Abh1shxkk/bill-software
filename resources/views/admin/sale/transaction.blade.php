@@ -1509,16 +1509,18 @@
 </div>
 
 <script>
-// Global variables
+// Global variables (exposed on window for cross-script access)
 let itemsData = [];
 let itemIndex = -1;
 let currentSelectedRowIndex = null;
 let currentDiscountRowIndex = null; // Track which row's discount is being edited
 let companyDiscounts = {}; // Store company-wise discounts for this session
-let pendingItemSelection = null; // Store item data when waiting for batch selection
+window.pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
 let selectedChallanId = null; // Store selected challan ID for loading
-let pendingBarcodeRowIndex = null; // 🔥 Store row index when barcode is entered for batch selection
+window.pendingBarcodeRowIndex = null; // 🔥 Store row index when barcode is entered for batch selection
+window.pendingBatchChangeRowIndex = null; // 🔥 Store row index when batch field is cleared for batch change
+window.itemModalOpenedFromRowIndex = null; // 🔥 Track which row opened the item modal for focus return
 
 // Load items on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -2755,10 +2757,46 @@ function loadChallanItemsToSale(challan) {
 
 // Close Choose Items Modal
 function closeChooseItemsModal() {
-    const modal = document.getElementById('chooseItemsModal');
-    const backdrop = document.getElementById('chooseItemsBackdrop');
-    modal.classList.remove('show');
-    backdrop.classList.remove('show');
+    // Use the component's close function if available 
+    // (overridden in bridge to handle focus-back and escape handler removal)
+    if (typeof closeItemModal_chooseItemsModal === 'function') {
+        closeItemModal_chooseItemsModal();
+    } else {
+        // Fallback - close modal and focus back manually
+        const modal = document.getElementById('chooseItemsModal');
+        const backdrop = document.getElementById('chooseItemsBackdrop');
+        if (modal) modal.classList.remove('show');
+        if (backdrop) backdrop.classList.remove('show');
+        
+        // Focus back to the code field of the row that opened the modal
+        if (window.itemModalOpenedFromRowIndex !== null) {
+            const rowIndex = window.itemModalOpenedFromRowIndex;
+            window.itemModalOpenedFromRowIndex = null;
+            
+            setTimeout(function() {
+                const rows = document.querySelectorAll('#itemsTableBody tr');
+                for (let row of rows) {
+                    if (parseInt(row.dataset.rowIndex) === rowIndex) {
+                        const codeInput = row.querySelector('input[name*="[code]"]');
+                        if (codeInput) {
+                            codeInput.focus();
+                            codeInput.select();
+                        }
+                        return;
+                    }
+                }
+                // Fallback: focus on first empty code field
+                for (let row of rows) {
+                    const codeInput = row.querySelector('input[name*="[code]"]');
+                    if (codeInput && !codeInput.value.trim()) {
+                        codeInput.focus();
+                        codeInput.select();
+                        break;
+                    }
+                }
+            }, 50);
+        }
+    }
 }
 
 // Display items in modal
@@ -2829,7 +2867,7 @@ function filterItemsInModal() {
 // Select item from modal
 function selectItemFromModal(item) {
     // Store item data for batch selection
-    pendingItemSelection = item;
+    window.pendingItemSelection = item;
     
     // Close items modal
     closeChooseItemsModal();
@@ -2872,12 +2910,18 @@ function openBatchSelectionModal(item) {
 
 // Close Batch Selection Modal
 function closeBatchSelectionModal() {
-    const modal = document.getElementById('batchSelectionModal');
-    const backdrop = document.getElementById('batchSelectionBackdrop');
-    modal.classList.remove('show');
-    backdrop.classList.remove('show');
-    pendingItemSelection = null;
-    pendingBarcodeRowIndex = null; // 🔥 Clear barcode row index when modal is closed
+    // Use the component's close function if available (properly removes escape handler)
+    if (typeof closeBatchModal_batchSelectionModal === 'function') {
+        closeBatchModal_batchSelectionModal();
+    } else {
+        // Fallback
+        const modal = document.getElementById('batchSelectionModal');
+        const backdrop = document.getElementById('batchSelectionBackdrop');
+        if (modal) modal.classList.remove('show');
+        if (backdrop) backdrop.classList.remove('show');
+    }
+    window.pendingItemSelection = null;
+    window.pendingBarcodeRowIndex = null; // 🔥 Clear barcode row index when modal is closed
 }
 
 
@@ -3007,7 +3051,7 @@ function displayBatchesInModal(batches) {
         
         // Double-click to select and add to table
         row.addEventListener('dblclick', function() {
-            if (pendingItemSelection && window.selectedBatch) {
+            if (window.pendingItemSelection && window.selectedBatch) {
                 selectBatchFromModal(window.selectedBatch);
             }
         });
@@ -3112,7 +3156,7 @@ function filterBatchesInModal() {
 // 1. Barcode entry - populates existing row (pendingBarcodeRowIndex is set)
 // 2. Choose Items modal - adds new row (pendingBarcodeRowIndex is null)
 function selectBatchFromModal(batch) {
-    if (!pendingItemSelection) return;
+    if (!window.pendingItemSelection) return;
     
     // Use the batch from window.selectedBatch if available, otherwise use passed batch
     const selectedBatch = window.selectedBatch || batch;
@@ -3126,17 +3170,17 @@ function selectBatchFromModal(batch) {
     console.log('📦 Batch ID:', selectedBatch.id);
     
     // 🔥 Check if this is from barcode entry (existing row) or Choose Items modal (new row)
-    if (pendingBarcodeRowIndex !== null) {
+    if (window.pendingBarcodeRowIndex !== null) {
         // 🔥 CASE 1: From barcode entry - populate the existing row
-        console.log('📱 Populating existing row from barcode entry, row index:', pendingBarcodeRowIndex);
-        populateRowWithItemAndBatch(pendingBarcodeRowIndex, pendingItemSelection, selectedBatch);
+        console.log('📱 Populating existing row from barcode entry, row index:', window.pendingBarcodeRowIndex);
+        populateRowWithItemAndBatch(window.pendingBarcodeRowIndex, window.pendingItemSelection, selectedBatch);
         
         // Clear the pending barcode row index
-        pendingBarcodeRowIndex = null;
+        window.pendingBarcodeRowIndex = null;
     } else {
         // 🔥 CASE 2: From Choose Items modal - add item to table (creates new row or uses empty row)
         console.log('➕ Adding new item from Choose Items modal');
-        addItemToTable(pendingItemSelection, selectedBatch);
+        addItemToTable(window.pendingItemSelection, selectedBatch);
     }
     
     // Close batch modal
@@ -3243,7 +3287,8 @@ function populateRowWithItemAndBatch(rowIndex, item, batch) {
 }
 
 // Populate a specific row with item and batch data (for barcode entry)
-function populateRowWithItemAndBatch(rowIndex, item, batch) {
+// 🔥 Exposed globally for bridge script access
+window.populateRowWithItemAndBatch = function(rowIndex, item, batch) {
     const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
     if (!row) {
         console.error('Row not found for index:', rowIndex);
@@ -3270,7 +3315,7 @@ function populateRowWithItemAndBatch(rowIndex, item, batch) {
             qtyInput.select();
         }
     }, 100);
-}
+};
 
 // Add empty row to table
 function addEmptyRow() {
@@ -3482,8 +3527,127 @@ function fetchItemByBarcodeAndOpenBatchModal(barcode, rowIndex) {
         });
 }
 
+// 🔥 NEW: Open batch modal for changing batch on existing row
+function openBatchChangeModal(rowIndex) {
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    if (!row) {
+        console.error('Row not found for batch change:', rowIndex);
+        return;
+    }
+    
+    const itemId = row.getAttribute('data-item-id');
+    const nameInput = row.querySelector('input[name*="[item_name]"]');
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    
+    if (!itemId) {
+        console.warn('No item in row, cannot change batch');
+        return;
+    }
+    
+    // Build item object from row data
+    const item = {
+        id: parseInt(itemId),
+        name: nameInput ? nameInput.value : '',
+        bar_code: codeInput ? codeInput.value : '',
+        hsn_code: row.getAttribute('data-hsn-code') || '',
+        cgst_percent: parseFloat(row.getAttribute('data-cgst')) || 0,
+        sgst_percent: parseFloat(row.getAttribute('data-sgst')) || 0,
+        cess_percent: parseFloat(row.getAttribute('data-cess')) || 0,
+        packing: row.getAttribute('data-packing') || '',
+        unit: row.getAttribute('data-unit') || '',
+        company_name: row.getAttribute('data-company') || '',
+        case_qty: parseInt(row.getAttribute('data-case-qty')) || 0,
+        box_qty: parseInt(row.getAttribute('data-box-qty')) || 0
+    };
+    
+    console.log('🔄 Opening batch change modal for row:', rowIndex, 'item:', item.name);
+    
+    // Store the row index for batch change
+    window.pendingBatchChangeRowIndex = rowIndex;
+    window.pendingItemSelection = item;
+    
+    // Open batch modal
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
+    } else if (typeof openBatchSelectionModal === 'function') {
+        openBatchSelectionModal(item);
+    }
+}
+
+// 🔥 NEW: Update existing row with new batch data
+// 🔥 Exposed globally for bridge script access
+window.updateRowWithNewBatch = function(rowIndex, batch) {
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    if (!row) {
+        console.error('Row not found for batch update:', rowIndex);
+        return;
+    }
+    
+    console.log('🔄 Updating row', rowIndex, 'with new batch:', batch.batch_no);
+    
+    // Get input fields
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expiryInput = row.querySelector('input[name*="[expiry]"]');
+    const rateInput = row.querySelector('input[name*="[rate]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    
+    // Use batch's sale rate if available
+    const rate = parseFloat(batch.avg_s_rate || batch.s_rate || 0);
+    
+    // Format expiry date for display
+    let expiryDisplay = '';
+    if (batch.expiry_display) {
+        expiryDisplay = batch.expiry_display;
+    } else if (batch.expiry_date) {
+        try {
+            const date = new Date(batch.expiry_date);
+            expiryDisplay = date.toLocaleDateString('en-GB', { month: '2-digit', year: '2-digit' }).replace('/', '/');
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    // Update fields
+    if (batchInput) batchInput.value = batch.batch_no || '';
+    if (expiryInput) expiryInput.value = expiryDisplay;
+    if (rateInput) rateInput.value = rate.toFixed(2);
+    if (mrpInput) mrpInput.value = parseFloat(batch.avg_mrp || batch.mrp || 0).toFixed(2);
+    
+    // Update batch-related data attributes
+    row.setAttribute('data-batch-id', batch.id ? parseInt(batch.id) : '');
+    row.setAttribute('data-batch-purchase-rate', batch.avg_pur_rate || batch.pur_rate || 0);
+    row.setAttribute('data-batch-cost-gst', batch.avg_cost_gst || batch.cost_gst || 0);
+    row.setAttribute('data-batch-supplier', batch.supplier_name || '');
+    row.setAttribute('data-batch-purchase-date', batch.purchase_date_display || batch.purchase_date || '');
+    
+    // Recalculate row amount
+    calculateRowAmount(rowIndex);
+    
+    // Update row color
+    updateRowColor(rowIndex);
+    
+    // Update detailed summary
+    updateDetailedSummary(rowIndex);
+    
+    // Recalculate totals
+    calculateTotal();
+    calculateSummary();
+    
+    // Focus on qty field
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+    
+    console.log('✅ Row batch updated successfully');
+};
+
 // Add item to table (FIXED VERSION - reuses empty rows)
-function addItemToTable(item, batch) {
+// 🔥 Exposed globally for bridge script access
+window.addItemToTable = function(item, batch) {
     console.log('🔄 Adding item to table:', item.name);
     
     // First, try to find an existing empty row
@@ -3620,7 +3784,7 @@ function addItemToTable(item, batch) {
     
     // Calculate totals
     calculateTotal();
-}
+};
 
 // Add event listeners to row for editing functionality
 function addRowEventListeners(row, rowIndex) {
@@ -3663,11 +3827,24 @@ function addRowEventListeners(row, rowIndex) {
         });
     }
     
-    // Rate field - Enter moves to Discount
+    // Rate field - Enter moves to Discount (with MRP validation)
     if (rateInput) {
         rateInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                
+                // 🔥 Validate: Sale Rate cannot be greater than MRP
+                const saleRate = parseFloat(this.value) || 0;
+                const mrpInput = document.getElementById(`mrp_${rowIndex}`);
+                const mrp = parseFloat(mrpInput?.value) || 0;
+                
+                if (mrp > 0 && saleRate > mrp) {
+                    showToast(`Sale Rate (₹${saleRate.toFixed(2)}) cannot be greater than MRP (₹${mrp.toFixed(2)})`, 'error', 'Invalid Rate');
+                    this.focus();
+                    this.select();
+                    return; // Don't proceed
+                }
+                
                 calculateRowAmount(rowIndex);
                 if (discountInput) discountInput.focus();
             } else if (e.key === 'ArrowUp') {
@@ -3676,6 +3853,20 @@ function addRowEventListeners(row, rowIndex) {
             } else if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 navigateToRow(rowIndex + 1);
+            }
+        });
+        
+        // 🔥 Also validate on blur (when user clicks away or tabs out)
+        rateInput.addEventListener('blur', function() {
+            const saleRate = parseFloat(this.value) || 0;
+            const mrpInput = document.getElementById(`mrp_${rowIndex}`);
+            const mrp = parseFloat(mrpInput?.value) || 0;
+            
+            if (mrp > 0 && saleRate > mrp) {
+                showToast(`Sale Rate (₹${saleRate.toFixed(2)}) cannot be greater than MRP (₹${mrp.toFixed(2)})`, 'error', 'Invalid Rate');
+                // Focus back on rate field for correction
+                this.focus();
+                this.select();
             }
         });
     }
@@ -3739,6 +3930,8 @@ function addRowEventListeners(row, rowIndex) {
                 
                 if (!itemCode) {
                     // Empty code - open Item Modal
+                    // Track which row opened the modal for focus return on ESC
+                    window.itemModalOpenedFromRowIndex = rowIndex;
                     if (typeof openItemModal_chooseItemsModal === 'function') {
                         openItemModal_chooseItemsModal();
                     } else if (typeof openChooseItemsModal === 'function') {
@@ -3766,6 +3959,25 @@ function addRowEventListeners(row, rowIndex) {
         batchInput.addEventListener('blur', function() {
             updateDetailedSummary(rowIndex);
         });
+        
+        // 🔥 NEW: Allow batch change by clearing batch field and pressing Enter
+        batchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const batchValue = this.value.trim();
+                const itemId = row.getAttribute('data-item-id');
+                
+                // If batch field is cleared AND row has an item, open batch modal for change
+                if (!batchValue && itemId) {
+                    console.log('🔄 Batch field cleared, opening batch modal for row:', rowIndex);
+                    openBatchChangeModal(rowIndex);
+                }
+            }
+        });
+        
+        // Add visual hint that batch can be changed
+        batchInput.style.cursor = 'pointer';
+        batchInput.title = 'Clear and press Enter to change batch';
     }
     
     // Listen for expiry changes
@@ -3845,9 +4057,9 @@ function fetchItemDetailsForRow(itemCode, rowIndex) {
                 console.log('🔢 Item ID:', data.item.id);
                 
                 // 🔥 Store the row index for later population after batch selection
-                pendingBarcodeRowIndex = rowIndex;
+                window.pendingBarcodeRowIndex = rowIndex;
                 
-                // 🔥 Store item data for batch selection (similar to pendingItemSelection)
+                // 🔥 Store item data for batch selection (similar to window.pendingItemSelection)
                 // Create item object matching the format expected by openBatchSelectionModal
                 const itemForBatch = {
                     id: data.item.id,
@@ -3867,7 +4079,7 @@ function fetchItemDetailsForRow(itemCode, rowIndex) {
                 };
                 
                 // 🔥 Store item for batch selection
-                pendingItemSelection = itemForBatch;
+                window.pendingItemSelection = itemForBatch;
                 
                 // 🔥 Open batch selection modal
                 openBatchSelectionModal(itemForBatch);
@@ -4139,6 +4351,12 @@ function clearDetailedSummary() {
 function calculateRowAmount(rowIndex) {
     const qty = parseFloat(document.getElementById(`qty_${rowIndex}`)?.value) || 0;
     const rate = parseFloat(document.getElementById(`rate_${rowIndex}`)?.value) || 0;
+    const mrp = parseFloat(document.getElementById(`mrp_${rowIndex}`)?.value) || 0;
+    
+    // 🔥 Validate: Sale Rate cannot exceed MRP - show error but don't auto-change
+    if (mrp > 0 && rate > mrp) {
+        showToast(`Sale Rate (₹${rate.toFixed(2)}) cannot be greater than MRP (₹${mrp.toFixed(2)})`, 'error', 'Invalid Rate');
+    }
     
     // Amount = Qty × Rate ONLY (discount NOT applied here)
     const amount = qty * rate;
@@ -4811,6 +5029,11 @@ function saveSale() {
     console.log('Full Payload:', payload);
     console.log('===================================');
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     // Check if we have a pending receipt file to upload (TEMP transaction mode)
     const hasPendingReceipt = window.pendingReceiptFile && isTempTransaction;
     
@@ -4986,6 +5209,11 @@ function clearFormAfterSave() {
     document.getElementById('detailNetAmt').value = '0.00';
     document.getElementById('detailDisAmt').value = '0.00';
     
+    // Reset keyboard navigation state
+    if (typeof window.resetRemarksNavigationState === 'function') {
+        window.resetRemarksNavigationState();
+    }
+    
     console.log('Form cleared for next transaction');
 }
 
@@ -4993,14 +5221,7 @@ function clearFormAfterSave() {
 document.getElementById('chooseItemsBackdrop')?.addEventListener('click', closeChooseItemsModal);
 document.getElementById('batchSelectionBackdrop')?.addEventListener('click', closeBatchSelectionModal);
 
-// Close modals on Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeChooseItemsModal();
-        closeBatchSelectionModal();
-        closeAlert();
-    }
-});
+// Note: Escape key handling is done in the MAIN KEYBOARD EVENT LISTENER section below
 
 // ============================================
 // TOAST NOTIFICATION FUNCTIONS
@@ -5752,6 +5973,12 @@ document.addEventListener('keydown', function(e) {
     'use strict';
     
     // ============================================
+    // STATE TRACKING
+    // ============================================
+    // Track if user navigated past remarks (to enable Enter reopening Choose Items modal)
+    let passedRemarksField = false;
+    
+    // ============================================
     // CONFIGURATION
     // ============================================
     const CONFIG = {
@@ -5921,6 +6148,7 @@ document.addEventListener('keydown', function(e) {
     /**
      * Handle ENTER key - move to next field
      * For SELECT elements: Arrow Down/Up to change selection, Enter confirms and moves to next
+     * Special: After remarks field, Enter opens Choose Items modal
      */
     function handleEnterKey(e) {
         const activeEl = document.activeElement;
@@ -5931,6 +6159,56 @@ document.addEventListener('keydown', function(e) {
         
         // Don't interfere with textarea (allow new lines)
         if (tagName === 'textarea') return;
+        
+        // 🔥 NEW: If on remarks field, open Choose Items modal and mark as passed
+        if (activeEl.id === 'remarks' || activeEl.name === 'remarks') {
+            e.preventDefault();
+            e.stopPropagation();
+            passedRemarksField = true; // Mark that we've navigated past remarks
+            console.log('🎯 Enter on remarks field - opening Choose Items modal');
+            if (typeof openChooseItemsModal === 'function') {
+                openChooseItemsModal();
+            }
+            return;
+        }
+        
+        // 🔥 FALLBACK: If we passed remarks and modal was closed, check if focus is on
+        // non-navigable fields (readonly) or body - reopen Choose Items modal
+        if (passedRemarksField) {
+            const isReadonlyField = activeEl.hasAttribute('readonly') || activeEl.classList.contains('readonly-field');
+            const isBodyOrNoFocus = tagName === 'body' || !activeEl || activeEl === document.body;
+            const isInHeaderSection = activeEl.closest('.header-section') || activeEl.closest('.inner-card');
+            
+            // If focus is on a readonly field, body, or still in header section after passing remarks
+            if (isReadonlyField || isBodyOrNoFocus) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🔄 Fallback: Reopening Choose Items modal (passed remarks, focus on readonly/body)');
+                if (typeof openChooseItemsModal === 'function') {
+                    openChooseItemsModal();
+                }
+                return;
+            }
+        }
+        
+        // 🔥 Check if this is a batch field being cleared for batch change
+        // If batch field is empty and row has an item, open batch modal
+        if (activeEl.name && activeEl.name.includes('[batch]')) {
+            const batchValue = activeEl.value.trim();
+            const row = activeEl.closest('tr');
+            const itemId = row ? row.getAttribute('data-item-id') : null;
+            
+            if (!batchValue && itemId) {
+                e.preventDefault();
+                e.stopPropagation();
+                const rowIndex = parseInt(row.getAttribute('data-row-index'));
+                console.log('🔄 Enter on empty batch field, opening batch modal for row:', rowIndex);
+                if (typeof openBatchChangeModal === 'function') {
+                    openBatchChangeModal(rowIndex);
+                }
+                return;
+            }
+        }
         
         // If in items table, handle specially
         if (isInItemsTable(activeEl)) {
@@ -6103,6 +6381,7 @@ document.addEventListener('keydown', function(e) {
             if (alertModal?.classList.contains('show')) {
                 closeAlert();
                 e.preventDefault();
+                e.stopPropagation();
                 return;
             }
         }
@@ -6112,6 +6391,7 @@ document.addEventListener('keydown', function(e) {
             if (saveModal?.classList.contains('show')) {
                 closeSaveOptionsModal();
                 e.preventDefault();
+                e.stopPropagation();
                 return;
             }
         }
@@ -6121,6 +6401,7 @@ document.addEventListener('keydown', function(e) {
             if (batchModal?.classList.contains('show')) {
                 closeBatchSelectionModal();
                 e.preventDefault();
+                e.stopPropagation();
                 return;
             }
         }
@@ -6130,6 +6411,7 @@ document.addEventListener('keydown', function(e) {
             if (itemsModal?.classList.contains('show')) {
                 closeChooseItemsModal();
                 e.preventDefault();
+                e.stopPropagation();
                 return;
             }
         }
@@ -6139,6 +6421,7 @@ document.addEventListener('keydown', function(e) {
             if (challanModal?.classList.contains('show')) {
                 closePendingChallanModal();
                 e.preventDefault();
+                e.stopPropagation();
                 return;
             }
         }
@@ -6348,8 +6631,11 @@ document.addEventListener('keydown', function(e) {
             // Handle Escape for modals
             if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 closeChooseItemsModal();
                 chooseItemsSelectedIndex = -1;
+                return;
             }
             return;
         }
@@ -6360,8 +6646,11 @@ document.addEventListener('keydown', function(e) {
             // Handle Escape for modals
             if (e.key === 'Escape') {
                 e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 closeBatchSelectionModal();
                 batchSelectedIndex = -1;
+                return;
             }
             return;
         }
@@ -6518,11 +6807,38 @@ document.addEventListener('keydown', function(e) {
     `;
     document.head.appendChild(focusStyle);
     
+    // ============================================
+    // EXPOSE RESET FUNCTION GLOBALLY
+    // ============================================
+    // Allow external code to reset the remarks navigation state
+    window.resetRemarksNavigationState = function() {
+        passedRemarksField = false;
+        console.log('🔄 Remarks navigation state reset');
+    };
+    
+    // ============================================
+    // RESET STATE WHEN FOCUSING ON HEADER FIELDS
+    // ============================================
+    // Reset passedRemarksField when user clicks/focuses on fields before remarks
+    const headerFieldsToWatch = ['seriesSelect', 'invoiceNo', 'saleDate', 'customerSelect', 'salesmanSelect', 'dueDate', 'cash', 'transfer'];
+    headerFieldsToWatch.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('focus', function() {
+                if (passedRemarksField) {
+                    passedRemarksField = false;
+                    console.log('🔄 Reset passedRemarksField - user focused on header field:', fieldId);
+                }
+            });
+        }
+    });
+    
     console.log('🎹 Keyboard Navigation System Loaded');
     console.log('   Enter → Next field | Shift+Enter → Previous field');
     console.log('   Arrow Keys → Navigate dropdown/table');
     console.log('   End → Save | Ctrl+S → Save | Ctrl+I → Choose Items');
     console.log('   In Modals: ↑↓ Navigate | Enter Select | F → Search | Esc → Close');
+    console.log('   After Remarks: Enter → Choose Items modal (with fallback)');
     
 })();
 
@@ -6641,7 +6957,7 @@ window.closeChooseItemsModal = function() {
 // Override openBatchSelectionModal to use new component
 window.openBatchSelectionModal = function(item) {
     console.log('🔗 Bridge: Opening Batch Modal via new component for:', item?.name);
-    pendingItemSelection = item;
+    window.pendingItemSelection = item;
     if (typeof openBatchModal_batchSelectionModal === 'function') {
         openBatchModal_batchSelectionModal(item);
     } else {
@@ -6655,38 +6971,92 @@ window.closeBatchSelectionModal = function() {
     if (typeof closeBatchModal_batchSelectionModal === 'function') {
         closeBatchModal_batchSelectionModal();
     }
-    pendingItemSelection = null;
+    window.pendingItemSelection = null;
     window.pendingBarcodeRowIndex = null;
+    window.pendingBatchChangeRowIndex = null; // 🔥 Clear batch change row index
 };
 
 // Callback when item and batch are selected from new modal component
 // This is called by the batch modal component when user confirms selection
 window.onItemBatchSelectedFromModal = function(item, batch) {
     console.log('✅ Bridge: Item+Batch selected from new modal:', item?.name, batch?.batch_no);
+    console.log('📋 Bridge: addItemToTable exists:', typeof window.addItemToTable);
+    console.log('📋 Bridge: pendingBarcodeRowIndex:', window.pendingBarcodeRowIndex);
+    console.log('📋 Bridge: pendingBatchChangeRowIndex:', window.pendingBatchChangeRowIndex);
     
     // Store selected batch for compatibility
     window.selectedBatch = batch;
-    pendingItemSelection = item;
+    window.pendingItemSelection = item;
     
-    // Check if this is from barcode entry (existing row) or Choose Items modal (new row)
-    if (window.pendingBarcodeRowIndex !== null) {
-        // From barcode entry - populate existing row
-        console.log('📱 Bridge: Populating existing row from barcode, index:', window.pendingBarcodeRowIndex);
-        if (typeof populateRowWithItemAndBatch === 'function') {
-            populateRowWithItemAndBatch(window.pendingBarcodeRowIndex, item, batch);
+    // 🔥 Helper function to execute the add with retry
+    function executeAddItem(retryCount = 0) {
+        const maxRetries = 5;
+        const retryDelay = 150; // ms
+        
+        console.log(`🔄 Bridge executeAddItem: attempt ${retryCount + 1}`);
+        
+        // 🔥 Check if this is a batch change on existing row (highest priority)
+        if (window.pendingBatchChangeRowIndex !== null) {
+            // Batch change on existing row
+            console.log('🔄 Bridge: Changing batch on existing row, index:', window.pendingBatchChangeRowIndex);
+            if (typeof window.updateRowWithNewBatch === 'function') {
+                window.updateRowWithNewBatch(window.pendingBatchChangeRowIndex, batch);
+                window.pendingBatchChangeRowIndex = null;
+                console.log('✅ Bridge: Batch change completed');
+                return true;
+            } else {
+                console.warn('⚠️ Bridge: updateRowWithNewBatch not found');
+            }
+        } else if (window.pendingBarcodeRowIndex !== null) {
+            // From barcode entry - populate existing row
+            console.log('📱 Bridge: Populating existing row from barcode, index:', window.pendingBarcodeRowIndex);
+            if (typeof window.populateRowWithItemAndBatch === 'function') {
+                window.populateRowWithItemAndBatch(window.pendingBarcodeRowIndex, item, batch);
+                window.pendingBarcodeRowIndex = null;
+                console.log('✅ Bridge: Row population completed');
+                return true;
+            } else {
+                console.warn('⚠️ Bridge: populateRowWithItemAndBatch not found');
+            }
+        } else {
+            // From Choose Items modal - add new row
+            console.log('➕ Bridge: Adding new item via window.addItemToTable');
+            if (typeof window.addItemToTable === 'function') {
+                try {
+                    window.addItemToTable(item, batch);
+                    console.log('✅ Bridge: addItemToTable executed successfully');
+                    return true;
+                } catch (error) {
+                    console.error('❌ Bridge: Error in addItemToTable:', error);
+                    return false;
+                }
+            } else {
+                console.warn('⚠️ Bridge: addItemToTable not found, type:', typeof window.addItemToTable);
+            }
         }
-        window.pendingBarcodeRowIndex = null;
-    } else {
-        // From Choose Items modal - add new row
-        console.log('➕ Bridge: Adding new item via addItemToTable');
-        if (typeof addItemToTable === 'function') {
-            addItemToTable(item, batch);
+        
+        // 🔥 Retry mechanism if function not available yet
+        if (retryCount < maxRetries) {
+            console.log(`⏳ Bridge: Function not ready, retrying in ${retryDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+            setTimeout(() => executeAddItem(retryCount + 1), retryDelay);
+            return false;
+        } else {
+            console.error('❌ Bridge: Failed to add item after maximum retries. Functions not available.');
+            // 🔥 Fallback: Store for manual retry
+            window._pendingItemToAdd = { item, batch };
+            console.log('💾 Bridge: Item stored in window._pendingItemToAdd for manual retry');
+            return false;
         }
     }
     
-    // Clear selections
-    window.selectedBatch = null;
-    pendingItemSelection = null;
+    // Execute with retry support
+    executeAddItem();
+    
+    // Clear selections after a delay to ensure operation completes
+    setTimeout(function() {
+        window.selectedBatch = null;
+        window.pendingItemSelection = null;
+    }, 500);
 };
 
 // Also support the simpler callback name
@@ -6697,13 +7067,61 @@ window.onBatchSelectedFromModal = function(item, batch) {
 // Listen for item selection to open batch modal (for compatibility)
 window.onItemSelectedFromModal = function(item) {
     console.log('🔗 Bridge: Item selected, opening batch modal for:', item?.name);
-    pendingItemSelection = item;
+    window.pendingItemSelection = item;
     if (typeof openBatchModal_batchSelectionModal === 'function') {
         openBatchModal_batchSelectionModal(item);
     }
 };
 
-console.log('🔗 Modal Component Bridge Loaded - Sale Transaction');
+// 🔥 Override component's close function to add focus-back logic
+(function() {
+    // Wait for component to be loaded
+    setTimeout(function() {
+        if (typeof window.closeItemModal_chooseItemsModal === 'function') {
+            const originalCloseItemModal = window.closeItemModal_chooseItemsModal;
+            
+            window.closeItemModal_chooseItemsModal = function() {
+                // Call original close function
+                originalCloseItemModal();
+                
+                // Focus back to the code field if modal was opened from a row
+                if (window.itemModalOpenedFromRowIndex !== null) {
+                    const rowIndex = window.itemModalOpenedFromRowIndex;
+                    window.itemModalOpenedFromRowIndex = null; // Clear tracking
+                    
+                    setTimeout(function() {
+                        const rows = document.querySelectorAll('#itemsTableBody tr');
+                        let found = false;
+                        
+                        for (let row of rows) {
+                            if (parseInt(row.dataset.rowIndex) === rowIndex) {
+                                const codeInput = row.querySelector('input[name*="[code]"]');
+                                if (codeInput) {
+                                    codeInput.focus();
+                                    codeInput.select();
+                                    found = true;
+                                }
+                                break;
+                            }
+                        }
+                        
+                        // Fallback: focus on first empty code field
+                        if (!found) {
+                            for (let row of rows) {
+                                const codeInput = row.querySelector('input[name*="[code]"]');
+                                if (codeInput && !codeInput.value.trim()) {
+                                    codeInput.focus();
+                                    codeInput.select();
+                                    break;
+                                }
+                            }
+                        }
+                    }, 100);
+                }
+            };
+        }
+    }, 500);
+})();
 </script>
 
 @endsection

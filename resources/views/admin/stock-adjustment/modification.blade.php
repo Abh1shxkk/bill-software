@@ -1317,6 +1317,11 @@ function updateTransaction() {
     updateBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
     updateBtn.disabled = true;
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(`{{ url('admin/stock-adjustment') }}/${currentAdjustmentId}`, {
         method: 'PUT',
         headers: {

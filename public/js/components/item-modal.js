@@ -268,9 +268,8 @@ const ItemModalComponent = (function () {
                 if (selectedRowIndex > 0) {
                     highlightRow(modalId, selectedRowIndex - 1);
                     rows[selectedRowIndex]?.scrollIntoView({ block: 'nearest' });
-                } else if (selectedRowIndex === -1) {
-                    highlightRow(modalId, rows.length - 1);
                 }
+                // Do nothing when at first row or no selection - prevents looping
                 break;
 
             case 'Enter':

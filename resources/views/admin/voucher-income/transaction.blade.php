@@ -480,6 +480,10 @@ function saveVoucher() {
         total_sgst_amount: parseFloat(document.getElementById('totalSgstAmt').textContent) || 0,
         items: items, accounts: accounts, _token: '{{ csrf_token() }}'
     };
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
     fetch('{{ route("admin.voucher-income.store") }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify(formData) })
     .then(r => r.json()).then(data => { if (data.success) { alert('Voucher #' + data.voucher_no + ' saved!'); window.location.reload(); } else alert('Error: ' + data.message); })
     .catch(e => { console.error('Error:', e); alert('Failed to save'); });

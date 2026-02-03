@@ -218,14 +218,14 @@
 </div>
 
 <!-- Item Selection Modal -->
-<div class="modal-backdrop-custom" id="itemModalBackdrop" onclick="closeItemModal()"></div>
+<div class="modal-backdrop-custom" id="itemModalBackdrop" onclick="_legacy_closeItemModal()"></div>
 <div class="custom-modal" id="itemModal">
     <div class="modal-header-custom">
         <h6 class="mb-0"><i class="bi bi-search me-1"></i> Select Item</h6>
-        <button type="button" class="btn btn-sm btn-light" onclick="closeItemModal()">&times;</button>
+        <button type="button" class="btn btn-sm btn-light" onclick="_legacy_closeItemModal()">&times;</button>
     </div>
     <div class="modal-body-custom">
-        <input type="text" id="itemSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by code or name..." onkeyup="filterItems()">
+        <input type="text" id="itemSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by code or name..." onkeyup="_legacy_filterItems()">
         <div class="table-responsive" style="max-height: 300px;">
             <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 11px;">
                 <thead class="table-light sticky-top"><tr><th>Code</th><th>Item Name</th><th>Pack</th><th>Company</th></tr></thead>
@@ -234,16 +234,16 @@
         </div>
     </div>
     <div class="modal-footer-custom">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="_legacy_closeItemModal()">Close</button>
     </div>
 </div>
 
 <!-- Batch Selection Modal -->
-<div class="modal-backdrop-custom" id="batchModalBackdrop" onclick="closeBatchModal()"></div>
+<div class="modal-backdrop-custom" id="batchModalBackdrop" onclick="_legacy_closeBatchModal()"></div>
 <div class="custom-modal" id="batchModal">
     <div class="modal-header-custom batch">
         <h6 class="mb-0"><i class="bi bi-box me-1"></i> Select Batch</h6>
-        <button type="button" class="btn btn-sm btn-dark" onclick="closeBatchModal()">&times;</button>
+        <button type="button" class="btn btn-sm btn-dark" onclick="_legacy_closeBatchModal()">&times;</button>
     </div>
     <div class="modal-body-custom">
         <div class="mb-2 p-2 bg-light rounded"><strong id="selectedItemName">-</strong></div>
@@ -255,11 +255,29 @@
         </div>
     </div>
     <div class="modal-footer-custom">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="_legacy_closeBatchModal()">Close</button>
     </div>
 </div>
 @endsection
 
+<!-- Reusable Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'breakageSupplierIssuedModItemModal',
+    'module' => 'breakage-supplier',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'breakageSupplierIssuedModBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'breakageSupplierIssuedModBatchModal',
+    'module' => 'breakage-supplier',
+    'showOnlyAvailable' => true,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
 
 @push('scripts')
 <script>
@@ -447,37 +465,82 @@ function addItemRowFromData(item) {
     selectRow(idx);
 }
 
-// Item Modal
+// Item Modal - Bridge function to use reusable modal
 function showItemModal() {
+    console.log('showItemModal called - attempting to use reusable modal');
+    if (typeof openItemModal_breakageSupplierIssuedModItemModal === 'function') {
+        console.log('Using reusable item modal');
+        openItemModal_breakageSupplierIssuedModItemModal();
+    } else {
+        console.log('Fallback to legacy modal');
+        _legacy_showItemModal();
+    }
+}
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from modal:', item);
+    console.log('Batch selected from modal:', batch);
+    
+    // Transform item to match expected format
+    const transformedItem = {
+        id: item.id,
+        item_code: item.bar_code || item.code || '',
+        item_name: item.name || '',
+        packing: item.packing || '',
+        company_name: item.company_name || '',
+        hsn_code: item.hsn_code || '',
+        unit: item.unit || '',
+        cgst: item.cgst_percent || 0,
+        sgst: item.sgst_percent || 0
+    };
+    
+    // Transform batch to match expected format
+    const transformedBatch = {
+        id: batch.id,
+        batch_no: batch.batch_no || '',
+        expiry_date: batch.expiry_date || '',
+        mrp: batch.mrp || 0,
+        purchase_rate: batch.p_rate || batch.pur_rate || batch.purchase_rate || 0,
+        sale_rate: batch.s_rate || batch.sale_rate || 0,
+        quantity: batch.qty || batch.quantity || 0
+    };
+    
+    // Use existing addItemRow function
+    addItemRow(transformedItem, transformedBatch);
+};
+
+// Legacy Item Modal Functions
+function _legacy_showItemModal() {
     document.getElementById('itemModalBackdrop').classList.add('show');
     document.getElementById('itemModal').classList.add('show');
     document.getElementById('itemSearchInput').value = '';
-    renderItemsList(allItems);
+    _legacy_renderItemsList(allItems);
     setTimeout(() => document.getElementById('itemSearchInput').focus(), 100);
 }
 
-function closeItemModal() {
+function _legacy_closeItemModal() {
     document.getElementById('itemModalBackdrop').classList.remove('show');
     document.getElementById('itemModal').classList.remove('show');
 }
 
-function filterItems() {
+function _legacy_filterItems() {
     const search = document.getElementById('itemSearchInput').value.toLowerCase();
     const filtered = allItems.filter(item => 
         (item.item_code && item.item_code.toLowerCase().includes(search)) ||
         (item.item_name && item.item_name.toLowerCase().includes(search))
     );
-    renderItemsList(filtered);
+    _legacy_renderItemsList(filtered);
 }
 
-function renderItemsList(items) {
+function _legacy_renderItemsList(items) {
     const tbody = document.getElementById('itemsListBody');
     if (!items.length) {
         tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No items found</td></tr>';
         return;
     }
     tbody.innerHTML = items.slice(0, 100).map(item => `
-        <tr class="item-row" onclick="selectItem(${item.id})">
+        <tr class="item-row" onclick="_legacy_selectItem(${item.id})">
             <td>${item.item_code || ''}</td>
             <td>${item.item_name || ''}</td>
             <td>${item.packing || ''}</td>
@@ -486,21 +549,21 @@ function renderItemsList(items) {
     `).join('');
 }
 
-function selectItem(itemId) {
+function _legacy_selectItem(itemId) {
     selectedItem = allItems.find(i => i.id === itemId);
     if (!selectedItem) return;
-    closeItemModal();
+    _legacy_closeItemModal();
     document.getElementById('selectedItemName').textContent = `${selectedItem.item_code} - ${selectedItem.item_name}`;
-    loadBatches(itemId);
+    _legacy_loadBatches(itemId);
 }
 
-function loadBatches(itemId) {
+function _legacy_loadBatches(itemId) {
     fetch(`{{ url('admin/breakage-supplier/get-batches') }}/${itemId}`)
         .then(r => r.json())
         .then(batches => {
             document.getElementById('batchModalBackdrop').classList.add('show');
             document.getElementById('batchModal').classList.add('show');
-            renderBatchesList(batches);
+            _legacy_renderBatchesList(batches);
         })
         .catch(e => {
             console.error('Error loading batches:', e);
@@ -508,14 +571,14 @@ function loadBatches(itemId) {
         });
 }
 
-function renderBatchesList(batches) {
+function _legacy_renderBatchesList(batches) {
     const tbody = document.getElementById('batchesListBody');
     if (!batches.length) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No batches found</td></tr>';
         return;
     }
     tbody.innerHTML = batches.map(batch => `
-        <tr class="batch-row" onclick="selectBatch(${JSON.stringify(batch).replace(/"/g, '&quot;')})">
+        <tr class="batch-row" onclick="_legacy_selectBatch(${JSON.stringify(batch).replace(/"/g, '&quot;')})">
             <td>${batch.batch_no || ''}</td>
             <td>${batch.expiry_date || ''}</td>
             <td class="text-end">${batch.quantity || 0}</td>
@@ -526,13 +589,13 @@ function renderBatchesList(batches) {
     `).join('');
 }
 
-function closeBatchModal() {
+function _legacy_closeBatchModal() {
     document.getElementById('batchModalBackdrop').classList.remove('show');
     document.getElementById('batchModal').classList.remove('show');
 }
 
-function selectBatch(batch) {
-    closeBatchModal();
+function _legacy_selectBatch(batch) {
+    _legacy_closeBatchModal();
     addItemRow(selectedItem, batch);
 }
 

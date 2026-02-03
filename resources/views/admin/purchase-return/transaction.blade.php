@@ -533,26 +533,33 @@
         </div>
     </section>
 
+@endsection
+
 <!-- Item and Batch Selection Modal Components -->
 @include('components.modals.item-selection', [
-    'id' => 'chooseItemsModal',
+    'id' => 'purchaseReturnItemModal',
     'module' => 'purchase-return',
     'showStock' => true,
     'rateType' => 'pur_rate',
     'showCompany' => true,
     'showHsn' => true,
-    'batchModalId' => 'batchSelectionModal',
+    'batchModalId' => 'purchaseReturnBatchModal',
 ])
 
 @include('components.modals.batch-selection', [
-    'id' => 'batchSelectionModal',
+    'id' => 'purchaseReturnBatchModal',
     'module' => 'purchase-return',
     'showOnlyAvailable' => true,
     'rateType' => 'pur_rate',
     'showCostDetails' => true,
 ])
 
-@endsection
+<script>
+console.log('🟢 Purchase Return: Modal components included');
+console.log('🟢 Purchase Return: Checking if modal functions exist...');
+console.log('🟢 Purchase Return: openItemModal_purchaseReturnItemModal =', typeof window.openItemModal_purchaseReturnItemModal);
+console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', typeof window.openBatchModal_purchaseReturnBatchModal);
+</script>
 
 @push('styles')
 <style>
@@ -703,16 +710,24 @@
 
     // Add New Row - Opens reusable item selection modal
     function addNewRow() {
+        console.log('🔵 Purchase Return: addNewRow() called');
+        
         if (!selectedSupplier) {
             alert('Please select a supplier first!');
             return;
         }
         
+        console.log('🔵 Purchase Return: Supplier selected:', selectedSupplier);
+        console.log('🔵 Purchase Return: Checking for modal function...');
+        console.log('🔵 Purchase Return: typeof openItemModal_purchaseReturnItemModal =', typeof openItemModal_purchaseReturnItemModal);
+        
         // Use reusable item selection modal
-        if (typeof openItemModal_chooseItemsModal === 'function') {
-            openItemModal_chooseItemsModal();
+        if (typeof openItemModal_purchaseReturnItemModal === 'function') {
+            console.log('✅ Purchase Return: Modal function found! Opening modal...');
+            openItemModal_purchaseReturnItemModal();
         } else {
-            console.error('Item selection modal not initialized');
+            console.error('❌ Purchase Return: Modal function NOT found!');
+            console.error('❌ Available window functions:', Object.keys(window).filter(k => k.includes('Modal')));
             alert('Item selection modal not initialized. Please reload the page.');
         }
     }
@@ -818,32 +833,43 @@
         if (typeof calculateTotals === 'function') calculateTotals();
     };
     function openInsertOrdersModal() {
+        console.log('🔵 Purchase Return: openInsertOrdersModal() called');
+        
         if (!selectedSupplier) {
             alert('Please select a supplier first!');
             return;
         }
         
-        // Fetch all items
-        fetch('{{ route("admin.items.all") }}', {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            allItems = data.items || data;
-            showItemSelectionModal(allItems);
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to load items');
-        });
+        console.log('🔵 Purchase Return: Opening reusable item modal for Insert Orders');
+        
+        // Use reusable item selection modal instead of legacy modal
+        if (typeof openItemModal_purchaseReturnItemModal === 'function') {
+            console.log('✅ Purchase Return: Reusable modal function found! Opening...');
+            openItemModal_purchaseReturnItemModal();
+        } else {
+            console.error('❌ Purchase Return: Reusable modal not available, falling back to legacy');
+            // Fallback to legacy modal if reusable not available
+            fetch('{{ route("admin.items.all") }}', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                allItems = data.items || data;
+                _legacy_showItemSelectionModal(allItems);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to load items');
+            });
+        }
     }
 
-    // Show item selection modal
-    function showItemSelectionModal(items) {
+    // LEGACY: Show item selection modal for Insert Orders feature
+    function _legacy_showItemSelectionModal(items) {
         const modalHTML = `
             <div class="insert-orders-modal-backdrop" id="insertOrdersModalBackdrop" onclick="closeInsertOrdersModal()"></div>
             <div class="insert-orders-modal" id="insertOrdersModal">
@@ -857,7 +883,7 @@
                         <div style="margin-bottom: 10px;">
                             <input type="text" id="itemSearchInput" class="form-control form-control-sm" 
                                    placeholder="Search by item name or code..." 
-                                   onkeyup="filterItems()"
+                                   onkeyup="_legacy_filterItems()"
                                    style="font-size: 11px;">
                         </div>
                         
@@ -895,7 +921,7 @@
                                             <td>${item.company_name || ''}</td>
                                             <td style="text-align: center;">
                                                 <button type="button" class="btn btn-sm btn-primary" 
-                                                        onclick='selectItemForBatch(${JSON.stringify(itemData).replace(/'/g, "\\'")})' 
+                                                        onclick='_legacy_selectItemForBatch(${JSON.stringify(itemData).replace(/'/g, "\\'")})' 
                                                         style="font-size: 9px; padding: 2px 8px;">
                                                     Select
                                                 </button>
@@ -929,8 +955,8 @@
         }, 10);
     }
 
-    // Filter items in the selection table
-    function filterItems() {
+    // LEGACY: Filter items in the selection table (Insert Orders)
+    function _legacy_filterItems() {
         const searchValue = document.getElementById('itemSearchInput').value.toLowerCase();
         const rows = document.querySelectorAll('.item-row');
         
@@ -946,8 +972,8 @@
         });
     }
 
-    // Select item and show batch modal
-    function selectItemForBatch(item) {
+    // LEGACY: Select item and show batch modal (Insert Orders)
+    function _legacy_selectItemForBatch(item) {
         if (typeof item === 'string') {
             item = JSON.parse(item);
         }
@@ -975,15 +1001,15 @@
         
         if (existingRows === 0) {
             // First time - show normal batch modal
-            loadBatchesForSupplierAndItem(selectedSupplier.id, item.id, false);
+            _legacy_loadBatchesForSupplierAndItem(selectedSupplier.id, item.id, false);
         } else {
             // Add row - show ALL batches of this item (any supplier)
-            loadAllBatchesForItem(item.id);
+            _legacy_loadAllBatchesForItem(item.id);
         }
     }
 
-    // Load batches from past purchases
-    function loadBatchesForSupplierAndItem(supplierId, itemId, isAddRow = false) {
+    // LEGACY: Load batches from past purchases (Insert Orders)
+    function _legacy_loadBatchesForSupplierAndItem(supplierId, itemId, isAddRow = false) {
         fetch(`{{ route("admin.purchase-return.batches") }}?supplier_id=${supplierId}&item_id=${itemId}`, {
             method: 'GET',
             headers: {
@@ -993,7 +1019,7 @@
         })
         .then(response => response.json())
         .then(data => {
-            showBatchSelectionModal(data.batches || [], isAddRow);
+            _legacy_showBatchSelectionModal(data.batches || [], isAddRow);
         })
         .catch(error => {
             console.error('Error:', error);
@@ -1001,8 +1027,8 @@
         });
     }
 
-    // Load all batches for item (any supplier) - for add row
-    function loadAllBatchesForItem(itemId) {
+    // LEGACY: Load all batches for item (any supplier) - for add row (Insert Orders)
+    function _legacy_loadAllBatchesForItem(itemId) {
         fetch(`{{ url('/admin/api/item-batches') }}/${itemId}`, {
             method: 'GET',
             headers: {
@@ -1046,7 +1072,7 @@
                 invoice_date: batch.invoice_date || null
             }));
             
-            showBatchSelectionModal(formattedBatches, true); // true = add row format
+            _legacy_showBatchSelectionModal(formattedBatches, true); // true = add row format
         })
         .catch(error => {
             console.error('Error loading batches:', error);
@@ -1054,8 +1080,8 @@
         });
     }
 
-    // Show batch selection modal
-    function showBatchSelectionModal(batches, isAddRow = false) {
+    // LEGACY: Show batch selection modal (Insert Orders)
+    function _legacy_showBatchSelectionModal(batches, isAddRow = false) {
         const modalHTML = `
             <div class="insert-orders-modal-backdrop" id="insertOrdersModalBackdrop" onclick="closeInsertOrdersModal()"></div>
             <div class="insert-orders-modal" id="insertOrdersModal">
@@ -1206,7 +1232,7 @@
                     if (data.is_same_supplier) {
                         // Same supplier - add directly
                         closeInsertOrdersModal();
-                        addItemToReturnTable(batch);
+                        _legacy_addItemToReturnTable(batch);
                     } else {
                         // Different supplier - show warning
                         const supplierName = data.batch_supplier_name || 'Unknown Supplier';
@@ -1222,7 +1248,7 @@ Do you still want to add this batch to the return?`;
                         
                         if (confirm(confirmMessage)) {
                             closeInsertOrdersModal();
-                            addItemToReturnTable(batch);
+                            _legacy_addItemToReturnTable(batch);
                         }
                     }
                 })
@@ -1230,22 +1256,22 @@ Do you still want to add this batch to the return?`;
                     console.error('Error verifying supplier:', error);
                     // Fallback - add directly if verification fails
                     closeInsertOrdersModal();
-                    addItemToReturnTable(batch);
+                    _legacy_addItemToReturnTable(batch);
                 });
                 return; // Exit here to wait for AJAX response
             }
         }
         
         closeInsertOrdersModal();
-        addItemToReturnTable(batch);
+        _legacy_addItemToReturnTable(batch);
     }
 
     // Global variables for table management
     let currentRowIndex = 0;
     let selectedRowIndex = null;
 
-    // Add item to return table - Enhanced version with proper structure
-    function addItemToReturnTable(batch) {
+    // LEGACY: Add item to return table - Enhanced version with proper structure (Insert Orders)
+    function _legacy_addItemToReturnTable(batch) {
         // Auto-populate invoice details from batch's purchase transaction
         // Use bill_no and bill_date as fallback if invoice fields are null
         const invoiceNo = batch.invoice_no || batch.bill_no || null;
@@ -1304,12 +1330,12 @@ Do you still want to add this batch to the return?`;
         };
 
         const newIndex = returnItems.length;
-        addItemRow(item, newIndex);
+        _legacy_addItemRow(item, newIndex);
         returnItems.push(item);
     }
 
-    // Add a single item row to the table
-    function addItemRow(item, index) {
+    // LEGACY: Add a single item row to the table (Insert Orders)
+    function _legacy_addItemRow(item, index) {
         const tbody = document.getElementById('itemsTableBody');
         const rowIndex = currentRowIndex++;
         
@@ -1774,8 +1800,10 @@ Do you still want to add this batch to the return?`;
         }
     }
 
-    // Add new row button
-    function addNewRow() {
+    // LEGACY: Add new row button - Opens Insert Orders modal (DUPLICATE - SHOULD NOT BE USED)
+    // This function was overriding the correct addNewRow() function
+    // Renamed to prevent conflict
+    function _legacy_addNewRowViaInsertOrders() {
         if (!selectedSupplier) {
             alert('Please select a supplier first!');
             return;
@@ -2134,6 +2162,11 @@ Do you still want to add this batch to the return?`;
             items: items,
             adjustments: adjustments
         };
+        
+        // 🔥 Mark as saving to prevent exit confirmation dialog
+        if (typeof window.markAsSaving === 'function') {
+            window.markAsSaving();
+        }
         
         // Submit to server
         fetch('{{ route("admin.purchase-return.store") }}', {

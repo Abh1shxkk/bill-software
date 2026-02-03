@@ -548,6 +548,11 @@ function saveVoucher() {
         _token: '{{ csrf_token() }}'
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.voucher-entry.store") }}', {
         method: 'POST',
         headers: {

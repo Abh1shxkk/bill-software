@@ -1096,6 +1096,11 @@ function submitDebitNote(withAdjustment = false, adjustments = []) {
         adjustments: adjustments
     };
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch('{{ route("admin.debit-note.store") }}', {
         method: 'POST',
         headers: {

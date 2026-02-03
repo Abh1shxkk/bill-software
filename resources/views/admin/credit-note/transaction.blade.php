@@ -1057,6 +1057,11 @@ function submitCreditNote(withAdjustment = false, adjustments = []) {
         : '{{ route("admin.credit-note.store") }}';
     const method = creditNoteId ? 'PUT' : 'POST';
     
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
     fetch(url, {
         method: method,
         headers: {
