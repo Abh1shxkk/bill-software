@@ -144,6 +144,25 @@
 <!-- Modal placeholder -->
 <div id="modalContainer"></div>
 
+<!-- Reusable Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'reusableItemsModal',
+    'module' => 'replacement-note-modification',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'reusableBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'reusableBatchModal',
+    'module' => 'replacement-note-modification',
+    'showOnlyAvailable' => true,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
+
 @endsection
 
 @push('scripts')
@@ -156,6 +175,70 @@ document.addEventListener('DOMContentLoaded', function() {
     const id = urlParams.get('id');
     if (id) loadTransaction(id);
 });
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from reusable modal:', item);
+    console.log('Batch selected from reusable modal:', batch);
+    
+    // Create a new row with item and batch data
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    // Format expiry date
+    let expiryDisplay = '';
+    if (batch.expiry_date) {
+        try {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    const mrp = parseFloat(batch.mrp || batch.avg_mrp || item.mrp || 0);
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = item.id;
+    row.dataset.batchId = batch.id;
+    row.dataset.itemData = JSON.stringify(item);
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="1" step="1" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][amount]" value="${mrp.toFixed(2)}" readonly></td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-trash"></i></button>
+        </td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Update footer display
+    if (typeof updateFooter === 'function') {
+        updateFooter(item);
+    }
+    
+    // Calculate totals
+    if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
+    if (typeof calculateTotal === 'function') calculateTotal();
+    
+    // Focus qty field
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+    }
+};
 
 function loadItems() {
     fetch('{{ route("admin.items.get-all") }}')
@@ -624,21 +707,13 @@ function closeCreateBatchModal() {
 }
 
 function openInsertItemsModal() {
-    let html = `<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1050;" id="itemBackdrop"></div>
-        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;max-width:700px;background:white;border-radius:8px;z-index:1055;" id="itemModal">
-            <div style="padding:0.75rem;background:#198754;color:white;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;">
-                <h6 class="mb-0"><i class="bi bi-plus-square me-1"></i> Insert Items</h6>
-                <button onclick="closeItemModal()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">&times;</button>
-            </div>
-            <div style="padding:1rem;max-height:400px;overflow-y:auto;">
-                <input type="text" class="form-control mb-2" id="itemSearchInput" placeholder="Search item..." onkeyup="filterItems()">
-                <table class="table table-sm table-hover"><thead class="table-success"><tr><th>Code</th><th>Name</th><th>Packing</th><th>MRP</th><th>Action</th></tr></thead><tbody id="itemListBody">`;
-    itemsData.slice(0,50).forEach(item => {
-        html += `<tr ondblclick='selectInsertItem(${JSON.stringify(item).replace(/'/g,"&apos;")})'><td>${item.id}</td><td>${item.name||''}</td><td>${item.packing||''}</td><td class="text-end">${parseFloat(item.mrp||0).toFixed(2)}</td>
-            <td><button class="btn btn-sm btn-success py-0" onclick='selectInsertItem(${JSON.stringify(item).replace(/'/g,"&apos;")})'><i class="bi bi-check"></i></button></td></tr>`;
-    });
-    html += `</tbody></table></div></div>`;
-    document.getElementById('modalContainer').innerHTML = html;
+    // Use reusable item selection modal
+    if (typeof openItemModal_reusableItemsModal === 'function') {
+        openItemModal_reusableItemsModal();
+    } else {
+        console.error('Reusable item modal not found');
+        alert('Item selection modal not available. Please reload the page.');
+    }
 }
 
 function filterItems() {

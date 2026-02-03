@@ -83,6 +83,17 @@
 </section>
 @endsection
 
+<!-- Item Selection Modal Component -->
+@include('components.modals.item-selection', [
+    'id' => 'pendingOrderItemModal',
+    'module' => 'pending-order-item',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => '',
+])
+
 @push('scripts')
 <script>
 let itemsData = [];
@@ -99,17 +110,66 @@ function loadItems() {
         .catch(error => console.error('Error:', error));
 }
 
+// ============================================================================
+// BRIDGE FUNCTIONS FOR REUSABLE MODAL COMPONENTS
+// ============================================================================
+
+/**
+ * Bridge function called by reusable modal component after item selection
+ * Note: No batch selection in this module - only item selection
+ */
+function onItemSelectedFromModal(itemData) {
+    console.log('🎯 Pending Order Item: onItemSelectedFromModal called', {itemData});
+    
+    if (!itemData || !itemData.id) {
+        console.error('❌ Pending Order Item: Invalid item data received');
+        return;
+    }
+    
+    // Populate form fields
+    document.getElementById('item_id').value = itemData.id || '';
+    document.getElementById('item_code').value = itemData.bar_code || itemData.id || '';
+    document.getElementById('item_name').value = itemData.name || '';
+    
+    console.log('✅ Pending Order Item: Item selected successfully');
+    
+    // Focus quantity field
+    setTimeout(() => {
+        document.getElementById('quantity')?.focus();
+    }, 100);
+}
+
+/**
+ * Bridge function to open item selection modal
+ */
 function showItemModal() {
+    console.log('🎯 Pending Order Item: showItemModal called');
+    
+    // Check if modal component function exists
+    if (typeof window.openItemModal_pendingOrderItemModal === 'function') {
+        console.log('✅ Pending Order Item: Opening reusable item modal');
+        window.openItemModal_pendingOrderItemModal();
+    } else {
+        console.error('❌ Pending Order Item: openItemModal_pendingOrderItemModal function not found. Modal component may not be loaded.');
+        alert('Error: Item selection modal not available. Please refresh the page.');
+    }
+}
+
+// ============================================================================
+// LEGACY FUNCTIONS (Kept as fallback, prefixed with _legacy_)
+// ============================================================================
+
+function _legacy_showItemModal() {
     let html = `
         <div class="item-modal-backdrop show" id="itemBackdrop"></div>
         <div class="item-modal show" id="itemModal">
             <div class="modal-header-custom">
                 <h5 class="mb-0"><i class="bi bi-search me-2"></i>Select Item</h5>
-                <button type="button" class="btn-close btn-close-white" onclick="closeItemModal()"></button>
+                <button type="button" class="btn-close btn-close-white" onclick="_legacy_closeItemModal()"></button>
             </div>
             <div class="modal-body-custom">
                 <div class="mb-3">
-                    <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by code or name..." onkeyup="filterItems()">
+                    <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by code or name..." onkeyup="_legacy_filterItems()">
                 </div>
                 <div class="table-responsive" style="max-height: 300px;">
                     <table class="table table-bordered table-sm" style="font-size: 11px;">
@@ -126,15 +186,15 @@ function showItemModal() {
                 </div>
             </div>
             <div class="modal-footer-custom">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="_legacy_closeItemModal()">Close</button>
             </div>
         </div>`;
     document.body.insertAdjacentHTML('beforeend', html);
     document.getElementById('itemSearchInput')?.focus();
-    renderItemsList();
+    _legacy_renderItemsList();
 }
 
-function renderItemsList(filter = '') {
+function _legacy_renderItemsList(filter = '') {
     const tbody = document.getElementById('itemsListBody');
     const filtered = itemsData.filter(item => 
         !filter || 
@@ -143,7 +203,7 @@ function renderItemsList(filter = '') {
     );
     
     tbody.innerHTML = filtered.map(item => `
-        <tr class="item-row" onclick="selectItem(${item.id})">
+        <tr class="item-row" onclick="_legacy_selectItem(${item.id})">
             <td>${item.bar_code || item.id}</td>
             <td>${item.name || ''}</td>
             <td>${item.packing || ''}</td>
@@ -152,11 +212,11 @@ function renderItemsList(filter = '') {
     `).join('');
 }
 
-function filterItems() {
-    renderItemsList(document.getElementById('itemSearchInput').value);
+function _legacy_filterItems() {
+    _legacy_renderItemsList(document.getElementById('itemSearchInput').value);
 }
 
-function selectItem(itemId) {
+function _legacy_selectItem(itemId) {
     const item = itemsData.find(i => i.id === itemId);
     if (!item) return;
     
@@ -164,11 +224,11 @@ function selectItem(itemId) {
     document.getElementById('item_code').value = item.bar_code || item.id;
     document.getElementById('item_name').value = item.name || '';
     
-    closeItemModal();
+    _legacy_closeItemModal();
     document.getElementById('quantity').focus();
 }
 
-function closeItemModal() {
+function _legacy_closeItemModal() {
     document.getElementById('itemModal')?.remove();
     document.getElementById('itemBackdrop')?.remove();
 }

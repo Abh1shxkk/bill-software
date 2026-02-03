@@ -505,9 +505,17 @@ private function generateTrnNo()
 
             $adjustments = $query->paginate(20);
 
+            // Ensure total_items is set for each adjustment
+            $adjustmentsData = $adjustments->items();
+            foreach ($adjustmentsData as $adjustment) {
+                if (!$adjustment->total_items) {
+                    $adjustment->total_items = $adjustment->items->count();
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'adjustments' => $adjustments->items(),
+                'adjustments' => $adjustmentsData,
                 'hasMorePages' => $adjustments->hasMorePages()
             ]);
 

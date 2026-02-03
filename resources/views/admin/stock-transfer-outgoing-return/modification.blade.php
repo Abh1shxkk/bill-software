@@ -434,6 +434,25 @@
     </div>
 </div>
 
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'stockTransferOutgoingReturnModItemModal',
+    'module' => 'stock-transfer-outgoing-return',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'stockTransferOutgoingReturnModBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'stockTransferOutgoingReturnModBatchModal',
+    'module' => 'stock-transfer-outgoing-return',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+])
+
 @endsection
 
 @push('scripts')
@@ -659,7 +678,67 @@ function populateItemRow(rowIndex, item) {
     updateFooterDetails(rowIndex);
 }
 
+// ====== NEW MODAL COMPONENT BRIDGE ======
+function openInsertItemsModal() {
+    console.log('📦 Opening stock transfer outgoing return modification item modal');
+    if (typeof openItemModal_stockTransferOutgoingReturnModItemModal === 'function') {
+        openItemModal_stockTransferOutgoingReturnModItemModal();
+    } else {
+        console.error('❌ Item modal function not found');
+    }
+}
+
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Stock Transfer Outgoing Return Modification - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('Item data:', item);
+    console.log('Batch data:', batch);
+    addNewRow();
+    const rowIndex = currentRowIndex - 1;
+    
+    populateItemRow(rowIndex, item);
+    
+    if (batch) {
+        document.getElementById(`batch_${rowIndex}`).value = batch.batch_no || '';
+        document.getElementById(`expiry_${rowIndex}`).value = batch.expiry || '';
+        document.getElementById(`rate_${rowIndex}`).value = parseFloat(batch.s_rate || 0).toFixed(2);
+        if (itemsData[rowIndex]) {
+            itemsData[rowIndex].cl_qty = batch.qty || 0;
+            updateFooterDetails(rowIndex);
+        }
+    }
+    
+    document.getElementById(`qty_${rowIndex}`).focus();
+    calculateRowAmount(rowIndex);
+};
+
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Item selected, opening batch modal for:', item?.name);
+    if (typeof openBatchModal_stockTransferOutgoingReturnModBatchModal === 'function') {
+        openBatchModal_stockTransferOutgoingReturnModBatchModal(item);
+    } else {
+        console.error('❌ Batch modal function not found');
+    }
+};
+// ====== END MODAL COMPONENT BRIDGE ======
+
 function openItemModal(rowIndex) {
+    console.log('📦 Opening item modal for row:', rowIndex);
+    // Use new component if available
+    if (typeof openItemModal_stockTransferOutgoingReturnModItemModal === 'function') {
+        selectedRowIndex = rowIndex;
+        openItemModal_stockTransferOutgoingReturnModItemModal();
+        return;
+    }
+    // Fallback to legacy
+    console.warn('⚠️ Falling back to legacy item modal');
+    _legacy_openItemModal(rowIndex);
+}
+
+function _legacy_openItemModal(rowIndex) {
     selectedRowIndex = rowIndex;
     document.getElementById('itemModalBackdrop').classList.add('show');
     document.getElementById('itemModal').classList.add('show');

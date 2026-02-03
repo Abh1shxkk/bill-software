@@ -614,9 +614,46 @@ function updateSalesmanName() {
 
 // Add new row to items table
 function addNewRow() {
-    // Open item selection modal
-    openAllItemsModal();
+    // Open reusable item selection modal
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        console.error('Item selection modal not initialized');
+        showAlert('error', 'Could not open item selection modal');
+    }
 }
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from modal:', item);
+    console.log('Batch selected from modal:', batch);
+    
+    // Create item object for the table
+    const newItem = {
+        item_id: item.id,
+        item_code: item.bar_code || item.id,
+        item_name: item.name,
+        batch_id: batch.id,
+        batch_no: batch.batch_no,
+        expiry_date: batch.expiry_display || batch.expiry_date || '',
+        packing: item.packing || '',
+        unit: item.unit || 'PCS',
+        company_name: item.company_name || '',
+        hsn_code: item.hsn_code || '',
+        sale_rate: parseFloat(batch.s_rate || batch.avg_s_rate || 0),
+        mrp: parseFloat(batch.mrp || batch.avg_mrp || 0),
+        discount_percent: 0,
+        cgst_percent: parseFloat(item.cgst_percent || 6),
+        sgst_percent: parseFloat(item.sgst_percent || 6),
+        cess_percent: parseFloat(item.cess_percent || 0),
+        return_qty: 0,
+        return_fqty: 0
+    };
+    
+    // Add to table using existing function
+    populateItemsTable([newItem]);
+    showAlert('success', 'Item added successfully! Enter return quantity.');
+};
 
 // Populate items table with items (ADD new items, don't clear existing)
 function populateItemsTable(items) {
@@ -1279,16 +1316,13 @@ let itemsLoading = false;
 let allLoadedItems = [];
 
 function openAllItemsModal() {
-    showAlert('info', 'Loading items...');
-    
-    // Reset pagination state
-    itemsCurrentPage = 1;
-    itemsHasMore = true;
-    itemsLoading = false;
-    allLoadedItems = [];
-    
-    // Fetch first page of items
-    fetchPaginatedItems(itemsCurrentPage, true);
+    // LEGACY REDIRECT: Use new reusable modal component
+    console.log('openAllItemsModal called - redirecting to new modal component');
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        showAlert('error', 'Item selection modal not initialized. Please reload the page.');
+    }
 }
 
 // Fetch paginated items from server
@@ -3906,5 +3940,24 @@ document.addEventListener('DOMContentLoaded', function() {
     gap: 10px;
 }
 </style>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'sale-return',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'batchSelectionModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'sale-return',
+    'showOnlyAvailable' => false,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+])
 
 @endsection

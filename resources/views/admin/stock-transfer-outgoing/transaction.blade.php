@@ -226,6 +226,26 @@
         </form>
     </div>
 </div>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'stockTransferOutgoingItemModal',
+    'module' => 'stock-transfer-outgoing',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'stockTransferOutgoingBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'stockTransferOutgoingBatchModal',
+    'module' => 'stock-transfer-outgoing',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+])
+
 @endsection
 
 @push('scripts')
@@ -237,10 +257,10 @@ let pendingItemForBatch = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    loadItems();
+    loadItems(); // Keep for legacy row-based item lookup
 });
 
-// Load Items from API
+// Load Items from API (for legacy row-based lookup)
 function loadItems() {
     fetch('{{ route("admin.items.get-all") }}')
         .then(response => response.json())
@@ -250,6 +270,41 @@ function loadItems() {
         })
         .catch(error => console.error('Error loading items:', error));
 }
+
+// ====== NEW MODAL COMPONENT BRIDGE ======
+// Open Insert Items Modal using new component
+function openInsertItemsModal() {
+    console.log('📦 Opening stock transfer outgoing item modal');
+    if (typeof openItemModal_stockTransferOutgoingItemModal === 'function') {
+        openItemModal_stockTransferOutgoingItemModal();
+    } else {
+        console.error('❌ Item modal function not found');
+    }
+}
+
+// Callback when item and batch are selected from new modal component
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Stock Transfer Outgoing - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('Item data:', item);
+    console.log('Batch data:', batch);
+    addItemToTable(item, batch);
+};
+
+// Also support the simpler callback name
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+// Listen for item selection (if batch modal doesn't auto-open)
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Item selected, opening batch modal for:', item?.name);
+    if (typeof openBatchModal_stockTransferOutgoingBatchModal === 'function') {
+        openBatchModal_stockTransferOutgoingBatchModal(item);
+    } else {
+        console.error('❌ Batch modal function not found');
+    }
+};
+// ====== END MODAL COMPONENT BRIDGE ======
 
 function updateCustomerName() {
     const select = document.getElementById('customerSelect');
@@ -519,8 +574,8 @@ function closeBatchModal() {
     document.getElementById('batchBackdrop')?.remove();
 }
 
-// Open Insert Items Modal
-function openInsertItemsModal() {
+// OLD LEGACY - Renamed to avoid conflict with new component bridge  
+function _legacy_openInsertItemsModal() {
     let html = `
         <div class="item-modal-backdrop show" id="itemBackdrop"></div>
         <div class="item-modal show" id="itemModal">

@@ -261,6 +261,26 @@
         </div>
     </div>
 </section>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'stockTransferIncomingItemModal',
+    'module' => 'stock-transfer-incoming',
+    'showStock' => true,
+    'rateType' => 'pur_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'stockTransferIncomingBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'stockTransferIncomingBatchModal',
+    'module' => 'stock-transfer-incoming',
+    'showOnlyAvailable' => false,
+    'rateType' => 'pur_rate',
+    'showCostDetails' => true,
+])
+
 @endsection
 
 @push('scripts')
@@ -298,8 +318,84 @@ function loadItems() {
         .catch(error => console.error('Error loading items:', error));
 }
 
-// ============ ITEM SELECTION MODAL ============
+// ====== NEW MODAL COMPONENT BRIDGE ======
+// Open Item Selection Modal using new component
 function showItemSelectionModal() {
+    console.log('📦 Opening stock transfer incoming item modal');
+    if (typeof openItemModal_stockTransferIncomingItemModal === 'function') {
+        openItemModal_stockTransferIncomingItemModal();
+    } else {
+        console.error('❌ Item modal function not found');
+    }
+}
+
+// Callback when item and batch are selected from new modal component
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Stock Transfer Incoming - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('Item data:', item);
+    console.log('Batch data:', batch);
+    // Add row with item and batch data
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = item.id;
+    row.dataset.itemData = JSON.stringify(item);
+    if (batch) {
+        row.dataset.batchId = batch.id;
+        row.dataset.batchData = JSON.stringify(batch);
+    }
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    const batchNo = batch ? batch.batch_no : '';
+    const expiry = batch && batch.expiry_date ? (() => {
+        const d = new Date(batch.expiry_date);
+        return `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    })() : '';
+    const pRate = batch ? parseFloat(batch.pur_rate || item.pur_rate || 0).toFixed(2) : parseFloat(item.pur_rate || 0).toFixed(2);
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || item.item_code || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" value="${pRate}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="${item.gst_percent || 0}" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+    `;
+    
+    tbody.appendChild(row);
+    selectRow(rowIndex);
+    updateFooterFromRow(row);
+    
+    // Focus on qty field
+    setTimeout(() => {
+        row.querySelector('input[name*="[qty]"]')?.focus();
+    }, 100);
+};
+
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Item selected, opening batch modal for:', item?.name);
+    if (typeof openBatchModal_stockTransferIncomingBatchModal === 'function') {
+        openBatchModal_stockTransferIncomingBatchModal(item);
+    } else {
+        console.error('❌ Batch modal function not found');
+    }
+};
+// ====== END MODAL COMPONENT BRIDGE ======
+
+// ============ LEGACY ITEM SELECTION MODAL (RENAMED) ============
+function _legacy_showItemSelectionModal() {
     let html = `
         <div class="batch-modal-backdrop show" id="itemModalBackdrop"></div>
         <div class="batch-modal show" id="itemModal" style="max-width: 900px;">

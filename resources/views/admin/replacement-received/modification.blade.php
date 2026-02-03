@@ -219,9 +219,94 @@
 
 @endsection
 
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'replacementReceivedModItemModal',
+    'module' => 'replacement-received',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'replacementReceivedModBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'replacementReceivedModBatchModal',
+    'module' => 'replacement-received',
+    'showOnlyAvailable' => false,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
+
 @push('scripts')
 <script>
 let currentRowIndex = 0, itemsData = [], currentTransactionId = null, selectedRowIndex = null;
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from reusable modal:', item);
+    console.log('Batch selected from reusable modal:', batch);
+    
+    // Add a new row with item and batch data
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    // Format expiry date
+    let expiryDisplay = '';
+    if (batch.expiry_date) {
+        try {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    const mrp = parseFloat(batch.mrp || batch.avg_mrp || item.mrp || 0);
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = item.id;
+    row.dataset.batchId = batch.id;
+    row.dataset.itemData = JSON.stringify(item);
+    row.dataset.batchData = JSON.stringify(batch);
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" step="1" min="1" value="0" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][free_qty]" value="0" step="1" min="0"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][discount_percent]" value="0" step="0.01" min="0" max="100" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly></td>
+        <td><input type="number" class="form-control text-end readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger py-0" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Update footer display
+    updateFooterFromRow(row);
+    
+    // Select the row
+    selectRow(rowIndex);
+    
+    // Focus qty field
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+    
+    calculateRowAmount(rowIndex);
+    calculateTotals();
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
@@ -1015,118 +1100,12 @@ function closeCreateBatchModal() {
 }
 
 function openInsertItemsModal() {
-    let html = `<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1050;" id="itemBackdrop"></div>
-        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;max-width:700px;background:white;border-radius:8px;z-index:1055;" id="itemModal">
-            <div style="padding:0.75rem;background:#198754;color:white;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;">
-                <h6 class="mb-0"><i class="bi bi-plus-square me-1"></i> Insert Items</h6>
-                <button onclick="closeItemModal()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">&times;</button>
-            </div>
-            <div style="padding:1rem;max-height:400px;overflow-y:auto;">
-                <input type="text" class="form-control mb-2" id="itemSearchInput" placeholder="Search item..." onkeyup="filterItems()">
-                <table class="table table-sm table-hover"><thead class="table-success"><tr><th>Code</th><th>Name</th><th>Packing</th><th>MRP</th><th>Action</th></tr></thead><tbody id="itemListBody">`;
-    itemsData.slice(0,50).forEach(item => {
-        html += `<tr ondblclick='selectInsertItem(${JSON.stringify(item).replace(/'/g,"&apos;")})'><td>${item.id}</td><td>${item.name||''}</td><td>${item.packing||''}</td><td class="text-end">${parseFloat(item.mrp||0).toFixed(2)}</td>
-            <td><button class="btn btn-sm btn-success py-0" onclick='selectInsertItem(${JSON.stringify(item).replace(/'/g,"&apos;")})'><i class="bi bi-check"></i></button></td></tr>`;
-    });
-    html += `</tbody></table></div></div>`;
-    document.getElementById('modalContainer').innerHTML = html;
-}
-
-function filterItems() {
-    const search = document.getElementById('itemSearchInput').value.toLowerCase();
-    const filtered = itemsData.filter(i => (i.name||'').toLowerCase().includes(search) || (i.id||'').toString().includes(search));
-    let html = '';
-    filtered.slice(0,50).forEach(item => {
-        html += `<tr ondblclick='selectInsertItem(${JSON.stringify(item).replace(/'/g,"&apos;")})'><td>${item.id}</td><td>${item.name||''}</td><td>${item.packing||''}</td><td class="text-end">${parseFloat(item.mrp||0).toFixed(2)}</td>
-            <td><button class="btn btn-sm btn-success py-0" onclick='selectInsertItem(${JSON.stringify(item).replace(/'/g,"&apos;")})'><i class="bi bi-check"></i></button></td></tr>`;
-    });
-    document.getElementById('itemListBody').innerHTML = html;
-}
-
-function selectInsertItem(item) {
-    pendingItemForBatch = item;
-    closeItemModal();
-    
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
-        .then(r => r.json())
-        .then(d => {
-            const availableBatches = (d.batches || []).filter(b => (b.qty || 0) > 0);
-            if (availableBatches.length > 0) {
-                showBatchModal(availableBatches, item);
-            } else {
-                addItemToTable(item, null);
-            }
-        })
-        .catch(e => {
-            console.error(e);
-            addItemToTable(item, null);
-        });
-}
-
-function showBatchModal(batches, item) {
-    const totalStock = batches.reduce((sum, b) => sum + (b.qty || 0), 0);
-    let html = `<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1050;" id="batchBackdrop"></div>
-        <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:80%;max-width:700px;background:white;border-radius:8px;z-index:1055;" id="batchModal">
-            <div style="padding:0.75rem;background:#17a2b8;color:white;border-radius:8px 8px 0 0;display:flex;justify-content:space-between;">
-                <h6 class="mb-0"><i class="bi bi-box me-1"></i> Select Batch - ${item.name}</h6>
-                <button onclick="closeBatchModalAndReopen()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer;">&times;</button>
-            </div>
-            <div style="padding:1rem;max-height:400px;overflow-y:auto;">
-                <div class="mb-2"><strong>Total Stock: <span class="text-success">${totalStock}</span></strong></div>
-                <table class="table table-sm table-hover"><thead class="table-info"><tr><th>Batch</th><th>Expiry</th><th>MRP</th><th>Avl.Qty</th><th>Action</th></tr></thead><tbody>`;
-    batches.forEach(batch => {
-        const exp = batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB', {month:'2-digit',year:'numeric'}) : '';
-        html += `<tr style="background:#d4edda;" ondblclick='selectBatch(${JSON.stringify(batch).replace(/'/g,"&apos;")})'><td><strong>${batch.batch_no||''}</strong></td><td>${exp}</td><td>${parseFloat(batch.mrp||0).toFixed(2)}</td><td><strong>${batch.qty||0}</strong></td>
-            <td><button class="btn btn-sm btn-success py-0" onclick='selectBatch(${JSON.stringify(batch).replace(/'/g,"&apos;")})'><i class="bi bi-check"></i></button></td></tr>`;
-    });
-    html += `</tbody></table></div>
-        <div style="padding:0.75rem;background:#f8f9fa;border-top:1px solid #dee2e6;">
-            <button class="btn btn-outline-primary btn-sm" onclick="addItemWithoutBatch()"><i class="bi bi-plus"></i> Add Without Batch</button>
-            <button class="btn btn-secondary btn-sm" onclick="closeBatchModalAndReopen()">Back</button>
-        </div></div>`;
-    document.getElementById('modalContainer').innerHTML = html;
-}
-
-function selectBatch(batch) {
-    closeModal();
-    addItemToTable(pendingItemForBatch, batch);
-}
-
-function addItemWithoutBatch() {
-    closeModal();
-    addItemToTable(pendingItemForBatch, null);
-}
-
-function addItemToTable(item, batch) {
-    addNewRow();
-    const rowIndex = currentRowIndex - 1;
-    const row = document.getElementById(`row-${rowIndex}`);
-    if (row) {
-        row.querySelector('input[name*="[code]"]').value = item.id;
-        row.querySelector('input[name*="[name]"]').value = item.name;
-        row.querySelector('input[name*="[mrp]"]').value = parseFloat(item.mrp||0).toFixed(2);
-        row.dataset.itemId = item.id;
-        row.dataset.itemData = JSON.stringify(item);
-        
-        if (batch) {
-            row.querySelector('input[name*="[batch]"]').value = batch.batch_no || '';
-            row.querySelector('input[name*="[expiry]"]').value = batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB', {month:'2-digit',year:'numeric'}).replace('/','') : '';
-            row.dataset.batchId = batch.id;
-        }
-        
-        selectRow(rowIndex);
-        row.querySelector('input[name*="[qty]"]')?.focus();
+    if (typeof openItemModal_replacementReceivedModItemModal === 'function') {
+        openItemModal_replacementReceivedModItemModal();
+    } else {
+        console.error('Reusable item modal not found');
+        alert('Item selection modal not found. Please reload the page.');
     }
-}
-
-function closeItemModal() {
-    document.getElementById('itemBackdrop')?.remove();
-    document.getElementById('itemModal')?.remove();
-}
-
-function closeBatchModalAndReopen() {
-    closeModal();
-    setTimeout(openInsertItemsModal, 100);
 }
 
 function loadInvoiceFromModal(id) {

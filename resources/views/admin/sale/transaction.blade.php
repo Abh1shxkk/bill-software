@@ -1255,128 +1255,28 @@
     </div>
 </div>
 
-<!-- Choose Items Modal Backdrop -->
-<div id="chooseItemsBackdrop" class="pending-orders-backdrop"></div>
+<!-- Reusable Item Selection Modal Component -->
+@include('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'sale',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'batchSelectionModal',
+])
 
-<!-- Choose Items Modal -->
-<div id="chooseItemsModal" class="pending-orders-modal">
-    <div class="pending-orders-content">
-        <div class="pending-orders-header">
-            <h5 class="pending-orders-title">Choose Items</h5>
-            <button type="button" class="btn-close-modal" onclick="closeChooseItemsModal()" title="Close">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="pending-orders-body">
-            <div class="p-3">
-                <input type="text" class="form-control mb-3" id="itemSearchInput" placeholder="Search by Name, HSN Code, Company... (Press Enter to select first)" autocomplete="off" style="font-size: 12px;" oninput="filterItemsInModal()">
-            </div>
-            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
-                <table class="table table-bordered table-hover mb-0" style="font-size: 11px;">
-                    <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
-                        <tr style="background: #ffcccc;">
-                            <th style="width: 200px;">Name</th>
-                            <th style="width: 120px;">HSN Code</th>
-                            <th style="width: 100px;">Pack</th>
-                            <th style="width: 150px;">Company</th>
-                            <th style="width: 80px;">Qty</th>
-                        </tr>
-                    </thead>
-                    <tbody id="chooseItemsBody">
-                        <!-- Items will be loaded here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="pending-orders-footer">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeChooseItemsModal()">
-                <i class="bi bi-x-circle"></i> Cancel
-            </button>
-        </div>
-    </div>
-</div>
+<!-- Reusable Batch Selection Modal Component (shows only available stock) -->
+@include('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'sale',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showPurchaseRate' => true,
+    'showCostDetails' => true,
+    'showSupplier' => true,
+])
 
-<!-- Batch Selection Modal Backdrop -->
-<div id="batchSelectionBackdrop" class="pending-orders-backdrop"></div>
-
-<!-- Batch Selection Modal -->
-<div id="batchSelectionModal" class="pending-orders-modal" style="max-width: 900px;">
-    <div class="pending-orders-content">
-        <div class="pending-orders-header">
-            <h5 class="pending-orders-title">Select Batch</h5>
-            <button type="button" class="btn-close-modal" onclick="closeBatchSelectionModal()" title="Close">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="pending-orders-body">
-            <div class="p-3 bg-light border-bottom">
-                <div class="mb-2">
-                    <strong style="font-size: 14px;">Item: <span id="batchItemName" style="color: #7c3aed; font-size: 16px;">---</span></strong>
-                </div>
-                <input type="text" class="form-control mb-0" id="batchSearchInput" placeholder="Search by Batch No..." autocomplete="off" oninput="filterBatchesInModal()" style="font-size: 12px;">
-            </div>
-            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                <table class="table table-bordered mb-0" style="font-size: 11px;">
-                    <thead style="position: sticky; top: 0; background: #ffcccc; z-index: 10; font-weight: bold;">
-                        <tr>
-                            <th style="width: 120px; text-align: left; padding: 8px;">BATCH</th>
-                            <th style="width: 80px; text-align: center; padding: 8px;">DATE</th>
-                            <th style="width: 90px; text-align: right; padding: 8px;">RATE</th>
-                            <th style="width: 90px; text-align: right; padding: 8px;">PRATE</th>
-                            <th style="width: 90px; text-align: right; padding: 8px;">MRP</th>
-                            <th style="width: 70px; text-align: right; padding: 8px;">QTY.</th>
-                            <th style="width: 70px; text-align: right; padding: 8px;">EXP.</th>
-                            <th style="width: 80px; text-align: center; padding: 8px;">CODE</th>
-                        </tr>
-                    </thead>
-                    <tbody id="batchSelectionBody">
-                        <!-- Batches will be loaded here -->
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Batch Details Section (like in image) -->
-            <div class="p-3 bg-white border-top">
-                <div class="mb-2" style="font-weight: bold; font-size: 13px; color: #000;">
-                    <strong>BRAND : </strong><span id="batchBrand" style="color: #7c3aed;">---</span>
-                    <span class="float-end"><strong>Packing : </strong><span id="batchPacking" style="color: #7c3aed;">---</span></span>
-                </div>
-                <table class="table table-bordered mb-0" style="font-size: 11px;">
-                    <thead style="background: #ffcccc; font-weight: bold;">
-                        <tr>
-                            <th style="padding: 5px;">BATCH</th>
-                            <th style="padding: 5px; text-align: center;">DATE</th>
-                            <th style="padding: 5px; text-align: right;">RATE</th>
-                            <th style="padding: 5px; text-align: right;">PRATE</th>
-                            <th style="padding: 5px; text-align: right;">MRP</th>
-                            <th style="padding: 5px; text-align: right;">QTY.</th>
-                            <th style="padding: 5px; text-align: center;">EXP.</th>
-                            <th style="padding: 5px; text-align: center;">CODE</th>
-                            <th style="padding: 5px; text-align: right;">Cost+GST</th>
-                            <th style="padding: 5px; text-align: center;">SCM</th>
-                        </tr>
-                    </thead>
-                    <tbody id="batchDetailsBody" style="background: #ffcccc;">
-                        <tr>
-                            <td colspan="10" class="text-center" style="padding: 8px;">Select a batch to view details</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="mt-2" style="font-size: 11px;">
-                    <strong>Supplier : </strong><span id="batchSupplier" style="color: #0066cc; font-weight: bold;">---</span>
-                </div>
-            </div>
-        </div>
-        <div class="pending-orders-footer">
-            <button type="button" class="btn btn-primary btn-sm" onclick="if(window.selectedBatch) selectBatchFromModal(window.selectedBatch); else alert('Please select a batch first');">
-                <i class="bi bi-check-circle"></i> Select Batch
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchSelectionModal()">
-                <i class="bi bi-x-circle"></i> Cancel
-            </button>
-        </div>
-    </div>
-</div>
 
 <!-- Pending Challan Modal Backdrop -->
 <div id="pendingChallanBackdrop" class="pending-orders-backdrop"></div>
@@ -3342,6 +3242,68 @@ function populateRowWithItemAndBatch(rowIndex, item, batch) {
     console.log('✅ Row populated successfully');
 }
 
+// Populate a specific row with item and batch data (for barcode entry)
+function populateRowWithItemAndBatch(rowIndex, item, batch) {
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    if (!row) {
+        console.error('Row not found for index:', rowIndex);
+        // Fallback to addItemToTable
+        addItemToTable(item, batch);
+        return;
+    }
+    
+    // Use populateExistingRow to fill the row
+    populateExistingRow(row, item, batch);
+    
+    // Make item name readonly after population
+    const nameInput = row.querySelector('input[name*="[item_name]"]');
+    if (nameInput) {
+        nameInput.setAttribute('readonly', 'readonly');
+        nameInput.style.background = 'transparent';
+    }
+    
+    // Focus on qty field
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+}
+
+// Add empty row to table
+function addEmptyRow() {
+    itemIndex++;
+    const tbody = document.getElementById('itemsTableBody');
+    const newRow = document.createElement('tr');
+    newRow.setAttribute('data-row-index', itemIndex);
+    newRow.style.cursor = 'pointer';
+    
+    newRow.innerHTML = `
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0.00" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="0.00" step="0.01" style="font-size: 10px;" readonly></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][amount]" id="amount_${itemIndex}" value="0.00" style="font-size: 10px;" readonly></td>
+        <td class="p-0 text-center">
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(${itemIndex})" title="Delete Row" style="font-size: 9px; padding: 2px 5px;">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    addRowEventListeners(newRow, itemIndex);
+    
+    return newRow;
+}
+
 
 // Find first empty row that can be reused
 function findFirstEmptyRow() {
@@ -3445,6 +3407,81 @@ function populateExistingRow(row, item, batch) {
     return rowIndex;
 }
 
+// Move to next row's code field (creates new row if needed)
+function moveToNextRowCodeField(currentRowIndex) {
+    const tbody = document.getElementById('itemsTableBody');
+    const allRows = tbody.querySelectorAll('tr[data-row-index]');
+    let nextRow = null;
+    
+    // Find next row after current
+    for (let i = 0; i < allRows.length; i++) {
+        const rowIdx = parseInt(allRows[i].getAttribute('data-row-index'));
+        if (rowIdx > currentRowIndex) {
+            nextRow = allRows[i];
+            break;
+        }
+    }
+    
+    // If no next row, create a new empty row
+    if (!nextRow) {
+        addEmptyRow();
+        // Get the newly created row
+        const newRows = tbody.querySelectorAll('tr[data-row-index]');
+        nextRow = newRows[newRows.length - 1];
+    }
+    
+    // Focus on code field of next row
+    if (nextRow) {
+        const codeInput = nextRow.querySelector('input[name*="[code]"]');
+        if (codeInput) {
+            codeInput.focus();
+            codeInput.select();
+        }
+    }
+}
+
+// Track which row barcode was entered for
+if (typeof window.pendingBarcodeRowIndex === 'undefined') {
+    window.pendingBarcodeRowIndex = null;
+}
+
+// Fetch item by barcode and open batch modal
+function fetchItemByBarcodeAndOpenBatchModal(barcode, rowIndex) {
+    console.log('🔍 Fetching item by barcode:', barcode, 'for row:', rowIndex);
+    
+    // Store the row index for later population
+    window.pendingBarcodeRowIndex = rowIndex;
+    
+    // Fetch item from API
+    fetch(`{{ url('/admin/api/items/search') }}?search=${encodeURIComponent(barcode)}&exact=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.items && data.items.length > 0) {
+                const item = data.items[0];
+                console.log('✅ Found item:', item.name);
+                
+                // Store item and open batch modal
+                window.pendingItemSelection = item;
+                
+                // Open batch modal for this item
+                if (typeof openBatchModal_batchSelectionModal === 'function') {
+                    openBatchModal_batchSelectionModal(item);
+                } else if (typeof openBatchSelectionModal === 'function') {
+                    openBatchSelectionModal(item);
+                }
+            } else {
+                console.warn('⚠️ No item found for barcode:', barcode);
+                alert('Item not found for barcode: ' + barcode);
+                window.pendingBarcodeRowIndex = null;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching item:', error);
+            alert('Error fetching item. Please try again.');
+            window.pendingBarcodeRowIndex = null;
+        });
+}
+
 // Add item to table (FIXED VERSION - reuses empty rows)
 function addItemToTable(item, batch) {
     console.log('🔄 Adding item to table:', item.name);
@@ -3502,7 +3539,7 @@ function addItemToTable(item, batch) {
         
         targetRow.innerHTML = `
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
-            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px;" autocomplete="off"></td>
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px; background: transparent;" autocomplete="off" readonly></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px;" autocomplete="off"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
@@ -3667,10 +3704,11 @@ function addRowEventListeners(row, rowIndex) {
                 if (currentValue !== originalValue) {
                     showDiscountOptionsModal(rowIndex, currentValue);
                 } else {
-                    // No change, just move to next row
+                    // No change, move to next row's code field
                     calculateRowAmount(rowIndex);
                     calculateTotal();
-                    moveToNextRow(rowIndex);
+                    // Move to next row's code field or create new row
+                    moveToNextRowCodeField(rowIndex);
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -3698,12 +3736,18 @@ function addRowEventListeners(row, rowIndex) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 const itemCode = this.value.trim();
-                if (itemCode) {
-                    fetchItemDetailsForRow(itemCode, rowIndex);
+                
+                if (!itemCode) {
+                    // Empty code - open Item Modal
+                    if (typeof openItemModal_chooseItemsModal === 'function') {
+                        openItemModal_chooseItemsModal();
+                    } else if (typeof openChooseItemsModal === 'function') {
+                        openChooseItemsModal();
+                    }
+                } else {
+                    // Has barcode - fetch item and open batch modal
+                    fetchItemByBarcodeAndOpenBatchModal(itemCode, rowIndex);
                 }
-                // Move to next field
-                const nextInput = row.querySelector('input[name*="[item_name]"]');
-                if (nextInput) nextInput.focus();
             }
         });
     }
@@ -6557,6 +6601,109 @@ window.addEventListener('ocrItemsSelected', function(e) {
 });
 
 console.log('📷 OCR Integration Loaded - Items from receipt will be added to transaction table');
+</script>
+
+<!-- Bridge Script for New Modal Components -->
+<script>
+/**
+ * Bridge to connect new reusable modal components with existing sale transaction functions
+ * This ensures backward compatibility while using the new components
+ */
+
+// Override openChooseItemsModal to use new component (for Choose Items button)
+window.openChooseItemsModal = function() {
+    console.log('🔗 Bridge: Opening Item Modal via Choose Items button');
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        console.error('Item Modal component not loaded');
+    }
+};
+
+// Override openItemsModalDirectly to use new component
+window.openItemsModalDirectly = function() {
+    console.log('🔗 Bridge: Opening Item Modal via new component');
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        console.error('Item Modal component not loaded');
+    }
+};
+
+// Override closeChooseItemsModal to use new component  
+window.closeChooseItemsModal = function() {
+    console.log('🔗 Bridge: Closing Item Modal via new component');
+    if (typeof closeItemModal_chooseItemsModal === 'function') {
+        closeItemModal_chooseItemsModal();
+    }
+};
+
+// Override openBatchSelectionModal to use new component
+window.openBatchSelectionModal = function(item) {
+    console.log('🔗 Bridge: Opening Batch Modal via new component for:', item?.name);
+    pendingItemSelection = item;
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
+    } else {
+        console.error('Batch Modal component not loaded');
+    }
+};
+
+// Override closeBatchSelectionModal to use new component
+window.closeBatchSelectionModal = function() {
+    console.log('🔗 Bridge: Closing Batch Modal via new component');
+    if (typeof closeBatchModal_batchSelectionModal === 'function') {
+        closeBatchModal_batchSelectionModal();
+    }
+    pendingItemSelection = null;
+    window.pendingBarcodeRowIndex = null;
+};
+
+// Callback when item and batch are selected from new modal component
+// This is called by the batch modal component when user confirms selection
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Bridge: Item+Batch selected from new modal:', item?.name, batch?.batch_no);
+    
+    // Store selected batch for compatibility
+    window.selectedBatch = batch;
+    pendingItemSelection = item;
+    
+    // Check if this is from barcode entry (existing row) or Choose Items modal (new row)
+    if (window.pendingBarcodeRowIndex !== null) {
+        // From barcode entry - populate existing row
+        console.log('📱 Bridge: Populating existing row from barcode, index:', window.pendingBarcodeRowIndex);
+        if (typeof populateRowWithItemAndBatch === 'function') {
+            populateRowWithItemAndBatch(window.pendingBarcodeRowIndex, item, batch);
+        }
+        window.pendingBarcodeRowIndex = null;
+    } else {
+        // From Choose Items modal - add new row
+        console.log('➕ Bridge: Adding new item via addItemToTable');
+        if (typeof addItemToTable === 'function') {
+            addItemToTable(item, batch);
+        }
+    }
+    
+    // Clear selections
+    window.selectedBatch = null;
+    pendingItemSelection = null;
+};
+
+// Also support the simpler callback name
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+// Listen for item selection to open batch modal (for compatibility)
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Bridge: Item selected, opening batch modal for:', item?.name);
+    pendingItemSelection = item;
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
+    }
+};
+
+console.log('🔗 Modal Component Bridge Loaded - Sale Transaction');
 </script>
 
 @endsection

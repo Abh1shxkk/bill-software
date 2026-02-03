@@ -509,6 +509,33 @@
         from { transform: scaleX(1); }
         to { transform: scaleX(0); }
     }
+    
+    /* Custom Dropdown Styles */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #bbdefb;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -533,14 +560,33 @@
                     <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
                 </div>
                 
-                <div class="field-group">
+                <div class="field-group" style="position: relative;">
                     <label>Supplier:</label>
-                    <select class="form-control" name="supplier_id" id="supplierSelect" style="width: 250px;" autocomplete="off">
-                        <option value="">Select Supplier</option>
-                        @foreach($suppliers ?? [] as $supplier)
-                            <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                        @endforeach
-                    </select>
+                    <div class="custom-dropdown-wrapper" style="width: 250px; position: relative;">
+                        <input type="text" 
+                               class="form-control no-select2" 
+                               id="supplierSearchInput" 
+                               placeholder="Type to search supplier..."
+                               autocomplete="off"
+                               style="width: 100%;">
+                        <input type="hidden" name="supplier_id" id="supplierSelect">
+                        
+                        <div id="supplierDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                Select Supplier
+                            </div>
+                            <div id="supplierList" class="dropdown-list">
+                                @foreach($suppliers ?? [] as $supplier)
+                                    <div class="dropdown-item" 
+                                         data-id="{{ $supplier->supplier_id }}" 
+                                         data-name="{{ $supplier->name }}"
+                                         style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                        - {{ $supplier->name }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -1117,11 +1163,146 @@ function updateDayName() {
     }
 }
 
+// Ensure a select has an option with the given value; create if missing, then select it
+function setSelectOption(selectElement, value, displayText) {
+    if (!selectElement) return;
+    
+    let option = Array.from(selectElement.options).find(opt => String(opt.value) === String(value));
+    if (!option && value) {
+        option = new Option(displayText || String(value), String(value), true, true);
+        selectElement.add(option);
+    }
+    if (option) {
+        // If we have a label to show, update option text as well
+        if (displayText && option.text !== displayText) {
+            option.text = displayText;
+        }
+        selectElement.value = String(value);
+    }
+}
+
+// Update supplier name (no separate field needed - name shown in dropdown)
+function updateSupplierName() {
+    // Supplier name already displayed in dropdown, no separate field needed
+}
+
+// Set supplier by ID (for loading existing data)
+function setSupplierById(supplierId) {
+    const supplierSearchInput = document.getElementById('supplierSearchInput');
+    const supplierSelect = document.getElementById('supplierSelect');
+    const supplierList = document.getElementById('supplierList');
+    
+    if (!supplierSearchInput || !supplierSelect || !supplierList) return;
+    
+    // Find supplier by ID
+    const item = supplierList.querySelector(`.dropdown-item[data-id="${supplierId}"]`);
+    if (item) {
+        const supplierName = item.getAttribute('data-name');
+        supplierSearchInput.value = supplierName;
+        supplierSelect.value = supplierId;
+    }
+}
+
 // Current selected row index
 let currentSelectedRow = null;
 
 // S.Rate Enter key navigation to next row
 document.addEventListener('DOMContentLoaded', function() {
+    // Supplier dropdown functionality
+    const supplierSearchInput = document.getElementById('supplierSearchInput');
+    const supplierDropdown = document.getElementById('supplierDropdown');
+    const supplierSelect = document.getElementById('supplierSelect');
+    const supplierList = document.getElementById('supplierList');
+    
+    if (supplierSearchInput && supplierDropdown) {
+        // Show dropdown on focus
+        supplierSearchInput.addEventListener('focus', function() {
+            supplierDropdown.style.display = 'block';
+            filterSuppliers('');
+        });
+        
+        // Filter suppliers on input
+        supplierSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filterSuppliers(searchTerm);
+            supplierDropdown.style.display = 'block';
+        });
+        
+        // Handle supplier selection
+        supplierList.addEventListener('click', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                const supplierId = item.getAttribute('data-id');
+                const supplierName = item.getAttribute('data-name');
+                
+                supplierSearchInput.value = supplierName;
+                supplierSelect.value = supplierId;
+                supplierDropdown.style.display = 'none';
+                
+                updateSupplierName();
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!supplierSearchInput.contains(e.target) && !supplierDropdown.contains(e.target)) {
+                supplierDropdown.style.display = 'none';
+            }
+        });
+        
+        // Keyboard navigation
+        supplierSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const visibleItems = supplierList.querySelectorAll('.dropdown-item:not([style*="display: none"])');
+                if (visibleItems.length === 1) {
+                    // Auto-select if only one match
+                    visibleItems[0].click();
+                }
+                supplierDropdown.style.display = 'none';
+                
+                // Move to trn no field
+                const trnNoField = document.getElementById('trnNo');
+                if (trnNoField) {
+                    trnNoField.focus();
+                    trnNoField.select();
+                }
+            } else if (e.key === 'Escape') {
+                supplierDropdown.style.display = 'none';
+            }
+        });
+    }
+    
+    // Filter suppliers function
+    function filterSuppliers(searchTerm) {
+        const items = supplierList.querySelectorAll('.dropdown-item');
+        let visibleCount = 0;
+        
+        items.forEach(item => {
+            const name = item.getAttribute('data-name').toLowerCase();
+            if (name.includes(searchTerm)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Show "No results" if no matches
+        if (visibleCount === 0 && !document.getElementById('noResults')) {
+            const noResults = document.createElement('div');
+            noResults.id = 'noResults';
+            noResults.style.padding = '12px';
+            noResults.style.textAlign = 'center';
+            noResults.style.color = '#999';
+            noResults.textContent = 'No suppliers found';
+            supplierList.appendChild(noResults);
+        } else if (visibleCount > 0) {
+            const noResults = document.getElementById('noResults');
+            if (noResults) noResults.remove();
+        }
+    }
+    
     // Add Enter key support for Bill No and Trn No fields
     const billNoField = document.getElementById('billNo');
     const trnNoField = document.getElementById('trnNo');
@@ -2347,8 +2528,23 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 
+                // Check if this is the Code field
+                if (input.name && input.name.includes('[code]')) {
+                    const code = input.value.trim();
+                    if (!code) {
+                        // Empty code field - Open Item Selection Modal
+                        console.log('Code field empty, opening Item Selection Modal');
+                        if (typeof openChooseItemsModal === 'function') {
+                            openChooseItemsModal();
+                        }
+                    } else {
+                        // Barcode entered - Fetch item and open Batch Modal
+                        console.log('Barcode entered:', code);
+                        fetchItemByBarcodeAndOpenBatchModal(code, rowIndex);
+                    }
+                }
                 // Check if this is the F.Qty field
-                if (input.classList.contains('item-fqty')) {
+                else if (input.classList.contains('item-fqty')) {
                     console.log('F.Qty Enter pressed, rowIndex:', rowIndex);
                     // Get item code from current row
                     const itemCode = row.querySelector('input[name*="[code]"]').value;
@@ -2375,11 +2571,11 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
                         console.log('Discount changed, showing modal');
                         showDiscountOptionsModal(rowIndex, currentValue);
                     } else {
-                        console.log('Dis% Enter pressed, moving to S.Rate in calculation section');
+                        console.log('Dis% Enter pressed, moving to next row Code field');
                         currentActiveRow = rowIndex;
                         calculateAndSaveGstForRow(rowIndex);
-                        const sRateField = document.getElementById('calc_s_rate');
-                        if (sRateField) { sRateField.focus(); sRateField.select(); }
+                        // Move to next row's Code field
+                        moveToNextRowCodeField(rowIndex);
                     }
                 } else {
                     // Move to next input in same row
@@ -4500,5 +4696,233 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
         <button type="button" class="btn btn-secondary btn-sm" onclick="closeDiscountOptionsModal()">Cancel</button>
     </div>
 </div>
+
+<!-- Reusable Item Selection Modal Component -->
+@include('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'purchase-modification',
+    'showStock' => true,
+    'rateType' => 'pur_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'batchSelectionModal',
+])
+
+<!-- Reusable Batch Selection Modal Component -->
+@include('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'purchase-modification',
+    'showOnlyAvailable' => false,
+    'rateType' => 'pur_rate',
+    'showCostDetails' => true,
+    'showSupplier' => true,
+    'showPurchaseRate' => true
+])
+
+<script>
+// ============================================================================
+// MODAL COMPONENT BRIDGE SCRIPT - Purchase Modification
+// ============================================================================
+
+// Track which row barcode was entered for
+if (typeof window.pendingBarcodeRowIndex === 'undefined') {
+    window.pendingBarcodeRowIndex = null;
+}
+
+// Override openChooseItemsModal (if button exists)
+window.openChooseItemsModal = function() {
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    }
+};
+
+// Override openBatchSelectionModal to use new component
+window.openBatchSelectionModal = function(item) {
+    console.log('🔗 Bridge: Opening Batch Modal via new component for:', item?.name);
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
+    } else {
+        console.error('Batch Modal component not loaded');
+    }
+};
+
+// Override closeBatchSelectionModal to use new component
+window.closeBatchSelectionModal = function() {
+    console.log('🔗 Bridge: Closing Batch Modal via new component');
+    if (typeof closeBatchModal_batchSelectionModal === 'function') {
+        closeBatchModal_batchSelectionModal();
+    }
+    window.pendingBarcodeRowIndex = null;
+};
+
+// Callback when item and batch are selected from new modal component
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Bridge: Item+Batch selected from new modal:', item?.name, batch?.batch_no);
+    
+    // Store selected batch for compatibility
+    window.selectedBatch = batch;
+    
+    // Check if this is from barcode entry (existing row) or generic add (new row)
+    if (window.pendingBarcodeRowIndex !== null) {
+        // Populate existing row
+        populateRowWithItemAndBatch(window.pendingBarcodeRowIndex, item, batch);
+        window.pendingBarcodeRowIndex = null;
+    } else {
+        // Add new row
+        addItemToTable(item, batch);
+    }
+    
+    // Cleanup
+    window.selectedBatch = null;
+};
+
+// Also support the simpler callback name
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+// Listen for item selection to open batch modal (for compatibility)
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Bridge: Item selected, opening batch modal for:', item?.name);
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
+    }
+};
+
+// Move to next row's code field (creates new row if needed)
+function moveToNextRowCodeField(currentRowIndex) {
+    const tbody = document.getElementById('itemsTableBody');
+    const allRows = tbody.querySelectorAll('tr');
+    let nextRow = null;
+    
+    // Find next row after current
+    for (let i = 0; i < allRows.length; i++) {
+        if (i > currentRowIndex) {
+            nextRow = allRows[i];
+            break;
+        }
+    }
+    
+    // If no next row, create a new empty row
+    if (!nextRow) {
+        addNewRow();
+        // Get the newly added row
+        const rows = tbody.querySelectorAll('tr');
+        nextRow = rows[rows.length - 1];
+    }
+    
+    // Focus on code field of next row
+    if (nextRow) {
+        const codeInput = nextRow.querySelector('input[name*="[code]"]');
+        if (codeInput) {
+            codeInput.focus();
+            codeInput.select();
+        }
+    }
+}
+
+// Fetch item by barcode and open batch modal
+function fetchItemByBarcodeAndOpenBatchModal(barcode, rowIndex) {
+    console.log('🔍 Fetching item by barcode:', barcode, 'for row:', rowIndex);
+    
+    // Store the row index for later population
+    window.pendingBarcodeRowIndex = rowIndex;
+    
+    // Fetch item from API
+    fetch(`{{ url('/admin/api/items/search') }}?search=${encodeURIComponent(barcode)}&exact=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.items && data.items.length > 0) {
+                const item = data.items[0];
+                console.log('✅ Found item:', item.name);
+                
+                // Open batch modal for this item
+                if (typeof openBatchModal_batchSelectionModal === 'function') {
+                    openBatchModal_batchSelectionModal(item);
+                } else if (typeof openBatchSelectionModal === 'function') {
+                    openBatchSelectionModal(item);
+                }
+            } else {
+                console.warn('⚠️ No item found for barcode:', barcode);
+                alert('Item not found for barcode: ' + barcode);
+                window.pendingBarcodeRowIndex = null;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching item:', error);
+            alert('Error fetching item. Please try again.');
+            window.pendingBarcodeRowIndex = null;
+        });
+}
+
+// Populate a specific row with item and batch data (for barcode entry)
+function populateRowWithItemAndBatch(rowIndex, item, batch) {
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    const row = rows[rowIndex];
+    
+    if (!row) {
+        console.error('Row not found for index:', rowIndex);
+        return;
+    }
+    
+    console.log('📝 Populating row', rowIndex, 'with item:', item.name, 'batch:', batch.batch_no);
+    
+    // Populate fields
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    const nameInput = row.querySelector('input[name*="[name]"]');
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expiryInput = row.querySelector('input[name*="[expiry]"]');
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    const purRateInput = row.querySelector('input[name*="[pur_rate]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    
+    if (codeInput) codeInput.value = item.code || '';
+    if (nameInput) {
+        nameInput.value = item.name || '';
+        // Make name field readonly
+        nameInput.setAttribute('readonly', true);
+        nameInput.classList.add('readonly-field');
+    }
+    if (batchInput) batchInput.value = batch.batch_no || '';
+    if (expiryInput) expiryInput.value = batch.expiry_date || '';
+    if (purRateInput) purRateInput.value = batch.pur_rate || item.pur_rate || '';
+    if (mrpInput) mrpInput.value = batch.mrp || item.mrp || '';
+    
+    // Set data attributes
+    row.setAttribute('data-item-id', item.item_id);
+    row.setAttribute('data-batch-id', batch.batch_id || '');
+    row.setAttribute('data-company-id', item.company_id || '');
+    
+    // Focus on quantity field
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+    }
+    
+    // Trigger calculation updates
+    if (typeof fetchItemDetailsForCalculation === 'function') {
+        fetchItemDetailsForCalculation(item.code, rowIndex);
+    }
+}
+
+// Add item to table (for Choose Items modal - adds new row)
+function addItemToTable(item, batch) {
+    console.log('➕ Adding new item to table:', item.name, 'batch:', batch.batch_no);
+    
+    // Add a new row
+    addNewRow();
+    
+    // Get the newly added row
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    const newRow = rows[rows.length - 1];
+    const rowIndex = rows.length - 1;
+    
+    // Populate the new row
+    populateRowWithItemAndBatch(rowIndex, item, batch);
+}
+
+console.log('🔗 Modal Component Bridge Loaded - Purchase Modification');
+</script>
 
 @endsection

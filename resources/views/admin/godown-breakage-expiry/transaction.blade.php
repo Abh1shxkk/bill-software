@@ -190,6 +190,26 @@
         </div>
     </div>
 </section>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'godownBreakageExpiryItemModal',
+    'module' => 'godown-breakage-expiry',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'godownBreakageExpiryBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'godownBreakageExpiryBatchModal',
+    'module' => 'godown-breakage-expiry',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+])
+
 @endsection
 
 @push('scripts')
@@ -222,8 +242,228 @@ function loadItems() {
         .catch(error => console.error('Error loading items:', error));
 }
 
+// ============================================================================
+// BRIDGE FUNCTIONS FOR REUSABLE MODAL COMPONENTS
+// ============================================================================
+
+/**
+ * Bridge function called by reusable modal components after item and batch selection
+ * Supports both creating new rows and updating existing rows based on targetRowIndex
+ */
+function onItemBatchSelectedFromModal(itemData, batchData) {
+    console.log('🎯 Godown Breakage Expiry: onItemBatchSelectedFromModal called', {itemData, batchData});
+    
+    if (!itemData || !itemData.id) {
+        console.error('❌ Godown Breakage Expiry: Invalid item data received');
+        return;
+    }
+    
+    const tbody = document.getElementById('itemsTableBody');
+    
+    // Check if we should update existing row or create new one
+    const targetRowIndex = window.targetRowIndexForModal;
+    const shouldCreateNewRow = (targetRowIndex === null || targetRowIndex === undefined);
+    
+    if (shouldCreateNewRow) {
+        // CREATE NEW ROW
+        const rowIndex = currentRowIndex++;
+        const row = document.createElement('tr');
+        row.id = `row-${rowIndex}`;
+        row.dataset.rowIndex = rowIndex;
+        row.dataset.itemId = itemData.id;
+        row.onclick = function() { selectRow(rowIndex); };
+        
+        // Store item and batch data
+        row.dataset.itemData = JSON.stringify({
+            packing: itemData.packing || '',
+            unit: itemData.unit || '1',
+            mrp: itemData.mrp || 0,
+            s_rate: itemData.s_rate || 0,
+            p_rate: itemData.p_rate || itemData.pur_rate || 0,
+            company_name: itemData.company_name || ''
+        });
+        
+        if (batchData && batchData.id) {
+            row.dataset.batchId = batchData.id;
+            row.dataset.batchData = JSON.stringify({
+                qty: batchData.qty || batchData.available_qty || 0,
+                location: batchData.location || ''
+            });
+        }
+        
+        const cost = batchData?.pur_rate || batchData?.cost || batchData?.avg_pur_rate || itemData.p_rate || itemData.pur_rate || 0;
+        const qty = 1;
+        const amount = (qty * cost).toFixed(2);
+        
+        row.innerHTML = `
+            <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${itemData.id || ''}" readonly></td>
+            <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemData.name || ''}" readonly></td>
+            <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchData?.batch_no || ''}" readonly></td>
+            <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batchData?.expiry_display || batchData?.expiry || ''}" readonly></td>
+            <td>
+                <select class="form-select form-select-sm" name="items[${rowIndex}][br_ex_type]">
+                    <option value="BREAKAGE">Brk</option>
+                    <option value="EXPIRY">Exp</option>
+                </select>
+            </td>
+            <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="${qty}" onchange="calculateRowAmount(${rowIndex})"></td>
+            <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="${cost}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+            <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="${amount}" step="0.01" readonly></td>
+            <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemData.id || ''}">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchData?.id || ''}">
+            <input type="hidden" name="items[${rowIndex}][packing]" value="${itemData.packing || ''}">
+            <input type="hidden" name="items[${rowIndex}][unit]" value="${itemData.unit || '1'}">
+            <input type="hidden" name="items[${rowIndex}][company_name]" value="${itemData.company_name || ''}">
+            <input type="hidden" name="items[${rowIndex}][mrp]" value="${itemData.mrp || 0}">
+            <input type="hidden" name="items[${rowIndex}][s_rate]" value="${itemData.s_rate || 0}">
+            <input type="hidden" name="items[${rowIndex}][p_rate]" value="${cost}">
+        `;
+        
+        tbody.appendChild(row);
+        row.classList.add('row-complete');
+        selectRow(rowIndex);
+        calculateRowAmount(rowIndex);
+        
+        console.log('✅ Godown Breakage Expiry: New row created successfully', rowIndex);
+        
+        // Focus qty field
+        setTimeout(() => {
+            row.querySelector('input[name*="[qty]"]')?.focus();
+        }, 100);
+        
+    } else {
+        // UPDATE EXISTING ROW
+        const row = document.getElementById(`row-${targetRowIndex}`);
+        if (!row) {
+            console.error('❌ Godown Breakage Expiry: Target row not found', targetRowIndex);
+            return;
+        }
+        
+        row.dataset.itemId = itemData.id;
+        row.dataset.itemData = JSON.stringify({
+            packing: itemData.packing || '',
+            unit: itemData.unit || '1',
+            mrp: itemData.mrp || 0,
+            s_rate: itemData.s_rate || 0,
+            p_rate: itemData.p_rate || itemData.pur_rate || 0,
+            company_name: itemData.company_name || ''
+        });
+        
+        if (batchData && batchData.id) {
+            row.dataset.batchId = batchData.id;
+            row.dataset.batchData = JSON.stringify({
+                qty: batchData.qty || batchData.available_qty || 0,
+                location: batchData.location || ''
+            });
+        }
+        
+        const cost = batchData?.pur_rate || batchData?.cost || batchData?.avg_pur_rate || itemData.p_rate || itemData.pur_rate || 0;
+        
+        // Update row fields
+        row.querySelector('input[name*="[code]"]').value = itemData.id || '';
+        row.querySelector('input[name*="[name]"]').value = itemData.name || '';
+        row.querySelector('input[name*="[batch]"]').value = batchData?.batch_no || '';
+        row.querySelector('input[name*="[expiry]"]').value = batchData?.expiry_display || batchData?.expiry || '';
+        row.querySelector('input[name*="[cost]"]').value = cost;
+        row.querySelector('input[name*="[item_id]"]').value = itemData.id || '';
+        row.querySelector('input[name*="[batch_id]"]').value = batchData?.id || '';
+        row.querySelector('input[name*="[packing]"]').value = itemData.packing || '';
+        row.querySelector('input[name*="[unit]"]').value = itemData.unit || '1';
+        row.querySelector('input[name*="[company_name]"]').value = itemData.company_name || '';
+        row.querySelector('input[name*="[mrp]"]').value = itemData.mrp || 0;
+        row.querySelector('input[name*="[s_rate]"]').value = itemData.s_rate || 0;
+        row.querySelector('input[name*="[p_rate]"]').value = cost;
+        
+        row.classList.add('row-complete');
+        calculateRowAmount(targetRowIndex);
+        
+        console.log('✅ Godown Breakage Expiry: Existing row updated successfully', targetRowIndex);
+    }
+    
+    // Update footer
+    document.getElementById('packing').value = itemData.packing || '';
+    document.getElementById('unit').value = itemData.unit || '1';
+    document.getElementById('p_rate').value = itemData.p_rate || itemData.pur_rate || '0';
+    document.getElementById('s_rate').value = itemData.s_rate || '0';
+    document.getElementById('mrp').value = itemData.mrp || '0';
+    document.getElementById('company_name').value = itemData.company_name || '';
+    document.getElementById('cl_qty').value = batchData?.qty || batchData?.available_qty || '0';
+    document.getElementById('location').value = batchData?.location || '';
+    
+    calculateTotalAmount();
+    
+    // Clear target row index
+    window.targetRowIndexForModal = null;
+    
+    console.log('✅ Godown Breakage Expiry: Footer updated, targetRowIndex cleared');
+}
+
+/**
+ * Bridge function to open item selection modal
+ * Supports targetRowIndex parameter for updating existing rows
+ * @param {number|null} targetRowIndex - Row index to update, or null to create new row
+ */
+function showItemSelectionModal(targetRowIndex = null) {
+    console.log('🎯 Godown Breakage Expiry: showItemSelectionModal called', {targetRowIndex});
+    
+    // Store targetRowIndex for later use
+    window.targetRowIndexForModal = targetRowIndex;
+    
+    // Check if modal component function exists
+    if (typeof window.openItemModal_godownBreakageExpiryItemModal === 'function') {
+        console.log('✅ Godown Breakage Expiry: Opening reusable item modal');
+        window.openItemModal_godownBreakageExpiryItemModal();
+    } else {
+        console.error('❌ Godown Breakage Expiry: openItemModal_godownBreakageExpiryItemModal function not found. Modal component may not be loaded.');
+        alert('Error: Item selection modal not available. Please refresh the page.');
+    }
+}
+
+// ============================================================================
+// LEGACY FUNCTIONS (Kept as fallback, prefixed with _legacy_)
+// ============================================================================
 
 function addNewRow() {
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onclick="_legacy_showBatchModal(${rowIndex})" readonly style="cursor: pointer;"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" readonly></td>
+        <td>
+            <select class="form-select form-select-sm" name="items[${rowIndex}][br_ex_type]">
+                <option value="BREAKAGE">Brk</option>
+                <option value="EXPIRY">Exp</option>
+            </select>
+        </td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="0" step="0.01" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
+        <input type="hidden" name="items[${rowIndex}][packing]" value="">
+        <input type="hidden" name="items[${rowIndex}][unit]" value="">
+        <input type="hidden" name="items[${rowIndex}][company_name]" value="">
+        <input type="hidden" name="items[${rowIndex}][mrp]" value="0">
+        <input type="hidden" name="items[${rowIndex}][s_rate]" value="0">
+        <input type="hidden" name="items[${rowIndex}][p_rate]" value="0">
+    `;
+    
+    tbody.appendChild(row);
+    selectRow(rowIndex);
+    row.querySelector('input[name*="[code]"]').focus();
+}
+
+function _legacy_showItemSelectionModal(targetRowIndex = null) {
     const tbody = document.getElementById('itemsTableBody');
     const rowIndex = currentRowIndex++;
     
@@ -312,7 +552,7 @@ function findItemByCode(code, rowIndex) {
     }
 }
 
-function showItemSelectionModal(targetRowIndex = null) {
+function _legacy_showItemSelectionModal_OLD(targetRowIndex = null) {
     // Store if we need to create new row or use existing
     window.createNewRowAfterSelection = (targetRowIndex === null);
     const rowIndex = targetRowIndex !== null ? targetRowIndex : -1;
@@ -322,11 +562,11 @@ function showItemSelectionModal(targetRowIndex = null) {
         <div class="batch-modal show" id="itemModal" style="max-width: 900px;">
             <div class="modal-header-custom" style="background: #17a2b8;">
                 <h5 class="mb-0"><i class="bi bi-search me-2"></i>Select Item</h5>
-                <button type="button" class="btn-close btn-close-white" onclick="closeItemModal()"></button>
+                <button type="button" class="btn-close btn-close-white" onclick="_legacy_closeItemModal()"></button>
             </div>
             <div class="modal-body-custom">
                 <div class="mb-3">
-                    <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by name or code..." onkeyup="filterItems()">
+                    <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by name or code..." onkeyup="_legacy_filterItems()">
                 </div>
                 <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
                     <table class="table table-bordered table-sm" style="font-size: 11px;">
@@ -344,17 +584,17 @@ function showItemSelectionModal(targetRowIndex = null) {
                 </div>
             </div>
             <div class="modal-footer-custom">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="_legacy_closeItemModal()">Close</button>
             </div>
         </div>`;
     
     document.body.insertAdjacentHTML('beforeend', html);
     document.body.dataset.targetRowIndex = rowIndex;
     document.getElementById('itemSearchInput').focus();
-    renderItemsList();
+    _legacy_renderItemsList();
 }
 
-function renderItemsList(filter = '') {
+function _legacy_renderItemsList(filter = '') {
     const tbody = document.getElementById('itemsListBody');
     const filtered = filter ? itemsData.filter(item => 
         item.name.toLowerCase().includes(filter.toLowerCase()) || 
@@ -362,7 +602,7 @@ function renderItemsList(filter = '') {
     ) : itemsData;
     
     tbody.innerHTML = filtered.slice(0, 100).map(item => `
-        <tr class="item-row" onclick="selectItem(${item.id})" style="cursor: pointer;">
+        <tr class="item-row" onclick="_legacy_selectItem(${item.id})" style="cursor: pointer;">
             <td>${item.id}</td>
             <td>${item.name}</td>
             <td>${item.packing || '-'}</td>
@@ -372,29 +612,29 @@ function renderItemsList(filter = '') {
     `).join('');
 }
 
-function filterItems() {
+function _legacy_filterItems() {
     const search = document.getElementById('itemSearchInput').value;
-    renderItemsList(search);
+    _legacy_renderItemsList(search);
 }
 
-function selectItem(itemId) {
+function _legacy_selectItem(itemId) {
     const item = itemsData.find(i => i.id === itemId);
     if (item) {
         // Store selected item for batch selection
         window.selectedItemData = item;
-        closeItemModal();
+        _legacy_closeItemModal();
         // Show batch modal - row will be created after batch selection
-        showBatchModalForItem(item);
+        _legacy_showBatchModalForItem(item);
     }
 }
 
-function showBatchModalForItem(item) {
+function _legacy_showBatchModalForItem(item) {
     let html = `
         <div class="batch-modal-backdrop show" id="batchModalBackdrop"></div>
         <div class="batch-modal show" id="batchModal">
             <div class="modal-header-custom" style="background: #ffc107; color: #000;">
                 <h5 class="mb-0"><i class="bi bi-box me-2"></i>Select Batch - ${item.name}</h5>
-                <button type="button" class="btn-close" onclick="closeBatchModalAndClear()"></button>
+                <button type="button" class="btn-close" onclick="_legacy_closeBatchModalAndClear()"></button>
             </div>
             <div class="modal-body-custom">
                 <div class="text-center py-3">
@@ -403,7 +643,7 @@ function showBatchModalForItem(item) {
                 </div>
             </div>
             <div class="modal-footer-custom">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModalAndClear()">Cancel</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="_legacy_closeBatchModalAndClear()">Cancel</button>
             </div>
         </div>`;
     
@@ -436,7 +676,7 @@ function showBatchModalForItem(item) {
                         </thead>
                         <tbody>
                             ${batches.map(batch => `
-                                <tr class="batch-row" onclick="selectBatchAndCreateRow('${batch.id}', '${(batch.batch_no || '').replace(/'/g, "\\'")}', '${(batch.expiry_display || batch.expiry || '').replace(/'/g, "\\'")}', ${batch.qty || 0}, ${batch.mrp || 0}, ${batch.pur_rate || batch.cost || 0}, '${(batch.company_name || '').replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                                <tr class="batch-row" onclick="_legacy_selectBatchAndCreateRow('${batch.id}', '${(batch.batch_no || '').replace(/'/g, "\\'")}', '${(batch.expiry_display || batch.expiry || '').replace(/'/g, "\\'")}', ${batch.qty || 0}, ${batch.mrp || 0}, ${batch.pur_rate || batch.cost || 0}, '${(batch.company_name || '').replace(/'/g, "\\'")}')" style="cursor: pointer;">
                                     <td>${batch.batch_no || '-'}</td>
                                     <td>${batch.expiry_display || '-'}</td>
                                     <td class="text-end">${batch.qty || 0}</td>
@@ -455,7 +695,7 @@ function showBatchModalForItem(item) {
         });
 }
 
-function selectBatchAndCreateRow(batchId, batchNo, expiry, qty, mrp, pRate, location) {
+function _legacy_selectBatchAndCreateRow(batchId, batchNo, expiry, qty, mrp, pRate, location) {
     const item = window.selectedItemData;
     if (!item) return;
     
@@ -519,8 +759,8 @@ function selectBatchAndCreateRow(batchId, batchNo, expiry, qty, mrp, pRate, loca
     row.querySelector('input[name*="[qty]"]').focus();
 }
 
-function closeBatchModalAndClear() {
-    closeBatchModal();
+function _legacy_closeBatchModalAndClear() {
+    _legacy_closeBatchModal();
     window.selectedItemData = null;
 }
 
@@ -549,15 +789,15 @@ function selectItemForRow(item, rowIndex) {
     });
     
     updateFooterFromRow(row);
-    showBatchModal(rowIndex);
+    _legacy_showBatchModal(rowIndex);
 }
 
-function closeItemModal() {
+function _legacy_closeItemModal() {
     document.getElementById('itemModal')?.remove();
     document.getElementById('itemModalBackdrop')?.remove();
 }
 
-function showBatchModal(rowIndex) {
+function _legacy_showBatchModal(rowIndex) {
     const row = document.getElementById(`row-${rowIndex}`);
     if (!row) return;
     
@@ -572,7 +812,7 @@ function showBatchModal(rowIndex) {
         <div class="batch-modal show" id="batchModal">
             <div class="modal-header-custom" style="background: #ffc107; color: #000;">
                 <h5 class="mb-0"><i class="bi bi-box me-2"></i>Select Batch</h5>
-                <button type="button" class="btn-close" onclick="closeBatchModal()"></button>
+                <button type="button" class="btn-close" onclick="_legacy_closeBatchModal()"></button>
             </div>
             <div class="modal-body-custom">
                 <div class="text-center py-3">
@@ -581,7 +821,7 @@ function showBatchModal(rowIndex) {
                 </div>
             </div>
             <div class="modal-footer-custom">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="_legacy_closeBatchModal()">Close</button>
             </div>
         </div>`;
     
@@ -614,7 +854,7 @@ function showBatchModal(rowIndex) {
                         </thead>
                         <tbody>
                             ${batches.map(batch => `
-                                <tr class="batch-row" onclick="selectBatch(${batch.id}, '${(batch.batch_no || '').replace(/'/g, "\\'")}', '${(batch.expiry_display || '').replace(/'/g, "\\'")}', ${batch.qty || 0}, ${batch.mrp || 0}, ${batch.pur_rate || batch.cost || 0}, '${(batch.company_name || '').replace(/'/g, "\\'")}')" style="cursor: pointer;">
+                                <tr class="batch-row" onclick="_legacy_selectBatch(${batch.id}, '${(batch.batch_no || '').replace(/'/g, "\\'")}', '${(batch.expiry_display || '').replace(/'/g, "\\'")}', ${batch.qty || 0}, ${batch.mrp || 0}, ${batch.pur_rate || batch.cost || 0}, '${(batch.company_name || '').replace(/'/g, "\\'")}')" style="cursor: pointer;">
                                     <td>${batch.batch_no || '-'}</td>
                                     <td>${batch.expiry_display || '-'}</td>
                                     <td class="text-end">${batch.qty || 0}</td>
@@ -632,7 +872,7 @@ function showBatchModal(rowIndex) {
         });
 }
 
-function selectBatch(batchId, batchNo, expiry, qty, mrp, pRate, location) {
+function _legacy_selectBatch(batchId, batchNo, expiry, qty, mrp, pRate, location) {
     const rowIndex = parseInt(document.body.dataset.batchRowIndex);
     const row = document.getElementById(`row-${rowIndex}`);
     if (!row) return;
@@ -652,7 +892,7 @@ function selectBatch(batchId, batchNo, expiry, qty, mrp, pRate, location) {
     row.querySelector('input[name*="[qty]"]').focus();
 }
 
-function closeBatchModal() {
+function _legacy_closeBatchModal() {
     document.getElementById('batchModal')?.remove();
     document.getElementById('batchModalBackdrop')?.remove();
 }

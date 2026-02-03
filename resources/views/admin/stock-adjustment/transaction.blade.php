@@ -111,105 +111,7 @@
         max-height: 310px !important;
     }
 
-    /* Modal Styles */
-    .item-modal-backdrop, .batch-modal-backdrop {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 1050;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .item-modal-backdrop.show, .batch-modal-backdrop.show {
-        display: block;
-        opacity: 1;
-    }
-
-    .item-modal, .batch-modal {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 55%;
-        transform: translate(-50%, -50%) scale(0.7);
-        width: calc(100% - 200px);
-        max-width: 800px;
-        z-index: 1055;
-        opacity: 0;
-        transition: all 0.3s ease;
-    }
-
-    .item-modal.show, .batch-modal.show {
-        display: block;
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 1;
-    }
-
-    .item-modal-content, .batch-modal-content {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
-        overflow: hidden;
-    }
-
-    .item-modal-header {
-        padding: 1rem 1.5rem;
-        background: #0d6efd;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .batch-modal-header {
-        padding: 1rem 1.5rem;
-        background: #17a2b8;
-        color: white;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .item-modal-title, .batch-modal-title {
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: 600;
-    }
-
-    .btn-close-modal {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 2rem;
-        cursor: pointer;
-        padding: 0;
-        width: 30px;
-        height: 30px;
-    }
-
-    .item-modal-body, .batch-modal-body {
-        padding: 1rem;
-        max-height: 400px;
-        overflow-y: auto;
-    }
-
-    .batch-modal-body {
-        padding: 0;
-    }
-
-    .item-modal-footer, .batch-modal-footer {
-        padding: 1rem 1.5rem;
-        background: #f8f9fa;
-        border-top: 1px solid #dee2e6;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
+    /* Row utility styles */
     .row-shortage {
         background-color: #ffe6e6 !important;
     }
@@ -293,6 +195,12 @@
                         </tbody>
                     </table>
                 </div>
+                <!-- Add Row Button -->
+                <div class="text-center mt-2">
+                    <button type="button" class="btn btn-sm btn-info" onclick="openItemModal()">
+                        <i class="bi bi-plus-circle me-1"></i> Insert Item
+                    </button>
+                </div>
             </div>
 
             <!-- Additional Details Section -->
@@ -363,76 +271,24 @@
     </div>
 </div>
 
-<!-- Item Selection Modal -->
-<div id="itemModalBackdrop" class="item-modal-backdrop" onclick="closeItemModal()"></div>
-<div id="itemModal" class="item-modal">
-    <div class="item-modal-content">
-        <div class="item-modal-header">
-            <h5 class="item-modal-title"><i class="bi bi-box-seam me-2"></i>Select Item</h5>
-            <button type="button" class="btn-close-modal" onclick="closeItemModal()">&times;</button>
-        </div>
-        <div class="item-modal-body">
-            <div class="mb-3">
-                <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by code or name..." autocomplete="off">
-            </div>
-            <div id="itemsListContainer" style="max-height: 300px; overflow-y: auto;">
-                <table class="table table-hover table-sm mb-0">
-                    <thead class="table-light sticky-top">
-                        <tr>
-                            <th>Code</th>
-                            <th>Item Name</th>
-                            <th>Packing</th>
-                            <th>Company</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="itemsListBody">
-                        <!-- Items will be loaded here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="item-modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeItemModal()">Close</button>
-        </div>
-    </div>
-</div>
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'stockAdjustmentItemModal',
+    'module' => 'stock-adjustment',
+    'showStock' => true,
+    'rateType' => 'cost',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'stockAdjustmentBatchModal',
+])
 
-<!-- Batch Selection Modal -->
-<div id="batchModalBackdrop" class="batch-modal-backdrop" onclick="closeBatchModal()"></div>
-<div id="batchModal" class="batch-modal" style="max-width: 950px;">
-    <div class="batch-modal-content">
-        <div class="batch-modal-header">
-            <h5 class="batch-modal-title"><i class="bi bi-layers me-2"></i>Select Batch - <span id="batchModalItemName"></span></h5>
-            <span class="ms-3 small">Packing: <span id="batchModalPacking">1*10</span></span>
-            <button type="button" class="btn-close-modal" onclick="closeBatchModal()">&times;</button>
-        </div>
-        <div class="batch-modal-body" style="max-height: 350px; overflow-y: auto; padding: 0;">
-            <table class="table table-hover table-sm mb-0" style="font-size: 11px;">
-                <thead class="table-dark sticky-top">
-                    <tr>
-                        <th>BATCH</th>
-                        <th>DATE</th>
-                        <th>RATE</th>
-                        <th>P.RATE</th>
-                        <th>MRP</th>
-                        <th>QTY</th>
-                        <th>EXP.</th>
-                        <th>CODE</th>
-                        <th>Cost+GST</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="batchesListBody">
-                    <!-- Batches will be loaded here -->
-                </tbody>
-            </table>
-        </div>
-        <div class="batch-modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeBatchModal()">Close</button>
-        </div>
-    </div>
-</div>
+@include('components.modals.batch-selection', [
+    'id' => 'stockAdjustmentBatchModal',
+    'module' => 'stock-adjustment',
+    'showOnlyAvailable' => true,
+    'rateType' => 'cost',
+    'showCostDetails' => true,
+])
 
 @endsection
 
@@ -445,20 +301,7 @@ let allItems = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
-    loadItems();
-    
     document.getElementById('adjustmentDate').addEventListener('change', updateDayName);
-    
-    // Item search
-    document.getElementById('itemSearchInput').addEventListener('input', debounce(filterItems, 300));
-    
-    // Close modals on Escape
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeItemModal();
-            closeBatchModal();
-        }
-    });
 });
 
 function debounce(func, wait) {
@@ -482,207 +325,36 @@ function updateDayName() {
     }
 }
 
-// Load all items
-function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}')
-        .then(response => response.json())
-        .then(data => {
-            // API returns {success: true, items: [...]}
-            if (data.success && data.items) {
-                allItems = data.items;
-            } else if (Array.isArray(data)) {
-                allItems = data;
-            } else {
-                allItems = [];
-            }
-            renderItems(allItems);
-        })
-        .catch(error => {
-            console.error('Error loading items:', error);
-            allItems = [];
-        });
-}
-
-// Render items in modal
-function renderItems(items) {
-    const tbody = document.getElementById('itemsListBody');
-    tbody.innerHTML = '';
-    
-    // Ensure items is an array
-    if (!Array.isArray(items)) {
-        items = [];
-    }
-    
-    if (items.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No items found</td></tr>';
-        return;
-    }
-    
-    items.slice(0, 100).forEach(item => {
-        const tr = document.createElement('tr');
-        const itemCost = parseFloat(item.cost || 0).toFixed(2);
-        const itemUnit = item.unit || '1';
-        const itemCompany = item.company_short_name || item.mfg_by || '';
-        tr.innerHTML = `
-            <td>${item.id}</td>
-            <td>${item.name}</td>
-            <td>${item.packing || '-'}</td>
-            <td>${itemCompany || '-'}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-primary" onclick="selectItem(${item.id}, '${escapeHtml(item.name)}', '${escapeHtml(item.packing || '')}', '${escapeHtml(itemCompany)}', ${itemCost}, '${escapeHtml(itemUnit)}')">
-                    <i class="bi bi-check"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-}
-
-// Filter items
-function filterItems() {
-    const searchTerm = document.getElementById('itemSearchInput').value.toLowerCase();
-    const filtered = allItems.filter(item => 
-        item.id.toString().includes(searchTerm) ||
-        item.name.toLowerCase().includes(searchTerm) ||
-        (item.bar_code && item.bar_code.toLowerCase().includes(searchTerm))
-    );
-    renderItems(filtered);
-}
-
-// Open item modal
+// Bridge function to open new component's item modal
 function openItemModal() {
-    document.getElementById('itemModalBackdrop').classList.add('show');
-    document.getElementById('itemModal').classList.add('show');
-    document.getElementById('itemSearchInput').value = '';
-    renderItems(allItems);
-    setTimeout(() => document.getElementById('itemSearchInput').focus(), 100);
-}
-
-// Close item modal
-function closeItemModal() {
-    document.getElementById('itemModalBackdrop').classList.remove('show');
-    document.getElementById('itemModal').classList.remove('show');
-}
-
-// Select item and open batch modal
-function selectItem(itemId, itemName, packing, company, cost, unit) {
-    closeItemModal();
-    currentItemData = {
-        id: itemId,
-        name: itemName,
-        packing: packing,
-        company: company,
-        cost: cost || 0,
-        unit: unit || '1'
-    };
-    
-    document.getElementById('batchModalItemName').textContent = itemName;
-    document.getElementById('batchModalPacking').textContent = packing || '1*10';
-    loadBatches(itemId);
-}
-
-// Load batches for item
-function loadBatches(itemId) {
-    fetch(`{{ url('admin/api/item-batches') }}/${itemId}`)
-        .then(response => response.json())
-        .then(data => {
-            // API returns {success: true, batches: [...]}
-            let batches = [];
-            if (data.success && data.batches) {
-                batches = data.batches;
-            } else if (Array.isArray(data)) {
-                batches = data;
-            }
-            renderBatches(batches);
-            document.getElementById('batchModalBackdrop').classList.add('show');
-            document.getElementById('batchModal').classList.add('show');
-        })
-        .catch(error => {
-            console.error('Error loading batches:', error);
-            alert('Error loading batches');
-        });
-}
-
-// Render batches in modal
-function renderBatches(batches) {
-    const tbody = document.getElementById('batchesListBody');
-    tbody.innerHTML = '';
-    
-    // Ensure batches is an array
-    if (!Array.isArray(batches)) {
-        batches = [];
+    if (typeof openItemModal_stockAdjustmentItemModal === 'function') {
+        openItemModal_stockAdjustmentItemModal();
+    } else {
+        console.error('Stock adjustment item modal not found');
+        alert('Item selection modal not found. Please reload the page.');
     }
-    
-    // Update packing display
-    if (batches.length > 0 && batches[0].packing) {
-        document.getElementById('batchModalPacking').textContent = batches[0].packing;
-    }
-    
-    if (batches.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted">No batches found</td></tr>';
-        return;
-    }
-    
-    batches.forEach(batch => {
-        // Format expiry date as MM/YY
-        let expiryDisplay = '-';
-        if (batch.expiry_date) {
-            try {
-                const expDate = new Date(batch.expiry_date);
-                expiryDisplay = String(expDate.getMonth() + 1).padStart(2, '0') + '/' + String(expDate.getFullYear()).slice(-2);
-            } catch(e) {
-                expiryDisplay = batch.expiry_display || '-';
-            }
-        }
-        
-        // Format purchase date as DD-MMM-YY
-        let purchaseDateDisplay = '-';
-        if (batch.purchase_date) {
-            try {
-                const pDate = new Date(batch.purchase_date);
-                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                purchaseDateDisplay = String(pDate.getDate()).padStart(2, '0') + '-' + months[pDate.getMonth()] + '-' + String(pDate.getFullYear()).slice(-2);
-            } catch(e) {
-                purchaseDateDisplay = batch.purchase_date_display || '-';
-            }
-        }
-        
-        const qty = parseFloat(batch.qty || 0);
-        const qtyClass = qty < 0 ? 'text-danger fw-bold' : '';
-        
-        const tr = document.createElement('tr');
-        tr.style.cursor = 'pointer';
-        tr.innerHTML = `
-            <td>${batch.batch_no || '-'}</td>
-            <td>${purchaseDateDisplay}</td>
-            <td class="text-end">${parseFloat(batch.s_rate || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(batch.pur_rate || 0).toFixed(2)}</td>
-            <td class="text-end">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
-            <td class="text-end ${qtyClass}">${qty}</td>
-            <td>${expiryDisplay}</td>
-            <td>${batch.item_code || batch.id || '-'}</td>
-            <td class="text-end">${parseFloat(batch.cost_gst || batch.cost || 0).toFixed(2)}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-primary" onclick='selectBatch(${JSON.stringify(batch)})'>
-                    <i class="bi bi-check"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
 }
 
-// Close batch modal
-function closeBatchModal() {
-    document.getElementById('batchModalBackdrop').classList.remove('show');
-    document.getElementById('batchModal').classList.remove('show');
-}
+// Callback when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Stock Adjustment - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('Item data:', item);
+    console.log('Batch data:', batch);
+    addItemRow(item, batch);
+};
 
-// Select batch and add row
-function selectBatch(batch) {
-    closeBatchModal();
-    addItemRow(currentItemData, batch);
-}
+// Also support the simpler callback name
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+// Listen for item selection (if batch modal doesn't open automatically)
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Item selected, opening batch modal for:', item?.name);
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
+    }
+};
 
 // Add item row to table
 function addItemRow(item, batch) {
@@ -693,8 +365,8 @@ function addItemRow(item, batch) {
     row.setAttribute('data-batch-id', batch.id);
     
     const expiryDate = batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB', {month: '2-digit', year: 'numeric'}) : '-';
-    // Use item's cost from items table, not batch cost
-    const cost = parseFloat(item.cost || 0);
+    // Use item's cost from items table, fallback to purchase rate if cost not available
+    const cost = parseFloat(item.cost || item.pur_rate || item.p_rate || 0);
     
     row.innerHTML = `
         <td>

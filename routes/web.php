@@ -232,6 +232,10 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::post('items/multiple-delete', [ItemController::class, 'multipleDelete'])->name('items.multiple-delete');
         Route::get('api/item-total-qty/{itemId}', [ItemController::class, 'getItemTotalQty'])->name('api.item-total-qty');
         
+        // Unified Item & Batch Modal Component APIs
+        Route::get('api/items/list', [\App\Http\Controllers\Api\ItemBatchController::class, 'getItems'])->name('api.items.list');
+        Route::get('api/items/search', [\App\Http\Controllers\Api\ItemBatchController::class, 'searchItems'])->name('api.items.search');
+        
         Route::resource('items', ItemController::class);
         Route::get('items/{item}/stock-ledger', [ItemController::class, 'stockLedger'])->name('items.stock-ledger');
         Route::get('items/{item}/stock-ledger-complete', [ItemController::class, 'stockLedgerComplete'])->name('items.stock-ledger-complete');

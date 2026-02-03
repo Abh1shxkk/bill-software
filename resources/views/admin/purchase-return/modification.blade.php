@@ -533,6 +533,26 @@
 
         </div>
     </section>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'purchase-return',
+    'showStock' => true,
+    'rateType' => 'pur_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'batchSelectionModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'purchase-return',
+    'showOnlyAvailable' => true,
+    'rateType' => 'pur_rate',
+    'showCostDetails' => true,
+])
+
 @endsection
 
 @push('styles')
@@ -678,6 +698,123 @@
             openPastReturnsModal();
         });
     });
+
+    // Add New Row - Opens reusable item selection modal
+    function addNewRow() {
+        if (!selectedSupplier) {
+            alert('Please select a supplier first!');
+            return;
+        }
+        
+        // Use reusable item selection modal
+        if (typeof openItemModal_chooseItemsModal === 'function') {
+            openItemModal_chooseItemsModal();
+        } else {
+            console.error('Item selection modal not initialized');
+            alert('Item selection modal not initialized. Please reload the page.');
+        }
+    }
+
+    // Callback function when item and batch are selected from reusable modal
+    window.onItemBatchSelectedFromModal = function(item, batch) {
+        console.log('Item selected from modal:', item);
+        console.log('Batch selected from modal:', batch);
+        
+        // Create a new row for the item
+        const tbody = document.getElementById('itemsTableBody');
+        const rowIndex = tbody.querySelectorAll('tr').length;
+        
+        // Format expiry date
+        let expiryDisplay = '';
+        if (batch.expiry_date) {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        }
+        
+        const purchaseRate = parseFloat(batch.p_rate || batch.pur_rate || batch.purchase_rate || 0);
+        
+        const row = document.createElement('tr');
+        row.id = `row-${rowIndex}`;
+        row.dataset.itemData = JSON.stringify({
+            item_id: item.id,
+            item_name: item.name,
+            batch_id: batch.id,
+            batch_no: batch.batch_no,
+            hsn_code: item.hsn_code || '',
+            cgst_percent: item.cgst_percent || 0,
+            sgst_percent: item.sgst_percent || 0,
+            cess_percent: item.cess_percent || 0,
+            s_rate: batch.s_rate || 0,
+            ws_rate: batch.ws_rate || 0,
+            mrp: batch.mrp || 0
+        });
+        
+        row.innerHTML = `
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1" 
+                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
+                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][purchase_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" 
+                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})" readonly>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][dis_percent]" value="0" step="0.01" 
+                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][ft_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" 
+                       onclick="selectRowForCalculation(${rowIndex})" readonly>
+            </td>
+            <td>
+                <input type="number" class="form-control readonly-field" name="items[${rowIndex}][ft_amount]" value="0.00" readonly>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})" style="padding: 2px 6px;">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
+            <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="${item.cgst_percent || 0}">
+            <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="${item.sgst_percent || 0}">
+            <input type="hidden" name="items[${rowIndex}][mrp]" value="${batch.mrp || 0}">
+        `;
+        
+        tbody.appendChild(row);
+        
+        // Select the new row
+        if (typeof selectRowForCalculation === 'function') selectRowForCalculation(rowIndex);
+        
+        // Focus on qty input
+        setTimeout(() => {
+            const qtyInput = row.querySelector('input[name*="[qty]"]');
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }, 100);
+        
+        alert('Item added! Enter return quantity.');
+        if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
+        if (typeof calculateTotals === 'function') calculateTotals();
+    };
 
     // Open Insert Orders Modal
     function openInsertOrdersModal() {

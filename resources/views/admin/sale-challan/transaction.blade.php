@@ -1062,6 +1062,50 @@ let currentSelectedRowIndex = null;
 let pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
 
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from reusable modal:', item);
+    console.log('Batch selected from reusable modal:', batch);
+    
+    // Transform item data to expected format
+    const transformedItem = {
+        id: item.id,
+        bar_code: item.bar_code || item.code || '',
+        name: item.name || '',
+        packing: item.packing || '',
+        company_name: item.company_name || item.company || '',
+        hsn_code: item.hsn_code || '',
+        unit: item.unit || '',
+        cgst_percent: item.cgst_percent || 0,
+        sgst_percent: item.sgst_percent || 0,
+        cess_percent: item.cess_percent || 0,
+        s_rate: item.s_rate || 0,
+        case_qty: item.case_qty || 0
+    };
+    
+    // Transform batch data to expected format
+    const transformedBatch = {
+        id: batch.id,
+        batch_no: batch.batch_no || '',
+        expiry_date: batch.expiry_date || '',
+        expiry_display: batch.expiry_display || '',
+        mrp: batch.mrp || batch.avg_mrp || 0,
+        avg_mrp: batch.avg_mrp || batch.mrp || 0,
+        s_rate: batch.s_rate || batch.avg_s_rate || 0,
+        avg_s_rate: batch.avg_s_rate || batch.s_rate || 0,
+        pur_rate: batch.p_rate || batch.pur_rate || 0,
+        total_qty: batch.qty || batch.total_qty || 0
+    };
+    
+    // Use existing addItemToTable function
+    if (typeof addItemToTable === 'function') {
+        addItemToTable(transformedItem, transformedBatch);
+    } else {
+        console.error('addItemToTable function not found');
+        alert('Error: Could not add item to table. Please try again.');
+    }
+};
+
 // Load items on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
@@ -1318,6 +1362,13 @@ function openChooseItemsModal() {
         return;
     }
     
+    // Try to use the new reusable item selection modal
+    if (typeof openItemModal_reusableItemsModal === 'function') {
+        openItemModal_reusableItemsModal();
+        return;
+    }
+    
+    // Fallback to old inline modal
     const modal = document.getElementById('chooseItemsModal');
     const backdrop = document.getElementById('chooseItemsBackdrop');
     
@@ -3331,5 +3382,24 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
     </div>
 </div>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'reusableItemsModal',
+    'module' => 'sale-challan',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'reusableBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'reusableBatchModal',
+    'module' => 'sale-challan',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => true,
+])
 
 @endsection

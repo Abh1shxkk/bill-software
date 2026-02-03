@@ -2227,27 +2227,6 @@ function populateItemsTable(items) {
             });
         });
         
-        // 🔥 Add blur listener to item code field to trigger auto-calculation
-        const itemCodeInput = row.querySelector('input[name*="[code]"]');
-        if (itemCodeInput) {
-            itemCodeInput.addEventListener('blur', function(e) {
-                const itemCode = e.target.value?.trim() || '';
-                const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
-                const purRate = parseFloat(row.querySelector('input[name*="[pur_rate]"]')?.value) || 0;
-                const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
-                
-                // If row has all required data but GST not calculated yet, auto-calculate
-                if (itemCode && qty > 0 && purRate > 0 && amount > 0) {
-                    if (!rowGstData[index] || !rowGstData[index].calculated) {
-                        console.log(`🔄 Item code blur: Auto-triggering GST calculation for row ${index}`);
-                        setTimeout(() => {
-                            calculateAndSaveGstForRow(index);
-                        }, 150);
-                    }
-                }
-            });
-        }
-        
         // Update row color initially
         updateRowColor(index);
     }
@@ -2411,7 +2390,6 @@ function addAmountCalculation(row, rowIndex) {
         const qty = parseFloat(qtyInput.value) || 0;
         const purRate = parseFloat(purRateInput.value) || 0;
         const disPercent = parseFloat(disPercentInput.value) || 0;
-        const itemCode = row.querySelector('input[name*="[code]"]')?.value?.trim() || '';
         
         // Calculate: (pur_rate * qty) - discount
         let amount = qty * purRate;
@@ -2470,15 +2448,6 @@ function addAmountCalculation(row, rowIndex) {
             updateRowColor(rowIndex);
             
             console.log(`GST recalculated for row ${rowIndex} with new amount ${amount}`);
-        } else {
-            // 🔥 AUTO-CALCULATE GST: If row has all required data but GST not calculated yet
-            if (itemCode && qty > 0 && purRate > 0 && amount > 0) {
-                console.log(`🔄 Auto-triggering GST calculation for row ${rowIndex}`);
-                // Small delay to ensure amount is saved
-                setTimeout(() => {
-                    calculateAndSaveGstForRow(rowIndex);
-                }, 100);
-            }
         }
     }
     
@@ -2907,27 +2876,6 @@ function addNewRow() {
             }
         });
     });
-    
-    // 🔥 Add blur listener to item code field to trigger auto-calculation
-    const itemCodeInput = row.querySelector('input[name*="[code]"]');
-    if (itemCodeInput) {
-        itemCodeInput.addEventListener('blur', function(e) {
-            const itemCode = e.target.value?.trim() || '';
-            const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
-            const purRate = parseFloat(row.querySelector('input[name*="[pur_rate]"]')?.value) || 0;
-            const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
-            
-            // If row has all required data but GST not calculated yet, auto-calculate
-            if (itemCode && qty > 0 && purRate > 0 && amount > 0) {
-                if (!rowGstData[newIndex] || !rowGstData[newIndex].calculated) {
-                    console.log(`🔄 Item code blur (new row): Auto-triggering GST calculation for row ${newIndex}`);
-                    setTimeout(() => {
-                        calculateAndSaveGstForRow(newIndex);
-                    }, 150);
-                }
-            }
-        });
-    }
     
     console.log(`New row ${newIndex} added`);
 }

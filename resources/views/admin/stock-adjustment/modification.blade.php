@@ -530,6 +530,25 @@
     </div>
 </div>
 
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'stockAdjustmentModItemModal',
+    'module' => 'stock-adjustment',
+    'showStock' => true,
+    'rateType' => 'cost',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'stockAdjustmentModBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'stockAdjustmentModBatchModal',
+    'module' => 'stock-adjustment',
+    'showOnlyAvailable' => false,
+    'rateType' => 'cost',
+    'showCostDetails' => true,
+])
+
 @endsection
 
 @push('scripts')
@@ -774,6 +793,18 @@ function filterItems() {
 }
 
 function openItemModal() {
+    // Use new component if available
+    if (typeof openItemModal_stockAdjustmentModItemModal === 'function') {
+        console.log('✅ Opening reusable item modal for stock adjustment modification');
+        openItemModal_stockAdjustmentModItemModal();
+        return;
+    }
+    // Fallback to legacy
+    console.log('⚠️ Falling back to legacy item modal');
+    _legacy_openItemModal();
+}
+
+function _legacy_openItemModal() {
     document.getElementById('itemModalBackdrop').classList.add('show');
     document.getElementById('itemModal').classList.add('show');
     document.getElementById('itemSearchInput').value = '';
@@ -781,22 +812,105 @@ function openItemModal() {
     setTimeout(() => document.getElementById('itemSearchInput').focus(), 100);
 }
 
+// ====== NEW MODAL COMPONENT BRIDGE ======
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Stock Adjustment Modification - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('Item data:', item);
+    console.log('Batch data:', batch);
+    
+    const tbody = document.getElementById('itemsTableBody');
+    const row = document.createElement('tr');
+    row.setAttribute('data-row', rowCount);
+    row.setAttribute('data-item-id', item.id);
+    row.setAttribute('data-batch-id', batch?.id || '');
+    
+    const expiryDate = batch?.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB', {month: '2-digit', year: 'numeric'}) : '-';
+    // Use cost with fallbacks: batch cost_gst > item cost > item pur_rate > item p_rate > 0
+    const cost = parseFloat(batch?.cost_gst || item.cost || item.pur_rate || item.p_rate || 0).toFixed(2);
+    
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm readonly-field" value="${item.id}" readonly>
+            <input type="hidden" name="items[${rowCount}][item_id]" value="${item.id}">
+            <input type="hidden" name="items[${rowCount}][item_code]" value="${item.id}">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm readonly-field" value="${item.name}" readonly>
+            <input type="hidden" name="items[${rowCount}][item_name]" value="${item.name}">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm readonly-field" value="${batch?.batch_no || '-'}" readonly>
+            <input type="hidden" name="items[${rowCount}][batch_id]" value="${batch?.id || ''}">
+            <input type="hidden" name="items[${rowCount}][batch_no]" value="${batch?.batch_no || ''}">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm readonly-field" value="${expiryDate}" readonly>
+            <input type="hidden" name="items[${rowCount}][expiry_date]" value="${batch?.expiry_date || ''}">
+        </td>
+        <td>
+            <select class="form-control form-control-sm adjustment-type" name="items[${rowCount}][adjustment_type]" onchange="updateRowStyle(${rowCount})">
+                <option value="S">S</option>
+                <option value="E">E</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm qty-input" name="items[${rowCount}][qty]" value="0.00" step="0.01" min="0" onchange="calculateRowAmount(${rowCount})" onkeyup="calculateRowAmount(${rowCount})">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm readonly-field cost-input" name="items[${rowCount}][cost]" value="${cost}" step="0.01" readonly>
+            <input type="hidden" name="items[${rowCount}][packing]" value="${item.packing || ''}">
+            <input type="hidden" name="items[${rowCount}][company_name]" value="${item.company_short_name || ''}">
+            <input type="hidden" name="items[${rowCount}][mrp]" value="${batch?.mrp || item.mrp || 0}">
+            <input type="hidden" name="items[${rowCount}][unit]" value="${item.unit || '1'}">
+            <input type="hidden" name="items[${rowCount}][cl_qty]" value="${batch?.qty || item.total_qty || 0}">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm readonly-field amount-input" name="items[${rowCount}][amount]" value="0.00" step="0.01" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRow(${rowCount})" title="Delete">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    const currentRowIndex = rowCount;
+    row.addEventListener('click', function(e) {
+        if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+            selectRow(currentRowIndex);
+        }
+    });
+    
+    rowCount++;
+    updateRowStyle(currentRowIndex);
+    selectRow(currentRowIndex);
+    calculateTotals();
+    
+    row.querySelector('.qty-input')?.focus();
+};
+
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+window.onItemSelectedFromModal = function(item) {
+    console.log('✅ Item selected, opening batch modal:', item?.name);
+    if (typeof openBatchModal_stockAdjustmentModBatchModal === 'function') {
+        openBatchModal_stockAdjustmentModBatchModal(item);
+    } else {
+        console.error('❌ Batch modal function not found');
+    }
+};
+// ====== END MODAL COMPONENT BRIDGE ======
+
 function closeItemModal() {
     document.getElementById('itemModalBackdrop').classList.remove('show');
     document.getElementById('itemModal').classList.remove('show');
 }
 
-function selectItem(itemId, itemName, packing, company, cost, unit) {
-    closeItemModal();
-    currentItemData = {
-        id: itemId,
-        name: itemName,
-        packing: packing,
-        company: company,
-        cost: cost || 0,
-        unit: unit || '1'
-    };
-    
+function openBatchModal(itemId, itemName, packing) {
     document.getElementById('batchModalItemName').textContent = itemName;
     document.getElementById('batchModalPacking').textContent = packing || '1*10';
     loadBatches(itemId);
@@ -1080,37 +1194,47 @@ function cancelModification() {
 
 // Open past adjustments modal
 function openPastAdjustmentsModal() {
+    console.log('📋 Opening past adjustments modal...');
     fetch('{{ route("admin.stock-adjustment.past-adjustments") }}')
-        .then(response => response.json())
+        .then(response => {
+            console.log('📋 Response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('📋 Past adjustments data:', data);
             if (data.success) {
                 renderPastAdjustments(data.adjustments);
                 document.getElementById('pastAdjustmentsModalBackdrop').classList.add('show');
                 document.getElementById('pastAdjustmentsModal').classList.add('show');
+            } else {
+                console.error('❌ Failed to load past adjustments:', data.message);
+                alert(data.message || 'Error loading past adjustments');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading past adjustments');
+            console.error('❌ Error loading past adjustments:', error);
+            alert('Error loading past adjustments: ' + error.message);
         });
 }
 
 function renderPastAdjustments(adjustments) {
+    console.log('📋 Rendering past adjustments:', adjustments);
     const tbody = document.getElementById('pastAdjustmentsListBody');
     tbody.innerHTML = '';
     
-    if (adjustments.length === 0) {
+    if (!adjustments || adjustments.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No adjustments found</td></tr>';
         return;
     }
     
     adjustments.forEach(adj => {
+        console.log('📋 Processing adjustment:', adj);
         const date = new Date(adj.adjustment_date).toLocaleDateString('en-GB');
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${adj.trn_no}</td>
             <td>${date}</td>
-            <td>${adj.total_items}</td>
+            <td>${adj.total_items || 0}</td>
             <td>${parseFloat(adj.total_amount || 0).toFixed(2)}</td>
             <td>
                 <button type="button" class="btn btn-sm btn-primary" onclick="loadAdjustmentFromList('${adj.trn_no}')">
@@ -1120,6 +1244,7 @@ function renderPastAdjustments(adjustments) {
         `;
         tbody.appendChild(tr);
     });
+    console.log('✅ Past adjustments rendered successfully');
 }
 
 function loadAdjustmentFromList(trnNo) {

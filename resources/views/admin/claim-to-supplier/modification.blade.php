@@ -377,6 +377,25 @@
 </section>
 @endsection
 
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'claimToSupplierModItemModal',
+    'module' => 'claim-to-supplier-mod',
+    'showStock' => true,
+    'rateType' => 'pur_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'claimToSupplierModBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'claimToSupplierModBatchModal',
+    'module' => 'claim-to-supplier-mod',
+    'showOnlyAvailable' => true,
+    'rateType' => 'pur_rate',
+    'showCostDetails' => true,
+])
+
 @push('scripts')
 <script>
 let rowIndex = 0;
@@ -394,6 +413,98 @@ let additionalDetails = {
     company_name: '',
     division: '00'
 };
+
+// ============================================================================
+// BRIDGE FUNCTIONS FOR REUSABLE MODAL COMPONENTS
+// ============================================================================
+
+/**
+ * Bridge function called by reusable modal components after item and batch selection
+ */
+function onItemBatchSelectedFromModal(itemData, batchData) {
+    console.log('🎯 Claim to Supplier Mod: onItemBatchSelectedFromModal called', {itemData, batchData});
+    
+    if (!itemData || !itemData.id) {
+        console.error('❌ Claim to Supplier Mod: Invalid item data received');
+        return;
+    }
+    
+    // Create new row
+    const tbody = document.getElementById('itemsTableBody');
+    const newRowIndex = rowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${newRowIndex}`;
+    row.dataset.rowIndex = newRowIndex;
+    row.dataset.itemId = itemData.id;
+    row.dataset.batchId = batchData?.id || '';
+    row.onclick = function() { selectRow(newRowIndex); };
+    
+    // Get rates and calculate
+    const rate = batchData?.pur_rate || batchData?.cost || batchData?.avg_pur_rate || itemData.pur_rate || itemData.p_rate || 0;
+    const qty = 1;
+    const amount = (qty * rate).toFixed(2);
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control" value="${itemData.id || ''}" readonly></td>
+        <td><input type="text" class="form-control" value="${itemData.name || ''}" readonly></td>
+        <td><input type="text" class="form-control" value="${batchData?.batch_no || ''}" readonly></td>
+        <td><input type="text" class="form-control" value="${batchData?.expiry_display || batchData?.expiry || ''}" readonly></td>
+        <td><input type="number" class="form-control" value="${qty}" onchange="calculateRowAmount(${newRowIndex})"></td>
+        <td><input type="number" class="form-control" value="0" onchange="calculateRowAmount(${newRowIndex})"></td>
+        <td><input type="number" class="form-control" value="${rate}" step="0.01" onchange="calculateRowAmount(${newRowIndex})"></td>
+        <td><input type="number" class="form-control" value="0" step="0.01" onchange="calculateRowAmount(${newRowIndex})"></td>
+        <td><input type="number" class="form-control readonly-field" value="${amount}" step="0.01" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${newRowIndex})"><i class="bi bi-x"></i></button></td>
+        <input type="hidden" name="items[${newRowIndex}][item_id]" value="${itemData.id || ''}">
+        <input type="hidden" name="items[${newRowIndex}][batch_id]" value="${batchData?.id || ''}">
+        <input type="hidden" name="items[${newRowIndex}][hsn_code]" value="${itemData.hsn_code || ''}">
+        <input type="hidden" name="items[${newRowIndex}][packing]" value="${itemData.packing || ''}">
+        <input type="hidden" name="items[${newRowIndex}][unit]" value="${itemData.unit || '1'}">
+        <input type="hidden" name="items[${newRowIndex}][company_name]" value="${itemData.company_name || ''}">
+        <input type="hidden" name="items[${newRowIndex}][mrp]" value="${itemData.mrp || 0}">
+        <input type="hidden" name="items[${newRowIndex}][s_rate]" value="${itemData.s_rate || 0}">
+        <input type="hidden" name="items[${newRowIndex}][pur_rate]" value="${rate}">
+    `;
+    
+    tbody.appendChild(row);
+    selectRow(newRowIndex);
+    
+    // Update calculations
+    if (typeof calculateRowAmount === 'function') {
+        calculateRowAmount(newRowIndex);
+    }
+    if (typeof calculateTotals === 'function') {
+        calculateTotals();
+    }
+    
+    console.log('✅ Claim to Supplier Mod: Row created successfully', newRowIndex);
+    
+    // Focus qty field
+    setTimeout(() => {
+        row.querySelector('input[type="number"]')?.focus();
+    }, 100);
+}
+
+/**
+ * Bridge function to open item selection modal
+ */
+function showAddItemModal() {
+    console.log('🎯 Claim to Supplier Mod: showAddItemModal called');
+    
+    // Check if modal component function exists
+    if (typeof window.openItemModal_claimToSupplierModItemModal === 'function') {
+        console.log('✅ Claim to Supplier Mod: Opening reusable item modal');
+        window.openItemModal_claimToSupplierModItemModal();
+    } else {
+        console.error('❌ Claim to Supplier Mod: openItemModal_claimToSupplierModItemModal function not found. Modal component may not be loaded.');
+        alert('Error: Item selection modal not available. Please refresh the page.');
+    }
+}
+
+// ============================================================================
+// EXISTING FUNCTIONS
+// ============================================================================
 
 $(document).ready(function() {
     loadNextTransactionNumber();
@@ -525,8 +636,8 @@ function saveAdditionalDetails() {
 }
 
 
-// ==================== ITEM SELECTION MODAL ====================
-function showAddItemModal() {
+// ==================== LEGACY ITEM SELECTION MODAL ====================
+function _legacy_showAddItemModal() {
     const supplierId = $('#supplier_id').val();
     if (!supplierId) {
         alert('Please select a supplier first');
@@ -539,13 +650,13 @@ function showAddItemModal() {
     
     $.get("{{ route('admin.items.get-all') }}", params, function(data) {
         allItems = data.items || data;
-        showItemSelectionModal(allItems);
+        _legacy_showItemSelectionModal(allItems);
     }).fail(function() {
         alert('Failed to load items');
     });
 }
 
-function showItemSelectionModal(items) {
+function _legacy_showItemSelectionModal(items) {
     let itemsHtml = items.map((item, index) => {
         // Prepare item data with all required fields
         const itemData = {
@@ -573,23 +684,23 @@ function showItemSelectionModal(items) {
             <td>${item.name || ''}</td>
             <td>${item.company_short_name || ''}</td>
             <td style="text-align: center;">
-                <button type="button" class="btn btn-sm btn-primary" onclick='selectItem(${JSON.stringify(itemData).replace(/'/g, "\\'")})'
+                <button type="button" class="btn btn-sm btn-primary" onclick='_legacy_selectItem(${JSON.stringify(itemData).replace(/'/g, "\\'")})'
                     style="font-size: 9px; padding: 2px 8px;">Select</button>
             </td>
         </tr>
     `}).join('');
     
     const modalHTML = `
-        <div class="modal-backdrop-custom" id="itemModalBackdrop" onclick="closeItemModal()"></div>
+        <div class="modal-backdrop-custom" id="itemModalBackdrop" onclick="_legacy_closeItemModal()"></div>
         <div class="item-modal" id="itemModal">
             <div class="item-modal-header">
                 <h5><i class="bi bi-box-seam me-2"></i>Select Item</h5>
-                <button type="button" class="btn-close-custom" onclick="closeItemModal()">&times;</button>
+                <button type="button" class="btn-close-custom" onclick="_legacy_closeItemModal()">&times;</button>
             </div>
             <div class="item-modal-body">
                 <div style="margin-bottom: 10px;">
                     <input type="text" id="itemSearchInput" class="form-control form-control-sm" 
-                           placeholder="Search by item name or code..." onkeyup="filterItems()" style="font-size: 11px;">
+                           placeholder="Search by item name or code..." onkeyup="_legacy_filterItems()" style="font-size: 11px;">
                 </div>
                 <div style="max-height: 400px; overflow-y: auto;">
                     <table class="table table-bordered table-sm" style="font-size: 10px; margin-bottom: 0;">
@@ -607,7 +718,7 @@ function showItemSelectionModal(items) {
                 </div>
             </div>
             <div class="item-modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="_legacy_closeItemModal()">Close</button>
             </div>
         </div>
     `;
@@ -617,7 +728,7 @@ function showItemSelectionModal(items) {
     setTimeout(() => { $('#itemModalBackdrop, #itemModal').addClass('show'); $('#itemSearchInput').focus(); }, 10);
 }
 
-function filterItems() {
+function _legacy_filterItems() {
     const searchValue = $('#itemSearchInput').val().toLowerCase();
     $('.item-row').each(function() {
         const name = $(this).data('item-name');
@@ -626,22 +737,22 @@ function filterItems() {
     });
 }
 
-function closeItemModal() {
+function _legacy_closeItemModal() {
     $('#itemModalBackdrop, #itemModal').removeClass('show');
     setTimeout(() => { $('#itemModal, #itemModalBackdrop').remove(); }, 300);
 }
 
-// ==================== SELECT ITEM & ADD ROW (NO BATCH MODAL) ====================
-function selectItem(item) {
+// ==================== LEGACY SELECT ITEM & ADD ROW (NO BATCH MODAL) ====================
+function _legacy_selectItem(item) {
     if (typeof item === 'string') item = JSON.parse(item);
     selectedItem = item;
-    closeItemModal();
+    _legacy_closeItemModal();
     
     // Directly add row without batch modal - user will enter batch manually
-    addItemRowManual(item);
+    _legacy_addItemRowManual(item);
 }
 
-function addItemRowManual(item) {
+function _legacy_addItemRowManual(item) {
     const row = `
         <tr data-row="${rowIndex}">
             <td><input type="text" class="form-control item-code" data-row="${rowIndex}" value="${item.code || ''}" readonly tabindex="-1"></td>

@@ -199,6 +199,26 @@
         </div>
     </div>
 </section>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'quotation',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'batchSelectionModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'quotation',
+    'showOnlyAvailable' => false,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+])
+
 @endsection
 
 @push('scripts')
@@ -211,8 +231,83 @@ let isLoadingItems = false;
 let hasMoreItems = true;
 let currentSearchTerm = '';
 
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from reusable modal:', item);
+    console.log('Batch selected from reusable modal:', batch);
+    
+    // Create a new row with item and batch data
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    // Format expiry date
+    let expiryDisplay = '';
+    if (batch.expiry_date) {
+        try {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    // Use sale rate for quotations
+    const saleRate = parseFloat(batch.s_rate || batch.avg_s_rate || item.s_rate || 0);
+    const mrp = parseFloat(batch.mrp || batch.avg_mrp || item.mrp || 0);
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = item.id;
+    row.dataset.batchId = batch.id;
+    row.dataset.itemData = JSON.stringify(item);
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly onkeydown="handleCodeKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][item_name]" value="${item.name || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="1" step="0.001" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="${saleRate.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" readonly></td>
+        <td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items[${rowIndex}][amount]" value="${saleRate.toFixed(2)}" readonly></td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
+            <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
+            <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
+            <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || ''}">
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Update footer display
+    if (typeof updateFooter === 'function') {
+        updateFooter(item);
+    }
+    
+    // Calculate row amount and totals
+    if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
+    if (typeof calculateTotalAmount === 'function') calculateTotalAmount();
+    
+    // Focus qty field
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+    }
+    
+    // Reset selectedRowIndex
+    selectedRowIndex = null;
+};
+
 document.addEventListener('DOMContentLoaded', function() {
-    addNewRow();
+    // Don't add empty row on load - rows will be created when items are selected
+    // Initialize date/day if needed
+    updateDayName();
 });
 
 function updateDayName() {
@@ -434,6 +529,13 @@ function showItemModal(rowIndex) {
     currentPage = 1;
     hasMoreItems = true;
     
+    // Try to use the new reusable item selection modal
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+        return;
+    }
+    
+    // Fallback to old inline modal
     let html = `
         <div class="batch-modal-backdrop show" id="itemModalBackdrop"></div>
         <div class="batch-modal show" id="itemModal">
@@ -620,6 +722,13 @@ function closeBatchModal() {
 
 // Add Items Modal - allows selecting multiple items at once
 function showAddItemsModal() {
+    // Try to use the new reusable item selection modal
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+        return;
+    }
+    
+    // Fallback to old inline modal
     // Reset state
     addItemsPage = 1;
     hasMoreAddItems = true;

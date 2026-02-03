@@ -993,6 +993,81 @@ function updateDayName() {
 // Current selected row index
 let currentSelectedRow = null;
 
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from reusable modal:', item);
+    console.log('Batch selected from reusable modal:', batch);
+    
+    // Create new row for purchase challan
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = tbody.querySelectorAll('tr').length;
+    
+    // Format expiry date
+    let expiryDisplay = '';
+    if (batch.expiry_date) {
+        try {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    const purchaseRate = parseFloat(batch.p_rate || batch.pur_rate || batch.purchase_rate || 0);
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.setAttribute('data-row-index', rowIndex);
+    row.setAttribute('data-item-id', item.id);
+    row.setAttribute('data-batch-id', batch.id);
+    row.setAttribute('data-hsn-code', item.hsn_code || '');
+    row.setAttribute('data-cgst', item.cgst_percent || 0);
+    row.setAttribute('data-sgst', item.sgst_percent || 0);
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][item_name]" value="${item.name || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
+        <td><input type="number" class="form-control item-qty" name="items[${rowIndex}][qty]" value="0" step="1" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control item-fqty" name="items[${rowIndex}][free_qty]" value="0" step="1" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control" name="items[${rowIndex}][pur_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control item-dis-percent" name="items[${rowIndex}][dis_percent]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control" name="items[${rowIndex}][ft_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" onclick="selectRow(${rowIndex})" readonly></td>
+        <td><input type="number" class="form-control readonly-field" name="items[${rowIndex}][ft_amount]" value="0.00" readonly></td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="deleteRow(${rowIndex})" style="padding: 2px 6px;">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
+        <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="${item.cgst_percent || 0}">
+        <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="${item.sgst_percent || 0}">
+        <input type="hidden" name="items[${rowIndex}][mrp]" value="${batch.mrp || 0}">
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Select the new row
+    if (typeof selectRow === 'function') {
+        selectRow(rowIndex);
+    }
+    
+    // Focus on qty input
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+    
+    alert('Item added! Enter quantity.');
+    if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
+    if (typeof calculateTotals === 'function') calculateTotals();
+};
+
 // S.Rate Enter key navigation to next row
 document.addEventListener('DOMContentLoaded', function() {
     const sRateField = document.getElementById('calc_s_rate');
@@ -3714,5 +3789,24 @@ function loadChallanIntoPurchase(challanId, challanNo) {
         });
 }
 </script>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'reusableItemsModal',
+    'module' => 'purchase-challan',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'reusableBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'reusableBatchModal',
+    'module' => 'purchase-challan',
+    'showOnlyAvailable' => false,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
 
 @endsection

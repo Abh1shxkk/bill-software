@@ -240,6 +240,26 @@
         </div>
     </div>
 </section>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'sampleReceivedModItemModal',
+    'module' => 'sample-received-mod',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'sampleReceivedModBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'sampleReceivedModBatchModal',
+    'module' => 'sample-received-mod',
+    'showOnlyAvailable' => false,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+])
+
 @endsection
 
 @push('scripts')
@@ -577,9 +597,81 @@ function updatePartyName() {
     }
 }
 
+// ============ REUSABLE MODAL BRIDGE FUNCTION ============
+// This function is called by the reusable modal components
+function onItemBatchSelectedFromModal(itemData, batchData) {
+    console.log('🎯 Sample Received Mod: onItemBatchSelectedFromModal called', {itemData, batchData});
+    
+    if (!itemData || !itemData.id) {
+        console.error('❌ Sample Received Mod: Invalid item data received');
+        return;
+    }
+    
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = itemData.id;
+    row.dataset.itemData = JSON.stringify(itemData);
+    if (batchData && batchData.id) {
+        row.dataset.batchId = batchData.id;
+        row.dataset.batchData = JSON.stringify(batchData);
+    }
+    row.onclick = function() { selectRow(rowIndex); };
+    row.className = 'row-complete';
+    
+    // Complete row HTML with all fields
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${itemData.id || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemData.name || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchData?.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batchData?.expiry_formatted || ''}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="${batchData?.qty || 0}" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" value="${parseFloat(batchData?.s_rate || itemData.s_rate || 0).toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="0.00" step="0.01" readonly></td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemData.id}">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchData?.id || ''}">
+            <input type="hidden" name="items[${rowIndex}][packing]" value="${itemData.packing || ''}">
+            <input type="hidden" name="items[${rowIndex}][unit]" value="${itemData.unit || ''}">
+            <input type="hidden" name="items[${rowIndex}][company_name]" value="${itemData.company_name || ''}">
+            <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${itemData.hsn_code || ''}">
+            <input type="hidden" name="items[${rowIndex}][mrp]" value="${itemData.mrp || 0}">
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    selectRow(rowIndex);
+    
+    // Update footer with item/batch details
+    document.getElementById('packing').value = itemData.packing || '';
+    document.getElementById('unit').value = itemData.unit || '';
+    document.getElementById('cl_qty').value = batchData?.qty || 0;
+    
+    // Calculate row amount
+    calculateRowAmount(rowIndex);
+    
+    console.log('✅ Sample Received Mod: Row created successfully', {rowIndex, itemId: itemData.id, batchId: batchData?.id});
+}
 
-// ============ ITEM SELECTION MODAL ============
+// ============ SHOW ITEM SELECTION MODAL (BRIDGE TO REUSABLE COMPONENT) ============
 function showItemSelectionModal() {
+    console.log('🔗 Sample Received Mod: showItemSelectionModal called - opening reusable modal');
+    
+    // Check if modal functions exist
+    if (typeof window.openItemModal_sampleReceivedModItemModal === 'function') {
+        window.openItemModal_sampleReceivedModItemModal();
+    } else {
+        console.error('❌ Sample Received Mod: openItemModal_sampleReceivedModItemModal function not found. Modal component may not be loaded.');
+        alert('Error: Modal component not loaded. Please refresh the page.');
+    }
+}
+
+// ============ LEGACY ITEM SELECTION MODAL (RENAMED TO AVOID CONFLICT) ============
+function _legacy_showItemSelectionModal() {
     let html = `
         <div class="batch-modal-backdrop show" id="itemModalBackdrop"></div>
         <div class="batch-modal show" id="itemModal" style="max-width: 900px;">
@@ -606,7 +698,7 @@ function showItemSelectionModal() {
     
     itemsData.forEach(item => {
         html += `
-            <tr class="item-row" onclick="selectItemFromModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+            <tr class="item-row" onclick="_legacy_selectItemFromModal(${JSON.stringify(item).replace(/"/g, '&quot;')})">
                 <td><strong>${item.id || ''}</strong></td>
                 <td>${item.name || ''}</td>
                 <td>${item.packing || ''}</td>
@@ -639,7 +731,7 @@ function closeItemModal() {
     document.getElementById('itemModalBackdrop')?.remove();
 }
 
-function selectItemFromModal(item) {
+function _legacy_selectItemFromModal(item) {
     closeItemModal();
     
     const tbody = document.getElementById('itemsTableBody');
@@ -672,23 +764,23 @@ function selectItemFromModal(item) {
     
     tbody.appendChild(row);
     selectRow(rowIndex);
-    showBatchSelectionForItem(item, rowIndex);
+    _legacy_showBatchSelectionForItem(item, rowIndex);
 }
 
-function showBatchSelectionForItem(item, rowIndex) {
+function _legacy_showBatchSelectionForItem(item, rowIndex) {
     fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
         .then(response => response.json())
         .then(data => {
             const batches = data.batches || data || [];
-            showBatchSelectionModal(Array.isArray(batches) ? batches : [], rowIndex, item);
+            _legacy_showBatchSelectionModal(Array.isArray(batches) ? batches : [], rowIndex, item);
         })
         .catch(error => {
             console.error('Error fetching batches:', error);
-            showBatchSelectionModal([], rowIndex, item);
+            _legacy_showBatchSelectionModal([], rowIndex, item);
         });
 }
 
-function showBatchSelectionModal(batches, rowIndex, itemData) {
+function _legacy_showBatchSelectionModal(batches, rowIndex, itemData) {
     let html = `
         <div class="batch-modal-backdrop show" id="batchBackdrop"></div>
         <div class="batch-modal show" id="batchModal">
@@ -701,7 +793,7 @@ function showBatchSelectionModal(batches, rowIndex, itemData) {
                     <div>
                         <strong>ITEM:</strong> <span style="color: #6f42c1; font-weight: bold;">${itemData.name || ''}</span>
                     </div>
-                    <button type="button" class="btn btn-warning btn-sm" onclick="skipBatchSelection(${rowIndex})">
+                    <button type="button" class="btn btn-warning btn-sm" onclick="_legacy_skipBatchSelection(${rowIndex})">
                         <i class="bi bi-skip-forward me-1"></i> Skip (No Batch)
                     </button>
                 </div>`;
@@ -732,7 +824,7 @@ function showBatchSelectionModal(batches, rowIndex, itemData) {
                     <td class="text-end">${batch.qty || 0}</td>
                     <td>${expiry}</td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-success py-0 px-2" onclick='selectBatchFromModal(${rowIndex}, ${JSON.stringify(batch).replace(/'/g, "&apos;")})'>
+                        <button type="button" class="btn btn-sm btn-success py-0 px-2" onclick='_legacy_selectBatchFromModal(${rowIndex}, ${JSON.stringify(batch).replace(/'/g, "&apos;")})'>
                             <i class="bi bi-check"></i> Select
                         </button>
                     </td>
@@ -758,13 +850,13 @@ function showBatchSelectionModal(batches, rowIndex, itemData) {
     document.body.insertAdjacentHTML('beforeend', html);
 }
 
-function skipBatchSelection(rowIndex) {
+function _legacy_skipBatchSelection(rowIndex) {
     closeBatchModal();
     const row = document.getElementById(`row-${rowIndex}`);
     row?.querySelector('input[name*="[qty]"]')?.focus();
 }
 
-function selectBatchFromModal(rowIndex, batch) {
+function _legacy_selectBatchFromModal(rowIndex, batch) {
     const row = document.getElementById(`row-${rowIndex}`);
     if (!row) return;
     
@@ -892,7 +984,7 @@ function fillRowWithItem(rowIndex, item) {
     row.dataset.itemId = item.id;
     
     updateFooterFromRow(row);
-    showBatchSelectionForItem(item, rowIndex);
+    _legacy_showBatchSelectionForItem(item, rowIndex);
 }
 
 function selectRow(rowIndex) {

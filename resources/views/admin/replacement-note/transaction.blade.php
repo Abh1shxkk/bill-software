@@ -226,6 +226,25 @@
     </div>
 </section>
 
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'reusableItemsModal',
+    'module' => 'replacement-note',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'reusableBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'reusableBatchModal',
+    'module' => 'replacement-note',
+    'showOnlyAvailable' => true,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
+
 <!-- Remarks Modal -->
 <div class="modal fade" id="remarksModal" tabindex="-1">
     <div class="modal-dialog">
@@ -246,11 +265,106 @@
 </div>
 @endsection
 
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'replacement-note',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'batchSelectionModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'replacement-note',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => true,
+])
+
 @push('scripts')
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
 let selectedRowIndex = null;
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from reusable modal:', item);
+    console.log('Batch selected from reusable modal:', batch);
+    
+    // Add a new row with item and batch data
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    // Format expiry date
+    let expiryDisplay = '';
+    if (batch.expiry_date) {
+        try {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    const purchaseRate = parseFloat(batch.p_rate || batch.pur_rate || batch.purchase_rate || 0);
+    const mrp = parseFloat(batch.mrp || batch.avg_mrp || item.mrp || 0);
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = item.id;
+    row.dataset.batchId = batch.id;
+    row.dataset.itemData = JSON.stringify(item);
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly onclick="handleCodeKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" value="1" step="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleMrpKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][amount]" value="${mrp.toFixed(2)}" readonly></td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-trash"></i></button>
+        </td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Update footer display
+    if (typeof updateFooter === 'function') {
+        updateFooter(item);
+    }
+    
+    // Focus qty field
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+    }
+    
+    calculateRowAmount(rowIndex);
+    calculateTotals();
+};
+
+// Open Item Modal - use reusable modal
+function openItemModal() {
+    if (typeof openItemModal_reusableItemsModal === 'function') {
+        openItemModal_reusableItemsModal();
+    } else if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        console.error('Item selection modal not found');
+        alert('Item selection modal not found. Please reload the page.');
+    }
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -691,42 +805,17 @@ function selectBatch(rowIndex, batch) {
     selectBatchFromModal(rowIndex, batch);
 }
 
-// Open Insert Items Modal - Shows items first, then batches
+// Open Insert Items Modal - Redirect to reusable modal component
 let pendingItemForBatch = null;
 
 function openInsertItemsModal() {
-    let html = `
-        <div class="item-modal-backdrop show" id="itemBackdrop"></div>
-        <div class="item-modal show" id="itemModal">
-            <div class="modal-header-custom" style="background: #198754;">
-                <h5 class="mb-0"><i class="bi bi-plus-square me-1"></i> Insert Items</h5>
-                <button type="button" class="btn-close btn-close-white" onclick="closeItemModal()"></button>
-            </div>
-            <div class="modal-body-custom">
-                <input type="text" class="form-control mb-2" id="itemSearchInput" placeholder="Search by item name or code..." onkeyup="filterInsertItemList()" autofocus>
-                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-                    <table class="table table-bordered table-hover table-sm" style="font-size: 11px;">
-                        <thead class="table-light" style="position: sticky; top: 0; z-index: 5;">
-                            <tr>
-                                <th style="width: 60px;">Code</th>
-                                <th>Item Name</th>
-                                <th style="width: 80px;">Packing</th>
-                                <th style="width: 70px;">MRP</th>
-                                <th style="width: 70px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="insertItemListBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer-custom">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
-            </div>
-        </div>`;
-    
-    document.body.insertAdjacentHTML('beforeend', html);
-    displayInsertItemList(itemsData);
-    document.getElementById('itemSearchInput')?.focus();
+    // Use reusable item selection modal
+    if (typeof openItemModal_reusableItemsModal === 'function') {
+        openItemModal_reusableItemsModal();
+    } else {
+        console.error('Reusable item modal not found');
+        alert('Item selection modal not available. Please reload the page.');
+    }
 }
 
 // Display Insert Item List

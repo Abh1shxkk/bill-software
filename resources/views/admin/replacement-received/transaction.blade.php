@@ -241,31 +241,98 @@
     </div>
 </section>
 
-<!-- Remarks Modal -->
-<div class="modal fade" id="remarksModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Remarks</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <textarea id="remarks" name="remarks" class="form-control" rows="4" placeholder="Enter remarks..."></textarea>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Save</button>
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'replacementReceivedItemModal',
+    'module' => 'replacement-received',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'replacementReceivedBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'replacementReceivedBatchModal',
+    'module' => 'replacement-received',
+    'showOnlyAvailable' => false,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
 
 @push('scripts')
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
 let selectedRowIndex = null;
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from reusable modal:', item);
+    console.log('Batch selected from reusable modal:', batch);
+    
+    // Add a new row with item and batch data
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    // Format expiry date
+    let expiryDisplay = '';
+    if (batch.expiry_date) {
+        try {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        } catch (e) {
+            expiryDisplay = batch.expiry_date;
+        }
+    }
+    
+    const mrp = parseFloat(batch.mrp || batch.avg_mrp || item.mrp || 0);
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.dataset.rowIndex = rowIndex;
+    row.dataset.itemId = item.id;
+    row.dataset.batchId = batch.id;
+    row.dataset.itemData = JSON.stringify(item);
+    row.dataset.batchData = JSON.stringify(batch);
+    row.onclick = function() { selectRow(rowIndex); };
+    
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" value="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" value="0" step="1" min="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleMrpKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][discount_percent]" value="0" step="0.01" min="0" max="100" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger py-0 px-1" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Update footer display
+    updateFooterFromRow(row);
+    
+    // Select the row
+    selectRow(rowIndex);
+    
+    // Focus qty field
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+    
+    calculateRowAmount(rowIndex);
+    calculateTotals();
+};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
@@ -805,259 +872,19 @@ function selectBatch(rowIndex, batch) {
     selectBatchFromModal(rowIndex, batch);
 }
 
-// Open Insert Items Modal - Shows items first, then batches
-let pendingItemForBatch = null;
-
+// Open Insert Items Modal - Use reusable modal component
 function openInsertItemsModal() {
-    let html = `
-        <div class="item-modal-backdrop show" id="itemBackdrop"></div>
-        <div class="item-modal show" id="itemModal">
-            <div class="modal-header-custom" style="background: #198754;">
-                <h5 class="mb-0"><i class="bi bi-plus-square me-1"></i> Insert Items</h5>
-                <button type="button" class="btn-close btn-close-white" onclick="closeItemModal()"></button>
-            </div>
-            <div class="modal-body-custom">
-                <input type="text" class="form-control mb-2" id="itemSearchInput" placeholder="Search by item name or code..." onkeyup="filterInsertItemList()" autofocus>
-                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-                    <table class="table table-bordered table-hover table-sm" style="font-size: 11px;">
-                        <thead class="table-light" style="position: sticky; top: 0; z-index: 5;">
-                            <tr>
-                                <th style="width: 60px;">Code</th>
-                                <th>Item Name</th>
-                                <th style="width: 80px;">Packing</th>
-                                <th style="width: 70px;">MRP</th>
-                                <th style="width: 70px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="insertItemListBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer-custom">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
-            </div>
-        </div>`;
-    
-    document.body.insertAdjacentHTML('beforeend', html);
-    displayInsertItemList(itemsData);
-    document.getElementById('itemSearchInput')?.focus();
-}
-
-// Display Insert Item List
-function displayInsertItemList(items) {
-    const tbody = document.getElementById('insertItemListBody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = items.slice(0, 100).map(item => `
-        <tr style="cursor: pointer;" ondblclick='selectInsertItem(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
-            <td>${item.id || ''}</td>
-            <td>${item.name || ''}</td>
-            <td>${item.packing || ''}</td>
-            <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-success" onclick='selectInsertItem(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
-                    <i class="bi bi-check"></i>
-                </button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-// Filter Insert Item List
-function filterInsertItemList() {
-    const search = document.getElementById('itemSearchInput').value.toLowerCase();
-    const filtered = itemsData.filter(i => 
-        (i.name || '').toLowerCase().includes(search) || 
-        (i.id || '').toString().includes(search)
-    );
-    displayInsertItemList(filtered);
-}
-
-// Select Insert Item - Close item modal and show batch modal
-function selectInsertItem(item) {
-    pendingItemForBatch = item;
-    closeItemModal();
-    
-    // Fetch batches for this item
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
-        .then(response => response.json())
-        .then(data => {
-            // Filter to only show batches with qty > 0 (available stock)
-            const availableBatches = (data.batches || []).filter(b => (b.qty || 0) > 0);
-            
-            if (availableBatches.length > 0) {
-                showInsertBatchModal(availableBatches, item);
-            } else {
-                // No available batches found, add item without batch
-                addItemToTable(item, null);
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching batches:', error);
-            addItemToTable(item, null);
-        });
-}
-
-// Show Insert Batch Modal - Only shows batches with qty > 0
-function showInsertBatchModal(batches, item) {
-    // Filter to only available batches (qty > 0)
-    const availableBatches = batches.filter(b => (b.qty || 0) > 0);
-    
-    // Calculate total available stock
-    const totalAvailableStock = availableBatches.reduce((sum, b) => sum + (b.qty || 0), 0);
-    
-    let html = `
-        <div class="batch-modal-backdrop show" id="batchBackdrop"></div>
-        <div class="batch-modal show" id="batchModal">
-            <div class="modal-header-custom" style="background: #17a2b8;">
-                <h5 class="mb-0"><i class="bi bi-box me-1"></i> Select Batch - ${item.name}</h5>
-                <button type="button" class="btn-close btn-close-white" onclick="closeBatchModalAndReopen()"></button>
-            </div>
-            <div class="modal-body-custom">
-                <div class="mb-2">
-                    <strong>Total Available Stock:</strong> <span class="text-success fw-bold">${totalAvailableStock}</span>
-                </div>
-                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-                    <table class="table table-bordered table-hover table-sm" style="font-size: 11px;">
-                        <thead class="table-light" style="position: sticky; top: 0; z-index: 5;">
-                            <tr>
-                                <th>Batch No</th>
-                                <th>Expiry</th>
-                                <th class="text-end">MRP</th>
-                                <th class="text-end">P.Rate</th>
-                                <th class="text-end">Avl. Qty</th>
-                                <th style="width: 70px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>`;
-    
-    availableBatches.forEach(batch => {
-        const expiry = batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB', {month: '2-digit', year: 'numeric'}) : '';
-        html += `
-            <tr style="cursor: pointer; background: #d4edda;" ondblclick='selectInsertBatch(${JSON.stringify(batch).replace(/'/g, "&apos;")})'>
-                <td><strong>${batch.batch_no || ''}</strong></td>
-                <td>${expiry}</td>
-                <td class="text-end">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
-                <td class="text-end">${parseFloat(batch.pur_rate || 0).toFixed(2)}</td>
-                <td class="text-end"><strong>${batch.qty || 0}</strong></td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-success" onclick='selectInsertBatch(${JSON.stringify(batch).replace(/'/g, "&apos;")})'>
-                        <i class="bi bi-check"></i>
-                    </button>
-                </td>
-            </tr>`;
-    });
-    
-    html += `</tbody></table></div></div>
-            <div class="modal-footer-custom">
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="addItemWithoutBatch()">
-                    <i class="bi bi-plus"></i> Add Without Batch
-                </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModalAndReopen()">Back to Items</button>
-            </div>
-        </div>`;
-    
-    document.body.insertAdjacentHTML('beforeend', html);
-}
-
-// Select Insert Batch
-function selectInsertBatch(batch) {
-    closeBatchModal();
-    addItemToTable(pendingItemForBatch, batch);
-    pendingItemForBatch = null;
-}
-
-// Add Item Without Batch
-function addItemWithoutBatch() {
-    closeBatchModal();
-    addItemToTable(pendingItemForBatch, null);
-    pendingItemForBatch = null;
-}
-
-// Close Batch Modal and Reopen Item Modal
-function closeBatchModalAndReopen() {
-    closeBatchModal();
-    pendingItemForBatch = null;
-    openInsertItemsModal();
-}
-
-// Add Item to Table
-function addItemToTable(item, batch) {
-    const tbody = document.getElementById('itemsTableBody');
-    const rowIndex = currentRowIndex++;
-    
-    const row = document.createElement('tr');
-    row.id = `row-${rowIndex}`;
-    row.dataset.rowIndex = rowIndex;
-    row.dataset.itemId = item.id;
-    row.dataset.itemData = JSON.stringify(item);
-    if (batch) {
-        row.dataset.batchId = batch.id;
-        row.dataset.batchData = JSON.stringify(batch);
+    if (typeof openItemModal_replacementReceivedItemModal === 'function') {
+        openItemModal_replacementReceivedItemModal();
+    } else {
+        console.error('Reusable item modal not found');
+        alert('Item selection modal not found. Please reload the page.');
     }
-    row.onclick = function() { selectRow(rowIndex); };
-    
-    const batchNo = batch ? batch.batch_no : '';
-    const expiry = batch && batch.expiry_date ? (() => {
-        const d = new Date(batch.expiry_date);
-        return `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-    })() : '';
-    const mrp = batch ? parseFloat(batch.mrp || 0).toFixed(2) : parseFloat(item.mrp || 0).toFixed(2);
-    
-    row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onblur="checkBatchOnBlur(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" placeholder="MM/YYYY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" value="0" step="1" min="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" value="${mrp}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleMrpKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][discount_percent]" value="0" step="0.01" min="0" max="100" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleDiscountKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger py-0 px-1" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
-    `;
-    
-    tbody.appendChild(row);
-    updateFooterFromRow(row);
-    selectRow(rowIndex);
-    
-    // Focus based on whether batch is already filled
-    setTimeout(() => {
-        if (batchNo) {
-            // Batch already selected, focus on qty
-            row.querySelector('input[name*="[qty]"]')?.focus();
-        } else {
-            // No batch, focus on batch field
-            row.querySelector('input[name*="[batch]"]')?.focus();
-        }
-    }, 100);
 }
 
 // Open Item Modal (legacy - for Select Item button)
 function openItemModal() {
     openInsertItemsModal();
-}
-
-// Close Item Modal
-function closeItemModal() {
-    document.getElementById('itemModal')?.remove();
-    document.getElementById('itemBackdrop')?.remove();
-}
-
-// Display Item List (legacy)
-function displayItemList(items) {
-    displayInsertItemList(items);
-}
-
-// Filter Item List (legacy)
-function filterItemList() {
-    filterInsertItemList();
-}
-
-// Select Item from Modal (legacy)
-function selectItemFromModal(item) {
-    selectInsertItem(item);
 }
 
 // Calculate Row Amount

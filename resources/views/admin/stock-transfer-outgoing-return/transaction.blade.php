@@ -232,6 +232,26 @@
         </form>
     </div>
 </div>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'stockTransferOutgoingReturnItemModal',
+    'module' => 'stock-transfer-outgoing-return',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'stockTransferOutgoingReturnBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'stockTransferOutgoingReturnBatchModal',
+    'module' => 'stock-transfer-outgoing-return',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+])
+
 @endsection
 
 @push('scripts')
@@ -246,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadItems();
 });
 
-// Load Items from API
+// Load Items from API (for legacy row-based lookup)
 function loadItems() {
     fetch('{{ route("admin.items.get-all") }}')
         .then(response => response.json())
@@ -256,6 +276,39 @@ function loadItems() {
         })
         .catch(error => console.error('Error loading items:', error));
 }
+
+// ====== NEW MODAL COMPONENT BRIDGE ======
+// Open Insert Items Modal using new component
+function openInsertItemsModal() {
+    console.log('📦 Opening stock transfer outgoing return item modal');
+    if (typeof openItemModal_stockTransferOutgoingReturnItemModal === 'function') {
+        openItemModal_stockTransferOutgoingReturnItemModal();
+    } else {
+        console.error('❌ Item modal function not found');
+    }
+}
+
+// Callback when item and batch are selected from new modal component
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Stock Transfer Outgoing Return - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('Item data:', item);
+    console.log('Batch data:', batch);
+    addItemToTable(item, batch);
+};
+
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Item selected, opening batch modal for:', item?.name);
+    if (typeof openBatchModal_stockTransferOutgoingReturnBatchModal === 'function') {
+        openBatchModal_stockTransferOutgoingReturnBatchModal(item);
+    } else {
+        console.error('❌ Batch modal function not found');
+    }
+};
+// ====== END MODAL COMPONENT BRIDGE ======
 
 function updateCustomerName() {
     const select = document.getElementById('customerSelect');
@@ -525,8 +578,8 @@ function closeBatchModal() {
     document.getElementById('batchBackdrop')?.remove();
 }
 
-// Open Insert Items Modal
-function openInsertItemsModal() {
+// OLD LEGACY - Renamed to avoid conflict with new component bridge
+function _legacy_openInsertItemsModal() {
     let html = `
         <div class="item-modal-backdrop show" id="itemBackdrop"></div>
         <div class="item-modal show" id="itemModal">

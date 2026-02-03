@@ -242,6 +242,26 @@
         <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
     </div>
 </div>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'breakage-supplier',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'batchSelectionModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'breakage-supplier',
+    'showOnlyAvailable' => true,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
+
 @endsection
 
 
@@ -274,14 +294,53 @@ function loadItems() {
         .catch(e => console.error('Error loading items:', e));
 }
 
-// Item Modal
+// Item Modal - Redirect to reusable modal component
 function showItemModal() {
-    document.getElementById('itemModalBackdrop').classList.add('show');
-    document.getElementById('itemModal').classList.add('show');
-    document.getElementById('itemSearchInput').value = '';
-    renderItemsList(allItems);
-    setTimeout(() => document.getElementById('itemSearchInput').focus(), 100);
+    // Use reusable item selection modal
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        // Fallback to old modal behavior
+        document.getElementById('itemModalBackdrop').classList.add('show');
+        document.getElementById('itemModal').classList.add('show');
+        document.getElementById('itemSearchInput').value = '';
+        renderItemsList(allItems);
+        setTimeout(() => document.getElementById('itemSearchInput').focus(), 100);
+    }
 }
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from modal:', item);
+    console.log('Batch selected from modal:', batch);
+    
+    // Transform item to match expected format for addItemRow
+    const transformedItem = {
+        id: item.id,
+        item_code: item.bar_code || item.code || '',
+        item_name: item.name || '',
+        packing: item.packing || '',
+        company_name: item.company_name || '',
+        hsn_code: item.hsn_code || '',
+        unit: item.unit || '',
+        cgst: item.cgst_percent || 0,
+        sgst: item.sgst_percent || 0
+    };
+    
+    // Transform batch to match expected format
+    const transformedBatch = {
+        id: batch.id,
+        batch_no: batch.batch_no || '',
+        expiry_date: batch.expiry_date || '',
+        mrp: batch.mrp || 0,
+        purchase_rate: batch.p_rate || batch.pur_rate || batch.purchase_rate || 0,
+        sale_rate: batch.s_rate || batch.sale_rate || 0,
+        quantity: batch.qty || batch.quantity || 0
+    };
+    
+    // Use existing addItemRow function
+    addItemRow(transformedItem, transformedBatch);
+};
 
 function closeItemModal() {
     document.getElementById('itemModalBackdrop').classList.remove('show');
