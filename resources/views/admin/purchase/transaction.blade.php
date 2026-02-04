@@ -90,6 +90,78 @@
         padding: 8px;
         border-radius: 3px;
     }
+
+    /* ============================================ */
+    /* SEARCHABLE DROPDOWN STYLES */
+    /* ============================================ */
+    .searchable-dropdown {
+        position: relative;
+    }
+
+    .searchable-dropdown-input {
+        width: 100%;
+        cursor: text;
+    }
+
+    .searchable-dropdown-input:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+    }
+
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .searchable-dropdown-list .dropdown-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.15s;
+    }
+
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .searchable-dropdown-list .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+
+    .searchable-dropdown-list .dropdown-item.selected {
+        background-color: #e7f3ff;
+        font-weight: 600;
+    }
+
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
+    }
+
+    /* Modal button highlight */
+    #purchaseChallanModal .kbd-highlight,
+    #pendingOrdersModal .kbd-highlight,
+    #alertModal .kbd-highlight,
+    #mrpDetailsModal .kbd-highlight {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 1px;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+    }
     
     .table-compact {
         font-size: 10px;
@@ -513,18 +585,33 @@
                         <div class="header-row">
                             <div class="field-group">
                                 <label>Bill / Ledger Date</label>
-                                <input type="date" class="form-control" name="bill_date" id="billDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()">
+                                <input type="date" class="form-control" name="bill_date" id="billDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()" data-kb-order="1">
                                 <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
                             </div>
                             
                             <div class="field-group">
                                 <label>Supplier:</label>
-                                <select class="form-control" name="supplier_id" id="supplierSelect" style="width: 250px;" autocomplete="off">
-                                    <option value="">Select Supplier</option>
-                                    @foreach($suppliers ?? [] as $supplier)
-                                        <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                                    @endforeach
-                                </select>
+                                <div class="searchable-dropdown" id="supplierDropdownWrapper" style="position: relative; width: 250px;">
+                                    <input type="text"
+                                           class="form-control searchable-dropdown-input"
+                                           id="supplierSearchInput"
+                                           placeholder="Type to search supplier..."
+                                           autocomplete="off"
+                                           style="width: 100%;"
+                                           data-kb-order="2">
+                                    <input type="hidden" name="supplier_id" id="supplierSelect" value="">
+                                    <div class="searchable-dropdown-list" id="supplierDropdownList" style="display: none;">
+                                        <div class="dropdown-item" data-value="" data-name="">Select Supplier</div>
+                                        @foreach($suppliers ?? [] as $supplier)
+                                            <div class="dropdown-item"
+                                                 data-value="{{ $supplier->supplier_id }}"
+                                                 data-name="{{ $supplier->name }}"
+                                                 data-code="{{ $supplier->code ?? '' }}">
+                                                {{ $supplier->code ?? '' }} - {{ $supplier->name }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -539,13 +626,13 @@
                                     <div class="col-md-6">
                                         <div class="field-group">
                                             <label style="width: 100px;">Receive Date</label>
-                                            <input type="date" class="form-control" name="receive_date" id="receiveDate" value="{{ date('Y-m-d') }}">
+                                            <input type="date" class="form-control" name="receive_date" id="receiveDate" value="{{ date('Y-m-d') }}" data-kb-order="3">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <div class="field-group">
                                             <label>Cash:</label>
-                                            <select class="form-control" name="cash" id="cash" style="width: 60px;">
+                                            <select class="form-control" name="cash" id="cash" style="width: 60px;" data-kb-order="4">
                                                 <option value="N" selected>N</option>
                                                 <option value="Y">Y</option>
                                             </select>
@@ -554,7 +641,7 @@
                                     <div class="col-md-3">
                                         <div class="field-group">
                                             <label>Transfer:</label>
-                                            <input type="text" class="form-control" name="transfer" id="transfer" value="N" maxlength="1" style="width: 50px;">
+                                            <input type="text" class="form-control" name="transfer" id="transfer" value="N" maxlength="1" style="width: 50px;" data-kb-order="5">
                                         </div>
                                     </div>
                                 </div>
@@ -563,13 +650,13 @@
                                     <div class="col-md-7">
                                         <div class="field-group">
                                             <label>Remarks:</label>
-                                            <input type="text" class="form-control" name="remarks" id="remarks">
+                                            <input type="text" class="form-control" name="remarks" id="remarks" data-kb-order="6">
                                         </div>
                                     </div>
                                     <div class="col-md-5">
                                         <div class="field-group">
                                             <label style="width: 80px;">Due Date:</label>
-                                            <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}">
+                                            <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}" data-kb-order="7">
                                         </div>
                                     </div>
                                 </div>
@@ -577,14 +664,14 @@
                              <div style="width: 200px;">
                                 <div class="field-group mb-2">
                                     <label style="width: 60px;">Bill No.:</label>
-                                    <input type="text" class="form-control" name="bill_no" id="billNo" placeholder="1111">
+                                    <input type="text" class="form-control" name="bill_no" id="billNo" placeholder="1111" data-kb-order="8">
                                 </div>
                                 <div class="field-group mb-2">
                                     <label style="width: 60px;">Trn.No.:</label>
                                     <input type="text" class="form-control readonly-field" name="trn_no" id="trnNo" value="{{ $nextTrnNo ?? 1 }}" readonly>
                                 </div>
                                 <div class="text-center">
-                                    <button type="button" class="btn btn-sm btn-info" onclick="openPendingOrdersModal()" style="width: 100%;">
+                                    <button type="button" class="btn btn-sm btn-info" id="insertOrdersBtn" onclick="openPendingOrdersModal()" style="width: 100%;">
                                         <i class="bi bi-list-check"></i> Insert Orders
                                     </button>
                                 </div>
@@ -983,7 +1070,7 @@
             </div>
         </div>
         <div class="pending-orders-footer" style="padding: 10px 15px; text-align: right; background: #f8f9fa;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeMrpDetailsModal()" style="margin-right: 10px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="mrpCancelBtn" onclick="closeMrpDetailsModal()" style="margin-right: 10px;">
                 <i class="bi bi-x-circle"></i> Cancel
             </button>
             <button type="button" class="btn btn-primary btn-sm" id="saveMrpDetailsBtn">
@@ -1068,7 +1155,7 @@
             </div>
         </div>
         <div class="pending-orders-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePendingOrdersModal()">
+            <button type="button" class="btn btn-secondary" id="pendingOrdersExitBtn" onclick="closePendingOrdersModal()">
                 <i class="bi bi-x-circle"></i> Exit ( Esc )
             </button>
             <button type="button" class="btn btn-primary" id="generateInvoiceBtn">
@@ -1092,11 +1179,79 @@ function updateDayName() {
 
 // Current selected row index
 let currentSelectedRow = null;
+let pendingOrdersSelectedIndex = -1;
+let pendingOrdersFocusMode = 'rows'; // 'rows' | 'actions'
+let pendingOrdersActionIndex = 0; // 0 = Exit, 1 = Generate
+let mrpFocusMode = 'fields'; // 'fields' | 'actions'
+let mrpActionIndex = 0; // 0 = Cancel, 1 = Save
 
 // S.Rate Enter key navigation to next row
 document.addEventListener('DOMContentLoaded', function() {
     const sRateField = document.getElementById('calc_s_rate');
     if (sRateField) {
+        function isRowEmpty(row) {
+            if (!row) return true;
+            const inputs = row.querySelectorAll('input');
+            for (const input of inputs) {
+                const name = input.getAttribute('name') || '';
+                // Ignore amount field (readonly/calculated)
+                if (name.includes('[amount]')) continue;
+                const value = (input.value || '').trim();
+                if (value !== '' && value !== '0' && value !== '0.00') {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function focusRowCodeInput(row, rowIndex) {
+            const codeInput = row?.querySelector('input[name*="[code]"]');
+            if (codeInput) {
+                currentActiveRow = rowIndex;
+                isRowSelected = false;
+                codeInput.focus();
+                codeInput.select();
+            }
+        }
+
+        function advanceFromSaleRate(e) {
+            // Save s_rate before calculating GST
+            if (currentActiveRow !== null && currentActiveRow !== undefined) {
+                const sRateValue = parseFloat(e.target.value) || 0;
+                if (!rowGstData[currentActiveRow]) {
+                    rowGstData[currentActiveRow] = {};
+                }
+                rowGstData[currentActiveRow].s_rate = sRateValue;
+            }
+
+            // Calculate and save GST amounts for current row before moving
+            calculateAndSaveGstForRow(currentActiveRow);
+
+            // Small delay to ensure calculation is saved
+            setTimeout(() => {
+                const tbody = document.getElementById('itemsTableBody');
+                const rows = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
+                const nextRowIndex = currentActiveRow + 1;
+                
+                if (nextRowIndex < rows.length) {
+                    const nextRow = rows[nextRowIndex];
+                    if (isRowEmpty(nextRow)) {
+                        focusRowCodeInput(nextRow, nextRowIndex);
+                    } else {
+                        const prevCount = rows.length;
+                        addNewRow();
+                        const newRow = tbody.querySelectorAll('tr')[prevCount];
+                        focusRowCodeInput(newRow, prevCount);
+                    }
+                } else {
+                    const prevCount = rows.length;
+                    addNewRow();
+                    const newRow = tbody.querySelectorAll('tr')[prevCount];
+                    focusRowCodeInput(newRow, prevCount);
+                }
+            }, 100);
+        }
+
         // Save s_rate when user changes it (input/change event)
         sRateField.addEventListener('input', function(e) {
             if (currentActiveRow !== null && currentActiveRow !== undefined) {
@@ -1111,50 +1266,94 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        sRateField.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                console.log('S.Rate Enter pressed');
-                console.log('currentActiveRow:', currentActiveRow);
-                console.log('isRowSelected before:', isRowSelected);
+        function handleSaleRateEnter(e) {
+            const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+            if (!isEnter) return;
+            // Block other handlers from hijacking Enter (ex: moving to Unit field)
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            console.log('S.Rate Enter pressed');
+            console.log('currentActiveRow:', currentActiveRow);
+            console.log('isRowSelected before:', isRowSelected);
                 
-                // Save s_rate before calculating GST
-                if (currentActiveRow !== null && currentActiveRow !== undefined) {
-                    const sRateValue = parseFloat(e.target.value) || 0;
-                    if (!rowGstData[currentActiveRow]) {
-                        rowGstData[currentActiveRow] = {};
-                    }
-                    rowGstData[currentActiveRow].s_rate = sRateValue;
-                }
-                
-                // Calculate and save GST amounts for current row before moving
-                calculateAndSaveGstForRow(currentActiveRow);
-                
-                // Small delay to ensure calculation is saved
-                setTimeout(() => {
-                    // Select next row (full row selection with blue highlight)
-                    const rows = document.querySelectorAll('#itemsTableBody tr');
-                    const nextRowIndex = currentActiveRow + 1;
-                    console.log('nextRowIndex:', nextRowIndex, 'Total rows:', rows.length);
-                    
-                    if (nextRowIndex < rows.length) {
-                        // Prevent default behavior completely
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        // Select next row with full row highlight (blue background)
-                        selectRow(nextRowIndex);
-                        
-                        console.log('After moving to next row - currentActiveRow:', currentActiveRow);
-                        console.log('isRowSelected:', isRowSelected);
-                    } else {
-                        console.log('No more rows available');
-                    }
-                }, 100);
-            }
-        });
+            advanceFromSaleRate(e);
+        }
+
+        // Capture to beat global handlers that may move focus elsewhere
+        sRateField.addEventListener('keydown', handleSaleRateEnter, true);
+        // Bubble fallback
+        sRateField.addEventListener('keydown', handleSaleRateEnter);
+
+        // Window capture to preempt document-level handlers (prevents Unit focus)
+        window.addEventListener('keydown', function(e) {
+            const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+            if (!isEnter) return;
+            const active = document.activeElement;
+            if (!active || active.id !== 'calc_s_rate') return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            advanceFromSaleRate(e);
+        }, true);
     }
 });
+
+// ============================================
+// PURCHASE CHALLAN MODAL KEYBOARD HANDLING
+// ============================================
+document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('purchaseChallanModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    const closeBtn = document.getElementById('purchaseChallanCloseBtn');
+    const loadBtn = document.getElementById('purchaseChallanLoadBtn');
+    const buttons = [closeBtn, loadBtn].filter(Boolean);
+    if (buttons.length === 0) return;
+
+    let currentIndex = buttons.findIndex(btn => btn.classList.contains('kbd-highlight'));
+    if (currentIndex === -1) currentIndex = 0;
+
+    function highlight(index) {
+        buttons.forEach(btn => btn.classList.remove('kbd-highlight'));
+        const target = buttons[index];
+        if (target) target.classList.add('kbd-highlight');
+    }
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextIndex = currentIndex <= 0 ? buttons.length - 1 : currentIndex - 1;
+        highlight(nextIndex);
+        return;
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextIndex = currentIndex >= buttons.length - 1 ? 0 : currentIndex + 1;
+        highlight(nextIndex);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        const target = buttons[currentIndex];
+        if (target) target.click();
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof closePurchaseChallanModal === 'function') {
+            closePurchaseChallanModal();
+        }
+        return;
+    }
+}, true);
 
 // Setup on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -1237,6 +1436,203 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// ============================================
+// HEADER KEYBOARD NAVIGATION (PURCHASE)
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Disable Select2 on purchase header dropdowns if initialized
+    if (window.$ && $.fn.select2) {
+        const $supplier = $('#supplierSelect');
+        if ($supplier.length && $supplier.data('select2')) {
+            $supplier.select2('destroy');
+            $supplier.removeClass('select2-hidden-accessible');
+            $supplier.next('.select2-container').remove();
+        }
+    }
+
+    const headerSection = document.querySelector('.header-section');
+    if (!headerSection) return;
+
+    function isFocusable(el) {
+        if (!el) return false;
+        if (el.disabled || el.readOnly) return false;
+        if (el.offsetParent === null) return false;
+        return true;
+    }
+
+    function getHeaderFields() {
+        const fields = Array.from(headerSection.querySelectorAll('[data-kb-order]'))
+            .filter(isFocusable)
+            .sort((a, b) => {
+                const aOrder = parseInt(a.getAttribute('data-kb-order'), 10);
+                const bOrder = parseInt(b.getAttribute('data-kb-order'), 10);
+                return (aOrder || 0) - (bOrder || 0);
+            });
+        return fields;
+    }
+
+    console.log('[KB] Header nav init', {
+        hasHeaderSection: !!headerSection,
+        headerFields: getHeaderFields().map(f => f.id)
+    });
+
+    function isBlockingModalOpen() {
+        return !!document.querySelector(
+            '#alertModal.show, #pendingOrdersModal.show, #purchaseChallanModal.show, #mrpDetailsModal.show, .pending-orders-modal.show, .alert-modal.show'
+        );
+    }
+
+    function triggerInsertOrders(source = 'unknown') {
+        if (isBlockingModalOpen()) {
+            console.log('[KB] triggerInsertOrders skipped (modal open)', { source });
+            return;
+        }
+        const insertBtn = document.getElementById('insertOrdersBtn');
+        console.log('[KB] triggerInsertOrders', {
+            source,
+            hasInsertBtn: !!insertBtn
+        });
+        if (insertBtn) {
+            insertBtn.click();
+        } else if (typeof openPendingOrdersModal === 'function') {
+            openPendingOrdersModal();
+        }
+    }
+
+    function focusHeaderByIndex(index) {
+        const headerFields = getHeaderFields();
+        if (index < 0 || index >= headerFields.length) return;
+        const el = headerFields[index];
+        if (el) {
+            el.focus();
+            if (el.select) el.select();
+        }
+    }
+
+    function getHeaderIndex(el) {
+        return getHeaderFields().indexOf(el);
+    }
+
+    getHeaderFields().forEach(field => {
+        if (field.tagName.toLowerCase() === 'select') {
+            field.addEventListener('change', function() {
+                const idx = getHeaderIndex(this);
+                if (idx >= 0) {
+                    focusHeaderByIndex(idx + 1);
+                }
+            });
+        }
+    });
+
+    const insertOrdersBtn = document.getElementById('insertOrdersBtn');
+    if (insertOrdersBtn) {
+        insertOrdersBtn.addEventListener('click', function() {
+            console.log('[KB] Insert Orders button clicked');
+        });
+    }
+
+    const billNoInput = document.getElementById('billNo');
+    if (billNoInput) {
+        // Window-level capture to beat any document-level capture handlers
+        window.addEventListener('keydown', function(e) {
+            const target = e.target;
+            const isBillNoTarget = target && target.id === 'billNo';
+            const isBillNoActive = document.activeElement && document.activeElement.id === 'billNo';
+            if ((isBillNoTarget || isBillNoActive) && (e.key === 'Enter' || e.keyCode === 13)) {
+                if (isBlockingModalOpen()) {
+                    console.log('[KB] BillNo Enter ignored (modal open)');
+                    return;
+                }
+                console.log('[KB] BillNo Enter (window capture)', {
+                    targetId: target?.id,
+                    activeId: document.activeElement?.id
+                });
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                triggerInsertOrders('billNo-window');
+            }
+        }, true);
+
+        billNoInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                if (isBlockingModalOpen()) {
+                    console.log('[KB] BillNo Enter ignored (modal open)');
+                    return;
+                }
+                console.log('[KB] BillNo Enter (direct listener)', {
+                    id: this.id,
+                    value: this.value
+                });
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                triggerInsertOrders('billNo-direct');
+            }
+        }, true);
+    }
+
+    headerSection.addEventListener('keydown', function(e) {
+        const activeEl = document.activeElement;
+        if (!activeEl || !headerSection.contains(activeEl)) return;
+
+        // Let supplier searchable dropdown handle its own keys
+        if (activeEl.id === 'supplierSearchInput') {
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const idx = getHeaderIndex(activeEl);
+            if (idx > 0) focusHeaderByIndex(idx - 1);
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            const idx = getHeaderIndex(activeEl);
+            console.log('[KB] Header Enter', {
+                activeId: activeEl.id,
+                activeName: activeEl.name,
+                idx
+            });
+            if (activeEl.id === 'billNo') {
+                e.preventDefault();
+                triggerInsertOrders('billNo-header');
+                return;
+            }
+
+            if (activeEl.tagName.toLowerCase() === 'select') {
+                e.preventDefault();
+                activeEl.focus();
+                activeEl.click();
+                return;
+            }
+
+            if (idx >= 0) {
+                e.preventDefault();
+                focusHeaderByIndex(idx + 1);
+            }
+        }
+});
+});
+
+// Ctrl+S -> Save Purchase Transaction
+window.addEventListener('keydown', function(e) {
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (!isCtrlS || e.repeat) return;
+    if (typeof isBlockingModalOpen === 'function' && isBlockingModalOpen()) {
+        console.log('[KB] Ctrl+S ignored (modal open)');
+        return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    console.log('[KB] Ctrl+S -> savePurchase');
+    if (typeof savePurchase === 'function') {
+        savePurchase();
+    }
+}, true);
 
 // Add row selection listeners
 function addRowSelectionListeners() {
@@ -1740,6 +2136,13 @@ function showPendingOrdersModal() {
         backdrop.classList.add('show');
         modal.classList.add('show');
     }, 10);
+
+    // Reset pending orders modal focus state
+    pendingOrdersFocusMode = 'rows';
+    pendingOrdersActionIndex = 0;
+    const exitBtn = document.getElementById('pendingOrdersExitBtn');
+    const genBtn = document.getElementById('generateInvoiceBtn');
+    [exitBtn, genBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
 }
 
 // Open pending orders modal (called from Insert Orders button)
@@ -1811,9 +2214,17 @@ function openMrpDetailsModal() {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
-        // Focus on MRP input
-        document.getElementById('mrp_value').focus();
-        document.getElementById('mrp_value').select();
+        // Focus on Case input first
+        const caseInput = document.getElementById('mrp_case');
+        if (caseInput) {
+            caseInput.focus();
+            caseInput.select();
+        }
+        mrpFocusMode = 'fields';
+        mrpActionIndex = 0;
+        const cancelBtn = document.getElementById('mrpCancelBtn');
+        const saveBtn = document.getElementById('saveMrpDetailsBtn');
+        [cancelBtn, saveBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
     }, 10);
 }
 
@@ -1938,15 +2349,129 @@ document.getElementById('saveMrpDetailsBtn').addEventListener('click', function(
     
     closeMrpDetailsModal();
     
-    // Focus on Purchase Rate field
+    // Focus on Purchase Rate field in the row (next step after MRP modal)
     const purRateInput = currentRow.querySelector('input[name*="[pur_rate]"]');
     if (purRateInput) {
         setTimeout(() => {
             purRateInput.focus();
-            purRateInput.select();
+            if (purRateInput.select) purRateInput.select();
         }, 100);
     }
 });
+
+// ============================================
+// MRP DETAILS MODAL KEYBOARD HANDLING
+// ============================================
+function handleMrpDetailsKeyboard(e) {
+    const modal = document.getElementById('mrpDetailsModal');
+    if (!modal || !modal.classList.contains('show')) return false;
+
+    const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+    const fieldOrder = [
+        'mrp_case',
+        'mrp_box',
+        'mrp_value',
+        'mrp_pur_rate',
+        'mrp_sale_rate',
+        'mrp_ws_rate',
+        'mrp_spl_rate',
+        'mrp_excise'
+    ];
+
+    const fields = fieldOrder.map(id => document.getElementById(id)).filter(Boolean);
+    const cancelBtn = document.getElementById('mrpCancelBtn');
+    const saveBtn = document.getElementById('saveMrpDetailsBtn');
+    const actionButtons = [cancelBtn, saveBtn].filter(Boolean);
+
+    // Ensure focus mode resets when focusing any field
+    fields.forEach(field => {
+        field.addEventListener('focus', function() {
+            mrpFocusMode = 'fields';
+            actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+        }, { once: true });
+    });
+
+    function highlightAction(index) {
+        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+        const btn = actionButtons[index];
+        if (btn) btn.classList.add('kbd-highlight');
+    }
+
+    function clearActionHighlight() {
+        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+    }
+
+    if (mrpFocusMode === 'fields' && isEnter) {
+        const activeEl = document.activeElement;
+        // Force action mode after Excise
+        if (activeEl && activeEl.id === 'mrp_excise') {
+            mrpFocusMode = 'actions';
+            mrpActionIndex = 0;
+            highlightAction(mrpActionIndex);
+            if (actionButtons[0]) actionButtons[0].focus();
+            return true;
+        }
+        const idx = fields.indexOf(activeEl);
+        if (idx >= 0 && idx < fields.length - 1) {
+            const nextField = fields[idx + 1];
+            if (nextField) {
+                nextField.focus();
+                if (nextField.select) nextField.select();
+            }
+        } else {
+            // Move to actions after last field
+            mrpFocusMode = 'actions';
+            mrpActionIndex = 0;
+            highlightAction(mrpActionIndex);
+            if (actionButtons[0]) actionButtons[0].focus();
+        }
+        return true;
+    }
+
+    if (mrpFocusMode === 'actions' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        if (actionButtons.length === 0) return true;
+        if (e.key === 'ArrowLeft') {
+            mrpActionIndex = mrpActionIndex <= 0 ? actionButtons.length - 1 : mrpActionIndex - 1;
+        } else {
+            mrpActionIndex = mrpActionIndex >= actionButtons.length - 1 ? 0 : mrpActionIndex + 1;
+        }
+        highlightAction(mrpActionIndex);
+        return true;
+    }
+
+    if (mrpFocusMode === 'actions' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        mrpFocusMode = 'fields';
+        clearActionHighlight();
+        const firstField = fields[0];
+        if (firstField) {
+            firstField.focus();
+            if (firstField.select) firstField.select();
+        }
+        return true;
+    }
+
+    if (mrpFocusMode === 'actions' && isEnter) {
+        const btn = actionButtons[mrpActionIndex];
+        if (btn) btn.click();
+        return true;
+    }
+
+    if (e.key === 'Escape') {
+        closeMrpDetailsModal();
+        return true;
+    }
+
+    return false;
+}
+
+window.addEventListener('keydown', function(e) {
+    const handled = handleMrpDetailsKeyboard(e);
+    if (handled) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+}, true);
 
 // Enable specific row for editing
 function enableRow(rowIndex) {
@@ -2079,6 +2604,7 @@ document.addEventListener('keydown', function(e) {
 function displayPendingOrders(orders) {
     const tbody = document.getElementById('pendingOrdersBody');
     tbody.innerHTML = '';
+    pendingOrdersSelectedIndex = -1;
     
     if (orders.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">No pending orders found</td></tr>';
@@ -2094,6 +2620,11 @@ function displayPendingOrders(orders) {
         row.addEventListener('click', function() {
             tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-primary'));
             this.classList.add('table-primary');
+            pendingOrdersSelectedIndex = index;
+            pendingOrdersFocusMode = 'rows';
+            const exitBtn = document.getElementById('pendingOrdersExitBtn');
+            const genBtn = document.getElementById('generateInvoiceBtn');
+            [exitBtn, genBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
         });
         
         row.innerHTML = `
@@ -2107,6 +2638,14 @@ function displayPendingOrders(orders) {
         
         tbody.appendChild(row);
     });
+
+    // Auto-highlight first row for keyboard navigation
+    const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
+    if (rows.length > 0) {
+        rows.forEach(r => r.classList.remove('table-primary'));
+        pendingOrdersSelectedIndex = 0;
+        rows[0].classList.add('table-primary');
+    }
 }
 
 // Generate Invoice button
@@ -2119,11 +2658,127 @@ document.getElementById('generateInvoiceBtn').addEventListener('click', function
     }
     
     const orderNo = selectedRow.getAttribute('data-order-no');
+    const pendingModal = document.getElementById('pendingOrdersModal');
+    const wasPendingOpen = pendingModal && pendingModal.classList.contains('show');
+    if (wasPendingOpen) {
+        closePendingOrdersModal();
+    }
     
     showConfirm(`Generate invoice for Order No: ${orderNo}?`, function() {
         loadOrderItems(orderNo);
-    }, null, 'Generate Invoice');
+    }, function() {
+        if (wasPendingOpen) {
+            showPendingOrdersModal();
+        }
+    }, 'Generate Invoice');
 });
+
+// ============================================
+// PENDING ORDERS MODAL KEYBOARD HANDLING
+// ============================================
+function handlePendingOrdersKeyboard(e) {
+    const modal = document.getElementById('pendingOrdersModal');
+    if (!modal || !modal.classList.contains('show')) return false;
+
+    const tbody = document.getElementById('pendingOrdersBody');
+    if (!tbody) return false;
+
+    const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
+        return !row.querySelector('td[colspan]');
+    });
+    const exitBtn = document.getElementById('pendingOrdersExitBtn');
+    const genBtn = document.getElementById('generateInvoiceBtn');
+    const actionButtons = [exitBtn, genBtn].filter(Boolean);
+
+    function highlightAction(index) {
+        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+        const btn = actionButtons[index];
+        if (btn) btn.classList.add('kbd-highlight');
+    }
+
+    function clearActionHighlight() {
+        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+    }
+
+    if (pendingOrdersFocusMode === 'rows' && e.key === 'ArrowDown') {
+        if (rows.length === 0) return true;
+        pendingOrdersSelectedIndex = (pendingOrdersSelectedIndex + 1) % rows.length;
+        rows.forEach(r => r.classList.remove('table-primary'));
+        const selectedRow = rows[pendingOrdersSelectedIndex];
+        if (selectedRow) {
+            selectedRow.classList.add('table-primary');
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+        return true;
+    }
+
+    if (pendingOrdersFocusMode === 'rows' && e.key === 'ArrowUp') {
+        if (rows.length === 0) return true;
+        pendingOrdersSelectedIndex = pendingOrdersSelectedIndex <= 0 ? rows.length - 1 : pendingOrdersSelectedIndex - 1;
+        rows.forEach(r => r.classList.remove('table-primary'));
+        const selectedRow = rows[pendingOrdersSelectedIndex];
+        if (selectedRow) {
+            selectedRow.classList.add('table-primary');
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+        return true;
+    }
+
+    if (pendingOrdersFocusMode === 'rows' && e.key === 'Enter') {
+        if (rows.length === 0) return true;
+        if (pendingOrdersSelectedIndex < 0) {
+            pendingOrdersSelectedIndex = 0;
+        }
+        const selectedRow = rows[pendingOrdersSelectedIndex];
+        if (selectedRow) selectedRow.classList.add('table-primary');
+        pendingOrdersFocusMode = 'actions';
+        pendingOrdersActionIndex = 0;
+        highlightAction(pendingOrdersActionIndex);
+        return true;
+    }
+
+    if (pendingOrdersFocusMode === 'actions' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        if (actionButtons.length === 0) return true;
+        if (e.key === 'ArrowLeft') {
+            pendingOrdersActionIndex = pendingOrdersActionIndex <= 0 ? actionButtons.length - 1 : pendingOrdersActionIndex - 1;
+        } else {
+            pendingOrdersActionIndex = pendingOrdersActionIndex >= actionButtons.length - 1 ? 0 : pendingOrdersActionIndex + 1;
+        }
+        highlightAction(pendingOrdersActionIndex);
+        return true;
+    }
+
+    if (pendingOrdersFocusMode === 'actions' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        pendingOrdersFocusMode = 'rows';
+        clearActionHighlight();
+        return true;
+    }
+
+    if (pendingOrdersFocusMode === 'actions' && e.key === 'Enter') {
+        const btn = actionButtons[pendingOrdersActionIndex];
+        if (btn) btn.click();
+        return true;
+    }
+
+    if (e.key === 'Escape') {
+        if (typeof closePendingOrdersModal === 'function') {
+            closePendingOrdersModal();
+        }
+        return true;
+    }
+
+    return false;
+}
+
+// Use window capture to preempt other handlers
+window.addEventListener('keydown', function(e) {
+    const handled = handlePendingOrdersKeyboard(e);
+    if (handled) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+}, true);
 
 // Load order items and populate table
 function loadOrderItems(orderNo) {
@@ -2147,12 +2802,12 @@ function loadOrderItems(orderNo) {
                 // Close modal
                 closePendingOrdersModal();
                 
-                // Focus on first cell
+                // Focus on first row batch field
                 setTimeout(() => {
-                    const firstInput = document.querySelector('#itemsTableBody tr:first-child input');
-                    if (firstInput) {
-                        firstInput.focus();
-                        firstInput.select();
+                    const batchInput = document.querySelector('#itemsTableBody tr:first-child input[name*="[batch]"]');
+                    if (batchInput) {
+                        batchInput.focus();
+                        if (batchInput.select) batchInput.select();
                     }
                 }, 300);
             }
@@ -2168,9 +2823,8 @@ function populateItemsTable(items) {
     const tbody = document.getElementById('itemsTableBody');
     tbody.innerHTML = '';
     
-    // Ensure minimum 10 rows
-    const minRows = 10;
-    const totalRows = Math.max(items.length, minRows);
+    // Only render actual items
+    const totalRows = items.length;
     
     for (let index = 0; index < totalRows; index++) {
         const item = items[index] || {}; // Empty object if no item data
@@ -2182,8 +2836,8 @@ function populateItemsTable(items) {
         
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><input type="text" class="form-control" name="items[${index}][code]" value="${item.item_code || ''}" tabindex="${index * 10 + 1}" autocomplete="off"></td>
-            <td><input type="text" class="form-control" name="items[${index}][name]" value="${item.item_name || ''}" tabindex="${index * 10 + 2}" autocomplete="off"></td>
+            <td><input type="text" class="form-control readonly-field" name="items[${index}][code]" value="${item.item_code || ''}" tabindex="-1" autocomplete="off" readonly></td>
+            <td><input type="text" class="form-control readonly-field" name="items[${index}][name]" value="${item.item_name || ''}" tabindex="-1" autocomplete="off" readonly></td>
             <td><input type="text" class="form-control" name="items[${index}][batch]" tabindex="${index * 10 + 3}" autocomplete="off"></td>
             <td><input type="text" class="form-control" name="items[${index}][exp]" tabindex="${index * 10 + 4}" autocomplete="off"></td>
             <td><input type="number" class="form-control item-qty" name="items[${index}][qty]" value="${item.order_qty || ''}" tabindex="${index * 10 + 5}" autocomplete="off" data-row="${index}"></td>
@@ -2234,6 +2888,16 @@ function populateItemsTable(items) {
     // Set first row as selected (full row selection mode)
     currentActiveRow = 0;
     selectRow(0);
+
+    // Focus first row batch field for editing
+    setTimeout(() => {
+        const firstRow = tbody.querySelector('tr');
+        const batchInput = firstRow?.querySelector('input[name*="[batch]"]');
+        if (batchInput) {
+            batchInput.focus();
+            if (batchInput.select) batchInput.select();
+        }
+    }, 100);
     
     // Check all rows after populating
     checkAllRowsComplete();
@@ -2268,8 +2932,9 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
         
         // Add keyboard navigation listener
         input.addEventListener('keydown', function(e) {
+            const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
             // Enter key navigation
-            if (e.key === 'Enter') {
+            if (isEnter) {
                 e.preventDefault();
                 
                 // Check if this is the F.Qty field
@@ -2304,20 +2969,27 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
                         console.log('Discount changed from', originalValue, 'to', currentValue, '- showing modal');
                         showDiscountOptionsModal(rowIndex, currentValue);
                     } else {
-                        console.log('Discount unchanged, moving to S.Rate in calculation section');
-                        // Update current active row before moving to S.Rate
-                        currentActiveRow = rowIndex;
-                        
-                        // Calculate and save GST amounts for this row
-                        calculateAndSaveGstForRow(rowIndex);
-                        
-                        // Move to S.Rate in calculation section
-                        const sRateField = document.getElementById('calc_s_rate');
-                        if (sRateField) {
-                            sRateField.focus();
-                            sRateField.select();
+                        console.log('Discount unchanged, moving to MRP field');
+                        const mrpField = row.querySelector('input[name*="[mrp]"]');
+                        if (mrpField) {
+                            mrpField.focus();
+                            if (mrpField.select) mrpField.select();
                         }
                     }
+                }
+                // Check if this is the MRP field
+                else if (input.getAttribute('name') && input.getAttribute('name').includes('[mrp]')) {
+                    console.log('MRP Enter pressed, moving to S.Rate in calculation section');
+                    // Update current active row before moving to S.Rate
+                    currentActiveRow = rowIndex;
+                    const sRateField = document.getElementById('calc_s_rate');
+                    if (sRateField) {
+                        sRateField.focus();
+                        sRateField.select();
+                    }
+                    // Prevent any other handlers from hijacking Enter
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
                 } else {
                     // Move to next input in same row
                     const nextIndex = colIndex + 1;
@@ -2378,6 +3050,35 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
         }
     });
 }
+
+// Global capture: ensure MRP Enter always moves to Sale Rate
+window.addEventListener('keydown', function(e) {
+    const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+    if (!isEnter) return;
+    const active = document.activeElement;
+    if (!active || active.id === 'calc_mrp') return;
+    if (active.tagName !== 'INPUT') return;
+    const name = active.getAttribute('name') || '';
+    if (!name.includes('[mrp]')) return;
+    const rowEl = active.closest('tr');
+    if (!rowEl || !rowEl.closest('#itemsTableBody')) return;
+
+    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+    const rowIndex = rows.indexOf(rowEl);
+    if (rowIndex >= 0) {
+        currentActiveRow = rowIndex;
+    }
+
+    const sRateField = document.getElementById('calc_s_rate');
+    if (sRateField) {
+        console.log('[KB] MRP Enter (capture) -> S.Rate', { rowIndex });
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        sRateField.focus();
+        sRateField.select();
+    }
+}, true);
 
 // Add amount calculation to row
 function addAmountCalculation(row, rowIndex) {
@@ -3428,8 +4129,8 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     
     // Set footer with Yes/No buttons
     footer.innerHTML = `
-        <button type="button" class="btn btn-secondary" onclick="handleConfirmCancel()">No</button>
-        <button type="button" class="btn btn-primary" onclick="handleConfirmYes()">Yes</button>
+        <button type="button" class="btn btn-secondary" id="alertConfirmNoBtn" onclick="handleConfirmCancel()">No</button>
+        <button type="button" class="btn btn-primary" id="alertConfirmYesBtn" onclick="handleConfirmYes()">Yes</button>
     `;
     
     // Show modal with enhanced effects
@@ -3439,6 +4140,11 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        const yesBtn = document.getElementById('alertConfirmYesBtn');
+        const noBtn = document.getElementById('alertConfirmNoBtn');
+        [yesBtn, noBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
+        if (yesBtn) yesBtn.classList.add('kbd-highlight');
+        if (yesBtn) yesBtn.focus();
     }, 10);
 }
 
@@ -3477,6 +4183,87 @@ function closeAlert() {
         backdrop.style.display = 'none';
     }, 400);
 }
+
+// ============================================
+// ALERT CONFIRM MODAL KEYBOARD HANDLING
+// ============================================
+// Simple OK alert (success/info/error) keyboard handling
+document.addEventListener('keydown', function(e) {
+    const alertModal = document.getElementById('alertModal');
+    if (!alertModal || !alertModal.classList.contains('show')) return;
+
+    // If confirm buttons exist, let confirm handler handle it
+    const yesBtn = document.getElementById('alertConfirmYesBtn');
+    const noBtn = document.getElementById('alertConfirmNoBtn');
+    if (yesBtn || noBtn) return;
+
+    const okBtn = alertModal.querySelector('.alert-modal-footer button');
+    if (!okBtn) return;
+
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        okBtn.click();
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeAlert();
+    }
+}, true);
+
+document.addEventListener('keydown', function(e) {
+    const alertModal = document.getElementById('alertModal');
+    if (!alertModal || !alertModal.classList.contains('show')) return;
+
+    const yesBtn = document.getElementById('alertConfirmYesBtn');
+    const noBtn = document.getElementById('alertConfirmNoBtn');
+    if (!yesBtn || !noBtn) return;
+
+    const buttons = [noBtn, yesBtn];
+    let currentIndex = buttons.findIndex(btn => btn.classList.contains('kbd-highlight'));
+    if (currentIndex === -1) currentIndex = 1; // default Yes
+
+    function highlight(index) {
+        buttons.forEach(btn => btn.classList.remove('kbd-highlight'));
+        const btn = buttons[index];
+        if (btn) btn.classList.add('kbd-highlight');
+    }
+
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextIndex = currentIndex <= 0 ? buttons.length - 1 : currentIndex - 1;
+        highlight(nextIndex);
+        return;
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        e.stopPropagation();
+        const nextIndex = currentIndex >= buttons.length - 1 ? 0 : currentIndex + 1;
+        highlight(nextIndex);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        const btn = buttons[currentIndex];
+        if (btn) btn.click();
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        handleConfirmCancel();
+    }
+}, true);
 
 // Close modal when clicking backdrop
 document.addEventListener('DOMContentLoaded', function() {
@@ -3541,8 +4328,8 @@ document.addEventListener('DOMContentLoaded', function() {
             </table>
         </div>
         <div class="pending-orders-footer" style="padding: 8px 15px;">
-            <button type="button" class="btn btn-sm btn-secondary" onclick="closePurchaseChallanModal()">Close (Esc)</button>
-            <button type="button" class="btn btn-sm btn-primary" onclick="loadSelectedChallan()">Load Selected</button>
+            <button type="button" class="btn btn-sm btn-secondary" id="purchaseChallanCloseBtn" onclick="closePurchaseChallanModal()">Close (Esc)</button>
+            <button type="button" class="btn btn-sm btn-primary" id="purchaseChallanLoadBtn" onclick="loadSelectedChallan()">Load Selected</button>
         </div>
     </div>
 </div>
@@ -3587,20 +4374,18 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <script>
-// Add change event to supplier select
+// Add change event to supplier hidden input (searchable dropdown)
 document.addEventListener('DOMContentLoaded', function() {
     const supplierSelect = document.getElementById('supplierSelect');
     if (supplierSelect) {
         let previousValue = '';
         
-        supplierSelect.addEventListener('focus', function() {
-            previousValue = this.value;
-        });
-        
         supplierSelect.addEventListener('change', function() {
             const supplierId = this.value;
             if (supplierId && supplierId !== previousValue) {
-                showPurchaseChallanModal(supplierId);
+                previousValue = supplierId;
+                // Do not auto-open pending challan/orders modal on supplier select.
+                // User will trigger Insert Orders manually.
             }
         });
     }
@@ -4159,6 +4944,210 @@ function saveDiscountToItem(itemId, discountValue, callback) {
 // Close modal on backdrop click
 document.getElementById('discountOptionsBackdrop')?.addEventListener('click', closeDiscountOptionsModal);
 
+</script>
+
+<!-- ============================================ -->
+<!-- SEARCHABLE SUPPLIER DROPDOWN SYSTEM -->
+<!-- ============================================ -->
+<script>
+(function() {
+    'use strict';
+
+    const supplierInput = document.getElementById('supplierSearchInput');
+    const supplierHiddenInput = document.getElementById('supplierSelect');
+    const supplierDropdownList = document.getElementById('supplierDropdownList');
+
+    if (!supplierInput || !supplierDropdownList || !supplierHiddenInput) {
+        console.warn('Supplier searchable dropdown elements not found');
+        return;
+    }
+
+    let highlightedIndex = -1;
+    let isDropdownOpen = false;
+
+    function getVisibleItems() {
+        return Array.from(supplierDropdownList.querySelectorAll('.dropdown-item:not(.hidden)'));
+    }
+
+    function showDropdown() {
+        supplierDropdownList.style.display = 'block';
+        isDropdownOpen = true;
+        highlightedIndex = -1;
+    }
+
+    function hideDropdown() {
+        supplierDropdownList.style.display = 'none';
+        isDropdownOpen = false;
+        highlightedIndex = -1;
+        supplierDropdownList.querySelectorAll('.dropdown-item').forEach(item => {
+            item.classList.remove('highlighted');
+        });
+    }
+
+    function filterItems(searchText) {
+        const items = supplierDropdownList.querySelectorAll('.dropdown-item');
+        const search = searchText.toLowerCase().trim();
+
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            const code = (item.dataset.code || '').toLowerCase();
+            const name = (item.dataset.name || '').toLowerCase();
+
+            if (search === '' || text.includes(search) || code.includes(search) || name.includes(search)) {
+                item.classList.remove('hidden');
+            } else {
+                item.classList.add('hidden');
+            }
+        });
+
+        highlightedIndex = -1;
+        items.forEach(item => item.classList.remove('highlighted'));
+    }
+
+    function highlightItem(index) {
+        const visibleItems = getVisibleItems();
+        visibleItems.forEach(item => item.classList.remove('highlighted'));
+
+        if (index >= 0 && index < visibleItems.length) {
+            highlightedIndex = index;
+            visibleItems[index].classList.add('highlighted');
+            visibleItems[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+
+    function selectItem(item) {
+        const value = item.dataset.value;
+        const name = item.dataset.name || '';
+        const code = item.dataset.code || '';
+
+        supplierHiddenInput.value = value;
+
+        if (value) {
+            supplierInput.value = code ? `${code} - ${name}` : name;
+        } else {
+            supplierInput.value = '';
+        }
+
+        supplierDropdownList.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+        item.classList.add('selected');
+
+        hideDropdown();
+
+        supplierHiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    supplierInput.addEventListener('focus', function() {
+        showDropdown();
+        filterItems(this.value);
+    });
+
+    supplierInput.addEventListener('input', function() {
+        showDropdown();
+        filterItems(this.value);
+    });
+
+    supplierInput.addEventListener('keydown', function(e) {
+        if (!isDropdownOpen) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                showDropdown();
+                filterItems(this.value);
+            }
+            return;
+        }
+
+        const visibleItems = getVisibleItems();
+
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                e.stopPropagation();
+                if (highlightedIndex < visibleItems.length - 1) {
+                    highlightItem(highlightedIndex + 1);
+                } else {
+                    highlightItem(0);
+                }
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                e.stopPropagation();
+                if (highlightedIndex > 0) {
+                    highlightItem(highlightedIndex - 1);
+                } else {
+                    highlightItem(visibleItems.length - 1);
+                }
+                break;
+            case 'Enter':
+                e.preventDefault();
+                e.stopPropagation();
+                if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                    selectItem(visibleItems[highlightedIndex]);
+                } else if (visibleItems.length > 0) {
+                    selectItem(visibleItems[0]);
+                }
+                break;
+            case 'Escape':
+                e.preventDefault();
+                e.stopPropagation();
+                hideDropdown();
+                break;
+            case 'Tab':
+                if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                    selectItem(visibleItems[highlightedIndex]);
+                }
+                hideDropdown();
+                break;
+        }
+    });
+
+    supplierDropdownList.addEventListener('click', function(e) {
+        const item = e.target.closest('.dropdown-item');
+        if (item) {
+            selectItem(item);
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#supplierDropdownWrapper')) {
+            hideDropdown();
+        }
+    });
+
+    console.log('🔍 Searchable Supplier Dropdown Initialized');
+})();
+</script>
+
+<!-- ============================================ -->
+<!-- VISUAL FOCUS INDICATORS (MATCH SALE MODIFICATION) -->
+<!-- ============================================ -->
+<script>
+(function() {
+    const focusStyle = document.createElement('style');
+    focusStyle.textContent = `
+        .form-control:focus,
+        select:focus,
+        input:focus {
+            outline: 2px solid #0d6efd !important;
+            outline-offset: 1px;
+            box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        }
+
+        .form-control:focus:not(:focus-visible),
+        select:focus:not(:focus-visible),
+        input:focus:not(:focus-visible) {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        #itemsTableBody tr:focus-within {
+            background-color: #e7f3ff !important;
+        }
+
+        #itemsTableBody tr:focus-within td {
+            background-color: #e7f3ff !important;
+        }
+    `;
+    document.head.appendChild(focusStyle);
+})();
 </script>
 
 @endsection

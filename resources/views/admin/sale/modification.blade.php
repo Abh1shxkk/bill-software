@@ -605,13 +605,13 @@
                     
                     <div class="field-group">
                         <label>Sale Date</label>
-                        <input type="date" class="form-control" name="date" id="saleDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()">
+                        <input type="date" class="form-control" name="date" id="saleDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()" data-kb-order="2">
                         <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
                     </div>
                     
                     <div class="field-group">
                         <label>Customer:</label>
-                        <select class="form-control readonly-field" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" disabled>
+                        <select class="form-control readonly-field" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" disabled data-kb-order="3">
                             <option value="">-- Select Customer --</option>
                             @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-code="{{ $customer->code ?? '' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
@@ -626,7 +626,7 @@
                     <div style="width: 250px;">
                         <div class="field-group mb-1">
                             <label style="width: 70px;">Inv.No.:</label>
-                            <input type="text" class="form-control" name="invoice_no" id="invoiceNo" value="" placeholder="Type or press Enter" style="background-color: #fff8dc;">
+                            <input type="text" class="form-control" name="invoice_no" id="invoiceNo" value="" placeholder="Type or press Enter" style="background-color: #fff8dc;" data-kb-order="1">
                             <input type="hidden" id="transactionId" value="">
                         </div>
                         <div class="text-muted mb-2" style="font-size: 10px; margin-left: 70px;">
@@ -634,7 +634,7 @@
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man:</label>
-                            <select class="form-control readonly-field" name="salesman_id" id="salesmanSelect" style="width: 170px;" autocomplete="off" disabled>
+                            <select class="form-control readonly-field" name="salesman_id" id="salesmanSelect" style="width: 170px;" autocomplete="off" disabled data-kb-order="4">
                                 <option value="">-- Select Salesman --</option>
                                 @foreach($salesmen as $salesman)
                                     <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}" data-code="{{ $salesman->code ?? '' }}">{{ $salesman->code ?? '' }} - {{ $salesman->name }}</option>
@@ -654,19 +654,19 @@
                             <div class="col-md-6">
                                 <div class="field-group">
                                     <label style="width: 80px;">Due Date</label>
-                                    <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}">
+                                    <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}" data-kb-order="5">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label>Cash:</label>
-                                    <input type="text" class="form-control" name="cash" id="cash" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="cash" id="cash" value="N" maxlength="1" style="width: 50px;" data-kb-order="6">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label>Transfer:</label>
-                                    <input type="text" class="form-control" name="transfer" id="transfer" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="transfer" id="transfer" value="N" maxlength="1" style="width: 50px;" data-kb-order="7">
                                 </div>
                             </div>
                         </div>
@@ -675,7 +675,7 @@
                             <div class="col-md-12">
                                 <div class="field-group">
                                     <label>Remarks:</label>
-                                    <input type="text" class="form-control" name="remarks" id="remarks">
+                                    <input type="text" class="form-control" name="remarks" id="remarks" data-kb-order="8">
                                 </div>
                             </div>
                         </div>
@@ -728,7 +728,7 @@
                 </div>
                 <!-- Add Row Button -->
                 <div class="text-center mt-2">
-                    <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
+                    <button type="button" class="btn btn-sm btn-success" id="addRowBtn" onclick="addNewRow()">
                         <i class="fas fa-plus-circle"></i> Add Row
                     </button>
                 </div>
@@ -1106,11 +1106,29 @@ let itemIndex = -1;
 let currentSelectedRowIndex = null;
 let pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
-let pendingBatchChangeRowIndex = null; // 🔥 Store row index when batch field is cleared for batch change
+window.KEYBOARD_DEBUG = true;
+let pendingBatchChangeRowIndex = null; // Store row index when batch field is cleared for batch change
+
+// Normalize window-scoped flags used by modal bridge flows
+if (typeof window.pendingBarcodeRowIndex === 'undefined') {
+    window.pendingBarcodeRowIndex = null;
+}
+if (typeof window.pendingBatchChangeRowIndex === 'undefined') {
+    window.pendingBatchChangeRowIndex = null;
+}
 
 // Load items on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
+
+    const addRowBtn = document.getElementById('addRowBtn');
+    if (addRowBtn) {
+        addRowBtn.addEventListener('click', function() {
+            if (window.KEYBOARD_DEBUG) {
+                console.log('[KB] Add Row button clicked');
+            }
+        });
+    }
     
     // Auto-load transaction if invoice_no is provided in URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -1145,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Load transaction on Enter key
         invoiceNoInput.addEventListener('keydown', function(e) {
+            if (e.defaultPrevented) return;
             if (e.key === 'Enter') {
                 e.preventDefault();
                 e.stopPropagation();
@@ -1726,7 +1745,7 @@ function addItemToTable(item, batch) {
     }
     
     newRow.innerHTML = `
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0 item-code" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px; background: transparent;" autocomplete="off" readonly></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px;" autocomplete="off"></td>
@@ -1839,6 +1858,56 @@ function moveToNextRowCodeField(currentRowIndex) {
     }
 }
 
+// Create a brand new empty row and focus its code field (used after discount)
+function triggerAddRowAndFocusCode() {
+    const tbody = document.getElementById('itemsTableBody');
+    const prevCount = tbody ? tbody.querySelectorAll('tr').length : 0;
+    const addBtn = document.getElementById('addRowBtn');
+
+    if (window.KEYBOARD_DEBUG) {
+        console.log('[KB] triggerAddRowAndFocusCode', {
+            prevCount,
+            hasAddBtn: !!addBtn
+        });
+    }
+
+    if (addBtn) {
+        addBtn.click();
+    } else if (typeof addNewRow === 'function') {
+        addNewRow();
+    }
+
+    setTimeout(() => {
+        const rowsAfter = tbody ? tbody.querySelectorAll('tr') : [];
+        if (rowsAfter.length <= prevCount && typeof addNewRow === 'function') {
+            addNewRow();
+        }
+
+        const finalRows = tbody ? tbody.querySelectorAll('tr') : [];
+        const lastRow = finalRows.length ? finalRows[finalRows.length - 1] : null;
+        const codeInput = lastRow?.querySelector('input[name*="[code]"]');
+        if (window.KEYBOARD_DEBUG) {
+            console.log('[KB] after add row', {
+                prevCount,
+                finalCount: finalRows.length,
+                hasLastRow: !!lastRow,
+                hasCodeInput: !!codeInput
+            });
+        }
+        if (codeInput) {
+            codeInput.focus();
+            codeInput.select();
+            lastRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }, 120);
+}
+
+function createEmptyRowAfterDiscount(rowIndex) {
+    calculateRowAmount(rowIndex);
+    calculateTotal();
+    triggerAddRowAndFocusCode();
+}
+
 // Add empty row to table
 function addEmptyRow() {
     itemIndex++;
@@ -1848,7 +1917,7 @@ function addEmptyRow() {
     newRow.style.cursor = 'pointer';
     
     newRow.innerHTML = `
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0 item-code" name="items[${itemIndex}][code]" value="" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="" style="font-size: 10px;" autocomplete="off"></td>
@@ -2124,6 +2193,7 @@ function addRowEventListeners(row, rowIndex) {
     const freeQtyInput = row.querySelector('input[name*="[free_qty]"]');
     const rateInput = row.querySelector('input[name*="[rate]"]');
     const discountInput = row.querySelector('input[name*="[discount]"]');
+    const debug = window.KEYBOARD_DEBUG;
     
     // Qty field - Enter moves to Free Qty
     if (qtyInput) {
@@ -2177,22 +2247,49 @@ function addRowEventListeners(row, rowIndex) {
     
     // Discount field - Enter finalizes row and moves to next
     if (discountInput) {
+        if (debug) {
+            console.log('[KB] Discount handler attached', {
+                rowIndex,
+                id: discountInput.id,
+                name: discountInput.name,
+                type: discountInput.type
+            });
+        }
+
         discountInput.addEventListener('focus', function() {
             this.setAttribute('data-original-discount', this.value || '0');
         });
         
         discountInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
+            if (debug) {
+                console.log('[KB] Discount keydown', {
+                    rowIndex,
+                    key: e.key,
+                    keyCode: e.keyCode,
+                    value: this.value,
+                    original: this.getAttribute('data-original-discount'),
+                    defaultPrevented: e.defaultPrevented
+                });
+            }
+
+            if (e.key === 'Enter' || e.keyCode === 13) {
                 e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
                 const currentValue = parseFloat(this.value) || 0;
                 const originalValue = parseFloat(this.getAttribute('data-original-discount') || 0);
                 
                 if (currentValue !== originalValue) {
-                    showDiscountOptionsModal(rowIndex, currentValue);
+                    // Default: proceed to next row immediately
+                    // Use Ctrl+Enter to open discount options modal if needed
+                    if (e.ctrlKey) {
+                        showDiscountOptionsModal(rowIndex, currentValue);
+                    } else {
+                        this.setAttribute('data-original-discount', currentValue.toString());
+                        createEmptyRowAfterDiscount(rowIndex);
+                    }
                 } else {
-                    calculateRowAmount(rowIndex);
-                    calculateTotal();
-                    moveToNextRowCodeField(rowIndex);
+                    createEmptyRowAfterDiscount(rowIndex);
                 }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
@@ -2207,6 +2304,13 @@ function addRowEventListeners(row, rowIndex) {
     // Listen for code changes to fetch item details
     const codeInput = row.querySelector('input[name*="[code]"]');
     if (codeInput) {
+        if (window.KEYBOARD_DEBUG) {
+            console.log('[KB] Code handler attached', {
+                rowIndex,
+                name: codeInput.name,
+                id: codeInput.id
+            });
+        }
         codeInput.addEventListener('blur', function() {
             const itemCode = this.value.trim();
             if (itemCode) {
@@ -2219,13 +2323,47 @@ function addRowEventListeners(row, rowIndex) {
         codeInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const itemCode = this.value.trim();
-                if (!itemCode) {
-                    // Empty code field - open item modal
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+
+                const row = this.closest('tr[data-row-index]');
+                const rowIndex = row ? parseInt(row.getAttribute('data-row-index'), 10) : null;
+                if (Number.isFinite(rowIndex)) {
+                    window.pendingBarcodeRowIndex = rowIndex;
+                    if (window.KEYBOARD_DEBUG) {
+                        console.log('[KB] Code Enter -> set pendingBarcodeRowIndex', rowIndex);
+                    }
+                }
+
+                if (window.KEYBOARD_DEBUG) {
+                    console.log('[KB] Code Enter', {
+                        rowIndex,
+                        value: this.value,
+                        hasChooseItemsBtn: !!document.getElementById('chooseItemsBtn'),
+                        hasHandleChooseItemsClick: typeof handleChooseItemsClick === 'function',
+                        hasOpenChooseItemsModal: typeof openChooseItemsModal === 'function'
+                    });
+                }
+
+                // Always trigger Add More Items flow from header
+                const addMoreBtn = document.getElementById('chooseItemsBtn');
+                if (addMoreBtn) {
+                    addMoreBtn.click();
+                    if (window.KEYBOARD_DEBUG) {
+                        console.log('[KB] chooseItemsBtn clicked');
+                    }
+                    // Fallback: dispatch a real click event
+                    addMoreBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                } else if (typeof handleChooseItemsClick === 'function') {
+                    handleChooseItemsClick();
+                    if (window.KEYBOARD_DEBUG) {
+                        console.log('[KB] handleChooseItemsClick called');
+                    }
+                } else if (typeof openChooseItemsModal === 'function') {
                     openChooseItemsModal();
-                } else {
-                    // Has barcode - fetch item and open batch modal
-                    fetchItemByBarcodeAndOpenBatchModal(itemCode, rowIndex);
+                    if (window.KEYBOARD_DEBUG) {
+                        console.log('[KB] openChooseItemsModal called');
+                    }
                 }
             }
         });
@@ -2252,11 +2390,22 @@ function addRowEventListeners(row, rowIndex) {
                 e.preventDefault();
                 const batchValue = this.value.trim();
                 const itemId = row.getAttribute('data-item-id');
+
+                if (window.ignoreEnterUntil && Date.now() < window.ignoreEnterUntil) {
+                    return;
+                }
                 
                 // If batch field is cleared AND row has an item, open batch modal for change
                 if (!batchValue && itemId) {
                     console.log('🔄 Batch field cleared, opening batch modal for row:', rowIndex);
                     openBatchChangeModal(rowIndex);
+                    return;
+                }
+
+                const expiryInput = row.querySelector('input[name*="[expiry]"]');
+                if (expiryInput) {
+                    expiryInput.focus();
+                    if (expiryInput.select) expiryInput.select();
                 }
             }
         });
@@ -2271,6 +2420,16 @@ function addRowEventListeners(row, rowIndex) {
     if (expiryInput) {
         expiryInput.addEventListener('blur', function() {
             updateDetailedSummary(rowIndex);
+        });
+
+        expiryInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (qtyInput) {
+                    qtyInput.focus();
+                    if (qtyInput.select) qtyInput.select();
+                }
+            }
         });
     }
 }
@@ -2794,7 +2953,7 @@ function addNewRow() {
     });
     
     newRow.innerHTML = `
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0 item-code" name="items[${itemIndex}][code]" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" style="font-size: 10px;" autocomplete="off"></td>
@@ -2827,6 +2986,8 @@ function addNewRow() {
             codeInput.focus();
         }
     }, 100);
+
+    return newRow;
 }
 
 // Delete row
@@ -3441,6 +3602,29 @@ async function fetchSalesmanName(salesmanId) {
     }
 }
 
+// Focus first row batch field after loading a transaction
+function focusFirstRowBatchField() {
+    const firstRow = document.querySelector('#itemsTableBody tr[data-row-index]');
+    if (!firstRow) return false;
+
+    const batchInput = firstRow.querySelector('input[name*="[batch]"]');
+    if (batchInput) {
+        batchInput.focus();
+        if (batchInput.select) batchInput.select();
+        return true;
+    }
+    return false;
+}
+
+function scheduleFocusFirstRowBatchField(delayMs = 150) {
+    window.ignoreEnterUntil = Date.now() + 400;
+    setTimeout(() => {
+        const alertModal = document.getElementById('alertModal');
+        if (alertModal && alertModal.classList.contains('show')) return;
+        focusFirstRowBatchField();
+    }, delayMs);
+}
+
 // Populate Form with Transaction Data
 async function populateFormWithTransaction(transaction) {
     console.log('Populating form with transaction:', transaction);
@@ -3628,7 +3812,7 @@ async function populateFormWithTransaction(transaction) {
             
             // Create row HTML
             newRow.innerHTML = `
-                <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.item_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
+                <td class="p-0"><input type="text" class="form-control form-control-sm border-0 item-code" name="items[${itemIndex}][code]" value="${item.item_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.item_name || ''}" style="font-size: 10px;" autocomplete="off"></td>
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${item.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${item.expiry_date || ''}" style="font-size: 10px;" autocomplete="off"></td>
@@ -3697,7 +3881,20 @@ async function populateFormWithTransaction(transaction) {
             // Populate detailed summary for first item
             updateDetailedSummary(0);
             updateCalculationSection(0);
+
+            // Move cursor to first row batch field for keyboard editing
+            focusFirstRowBatchField();
         }, 100);
+
+        // Fallback: ensure focus stays on batch (not expiry) after load
+        setTimeout(() => {
+            const activeEl = document.activeElement;
+            const isInTable = activeEl && activeEl.closest && activeEl.closest('#itemsTableBody');
+            const isBatch = activeEl?.name?.includes('[batch]');
+            if (!isInTable || !isBatch) {
+                focusFirstRowBatchField();
+            }
+        }, 350);
     }
     
     console.log('Form populated successfully with data from database');
@@ -4263,6 +4460,9 @@ function closeAlert() {
     setTimeout(() => {
         modal.style.display = 'none';
         backdrop.style.display = 'none';
+        if (document.getElementById('transactionId')?.value) {
+            scheduleFocusFirstRowBatchField(100);
+        }
     }, 400);
 }
 
@@ -4349,9 +4549,7 @@ function closeDiscountOptionsModal() {
     }, 300);
     
     if (currentDiscountRowIndex !== null) {
-        calculateRowAmount(currentDiscountRowIndex);
-        calculateTotal();
-        moveToNextRow(currentDiscountRowIndex);
+        createEmptyRowAfterDiscount(currentDiscountRowIndex);
         currentDiscountRowIndex = null;
     }
 }
@@ -5416,14 +5614,17 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     pendingItemSelection = item;
     
     // 🔥 NEW: Check if this is a batch change on existing row (highest priority)
-    if (window.pendingBatchChangeRowIndex !== null) {
+    const hasBatchChangeRow = Number.isFinite(window.pendingBatchChangeRowIndex);
+    const hasBarcodeRow = Number.isFinite(window.pendingBarcodeRowIndex);
+
+    if (hasBatchChangeRow) {
         // Batch change on existing row
         console.log('🔄 Bridge: Changing batch on existing row, index:', window.pendingBatchChangeRowIndex);
         if (typeof updateRowWithNewBatch === 'function') {
             updateRowWithNewBatch(window.pendingBatchChangeRowIndex, batch);
         }
         window.pendingBatchChangeRowIndex = null;
-    } else if (window.pendingBarcodeRowIndex !== null) {
+    } else if (hasBarcodeRow) {
         // From barcode entry - populate existing row
         console.log('📱 Bridge: Populating existing row from barcode, index:', window.pendingBarcodeRowIndex);
         if (typeof populateRowWithItemAndBatch === 'function') {
@@ -5458,6 +5659,1164 @@ window.onItemSelectedFromModal = function(item) {
 };
 
 console.log('🔗 Modal Component Bridge Loaded - Sale Modification');
+</script>
+
+<script>
+(() => {
+    // ============================================
+    // KEYBOARD NAVIGATION SYSTEM - SALE MODIFICATION
+    // ============================================
+
+    const CONFIG = {
+        focusableSelector: [
+            'input:not([type="hidden"]):not([readonly]):not([disabled]):not(.readonly-field)',
+            'select:not([disabled])',
+            'textarea:not([readonly]):not([disabled])',
+            'button:not([disabled]):not(.btn-close-modal)'
+        ].join(', '),
+        tableInputSelector: '#itemsTableBody input:not([readonly]):not([disabled])',
+        tableRowSelector: '#itemsTableBody tr',
+        modalSelectors: [
+            '.pending-orders-modal.show',
+            '#chooseItemsModal.show',
+            '#batchSelectionModal.show',
+            '#invoicesModal.show',
+            '#dateRangeModal.show',
+            '#receiptUploadModal.show',
+            '#discountOptionsModal.show',
+            '.choose-items-modal.show',
+            '.alert-modal.show'
+        ].join(', ')
+    };
+
+    const MODAL_CONTAINER_SELECTOR = [
+        '.pending-orders-modal',
+        '.choose-items-modal',
+        '.alert-modal',
+        '.save-options-modal',
+        '#chooseItemsModal',
+        '#batchSelectionModal',
+        '#invoicesModal',
+        '#dateRangeModal',
+        '#receiptUploadModal',
+        '#discountOptionsModal'
+    ].join(', ');
+
+    let passedRemarksField = false;
+    let chooseItemsSelectedIndex = -1;
+    let batchSelectedIndex = -1;
+    let invoicesSelectedIndex = -1;
+    window.invoicesSelectedIndex = -1;
+
+    function setInvoicesSelectedIndex(value) {
+        invoicesSelectedIndex = value;
+        window.invoicesSelectedIndex = value;
+    }
+
+    function isDiscountField(element) {
+        if (!element) return false;
+        const name = element.name || '';
+        const id = element.id || '';
+        return name.includes('[discount]') ||
+            id.startsWith('discount_') ||
+            element.classList.contains('item-discount');
+    }
+
+    function isCodeField(element) {
+        if (!element) return false;
+        const name = element.name || '';
+        return name.includes('[code]') ||
+            name.includes('[item_code]') ||
+            element.classList.contains('item-code');
+    }
+
+    function getRowIndexFromElement(element) {
+        const row = element?.closest?.('tr[data-row-index]');
+        if (!row) return null;
+        const idx = parseInt(row.getAttribute('data-row-index'), 10);
+        return Number.isFinite(idx) ? idx : null;
+    }
+
+    // ============================================
+    // UTILITY FUNCTIONS
+    // ============================================
+
+    function getFocusableElements(container = document) {
+        const elements = Array.from(container.querySelectorAll(CONFIG.focusableSelector));
+        return elements.filter(el => {
+            const style = window.getComputedStyle(el);
+            if (style.display === 'none' || style.visibility === 'hidden' || el.offsetParent === null) {
+                return false;
+            }
+            const modal = el.closest(MODAL_CONTAINER_SELECTOR);
+            if (modal && !modal.classList.contains('show')) {
+                return false;
+            }
+            return true;
+        });
+    }
+
+    function getHeaderOrderedElements(currentElement) {
+        const header = currentElement?.closest?.('.header-section');
+        if (!header) return null;
+        const elements = getFocusableElements(header).filter(el => el.hasAttribute('data-kb-order'));
+        if (!elements.length) return null;
+        return elements.sort((a, b) => {
+            const aOrder = parseInt(a.getAttribute('data-kb-order'), 10);
+            const bOrder = parseInt(b.getAttribute('data-kb-order'), 10);
+            return (aOrder || 0) - (bOrder || 0);
+        });
+    }
+
+    function isModalOpen() {
+        return document.querySelector(CONFIG.modalSelectors) !== null;
+    }
+
+    function isInItemsTable(element) {
+        return element && element.closest('#itemsTableBody') !== null;
+    }
+
+    function getTableCellInfo(element) {
+        const td = element.closest('td');
+        const tr = element.closest('tr');
+        if (!td || !tr) return null;
+
+        const tbody = tr.closest('tbody');
+        const cells = Array.from(tr.querySelectorAll('td'));
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        return {
+            element,
+            td,
+            tr,
+            tbody,
+            colIndex: cells.indexOf(td),
+            rowIndex: rows.indexOf(tr),
+            totalCols: cells.length,
+            totalRows: rows.length
+        };
+    }
+
+    function focusNextElement(currentElement, direction = 1, skipButtons = true) {
+        const headerOrdered = getHeaderOrderedElements(currentElement);
+        const focusable = headerOrdered || getFocusableElements();
+        const currentIndex = focusable.indexOf(currentElement);
+        if (currentIndex === -1) return false;
+
+        let nextIndex = currentIndex + direction;
+
+        while (skipButtons && nextIndex >= 0 && nextIndex < focusable.length) {
+            const nextEl = focusable[nextIndex];
+            if (nextEl.tagName !== 'BUTTON') break;
+            nextIndex += direction;
+        }
+
+        if (nextIndex >= 0 && nextIndex < focusable.length) {
+            const nextEl = focusable[nextIndex];
+            nextEl.focus();
+            if (nextEl.tagName === 'INPUT' && nextEl.type !== 'checkbox' && nextEl.type !== 'radio') {
+                nextEl.select();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    function focusTableCell(rowIndex, colIndex) {
+        const tbody = document.getElementById('itemsTableBody');
+        if (!tbody) return false;
+
+        const rows = tbody.querySelectorAll('tr');
+        if (rowIndex < 0 || rowIndex >= rows.length) return false;
+
+        const cells = rows[rowIndex].querySelectorAll('td');
+        if (colIndex < 0 || colIndex >= cells.length) return false;
+
+        const input = cells[colIndex].querySelector('input:not([readonly]):not([disabled]), select:not([disabled])');
+        if (input) {
+            input.focus();
+            if (input.select) input.select();
+            return true;
+        }
+        return false;
+    }
+
+    // ============================================
+    // MODAL CHECKS
+    // ============================================
+
+    function isAlertModalOpen() {
+        const modal = document.getElementById('alertModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function isChooseItemsModalOpen() {
+        const modal = document.getElementById('chooseItemsModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function isBatchModalOpen() {
+        const modal = document.getElementById('batchSelectionModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function isInvoicesModalOpen() {
+        const modal = document.getElementById('invoicesModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function isDateRangeModalOpen() {
+        const modal = document.getElementById('dateRangeModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function isReceiptUploadModalOpen() {
+        const modal = document.getElementById('receiptUploadModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function isDiscountOptionsModalOpen() {
+        const modal = document.getElementById('discountOptionsModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function isLegacyChooseItemsModal() {
+        return !!document.getElementById('itemSearchInput') && !!document.getElementById('chooseItemsBody');
+    }
+
+    function isLegacyBatchModal() {
+        return !!document.getElementById('batchSearchInput') && !!document.getElementById('batchSelectionBody');
+    }
+
+    function isComponentChooseItemsModal() {
+        return !!document.getElementById('chooseItemsModalSearch') &&
+            !!document.getElementById('chooseItemsModalBody');
+    }
+
+    function isComponentBatchModal() {
+        return !!document.getElementById('batchSelectionModalSearch') &&
+            !!document.getElementById('batchSelectionModalBody');
+    }
+
+    // ============================================
+    // MODAL KEYBOARD NAVIGATION (LEGACY + INVOICES)
+    // ============================================
+
+    function getChooseItemsRows() {
+        const tbody = document.getElementById('chooseItemsBody');
+        if (!tbody) return [];
+        return Array.from(tbody.querySelectorAll('tr')).filter(row => {
+            if (row.querySelector('td[colspan]')) return false;
+            const styleAttr = row.getAttribute('style') || '';
+            return !styleAttr.includes('display: none');
+        });
+    }
+
+    function navigateChooseItemsModal(direction) {
+        const rows = getChooseItemsRows();
+        if (rows.length === 0) return;
+
+        rows.forEach(r => r.classList.remove('item-row-selected'));
+
+        if (direction === 'down') {
+            chooseItemsSelectedIndex = (chooseItemsSelectedIndex + 1) % rows.length;
+        } else if (direction === 'up') {
+            chooseItemsSelectedIndex = chooseItemsSelectedIndex <= 0 ? rows.length - 1 : chooseItemsSelectedIndex - 1;
+        }
+
+        const selectedRow = rows[chooseItemsSelectedIndex];
+        if (selectedRow) {
+            selectedRow.classList.add('item-row-selected');
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+
+    function selectCurrentChooseItem() {
+        const rows = getChooseItemsRows();
+        if (chooseItemsSelectedIndex >= 0 && chooseItemsSelectedIndex < rows.length) {
+            rows[chooseItemsSelectedIndex].click();
+        }
+    }
+
+    function getBatchRows() {
+        const tbody = document.getElementById('batchSelectionBody');
+        if (!tbody) return [];
+        return Array.from(tbody.querySelectorAll('tr')).filter(row => {
+            if (row.querySelector('td[colspan]')) return false;
+            const styleAttr = row.getAttribute('style') || '';
+            return !styleAttr.includes('display: none');
+        });
+    }
+
+    function getComponentChooseItemsRows() {
+        const tbody = document.getElementById('chooseItemsModalBody');
+        if (!tbody) return [];
+        return Array.from(tbody.querySelectorAll('tr.item-row')).filter(row => {
+            const styleAttr = row.getAttribute('style') || '';
+            return !styleAttr.includes('display: none');
+        });
+    }
+
+    function getComponentBatchRows() {
+        const tbody = document.getElementById('batchSelectionModalBody');
+        if (!tbody) return [];
+        return Array.from(tbody.querySelectorAll('tr.batch-row')).filter(row => {
+            const styleAttr = row.getAttribute('style') || '';
+            return !styleAttr.includes('display: none');
+        });
+    }
+
+    function navigateBatchModal(direction) {
+        const rows = getBatchRows();
+        if (rows.length === 0) return;
+
+        rows.forEach(r => r.classList.remove('item-row-selected'));
+
+        if (direction === 'down') {
+            batchSelectedIndex = (batchSelectedIndex + 1) % rows.length;
+        } else if (direction === 'up') {
+            batchSelectedIndex = batchSelectedIndex <= 0 ? rows.length - 1 : batchSelectedIndex - 1;
+        }
+
+        const selectedRow = rows[batchSelectedIndex];
+        if (selectedRow) {
+            selectedRow.classList.add('item-row-selected');
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            selectedRow.click();
+        }
+    }
+
+    function selectCurrentBatch() {
+        if (window.selectedBatch && typeof selectBatchFromModal === 'function') {
+            selectBatchFromModal(window.selectedBatch);
+        }
+    }
+
+    function navigateComponentChooseItemsModal(direction) {
+        const rows = getComponentChooseItemsRows();
+        if (rows.length === 0) return;
+
+        if (direction === 'down') {
+            chooseItemsSelectedIndex = (chooseItemsSelectedIndex + 1) % rows.length;
+        } else if (direction === 'up') {
+            chooseItemsSelectedIndex = chooseItemsSelectedIndex <= 0 ? rows.length - 1 : chooseItemsSelectedIndex - 1;
+        }
+
+        if (typeof window.highlightItemRow_chooseItemsModal === 'function') {
+            window.highlightItemRow_chooseItemsModal(chooseItemsSelectedIndex);
+        } else {
+            rows.forEach(r => r.classList.remove('row-selected'));
+            const selectedRow = rows[chooseItemsSelectedIndex];
+            if (selectedRow) selectedRow.classList.add('row-selected');
+        }
+
+        const selectedRow = rows[chooseItemsSelectedIndex];
+        if (selectedRow) {
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+
+    function selectComponentChooseItem() {
+        const rows = getComponentChooseItemsRows();
+        if (rows.length === 0) return;
+        if (chooseItemsSelectedIndex < 0 || chooseItemsSelectedIndex >= rows.length) {
+            chooseItemsSelectedIndex = 0;
+        }
+        if (typeof window.selectItem_chooseItemsModal === 'function') {
+            window.selectItem_chooseItemsModal(chooseItemsSelectedIndex);
+        } else {
+            rows[chooseItemsSelectedIndex]?.click();
+        }
+    }
+
+    function navigateComponentBatchModal(direction) {
+        const rows = getComponentBatchRows();
+        if (rows.length === 0) return;
+
+        if (direction === 'down') {
+            batchSelectedIndex = (batchSelectedIndex + 1) % rows.length;
+        } else if (direction === 'up') {
+            batchSelectedIndex = batchSelectedIndex <= 0 ? rows.length - 1 : batchSelectedIndex - 1;
+        }
+
+        if (typeof window.highlightBatchRow_batchSelectionModal === 'function') {
+            window.highlightBatchRow_batchSelectionModal(batchSelectedIndex);
+        } else {
+            rows.forEach(r => r.classList.remove('row-selected'));
+            const selectedRow = rows[batchSelectedIndex];
+            if (selectedRow) selectedRow.classList.add('row-selected');
+        }
+
+        const selectedRow = rows[batchSelectedIndex];
+        if (selectedRow) {
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+
+    function selectComponentBatch() {
+        if (typeof window.selectBatch_batchSelectionModal === 'function') {
+            window.selectBatch_batchSelectionModal(batchSelectedIndex);
+        } else if (window.selectedBatch && typeof selectBatchFromModal === 'function') {
+            selectBatchFromModal(window.selectedBatch);
+        }
+    }
+
+    function getInvoiceRows() {
+        const tbody = document.getElementById('invoicesTableBody');
+        if (!tbody) return [];
+        return Array.from(tbody.querySelectorAll('tr')).filter(row => {
+            if (row.querySelector('td[colspan]')) return false;
+            const styleAttr = row.getAttribute('style') || '';
+            return !styleAttr.includes('display: none');
+        });
+    }
+
+    function navigateInvoicesModal(direction) {
+        const rows = getInvoiceRows();
+        if (rows.length === 0) return;
+
+        rows.forEach(r => r.classList.remove('item-row-selected'));
+
+        if (direction === 'down') {
+            setInvoicesSelectedIndex((invoicesSelectedIndex + 1) % rows.length);
+        } else if (direction === 'up') {
+            setInvoicesSelectedIndex(invoicesSelectedIndex <= 0 ? rows.length - 1 : invoicesSelectedIndex - 1);
+        }
+
+        const selectedRow = rows[invoicesSelectedIndex];
+        if (selectedRow) {
+            selectedRow.classList.add('item-row-selected');
+            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+
+    function selectCurrentInvoice() {
+        const rows = getInvoiceRows();
+        if (rows.length === 0) return;
+
+        if (invoicesSelectedIndex < 0 || invoicesSelectedIndex >= rows.length) {
+            setInvoicesSelectedIndex(0);
+        }
+
+        const selectedRow = rows[invoicesSelectedIndex];
+        if (selectedRow) {
+            selectedRow.click();
+        }
+    }
+
+    function handleChooseItemsModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                navigateChooseItemsModal('down');
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                navigateChooseItemsModal('up');
+                break;
+            case 'Enter':
+                if (document.activeElement.id === 'itemSearchInput') {
+                    e.preventDefault();
+                    const rows = getChooseItemsRows();
+                    if (rows.length > 0) {
+                        chooseItemsSelectedIndex = 0;
+                        rows[0].click();
+                    }
+                    return;
+                }
+                e.preventDefault();
+                selectCurrentChooseItem();
+                break;
+            case 'f':
+            case 'F':
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('itemSearchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+
+    function handleBatchModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                navigateBatchModal('down');
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                navigateBatchModal('up');
+                break;
+            case 'Enter':
+                if (document.activeElement.id === 'batchSearchInput') {
+                    e.preventDefault();
+                    const rows = getBatchRows();
+                    if (rows.length > 0) {
+                        rows[0].click();
+                        batchSelectedIndex = 0;
+                        setTimeout(() => {
+                            if (window.selectedBatch) {
+                                selectBatchFromModal(window.selectedBatch);
+                            }
+                        }, 50);
+                    }
+                    return;
+                }
+                e.preventDefault();
+                selectCurrentBatch();
+                break;
+            case 'f':
+            case 'F':
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('batchSearchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+
+    function handleComponentChooseItemsModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                e.stopPropagation();
+                navigateComponentChooseItemsModal('down');
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                e.stopPropagation();
+                navigateComponentChooseItemsModal('up');
+                break;
+            case 'Enter':
+                if (document.activeElement.id === 'chooseItemsModalSearch') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    chooseItemsSelectedIndex = 0;
+                    selectComponentChooseItem();
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                selectComponentChooseItem();
+                break;
+            case 'f':
+            case 'F':
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const searchInput = document.getElementById('chooseItemsModalSearch');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+
+    function handleComponentBatchModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                e.stopPropagation();
+                navigateComponentBatchModal('down');
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                e.stopPropagation();
+                navigateComponentBatchModal('up');
+                break;
+            case 'Enter':
+                if (document.activeElement.id === 'batchSelectionModalSearch') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    batchSelectedIndex = 0;
+                    selectComponentBatch();
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                selectComponentBatch();
+                break;
+            case 'f':
+            case 'F':
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const searchInput = document.getElementById('batchSelectionModalSearch');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+
+    function handleInvoicesModalKeyboard(e) {
+        switch (e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                navigateInvoicesModal('down');
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                navigateInvoicesModal('up');
+                break;
+            case 'Enter':
+                if (document.activeElement.id === 'invoiceSearchInput') {
+                    e.preventDefault();
+                    const rows = getInvoiceRows();
+                    if (rows.length > 0) {
+                        setInvoicesSelectedIndex(0);
+                        rows[0].click();
+                    }
+                    return;
+                }
+                e.preventDefault();
+                selectCurrentInvoice();
+                break;
+            case 'f':
+            case 'F':
+                if (!e.ctrlKey && !e.altKey) {
+                    e.preventDefault();
+                    const searchInput = document.getElementById('invoiceSearchInput');
+                    if (searchInput) {
+                        searchInput.focus();
+                        searchInput.select();
+                    }
+                }
+                break;
+        }
+    }
+
+    // ============================================
+    // KEY HANDLERS
+    // ============================================
+
+    function handleEnterKey(e) {
+        const activeEl = document.activeElement;
+        const tagName = activeEl?.tagName?.toLowerCase();
+
+        if (!activeEl) return;
+
+        if (tagName === 'button' || tagName === 'textarea') return;
+
+        if (activeEl.id === 'invoiceNo' || activeEl.name === 'invoice_no') {
+            e.preventDefault();
+            e.stopPropagation();
+            const invoiceNo = activeEl.value.trim();
+            if (invoiceNo && invoiceNo !== 'Loading...') {
+                if (typeof loadTransactionByInvoiceNo === 'function') {
+                    loadTransactionByInvoiceNo(invoiceNo);
+                }
+            } else {
+                if (typeof openAllInvoicesModal === 'function') {
+                    openAllInvoicesModal();
+                }
+            }
+            return;
+        }
+
+        if (activeEl.id === 'remarks' || activeEl.name === 'remarks') {
+            e.preventDefault();
+            e.stopPropagation();
+            passedRemarksField = true;
+            if (typeof openChooseItemsModal === 'function') {
+                openChooseItemsModal();
+            }
+            return;
+        }
+
+        if (passedRemarksField) {
+            const isReadonlyField = activeEl.hasAttribute('readonly') || activeEl.classList.contains('readonly-field');
+            const isBodyOrNoFocus = tagName === 'body' || !activeEl || activeEl === document.body;
+            if (isReadonlyField || isBodyOrNoFocus) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof openChooseItemsModal === 'function') {
+                    openChooseItemsModal();
+                }
+                return;
+            }
+        }
+
+        if (activeEl.name && activeEl.name.includes('[batch]')) {
+            const batchValue = activeEl.value.trim();
+            const row = activeEl.closest('tr');
+            const itemId = row ? row.getAttribute('data-item-id') : null;
+
+            if (!batchValue && itemId) {
+                e.preventDefault();
+                e.stopPropagation();
+                const rowIndex = parseInt(row.getAttribute('data-row-index'), 10);
+                if (typeof openBatchChangeModal === 'function') {
+                    openBatchChangeModal(rowIndex);
+                }
+                return;
+            }
+        }
+
+        // Let row-level handlers manage table fields
+        const fieldName = activeEl.name || '';
+        const fieldId = activeEl.id || '';
+        const isTableField = (
+            fieldName.includes('[code]') ||
+            fieldName.includes('[item_code]') ||
+            fieldName.includes('[discount]') ||
+            fieldName.includes('[batch]') ||
+            fieldName.includes('[expiry]') ||
+            fieldName.includes('[qty]') ||
+            fieldName.includes('[free_qty]') ||
+            fieldName.includes('[rate]') ||
+            fieldId.startsWith('discount_') ||
+            fieldId.startsWith('qty_') ||
+            fieldId.startsWith('free_qty_') ||
+            fieldId.startsWith('rate_') ||
+            fieldId.startsWith('mrp_') ||
+            fieldId.startsWith('amount_') ||
+            activeEl.classList.contains('item-code') ||
+            activeEl.classList.contains('item-discount') ||
+            activeEl.classList.contains('item-qty') ||
+            activeEl.classList.contains('item-rate')
+        );
+
+        if (window.KEYBOARD_DEBUG && isInItemsTable(activeEl)) {
+            console.log('[KB] handleEnterKey table enter', {
+                tagName,
+                name: fieldName,
+                id: fieldId,
+                classes: activeEl.className,
+                isTableField,
+                isCodeField: isCodeField(activeEl),
+                isDiscountField: isDiscountField(activeEl)
+            });
+        }
+
+        if (isTableField) {
+            return;
+        }
+
+        if (isInItemsTable(activeEl)) {
+            e.preventDefault();
+            const cellInfo = getTableCellInfo(activeEl);
+            if (cellInfo) {
+                const nextCol = cellInfo.colIndex + 1;
+                if (nextCol < cellInfo.totalCols - 1) {
+                    if (focusTableCell(cellInfo.rowIndex, nextCol)) return;
+                }
+                if (cellInfo.rowIndex < cellInfo.totalRows - 1) {
+                    if (focusTableCell(cellInfo.rowIndex + 1, 0)) return;
+                }
+                if (typeof addNewRow === 'function') {
+                    addNewRow();
+                    setTimeout(() => focusTableCell(cellInfo.rowIndex + 1, 0), 50);
+                }
+            }
+            return;
+        }
+
+        if (tagName === 'select') {
+            e.preventDefault();
+            focusNextElement(activeEl, e.shiftKey ? -1 : 1);
+            return;
+        }
+
+        if (tagName === 'input') {
+            e.preventDefault();
+            focusNextElement(activeEl, e.shiftKey ? -1 : 1);
+        }
+    }
+
+    function handleArrowKeys(e) {
+        const activeEl = document.activeElement;
+        if (!isInItemsTable(activeEl)) return;
+
+        const cellInfo = getTableCellInfo(activeEl);
+        if (!cellInfo) return;
+
+        let handled = false;
+
+        switch (e.key) {
+            case 'ArrowDown':
+                if (cellInfo.rowIndex < cellInfo.totalRows - 1) {
+                    handled = focusTableCell(cellInfo.rowIndex + 1, cellInfo.colIndex);
+                }
+                break;
+            case 'ArrowUp':
+                if (cellInfo.rowIndex > 0) {
+                    handled = focusTableCell(cellInfo.rowIndex - 1, cellInfo.colIndex);
+                }
+                break;
+            case 'ArrowRight':
+                if (activeEl.tagName === 'INPUT') {
+                    const cursorAtEnd = activeEl.selectionStart === activeEl.value.length;
+                    if (cursorAtEnd && cellInfo.colIndex < cellInfo.totalCols - 2) {
+                        handled = focusTableCell(cellInfo.rowIndex, cellInfo.colIndex + 1);
+                    }
+                }
+                break;
+            case 'ArrowLeft':
+                if (activeEl.tagName === 'INPUT') {
+                    const cursorAtStart = activeEl.selectionStart === 0;
+                    if (cursorAtStart && cellInfo.colIndex > 0) {
+                        handled = focusTableCell(cellInfo.rowIndex, cellInfo.colIndex - 1);
+                    }
+                }
+                break;
+        }
+
+        if (handled) {
+            e.preventDefault();
+        }
+    }
+
+    function handleEndKey(e) {
+        const activeEl = document.activeElement;
+        const tagName = activeEl?.tagName?.toLowerCase();
+
+        if (tagName === 'textarea') return;
+        if (tagName === 'input' && activeEl.type === 'text') {
+            if (!e.ctrlKey) return;
+        }
+
+        e.preventDefault();
+        if (typeof saveSale === 'function') {
+            saveSale();
+        }
+    }
+
+    function handleCtrlS(e) {
+        e.preventDefault();
+        if (typeof saveSale === 'function') {
+            saveSale();
+        }
+    }
+
+    function handleCtrlI(e) {
+        e.preventDefault();
+        if (typeof handleChooseItemsClick === 'function') {
+            handleChooseItemsClick();
+        } else if (typeof openChooseItemsModal === 'function') {
+            openChooseItemsModal();
+        }
+    }
+
+    function handleEscapeKey(e) {
+        if (isDiscountOptionsModalOpen() && typeof closeDiscountOptionsModal === 'function') {
+            closeDiscountOptionsModal();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
+        if (isReceiptUploadModalOpen() && typeof closeReceiptUploadModal === 'function') {
+            closeReceiptUploadModal();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
+        if (isDateRangeModalOpen() && typeof closeDateRangeModal === 'function') {
+            closeDateRangeModal();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
+        if (isInvoicesModalOpen() && typeof closeInvoicesModal === 'function') {
+            closeInvoicesModal();
+            setInvoicesSelectedIndex(-1);
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
+        if (isBatchModalOpen() && typeof closeBatchSelectionModal === 'function') {
+            closeBatchSelectionModal();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+
+        if (isChooseItemsModalOpen() && typeof closeChooseItemsModal === 'function') {
+            closeChooseItemsModal();
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+        }
+    }
+
+    // ============================================
+    // MAIN KEYBOARD LISTENER (CAPTURE PHASE)
+    // ============================================
+
+    document.addEventListener('keydown', function(e) {
+        const activeEl = document.activeElement;
+
+        if (window.KEYBOARD_DEBUG && (e.key === 'Enter' || e.keyCode === 13)) {
+            if (isDiscountField(activeEl)) {
+                console.log('[KB] Document capture Enter on discount', {
+                    key: e.key,
+                    keyCode: e.keyCode,
+                    activeId: activeEl.id,
+                    activeName: activeEl.name
+                });
+            }
+            if (isCodeField(activeEl)) {
+                console.log('[KB] Document capture Enter on code', {
+                    key: e.key,
+                    keyCode: e.keyCode,
+                    activeId: activeEl.id,
+                    activeName: activeEl.name
+                });
+            }
+        }
+
+        if (isCodeField(activeEl) && (e.key === 'Enter' || e.keyCode === 13)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            if (window.KEYBOARD_DEBUG) {
+                console.log('[KB] Fallback code handler (capture)');
+            }
+
+            const rowIndex = getRowIndexFromElement(activeEl);
+            if (Number.isFinite(rowIndex)) {
+                window.pendingBarcodeRowIndex = rowIndex;
+                if (window.KEYBOARD_DEBUG) {
+                    console.log('[KB] Fallback code -> set pendingBarcodeRowIndex', rowIndex);
+                }
+            }
+
+            const addMoreBtn = document.getElementById('chooseItemsBtn');
+            if (addMoreBtn) {
+                addMoreBtn.click();
+                addMoreBtn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            } else if (typeof handleChooseItemsClick === 'function') {
+                handleChooseItemsClick();
+            } else if (typeof openChooseItemsModal === 'function') {
+                openChooseItemsModal();
+            }
+            return;
+        }
+
+        if (isDiscountField(activeEl) && (e.key === 'Enter' || e.keyCode === 13)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rowIndex = getRowIndexFromElement(activeEl);
+            if (window.KEYBOARD_DEBUG) {
+                console.log('[KB] Fallback discount handler (capture)', { rowIndex });
+            }
+            if (rowIndex !== null && typeof createEmptyRowAfterDiscount === 'function') {
+                createEmptyRowAfterDiscount(rowIndex);
+            } else if (typeof triggerAddRowAndFocusCode === 'function') {
+                triggerAddRowAndFocusCode();
+            }
+            return;
+        }
+
+        if (e.defaultPrevented) return;
+
+        if (isAlertModalOpen()) {
+            return;
+        }
+
+        if (isChooseItemsModalOpen()) {
+            if (isLegacyChooseItemsModal()) {
+                handleChooseItemsModalKeyboard(e);
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    closeChooseItemsModal();
+                    chooseItemsSelectedIndex = -1;
+                }
+            } else if (isComponentChooseItemsModal()) {
+                handleComponentChooseItemsModalKeyboard(e);
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    closeChooseItemsModal();
+                    chooseItemsSelectedIndex = -1;
+                }
+            }
+            return;
+        }
+
+        if (isBatchModalOpen()) {
+            if (isLegacyBatchModal()) {
+                handleBatchModalKeyboard(e);
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    closeBatchSelectionModal();
+                    batchSelectedIndex = -1;
+                }
+            } else if (isComponentBatchModal()) {
+                handleComponentBatchModalKeyboard(e);
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    closeBatchSelectionModal();
+                    batchSelectedIndex = -1;
+                }
+            }
+            return;
+        }
+
+        if (isInvoicesModalOpen()) {
+            handleInvoicesModalKeyboard(e);
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                closeInvoicesModal();
+                setInvoicesSelectedIndex(-1);
+            }
+            return;
+        }
+
+        if (isDiscountOptionsModalOpen() || isDateRangeModalOpen() || isReceiptUploadModalOpen()) {
+            if (e.key === 'Escape') {
+                handleEscapeKey(e);
+            }
+            return;
+        }
+
+        switch (e.key) {
+            case 'Enter':
+                handleEnterKey(e);
+                break;
+            case 'ArrowDown':
+            case 'ArrowUp':
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                handleArrowKeys(e);
+                break;
+            case 'End':
+                handleEndKey(e);
+                break;
+            case 'Escape':
+                handleEscapeKey(e);
+                break;
+            case 's':
+            case 'S':
+                if (e.ctrlKey) {
+                    handleCtrlS(e);
+                }
+                break;
+            case 'i':
+            case 'I':
+                if (e.ctrlKey) {
+                    handleCtrlI(e);
+                }
+                break;
+        }
+    }, true);
+
+    // ============================================
+    // MODAL OPEN HOOKS
+    // ============================================
+
+    const originalOpenAllInvoicesModal = window.openAllInvoicesModal;
+    if (typeof originalOpenAllInvoicesModal === 'function') {
+        window.openAllInvoicesModal = function() {
+            setInvoicesSelectedIndex(-1);
+            return originalOpenAllInvoicesModal.apply(this, arguments);
+        };
+    }
+
+    // ============================================
+    // AUTO-FOCUS INVOICE NO ON PAGE LOAD
+    // ============================================
+
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const invoiceNoInput = document.getElementById('invoiceNo');
+            if (invoiceNoInput) {
+                invoiceNoInput.focus();
+                invoiceNoInput.select();
+            }
+        }, 200);
+    }, true);
+
+    // ============================================
+    // VISUAL FOCUS INDICATORS
+    // ============================================
+
+    const focusStyle = document.createElement('style');
+    focusStyle.textContent = `
+        .form-control:focus,
+        select:focus,
+        input:focus {
+            outline: 2px solid #0d6efd !important;
+            outline-offset: 1px;
+            box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        }
+
+        .form-control:focus:not(:focus-visible),
+        select:focus:not(:focus-visible),
+        input:focus:not(:focus-visible) {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        #itemsTableBody tr:focus-within {
+            background-color: #e7f3ff !important;
+        }
+
+        #itemsTableBody tr:focus-within td {
+            background-color: #e7f3ff !important;
+        }
+    `;
+    document.head.appendChild(focusStyle);
+
+    // ============================================
+    // RESET REMARKS NAVIGATION STATE
+    // ============================================
+
+    window.resetRemarksNavigationState = function() {
+        passedRemarksField = false;
+    };
+
+    const headerFieldsToWatch = [
+        'seriesSelect',
+        'invoiceNo',
+        'saleDate',
+        'customerSelect',
+        'salesmanSelect',
+        'dueDate',
+        'cash',
+        'transfer'
+    ];
+
+    headerFieldsToWatch.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('focus', function() {
+                if (passedRemarksField) {
+                    passedRemarksField = false;
+                }
+            });
+        }
+    });
+
+    console.log('Keyboard navigation loaded for Sale Modification');
+})();
 </script>
 
 @endsection
