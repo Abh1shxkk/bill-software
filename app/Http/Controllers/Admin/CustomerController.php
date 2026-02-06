@@ -496,8 +496,12 @@ class CustomerController extends Controller
     public function getAllCustomers()
     {
         try {
+            // Use is_deleted check to be consistent with other customer queries
+            // Handle NULL values properly (NULL != 1 is UNKNOWN in SQL)
             $customers = Customer::select('id as customer_id', 'name', 'code', 'mobile')
-                ->where('status', 1) // Only active customers
+                ->where(function($query) {
+                    $query->whereNull('is_deleted')->orWhere('is_deleted', '!=', 1);
+                })
                 ->orderBy('name')
                 ->get();
 

@@ -99,6 +99,41 @@
         background-color: #e9ecef !important;
         cursor: not-allowed;
     }
+
+    /* Custom searchable dropdown (customer) */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #f1f5ff;
+    }
+    
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #e3ebff;
+    }
+
+    .custom-dropdown-menu .dropdown-item.active {
+        background-color: #e3ebff;
+    }
+
+    /* Keyboard-selected rows in modals */
+.kb-row-active,
+.kb-row-active td {
+    background-color: #cfe2ff !important;
+}
+
+.credit-note-options button.kb-active,
+.credit-note-options button:focus,
+.credit-note-options button:focus-visible {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.adjustment-input.kb-active,
+.adjustment-input:focus,
+.adjustment-input:focus-visible {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -119,7 +154,7 @@
                 <div class="header-row">
                     <div class="field-group">
                         <label>SR.:</label>
-                        <select class="form-control" name="series" id="seriesSelect" style="width: 60px;" onchange="updateSeriesLabel()">
+                        <select class="form-control no-select2" name="series" id="seriesSelect" style="width: 60px;" onchange="updateSeriesLabel()">
                             <option value="SR" selected>SR</option>
                         </select>
                         <span id="seriesLabel" style="font-weight: bold; color: #0d6efd; margin-left: 10px;">SALES RETURN - CREDIT</span>
@@ -138,14 +173,39 @@
                     <div class="inner-card-sr flex-grow-1">
                         <div class="row g-2">
                             <div class="col-md-6">
-                                <div class="field-group">
+                                <div class="field-group" style="position: relative;">
                                     <label style="width: 100px;">Name:</label>
-                                    <select class="form-control" name="customer_id" id="customerSelect" autocomplete="off" onchange="updateCustomerName()">
-                                        <option value="">Select Customer</option>
-                                        @foreach($customers as $customer)
-                                            <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text" 
+                                               class="form-control no-select2" 
+                                               id="customerSearchInput" 
+                                               placeholder="Type to search customer..."
+                                               autocomplete="off"
+                                               style="width: 100%;">
+                                        <select class="form-control no-select2" name="customer_id" id="customerSelect" autocomplete="off" style="display: none;">
+                                            <option value="">Select Customer</option>
+                                            @foreach($customers as $customer)
+                                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        
+                                        <div id="customerDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Customer
+                                            </div>
+                                            <div id="customerList" class="dropdown-list">
+                                                @foreach($customers as $customer)
+                                                    <div class="dropdown-item" 
+                                                         data-id="{{ $customer->id }}" 
+                                                         data-name="{{ $customer->name }}"
+                                                         data-code="{{ $customer->code ?? '' }}"
+                                                         style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -172,7 +232,7 @@
                             <div class="col-md-6">
                                 <div class="field-group">
                                     <label style="width: 100px;">Sales Man:</label>
-                                    <select class="form-control" name="salesman_id" id="salesmanSelect" autocomplete="off" onchange="updateSalesmanName()">
+                                    <select class="form-control no-select2" name="salesman_id" id="salesmanSelect" autocomplete="off" onchange="updateSalesmanName()">
                                         <option value="">Select</option>
                                         @foreach($salesmen as $salesman)
                                             <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->code ?? '' }}</option>
@@ -592,14 +652,287 @@ function updateDayName() {
     }
 }
 
-// Update customer name
+// Update customer name (custom dropdown)
 function updateCustomerName() {
-    const select = document.getElementById('customerSelect');
-    const selectedOption = select.options[select.selectedIndex];
-    // Store customer name for later use
-    if (selectedOption) {
-        select.setAttribute('data-customer-name', selectedOption.getAttribute('data-name') || '');
+    const customerSelect = document.getElementById('customerSelect');
+    const customerSearchInput = document.getElementById('customerSearchInput');
+    const customerList = document.getElementById('customerList');
+    if (!customerSelect || !customerList) return;
+
+    const item = customerList.querySelector(`.dropdown-item[data-id="${customerSelect.value}"]`);
+    if (item) {
+        const name = item.getAttribute('data-name') || '';
+        const code = item.getAttribute('data-code') || '';
+        customerSelect.setAttribute('data-customer-name', name);
+        if (customerSearchInput) {
+            customerSearchInput.value = code ? `${code} - ${name}` : name;
+        }
+        return;
     }
+
+    // Fallback: use selected option text if dropdown list doesn't include item
+    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
+    if (selectedOption && customerSearchInput) {
+        customerSearchInput.value = selectedOption.textContent || '';
+    }
+}
+
+// Customer dropdown functionality (searchable)
+function initCustomerDropdown() {
+    const customerSearchInput = document.getElementById('customerSearchInput');
+    const customerDropdown = document.getElementById('customerDropdown');
+    const customerSelect = document.getElementById('customerSelect');
+    const customerList = document.getElementById('customerList');
+    if (!customerSearchInput || !customerDropdown || !customerSelect || !customerList) return;
+    if (customerSearchInput.dataset.kbInit === 'true') return;
+    customerSearchInput.dataset.kbInit = 'true';
+
+    let customerActiveIndex = -1;
+
+    function syncCustomerListFromSelect() {
+        const existing = customerList.querySelectorAll('.dropdown-item[data-id]').length;
+        if (existing > 0) return;
+        const options = Array.from(customerSelect.options || []);
+        options.forEach(opt => {
+            if (!opt.value) return;
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.setAttribute('data-id', opt.value);
+            item.setAttribute('data-name', opt.getAttribute('data-name') || opt.textContent || '');
+            item.setAttribute('data-code', '');
+            item.style.padding = '8px 12px';
+            item.style.cursor = 'pointer';
+            item.style.fontSize = '13px';
+            item.style.borderBottom = '1px solid #f0f0f0';
+            item.textContent = opt.textContent || '';
+            customerList.appendChild(item);
+        });
+    }
+
+    syncCustomerListFromSelect();
+
+    function loadCustomersFromApi() {
+        if (window.kbCustomersLoaded) return;
+        window.kbCustomersLoaded = true;
+        fetch('{{ route("admin.customers.all") }}', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data || !data.success || !Array.isArray(data.customers)) return;
+
+            // Clear existing select options (keep placeholder)
+            const placeholder = customerSelect.querySelector('option[value=""]');
+            customerSelect.innerHTML = '';
+            if (placeholder) customerSelect.appendChild(placeholder);
+
+            // Clear list
+            customerList.innerHTML = '';
+
+            data.customers.forEach(cust => {
+                const option = document.createElement('option');
+                option.value = cust.customer_id;
+                option.textContent = `${cust.code || ''} - ${cust.name}`;
+                option.setAttribute('data-name', cust.name || '');
+                customerSelect.appendChild(option);
+
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.setAttribute('data-id', cust.customer_id);
+                item.setAttribute('data-name', cust.name || '');
+                item.setAttribute('data-code', cust.code || '');
+                item.style.padding = '8px 12px';
+                item.style.cursor = 'pointer';
+                item.style.fontSize = '13px';
+                item.style.borderBottom = '1px solid #f0f0f0';
+                item.textContent = `${cust.code || ''} - ${cust.name}`;
+                customerList.appendChild(item);
+            });
+
+            if (!customerList.children.length) {
+                const empty = document.createElement('div');
+                empty.className = 'dropdown-item';
+                empty.textContent = 'No customers found';
+                empty.style.padding = '8px 12px';
+                empty.style.fontSize = '13px';
+                empty.style.color = '#888';
+                customerList.appendChild(empty);
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load customers:', err);
+        });
+    }
+
+    // If no customers were rendered by Blade, fetch from API
+    if (customerList.querySelectorAll('.dropdown-item[data-id]').length === 0) {
+        loadCustomersFromApi();
+    }
+
+    function isSelectableCustomerItem(item) {
+        return !!(item && item.getAttribute('data-id'));
+    }
+
+    function getVisibleCustomerItems() {
+        return Array.from(customerList.querySelectorAll('.dropdown-item:not([style*="display: none"])'))
+            .filter(isSelectableCustomerItem);
+    }
+
+    function setActiveCustomerItem(index) {
+        const items = getVisibleCustomerItems();
+        items.forEach(item => item.classList.remove('active'));
+        if (items[index]) {
+            items[index].classList.add('active');
+            items[index].scrollIntoView({ block: 'nearest' });
+            customerActiveIndex = index;
+        }
+    }
+
+    function filterCustomers(query) {
+        const items = customerList.querySelectorAll('.dropdown-item');
+        const q = (query || '').toLowerCase();
+        let visibleIndex = 0;
+        customerActiveIndex = -1;
+
+        items.forEach(item => {
+            const text = (item.textContent || '').toLowerCase();
+            if (!q || text.includes(q)) {
+                item.style.display = 'block';
+                if (customerActiveIndex === -1) {
+                    customerActiveIndex = visibleIndex;
+                }
+                visibleIndex++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    function selectCustomerItem(item, moveNext = false) {
+        if (!item) return false;
+        const id = item.getAttribute('data-id') || '';
+        customerSelect.value = id;
+        customerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        updateCustomerName();
+        customerDropdown.style.display = 'none';
+        if (moveNext) {
+            const rateDiff = document.getElementById('rateDiff');
+            if (rateDiff) rateDiff.focus();
+        }
+        return true;
+    }
+
+    customerSearchInput.addEventListener('focus', function() {
+        customerDropdown.style.display = 'block';
+        // Show all customers when dropdown opens - don't filter by current value
+        // This prevents empty dropdown when input has previous selection text
+        filterCustomers('');
+    });
+
+    customerSearchInput.addEventListener('input', function() {
+        filterCustomers(this.value);
+        customerDropdown.style.display = 'block';
+    });
+
+    customerList.addEventListener('click', function(e) {
+        const item = e.target.closest('.dropdown-item');
+        if (!item) return;
+        selectCustomerItem(item, false);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!customerSearchInput.contains(e.target) && !customerDropdown.contains(e.target)) {
+            customerDropdown.style.display = 'none';
+        }
+    });
+
+    customerSearchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const visibleItems = getVisibleCustomerItems();
+            let selected = false;
+            if (customerActiveIndex >= 0 && visibleItems[customerActiveIndex]) {
+                selected = selectCustomerItem(visibleItems[customerActiveIndex], true);
+            } else if (visibleItems.length >= 1) {
+                selected = selectCustomerItem(visibleItems[0], true);
+            }
+            if (!selected) {
+                customerDropdown.style.display = 'block';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            if (customerDropdown.style.display !== 'block') {
+                customerDropdown.style.display = 'block';
+            }
+            const nextIndex = customerActiveIndex < 0 ? 0 : Math.min(customerActiveIndex + 1, items.length - 1);
+            setActiveCustomerItem(nextIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            if (customerDropdown.style.display !== 'block') {
+                customerDropdown.style.display = 'block';
+            }
+            const prevIndex = customerActiveIndex <= 0 ? 0 : customerActiveIndex - 1;
+            setActiveCustomerItem(prevIndex);
+        } else if (e.key === 'Escape') {
+            customerDropdown.style.display = 'none';
+        }
+    }, true);
+
+    // Global capture to ensure dropdown selection works even if focus shifts
+    window.addEventListener('keydown', function(e) {
+        const activeEl = document.activeElement;
+        const isCustomerFocus = activeEl === customerSearchInput || customerDropdown.contains(activeEl);
+        const isDropdownOpen = customerDropdown.style.display === 'block';
+        if (!isCustomerFocus || !isDropdownOpen) return;
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const visibleItems = getVisibleCustomerItems();
+            let selected = false;
+            if (customerActiveIndex >= 0 && visibleItems[customerActiveIndex]) {
+                selected = selectCustomerItem(visibleItems[customerActiveIndex], true);
+            } else if (visibleItems.length >= 1) {
+                selected = selectCustomerItem(visibleItems[0], true);
+            }
+            if (!selected) {
+                customerDropdown.style.display = 'block';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            const nextIndex = customerActiveIndex < 0 ? 0 : Math.min(customerActiveIndex + 1, items.length - 1);
+            setActiveCustomerItem(nextIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            const prevIndex = customerActiveIndex <= 0 ? 0 : customerActiveIndex - 1;
+            setActiveCustomerItem(prevIndex);
+        } else if (e.key === 'Escape') {
+            customerDropdown.style.display = 'none';
+        }
+    }, true);
 }
 
 // Update salesman name
@@ -612,9 +945,21 @@ function updateSalesmanName() {
     }
 }
 
-// Add new row to items table
-function addNewRow() {
-    // Open reusable item selection modal
+// Track pending row for item selection
+if (typeof window.pendingReturnRowIndex === 'undefined') {
+    window.pendingReturnRowIndex = null;
+}
+
+// Open item modal for a specific row (code field Enter)
+function openItemModalForRow(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    if (!codeInput) return;
+    const isEditableRow = row.dataset.editable === 'true' || !codeInput.hasAttribute('readonly');
+    if (!isEditableRow) return;
+
+    window.pendingReturnRowIndex = rowIndex;
     if (typeof openItemModal_chooseItemsModal === 'function') {
         openItemModal_chooseItemsModal();
     } else {
@@ -623,11 +968,86 @@ function addNewRow() {
     }
 }
 
+// Capture Enter on Code field to always open item modal
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.keyCode !== 13) return;
+    const target = e.target;
+    if (!target || target.tagName !== 'INPUT') return;
+    const name = target.getAttribute('name') || '';
+    if (!name.includes('[code]')) return;
+    const row = target.closest('tr');
+    const rowId = row?.id || '';
+    const rowIndex = rowId.startsWith('row-') ? parseInt(rowId.replace('row-', '')) : NaN;
+    if (Number.isNaN(rowIndex)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    openItemModalForRow(rowIndex);
+}, true);
+
+// Add new row to items table (empty editable row)
+function addNewRow() {
+    // Prevent duplicate empty rows
+    const lastRow = document.querySelector('#itemsTableBody tr:last-child');
+    if (lastRow) {
+        const codeInput = lastRow.querySelector('input[name*="[code]"]');
+        const nameInput = lastRow.querySelector('input[name*="[name]"]');
+        if (codeInput && !codeInput.value && nameInput && !nameInput.value) {
+            codeInput.focus();
+            if (codeInput.select) codeInput.select();
+            return;
+        }
+    }
+
+    const emptyItem = {
+        item_id: '',
+        item_code: '',
+        item_name: '',
+        batch_id: '',
+        batch_no: '',
+        expiry_date: '',
+        packing: '',
+        unit: '',
+        company_name: '',
+        hsn_code: '',
+        sale_rate: 0,
+        mrp: 0,
+        discount_percent: 0,
+        cgst_percent: 0,
+        sgst_percent: 0,
+        cess_percent: 0,
+        return_qty: 0,
+        return_fqty: 0,
+        _editable: true
+    };
+
+    const newRowIndex = currentRowIndex;
+    addItemRow(emptyItem, newRowIndex);
+
+    setTimeout(() => {
+        const row = document.getElementById(`row-${newRowIndex}`) || document.querySelector('#itemsTableBody tr:last-child');
+        if (!row) return;
+        const codeInput = row.querySelector('input[name*="[code]"]');
+        if (codeInput) {
+            codeInput.focus();
+            if (codeInput.select) codeInput.select();
+        }
+    }, 100);
+}
+
 // Callback function when item and batch are selected from reusable modal
 window.onItemBatchSelectedFromModal = function(item, batch) {
     console.log('Item selected from modal:', item);
     console.log('Batch selected from modal:', batch);
-    
+
+    // If we are populating an existing row (code field flow)
+    if (window.pendingReturnRowIndex !== null && window.pendingReturnRowIndex !== undefined) {
+        const rowIndex = window.pendingReturnRowIndex;
+        window.pendingReturnRowIndex = null;
+        populateExistingRowWithItemBatch(rowIndex, item, batch);
+        return;
+    }
+
     // Create item object for the table
     const newItem = {
         item_id: item.id,
@@ -655,6 +1075,63 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     showAlert('success', 'Item added successfully! Enter return quantity.');
 };
 
+// Populate an existing row with item + batch (code field flow)
+function populateExistingRowWithItemBatch(rowIndex, item, batch) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+
+    const newItem = {
+        item_id: item.id,
+        item_code: item.bar_code || item.id,
+        item_name: item.name,
+        batch_id: batch.id,
+        batch_no: batch.batch_no,
+        expiry_date: batch.expiry_display || batch.expiry_date || '',
+        packing: item.packing || '',
+        unit: item.unit || 'PCS',
+        company_name: item.company_name || '',
+        hsn_code: item.hsn_code || '',
+        sale_rate: parseFloat(batch.s_rate || batch.avg_s_rate || 0),
+        mrp: parseFloat(batch.mrp || batch.avg_mrp || 0),
+        discount_percent: 0,
+        cgst_percent: parseFloat(item.cgst_percent || 6),
+        sgst_percent: parseFloat(item.sgst_percent || 6),
+        cess_percent: parseFloat(item.cess_percent || 0),
+        return_qty: 0,
+        return_fqty: 0
+    };
+
+    row.querySelector('input[name*="[code]"]').value = newItem.item_code || '';
+    row.querySelector('input[name*="[name]"]').value = newItem.item_name || '';
+    row.querySelector('input[name*="[batch]"]').value = newItem.batch_no || '';
+    row.querySelector('input[name*="[expiry]"]').value = newItem.expiry_date || '';
+    row.querySelector('input[name*="[sale_rate]"]').value = newItem.sale_rate || 0;
+    row.querySelector('input[name*="[mrp]"]').value = newItem.mrp || 0;
+
+    row.querySelector('input[name*="[item_id]"]').value = newItem.item_id || '';
+    row.querySelector('input[name*="[batch_id]"]').value = newItem.batch_id || '';
+    row.querySelector('input[name*="[hsn_code]"]').value = newItem.hsn_code || '';
+    row.querySelector('input[name*="[company_name]"]').value = newItem.company_name || '';
+    row.querySelector('input[name*="[packing]"]').value = newItem.packing || '';
+    row.querySelector('input[name*="[unit]"]').value = newItem.unit || '';
+    row.querySelector('input[name*="[cgst_percent]"]').value = newItem.cgst_percent || 0;
+    row.querySelector('input[name*="[sgst_percent]"]').value = newItem.sgst_percent || 0;
+    row.querySelector('input[name*="[cess_percent]"]').value = newItem.cess_percent || 0;
+
+    row.dataset.itemData = JSON.stringify(newItem);
+    row.dataset.completed = 'false';
+    row.dataset.editable = 'false';
+
+    calculateRowAmount(rowIndex);
+    selectRowForCalculation(rowIndex);
+
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+    }
+}
+
 // Populate items table with items (ADD new items, don't clear existing)
 function populateItemsTable(items) {
     console.log('populateItemsTable called with items:', items);
@@ -662,6 +1139,9 @@ function populateItemsTable(items) {
         console.log('No items to populate');
         return;
     }
+
+    // Filter out empty placeholder items (prevents extra blank row)
+    items = items.filter(it => it && (it.item_id || it.item_code || it.item_name));
     
     console.log(`Adding ${items.length} items to table. Current row index: ${currentRowIndex}`);
     
@@ -740,22 +1220,24 @@ function addItemRow(item, index) {
     console.log(`addItemRow called for item ${index}, will create row-${currentRowIndex}`);
     const tbody = document.getElementById('itemsTableBody');
     const rowIndex = currentRowIndex++;
+    const isEditable = !!item._editable;
+    const readonlyAttr = isEditable ? '' : 'readonly';
     
     const row = document.createElement('tr');
     row.id = `row-${rowIndex}`;
     console.log(`Creating row with ID: ${row.id}`);
     row.innerHTML = `
         <td>
-            <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.item_code || ''}" readonly>
+            <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.item_code || ''}" ${readonlyAttr}>
         </td>
         <td>
-            <input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.item_name || ''}" readonly>
+            <input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.item_name || ''}" ${readonlyAttr}>
         </td>
         <td>
-            <input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${item.batch_no || ''}" readonly>
+            <input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${item.batch_no || ''}" ${readonlyAttr}>
         </td>
         <td>
-            <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${item.expiry_date || ''}" readonly>
+            <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${item.expiry_date || ''}" ${readonlyAttr}>
         </td>
         <td>
             <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="${item.return_qty || 0}" step="1" 
@@ -2007,6 +2489,7 @@ function showPastSaleReturnsModal() {
 
 // Display past sale returns modal
 function displayPastSaleReturnsModal(saleReturns) {
+    console.log('[KB] displayPastSaleReturnsModal', { count: saleReturns?.length });
     const modalHTML = `
         <div class="invoice-modal-backdrop" id="saleReturnModalBackdrop" onclick="closeSaleReturnModal()"></div>
         <div class="invoice-modal" id="saleReturnModal">
@@ -2057,6 +2540,8 @@ function displayPastSaleReturnsModal(saleReturns) {
     setTimeout(() => {
         document.getElementById('saleReturnModalBackdrop').classList.add('show');
         document.getElementById('saleReturnModal').classList.add('show');
+        console.log('[KB] saleReturnModal shown');
+        initSaleReturnModalKeyboard();
     }, 10);
 }
 
@@ -2079,8 +2564,92 @@ function closeSaleReturnModal() {
             modal.remove();
         }
         if (backdrop) backdrop.remove();
+        if (saleReturnModalKeyHandler) {
+            window.removeEventListener('keydown', saleReturnModalKeyHandler, true);
+            saleReturnModalKeyHandler = null;
+        }
     }, 300);
 }
+
+// Keyboard navigation for Sale Return selection modal
+let saleReturnModalKeyHandler = null;
+function initSaleReturnModalKeyboard() {
+    const modal = document.getElementById('saleReturnModal');
+    if (!modal) return;
+    const body = modal.querySelector('tbody');
+    if (!body) return;
+
+    let activeIndex = 0;
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
+    console.log('[KB] initSaleReturnModalKeyboard', { rows: body.querySelectorAll('tr').length });
+
+    function getRows() {
+        return Array.from(body.querySelectorAll('tr'));
+    }
+
+    function setActiveRow(index) {
+        const rows = getRows();
+        rows.forEach(r => r.classList.remove('kb-row-active'));
+        if (!rows.length) return;
+        if (index < 0) index = 0;
+        if (index >= rows.length) index = rows.length - 1;
+        activeIndex = index;
+        const row = rows[activeIndex];
+        row.classList.add('kb-row-active');
+        row.scrollIntoView({ block: 'nearest' });
+    }
+
+    setActiveRow(0);
+
+    if (saleReturnModalKeyHandler) {
+        window.removeEventListener('keydown', saleReturnModalKeyHandler, true);
+    }
+
+    saleReturnModalKeyHandler = function(e) {
+        const modalEl = document.getElementById('saleReturnModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+
+        if (e.key === 'ArrowDown') {
+            console.log('[KB] saleReturnModal ArrowDown');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(activeIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            console.log('[KB] saleReturnModal ArrowUp');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(activeIndex - 1);
+        } else if (e.key === 'Enter') {
+            console.log('[KB] saleReturnModal Enter');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rows = getRows();
+            if (!rows.length) return;
+            window.kbFocusTableAfterLoad = true;
+            rows[activeIndex].click();
+        } else if (e.key === 'Escape') {
+            console.log('[KB] saleReturnModal Escape');
+            closeSaleReturnModal();
+        }
+    };
+
+    window.addEventListener('keydown', saleReturnModalKeyHandler, true);
+}
+
+// Global capture to keep modal keyboard active even if focus is outside
+window.addEventListener('keydown', function(e) {
+    const modalEl = document.getElementById('saleReturnModal');
+    if (!modalEl || !modalEl.classList.contains('show')) return;
+    if (!saleReturnModalKeyHandler) return;
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) {
+        console.log('[KB] saleReturnModal global capture', { key: e.key, active: document.activeElement?.id || document.activeElement?.tagName });
+        saleReturnModalKeyHandler(e);
+    }
+}, true);
 
 // Select sale return for modification
 function selectSaleReturnForModification(saleReturnId) {
@@ -2147,6 +2716,20 @@ function loadSaleReturnForModification(saleReturn) {
                 option.textContent = saleReturn.customer_name;
                 option.selected = true;
                 customerSelect.appendChild(option);
+                const customerList = document.getElementById('customerList');
+                if (customerList) {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item';
+                    item.setAttribute('data-id', saleReturn.customer_id);
+                    item.setAttribute('data-name', saleReturn.customer_name);
+                    item.setAttribute('data-code', '');
+                    item.style.padding = '8px 12px';
+                    item.style.cursor = 'pointer';
+                    item.style.fontSize = '13px';
+                    item.style.borderBottom = '1px solid #f0f0f0';
+                    item.textContent = saleReturn.customer_name;
+                    customerList.appendChild(item);
+                }
                 // Trigger change event after adding option
                 customerSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 console.log('✅ Added missing customer option:', saleReturn.customer_name);
@@ -2219,6 +2802,22 @@ function loadSaleReturnForModification(saleReturn) {
     document.getElementById('submitBtn').innerHTML = '<i class="bi bi-check-circle me-1"></i> Update Sale Return';
     
     showAlert('success', 'Sale return loaded successfully! You can now modify it.');
+
+    // If SR No enter triggered load, move focus to table
+    if (window.kbFocusTableAfterLoad) {
+        window.kbFocusTableAfterLoad = false;
+        setTimeout(() => {
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (!firstRow) return;
+            const qtyInput = firstRow.querySelector('input[name*="[qty]"]');
+            const firstInput = firstRow.querySelector('input');
+            const target = qtyInput || firstInput;
+            if (target) {
+                target.focus();
+                if (target.select) target.select();
+            }
+        }, 150);
+    }
 }
 
 // Generate Return from Modal
@@ -2315,7 +2914,26 @@ function handleDiscountAndCompleteRow(rowIndex) {
     selectedRowIndex = null;
     
     console.log('Row completed and sections cleared for next row');
+
+    // After completing row, create new row and focus code
+    addNewRow();
 }
+
+// Capture Enter on Dis% field to ensure add row triggers
+window.addEventListener('keydown', function(e) {
+    const target = e.target;
+    if (!target || (e.key !== 'Enter' && e.keyCode !== 13)) return;
+    const name = target.getAttribute('name') || '';
+    if (!name.includes('[dis_percent]')) return;
+    const row = target.closest('tr');
+    const rowId = row?.id || '';
+    const rowIndex = rowId.startsWith('row-') ? parseInt(rowId.replace('row-', '')) : NaN;
+    if (Number.isNaN(rowIndex)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    handleDiscountAndCompleteRow(rowIndex);
+}, true);
 
 // Mark row as completed (green background)
 function markRowAsCompleted(rowIndex) {
@@ -2751,31 +3369,92 @@ function saveTransaction() {
     showCreditNoteModal();
 }
 
-// Show Credit Note Modal
-function showCreditNoteModal() {
+// Credit Note Modal keyboard helper
+function initCreditNoteKeyboard() {
     const modal = document.getElementById('creditNoteModal');
-    modal.classList.add('show');
-    
-    // Remove any existing ESC listeners first
-    document.removeEventListener('keydown', window.creditNoteEscHandler);
-    
-    // Create new ESC key handler
-    window.creditNoteEscHandler = function(e) {
+    if (!modal) return;
+    const buttons = Array.from(modal.querySelectorAll('.credit-note-options button'));
+    if (!buttons.length) return;
+
+    let activeIndex = 0;
+    const setActive = (index) => {
+        activeIndex = index;
+        buttons.forEach((btn, i) => {
+            btn.classList.toggle('kb-active', i === activeIndex);
+        });
+        const activeBtn = buttons[activeIndex];
+        if (activeBtn) {
+            activeBtn.focus();
+        }
+    };
+
+    // Ensure buttons update highlight when focused via mouse/tab
+    buttons.forEach((btn, idx) => {
+        btn.addEventListener('focus', () => setActive(idx));
+        btn.addEventListener('mouseenter', () => setActive(idx));
+    });
+
+    setTimeout(() => setActive(0), 50);
+
+    if (window.creditNoteKeyHandler) {
+        document.removeEventListener('keydown', window.creditNoteKeyHandler, true);
+    }
+
+    window.creditNoteKeyHandler = function(e) {
+        if (!modal.classList.contains('show')) return;
+
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActive((activeIndex + 1) % buttons.length);
+            return;
+        }
+
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActive((activeIndex - 1 + buttons.length) % buttons.length);
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const activeBtn = buttons[activeIndex];
+            if (activeBtn) activeBtn.click();
+            return;
+        }
+
         if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
             closeCreditNoteModal();
         }
     };
-    
-    document.addEventListener('keydown', window.creditNoteEscHandler);
+
+    document.addEventListener('keydown', window.creditNoteKeyHandler, true);
+}
+
+// Show Credit Note Modal
+function showCreditNoteModal() {
+    const modal = document.getElementById('creditNoteModal');
+    if (!modal) return;
+    modal.classList.add('show');
+    modal.style.display = 'block';
+    initCreditNoteKeyboard();
 }
 
 // Close Credit Note Modal
 function closeCreditNoteModal() {
     const modal = document.getElementById('creditNoteModal');
     modal.classList.remove('show');
-    
-    // Remove ESC key listener
-    document.removeEventListener('keydown', window.creditNoteEscHandler);
+    if (window.creditNoteKeyHandler) {
+        document.removeEventListener('keydown', window.creditNoteKeyHandler, true);
+    }
     
     setTimeout(() => {
         modal.style.display = 'none';
@@ -3030,6 +3709,9 @@ function showAdjustmentModal(invoices, returnAmount) {
         setTimeout(() => {
             document.getElementById('adjustmentModalBackdrop').classList.add('show');
             document.getElementById('adjustmentModal').classList.add('show');
+            const hasExisting = Object.keys(existingAdjustments || {}).length > 0;
+            prefillAdjustmentFirstRow(hasExisting);
+            initAdjustmentModalKeyboard();
         }, 10);
         
         // Update balance display after pre-filling
@@ -3037,7 +3719,7 @@ function showAdjustmentModal(invoices, returnAmount) {
             updateAdjustmentBalance();
         }
         
-        // Add ESC key listener
+        // Add ESC / Ctrl+S key listener
         document.addEventListener('keydown', handleAdjustmentEsc);
     };
     
@@ -3077,8 +3759,106 @@ function showAdjustmentModal(invoices, returnAmount) {
 // Handle ESC key for adjustment modal
 function handleAdjustmentEsc(e) {
     if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         closeAdjustmentModal();
+        return;
     }
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (isCtrlS) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveAdjustment();
+    }
+}
+
+function prefillAdjustmentFirstRow(hasExisting = false) {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+    const firstInput = inputs[0];
+
+    if (hasExisting) {
+        firstInput.focus();
+        firstInput.select();
+        return;
+    }
+
+    const balance = parseFloat(firstInput.getAttribute('data-adj-balance') || firstInput.getAttribute('data-balance') || 0);
+    const desired = parseFloat(window.returnAmount || 0);
+    const prefill = Math.min(desired, balance);
+    firstInput.value = prefill.toFixed(2);
+    firstInput.placeholder = desired.toFixed(2);
+    updateAdjustmentBalance();
+}
+
+function getRemainingAdjustment() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    inputs.forEach(input => {
+        totalAdjusted += parseFloat(input.value || 0);
+    });
+    return Math.max(0, (parseFloat(window.returnAmount || 0) - totalAdjusted));
+}
+
+function initAdjustmentModalKeyboard() {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+
+    const setActive = (input) => {
+        inputs.forEach(i => i.classList.remove('kb-active'));
+        if (input) {
+            input.classList.add('kb-active');
+            input.focus();
+            input.select();
+        }
+    };
+
+    inputs.forEach((input, idx) => {
+        input.addEventListener('focus', () => setActive(input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = inputs[idx + 1];
+                if (next) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const remaining = getRemainingAdjustment();
+                    const nextBalance = parseFloat(next.getAttribute('data-adj-balance') || next.getAttribute('data-balance') || 0);
+
+                    if (remaining <= 0 && currentValue > 0) {
+                        const moveValue = Math.min(currentValue, nextBalance);
+                        next.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                    } else {
+                        const nextValue = Math.min(remaining, nextBalance);
+                        next.value = nextValue.toFixed(2);
+                    }
+
+                    updateAdjustmentBalance();
+                    setActive(next);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = inputs[idx - 1];
+                if (prev) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const prevBalance = parseFloat(prev.getAttribute('data-adj-balance') || prev.getAttribute('data-balance') || 0);
+
+                    if (currentValue > 0) {
+                        const moveValue = Math.min(currentValue, prevBalance);
+                        prev.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                        updateAdjustmentBalance();
+                    }
+
+                    setActive(prev);
+                }
+            }
+        });
+    });
+
+    setActive(inputs[0]);
 }
 
 // Update adjustment balance
@@ -3235,7 +4015,85 @@ function saveAdjustment() {
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     updateSeriesLabel();
+
+    // Remove Select2 if it was initialized on header dropdowns
+    if (window.$ && $.fn.select2) {
+        ['#seriesSelect', '#customerSelect', '#salesmanSelect'].forEach(selector => {
+            const $el = $(selector);
+            if ($el.length && $el.data('select2')) {
+                $el.select2('destroy');
+                $el.removeClass('select2-hidden-accessible');
+                $el.next('.select2-container').remove();
+            }
+        });
+    }
+
+    if (typeof initCustomerDropdown === 'function') {
+        initCustomerDropdown();
+    }
+
+    const customerSelect = document.getElementById('customerSelect');
+    if (customerSelect) {
+        customerSelect.addEventListener('change', updateCustomerName);
+        updateCustomerName();
+    }
 });
+
+// Ctrl+S -> Update Sale Return
+window.addEventListener('keydown', function(e) {
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (!isCtrlS || e.repeat) return;
+    const modalOpen = !!document.querySelector(
+        '.credit-note-modal.show, .adjustment-modal.show, #chooseItemsModal.show, #batchSelectionModal.show, .insert-orders-modal.show, .batch-modal.show, .create-batch-modal.show, .invoice-modal.show, #alertModal.show, .alert-modal.show'
+    );
+    if (modalOpen) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const updateBtn = document.getElementById('submitBtn');
+    if (updateBtn) {
+        updateBtn.click();
+    } else if (typeof saveTransaction === 'function') {
+        saveTransaction();
+    }
+}, true);
+
+// Header keyboard handling: SR No -> load, Fixed Dis -> insert orders
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.keyCode !== 13) return;
+    const active = document.activeElement;
+    if (!active) return;
+
+    const isBlockingModalOpen = !!document.querySelector(
+        '.invoice-modal.show, .insert-orders-modal.show, .batch-modal.show, .create-batch-modal.show, .adjustment-modal.show, .credit-note-modal.show, #alertModal.show, .alert-modal.show'
+    );
+    if (isBlockingModalOpen) return;
+
+    if (active.id === 'srNo') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const srNoValue = (active.value || '').trim();
+        if (srNoValue) {
+            window.kbFocusTableAfterLoad = true;
+            searchSaleReturnBySRNo(srNoValue);
+        } else {
+            const fixed = document.getElementById('fixedDiscount');
+            if (fixed) fixed.focus();
+        }
+    } else if (active.id === 'fixedDiscount') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        const insertBtn = document.getElementById('insertOrdersBtn');
+        if (insertBtn) {
+            insertBtn.click();
+        } else if (typeof openInsertOrdersModal === 'function') {
+            openInsertOrdersModal();
+        }
+    }
+}, true);
 </script>
 
 <style>
@@ -3943,6 +4801,30 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+/* Focus ring (blue border) */
+.form-control:focus,
+select:focus,
+input:focus {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.form-control:focus:not(:focus-visible),
+select:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+#itemsTableBody tr:focus-within {
+    background-color: #e7f3ff !important;
+}
+
+#itemsTableBody tr:focus-within td {
+    background-color: #e7f3ff !important;
 }
 </style>
 

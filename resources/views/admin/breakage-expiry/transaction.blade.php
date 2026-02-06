@@ -47,6 +47,32 @@
         cursor: not-allowed;
     }
 
+    /* Custom searchable dropdown */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #f1f5ff;
+    }
+
+    .custom-dropdown-menu .dropdown-item:active,
+    .custom-dropdown-menu .dropdown-item.active {
+        background-color: #e3ebff;
+    }
+
+    /* Focus ring (blue border + soft bg) */
+    input:focus,
+    select:focus,
+    .kb-focus {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 1px;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        background-color: #e7f3ff !important;
+    }
+
+    input:focus:not(:focus-visible),
+    select:focus:not(:focus-visible) {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
     .table-compact {
         font-size: 10px;
         margin-bottom: 0;
@@ -601,16 +627,16 @@
                 <div class="header-row">
                     <div class="field-group">
                         <label>Series:</label>
-                        <input type="text" class="form-control" name="series" style="width: 60px;" value="BE">
+                        <input type="text" class="form-control" name="series" id="seriesInput" style="width: 60px;" value="BE">
                     </div>
 
                     <div class="field-group">
                         <label>Date:</label>
-                        <input type="date" class="form-control" name="transaction_date" style="width: 140px;" value="{{ date('Y-m-d') }}">
+                        <input type="date" class="form-control" name="transaction_date" id="transactionDate" style="width: 140px;" value="{{ date('Y-m-d') }}">
                     </div>
                     <div class="field-group">
                         <label>End Date:</label>
-                        <input type="date" class="form-control" name="end_date" style="width: 140px;">
+                        <input type="date" class="form-control" name="end_date" id="endDate" style="width: 140px;">
                     </div>
                 </div>
 
@@ -621,59 +647,108 @@
                     <div class="inner-card-sr flex-grow-1">
                         <div class="row g-2">
                             <div class="col-md-5">
-                                <div class="field-group">
+                                <div class="field-group" style="position: relative;">
                                     <label style="width: 100px;">Name</label>
-                                    <select class="form-control" name="customer_id">
-                                        <option value="">Select Customer</option>
-                                        @foreach($customers ?? [] as $customer)
-                                            <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text"
+                                               class="form-control no-select2"
+                                               id="customerSearchInput"
+                                               placeholder="Type to search customer..."
+                                               autocomplete="off"
+                                               style="width: 100%;">
+                                        <select class="form-control no-select2" name="customer_id" id="customerSelect" autocomplete="off" style="display: none;">
+                                            <option value="">Select Customer</option>
+                                            @foreach($customers ?? [] as $customer)
+                                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
+                                            @endforeach
+                                        </select>
+
+                                        <div id="customerDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Customer
+                                            </div>
+                                            <div id="customerList" class="dropdown-list">
+                                                @foreach($customers ?? [] as $customer)
+                                                    <div class="dropdown-item"
+                                                         data-id="{{ $customer->id }}"
+                                                         data-name="{{ $customer->name }}"
+                                                         data-code="{{ $customer->code ?? '' }}"
+                                                         style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>GST Vno:</label>
-                                    <input type="text" class="form-control" name="gst_vno" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="gst_vno" id="gstVno" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label>R(epl.) / C(redit) Note:</label>
-                                    <input type="text" class="form-control" name="note_type" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="note_type" id="noteType" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>With GST[Y/N]:</label>
-                                    <input type="text" class="form-control" name="with_gst" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="with_gst" id="withGst" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
                         </div>
 
                         <div class="row g-2 mt-1">
                             <div class="col-md-5">
-                                <div class="field-group">
+                                <div class="field-group" style="position: relative;">
                                     <label style="width: 100px;">Sales Man</label>
-                                    <select class="form-control" name="salesman_id">
-                                        <option value="">Select Salesman</option>
-                                        @foreach($salesmen ?? [] as $salesman)
-                                            <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text"
+                                               class="form-control no-select2"
+                                               id="salesmanSearchInput"
+                                               placeholder="Type to search salesman..."
+                                               autocomplete="off"
+                                               style="width: 100%;">
+                                        <select class="form-control no-select2" name="salesman_id" id="salesmanSelect" autocomplete="off" style="display: none;">
+                                            <option value="">Select Salesman</option>
+                                            @foreach($salesmen ?? [] as $salesman)
+                                                <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->name }}</option>
+                                            @endforeach
+                                        </select>
+
+                                        <div id="salesmanDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Salesman
+                                            </div>
+                                            <div id="salesmanList" class="dropdown-list">
+                                                @foreach($salesmen ?? [] as $salesman)
+                                                    <div class="dropdown-item"
+                                                         data-id="{{ $salesman->id }}"
+                                                         data-name="{{ $salesman->name }}"
+                                                         style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                                        {{ $salesman->name }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>Inc.</label>
-                                    <input type="text" class="form-control" name="inc" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="inc" id="inc" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
 
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>Rev.Charge</label>
-                                    <input type="text" class="form-control" name="rev_charge" value="Y" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="rev_charge" id="revCharge" value="Y" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
 
@@ -684,27 +759,27 @@
                             <div class="col-md-5">
                                 <div class="field-group">
                                     <label>To be Adjusted?[Y/N],&lt;X&gt; for Imm. Posting</label>
-                                    <input type="text" class="form-control" name="adjusted" value="X" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" name="adjusted" id="adjustedFlag" value="X" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
 
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 80px;">Dis. Rpl:</label>
-                                    <input type="text" class="form-control" name="dis_rpl">
+                                    <input type="text" class="form-control" name="dis_rpl" id="disRpl">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 100px;">Brk. :</label>
-                                    <input type="text" class="form-control" name="brk">
+                                    <input type="text" class="form-control" name="brk" id="brk">
                                 </div>
                             </div>
 
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 80px;">Exp. :</label>
-                                    <input type="text" class="form-control" name="exp">
+                                    <input type="text" class="form-control" name="exp" id="expField">
                                 </div>
                             </div>
 
@@ -717,7 +792,7 @@
                         </div>
                         
                         <div class="text-center">
-                            <button type="button" class="btn btn-sm btn-info" style="width: 100%;" onclick="openItemSelectionModal()">
+                            <button type="button" class="btn btn-sm btn-info" id="insertOrdersBtn" style="width: 100%;" onclick="openItemSelectionModal()">
                                 <i class="bi bi-list-check"></i> Insert Orders
                             </button>
                         </div>
@@ -2086,7 +2161,7 @@ function removeRow(rowIndex) {
 // Add New Row - Opens item selection modal
 function addNewRow() {
     // Check if customer is selected
-    const customerId = document.querySelector('select[name="customer_id"]').value;
+    const customerId = document.querySelector('select[name="customer_id"]')?.value;
     
     if (!customerId) {
         showAlert('error', 'Please select a customer first.');
@@ -2096,15 +2171,207 @@ function addNewRow() {
     openItemSelectionModal();
 }
 
+// Custom searchable dropdown helper
+function initCustomDropdown({ inputId, selectId, dropdownId, listId }) {
+    const input = document.getElementById(inputId);
+    const select = document.getElementById(selectId);
+    const dropdown = document.getElementById(dropdownId);
+    const list = document.getElementById(listId);
+    if (!input || !select || !dropdown || !list) return;
+    if (input.dataset.kbInit === 'true') return;
+    input.dataset.kbInit = 'true';
+
+    let activeIndex = -1;
+
+    const getItems = () => Array.from(list.querySelectorAll('.dropdown-item[data-id]'));
+
+    const clearActive = () => {
+        getItems().forEach(item => item.classList.remove('active'));
+    };
+
+    const setActive = (index) => {
+        const items = getItems();
+        if (!items.length) return;
+        activeIndex = Math.max(0, Math.min(index, items.length - 1));
+        items.forEach((item, i) => item.classList.toggle('active', i === activeIndex));
+        items[activeIndex].scrollIntoView({ block: 'nearest' });
+    };
+
+    const showDropdown = () => {
+        dropdown.style.display = 'block';
+        if (activeIndex < 0) setActive(0);
+    };
+
+    const hideDropdown = () => {
+        dropdown.style.display = 'none';
+        activeIndex = -1;
+        clearActive();
+    };
+
+    const selectItem = (item) => {
+        const id = item.getAttribute('data-id') || '';
+        const name = item.getAttribute('data-name') || item.textContent || '';
+        const code = item.getAttribute('data-code') || '';
+        select.value = id;
+        select.dispatchEvent(new Event('change'));
+        input.value = code ? `${code} - ${name}` : name;
+        hideDropdown();
+    };
+
+    // Initial sync if select already has value
+    if (select.value) {
+        const opt = select.options[select.selectedIndex];
+        if (opt) input.value = opt.textContent || '';
+    }
+
+    input.addEventListener('focus', showDropdown);
+    input.addEventListener('input', () => {
+        const term = input.value.toLowerCase();
+        const items = getItems();
+        items.forEach(item => {
+            const text = (item.textContent || '').toLowerCase();
+            item.style.display = text.includes(term) ? '' : 'none';
+        });
+        activeIndex = -1;
+        setActive(0);
+        showDropdown();
+    });
+
+    input.addEventListener('keydown', (e) => {
+        const items = getItems().filter(item => item.style.display !== 'none');
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!dropdown.style.display || dropdown.style.display === 'none') showDropdown();
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            setActive(activeIndex);
+            e.stopPropagation();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (!dropdown.style.display || dropdown.style.display === 'none') showDropdown();
+            activeIndex = Math.max(activeIndex - 1, 0);
+            setActive(activeIndex);
+            e.stopPropagation();
+        } else if (e.key === 'Enter') {
+            if (dropdown.style.display !== 'none') {
+                e.preventDefault();
+                e.stopPropagation();
+                const item = items[activeIndex] || items[0];
+                if (item) selectItem(item);
+            }
+        } else if (e.key === 'Escape') {
+            hideDropdown();
+        }
+    });
+
+    list.addEventListener('click', (e) => {
+        const item = e.target.closest('.dropdown-item[data-id]');
+        if (item) {
+            selectItem(item);
+            input.focus();
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== input) {
+            hideDropdown();
+        }
+    });
+}
+
+// Header keyboard navigation (Enter to next, Exp -> Insert Orders)
+function initHeaderKeyboardNavigation() {
+    const order = [
+        '#seriesInput',
+        '#transactionDate',
+        '#endDate',
+        '#customerSearchInput',
+        '#gstVno',
+        '#noteType',
+        '#withGst',
+        '#salesmanSearchInput',
+        '#inc',
+        '#revCharge',
+        '#adjustedFlag',
+        '#disRpl',
+        '#brk',
+        '#expField'
+    ];
+    const fields = order.map(sel => document.querySelector(sel)).filter(Boolean);
+    const expField = document.getElementById('expField');
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter') return;
+        const active = document.activeElement;
+        if (!active || !fields.includes(active)) return;
+
+        // Let custom dropdown handle Enter selection
+        if (active.id === 'customerSearchInput' || active.id === 'salesmanSearchInput') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (active === expField) {
+            triggerInsertOrders();
+            return;
+        }
+
+        const idx = fields.indexOf(active);
+        const next = fields[idx + 1];
+        if (next) {
+            next.focus();
+            if (next.select) next.select();
+        }
+    }, true);
+}
+
+function triggerInsertOrders() {
+    const btn = document.getElementById('insertOrdersBtn');
+    if (btn) {
+        btn.click();
+    } else if (typeof openItemSelectionModal === 'function') {
+        openItemSelectionModal();
+    }
+}
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Breakage/Expiry Transaction page loaded');
+
+    // Ensure Select2 (if globally applied) is removed for these selects
+    try {
+        document.querySelectorAll('select').forEach(sel => sel.classList.add('no-select2'));
+        if (window.jQuery && window.jQuery.fn && window.jQuery.fn.select2) {
+            window.jQuery('.no-select2').select2('destroy');
+        }
+    } catch (e) {
+        console.warn('Select2 destroy skipped:', e);
+    }
+
+    initCustomDropdown({
+        inputId: 'customerSearchInput',
+        selectId: 'customerSelect',
+        dropdownId: 'customerDropdown',
+        listId: 'customerList'
+    });
+
+    initCustomDropdown({
+        inputId: 'salesmanSearchInput',
+        selectId: 'salesmanSelect',
+        dropdownId: 'salesmanDropdown',
+        listId: 'salesmanList'
+    });
+
+    initHeaderKeyboardNavigation();
     
     // Handle form submission
     document.getElementById('breakageExpiryTransactionForm').addEventListener('submit', function(e) {
         e.preventDefault();
         saveTransaction();
     });
+
+    // Default focus on series
+    const seriesInput = document.getElementById('seriesInput');
+    if (seriesInput) seriesInput.focus();
 });
 
 // Save Transaction

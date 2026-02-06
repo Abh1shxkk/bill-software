@@ -3342,14 +3342,22 @@ function initCreditNoteKeyboard() {
     let activeIndex = 0;
     const setActive = (index) => {
         activeIndex = index;
-        buttons.forEach((btn, i) => btn.classList.toggle('kb-active', i === activeIndex));
+        buttons.forEach((btn, i) => {
+            btn.classList.toggle('kb-active', i === activeIndex);
+        });
         const activeBtn = buttons[activeIndex];
         if (activeBtn) {
             activeBtn.focus();
         }
     };
 
-    setActive(0);
+    // Ensure buttons update highlight when focused via mouse/tab
+    buttons.forEach((btn, idx) => {
+        btn.addEventListener('focus', () => setActive(idx));
+        btn.addEventListener('mouseenter', () => setActive(idx));
+    });
+
+    setTimeout(() => setActive(0), 50);
 
     if (window.creditNoteKeyHandler) {
         document.removeEventListener('keydown', window.creditNoteKeyHandler, true);
@@ -3650,16 +3658,110 @@ function showAdjustmentModal(invoices, returnAmount) {
     setTimeout(() => {
         document.getElementById('adjustmentModalBackdrop').classList.add('show');
         document.getElementById('adjustmentModal').classList.add('show');
+        prefillAdjustmentFirstRow();
+        initAdjustmentModalKeyboard();
     }, 10);
     
     // Add ESC key listener
     document.addEventListener('keydown', handleAdjustmentEsc);
 }
 
+function prefillAdjustmentFirstRow() {
+    const firstInput = document.querySelector('.adjustment-input');
+    if (!firstInput) return;
+    const balance = parseFloat(firstInput.getAttribute('data-adj-balance') || firstInput.getAttribute('data-balance') || 0);
+    const desired = parseFloat(window.returnAmount || 0);
+    const prefill = Math.min(desired, balance);
+    firstInput.value = prefill.toFixed(2);
+    firstInput.placeholder = desired.toFixed(2);
+    updateAdjustmentBalance();
+}
+
+function getRemainingAdjustment() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    inputs.forEach(input => {
+        totalAdjusted += parseFloat(input.value || 0);
+    });
+    return Math.max(0, (parseFloat(window.returnAmount || 0) - totalAdjusted));
+}
+
+function initAdjustmentModalKeyboard() {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+
+    const setActive = (input) => {
+        inputs.forEach(i => i.classList.remove('kb-active'));
+        if (input) {
+            input.classList.add('kb-active');
+            input.focus();
+            input.select();
+        }
+    };
+
+    inputs.forEach((input, idx) => {
+        input.addEventListener('focus', () => setActive(input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = inputs[idx + 1];
+                if (next) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const remaining = getRemainingAdjustment();
+                    const nextBalance = parseFloat(next.getAttribute('data-adj-balance') || next.getAttribute('data-balance') || 0);
+
+                    if (remaining <= 0 && currentValue > 0) {
+                        // Move current amount to next row if nothing remains
+                        const moveValue = Math.min(currentValue, nextBalance);
+                        next.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                    } else {
+                        // Otherwise, push remaining balance to next row
+                        const nextValue = Math.min(remaining, nextBalance);
+                        next.value = nextValue.toFixed(2);
+                    }
+
+                    updateAdjustmentBalance();
+                    setActive(next);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = inputs[idx - 1];
+                if (prev) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const prevBalance = parseFloat(prev.getAttribute('data-adj-balance') || prev.getAttribute('data-balance') || 0);
+
+                    if (currentValue > 0) {
+                        const moveValue = Math.min(currentValue, prevBalance);
+                        prev.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                        updateAdjustmentBalance();
+                    }
+
+                    setActive(prev);
+                }
+            }
+        });
+    });
+
+    setActive(inputs[0]);
+}
+
 // Handle ESC key for adjustment modal
 function handleAdjustmentEsc(e) {
     if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         closeAdjustmentModal();
+        return;
+    }
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (isCtrlS) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveAdjustment();
     }
 }
 
@@ -4009,10 +4111,12 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-top: 20px;
 }
 
-.credit-note-options .kb-active {
-    outline: 2px solid #0d6efd;
-    outline-offset: 2px;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+.credit-note-options button.kb-active,
+.credit-note-options button:focus,
+.credit-note-options button:focus-visible {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
 
 .credit-note-close-btn {
@@ -4352,6 +4456,14 @@ document.addEventListener('DOMContentLoaded', function() {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+.adjustment-input.kb-active,
+.adjustment-input:focus,
+.adjustment-input:focus-visible {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 1px !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
 
 /* Batch Modal Styles */

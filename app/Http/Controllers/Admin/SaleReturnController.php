@@ -763,9 +763,16 @@ class SaleReturnController extends Controller
         $nextSRNo = 'SR' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
         
         // Get customers, salesmen, and items (same as transaction)
-        $customers = Customer::where('is_deleted', '!=', 1)->orderBy('name')->get();
-        $salesmen = SalesMan::where('is_deleted', '!=', 1)->orderBy('name')->get();
-        $items = Item::where('is_deleted', '!=', 1)->orderBy('name')->get();
+        // Use where(function) to handle NULL values properly (NULL != 1 is UNKNOWN in SQL)
+        $customers = Customer::where(function($query) {
+            $query->whereNull('is_deleted')->orWhere('is_deleted', '!=', 1);
+        })->orderBy('name')->get();
+        $salesmen = SalesMan::where(function($query) {
+            $query->whereNull('is_deleted')->orWhere('is_deleted', '!=', 1);
+        })->orderBy('name')->get();
+        $items = Item::where(function($query) {
+            $query->whereNull('is_deleted')->orWhere('is_deleted', '!=', 1);
+        })->orderBy('name')->get();
         
         return view('admin.sale-return.modification', compact('nextSRNo', 'customers', 'salesmen', 'items'));
     }
