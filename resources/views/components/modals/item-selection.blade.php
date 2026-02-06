@@ -531,21 +531,36 @@
         
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if (selectedRowIndex_{{ str_replace('-', '_', $id) }} < rows.length - 1) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            // If nothing selected, start at first row
+            if (selectedRowIndex_{{ str_replace('-', '_', $id) }} < 0) {
+                highlightItemRow_{{ str_replace('-', '_', $id) }}(0);
+            } else if (selectedRowIndex_{{ str_replace('-', '_', $id) }} < rows.length - 1) {
                 highlightItemRow_{{ str_replace('-', '_', $id) }}(selectedRowIndex_{{ str_replace('-', '_', $id) }} + 1);
+            }
+            if (rows[selectedRowIndex_{{ str_replace('-', '_', $id) }}]) {
                 rows[selectedRowIndex_{{ str_replace('-', '_', $id) }}].scrollIntoView({ block: 'nearest' });
             }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
             if (selectedRowIndex_{{ str_replace('-', '_', $id) }} > 0) {
                 highlightItemRow_{{ str_replace('-', '_', $id) }}(selectedRowIndex_{{ str_replace('-', '_', $id) }} - 1);
                 rows[selectedRowIndex_{{ str_replace('-', '_', $id) }}].scrollIntoView({ block: 'nearest' });
             }
         } else if (e.key === 'Enter') {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('[KB-ItemModal] Enter pressed', { selectedRowIndex: selectedRowIndex_{{ str_replace('-', '_', $id) }}, filteredCount: filteredItems_{{ str_replace('-', '_', $id) }}.length });
+            
+            // If a row is selected, use it; otherwise use first visible item
             if (selectedRowIndex_{{ str_replace('-', '_', $id) }} >= 0) {
                 selectItem_{{ str_replace('-', '_', $id) }}(selectedRowIndex_{{ str_replace('-', '_', $id) }});
-            } else if (filteredItems_{{ str_replace('-', '_', $id) }}.length === 1) {
+            } else if (filteredItems_{{ str_replace('-', '_', $id) }}.length > 0) {
+                // Select first row if nothing is highlighted
                 selectItem_{{ str_replace('-', '_', $id) }}(0);
             }
         }

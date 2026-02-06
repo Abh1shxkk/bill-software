@@ -615,21 +615,36 @@
         
         if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if (selectedRowIndex_{{ str_replace('-', '_', $id) }} < rows.length - 1) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            // If nothing selected, start at first row
+            if (selectedRowIndex_{{ str_replace('-', '_', $id) }} < 0) {
+                highlightBatchRow_{{ str_replace('-', '_', $id) }}(0);
+            } else if (selectedRowIndex_{{ str_replace('-', '_', $id) }} < rows.length - 1) {
                 highlightBatchRow_{{ str_replace('-', '_', $id) }}(selectedRowIndex_{{ str_replace('-', '_', $id) }} + 1);
+            }
+            if (rows[selectedRowIndex_{{ str_replace('-', '_', $id) }}]) {
                 rows[selectedRowIndex_{{ str_replace('-', '_', $id) }}].scrollIntoView({ block: 'nearest' });
             }
         } else if (e.key === 'ArrowUp') {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
             if (selectedRowIndex_{{ str_replace('-', '_', $id) }} > 0) {
                 highlightBatchRow_{{ str_replace('-', '_', $id) }}(selectedRowIndex_{{ str_replace('-', '_', $id) }} - 1);
                 rows[selectedRowIndex_{{ str_replace('-', '_', $id) }}].scrollIntoView({ block: 'nearest' });
             }
         } else if (e.key === 'Enter') {
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('[KB-BatchModal] Enter pressed', { selectedRowIndex: selectedRowIndex_{{ str_replace('-', '_', $id) }}, filteredCount: filteredBatches_{{ str_replace('-', '_', $id) }}.length });
+            
+            // If a row is selected, use it; otherwise use first batch
             if (selectedRowIndex_{{ str_replace('-', '_', $id) }} >= 0) {
                 selectBatch_{{ str_replace('-', '_', $id) }}(selectedRowIndex_{{ str_replace('-', '_', $id) }});
-            } else if (filteredBatches_{{ str_replace('-', '_', $id) }}.length === 1) {
+            } else if (filteredBatches_{{ str_replace('-', '_', $id) }}.length > 0) {
+                // Select first row if nothing is highlighted
                 selectBatch_{{ str_replace('-', '_', $id) }}(0);
             }
         }
