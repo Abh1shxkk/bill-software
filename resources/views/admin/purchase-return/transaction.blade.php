@@ -74,6 +74,78 @@
         border: 1px solid #ced4da;
         width: 100%;
     }
+
+    /* Searchable Dropdown Styles (Custom Supplier Dropdown) */
+    .searchable-dropdown {
+        position: relative;
+    }
+
+    .searchable-dropdown-input {
+        width: 100%;
+        cursor: text;
+    }
+
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .searchable-dropdown-list .dropdown-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.15s;
+    }
+
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .searchable-dropdown-list .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+
+    .searchable-dropdown-list .dropdown-item.selected {
+        background-color: #e7f3ff;
+        font-weight: 600;
+    }
+
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
+    }
+
+    /* Keyboard focus indicator (blue border like sale module) */
+    .prt .form-control:focus,
+    .prt .searchable-dropdown-input:focus,
+    .prt input:focus {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 1px;
+        border-color: #86b7fe !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+    }
+
+    .prt .form-control:focus:not(:focus-visible),
+    .prt .searchable-dropdown-input:focus:not(:focus-visible),
+    .prt input:focus:not(:focus-visible) {
+        outline: none !important;
+        box-shadow: none !important;
+    }
 </style>
 @endpush
 
@@ -124,12 +196,26 @@
                                         <div class="col-md-4">
                                             <div class="field-group">
                                                 <label style="width: 100px;">Supplier :</label>
-                                                <select id="supplier_id" name="supplier_id" class="form-control" required>
-                                                    <option value="">Select Supplier</option>
-                                                    @foreach($suppliers as $supplier)
-                                                        <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="searchable-dropdown" id="supplierDropdownWrapper" style="position: relative; width: 100%;">
+                                                    <input type="text"
+                                                           class="form-control searchable-dropdown-input"
+                                                           id="supplierSearchInput"
+                                                           placeholder="Type to search supplier..."
+                                                           autocomplete="off"
+                                                           style="width: 100%;">
+                                                    <input type="hidden" name="supplier_id" id="supplierSelect" value="">
+                                                    <div class="searchable-dropdown-list" id="supplierDropdownList" style="display: none;">
+                                                        <div class="dropdown-item" data-value="" data-name="" data-code="">Select Supplier</div>
+                                                        @foreach($suppliers as $supplier)
+                                                            <div class="dropdown-item"
+                                                                 data-value="{{ $supplier->supplier_id }}"
+                                                                 data-name="{{ $supplier->name }}"
+                                                                 data-code="{{ $supplier->code ?? '' }}">
+                                                                {{ $supplier->code ?? '' }} {{ $supplier->code ? '-' : '' }} {{ $supplier->name }}
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-5">
@@ -150,13 +236,13 @@
                                         <div class="col-md-5">
                                             <div class="field-group">
                                                 <label style="width: 100px;">GST Vno :</label>
-                                                <input type="text" class="form-control">
+                                                <input type="text" class="form-control" id="gst_vno">
                                             </div>
                                         </div>
                                         <div class="col-md-5">
                                             <div class="field-group">
                                                 <label style="width: 100px;">Remarks :</label>
-                                                <input type="text" class="form-control" >
+                                                <input type="text" class="form-control" id="remarks">
                                             </div>
                                         </div>
                                     </div>
@@ -165,7 +251,7 @@
                                         <div class="col-md-2">
                                             <div class="field-group">
                                                 <label>Tax:</label>
-                                                <input type="text" class="form-control" value="Y" maxlength="1"
+                                                <input type="text" class="form-control" id="tax_flag" value="Y" maxlength="1"
                                                     style="width: 50px;">
                                             </div>
                                         </div>
@@ -173,7 +259,7 @@
                                         <div class="col-md-3">
                                             <div class="field-group">
                                                 <label style="width: 80px;">Rate Diff :</label>
-                                                <input type="text" class="form-control" value="N" maxlength="1"
+                                                <input type="text" class="form-control" id="rate_diff" value="N" maxlength="1"
                                                     style="width: 50px;">
                                             </div>
                                         </div>
@@ -673,6 +759,438 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
     let allItems = [];
     let returnItems = [];
 
+    function getSelectedSupplierId() {
+        return selectedSupplier?.id || document.getElementById('supplierSelect')?.value || '';
+    }
+
+    function getSelectedSupplierName() {
+        if (selectedSupplier?.name) return selectedSupplier.name;
+        const selectedId = document.getElementById('supplierSelect')?.value;
+        if (selectedId) {
+            const item = document.querySelector(`#supplierDropdownList .dropdown-item[data-value="${selectedId}"]`);
+            return item?.dataset?.name || '';
+        }
+        return '';
+    }
+
+    function setSelectedSupplier(id, name, code = '') {
+        if (id) {
+            selectedSupplier = { id, name, code };
+        } else {
+            selectedSupplier = null;
+        }
+    }
+
+    function initSupplierDropdown() {
+        const input = document.getElementById('supplierSearchInput');
+        const hiddenInput = document.getElementById('supplierSelect');
+        const dropdownList = document.getElementById('supplierDropdownList');
+
+        if (!input || !hiddenInput || !dropdownList) {
+            console.warn('Supplier dropdown elements not found');
+            return;
+        }
+
+        let highlightedIndex = -1;
+        let isDropdownOpen = false;
+
+        function getVisibleItems() {
+            return Array.from(dropdownList.querySelectorAll('.dropdown-item:not(.hidden)'));
+        }
+
+        function showDropdown() {
+            dropdownList.style.display = 'block';
+            isDropdownOpen = true;
+            highlightedIndex = -1;
+        }
+
+        function hideDropdown() {
+            dropdownList.style.display = 'none';
+            isDropdownOpen = false;
+            highlightedIndex = -1;
+            dropdownList.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function filterItems(searchText) {
+            const items = dropdownList.querySelectorAll('.dropdown-item');
+            const search = (searchText || '').toLowerCase().trim();
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const code = (item.dataset.code || '').toLowerCase();
+                const name = (item.dataset.name || '').toLowerCase();
+
+                if (search === '' || text.includes(search) || code.includes(search) || name.includes(search)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            highlightedIndex = -1;
+            items.forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function highlightItem(index) {
+            const visibleItems = getVisibleItems();
+            visibleItems.forEach(item => item.classList.remove('highlighted'));
+
+            if (index >= 0 && index < visibleItems.length) {
+                highlightedIndex = index;
+                visibleItems[index].classList.add('highlighted');
+                visibleItems[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+
+        function selectItem(item, moveNext = true) {
+            const value = item.dataset.value || '';
+            const name = item.dataset.name || '';
+            const code = item.dataset.code || '';
+
+            hiddenInput.value = value;
+            if (value) {
+                input.value = code ? `${code} - ${name}` : name;
+            } else {
+                input.value = '';
+            }
+
+            dropdownList.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+
+            setSelectedSupplier(value, name, code);
+            hideDropdown();
+
+            if (moveNext && typeof window.focusNextHeaderField === 'function') {
+                window.focusNextHeaderField('supplierSearchInput');
+            }
+        }
+
+        input.addEventListener('focus', function() {
+            showDropdown();
+            filterItems(this.value);
+        });
+
+        input.addEventListener('input', function() {
+            showDropdown();
+            filterItems(this.value);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (!isDropdownOpen) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    showDropdown();
+                    filterItems(this.value);
+                }
+                return;
+            }
+
+            const visibleItems = getVisibleItems();
+
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    if (highlightedIndex < visibleItems.length - 1) {
+                        highlightItem(highlightedIndex + 1);
+                    } else {
+                        highlightItem(0);
+                    }
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    if (highlightedIndex > 0) {
+                        highlightItem(highlightedIndex - 1);
+                    } else {
+                        highlightItem(visibleItems.length - 1);
+                    }
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                        selectItem(visibleItems[highlightedIndex]);
+                    } else if (visibleItems.length > 0) {
+                        selectItem(visibleItems[0]);
+                    }
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    hideDropdown();
+                    break;
+                case 'Tab':
+                    if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                        selectItem(visibleItems[highlightedIndex], false);
+                    }
+                    hideDropdown();
+                    break;
+            }
+        });
+
+        dropdownList.addEventListener('click', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                selectItem(item, false);
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#supplierDropdownWrapper')) {
+                hideDropdown();
+            }
+        });
+    }
+
+    let awaitingDateSelection = false;
+    let datePickerJustOpened = false;
+    let supplierFocusForceTimer = null;
+    let startupSupplierFocusTimer = null;
+
+    function clearSupplierFocusForceTimer() {
+        if (supplierFocusForceTimer) {
+            clearInterval(supplierFocusForceTimer);
+            supplierFocusForceTimer = null;
+        }
+    }
+
+    function clearStartupSupplierFocusTimer() {
+        if (startupSupplierFocusTimer) {
+            clearInterval(startupSupplierFocusTimer);
+            startupSupplierFocusTimer = null;
+        }
+    }
+
+    function focusSupplierOnLoad() {
+        const supplierInput = document.getElementById('supplierSearchInput');
+        if (!supplierInput) {
+            console.warn('[KB-PR][Startup] supplierSearchInput not found');
+            return;
+        }
+
+        clearStartupSupplierFocusTimer();
+
+        let attempts = 0;
+        startupSupplierFocusTimer = setInterval(() => {
+            attempts += 1;
+
+            // Do not override focus if user has already moved to another field intentionally.
+            const active = document.activeElement;
+            if (!active || active === document.body || active.id === 'return_date' || active.id === 'supplierSearchInput') {
+                supplierInput.focus();
+                console.log('[KB-PR][Startup] supplier focus applied', {
+                    attempts,
+                    activeId: document.activeElement?.id || null
+                });
+            }
+
+            if (attempts >= 8) {
+                clearStartupSupplierFocusTimer();
+            }
+        }, 100);
+    }
+
+    function focusSupplierFromDate(source = 'unknown') {
+        const supplierInput = document.getElementById('supplierSearchInput');
+        if (!supplierInput) {
+            console.warn('[KB-PR][Date->Supplier] supplierSearchInput not found', { source });
+            return;
+        }
+
+        clearSupplierFocusForceTimer();
+
+        // Force focus after current event cycle to override any global key handlers.
+        setTimeout(() => {
+            supplierInput.focus();
+            console.log('[KB-PR][Date->Supplier] focus applied', {
+                source,
+                activeId: document.activeElement?.id || null
+            });
+        }, 0);
+
+        // Second pass fallback if some other handler re-focused another field.
+        setTimeout(() => {
+            if (document.activeElement !== supplierInput) {
+                supplierInput.focus();
+                console.log('[KB-PR][Date->Supplier] fallback focus applied', {
+                    source,
+                    activeId: document.activeElement?.id || null
+                });
+            }
+        }, 120);
+
+        // Late fallback for any async/global handlers that run after key events.
+        setTimeout(() => {
+            if (document.activeElement !== supplierInput) {
+                supplierInput.focus();
+                console.log('[KB-PR][Date->Supplier] late fallback focus applied', {
+                    source,
+                    activeId: document.activeElement?.id || null
+                });
+            }
+        }, 250);
+
+        // Keep forcing focus briefly to beat any late global "next-field" handlers.
+        let attempts = 0;
+        supplierFocusForceTimer = setInterval(() => {
+            attempts += 1;
+            if (document.activeElement !== supplierInput) {
+                supplierInput.focus();
+                console.log('[KB-PR][Date->Supplier] loop focus applied', {
+                    source,
+                    attempts,
+                    activeId: document.activeElement?.id || null
+                });
+            }
+            if (attempts >= 10) {
+                clearSupplierFocusForceTimer();
+            }
+        }, 80);
+    }
+
+    function openReturnDatePicker() {
+        const dateInput = document.getElementById('return_date');
+        if (!dateInput) return;
+
+        awaitingDateSelection = true;
+        datePickerJustOpened = true;
+        console.log('[KB-PR][Date] picker open requested', {
+            value: dateInput.value
+        });
+        setTimeout(() => {
+            datePickerJustOpened = false;
+        }, 300);
+
+        if (typeof dateInput.showPicker === 'function') {
+            dateInput.showPicker();
+        } else {
+            // Fallback for browsers without showPicker
+            dateInput.focus();
+            dateInput.click();
+        }
+    }
+
+    function initHeaderKeyboardNavigation() {
+        const order = [
+            'return_date',
+            'supplierSearchInput',
+            'invoice_no',
+            'invoice_date',
+            'gst_vno',
+            'remarks',
+            'tax_flag',
+            'rate_diff',
+            'insertOrderBtn'
+        ];
+
+        function isFocusable(el) {
+            return el && !el.disabled && el.offsetParent !== null;
+        }
+
+        function focusNext(currentId) {
+            const currentIndex = order.indexOf(currentId);
+            if (currentIndex === -1) return;
+
+            for (let i = currentIndex + 1; i < order.length; i++) {
+                const nextEl = document.getElementById(order[i]);
+                if (isFocusable(nextEl)) {
+                    nextEl.focus();
+                    return;
+                }
+            }
+        }
+
+        window.focusNextHeaderField = focusNext;
+
+        function confirmReturnDateSelection(source = 'unknown') {
+            if (!awaitingDateSelection) return;
+            awaitingDateSelection = false;
+            console.log('[KB-PR][Date] selection confirmed', {
+                source,
+                value: document.getElementById('return_date')?.value || null,
+                activeId: document.activeElement?.id || null
+            });
+            focusSupplierFromDate(source);
+        }
+
+        order.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            el.addEventListener('keydown', function(e) {
+                if (e.key !== 'Enter') return;
+                if (id === 'supplierSearchInput') return;
+                if (id === 'return_date') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === 'function') {
+                        e.stopImmediatePropagation();
+                    }
+                    // If date picker already opened and user presses Enter again, treat as select/confirm
+                    if (awaitingDateSelection) {
+                        confirmReturnDateSelection('return_date.keydown.enter.confirm');
+                    } else {
+                        openReturnDatePicker();
+                    }
+                    return;
+                }
+                e.preventDefault();
+
+                if (id === 'insertOrderBtn') {
+                    el.click();
+                    return;
+                }
+
+                focusNext(id);
+            });
+        });
+
+        const returnDateInput = document.getElementById('return_date');
+        if (returnDateInput) {
+            console.log('[KB-PR][Date] init header handlers', { id: returnDateInput.id });
+
+            // Capture-phase handler for date Enter. This gives us an early hook on target.
+            returnDateInput.addEventListener('keydown', function(e) {
+                if (e.key !== 'Enter') return;
+                console.log('[KB-PR][Date] capture keydown Enter', {
+                    awaitingDateSelection,
+                    activeId: document.activeElement?.id || null
+                });
+            }, true);
+
+            returnDateInput.addEventListener('input', function() {
+                confirmReturnDateSelection('return_date.input');
+            });
+
+            returnDateInput.addEventListener('change', function() {
+                confirmReturnDateSelection('return_date.change');
+            });
+
+            returnDateInput.addEventListener('keyup', function(e) {
+                if (e.key !== 'Enter') return;
+                if (!awaitingDateSelection) return;
+                confirmReturnDateSelection('return_date.keyup.enter');
+            });
+
+            returnDateInput.addEventListener('blur', function() {
+                if (datePickerJustOpened) return;
+                confirmReturnDateSelection('return_date.blur');
+            });
+        }
+
+        // Fallback: if Enter is pressed while awaiting date selection, move to supplier
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            if (!awaitingDateSelection) return;
+            console.log('[KB-PR][Date] document keydown fallback', {
+                targetId: e.target?.id || null,
+                activeId: document.activeElement?.id || null
+            });
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+            confirmReturnDateSelection('document.keydown.enter.fallback');
+        }, true);
+    }
+
     $(document).ready(function() {
         // Initialize transaction number
         fetchNextTransactionNumber();
@@ -684,23 +1202,16 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
             $('#day_name').val(days[date.getDay()]);
         });
 
-        // Supplier selection
-        $('#supplier_id').on('change', function() {
-            const supplierId = $(this).val();
-            if (supplierId) {
-                selectedSupplier = {
-                    id: supplierId,
-                    name: $(this).find('option:selected').text()
-                };
-            } else {
-                selectedSupplier = null;
-            }
-        });
+        // Initialize supplier dropdown + header keyboard navigation
+        initSupplierDropdown();
+        initHeaderKeyboardNavigation();
+        console.log('[KB-PR] header keyboard initialized');
+        focusSupplierOnLoad();
 
         // Insert Orders button - check if supplier is selected
         $('#insertOrderBtn').on('click', function(e) {
             e.preventDefault();
-            if (!selectedSupplier) {
+            if (!getSelectedSupplierId()) {
                 alert('Please select a supplier first!');
                 return false;
             }
@@ -712,12 +1223,15 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
     function addNewRow() {
         console.log('🔵 Purchase Return: addNewRow() called');
         
-        if (!selectedSupplier) {
+        if (!getSelectedSupplierId()) {
             alert('Please select a supplier first!');
             return;
         }
         
-        console.log('🔵 Purchase Return: Supplier selected:', selectedSupplier);
+        console.log('🔵 Purchase Return: Supplier selected:', {
+            id: getSelectedSupplierId(),
+            name: getSelectedSupplierName()
+        });
         console.log('🔵 Purchase Return: Checking for modal function...');
         console.log('🔵 Purchase Return: typeof openItemModal_purchaseReturnItemModal =', typeof openItemModal_purchaseReturnItemModal);
         
@@ -835,7 +1349,7 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
     function openInsertOrdersModal() {
         console.log('🔵 Purchase Return: openInsertOrdersModal() called');
         
-        if (!selectedSupplier) {
+        if (!getSelectedSupplierId()) {
             alert('Please select a supplier first!');
             return;
         }
@@ -1001,7 +1515,7 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
         
         if (existingRows === 0) {
             // First time - show normal batch modal
-            _legacy_loadBatchesForSupplierAndItem(selectedSupplier.id, item.id, false);
+            _legacy_loadBatchesForSupplierAndItem(getSelectedSupplierId(), item.id, false);
         } else {
             // Add row - show ALL batches of this item (any supplier)
             _legacy_loadAllBatchesForItem(item.id);
@@ -1092,7 +1606,7 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
                     </div>
                     <div class="insert-orders-modal-body">
                         <div class="alert alert-info" style="font-size: 11px; padding: 8px;">
-                            <strong>Supplier:</strong> ${selectedSupplier.name}
+                            <strong>Supplier:</strong> ${getSelectedSupplierName()}
                         </div>
                         
                         <div style="max-height: 450px; overflow-y: auto;">
@@ -1214,7 +1728,7 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
         if (existingRows > 0) {
             // This is add row - check if batch is actually from different supplier
             // We need to check if this batch's purchase transaction belongs to current supplier
-            const currentSupplierId = selectedSupplier.id;
+            const currentSupplierId = getSelectedSupplierId();
             const batchPurchaseTransactionId = batch.purchase_transaction_id;
             
             // Check if batch is from different supplier by verifying purchase transaction
@@ -1236,7 +1750,7 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
                     } else {
                         // Different supplier - show warning
                         const supplierName = data.batch_supplier_name || 'Unknown Supplier';
-                        const confirmMessage = `⚠️ Warning: This batch "${batch.batch_no || 'Unknown'}" is from "${supplierName}", not from the selected supplier "${selectedSupplier.name}".
+                        const confirmMessage = `⚠️ Warning: This batch "${batch.batch_no || 'Unknown'}" is from "${supplierName}", not from the selected supplier "${getSelectedSupplierName()}".
             
 Batch Details:
 • Supplier: ${supplierName}
@@ -1804,7 +2318,7 @@ Do you still want to add this batch to the return?`;
     // This function was overriding the correct addNewRow() function
     // Renamed to prevent conflict
     function _legacy_addNewRowViaInsertOrders() {
-        if (!selectedSupplier) {
+        if (!getSelectedSupplierId()) {
             alert('Please select a supplier first!');
             return;
         }
@@ -1821,7 +2335,7 @@ Do you still want to add this batch to the return?`;
             return;
         }
         
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier.');
             return;
@@ -1868,7 +2382,7 @@ Do you still want to add this batch to the return?`;
 
     // Open Credit Adjustment Modal
     function openCreditAdjustmentModal() {
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier first!');
             return;
@@ -2085,7 +2599,7 @@ Do you still want to add this batch to the return?`;
             return;
         }
         
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier.');
             return;
@@ -2154,7 +2668,7 @@ Do you still want to add this batch to the return?`;
         const formData = {
             return_date: document.getElementById('return_date').value,
             supplier_id: supplierId,
-            supplier_name: document.getElementById('supplier_id').options[document.getElementById('supplier_id').selectedIndex].text,
+            supplier_name: getSelectedSupplierName(),
             nt_amount: parseFloat(document.getElementById('ntAmount')?.value || 0),
             dis_amount: parseFloat(document.getElementById('disAmount')?.value || 0),
             tax_amount: parseFloat(document.getElementById('taxAmount')?.value || 0),
@@ -2200,7 +2714,7 @@ Do you still want to add this batch to the return?`;
             return;
         }
         
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier.');
             return;
