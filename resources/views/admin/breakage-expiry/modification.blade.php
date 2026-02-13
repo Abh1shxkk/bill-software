@@ -75,6 +75,45 @@
         width: 100%;
     }
 
+    /* Focus ring (blue border) */
+    input:focus,
+    select:focus,
+    .kb-focus {
+        border: 2px solid #0d6efd !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        background-color: inherit !important;
+        outline: none !important;
+    }
+
+    input:focus-visible,
+    select:focus-visible {
+        border: 2px solid #0d6efd !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        background-color: inherit !important;
+        outline: none !important;
+    }
+
+    /* Custom searchable dropdown styles */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #f1f5ff;
+    }
+    
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #e3ebff;
+    }
+
+    .custom-dropdown-menu .dropdown-item.active {
+        background-color: #cfe2ff;
+    }
+
+    /* Invoice modal keyboard highlight */
+    .kb-row-active {
+        background-color: #cfe2ff !important;
+    }
+    .kb-row-active td {
+        background-color: #cfe2ff !important;
+    }
+
     .item-modal-backdrop, .batch-modal-backdrop {
         display: none;
         position: fixed;
@@ -548,16 +587,16 @@
                 <div class="header-row">
                     <div class="field-group">
                         <label>Series:</label>
-                        <input type="text" class="form-control" name="series" style="width: 60px;" value="BE">
+                        <input type="text" class="form-control" id="seriesInput" name="series" style="width: 60px;" value="BE">
                     </div>
 
                     <div class="field-group">
                         <label>Date:</label>
-                        <input type="date" class="form-control" name="transaction_date" style="width: 140px;" value="{{ date('Y-m-d') }}">
+                        <input type="date" class="form-control" id="transactionDate" name="transaction_date" style="width: 140px;" value="{{ date('Y-m-d') }}">
                     </div>
                     <div class="field-group">
                         <label>End Date:</label>
-                        <input type="date" class="form-control" name="end_date" style="width: 140px;">
+                        <input type="date" class="form-control" id="endDate" name="end_date" style="width: 140px;">
                     </div>
                 </div>
 
@@ -570,30 +609,52 @@
                             <div class="col-md-5">
                                 <div class="field-group">
                                     <label style="width: 100px;">Name</label>
-                                    <select class="form-control" name="customer_id">
-                                        <option value="">Select Customer</option>
-                                        @foreach($customers ?? [] as $customer)
-                                            <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text" class="form-control"
+                                               id="customerSearchInput"
+                                               placeholder="Type to search customer..."
+                                               autocomplete="off">
+                                        <select class="form-control" name="customer_id" id="customerSelect" autocomplete="off" style="display: none;">
+                                            <option value="">Select Customer</option>
+                                            @foreach($customers ?? [] as $customer)
+                                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div id="customerDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Customer
+                                            </div>
+                                            <div id="customerList" class="dropdown-list">
+                                                @foreach($customers ?? [] as $customer)
+                                                    <div class="dropdown-item"
+                                                         data-id="{{ $customer->id }}"
+                                                         data-name="{{ $customer->name }}"
+                                                         data-code="{{ $customer->code ?? '' }}"
+                                                         style="padding: 6px 10px; cursor: pointer;">
+                                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>GST Vno:</label>
-                                    <input type="text" class="form-control" name="gst_vno" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" id="gstVno" name="gst_vno" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label>R(epl.) / C(redit) Note:</label>
-                                    <input type="text" class="form-control" name="note_type" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" id="noteType" name="note_type" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>With GST[Y/N]:</label>
-                                    <input type="text" class="form-control" name="with_gst" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" id="withGst" name="with_gst" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
                         </div>
@@ -602,25 +663,47 @@
                             <div class="col-md-5">
                                 <div class="field-group">
                                     <label style="width: 100px;">Sales Man</label>
-                                    <select class="form-control" name="salesman_id">
-                                        <option value="">Select Salesman</option>
-                                        @foreach($salesmen ?? [] as $salesman)
-                                            <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text" class="form-control"
+                                               id="salesmanSearchInput"
+                                               placeholder="Type to search salesman..."
+                                               autocomplete="off">
+                                        <select class="form-control" name="salesman_id" id="salesmanSelect" autocomplete="off" style="display: none;">
+                                            <option value="">Select Salesman</option>
+                                            @foreach($salesmen ?? [] as $salesman)
+                                                <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->code ?? '' }} - {{ $salesman->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <div id="salesmanDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Salesman
+                                            </div>
+                                            <div id="salesmanList" class="dropdown-list">
+                                                @foreach($salesmen ?? [] as $salesman)
+                                                    <div class="dropdown-item"
+                                                         data-id="{{ $salesman->id }}"
+                                                         data-name="{{ $salesman->name }}"
+                                                         data-code="{{ $salesman->code ?? '' }}"
+                                                         style="padding: 6px 10px; cursor: pointer;">
+                                                        {{ $salesman->code ?? '' }} - {{ $salesman->name }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>Inc.</label>
-                                    <input type="text" class="form-control" name="inc" value="N" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" id="incField" name="inc" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
 
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label>Rev.Charge</label>
-                                    <input type="text" class="form-control" name="rev_charge" value="Y" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" id="revCharge" name="rev_charge" value="Y" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
 
@@ -631,27 +714,27 @@
                             <div class="col-md-5">
                                 <div class="field-group">
                                     <label>To be Adjusted?[Y/N],&lt;X&gt; for Imm. Posting</label>
-                                    <input type="text" class="form-control" name="adjusted" value="X" maxlength="1" style="width: 50px;">
+                                    <input type="text" class="form-control" id="adjustedFlag" name="adjusted" value="X" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
 
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 80px;">Dis. Rpl:</label>
-                                    <input type="text" class="form-control" name="dis_rpl">
+                                    <input type="text" class="form-control" id="disRpl" name="dis_rpl">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 100px;">Brk. :</label>
-                                    <input type="text" class="form-control" name="brk">
+                                    <input type="text" class="form-control" id="brkField" name="brk">
                                 </div>
                             </div>
 
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 80px;">Exp. :</label>
-                                    <input type="text" class="form-control" name="exp">
+                                    <input type="text" class="form-control" id="expField" name="exp">
                                 </div>
                             </div>
 
@@ -1307,6 +1390,7 @@ function showInvoiceModal(invoices) {
     setTimeout(() => {
         document.getElementById('invoiceModalBackdrop').classList.add('show');
         document.getElementById('invoiceModal').classList.add('show');
+        initInvoiceModalListKeyboard();
     }, 10);
 }
 
@@ -1333,6 +1417,162 @@ function filterInvoices() {
         const text = row.textContent.toLowerCase();
         row.style.display = text.includes(searchTerm) ? '' : 'none';
     });
+    // Reset keyboard selection to first visible row after filtering
+    if (typeof initInvoiceModalListKeyboard === 'function') {
+        initInvoiceModalListKeyboard(true);
+    }
+}
+
+let invoiceModalKeyHandler = null;
+let invoiceModalActiveIndex = 0;
+let batchModalKeyHandler = null;
+let batchModalActiveIndex = 0;
+
+function initInvoiceModalListKeyboard(reset = false) {
+    const modal = document.getElementById('invoiceModal');
+    const body = document.getElementById('invoicesListBody');
+    if (!modal || !body) return;
+
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
+
+    function getRows() {
+        return Array.from(body.querySelectorAll('tr')).filter(r => r.style.display !== 'none');
+    }
+
+    function setActiveRow(index) {
+        const rows = getRows();
+        rows.forEach(r => r.classList.remove('kb-row-active'));
+        if (!rows.length) return;
+        if (index < 0) index = 0;
+        if (index >= rows.length) index = rows.length - 1;
+        invoiceModalActiveIndex = index;
+        const row = rows[invoiceModalActiveIndex];
+        row.classList.add('kb-row-active');
+        row.scrollIntoView({ block: 'nearest' });
+    }
+
+    if (reset) {
+        invoiceModalActiveIndex = 0;
+    }
+    setActiveRow(invoiceModalActiveIndex);
+
+    if (invoiceModalKeyHandler) {
+        window.removeEventListener('keydown', invoiceModalKeyHandler, true);
+    }
+
+    invoiceModalKeyHandler = function(e) {
+        const modalEl = document.getElementById('invoiceModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(invoiceModalActiveIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(invoiceModalActiveIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rows = getRows();
+            if (!rows.length) return;
+            const row = rows[invoiceModalActiveIndex];
+            const selectBtn = row.querySelector('button');
+            if (selectBtn) {
+                selectBtn.click();
+            } else {
+                row.click();
+            }
+        } else if (e.key === 'Escape') {
+            closeInvoiceModal();
+            setTimeout(() => {
+                const dateField = document.getElementById('invoice_date_filter');
+                if (dateField) dateField.focus();
+            }, 120);
+        }
+    };
+
+    window.addEventListener('keydown', invoiceModalKeyHandler, true);
+}
+
+function initBatchModalKeyboard(reset = false) {
+    const modal = document.getElementById('batchModal');
+    const body = modal ? modal.querySelector('tbody') : null;
+    if (!modal || !body) return;
+
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
+
+    function getRows() {
+        return Array.from(body.querySelectorAll('tr'));
+    }
+
+    function setActiveRow(index) {
+        const rows = getRows();
+        rows.forEach(r => r.classList.remove('kb-row-active'));
+        if (!rows.length) return;
+        if (index < 0) index = 0;
+        if (index >= rows.length) index = rows.length - 1;
+        batchModalActiveIndex = index;
+        const row = rows[batchModalActiveIndex];
+        row.classList.add('kb-row-active');
+        row.scrollIntoView({ block: 'nearest' });
+    }
+
+    if (reset) {
+        batchModalActiveIndex = 0;
+    }
+    setActiveRow(batchModalActiveIndex);
+
+    if (batchModalKeyHandler) {
+        window.removeEventListener('keydown', batchModalKeyHandler, true);
+    }
+
+    batchModalKeyHandler = function(e) {
+        const modalEl = document.getElementById('batchModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(batchModalActiveIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(batchModalActiveIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rows = getRows();
+            if (!rows.length) return;
+            const row = rows[batchModalActiveIndex];
+            const selectBtn = row.querySelector('button');
+            if (selectBtn) {
+                selectBtn.click();
+            } else {
+                row.click();
+            }
+        } else if (e.key === 'Escape') {
+            closeBatchModal();
+            setTimeout(() => {
+                if (currentItemForBatch) {
+                    const row = document.getElementById(`row-${currentItemForBatch.rowIndex}`);
+                    const batchInput = row ? row.querySelector('input[name*="[batch]"]') : null;
+                    if (batchInput) batchInput.focus();
+                }
+            }, 120);
+        }
+    };
+
+    window.addEventListener('keydown', batchModalKeyHandler, true);
 }
 
 // Select Invoice and Load Its Items
@@ -1353,6 +1593,9 @@ function selectInvoice(invoiceId) {
             closeInvoiceModal();
             populateInvoiceData(data.transaction);
             showAlert('success', 'Invoice loaded successfully');
+            setTimeout(() => {
+                focusFirstTableField();
+            }, 150);
         } else {
             showAlert('error', 'Error loading invoice details');
         }
@@ -1361,6 +1604,17 @@ function selectInvoice(invoiceId) {
         console.error('Error loading invoice:', error);
         showAlert('error', 'Error loading invoice details');
     });
+}
+
+function focusFirstTableField() {
+    const firstRow = document.querySelector('#itemsTableBody tr');
+    if (!firstRow) return;
+    const focusEl = firstRow.querySelector('input[name*=\"[batch]\"]') 
+        || firstRow.querySelector('input[name*=\"[qty]\"]') 
+        || firstRow.querySelector('input, select');
+    if (focusEl) {
+        focusEl.focus();
+    }
 }
 
 // Populate Invoice Data into Form
@@ -1431,6 +1685,10 @@ function populateInvoiceData(transaction) {
             
             // Trigger change event
             customerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            const customerInput = document.getElementById('customerSearchInput');
+            if (customerInput && customerSelect.selectedIndex >= 0) {
+                customerInput.value = customerSelect.options[customerSelect.selectedIndex].text;
+            }
             
             // Verify it was set
             setTimeout(() => {
@@ -1452,6 +1710,10 @@ function populateInvoiceData(transaction) {
                 } else {
                     console.log('✅ Customer set successfully:', customerSelect.options[customerSelect.selectedIndex].text);
                 }
+                const customerInput = document.getElementById('customerSearchInput');
+                if (customerInput && customerSelect.selectedIndex >= 0) {
+                    customerInput.value = customerSelect.options[customerSelect.selectedIndex].text;
+                }
             }, 100);
         }
     }
@@ -1470,6 +1732,10 @@ function populateInvoiceData(transaction) {
             
             // Trigger change event
             salesmanSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            const salesmanInput = document.getElementById('salesmanSearchInput');
+            if (salesmanInput && salesmanSelect.selectedIndex >= 0) {
+                salesmanInput.value = salesmanSelect.options[salesmanSelect.selectedIndex].text;
+            }
             
             // Verify it was set
             setTimeout(() => {
@@ -1490,6 +1756,10 @@ function populateInvoiceData(transaction) {
                     }
                 } else {
                     console.log('✅ Salesman set successfully:', salesmanSelect.options[salesmanSelect.selectedIndex].text);
+                }
+                const salesmanInput = document.getElementById('salesmanSearchInput');
+                if (salesmanInput && salesmanSelect.selectedIndex >= 0) {
+                    salesmanInput.value = salesmanSelect.options[salesmanSelect.selectedIndex].text;
                 }
             }, 100);
         }
@@ -2164,7 +2434,10 @@ function showBatchDetailsModal(batches, itemName, packing) {
         const backdrop = document.getElementById('batchModalBackdrop');
         const modal = document.getElementById('batchModal');
         if (backdrop) backdrop.classList.add('show');
-        if (modal) modal.classList.add('show');
+        if (modal) {
+            modal.classList.add('show');
+            initBatchModalKeyboard(true);
+        }
     }, 50);
 }
 
@@ -2180,6 +2453,11 @@ function closeBatchModal() {
         if (modal) modal.remove();
         if (backdrop) backdrop.remove();
     }, 300);
+
+    if (batchModalKeyHandler) {
+        window.removeEventListener('keydown', batchModalKeyHandler, true);
+        batchModalKeyHandler = null;
+    }
 }
 
 // Select Batch and Fill Row
@@ -2562,14 +2840,474 @@ function addNewRow() {
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Breakage/Expiry Transaction page loaded');
+    console.log('Breakage/Expiry Modification page loaded');
     
     // Handle form submission
     document.getElementById('breakageExpiryTransactionForm').addEventListener('submit', function(e) {
         e.preventDefault();
         saveTransaction();
     });
+
+    initCustomerDropdown();
+    initSalesmanDropdown();
+    initDropdownEnterCapture();
+    initHeaderKeyboardNavigation();
+    initInvoiceModalKeyboard();
+
+    // Initial focus
+    setTimeout(() => {
+        const seriesInput = document.getElementById('seriesInput');
+        if (seriesInput) seriesInput.focus();
+    }, 100);
 });
+
+// ==========================================
+// CUSTOM DROPDOWN AND HEADER KEYBOARD NAV
+// ==========================================
+let customerDropdownIndex = -1;
+let salesmanDropdownIndex = -1;
+let kbBeModDropdownSelecting = false;
+
+function setKbBeModDropdownSelecting(value) {
+    kbBeModDropdownSelecting = value;
+    if (value) {
+        setTimeout(() => {
+            kbBeModDropdownSelecting = false;
+        }, 180);
+    }
+}
+
+function isKbBeModDropdownOpen(dropdownEl) {
+    if (!dropdownEl) return false;
+    const computed = window.getComputedStyle(dropdownEl);
+    return computed.display !== 'none' && computed.visibility !== 'hidden';
+}
+
+function getKbBeModPreferredDropdownItem(listContainer, index) {
+    if (!listContainer) return null;
+    const allItems = Array.from(listContainer.querySelectorAll('.dropdown-item'));
+    const visibleItems = allItems.filter(item => item.style.display !== 'none');
+    if (visibleItems.length === 0) return null;
+    const activeItem = visibleItems.find(item => item.classList.contains('active'));
+    if (activeItem) return activeItem;
+    if (index >= 0 && visibleItems[index]) return visibleItems[index];
+    const firstValid = visibleItems.find(item => (item.dataset.id || '').trim() !== '');
+    return firstValid || visibleItems[0];
+}
+
+function selectKbBeModDropdownItem(kind) {
+    const isCustomer = kind === 'customer';
+    const searchInput = document.getElementById(isCustomer ? 'customerSearchInput' : 'salesmanSearchInput');
+    const dropdown = document.getElementById(isCustomer ? 'customerDropdown' : 'salesmanDropdown');
+    const listContainer = document.getElementById(isCustomer ? 'customerList' : 'salesmanList');
+    if (!searchInput || !dropdown || !listContainer) return false;
+
+    const selectedItem = getKbBeModPreferredDropdownItem(listContainer, isCustomer ? customerDropdownIndex : salesmanDropdownIndex);
+    if (!selectedItem) return false;
+
+    setKbBeModDropdownSelecting(true);
+    const selected = isCustomer ? selectCustomer(selectedItem) : selectSalesman(selectedItem);
+    if (selected) {
+        const nextField = document.getElementById(isCustomer ? 'gstVno' : 'incField');
+        if (nextField) nextField.focus();
+        return true;
+    }
+    return false;
+}
+
+function initCustomerDropdown() {
+    const searchInput = document.getElementById('customerSearchInput');
+    const selectElement = document.getElementById('customerSelect');
+    const dropdown = document.getElementById('customerDropdown');
+    const listContainer = document.getElementById('customerList');
+    if (!searchInput || !selectElement || !dropdown || !listContainer) return;
+
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+
+    searchInput.addEventListener('focus', function() {
+        showCustomerDropdown();
+    });
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        allItems.forEach(item => {
+            const name = (item.dataset.name || '').toLowerCase();
+            const code = (item.dataset.code || '').toLowerCase();
+            const text = item.textContent.toLowerCase();
+            item.style.display = (name.includes(searchTerm) || code.includes(searchTerm) || text.includes(searchTerm)) ? 'block' : 'none';
+        });
+        customerDropdownIndex = -1;
+        updateCustomerDropdownHighlight();
+        showCustomerDropdown();
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+        const dropdownVisible = isKbBeModDropdownOpen(dropdown);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            customerDropdownIndex = customerDropdownIndex < visibleItems.length - 1 ? customerDropdownIndex + 1 : 0;
+            updateCustomerDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[customerDropdownIndex], listContainer);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            customerDropdownIndex = customerDropdownIndex > 0 ? customerDropdownIndex - 1 : visibleItems.length - 1;
+            updateCustomerDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[customerDropdownIndex], listContainer);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (!dropdownVisible) {
+                showCustomerDropdown();
+                if (visibleItems.length > 0) {
+                    customerDropdownIndex = customerDropdownIndex >= 0 ? customerDropdownIndex : 0;
+                    updateCustomerDropdownHighlight();
+                }
+                return;
+            }
+            selectKbBeModDropdownItem('customer');
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            hideCustomerDropdown();
+        } else if (e.key === 'Tab') {
+            hideCustomerDropdown();
+        }
+    });
+
+    allItems.forEach(item => {
+        item.addEventListener('click', function() {
+            selectCustomer(this);
+            const nextField = document.getElementById('gstVno');
+            if (nextField) nextField.focus();
+        });
+        item.addEventListener('mouseenter', function() {
+            const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+            customerDropdownIndex = visibleItems.indexOf(this);
+            updateCustomerDropdownHighlight();
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown-wrapper')) {
+            hideCustomerDropdown();
+        }
+    });
+}
+
+function showCustomerDropdown() {
+    const dropdown = document.getElementById('customerDropdown');
+    if (dropdown) dropdown.style.display = 'block';
+}
+
+function hideCustomerDropdown() {
+    const dropdown = document.getElementById('customerDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+    customerDropdownIndex = -1;
+}
+
+function updateCustomerDropdownHighlight() {
+    const listContainer = document.getElementById('customerList');
+    if (!listContainer) return;
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+    const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+    allItems.forEach(item => item.classList.remove('active'));
+    if (customerDropdownIndex >= 0 && visibleItems[customerDropdownIndex]) {
+        visibleItems[customerDropdownIndex].classList.add('active');
+    }
+}
+
+function selectCustomer(item) {
+    const searchInput = document.getElementById('customerSearchInput');
+    const selectElement = document.getElementById('customerSelect');
+    if (!item || !searchInput || !selectElement) return false;
+    const id = (item.dataset.id || '').trim();
+    const name = item.dataset.name;
+    const code = item.dataset.code || '';
+    if (!id) return false;
+    searchInput.value = code ? `${code} - ${name}` : name;
+    selectElement.value = id;
+    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    hideCustomerDropdown();
+    return true;
+}
+
+function initSalesmanDropdown() {
+    const searchInput = document.getElementById('salesmanSearchInput');
+    const selectElement = document.getElementById('salesmanSelect');
+    const dropdown = document.getElementById('salesmanDropdown');
+    const listContainer = document.getElementById('salesmanList');
+    if (!searchInput || !selectElement || !dropdown || !listContainer) return;
+
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+
+    searchInput.addEventListener('focus', function() {
+        showSalesmanDropdown();
+    });
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        allItems.forEach(item => {
+            const name = (item.dataset.name || '').toLowerCase();
+            const code = (item.dataset.code || '').toLowerCase();
+            const text = item.textContent.toLowerCase();
+            item.style.display = (name.includes(searchTerm) || code.includes(searchTerm) || text.includes(searchTerm)) ? 'block' : 'none';
+        });
+        salesmanDropdownIndex = -1;
+        updateSalesmanDropdownHighlight();
+        showSalesmanDropdown();
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+        const dropdownVisible = isKbBeModDropdownOpen(dropdown);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            salesmanDropdownIndex = salesmanDropdownIndex < visibleItems.length - 1 ? salesmanDropdownIndex + 1 : 0;
+            updateSalesmanDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[salesmanDropdownIndex], listContainer);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            salesmanDropdownIndex = salesmanDropdownIndex > 0 ? salesmanDropdownIndex - 1 : visibleItems.length - 1;
+            updateSalesmanDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[salesmanDropdownIndex], listContainer);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (!dropdownVisible) {
+                showSalesmanDropdown();
+                if (visibleItems.length > 0) {
+                    salesmanDropdownIndex = salesmanDropdownIndex >= 0 ? salesmanDropdownIndex : 0;
+                    updateSalesmanDropdownHighlight();
+                }
+                return;
+            }
+            selectKbBeModDropdownItem('salesman');
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            hideSalesmanDropdown();
+        } else if (e.key === 'Tab') {
+            hideSalesmanDropdown();
+        }
+    });
+
+    allItems.forEach(item => {
+        item.addEventListener('click', function() {
+            selectSalesman(this);
+            const nextField = document.getElementById('incField');
+            if (nextField) nextField.focus();
+        });
+        item.addEventListener('mouseenter', function() {
+            const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+            salesmanDropdownIndex = visibleItems.indexOf(this);
+            updateSalesmanDropdownHighlight();
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown-wrapper')) {
+            hideSalesmanDropdown();
+        }
+    });
+}
+
+function showSalesmanDropdown() {
+    const dropdown = document.getElementById('salesmanDropdown');
+    if (dropdown) dropdown.style.display = 'block';
+}
+
+function hideSalesmanDropdown() {
+    const dropdown = document.getElementById('salesmanDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+    salesmanDropdownIndex = -1;
+}
+
+function updateSalesmanDropdownHighlight() {
+    const listContainer = document.getElementById('salesmanList');
+    if (!listContainer) return;
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+    const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+    allItems.forEach(item => item.classList.remove('active'));
+    if (salesmanDropdownIndex >= 0 && visibleItems[salesmanDropdownIndex]) {
+        visibleItems[salesmanDropdownIndex].classList.add('active');
+    }
+}
+
+function scrollIntoViewIfNeeded(element, container) {
+    if (!element || !container) return;
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    if (elementRect.bottom > containerRect.bottom) {
+        element.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    } else if (elementRect.top < containerRect.top) {
+        element.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+}
+
+function selectSalesman(item) {
+    const searchInput = document.getElementById('salesmanSearchInput');
+    const selectElement = document.getElementById('salesmanSelect');
+    if (!item || !searchInput || !selectElement) return false;
+    const id = (item.dataset.id || '').trim();
+    const name = item.dataset.name;
+    const code = item.dataset.code || '';
+    if (!id) return false;
+    searchInput.value = code ? `${code} - ${name}` : name;
+    selectElement.value = id;
+    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    hideSalesmanDropdown();
+    return true;
+}
+
+function initDropdownEnterCapture() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        const active = document.activeElement;
+        if (!active) return;
+
+        const customerInput = document.getElementById('customerSearchInput');
+        const customerDropdown = document.getElementById('customerDropdown');
+        const customerList = document.getElementById('customerList');
+        const salesmanInput = document.getElementById('salesmanSearchInput');
+        const salesmanDropdown = document.getElementById('salesmanDropdown');
+        const salesmanList = document.getElementById('salesmanList');
+
+        const customerOpen = isKbBeModDropdownOpen(customerDropdown);
+        const salesmanOpen = isKbBeModDropdownOpen(salesmanDropdown);
+        const customerFocus = !!(customerInput && (active === customerInput || customerDropdown?.contains(active)));
+        const salesmanFocus = !!(salesmanInput && (active === salesmanInput || salesmanDropdown?.contains(active)));
+
+        if (customerInput && customerDropdown && customerList && (customerOpen || customerFocus)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setKbBeModDropdownSelecting(true);
+            selectKbBeModDropdownItem('customer');
+            return;
+        }
+
+        if (salesmanInput && salesmanDropdown && salesmanList && (salesmanOpen || salesmanFocus)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setKbBeModDropdownSelecting(true);
+            selectKbBeModDropdownItem('salesman');
+        }
+    }, true);
+}
+
+function initHeaderKeyboardNavigation() {
+    const headerFields = [
+        { id: 'seriesInput', next: 'transactionDate' },
+        { id: 'transactionDate', next: 'endDate' },
+        { id: 'endDate', next: 'customerSearchInput' },
+        { id: 'gstVno', next: 'noteType' },
+        { id: 'noteType', next: 'withGst' },
+        { id: 'withGst', next: 'salesmanSearchInput' },
+        { id: 'incField', next: 'revCharge' },
+        { id: 'revCharge', next: 'adjustedFlag' },
+        { id: 'adjustedFlag', next: 'disRpl' },
+        { id: 'disRpl', next: 'brkField' },
+        { id: 'brkField', next: 'expField' },
+        { id: 'expField', next: 'sr_no_input' }
+    ];
+
+    headerFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (!element) return;
+        element.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+
+            const customerDropdown = document.getElementById('customerDropdown');
+            const salesmanDropdown = document.getElementById('salesmanDropdown');
+            const customerOpen = isKbBeModDropdownOpen(customerDropdown);
+            const salesmanOpen = isKbBeModDropdownOpen(salesmanDropdown);
+            if (customerOpen || salesmanOpen || kbBeModDropdownSelecting) {
+                e.preventDefault();
+                return;
+            }
+
+            e.preventDefault();
+            if (field.next) {
+                const nextElement = document.getElementById(field.next);
+                if (nextElement) nextElement.focus();
+            }
+        });
+    });
+
+    const srInput = document.getElementById('sr_no_input');
+    if (srInput) {
+        srInput.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const srNo = srInput.value.trim();
+            if (srNo) {
+                loadInvoiceBySrNo(srNo);
+            } else {
+                const dateField = document.getElementById('invoice_date_filter');
+                if (dateField) dateField.focus();
+            }
+        });
+    }
+
+    const dateField = document.getElementById('invoice_date_filter');
+    if (dateField) {
+        dateField.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            loadInvoice();
+        });
+    }
+
+    // Capture Enter on Or Date at document level (date inputs can swallow keydown).
+    if (!window.__kbBeModOrDateCaptureBound) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+            const active = document.activeElement;
+            if (!active || active.id !== 'invoice_date_filter') return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('[KB-BE-MOD] Or Date Enter (document capture)');
+            loadInvoice();
+        }, true);
+        window.__kbBeModOrDateCaptureBound = true;
+    }
+}
+
+// Close invoice modal on ESC and return focus to Or Date field.
+function initInvoiceModalKeyboard() {
+    if (window.__kbBeModInvoiceEscBound) return;
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        const modal = document.getElementById('invoiceModal');
+        if (!modal || !modal.classList.contains('show')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeInvoiceModal();
+        setTimeout(() => {
+            const dateField = document.getElementById('invoice_date_filter');
+            if (dateField) dateField.focus();
+        }, 120);
+    }, true);
+    window.__kbBeModInvoiceEscBound = true;
+}
 
 // Save Transaction - Show Credit Note Modal First
 function saveTransaction() {

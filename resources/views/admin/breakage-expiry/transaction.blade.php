@@ -1242,6 +1242,8 @@ function openItemSelectionModal() {
     // Use reusable item selection modal
     if (typeof openItemModal_chooseItemsModal === 'function') {
         openItemModal_chooseItemsModal();
+    } else if (typeof showItemModal === 'function') {
+        showItemModal();
     } else {
         showAlert('error', 'Item selection modal not initialized. Please reload the page.');
     }
@@ -1295,7 +1297,7 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
             <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly>
         </td>
         <td>
-            <select class="form-control" name="items[${rowIndex}][br_ex]" style="width: 60px;">
+            <select class="form-control no-select2" name="items[${rowIndex}][br_ex]" style="width: 60px;">
                 <option value="B">B</option>
                 <option value="E">E</option>
             </select>
@@ -1340,18 +1342,30 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="${item.cgst_percent || 0}">
         <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="${item.sgst_percent || 0}">
     `;
-    // Store batch data
+    // Store batch and item data for calculations
     row.dataset.batchData = JSON.stringify(batch);
     row.dataset.sRate = batch.s_rate || 0;
     row.dataset.pRate = batch.p_rate || batch.pur_rate || 0;
     row.dataset.mrp = batch.mrp || 0;
-    
+    row.dataset.itemData = JSON.stringify(item);
+    row.dataset.itemId = item.id || '';
+
+    // Update calculation and details immediately for selected item
+    updateCalculationSection(batch, item);
+    updateAdditionalDetails(row, item);
+
+    // Ensure row click selects it for calculation display
+    row.addEventListener('click', function() {
+        selectRowForCalculation(rowIndex);
+    });
+
+    bindDisEnterHandler(row, rowIndex);
+
     // Focus on qty input
     setTimeout(() => {
         const qtyInput = row.querySelector('input[name*="[qty]"]');
         if (qtyInput) {
             qtyInput.focus();
-            qtyInput.select();
         }
     }, 100);
     
@@ -1734,7 +1748,7 @@ function addNewRowWithItem(item) {
                    placeholder="MM/YY">
         </td>
         <td>
-            <select class="form-control form-control-sm" name="items[${rowIndex}][br_ex]"
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
                     onchange="moveToNextField(${rowIndex}, 'qty')"
                     onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'qty'); return false; }">
                 <option value="">Select</option>
@@ -1795,6 +1809,8 @@ function addNewRowWithItem(item) {
     row.addEventListener('click', function() {
         selectRowForCalculation(rowIndex);
     });
+
+    bindDisEnterHandler(row, rowIndex);
     
     // Focus on batch input
     setTimeout(() => {
@@ -2001,7 +2017,6 @@ function selectBatch(batch) {
         const expiryInput = row.querySelector('input[name*="[expiry]"]');
         if (expiryInput) {
             expiryInput.focus();
-            expiryInput.select();
         }
     }, 150);
     
@@ -2017,16 +2032,6 @@ function moveToNextField(rowIndex, nextFieldName) {
     if (nextField) {
         setTimeout(() => {
             nextField.focus();
-            // Select text for input fields
-            if (nextField.tagName === 'INPUT' && nextField.type !== 'number') {
-                nextField.select();
-            } else if (nextField.tagName === 'INPUT' && nextField.type === 'number') {
-                // For number inputs, select all
-                nextField.select();
-            } else if (nextField.tagName === 'SELECT') {
-                // For select, just focus
-                nextField.focus();
-            }
         }, 100);
     }
 }
@@ -2053,16 +2058,27 @@ function handleDiscountAndAddRow(rowIndex) {
     // Remove focus from current field
     document.activeElement.blur();
 
-    // Auto trigger Add Row button flow.
-    console.log('[KB-BE] Dis% Enter -> trigger Add Row button');
+    // Auto create a new row and focus code field.
+    console.log('[KB-BE] Dis% Enter -> addNewRow');
     setTimeout(() => {
-        const addRowBtn = document.getElementById('addRowBtn');
-        if (addRowBtn) {
-            addRowBtn.click();
-        } else {
-            addNewRow();
-        }
+        addNewRow();
     }, 80);
+}
+
+// Ensure Dis% input has a direct Enter handler (extra safety)
+function bindDisEnterHandler(row, rowIndex) {
+    if (!row) return;
+    const disInput = row.querySelector('input[name*="[dis_percent]"]');
+    if (!disInput || disInput.dataset.kbBeBound === '1') return;
+    disInput.dataset.kbBeBound = '1';
+    disInput.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.keyCode !== 13) return;
+        console.log('[KB-BE] Dis% Enter (direct bind)', { rowIndex });
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        handleDiscountAndAddRow(rowIndex);
+    });
 }
 
 // Handle Discount Change - Highlights row and triggers calculations
@@ -2179,21 +2195,97 @@ function selectRowForCalculation(rowIndex) {
         row.style.backgroundColor = '#e7f3ff';
     }
     
-    // Only show HSN details if row is completed
-    if (isCompleted) {
-        // Get item and batch data from row
-        const itemData = JSON.parse(row.dataset.itemData || '{}');
-        const batchData = JSON.parse(row.dataset.batchData || '{}');
-        
-        // Update calculation section
+    // Always show HSN details when item data is present
+    let itemData = {};
+    let batchData = {};
+
+    try {
+        const rawItem = row.dataset.itemData;
+        if (rawItem && rawItem !== 'undefined') {
+            itemData = JSON.parse(rawItem) || {};
+        }
+    } catch (err) {
+        console.warn('[KB-BE] itemData parse failed', err);
+        itemData = {};
+    }
+
+    try {
+        const rawBatch = row.dataset.batchData;
+        if (rawBatch && rawBatch !== 'undefined') {
+            batchData = JSON.parse(rawBatch) || {};
+        }
+    } catch (err) {
+        console.warn('[KB-BE] batchData parse failed', err);
+        batchData = {};
+    }
+
+    // If item data missing, try to resolve from itemsData using item_id/code
+    const itemId =
+        row.dataset.itemId ||
+        row.querySelector('input[name*="[item_id]"]')?.value ||
+        row.querySelector('input[name*="[code]"]')?.value;
+
+    if ((!itemData || Object.keys(itemData).length === 0) && itemId && Array.isArray(itemsData)) {
+        const found = itemsData.find(i => String(i.id) === String(itemId) || String(i.bar_code) === String(itemId));
+        if (found) {
+            itemData = found;
+            row.dataset.itemData = JSON.stringify(found);
+        }
+    }
+
+    // Fill minimal batch data from row inputs if missing
+    if (!batchData || Object.keys(batchData).length === 0) {
+        const mrpVal = row.querySelector('input[name*="[mrp]"]')?.value;
+        const sRateVal = row.querySelector('input[name*="[s_rate]"]')?.value;
+        const pRateVal = row.querySelector('input[name*="[p_rate]"]')?.value;
+        batchData = {
+            mrp: mrpVal || 0,
+            s_rate: sRateVal || 0,
+            p_rate: pRateVal || 0
+        };
+        row.dataset.batchData = JSON.stringify(batchData);
+    }
+
+    // Backfill tax/packing from hidden inputs if needed
+    if (itemData && Object.keys(itemData).length > 0) {
+        const cgstHidden = row.querySelector('input[name*="[cgst_percent]"]')?.value;
+        const sgstHidden = row.querySelector('input[name*="[sgst_percent]"]')?.value;
+        const packHidden = row.querySelector('input[name*="[packing]"]')?.value;
+        if (cgstHidden && !itemData.cgst_percent) itemData.cgst_percent = cgstHidden;
+        if (sgstHidden && !itemData.sgst_percent) itemData.sgst_percent = sgstHidden;
+        if (packHidden && !itemData.packing) itemData.packing = packHidden;
+        row.dataset.itemData = JSON.stringify(itemData);
+    }
+
+    const hasItem = itemData && Object.keys(itemData).length > 0;
+
+    if (hasItem) {
         updateCalculationSection(batchData, itemData);
-        
-        // Update additional details section with this row's data
         updateAdditionalDetails(row, itemData);
     } else {
-        // Clear calculation section for incomplete rows
         clearCalculationSection();
     }
+}
+
+function getGstPercents(itemData) {
+    const cgstRaw = parseFloat(itemData.cgst_percent ?? itemData.cgst ?? 0) || 0;
+    const sgstRaw = parseFloat(itemData.sgst_percent ?? itemData.sgst ?? 0) || 0;
+    let gstRaw = parseFloat(itemData.gst_percent ?? 0) || 0;
+
+    let cgst = cgstRaw;
+    let sgst = sgstRaw;
+    let gst = gstRaw;
+
+    if ((!cgst && !sgst) && gst) {
+        cgst = gst / 2;
+        sgst = gst / 2;
+    }
+
+    if (!gst && (cgst || sgst)) {
+        gst = cgst + sgst;
+    }
+
+    return { gst, cgst, sgst };
 }
 
 // Update Calculation Section with Batch and Item Data
@@ -2201,24 +2293,25 @@ function updateCalculationSection(batch, item) {
     console.log('Updating calculation section with:', { batch, item });
     
     // Fill from batch
-    document.getElementById('calc_srate').value = parseFloat(batch.s_rate || 0).toFixed(2);
-    document.getElementById('calc_prate').value = parseFloat(batch.pur_rate || 0).toFixed(2);
-    document.getElementById('calc_mrp').value = parseFloat(batch.mrp || 0).toFixed(2);
+    const sRate = parseFloat(batch.s_rate ?? batch.sale_rate ?? batch.sRate ?? 0) || 0;
+    const pRate = parseFloat(batch.pur_rate ?? batch.p_rate ?? batch.pRate ?? 0) || 0;
+    const mrp = parseFloat(batch.mrp ?? batch.MRP ?? 0) || 0;
+
+    document.getElementById('calc_srate').value = sRate.toFixed(2);
+    document.getElementById('calc_prate').value = pRate.toFixed(2);
+    document.getElementById('calc_mrp').value = mrp.toFixed(2);
     
     // Fill from item
-    document.getElementById('calc_hsn_code').value = item.hsn_code || '---';
+    document.getElementById('calc_hsn_code').value = item.hsn_code || item.hsn || '---';
     document.getElementById('calc_pack').value = item.packing || '';
     
-    // Calculate tax percentages (assuming GST is split equally between CGST and SGST)
-    const gstPercent = parseFloat(item.gst_percent || 0);
-    const cgstPercent = gstPercent / 2;
-    const sgstPercent = gstPercent / 2;
-    
-    console.log('Tax calculations:', { gstPercent, cgstPercent, sgstPercent });
-    
-    document.getElementById('calc_cgst_percent').value = cgstPercent.toFixed(2);
-    document.getElementById('calc_sgst_percent').value = sgstPercent.toFixed(2);
-    document.getElementById('calc_tax_percent').value = gstPercent.toFixed(2);
+    const { gst, cgst, sgst } = getGstPercents(item);
+
+    console.log('Tax calculations:', { gst, cgst, sgst });
+
+    document.getElementById('calc_cgst_percent').value = cgst.toFixed(2);
+    document.getElementById('calc_sgst_percent').value = sgst.toFixed(2);
+    document.getElementById('calc_tax_percent').value = gst.toFixed(2);
 }
 
 // Update Additional Details Section with selected row's data
@@ -2235,9 +2328,13 @@ function updateAdditionalDetails(row, itemData) {
     const discountAmount = (grossAmount - schemeAmount) * (disPercent / 100);
     const subtotal = grossAmount - schemeAmount - discountAmount;
     
-    // Get tax from calculation section
-    const cgstPercent = parseFloat(document.getElementById('calc_cgst_percent').value) || 0;
-    const sgstPercent = parseFloat(document.getElementById('calc_sgst_percent').value) || 0;
+    // Get tax from item data (fallback if calc section is empty)
+    const taxFromCalcCgst = parseFloat(document.getElementById('calc_cgst_percent').value) || 0;
+    const taxFromCalcSgst = parseFloat(document.getElementById('calc_sgst_percent').value) || 0;
+    const calcSum = taxFromCalcCgst + taxFromCalcSgst;
+    const { gst, cgst, sgst } = getGstPercents(itemData);
+    const cgstPercent = calcSum > 0 ? taxFromCalcCgst : cgst;
+    const sgstPercent = calcSum > 0 ? taxFromCalcSgst : sgst;
     const taxPercent = cgstPercent + sgstPercent;
     
     // Calculate CGST and SGST amounts separately
@@ -2249,6 +2346,13 @@ function updateAdditionalDetails(row, itemData) {
     // Update CGST and SGST amounts in calculation section
     document.getElementById('calc_cgst_amount').value = cgstAmount.toFixed(2);
     document.getElementById('calc_sgst_amount').value = sgstAmount.toFixed(2);
+
+    // Ensure percent fields are populated if they were empty
+    if (calcSum === 0) {
+        document.getElementById('calc_cgst_percent').value = cgstPercent.toFixed(2);
+        document.getElementById('calc_sgst_percent').value = sgstPercent.toFixed(2);
+        document.getElementById('calc_tax_percent').value = taxPercent.toFixed(2);
+    }
     
     // Get closing quantity from item data (total of all batches)
     const closingQty = parseFloat(itemData.total_qty || 0);
@@ -2294,8 +2398,8 @@ function updateAllCalculations() {
         
         // Get tax percentage from item data
         const itemData = JSON.parse(row.dataset.itemData || '{}');
-        const gstPercent = parseFloat(itemData.gst_percent || 0);
-        const taxAmount = subtotal * (gstPercent / 100);
+        const { gst } = getGstPercents(itemData);
+        const taxAmount = subtotal * (gst / 100);
         
         totalMrpValue += grossAmount;
         totalGross += subtotal;
@@ -2358,7 +2462,7 @@ function addNewRow() {
             <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="" readonly>
         </td>
         <td>
-            <select class="form-control form-control-sm" name="items[${rowIndex}][br_ex]"
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
                     onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'qty'); return false; }">
                 <option value="B">B</option>
                 <option value="E">E</option>
@@ -2401,11 +2505,16 @@ function addNewRow() {
 
     tbody.appendChild(row);
 
+    row.addEventListener('click', function() {
+        selectRowForCalculation(rowIndex);
+    });
+
+    bindDisEnterHandler(row, rowIndex);
+
     setTimeout(() => {
         const codeInput = row.querySelector('input[name*="[code]"]');
         if (codeInput) {
             codeInput.focus();
-            codeInput.select();
         }
     }, 80);
 }
@@ -2413,12 +2522,46 @@ function addNewRow() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Breakage/Expiry Transaction page loaded');
+
+    // Ensure Select2 is not applied to custom dropdowns or Br/Ex selects
+    if (window.jQuery && jQuery.fn && jQuery.fn.select2) {
+        const disableSelect2 = (el) => {
+            const $el = jQuery(el);
+            if ($el.data('select2')) {
+                $el.select2('destroy');
+            }
+        };
+        document.querySelectorAll('select.no-select2, select[name*="[br_ex]"]').forEach(disableSelect2);
+    }
     
     // Handle form submission
     document.getElementById('breakageExpiryTransactionForm').addEventListener('submit', function(e) {
         e.preventDefault();
         saveTransaction();
     });
+
+    // When adjustment modal is open, ESC should close it and Ctrl+S should submit it.
+    document.addEventListener('keydown', function(e) {
+        const modalOpen = !!document.getElementById('adjustmentModal') && document.getElementById('adjustmentModal').classList.contains('show');
+        if (!modalOpen) return;
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeAdjustmentModal();
+            return;
+        }
+
+        const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+        if (isCtrlS) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            saveAdjustment();
+            return;
+        }
+    }, true);
 
     // Prevent Enter from bubbling out of native selects (so it selects option, not next field)
     document.addEventListener('keydown', function(e) {
@@ -2511,6 +2654,7 @@ function showCreditNoteModal() {
     setTimeout(() => {
         document.getElementById('creditNoteModalBackdrop').classList.add('show');
         document.getElementById('creditNoteModal').classList.add('show');
+        initCreditNoteModalKeyboard();
     }, 10);
     
 }
@@ -2530,6 +2674,7 @@ function closeCreditNoteModal() {
         }, 300);
     }
     
+    teardownCreditNoteModalKeyboard();
 }
 
 // Save Without Credit Note
@@ -2553,6 +2698,72 @@ function saveWithCreditNote() {
     
     // Fetch customer's past sales for adjustment
     fetchCustomerSales(customerId, payableAmount);
+}
+
+// Credit Note Modal Keyboard Navigation
+function initCreditNoteModalKeyboard() {
+    if (window.__kbBeCreditNoteKeyBound) return;
+
+    function getButtons() {
+        const modal = document.getElementById('creditNoteModal');
+        if (!modal) return [];
+        return Array.from(modal.querySelectorAll('.credit-note-options button'));
+    }
+
+    function setActive(index) {
+        const buttons = getButtons();
+        buttons.forEach(btn => btn.classList.remove('kb-active'));
+        if (buttons[index]) {
+            buttons[index].classList.add('kb-active');
+            buttons[index].focus();
+        }
+    }
+
+    window.__kbBeCreditNoteIndex = 0;
+    setActive(window.__kbBeCreditNoteIndex);
+
+    window.__kbBeCreditNoteKeyHandler = function(e) {
+        const modal = document.getElementById('creditNoteModal');
+        if (!modal || !modal.classList.contains('show')) return;
+
+        if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const buttons = getButtons();
+            if (buttons.length === 0) return;
+            if (e.key === 'ArrowRight') {
+                window.__kbBeCreditNoteIndex = (window.__kbBeCreditNoteIndex + 1) % buttons.length;
+            } else {
+                window.__kbBeCreditNoteIndex = (window.__kbBeCreditNoteIndex - 1 + buttons.length) % buttons.length;
+            }
+            setActive(window.__kbBeCreditNoteIndex);
+        } else if (e.key === 'Enter') {
+            const buttons = getButtons();
+            if (buttons[window.__kbBeCreditNoteIndex]) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                buttons[window.__kbBeCreditNoteIndex].click();
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeCreditNoteModal();
+        }
+    };
+
+    document.addEventListener('keydown', window.__kbBeCreditNoteKeyHandler, true);
+    window.__kbBeCreditNoteKeyBound = true;
+}
+
+function teardownCreditNoteModalKeyboard() {
+    if (window.__kbBeCreditNoteKeyBound && window.__kbBeCreditNoteKeyHandler) {
+        document.removeEventListener('keydown', window.__kbBeCreditNoteKeyHandler, true);
+    }
+    window.__kbBeCreditNoteKeyBound = false;
+    window.__kbBeCreditNoteKeyHandler = null;
 }
 
 // Submit Transaction (actual save)
@@ -3103,6 +3314,14 @@ function showAdjustmentModal(sales, netAmount) {
             Object.keys(existingAdjustments).forEach(saleId => {
                 updateRemainingBalance(saleId);
             });
+        } else {
+            prefillAdjustmentFirstRow();
+        }
+
+        initAdjustmentModalKeyboard();
+        if (!window.__kbBeAdjustmentEscBound) {
+            document.addEventListener('keydown', handleAdjustmentEsc, true);
+            window.__kbBeAdjustmentEscBound = true;
         }
     }, 10);
     
@@ -3162,8 +3381,110 @@ function autoFillFirstRow(netAmount, sales) {
             
             // Focus on first input
             firstInput.focus();
-            firstInput.select();
         }
+    }
+}
+
+function prefillAdjustmentFirstRow() {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+
+    const anyValue = inputs.some(input => parseFloat(input.value || 0) > 0);
+    if (anyValue) return;
+
+    const firstInput = inputs[0];
+    const balance = parseFloat(firstInput.getAttribute('data-balance') || 0);
+    const desired = parseFloat(window.netAmount || 0);
+    const prefill = Math.min(desired, balance);
+
+    if (prefill > 0) {
+        firstInput.value = prefill.toFixed(2);
+    }
+    firstInput.placeholder = desired.toFixed(2);
+    updateAdjustmentBalance();
+}
+
+function getRemainingAdjustment() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    inputs.forEach(input => {
+        totalAdjusted += parseFloat(input.value || 0);
+    });
+    return Math.max(0, (parseFloat(window.netAmount || 0) - totalAdjusted));
+}
+
+function initAdjustmentModalKeyboard() {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+
+    const setActive = (input) => {
+        inputs.forEach(i => i.classList.remove('kb-active'));
+        if (input) {
+            input.classList.add('kb-active');
+            input.focus();
+        }
+    };
+
+    inputs.forEach((input, idx) => {
+        input.addEventListener('focus', () => setActive(input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = inputs[idx + 1];
+                if (next) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const remaining = getRemainingAdjustment();
+                    const nextBalance = parseFloat(next.getAttribute('data-balance') || 0);
+
+                    if (remaining <= 0 && currentValue > 0) {
+                        const moveValue = Math.min(currentValue, nextBalance);
+                        next.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                    } else {
+                        const nextValue = Math.min(remaining, nextBalance);
+                        next.value = nextValue.toFixed(2);
+                    }
+
+                    updateAdjustmentBalance();
+                    setActive(next);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = inputs[idx - 1];
+                if (prev) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const prevBalance = parseFloat(prev.getAttribute('data-balance') || 0);
+
+                    if (currentValue > 0) {
+                        const moveValue = Math.min(currentValue, prevBalance);
+                        prev.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                        updateAdjustmentBalance();
+                    }
+
+                    setActive(prev);
+                }
+            }
+        });
+    });
+
+    setActive(inputs[0]);
+}
+
+function handleAdjustmentEsc(e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeAdjustmentModal();
+        return;
+    }
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (isCtrlS) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveAdjustment();
     }
 }
 
@@ -3196,7 +3517,6 @@ function handleAdjustmentEnter(event, saleId, currentIndex) {
         // Move focus to next row
         if (currentIndex + 1 < allInputs.length) {
             allInputs[currentIndex + 1].focus();
-            allInputs[currentIndex + 1].select();
         }
     }
 }
@@ -3376,6 +3696,11 @@ function closeAdjustmentModal() {
             backdrop.remove();
         }, 300);
     }
+
+    if (window.__kbBeAdjustmentEscBound) {
+        document.removeEventListener('keydown', handleAdjustmentEsc, true);
+        window.__kbBeAdjustmentEscBound = false;
+    }
     
 }
 
@@ -3468,6 +3793,67 @@ function getKbBePreferredDropdownItem(listContainer, index) {
     return firstValid || visibleItems[0];
 }
 
+function selectKbBeDropdownItem(kind) {
+    const isCustomer = kind === 'customer';
+    const searchInput = document.getElementById(isCustomer ? 'customerSearchInput' : 'salesmanSearchInput');
+    const dropdown = document.getElementById(isCustomer ? 'customerDropdown' : 'salesmanDropdown');
+    const listContainer = document.getElementById(isCustomer ? 'customerList' : 'salesmanList');
+
+    if (!searchInput || !dropdown || !listContainer) return false;
+
+    const allItems = Array.from(listContainer.querySelectorAll('.dropdown-item'));
+    const visibleItems = allItems.filter(item => item.style.display !== 'none');
+
+    if (!visibleItems.length) {
+        console.log(`[KB-BE][${isCustomer ? 'Customer' : 'Salesman'}] no visible items to select`);
+        return false;
+    }
+
+    const index = isCustomer ? customerDropdownIndex : salesmanDropdownIndex;
+    let selectedItem = getKbBePreferredDropdownItem(listContainer, index);
+
+    if (!selectedItem && visibleItems.length) {
+        if (isCustomer) {
+            customerDropdownIndex = 0;
+            updateCustomerDropdownHighlight();
+            selectedItem = visibleItems[0];
+        } else {
+            salesmanDropdownIndex = 0;
+            updateSalesmanDropdownHighlight();
+            selectedItem = visibleItems[0];
+        }
+    }
+
+    if (!selectedItem) {
+        console.log(`[KB-BE][${isCustomer ? 'Customer' : 'Salesman'}] selected item not found`);
+        return false;
+    }
+
+    console.log(`[KB-BE][${isCustomer ? 'Customer' : 'Salesman'}] selecting item via Enter`, {
+        text: selectedItem.textContent?.trim(),
+        id: selectedItem.dataset.id || ''
+    });
+
+    setKbBeDropdownSelecting(true);
+
+    // Directly select to avoid Enter bubbling to header handlers.
+    const selected = isCustomer ? selectCustomer(selectedItem) : selectSalesman(selectedItem);
+    console.log(`[KB-BE][${isCustomer ? 'Customer' : 'Salesman'}] selection result`, {
+        selected,
+        text: selectedItem.textContent?.trim(),
+        id: selectedItem.dataset.id || ''
+    });
+    if (selected) {
+        const nextField = document.getElementById(isCustomer ? 'gstVno' : 'inc');
+        if (nextField) {
+            nextField.focus();
+        }
+        return true;
+    }
+
+    return false;
+}
+
 // Initialize Customer Dropdown
 function initCustomerDropdown() {
     const searchInput = document.getElementById('customerSearchInput');
@@ -3557,30 +3943,7 @@ function initCustomerDropdown() {
                 console.log('[KB-BE][Customer] Enter opened dropdown');
                 return;
             }
-
-            const selectedItem = getKbBePreferredDropdownItem(listContainer, customerDropdownIndex);
-
-            if (selectedItem) {
-                console.log('[KB-BE][Customer] selecting item via Enter', {
-                    index: customerDropdownIndex,
-                    text: selectedItem.textContent?.trim()
-                });
-                setKbBeDropdownSelecting(true);
-                const didSelect = selectCustomer(selectedItem);
-                if (didSelect) {
-                    // Move to next field after successful selection
-                    setTimeout(() => {
-                        const nextField = document.getElementById('gstVno');
-                        if (nextField) {
-                            nextField.focus();
-                        }
-                    }, 50);
-                } else {
-                    showCustomerDropdown();
-                }
-            } else {
-                console.log('[KB-BE][Customer] Enter pressed but no visible item to select');
-            }
+            selectKbBeDropdownItem('customer');
         } else if (e.key === 'Escape') {
             e.preventDefault();
             e.stopPropagation();
@@ -3658,6 +4021,8 @@ function selectCustomer(item) {
         console.log('[KB-BE][Customer] skip placeholder selection');
         return false;
     }
+
+    console.log('[KB-BE][Customer] selectCustomer', { id, name, code });
     
     searchInput.value = code ? `${code} - ${name}` : name;
     selectElement.value = id;
@@ -3756,30 +4121,7 @@ function initSalesmanDropdown() {
                 console.log('[KB-BE][Salesman] Enter opened dropdown');
                 return;
             }
-
-            const selectedItem = getKbBePreferredDropdownItem(listContainer, salesmanDropdownIndex);
-
-            if (selectedItem) {
-                console.log('[KB-BE][Salesman] selecting item via Enter', {
-                    index: salesmanDropdownIndex,
-                    text: selectedItem.textContent?.trim()
-                });
-                setKbBeDropdownSelecting(true);
-                const didSelect = selectSalesman(selectedItem);
-                if (didSelect) {
-                    // Move to next field after successful selection
-                    setTimeout(() => {
-                        const nextField = document.getElementById('inc');
-                        if (nextField) {
-                            nextField.focus();
-                        }
-                    }, 50);
-                } else {
-                    showSalesmanDropdown();
-                }
-            } else {
-                console.log('[KB-BE][Salesman] Enter pressed but no visible item to select');
-            }
+            selectKbBeDropdownItem('salesman');
         } else if (e.key === 'Escape') {
             e.preventDefault();
             e.stopPropagation();
@@ -3856,6 +4198,8 @@ function selectSalesman(item) {
         console.log('[KB-BE][Salesman] skip placeholder selection');
         return false;
     }
+
+    console.log('[KB-BE][Salesman] selectSalesman', { id, name, code });
     
     searchInput.value = code ? `${code} - ${name}` : name;
     selectElement.value = id;
@@ -3917,15 +4261,7 @@ function initDropdownEnterCapture() {
                 e.stopPropagation();
                 e.stopImmediatePropagation();
                 setKbBeDropdownSelecting(true);
-                const didSelect = selectCustomer(selectedItem);
-                if (didSelect) {
-                    setTimeout(() => {
-                        const nextField = document.getElementById('gstVno');
-                        if (nextField) nextField.focus();
-                    }, 40);
-                } else {
-                    showCustomerDropdown();
-                }
+                selectKbBeDropdownItem('customer');
             } else {
                 e.preventDefault();
                 e.stopPropagation();
@@ -3956,21 +4292,27 @@ function initDropdownEnterCapture() {
                 e.stopPropagation();
                 e.stopImmediatePropagation();
                 setKbBeDropdownSelecting(true);
-                const didSelect = selectSalesman(selectedItem);
-                if (didSelect) {
-                    setTimeout(() => {
-                        const nextField = document.getElementById('inc');
-                        if (nextField) nextField.focus();
-                    }, 40);
-                } else {
-                    showSalesmanDropdown();
-                }
+                selectKbBeDropdownItem('salesman');
             } else {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
                 showSalesmanDropdown();
             }
+        }
+    }, true);
+
+    // Also block keyup Enter from global handlers when dropdown is open
+    document.addEventListener('keyup', function(e) {
+        if (e.key !== 'Enter') return;
+        const customerDropdown = document.getElementById('customerDropdown');
+        const salesmanDropdown = document.getElementById('salesmanDropdown');
+        const customerOpen = isKbBeDropdownOpen(customerDropdown);
+        const salesmanOpen = isKbBeDropdownOpen(salesmanDropdown);
+        if (customerOpen || salesmanOpen || kbBeDropdownSelecting) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
         }
     }, true);
 }
@@ -4103,6 +4445,84 @@ function initTableDiscountEnterCapture() {
         }
 
         console.log('[KB-BE][Capture][Table] Dis% Enter fallback', {
+            activeName: active.name || null,
+            rowId: rowEl ? rowEl.id : null,
+            rowIndex
+        });
+
+        if (rowIndex >= 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            handleDiscountAndAddRow(rowIndex);
+        }
+    }, true);
+
+    document.addEventListener('keypress', function(e) {
+        if (e.key !== 'Enter' && e.keyCode !== 13) return;
+
+        const active = document.activeElement;
+        if (!active) return;
+
+        const isDisField =
+            active.matches &&
+            active.matches('#itemsTableBody input[name*="[dis_percent]"]');
+        if (!isDisField) return;
+
+        const rowEl = active.closest('tr[id^="row-"]');
+        let rowIndex = -1;
+
+        if (rowEl && rowEl.id) {
+            const parsed = parseInt(rowEl.id.replace('row-', ''), 10);
+            if (!Number.isNaN(parsed)) rowIndex = parsed;
+        }
+
+        if (rowIndex < 0) {
+            const name = active.getAttribute('name') || '';
+            const m = name.match(/items\[(\d+)\]\[dis_percent\]/);
+            if (m) rowIndex = parseInt(m[1], 10);
+        }
+
+        console.log('[KB-BE][Capture][Table] Dis% Enter keypress fallback', {
+            activeName: active.name || null,
+            rowId: rowEl ? rowEl.id : null,
+            rowIndex
+        });
+
+        if (rowIndex >= 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            handleDiscountAndAddRow(rowIndex);
+        }
+    }, true);
+
+    document.addEventListener('keyup', function(e) {
+        if (e.key !== 'Enter' && e.keyCode !== 13) return;
+
+        const active = document.activeElement;
+        if (!active) return;
+
+        const isDisField =
+            active.matches &&
+            active.matches('#itemsTableBody input[name*="[dis_percent]"]');
+        if (!isDisField) return;
+
+        const rowEl = active.closest('tr[id^="row-"]');
+        let rowIndex = -1;
+
+        if (rowEl && rowEl.id) {
+            const parsed = parseInt(rowEl.id.replace('row-', ''), 10);
+            if (!Number.isNaN(parsed)) rowIndex = parsed;
+        }
+
+        if (rowIndex < 0) {
+            const name = active.getAttribute('name') || '';
+            const m = name.match(/items\[(\d+)\]\[dis_percent\]/);
+            if (m) rowIndex = parseInt(m[1], 10);
+        }
+
+        console.log('[KB-BE][Capture][Table] Dis% Enter keyup fallback', {
             activeName: active.name || null,
             rowId: rowEl ? rowEl.id : null,
             rowIndex
