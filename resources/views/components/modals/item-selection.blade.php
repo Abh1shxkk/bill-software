@@ -565,6 +565,33 @@
             }
         }
     };
+
+    // Global capture fallback:
+    // If some page-level Enter handler swallows key events, this ensures item selection still works.
+    function isItemModalOpen_{{ str_replace('-', '_', $id) }}() {
+        var modal = document.getElementById('{{ $id }}');
+        return !!(modal && modal.classList.contains('show'));
+    }
+
+    function modalKeyCaptureHandler_{{ str_replace('-', '_', $id) }}(e) {
+        if (!isItemModalOpen_{{ str_replace('-', '_', $id) }}()) return;
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') {
+            e.stopImmediatePropagation();
+        }
+
+        console.log('[KB-ItemModal][Capture] key', {
+            key: e.key,
+            activeId: document.activeElement ? document.activeElement.id : null
+        });
+
+        handleItemKeyDown_{{ str_replace('-', '_', $id) }}(e);
+    }
+
+    window.addEventListener('keydown', modalKeyCaptureHandler_{{ str_replace('-', '_', $id) }}, true);
     
     // Select item
     window.selectItem_{{ str_replace('-', '_', $id) }} = function(index) {

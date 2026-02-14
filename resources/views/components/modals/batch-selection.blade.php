@@ -649,6 +649,33 @@
             }
         }
     };
+
+    // Global capture fallback:
+    // If page-level handlers consume Enter, keep modal keyboard selection reliable.
+    function isBatchModalOpen_{{ str_replace('-', '_', $id) }}() {
+        var modal = document.getElementById('{{ $id }}');
+        return !!(modal && modal.classList.contains('show'));
+    }
+
+    function modalKeyCaptureHandler_{{ str_replace('-', '_', $id) }}(e) {
+        if (!isBatchModalOpen_{{ str_replace('-', '_', $id) }}()) return;
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') {
+            e.stopImmediatePropagation();
+        }
+
+        console.log('[KB-BatchModal][Capture] key', {
+            key: e.key,
+            activeId: document.activeElement ? document.activeElement.id : null
+        });
+
+        handleBatchKeyDown_{{ str_replace('-', '_', $id) }}(e);
+    }
+
+    window.addEventListener('keydown', modalKeyCaptureHandler_{{ str_replace('-', '_', $id) }}, true);
     
     // Select batch
     window.selectBatch_{{ str_replace('-', '_', $id) }} = function(index) {

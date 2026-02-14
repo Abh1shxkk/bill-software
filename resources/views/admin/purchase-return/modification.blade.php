@@ -74,6 +74,75 @@
         border: 1px solid #ced4da;
         width: 100%;
     }
+
+    /* Searchable Dropdown Styles (Custom Supplier Dropdown) */
+    .searchable-dropdown {
+        position: relative;
+    }
+
+    .searchable-dropdown-input {
+        width: 100%;
+        cursor: text;
+    }
+
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 250px;
+        overflow-y: auto;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .searchable-dropdown-list .dropdown-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background-color 0.15s;
+    }
+
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+
+    .searchable-dropdown-list .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+
+    .searchable-dropdown-list .dropdown-item.selected {
+        background-color: #e7f3ff;
+        font-weight: 600;
+    }
+
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
+    }
+
+    .searchable-dropdown-input.readonly-field {
+        cursor: not-allowed;
+    }
+
+    /* Keyboard focus indicator (blue border) */
+    .prt .form-control:focus,
+    .prt .searchable-dropdown-input:focus,
+    .prt input:focus {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 1px;
+        border-color: #86b7fe !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+    }
 </style>
 @endpush
 
@@ -125,12 +194,26 @@
                                         <div class="col-md-4">
                                             <div class="field-group">
                                                 <label style="width: 100px;">Supplier :</label>
-                                                <select id="supplier_id" name="supplier_id" class="form-control" required>
-                                                    <option value="">Select Supplier</option>
-                                                    @foreach($suppliers as $supplier)
-                                                        <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="searchable-dropdown" id="supplierDropdownWrapper" style="position: relative; width: 100%;">
+                                                    <input type="text"
+                                                           class="form-control searchable-dropdown-input"
+                                                           id="supplierSearchInput"
+                                                           placeholder="Type to search supplier..."
+                                                           autocomplete="off"
+                                                           style="width: 100%;">
+                                                    <input type="hidden" name="supplier_id" id="supplier_id" value="">
+                                                    <div class="searchable-dropdown-list" id="supplierDropdownList" style="display: none;">
+                                                        <div class="dropdown-item" data-value="" data-name="" data-code="">Select Supplier</div>
+                                                        @foreach($suppliers as $supplier)
+                                                            <div class="dropdown-item"
+                                                                 data-value="{{ $supplier->supplier_id }}"
+                                                                 data-name="{{ $supplier->name }}"
+                                                                 data-code="{{ $supplier->code ?? '' }}">
+                                                                {{ $supplier->code ?? '' }} {{ $supplier->code ? '-' : '' }} {{ $supplier->name }}
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-5">
@@ -151,13 +234,13 @@
                                         <div class="col-md-5">
                                             <div class="field-group">
                                                 <label style="width: 100px;">GST Vno :</label>
-                                                <input type="text" class="form-control">
+                                                <input type="text" class="form-control" id="gst_vno">
                                             </div>
                                         </div>
                                         <div class="col-md-5">
                                             <div class="field-group">
                                                 <label style="width: 100px;">Remarks :</label>
-                                                <input type="text" class="form-control" >
+                                                <input type="text" class="form-control" id="remarks">
                                             </div>
                                         </div>
                                     </div>
@@ -166,7 +249,7 @@
                                         <div class="col-md-2">
                                             <div class="field-group">
                                                 <label>Tax:</label>
-                                                <input type="text" class="form-control" value="Y" maxlength="1"
+                                                <input type="text" class="form-control" id="tax_flag" value="Y" maxlength="1"
                                                     style="width: 50px;">
                                             </div>
                                         </div>
@@ -174,7 +257,8 @@
                                         <div class="col-md-3">
                                             <div class="field-group">
                                                 <label style="width: 80px;">Rate Diff :</label>
-                                                <input type="text" class="form-control" value="N" maxlength="1"
+                                                <input type="text" class="form-control" id="rate_diff" value="N" maxlength="1"
+                                                    onkeydown="return handleRateDiffKeydown(event);"
                                                     style="width: 50px;">
                                             </div>
                                         </div>
@@ -667,6 +751,453 @@
     let allItems = [];
     let returnItems = [];
     let currentTransactionId = null; // Track transaction ID for update vs create
+    let awaitingDateSelection = false;
+    let datePickerJustOpened = false;
+    let dateConfirmTargetId = 'supplierSearchInput';
+    let rateDiffToDateFlowActive = false;
+    let rateDiffFocusedAt = 0;
+    let insertOrdersAutoClickLock = false;
+
+    function getSelectedSupplierId() {
+        return selectedSupplier?.id || document.getElementById('supplier_id')?.value || '';
+    }
+
+    function getSelectedSupplierName() {
+        if (selectedSupplier?.name) return selectedSupplier.name;
+        const hiddenInput = document.getElementById('supplier_id');
+        return hiddenInput?.dataset?.supplierName || '';
+    }
+
+    function setSelectedSupplier(id, name, code = '') {
+        const hiddenInput = document.getElementById('supplier_id');
+        if (hiddenInput) {
+            hiddenInput.value = id || '';
+            hiddenInput.dataset.supplierName = name || '';
+            hiddenInput.dataset.supplierCode = code || '';
+        }
+
+        if (id) {
+            selectedSupplier = { id: String(id), name: name || '', code: code || '' };
+        } else {
+            selectedSupplier = null;
+        }
+    }
+
+    function setSupplierDropdownReadonly(readonly) {
+        const supplierInput = document.getElementById('supplierSearchInput');
+        if (!supplierInput) return;
+
+        supplierInput.readOnly = !!readonly;
+        supplierInput.classList.toggle('readonly-field', !!readonly);
+        supplierInput.dataset.kbReadonly = readonly ? '1' : '0';
+    }
+
+    function initSupplierDropdown() {
+        const input = document.getElementById('supplierSearchInput');
+        const hiddenInput = document.getElementById('supplier_id');
+        const dropdownList = document.getElementById('supplierDropdownList');
+
+        if (!input || !hiddenInput || !dropdownList) {
+            console.warn('[KB-PR-MOD] supplier dropdown elements missing');
+            return;
+        }
+
+        let highlightedIndex = -1;
+        let isDropdownOpen = false;
+
+        function isReadonly() {
+            return input.dataset.kbReadonly === '1' || input.readOnly;
+        }
+
+        function getVisibleItems() {
+            return Array.from(dropdownList.querySelectorAll('.dropdown-item:not(.hidden)'));
+        }
+
+        function showDropdown() {
+            if (isReadonly()) return;
+            dropdownList.style.display = 'block';
+            isDropdownOpen = true;
+            highlightedIndex = -1;
+        }
+
+        function hideDropdown() {
+            dropdownList.style.display = 'none';
+            isDropdownOpen = false;
+            highlightedIndex = -1;
+            dropdownList.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function filterItems(searchText) {
+            const items = dropdownList.querySelectorAll('.dropdown-item');
+            const search = (searchText || '').toLowerCase().trim();
+
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const code = (item.dataset.code || '').toLowerCase();
+                const name = (item.dataset.name || '').toLowerCase();
+                const matched = search === '' || text.includes(search) || code.includes(search) || name.includes(search);
+                item.classList.toggle('hidden', !matched);
+            });
+
+            highlightedIndex = -1;
+            items.forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function highlightItem(index) {
+            const visibleItems = getVisibleItems();
+            visibleItems.forEach(item => item.classList.remove('highlighted'));
+            if (index >= 0 && index < visibleItems.length) {
+                highlightedIndex = index;
+                visibleItems[index].classList.add('highlighted');
+                visibleItems[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+
+        function selectItem(item, moveNext = true) {
+            const value = item.dataset.value || '';
+            const name = item.dataset.name || '';
+            const code = item.dataset.code || '';
+
+            hiddenInput.value = value;
+            hiddenInput.dataset.supplierName = name;
+            hiddenInput.dataset.supplierCode = code;
+            input.value = value ? (code ? `${code} - ${name}` : name) : '';
+
+            dropdownList.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+
+            setSelectedSupplier(value, name, code);
+            hideDropdown();
+
+            if (moveNext && typeof window.focusNextHeaderField === 'function') {
+                window.focusNextHeaderField('supplierSearchInput');
+            }
+        }
+
+        input.addEventListener('focus', function() {
+            showDropdown();
+            filterItems(this.value);
+        });
+
+        input.addEventListener('input', function() {
+            if (isReadonly()) return;
+            showDropdown();
+            filterItems(this.value);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (isReadonly()) return;
+
+            if (!isDropdownOpen) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showDropdown();
+                    filterItems(this.value);
+                }
+                return;
+            }
+
+            const visibleItems = getVisibleItems();
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    highlightItem(highlightedIndex < visibleItems.length - 1 ? highlightedIndex + 1 : 0);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    highlightItem(highlightedIndex > 0 ? highlightedIndex - 1 : visibleItems.length - 1);
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                        selectItem(visibleItems[highlightedIndex]);
+                    } else if (visibleItems.length > 0) {
+                        selectItem(visibleItems[0]);
+                    }
+                    break;
+                case 'Escape':
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hideDropdown();
+                    break;
+                case 'Tab':
+                    if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
+                        selectItem(visibleItems[highlightedIndex], false);
+                    }
+                    hideDropdown();
+                    break;
+            }
+        });
+
+        dropdownList.addEventListener('click', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                selectItem(item, false);
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#supplierDropdownWrapper')) {
+                hideDropdown();
+            }
+        });
+    }
+
+    function focusSupplierOnLoad() {
+        const supplierInput = document.getElementById('supplierSearchInput');
+        if (!supplierInput) return;
+
+        let attempts = 0;
+        const focusTimer = setInterval(() => {
+            attempts += 1;
+            const active = document.activeElement;
+            if (!active || active === document.body || active.id === 'return_date' || active.id === 'supplierSearchInput') {
+                supplierInput.focus();
+            }
+            if (attempts >= 8) {
+                clearInterval(focusTimer);
+            }
+        }, 100);
+    }
+
+    function setDateConfirmTarget(targetId) {
+        dateConfirmTargetId = targetId || 'supplierSearchInput';
+    }
+
+    function openReturnDatePicker() {
+        const dateInput = document.getElementById('return_date');
+        if (!dateInput) return;
+
+        awaitingDateSelection = true;
+        datePickerJustOpened = true;
+        setTimeout(() => {
+            datePickerJustOpened = false;
+        }, 300);
+
+        if (typeof dateInput.showPicker === 'function') {
+            dateInput.showPicker();
+        } else {
+            dateInput.focus();
+            dateInput.click();
+        }
+    }
+
+    function triggerInsertOrdersAfterDateConfirm() {
+        if (insertOrdersAutoClickLock) return;
+
+        const insertBtn = document.getElementById('insertOrderBtn');
+        if (!insertBtn) return;
+
+        insertOrdersAutoClickLock = true;
+        setTimeout(() => {
+            insertBtn.focus();
+            insertBtn.click();
+            setTimeout(() => {
+                insertOrdersAutoClickLock = false;
+            }, 300);
+        }, 60);
+    }
+
+    function moveRateDiffToHeaderDate() {
+        const dateInput = document.getElementById('return_date');
+        if (!dateInput) return;
+        rateDiffToDateFlowActive = true;
+        setDateConfirmTarget('insertOrderBtn');
+        dateInput.focus();
+        setTimeout(() => {
+            openReturnDatePicker();
+        }, 0);
+    }
+
+    function shouldIgnoreImmediateRateDiffKey(event) {
+        const elapsed = Date.now() - rateDiffFocusedAt;
+        const isImmediate = elapsed >= 0 && elapsed < 140;
+        return event.key === 'Enter' && (event.repeat || isImmediate);
+    }
+
+    window.handleRateDiffKeydown = function(event) {
+        if (!event) return true;
+        if (event.key !== 'Enter' && event.key !== 'Tab') return true;
+        if (shouldIgnoreImmediateRateDiffKey(event)) return false;
+
+        event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') {
+            event.stopImmediatePropagation();
+        }
+
+        moveRateDiffToHeaderDate();
+        return false;
+    };
+
+    function initHeaderKeyboardNavigation() {
+        const order = [
+            'supplierSearchInput',
+            'invoice_no',
+            'invoice_date',
+            'gst_vno',
+            'remarks',
+            'tax_flag',
+            'rate_diff',
+            'return_date',
+            'insertOrderBtn',
+        ];
+
+        function isFocusable(el) {
+            return el && !el.disabled && el.offsetParent !== null;
+        }
+
+        function focusNext(currentId) {
+            const currentIndex = order.indexOf(currentId);
+            if (currentIndex === -1) return;
+            for (let i = currentIndex + 1; i < order.length; i++) {
+                const nextEl = document.getElementById(order[i]);
+                if (isFocusable(nextEl)) {
+                    nextEl.focus();
+                    return;
+                }
+            }
+        }
+
+        function focusById(targetId) {
+            const target = document.getElementById(targetId);
+            if (!target) return;
+            setTimeout(() => target.focus(), 0);
+            setTimeout(() => {
+                if (document.activeElement !== target) target.focus();
+            }, 120);
+        }
+
+        function confirmReturnDateSelection() {
+            if (!awaitingDateSelection) return;
+            awaitingDateSelection = false;
+
+            const nextTarget = dateConfirmTargetId || 'supplierSearchInput';
+            const shouldAutoTriggerInsertOrders = nextTarget === 'insertOrderBtn' && rateDiffToDateFlowActive;
+
+            if (shouldAutoTriggerInsertOrders) {
+                triggerInsertOrdersAfterDateConfirm();
+            } else {
+                focusById(nextTarget);
+            }
+
+            if (nextTarget === 'insertOrderBtn' || rateDiffToDateFlowActive) {
+                rateDiffToDateFlowActive = false;
+                setDateConfirmTarget('supplierSearchInput');
+            }
+        }
+
+        window.focusNextHeaderField = focusNext;
+
+        order.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            el.addEventListener('keydown', function(e) {
+                if (e.key !== 'Enter') return;
+
+                if (id === 'supplierSearchInput') {
+                    const dropdownOpen = document.getElementById('supplierDropdownList')?.style.display === 'block';
+                    if (dropdownOpen) return;
+                    e.preventDefault();
+                    focusNext(id);
+                    return;
+                }
+
+                if (id === 'rate_diff') {
+                    if (shouldIgnoreImmediateRateDiffKey(e)) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === 'function') {
+                        e.stopImmediatePropagation();
+                    }
+                    moveRateDiffToHeaderDate();
+                    return;
+                }
+
+                if (id === 'return_date') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === 'function') {
+                        e.stopImmediatePropagation();
+                    }
+                    if (awaitingDateSelection) {
+                        confirmReturnDateSelection();
+                    } else {
+                        setDateConfirmTarget('insertOrderBtn');
+                        openReturnDatePicker();
+                    }
+                    return;
+                }
+
+                e.preventDefault();
+                if (id === 'insertOrderBtn') {
+                    el.click();
+                    return;
+                }
+                focusNext(id);
+            });
+
+            if (id === 'rate_diff') {
+                el.addEventListener('focus', function() {
+                    rateDiffFocusedAt = Date.now();
+                });
+            }
+        });
+
+        const returnDateInput = document.getElementById('return_date');
+        if (returnDateInput) {
+            returnDateInput.addEventListener('input', function() {
+                if (!rateDiffToDateFlowActive) return;
+                confirmReturnDateSelection();
+            });
+            returnDateInput.addEventListener('change', function() {
+                if (!rateDiffToDateFlowActive) return;
+                confirmReturnDateSelection();
+            });
+            returnDateInput.addEventListener('keyup', function(e) {
+                if (e.key !== 'Enter') return;
+                if (!awaitingDateSelection) return;
+                confirmReturnDateSelection();
+            });
+            returnDateInput.addEventListener('blur', function() {
+                if (datePickerJustOpened) return;
+                if (!rateDiffToDateFlowActive) return;
+                confirmReturnDateSelection();
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            if (!awaitingDateSelection) return;
+            if ((document.activeElement?.id || null) !== 'return_date') return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+            confirmReturnDateSelection();
+        }, true);
+
+        if (!window.__kbPrModWindowRateDiffCaptureBound) {
+            window.addEventListener('keydown', function(e) {
+                const targetId = e.target?.id || null;
+                if ((e.key !== 'Enter' && e.key !== 'Tab') || targetId !== 'rate_diff') return;
+                if (shouldIgnoreImmediateRateDiffKey(e)) return;
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                moveRateDiffToHeaderDate();
+            }, true);
+            window.__kbPrModWindowRateDiffCaptureBound = true;
+        }
+    }
 
     $(document).ready(function() {
         // Initialize transaction number
@@ -679,29 +1210,25 @@
             $('#day_name').val(days[date.getDay()]);
         });
 
-        // Supplier selection
-        $('#supplier_id').on('change', function() {
-            const supplierId = $(this).val();
-            if (supplierId) {
-                selectedSupplier = {
-                    id: supplierId,
-                    name: $(this).find('option:selected').text()
-                };
-            } else {
-                selectedSupplier = null;
-            }
-        });
+        initSupplierDropdown();
+        initHeaderKeyboardNavigation();
+        setSupplierDropdownReadonly(false);
+        focusSupplierOnLoad();
 
         // Insert Orders button - show past purchase returns
         $('#insertOrderBtn').on('click', function(e) {
             e.preventDefault();
+            if (!getSelectedSupplierId()) {
+                alert('Please select a supplier first!');
+                return false;
+            }
             openPastReturnsModal();
         });
     });
 
     // Add New Row - Opens reusable item selection modal
     function addNewRow() {
-        if (!selectedSupplier) {
+        if (!getSelectedSupplierId()) {
             alert('Please select a supplier first!');
             return;
         }
@@ -818,7 +1345,7 @@
 
     // Open Insert Orders Modal
     function openInsertOrdersModal() {
-        if (!selectedSupplier) {
+        if (!getSelectedSupplierId()) {
             alert('Please select a supplier first!');
             return;
         }
@@ -974,8 +1501,13 @@
         const existingRows = tbody.querySelectorAll('tr').length;
         
         if (existingRows === 0) {
+            const supplierId = getSelectedSupplierId();
+            if (!supplierId) {
+                alert('Please select a supplier first!');
+                return;
+            }
             // First time - show normal batch modal
-            loadBatchesForSupplierAndItem(selectedSupplier.id, item.id, false);
+            loadBatchesForSupplierAndItem(supplierId, item.id, false);
         } else {
             // Add row - show ALL batches of this item (any supplier)
             loadAllBatchesForItem(item.id);
@@ -1034,7 +1566,7 @@
                     </div>
                     <div class="insert-orders-modal-body">
                         <div class="alert alert-info" style="font-size: 11px; padding: 8px;">
-                            <strong>Supplier:</strong> ${selectedSupplier.name}
+                            <strong>Supplier:</strong> ${getSelectedSupplierName()}
                         </div>
                         
                         <div style="max-height: 450px; overflow-y: auto;">
@@ -1156,7 +1688,7 @@
         if (existingRows > 0) {
             // This is add row - check if batch is actually from different supplier
             // We need to check if this batch's purchase transaction belongs to current supplier
-            const currentSupplierId = selectedSupplier.id;
+            const currentSupplierId = getSelectedSupplierId();
             const batchPurchaseTransactionId = batch.purchase_transaction_id;
             
             // Check if batch is from different supplier by verifying purchase transaction
@@ -1178,7 +1710,7 @@
                     } else {
                         // Different supplier - show warning
                         const supplierName = data.batch_supplier_name || 'Unknown Supplier';
-                        const confirmMessage = `⚠️ Warning: This batch "${batch.batch_no || 'Unknown'}" is from "${supplierName}", not from the selected supplier "${selectedSupplier.name}".
+                        const confirmMessage = `⚠️ Warning: This batch "${batch.batch_no || 'Unknown'}" is from "${supplierName}", not from the selected supplier "${getSelectedSupplierName()}".
             
 Batch Details:
 • Supplier: ${supplierName}
@@ -1749,7 +2281,7 @@ Do you still want to add this batch to the return?`;
 
     // Add new row button
     function addNewRow() {
-        if (!selectedSupplier) {
+        if (!getSelectedSupplierId()) {
             alert('Please select a supplier first!');
             return;
         }
@@ -1766,7 +2298,7 @@ Do you still want to add this batch to the return?`;
             return;
         }
         
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier.');
             return;
@@ -1812,7 +2344,7 @@ Do you still want to add this batch to the return?`;
     
     // Open Past Returns Modal
     function openPastReturnsModal() {
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         
         // Fetch all past purchase returns (no date filter required)
         let url = `{{ route('admin.purchase-return.past-returns') }}`;
@@ -2191,7 +2723,7 @@ Do you still want to add this batch to the return?`;
 
     // Open Credit Adjustment Modal
     function openCreditAdjustmentModal() {
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier first!');
             return;
@@ -2432,7 +2964,7 @@ Do you still want to add this batch to the return?`;
             return;
         }
         
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier.');
             return;
@@ -2501,7 +3033,7 @@ Do you still want to add this batch to the return?`;
         const formData = {
             return_date: document.getElementById('return_date').value,
             supplier_id: supplierId,
-            supplier_name: document.getElementById('supplier_id').options[document.getElementById('supplier_id').selectedIndex].text,
+            supplier_name: getSelectedSupplierName(),
             nt_amount: parseFloat(document.getElementById('ntAmount')?.value || 0),
             dis_amount: parseFloat(document.getElementById('disAmount')?.value || 0),
             tax_amount: parseFloat(document.getElementById('taxAmount')?.value || 0),
@@ -2547,7 +3079,7 @@ Do you still want to add this batch to the return?`;
             return;
         }
         
-        const supplierId = document.getElementById('supplier_id').value;
+        const supplierId = getSelectedSupplierId();
         if (!supplierId) {
             alert('Please select a supplier.');
             return;

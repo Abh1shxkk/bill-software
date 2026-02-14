@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Breakage/Expiry Modification')
+@section('disable_select2', '1')
 
 @section('content')
 <style>
@@ -112,6 +113,14 @@
     }
     .kb-row-active td {
         background-color: #cfe2ff !important;
+    }
+
+    .adjustment-input.kb-active,
+    .adjustment-input:focus,
+    .adjustment-input:focus-visible {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 2px !important;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
     }
 
     .item-modal-backdrop, .batch-modal-backdrop {
@@ -578,7 +587,7 @@
 
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
-        <form id="breakageExpiryTransactionForm" method="POST" autocomplete="off" onkeydown="return event.key !== 'Enter';">
+        <form id="breakageExpiryTransactionForm" method="POST" autocomplete="off">
             @csrf
 
             <!-- Header Section -->
@@ -787,8 +796,17 @@
                 </div>
                 <!-- Add Row Button -->
                 <div class="text-center mt-2">
-                    <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
+                    <button type="button" class="btn btn-sm btn-success" 
+                            id="addRowBtn"
+                            onclick="addNewRow()" 
+                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); addNewRow(); }">
                         <i class="fas fa-plus-circle"></i> Add Row
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary ms-2"
+                            id="selectItemBtn"
+                            data-target-row-index=""
+                            onclick="const idx = this.dataset.targetRowIndex; openItemPickerModalExplicitly(idx !== '' ? parseInt(idx, 10) : null); this.dataset.targetRowIndex='';">
+                        <i class="bi bi-search"></i> Select Item
                     </button>
                 </div>
             </div>
@@ -1055,7 +1073,7 @@
 
             <!-- Action Buttons -->
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-primary btn-sm" onclick="saveTransaction()">
+                <button type="button" class="btn btn-primary btn-sm" id="saveTransactionBtn" onclick="saveTransaction()">
                     <i class="bi bi-save"></i> Save
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='{{ route('admin.dashboard') }}'">
@@ -1076,6 +1094,11 @@
 let currentRowIndex = 0;
 let itemsData = [];
 let currentItemForBatch = null;
+let kbBeModItemModalTargetRowIndex = null;
+let kbBeModItemModalOpenLock = false;
+let kbBeModLastSaveShortcutAt = 0;
+let currentCreditNoteButtonIndex = 0;
+const creditNoteButtonIds = ['creditSaveWithoutBtn', 'creditSaveWithBtn'];
 
 // Show alert function
 function showAlert(type, message) {
@@ -1125,24 +1148,132 @@ function showAlert(type, message) {
     }, 3000);
 }
 
-// Add new row to items table - opens reusable item selection modal
-function addNewRow() {
-    // Use reusable item selection modal
+// Legacy helper: opens reusable item picker explicitly (kept for manual trigger paths)
+function openItemPickerModalExplicitly(rowIndex = null) {
+    if (kbBeModItemModalOpenLock) return;
+    const modalEl = document.getElementById('chooseItemsModal');
+    if (modalEl && modalEl.classList.contains('show')) return;
+
+    kbBeModItemModalTargetRowIndex = Number.isInteger(rowIndex) ? rowIndex : null;
+    kbBeModItemModalOpenLock = true;
     if (typeof openItemModal_chooseItemsModal === 'function') {
         openItemModal_chooseItemsModal();
+        setTimeout(() => {
+            kbBeModItemModalOpenLock = false;
+        }, 300);
     } else {
+        kbBeModItemModalOpenLock = false;
         showAlert('error', 'Item selection modal not initialized. Please reload the page.');
     }
+}
+
+function triggerSelectItemButtonForRow(rowIndex) {
+    const selectItemBtn = document.getElementById('selectItemBtn');
+    if (selectItemBtn) {
+        selectItemBtn.dataset.targetRowIndex = Number.isInteger(rowIndex) ? String(rowIndex) : '';
+        selectItemBtn.focus();
+        selectItemBtn.click();
+        return;
+    }
+    openItemPickerModalExplicitly(rowIndex);
+}
+
+function handleCodeFieldEnter(event, rowIndex) {
+    if (event.key !== 'Enter' && event.keyCode !== 13) return true;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    triggerSelectItemButtonForRow(rowIndex);
+    return false;
+}
+
+function applyItemBatchToExistingRow(rowIndex, item, batch) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return false;
+
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    const nameInput = row.querySelector('input[name*="[name]"]');
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expiryInput = row.querySelector('input[name*="[expiry]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    const brExSelect = row.querySelector('select[name*="[br_ex]"]');
+
+    if (codeInput) codeInput.value = item.bar_code || item.item_code || item.id || '';
+    if (nameInput) nameInput.value = item.name || item.item_name || '';
+    if (batchInput) batchInput.value = batch.batch_no || '';
+    if (mrpInput) mrpInput.value = parseFloat(batch.mrp || item.mrp || 0).toFixed(2);
+    if (brExSelect && !brExSelect.value) brExSelect.value = 'B';
+
+    if (expiryInput) {
+        let expiryDisplay = '';
+        if (batch.expiry_date) {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        }
+        expiryInput.value = expiryDisplay;
+    }
+
+    // Keep data model in sync for tax/calculation sections.
+    const gstPercent = parseFloat(item.gst_percent || ((parseFloat(item.cgst_percent || 0) + parseFloat(item.sgst_percent || 0)) || 0));
+    const itemData = {
+        id: item.id || item.item_id || item.bar_code || '',
+        name: item.name || item.item_name || '',
+        packing: item.packing || '',
+        mrp: parseFloat(batch.mrp || item.mrp || 0),
+        hsn_code: item.hsn_code || '',
+        gst_percent: gstPercent,
+        total_qty: parseFloat(item.total_qty || 0)
+    };
+    const batchData = {
+        batch_no: batch.batch_no || '',
+        s_rate: parseFloat(batch.s_rate || batch.sale_rate || 0),
+        pur_rate: parseFloat(batch.pur_rate || batch.p_rate || 0),
+        mrp: parseFloat(batch.mrp || item.mrp || 0),
+        expiry_date: batch.expiry_date || ''
+    };
+
+    row.dataset.itemId = itemData.id;
+    row.dataset.itemData = JSON.stringify(itemData);
+    row.dataset.batchData = JSON.stringify(batchData);
+    row.dataset.sRate = batchData.s_rate;
+    row.dataset.pRate = batchData.pur_rate;
+    row.dataset.mrp = batchData.mrp;
+    row.dataset.completed = 'false';
+
+    calculateRowAmount(rowIndex);
+    updateAllCalculations();
+
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        } else {
+            focusFirstEditableFieldInRow(row);
+        }
+    }, 80);
+
+    return true;
 }
 
 // Callback function when item and batch are selected from reusable modal
 window.onItemBatchSelectedFromModal = function(item, batch) {
     console.log('Item selected from modal:', item);
     console.log('Batch selected from modal:', batch);
+    kbBeModItemModalOpenLock = false;
+
+    // If item picker was opened from a specific row's first field, fill that row instead of adding another row.
+    if (Number.isInteger(kbBeModItemModalTargetRowIndex)) {
+        const targetRowIndex = kbBeModItemModalTargetRowIndex;
+        kbBeModItemModalTargetRowIndex = null;
+        if (applyItemBatchToExistingRow(targetRowIndex, item, batch)) {
+            return;
+        }
+    }
     
     // Create a new row for the item
     const tbody = document.getElementById('itemsTableBody');
-    const rowIndex = tbody.querySelectorAll('tr').length;
+    const rowIndex = currentRowIndex++;
     
     // Format expiry date
     let expiryDisplay = '';
@@ -1155,7 +1286,8 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     row.id = `row-${rowIndex}`;
     row.innerHTML = `
         <td>
-            <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly>
+            <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});">
         </td>
         <td>
             <input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly>
@@ -1167,7 +1299,9 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
             <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly>
         </td>
         <td>
-            <select class="form-control" name="items[${rowIndex}][br_ex]" style="width: 60px;">
+            <select class="form-control no-select2" name="items[${rowIndex}][br_ex]" style="width: 60px;"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
                 <option value="B">B</option>
                 <option value="E">E</option>
             </select>
@@ -1192,7 +1326,8 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         </td>
         <td>
             <input type="number" class="form-control" name="items[${rowIndex}][dis_percent]" value="0" step="0.01" 
-                   onchange="calculateRowTotal(${rowIndex})">
+                   onchange="calculateRowTotal(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }">
         </td>
         <td>
             <input type="number" class="form-control readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly>
@@ -1219,13 +1354,9 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     row.dataset.pRate = batch.p_rate || batch.pur_rate || 0;
     row.dataset.mrp = batch.mrp || 0;
     
-    // Focus on qty input
+    // Focus first editable field of the new row
     setTimeout(() => {
-        const qtyInput = row.querySelector('input[name*="[qty]"]');
-        if (qtyInput) {
-            qtyInput.focus();
-            qtyInput.select();
-        }
+        focusFirstEditableFieldInRow(row);
     }, 100);
     
     showAlert('success', 'Item added! Enter quantity.');
@@ -1811,7 +1942,8 @@ function addInvoiceItemToTable(item, index) {
     row.id = `row-${rowIndex}`;
     row.innerHTML = `
         <td>
-            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.item_code || ''}" readonly>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.item_code || ''}" readonly
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});">
         </td>
         <td>
             <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.item_name || ''}" readonly>
@@ -1830,9 +1962,9 @@ function addInvoiceItemToTable(item, index) {
                    placeholder="MM/YY">
         </td>
         <td>
-            <select class="form-control form-control-sm" name="items[${rowIndex}][br_ex]"
-                    onchange="moveToNextField(${rowIndex}, 'qty')"
-                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'qty'); return false; }">
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
                 <option value="">Select</option>
                 <option value="B" ${item.br_ex === 'B' ? 'selected' : ''}>Breakage</option>
                 <option value="E" ${item.br_ex === 'E' ? 'selected' : ''}>Expiry</option>
@@ -1866,9 +1998,10 @@ function addInvoiceItemToTable(item, index) {
                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'dis_percent'); return false; }">
         </td>
         <td>
-            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][dis_percent]" 
+            <input type="number" class="form-control form-control-sm TEST-DIS-PERCENT" name="items[${rowIndex}][dis_percent]" 
                    value="${item.dis_percent || 0}"
-                   step="0.01" onchange="handleDiscountChange(${rowIndex})" 
+                   step="0.01" 
+                   onchange="handleDiscountChange(${rowIndex})" 
                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }">
         </td>
         <td>
@@ -2216,7 +2349,8 @@ function addNewRowWithItem(item) {
     row.id = `row-${rowIndex}`;
     row.innerHTML = `
         <td>
-            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});">
         </td>
         <td>
             <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly>
@@ -2233,9 +2367,9 @@ function addNewRowWithItem(item) {
                    placeholder="MM/YY">
         </td>
         <td>
-            <select class="form-control form-control-sm" name="items[${rowIndex}][br_ex]"
-                    onchange="moveToNextField(${rowIndex}, 'qty')"
-                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'qty'); return false; }">
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
                 <option value="">Select</option>
                 <option value="B">Breakage</option>
                 <option value="E">Expiry</option>
@@ -2269,7 +2403,8 @@ function addNewRowWithItem(item) {
         </td>
         <td>
             <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][dis_percent]" 
-                   step="0.01" onchange="handleDiscountChange(${rowIndex})" 
+                   step="0.01" 
+                   onchange="handleDiscountChange(${rowIndex})" 
                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }" 
                    value="0.00">
         </td>
@@ -2295,12 +2430,9 @@ function addNewRowWithItem(item) {
         selectRowForCalculation(rowIndex);
     });
     
-    // Focus on batch input
+    // Focus first editable field of the new row
     setTimeout(() => {
-        const batchInput = row.querySelector('input[name*="[batch]"]');
-        if (batchInput) {
-            batchInput.focus();
-        }
+        focusFirstEditableFieldInRow(row);
     }, 100);
 }
 
@@ -2515,6 +2647,96 @@ function selectBatch(batch) {
     currentItemForBatch = null;
 }
 
+// Handle form-level Enter key - Allow field-specific handlers to execute first
+function handleFormEnterKey(event) {
+    if (event.key !== 'Enter') {
+        return true; // Allow all non-Enter keys
+    }
+    
+    // Allow Enter for SELECT elements (dropdowns)
+    if (event.target.tagName === 'SELECT') {
+        return true;
+    }
+    
+    // Check if the input field has its own onkeydown handler
+    // If yes, let it handle the Enter key (don't block it)
+    if (event.target.hasAttribute('onkeydown')) {
+        return true; // Let field's own handler execute
+    }
+    
+    // Block Enter for all other cases (prevent form submission)
+    return false;
+}
+
+// Handle Br/Ex dropdown keyboard navigation
+function openBrExDropdown(dropdown) {
+    if (!dropdown) return;
+
+    dropdown.focus();
+    dropdown.dataset.kbExpanded = '1';
+
+    if (typeof dropdown.showPicker === 'function') {
+        try {
+            dropdown.showPicker();
+            return;
+        } catch (error) {
+            // Fallback to size-based expansion below.
+        }
+    }
+
+    const optionsCount = Math.max(dropdown.options.length, 2);
+    dropdown.size = optionsCount;
+    dropdown.style.position = 'absolute';
+    dropdown.style.zIndex = '1000';
+    dropdown.style.backgroundColor = 'white';
+    dropdown.style.border = '1px solid #ced4da';
+    dropdown.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+}
+
+function closeBrExDropdown(dropdown) {
+    if (!dropdown) return;
+
+    dropdown.size = 1;
+    dropdown.style.position = '';
+    dropdown.style.zIndex = '';
+    dropdown.style.backgroundColor = '';
+    dropdown.style.border = '';
+    dropdown.style.boxShadow = '';
+    delete dropdown.dataset.kbExpanded;
+}
+
+function handleBrExChange(rowIndex, dropdown) {
+    closeBrExDropdown(dropdown);
+    moveToNextField(rowIndex, 'qty');
+}
+
+function handleBrExKeydown(event, rowIndex) {
+    const dropdown = event.target;
+    
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isExpanded = dropdown.size > 1 || dropdown.dataset.kbExpanded === '1';
+        if (isExpanded) {
+            closeBrExDropdown(dropdown);
+            setTimeout(() => {
+                moveToNextField(rowIndex, 'qty');
+            }, 50);
+        } else {
+            openBrExDropdown(dropdown);
+        }
+        
+        return false;
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeBrExDropdown(dropdown);
+        return false;
+    }
+
+    return true;
+}
+
 // Move to Next Field
 function moveToNextField(rowIndex, nextFieldName) {
     const row = document.getElementById(`row-${rowIndex}`);
@@ -2531,36 +2753,79 @@ function moveToNextField(rowIndex, nextFieldName) {
                 // For number inputs, select all
                 nextField.select();
             } else if (nextField.tagName === 'SELECT') {
-                // For select, just focus
                 nextField.focus();
+                if (nextFieldName === 'br_ex') {
+                    openBrExDropdown(nextField);
+                }
             }
         }, 100);
     }
 }
 
+function focusFirstEditableFieldInRow(row) {
+    if (!row) return false;
+    const firstEditable = row.querySelector('input:not([readonly]):not([disabled]), select:not([disabled]), textarea:not([readonly]):not([disabled])');
+    if (!firstEditable) return false;
+
+    firstEditable.focus();
+    if (firstEditable.tagName === 'INPUT') {
+        firstEditable.select();
+    }
+    return true;
+}
+
 // Handle Discount and Add New Row - Called when Enter is pressed on Dis% field
 function handleDiscountAndAddRow(rowIndex) {
-    console.log('handleDiscountAndAddRow called for row:', rowIndex);
-    const row = document.getElementById(`row-${rowIndex}`);
-    if (!row) {
-        console.log('Row not found:', rowIndex);
+    const active = document.activeElement;
+    if (active && active.name && !active.name.includes('[dis_percent]')) {
         return;
     }
-    
-    console.log('Marking row as completed');
+
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    const tbody = document.getElementById('itemsTableBody');
+    if (!tbody) return;
+    const previousRowCount = tbody.querySelectorAll('tr').length;
+
     // Mark row as completed
     markRowAsCompleted(rowIndex);
     
-    // Calculate the row amount
-    calculateRowAmount(rowIndex);
+    // Keep both calculators compatible with old/new row templates.
+    if (typeof calculateRowAmount === 'function') {
+        calculateRowAmount(rowIndex);
+    }
+    if (typeof calculateRowTotal === 'function') {
+        calculateRowTotal(rowIndex);
+    }
     
     // Clear HSN section (will show next row's data when selected)
     clearCalculationSection();
     
     // Remove focus from current field
-    document.activeElement.blur();
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
     
-    // Don't automatically add new row - user will click "Insert Items" button manually
+    // Trigger "Add Row" and auto-focus first editable field of newly created row.
+    const focusObserver = new MutationObserver(() => {
+        const rows = tbody.querySelectorAll('tr');
+        if (rows.length <= previousRowCount) return;
+        focusObserver.disconnect();
+        const newRow = rows[rows.length - 1];
+        setTimeout(() => {
+            focusFirstEditableFieldInRow(newRow);
+        }, 50);
+    });
+    focusObserver.observe(tbody, { childList: true });
+    setTimeout(() => focusObserver.disconnect(), 6000);
+
+    setTimeout(() => {
+        const addRowBtn = document.getElementById('addRowBtn') || document.querySelector('.btn-success[onclick*="addNewRow"]');
+        if (addRowBtn) {
+            addRowBtn.focus();
+            addRowBtn.click();
+        }
+    }, 100);
 }
 
 // Handle Discount Change - Highlights row and triggers calculations
@@ -2821,26 +3086,123 @@ function removeRow(rowIndex) {
     const row = document.getElementById(`row-${rowIndex}`);
     if (row) {
         row.remove();
-        calculateTotals();
+        updateAllCalculations();
     }
 }
 
-// Add New Row - Opens item selection modal
+// Add New Row - creates blank row only (no modal)
 function addNewRow() {
     // Check if customer is selected
-    const customerId = document.querySelector('select[name="customer_id"]').value;
+    const customerId = document.querySelector('select[name="customer_id"]')?.value;
     
     if (!customerId) {
         showAlert('error', 'Please select a customer first.');
         return;
     }
-    
-    openItemSelectionModal();
+
+    const tbody = document.getElementById('itemsTableBody');
+    if (!tbody) return;
+
+    const rowIndex = currentRowIndex++;
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value=""
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});"
+                   placeholder="">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value=""
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'batch'); return false; }">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value=""
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'expiry'); return false; }">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value=""
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'br_ex'); return false; }"
+                   placeholder="MM/YY">
+        </td>
+        <td>
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
+                <option value="">Select</option>
+                <option value="B">Breakage</option>
+                <option value="E">Expiry</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'f_qty'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][f_qty]" value="0" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'mrp'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" value="0.00" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'scm_percent'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][scm_percent]" value="0.00" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'dis_percent'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][dis_percent]" value="0.00" step="0.01"
+                   onchange="handleDiscountChange(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+
+    tbody.appendChild(row);
+
+    // Initialize blank row datasets to keep calculators stable
+    row.dataset.itemId = '';
+    row.dataset.itemData = JSON.stringify({});
+    row.dataset.batchData = JSON.stringify({});
+
+    row.addEventListener('click', function() {
+        selectRowForCalculation(rowIndex);
+    });
+
+    setTimeout(() => {
+        focusFirstEditableFieldInRow(row);
+    }, 80);
+
+    updateAllCalculations();
 }
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Breakage/Expiry Modification page loaded');
+    console.log('Breakage/Expiry Transaction page loaded');
+
+    // Keep this page Select2-free (same pattern used in sales return screens).
+    if (window.$ && $.fn.select2) {
+        document.querySelectorAll('select').forEach(function(selectElement) {
+            selectElement.classList.add('no-select2');
+            const $el = $(selectElement);
+            if ($el.data('select2')) {
+                $el.select2('destroy');
+                $el.removeClass('select2-hidden-accessible');
+                $el.next('.select2-container').remove();
+            }
+        });
+    }
     
     // Handle form submission
     document.getElementById('breakageExpiryTransactionForm').addEventListener('submit', function(e) {
@@ -2853,6 +3215,99 @@ document.addEventListener('DOMContentLoaded', function() {
     initDropdownEnterCapture();
     initHeaderKeyboardNavigation();
     initInvoiceModalKeyboard();
+
+    // Capture-level fallback: Enter on any Dis% field always triggers Add Row flow.
+    if (!window.__kbBeModDisEnterBound) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+            const target = e.target;
+            if (!target || !target.name || !target.name.includes('[dis_percent]')) return;
+
+            const rowMatch = target.name.match(/items\[(\d+)\]\[dis_percent\]/);
+            if (!rowMatch) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            handleDiscountAndAddRow(parseInt(rowMatch[1], 10));
+        }, true);
+        window.__kbBeModDisEnterBound = true;
+    }
+
+    // Delegated keyboard binding: Enter on any grid Code field opens Select Item modal.
+    // Works for both existing and dynamically added rows.
+    if (!window.__kbBeModCodeEnterBound) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+
+            const target = e.target;
+            if (!target || target.tagName !== 'INPUT') return;
+            if (!target.name || !target.name.includes('[code]')) return;
+
+            const rowEl = target.closest('#itemsTableBody tr');
+            if (!rowEl) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            // Avoid duplicate opens when modal is already visible or opening.
+            if (kbBeModItemModalOpenLock) return;
+            const modalEl = document.getElementById('chooseItemsModal');
+            if (modalEl && modalEl.classList.contains('show')) return;
+
+            let rowIndex = null;
+            const nameMatch = target.name.match(/items\[(\d+)\]\[code\]/);
+            if (nameMatch) {
+                rowIndex = parseInt(nameMatch[1], 10);
+            } else if (rowEl.id && rowEl.id.startsWith('row-')) {
+                rowIndex = parseInt(rowEl.id.replace('row-', ''), 10);
+            }
+
+            triggerSelectItemButtonForRow(Number.isInteger(rowIndex) ? rowIndex : null);
+        }, true);
+        window.__kbBeModCodeEnterBound = true;
+    }
+
+    // Global Ctrl+S / Cmd+S -> trigger same Save button flow as manual click.
+    if (!window.__kbBeModCtrlSBound) {
+        document.addEventListener('keydown', function(e) {
+            const isSaveShortcut = (e.ctrlKey || e.metaKey) && ((e.key || '').toLowerCase() === 's');
+            if (!isSaveShortcut) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            if (e.repeat) return;
+
+            const blockingModalOpen = !!document.querySelector(
+                '#chooseItemsModal.show, #batchSelectionModal.show, #creditNoteModal.show, #adjustmentModal.show, #invoiceModal.show, #itemModal.show, #batchModal.show, #createBatchModal.show'
+            );
+            if (blockingModalOpen) {
+                const adjustmentModalOpen = !!document.querySelector('#adjustmentModal.show');
+                if (adjustmentModalOpen && typeof saveAdjustment === 'function') {
+                    saveAdjustment();
+                }
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveTransactionBtn');
+            if (saveBtn && (saveBtn.disabled || saveBtn.getAttribute('aria-disabled') === 'true')) return;
+
+            const now = Date.now();
+            if (now - kbBeModLastSaveShortcutAt < 500) return;
+            kbBeModLastSaveShortcutAt = now;
+
+            if (saveBtn && typeof saveBtn.click === 'function') {
+                saveBtn.click();
+            } else if (typeof saveTransaction === 'function') {
+                saveTransaction();
+            }
+        }, true);
+
+        window.__kbBeModCtrlSBound = true;
+    }
 
     // Initial focus
     setTimeout(() => {
@@ -3342,31 +3797,103 @@ function saveTransaction() {
     showCreditNoteModal();
 }
 
+function getCreditNoteOptionButtons() {
+    return creditNoteButtonIds
+        .map(id => document.getElementById(id))
+        .filter(Boolean);
+}
+
+function focusCreditNoteOptionButton(index) {
+    const buttons = getCreditNoteOptionButtons();
+    if (buttons.length === 0) return;
+
+    const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+    currentCreditNoteButtonIndex = safeIndex;
+
+    buttons.forEach((btn, idx) => {
+        if (idx === safeIndex) {
+            btn.classList.add('active');
+            btn.focus();
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function handleCreditNoteModalKeyboard(e) {
+    const modal = document.getElementById('creditNoteModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    if (modal.style.display === 'none') return;
+
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        focusCreditNoteOptionButton(currentCreditNoteButtonIndex - 1);
+        return;
+    }
+
+    if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        focusCreditNoteOptionButton(currentCreditNoteButtonIndex + 1);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const focusedIndex = creditNoteButtonIds.findIndex(id => document.getElementById(id) === document.activeElement);
+        if (focusedIndex >= 0) {
+            currentCreditNoteButtonIndex = focusedIndex;
+        }
+
+        const activeButtonId = creditNoteButtonIds[currentCreditNoteButtonIndex];
+        const activeButton = activeButtonId ? document.getElementById(activeButtonId) : null;
+        if (activeButton && !activeButton.disabled) {
+            activeButton.click();
+        }
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeCreditNoteModal();
+    }
+}
+
 // Show Credit Note Modal
 function showCreditNoteModal() {
     const modal = document.getElementById('creditNoteModal');
+    if (!modal) return;
+
+    modal.style.display = 'block';
     modal.classList.add('show');
-    
-    // Remove any existing ESC listeners first
-    document.removeEventListener('keydown', window.creditNoteEscHandler);
-    
-    // Create new ESC key handler
-    window.creditNoteEscHandler = function(e) {
-        if (e.key === 'Escape') {
-            closeCreditNoteModal();
-        }
-    };
-    
-    document.addEventListener('keydown', window.creditNoteEscHandler);
+
+    currentCreditNoteButtonIndex = 0;
+    setTimeout(() => {
+        focusCreditNoteOptionButton(0);
+    }, 80);
+
+    // Remove and re-bind to avoid duplicate handlers.
+    document.removeEventListener('keydown', handleCreditNoteModalKeyboard, true);
+    document.addEventListener('keydown', handleCreditNoteModalKeyboard, true);
 }
 
 // Close Credit Note Modal
 function closeCreditNoteModal() {
     const modal = document.getElementById('creditNoteModal');
+    if (!modal) return;
+
     modal.classList.remove('show');
-    
-    // Remove ESC key listener
-    document.removeEventListener('keydown', window.creditNoteEscHandler);
+
+    // Remove modal keyboard listener.
+    document.removeEventListener('keydown', handleCreditNoteModalKeyboard, true);
     
     setTimeout(() => {
         modal.style.display = 'none';
@@ -3394,6 +3921,11 @@ function saveWithCreditNote() {
 
 // Submit Transaction (Original Logic)
 function submitTransaction(withCreditNote = false, adjustments = []) {
+    if (window.__kbBeModSubmitInProgress) {
+        return;
+    }
+    window.__kbBeModSubmitInProgress = true;
+
     const form = document.getElementById('breakageExpiryTransactionForm');
     const formData = new FormData(form);
     
@@ -3536,6 +4068,9 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     .catch(error => {
         console.error('Error:', error);
         showAlert('error', 'Error saving transaction: ' + error.message);
+    })
+    .finally(() => {
+        window.__kbBeModSubmitInProgress = false;
     });
 }
 
@@ -3707,17 +4242,14 @@ function showAdjustmentModal(sales, customer) {
             });
         }
         
-        // Remove any existing ESC listeners first
-        document.removeEventListener('keydown', window.adjustmentEscHandler);
+        // Initialize keyboard navigation for adjustment modal
+        initAdjustmentModalKeyboard();
         
-        // Create new ESC key handler
-        window.adjustmentEscHandler = function(e) {
-            if (e.key === 'Escape') {
-                closeAdjustmentModal();
-            }
-        };
-        
-        document.addEventListener('keydown', window.adjustmentEscHandler);
+        // Add keyboard event listener for ESC and Ctrl+S
+        if (!window.__kbBeAdjustmentEscBound) {
+            document.addEventListener('keydown', handleAdjustmentEsc, true);
+            window.__kbBeAdjustmentEscBound = true;
+        }
     };
     
     // If editing existing transaction, fetch existing adjustments
@@ -3862,13 +4394,108 @@ function updateAdjustmentBalance() {
     }
 }
 
+// Get Remaining Adjustment Amount
+function getRemainingAdjustment() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    inputs.forEach(input => {
+        totalAdjusted += parseFloat(input.value || 0);
+    });
+    return Math.max(0, (parseFloat(window.netAmount || 0) - totalAdjusted));
+}
+
+// Initialize Adjustment Modal Keyboard Navigation
+function initAdjustmentModalKeyboard() {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+
+    const setActive = (input) => {
+        inputs.forEach(i => i.classList.remove('kb-active'));
+        if (input) {
+            input.classList.add('kb-active');
+            input.focus();
+        }
+    };
+
+    inputs.forEach((input, idx) => {
+        input.addEventListener('focus', () => setActive(input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = inputs[idx + 1];
+                if (next) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const remaining = getRemainingAdjustment();
+                    const nextBalance = parseFloat(next.getAttribute('data-balance') || 0);
+
+                    if (remaining <= 0 && currentValue > 0) {
+                        const moveValue = Math.min(currentValue, nextBalance);
+                        next.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                    } else {
+                        const nextValue = Math.min(remaining, nextBalance);
+                        next.value = nextValue.toFixed(2);
+                    }
+
+                    updateAdjustmentBalance();
+                    setActive(next);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = inputs[idx - 1];
+                if (prev) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const prevBalance = parseFloat(prev.getAttribute('data-balance') || 0);
+
+                    if (currentValue > 0) {
+                        const moveValue = Math.min(currentValue, prevBalance);
+                        prev.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                        updateAdjustmentBalance();
+                    }
+
+                    setActive(prev);
+                }
+            }
+        });
+    });
+
+    setActive(inputs[0]);
+}
+
+// Handle Adjustment Modal Keyboard Events (ESC and Ctrl+S)
+function handleAdjustmentEsc(e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeAdjustmentModal();
+        return;
+    }
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (isCtrlS) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveAdjustment();
+    }
+}
+
 // Close Adjustment Modal
 function closeAdjustmentModal() {
     const modal = document.getElementById('adjustmentModal');
     modal.classList.remove('show');
     
-    // Remove ESC key listener
-    document.removeEventListener('keydown', window.adjustmentEscHandler);
+    // Remove keyboard event listeners
+    if (window.__kbBeAdjustmentEscBound) {
+        document.removeEventListener('keydown', handleAdjustmentEsc, true);
+        window.__kbBeAdjustmentEscBound = false;
+    }
+    
+    // Also remove old ESC listener if exists
+    if (window.adjustmentEscHandler) {
+        document.removeEventListener('keydown', window.adjustmentEscHandler);
+    }
     
     setTimeout(() => {
         modal.style.display = 'none';
@@ -4063,18 +4690,144 @@ function showBatchNotExistModal() {
             backdrop.style.display = 'block';
             modal.style.display = 'block';
             
+            // Add backdrop click handler
+            backdrop.onclick = function(e) {
+                if (e.target === backdrop) {
+                    closeBatchNotExistModal();
+                }
+            };
+            
+            // Prevent modal content clicks from closing
+            const modalContent = modal.querySelector('.batch-not-exist-modal-content');
+            if (modalContent) {
+                modalContent.onclick = function(e) {
+                    e.stopPropagation();
+                };
+            }
+            
             setTimeout(() => {
                 backdrop.classList.add('show');
                 modal.classList.add('show');
+                
+                // Initialize keyboard navigation after a delay to prevent immediate closure
+                setTimeout(() => {
+                    initBatchModalKeyboardNav();
+                }, 100);
             }, 10);
         }
     }, 10);
+}
+
+// Keyboard navigation for Batch Not Exist Modal
+let currentBatchModalButtonIndex = 0;
+const batchModalButtonIds = ['batchModalYesBtn', 'batchModalNoBtn', 'batchModalCancelBtn'];
+
+function initBatchModalKeyboardNav() {
+    currentBatchModalButtonIndex = 0;
+    
+    // Highlight first button (Yes)
+    highlightBatchModalButton(0);
+    
+    // Remove any existing listener first
+    document.removeEventListener('keydown', handleBatchModalKeyboard, true);
+    
+    // Add keyboard event listener with capture phase (higher priority)
+    document.addEventListener('keydown', handleBatchModalKeyboard, true);
+}
+
+function handleBatchModalKeyboard(e) {
+    const modal = document.getElementById('batchNotExistModal');
+    const backdrop = document.getElementById('batchNotExistModalBackdrop');
+    
+    // Only handle if modal is fully shown
+    if (!modal || !modal.classList.contains('show') || !backdrop || !backdrop.classList.contains('show')) {
+        return;
+    }
+    
+    // Check if modal is actually visible
+    if (modal.style.display === 'none' || backdrop.style.display === 'none') {
+        return;
+    }
+    
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        currentBatchModalButtonIndex = (currentBatchModalButtonIndex - 1 + batchModalButtonIds.length) % batchModalButtonIds.length;
+        highlightBatchModalButton(currentBatchModalButtonIndex);
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopPropagation();
+        currentBatchModalButtonIndex = (currentBatchModalButtonIndex + 1) % batchModalButtonIds.length;
+        highlightBatchModalButton(currentBatchModalButtonIndex);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const currentButtonId = batchModalButtonIds[currentBatchModalButtonIndex];
+        const currentButton = document.getElementById(currentButtonId);
+        if (currentButton) {
+            // Directly call the onclick function instead of click()
+            if (currentButtonId === 'batchModalYesBtn') {
+                openCreateBatchModal();
+            } else if (currentButtonId === 'batchModalNoBtn') {
+                closeBatchNotExistModal();
+                // Move focus to next field (expiry) after closing modal
+                setTimeout(() => {
+                    if (currentItemForBatch && currentItemForBatch.rowIndex !== undefined) {
+                        const expiryInput = document.querySelector(`input[name="items[${currentItemForBatch.rowIndex}][expiry]"]`);
+                        if (expiryInput) {
+                            expiryInput.focus();
+                            expiryInput.select();
+                        }
+                    }
+                }, 350);
+            } else if (currentButtonId === 'batchModalCancelBtn') {
+                closeBatchNotExistModal();
+            }
+        }
+        return false;
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeBatchNotExistModal();
+    }
+}
+
+function highlightBatchModalButton(index) {
+    // Remove highlight from all buttons
+    batchModalButtonIds.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.style.outline = '';
+            btn.style.boxShadow = '';
+            btn.style.transform = '';
+        }
+    });
+    
+    // Highlight current button
+    const currentButtonId = batchModalButtonIds[index];
+    const currentButton = document.getElementById(currentButtonId);
+    if (currentButton) {
+        currentButton.style.outline = '3px solid #0d6efd';
+        currentButton.style.boxShadow = '0 0 0 0.25rem rgba(13, 110, 253, 0.5)';
+        currentButton.style.transform = 'scale(1.05)';
+        currentButton.focus();
+    }
 }
 
 // Close Batch Not Exist Modal
 function closeBatchNotExistModal() {
     const modal = document.getElementById('batchNotExistModal');
     const backdrop = document.getElementById('batchNotExistModalBackdrop');
+    
+    // Remove keyboard event listener with capture phase
+    document.removeEventListener('keydown', handleBatchModalKeyboard, true);
+    
+    // Remove backdrop click handler
+    if (backdrop) {
+        backdrop.onclick = null;
+    }
     
     if (modal) {
         modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
@@ -4169,9 +4922,9 @@ function showAlert(type, message) {
 </script>
 
 <!-- Batch Does Not Exist Confirmation Modal -->
-<div class="batch-not-exist-modal-backdrop" id="batchNotExistModalBackdrop" onclick="closeBatchNotExistModal()" style="display: none;"></div>
+<div class="batch-not-exist-modal-backdrop" id="batchNotExistModalBackdrop" style="display: none;"></div>
 <div class="batch-not-exist-modal" id="batchNotExistModal" style="display: none;">
-    <div class="batch-not-exist-modal-content">
+    <div class="batch-not-exist-modal-content" onclick="event.stopPropagation()">
         <div class="batch-not-exist-modal-header">
             <h5 class="batch-not-exist-modal-title">
                 <i class="bi bi-question-circle me-2"></i>Batch Does not Exists Create New Batch
@@ -4182,9 +4935,9 @@ function showAlert(type, message) {
             <p class="mb-3">The batch number you entered does not exist. Would you like to create a new batch?</p>
         </div>
         <div class="batch-not-exist-modal-footer">
-            <button type="button" class="btn btn-success btn-sm" onclick="openCreateBatchModal()">Yes</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchNotExistModal()">No</button>
-            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="closeBatchNotExistModal()">Cancel</button>
+            <button type="button" id="batchModalYesBtn" class="btn btn-success btn-sm" onclick="openCreateBatchModal()">Yes</button>
+            <button type="button" id="batchModalNoBtn" class="btn btn-secondary btn-sm" onclick="closeBatchNotExistModal()">No</button>
+            <button type="button" id="batchModalCancelBtn" class="btn btn-outline-secondary btn-sm" onclick="closeBatchNotExistModal()">Cancel</button>
         </div>
     </div>
 </div>
@@ -4267,10 +5020,10 @@ function showAlert(type, message) {
         <div class="credit-note-modal-body">
             <p>How would you like to save this transaction?</p>
             <div class="credit-note-options">
-                <button type="button" class="btn btn-secondary" onclick="saveWithoutCreditNote()">
+                <button type="button" class="btn btn-secondary" id="creditSaveWithoutBtn" onclick="saveWithoutCreditNote()">
                     Save Without Credit Note
                 </button>
-                <button type="button" class="btn btn-primary" onclick="saveWithCreditNote()">
+                <button type="button" class="btn btn-primary" id="creditSaveWithBtn" onclick="saveWithCreditNote()">
                     Save With Credit Note
                 </button>
             </div>
