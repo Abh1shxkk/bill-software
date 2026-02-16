@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Purchase Return Transaction')
+@section('title', 'Purchase Return Modification')
 
 @push('styles')
 <style>
@@ -151,10 +151,10 @@
         <div class="container-fluid">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-plus me-2"></i> Purchase Return
-                        Transaction
+                    <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Purchase Return
+                        Modification
                     </h4>
-                    <div class="text-muted small">Create new purchase return transaction</div>
+                    <div class="text-muted small">Modify existing purchase return transaction</div>
                 </div>
             </div>
 
@@ -300,7 +300,7 @@
                             </div>
                             <!-- Add Row Button -->
                             <div class="text-center mt-2">
-                                <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
+                                <button type="button" class="btn btn-sm btn-success" id="addRowBtn" onclick="addNewRow()">
                                     <i class="fas fa-plus-circle"></i> Add Row
                                 </button>
                             </div>
@@ -757,6 +757,18 @@
     let rateDiffToDateFlowActive = false;
     let rateDiffFocusedAt = 0;
     let insertOrdersAutoClickLock = false;
+    let disPercentEnterLoopLock = false;
+    let codeEnterModalLock = false;
+    let pendingItemSelectionRowIndex = null;
+    let pastReturnsModalKeydownHandler = null;
+    let pastReturnsActiveIndex = -1;
+    let creditAdjustModalKeydownHandler = null;
+    let creditAdjustActiveInputIndex = 0;
+    let creditAdjustActiveButtonIndex = 0;
+    let confirmModalKeydownHandler = null;
+    let confirmModalActiveIndex = 0;
+    let successModalKeydownHandler = null;
+    let successModalActiveIndex = 0;
 
     function getSelectedSupplierId() {
         return selectedSupplier?.id || document.getElementById('supplier_id')?.value || '';
@@ -1128,7 +1140,9 @@
                     if (awaitingDateSelection) {
                         confirmReturnDateSelection();
                     } else {
-                        setDateConfirmTarget('insertOrderBtn');
+                        if (!rateDiffToDateFlowActive) {
+                            setDateConfirmTarget('supplierSearchInput');
+                        }
                         openReturnDatePicker();
                     }
                     return;
@@ -1199,6 +1213,142 @@
         }
     }
 
+    function initTableDiscountEnterCapture() {
+        if (window.__kbPrModDisPercentCaptureBound) return;
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+
+            const target = e.target;
+            if (!target || !target.matches || !target.matches('input[name*="[dis_percent]"]')) return;
+
+            const row = target.closest('tr[id^="row-"]');
+            if (!row) return;
+
+            const rowIndex = Number(row.id.replace('row-', ''));
+            if (Number.isNaN(rowIndex)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            handleDiscountAndCompleteRow(rowIndex);
+        }, true);
+
+        window.__kbPrModDisPercentCaptureBound = true;
+    }
+
+    function initTableCodeEnterCapture() {
+        if (window.__kbPrModCodeEnterCaptureBound) return;
+
+        function isCodeInputTarget(target) {
+            return !!(
+                target &&
+                target.matches &&
+                target.matches('#itemsTableBody input[name*="[code]"]') &&
+                !target.readOnly &&
+                !target.disabled
+            );
+        }
+
+        function resolveRowIndex(target) {
+            const row = target?.closest?.('tr[id^="row-"]');
+            if (!row) return null;
+            const parsedIndex = Number(row.id.replace('row-', ''));
+            return Number.isNaN(parsedIndex) ? null : parsedIndex;
+        }
+
+        function triggerCodeEnterModal(target, source) {
+            if (codeEnterModalLock) return;
+
+            const rowIndex = resolveRowIndex(target);
+            if (rowIndex === null) return;
+
+            codeEnterModalLock = true;
+            setTimeout(() => {
+                codeEnterModalLock = false;
+            }, 240);
+
+            console.log('[KB-PR-MOD][CodeEnter] trigger item modal', {
+                source,
+                rowIndex,
+                hasOpenItemModal: typeof openItemModalForRow === 'function',
+                hasChooseItemsModal: typeof openItemModal_chooseItemsModal === 'function'
+            });
+
+            if (typeof openItemModalForRow === 'function') {
+                openItemModalForRow(rowIndex);
+            }
+        }
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            const target = e.target;
+            if (!isCodeInputTarget(target)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            triggerCodeEnterModal(target, 'keydown-capture');
+        }, true);
+
+        // Fallback for pages where global keydown capture blocks target handlers.
+        window.addEventListener('keyup', function(e) {
+            if (e.key !== 'Enter') return;
+            const target = e.target;
+            if (!isCodeInputTarget(target)) return;
+            if (codeEnterModalLock) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            triggerCodeEnterModal(target, 'keyup-fallback');
+        }, true);
+
+        window.__kbPrModCodeEnterCaptureBound = true;
+    }
+
+    function initCtrlSSaveShortcut() {
+        if (window.__kbPrModCtrlSBound) return;
+
+        window.addEventListener('keydown', function(e) {
+            const isSaveShortcut = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S');
+            if (!isSaveShortcut) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            // Modal-aware save behavior
+            if (document.getElementById('successModal')) return;
+            if (document.getElementById('pastReturnsModal') || document.getElementById('insertOrdersModal')) return;
+
+            if (document.getElementById('creditAdjustModal')) {
+                saveCreditAdjustment();
+                return;
+            }
+
+            if (document.getElementById('confirmModal')) {
+                closeConfirmAndSave();
+                return;
+            }
+
+            askCreditAdjustment();
+        }, true);
+
+        window.__kbPrModCtrlSBound = true;
+    }
+
     $(document).ready(function() {
         // Initialize transaction number
         fetchNextTransactionNumber();
@@ -1212,6 +1362,9 @@
 
         initSupplierDropdown();
         initHeaderKeyboardNavigation();
+        initTableCodeEnterCapture();
+        initTableDiscountEnterCapture();
+        initCtrlSSaveShortcut();
         setSupplierDropdownReadonly(false);
         focusSupplierOnLoad();
 
@@ -1226,8 +1379,8 @@
         });
     });
 
-    // Add New Row - Opens reusable item selection modal
-    function addNewRow() {
+    // Legacy flow (kept only for reference)
+    function _legacy_addNewRowViaItemModalDeprecated() {
         if (!getSelectedSupplierId()) {
             alert('Please select a supplier first!');
             return;
@@ -1242,105 +1395,65 @@
         }
     }
 
+    function openItemModalForRow(rowIndex) {
+        if (!getSelectedSupplierId()) {
+            alert('Please select a supplier first!');
+            return false;
+        }
+
+        pendingItemSelectionRowIndex = Number(rowIndex);
+
+        if (typeof openItemModal_chooseItemsModal === 'function') {
+            openItemModal_chooseItemsModal();
+            return false;
+        }
+
+        pendingItemSelectionRowIndex = null;
+        console.error('Item selection modal not initialized');
+        alert('Item selection modal not initialized. Please reload the page.');
+        return false;
+    }
+
     // Callback function when item and batch are selected from reusable modal
     window.onItemBatchSelectedFromModal = function(item, batch) {
         console.log('Item selected from modal:', item);
         console.log('Batch selected from modal:', batch);
-        
-        // Create a new row for the item
-        const tbody = document.getElementById('itemsTableBody');
-        const rowIndex = tbody.querySelectorAll('tr').length;
-        
-        // Format expiry date
-        let expiryDisplay = '';
-        if (batch.expiry_date) {
-            const expiryDate = new Date(batch.expiry_date);
-            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
-        }
-        
-        const purchaseRate = parseFloat(batch.p_rate || batch.pur_rate || batch.purchase_rate || 0);
-        
-        const row = document.createElement('tr');
-        row.id = `row-${rowIndex}`;
-        row.dataset.itemData = JSON.stringify({
-            item_id: item.id,
-            item_name: item.name,
-            batch_id: batch.id,
-            batch_no: batch.batch_no,
-            hsn_code: item.hsn_code || '',
-            cgst_percent: item.cgst_percent || 0,
-            sgst_percent: item.sgst_percent || 0,
-            cess_percent: item.cess_percent || 0,
-            s_rate: batch.s_rate || 0,
-            ws_rate: batch.ws_rate || 0,
-            mrp: batch.mrp || 0
-        });
-        
-        row.innerHTML = `
-            <td>
-                <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly>
-            </td>
-            <td>
-                <input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly>
-            </td>
-            <td>
-                <input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly>
-            </td>
-            <td>
-                <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly>
-            </td>
-            <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1" 
-                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
-            </td>
-            <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
-                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
-            </td>
-            <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][purchase_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" 
-                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})" readonly>
-            </td>
-            <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][dis_percent]" value="0" step="0.01" 
-                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
-            </td>
-            <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][ft_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" 
-                       onclick="selectRowForCalculation(${rowIndex})" readonly>
-            </td>
-            <td>
-                <input type="number" class="form-control readonly-field" name="items[${rowIndex}][ft_amount]" value="0.00" readonly>
-            </td>
-            <td class="text-center">
-                <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})" style="padding: 2px 6px;">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-            <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
-            <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
-            <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="${item.cgst_percent || 0}">
-            <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="${item.sgst_percent || 0}">
-            <input type="hidden" name="items[${rowIndex}][mrp]" value="${batch.mrp || 0}">
-        `;
-        
-        tbody.appendChild(row);
-        
-        // Select the new row
-        if (typeof selectRowForCalculation === 'function') selectRowForCalculation(rowIndex);
-        
-        // Focus on qty input
-        setTimeout(() => {
-            const qtyInput = row.querySelector('input[name*="[qty]"]');
-            if (qtyInput) {
-                qtyInput.focus();
-                qtyInput.select();
+
+        const pendingRowIndex = Number(pendingItemSelectionRowIndex);
+        const hasPendingRow = Number.isInteger(pendingRowIndex) && pendingRowIndex >= 0;
+        pendingItemSelectionRowIndex = null;
+
+        // Normalize selected item used by addItemToReturnTable()
+        selectedItem = {
+            id: item.id || item.item_id || '',
+            code: item.bar_code || item.code || item.item_code || item.id || '',
+            name: item.name || item.item_name || '',
+            hsn_code: item.hsn_code || item.hsn || '',
+            packing: item.packing || '',
+            unit: item.unit || 'PCS',
+            company_name: item.company_name || '',
+            pur_rate: item.pur_rate ?? item.purchase_rate ?? 0,
+            ws_rate: item.ws_rate ?? 0,
+            spl_rate: item.spl_rate ?? 0,
+            s_rate: item.s_rate || 0,
+            mrp: item.mrp ?? 0,
+            cgst_percent: item.cgst_percent ?? item.cgst ?? 0,
+            sgst_percent: item.sgst_percent ?? item.sgst ?? 0,
+            cess_percent: item.cess_percent ?? item.gst_cess ?? 0,
+            total_cl_qty: item.total_cl_qty ?? item.closing_stock ?? 0
+        };
+
+        if (hasPendingRow) {
+            const pendingRow = document.getElementById(`row-${pendingRowIndex}`);
+            if (pendingRow) {
+                pendingRow.remove();
             }
-        }, 100);
-        
-        alert('Item added! Enter return quantity.');
-        if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
-        if (typeof calculateTotals === 'function') calculateTotals();
+            if (selectedRowIndex === pendingRowIndex) {
+                selectedRowIndex = null;
+            }
+        }
+
+        addItemToReturnTable(batch);
     };
 
     // Open Insert Orders Modal
@@ -1780,28 +1893,41 @@ Do you still want to add this batch to the return?`;
         console.log('Batch data received:', batch);
         console.log('Batch total_cl_qty:', batch.total_cl_qty);
         
+        const resolvedExpiry = batch.expiry || batch.expiry_display || batch.expiry_date || '';
+        const resolvedPurchaseRate = parseFloat(
+            batch.purchase_rate ?? batch.pur_rate ?? batch.avg_pur_rate ?? selectedItem.pur_rate ?? selectedItem.purchase_rate ?? 0
+        );
+        const resolvedMrp = parseFloat(batch.mrp ?? batch.avg_mrp ?? selectedItem.mrp ?? 0);
+        const resolvedWsRate = parseFloat(batch.ws_rate ?? selectedItem.ws_rate ?? 0);
+        const resolvedSplRate = parseFloat(batch.spl_rate ?? selectedItem.spl_rate ?? 0);
+        const resolvedSRate = parseFloat(batch.sale_rate ?? batch.s_rate ?? batch.avg_s_rate ?? selectedItem.s_rate ?? 0);
+        const resolvedCgst = parseFloat(batch.cgst_percent ?? batch.cgst ?? selectedItem.cgst_percent ?? selectedItem.cgst ?? 0);
+        const resolvedSgst = parseFloat(batch.sgst_percent ?? batch.sgst ?? selectedItem.sgst_percent ?? selectedItem.sgst ?? 0);
+        const resolvedCess = parseFloat(batch.cess_percent ?? batch.cess ?? selectedItem.cess_percent ?? selectedItem.gst_cess ?? 0);
+        const resolvedTotalClQty = parseFloat(batch.total_cl_qty ?? selectedItem.total_cl_qty ?? selectedItem.closing_stock ?? 0);
+
         const item = {
-            item_id: selectedItem.id,
-            item_code: selectedItem.code,
-            item_name: selectedItem.name,
+            item_id: selectedItem.id || selectedItem.item_id || '',
+            item_code: selectedItem.code || selectedItem.bar_code || selectedItem.item_code || '',
+            item_name: selectedItem.name || selectedItem.item_name || '',
             batch_id: batch.batch_id || batch.id,
-            batch_no: batch.batch_no,
-            expiry_date: batch.expiry,
+            batch_no: batch.batch_no || '',
+            expiry_date: resolvedExpiry,
             packing: batch.packing || selectedItem.packing || '',
             unit: batch.unit || selectedItem.unit || 'PCS',
             company_name: batch.company_name || selectedItem.company_name || '',
             hsn_code: batch.hsn_code || selectedItem.hsn_code || '',
-            purchase_rate: parseFloat(batch.purchase_rate || 0),
-            mrp: parseFloat(batch.mrp || 0),
-            // Batch specific rates - from selected batch
-            ws_rate: parseFloat(batch.ws_rate || 0),
-            spl_rate: parseFloat(batch.spl_rate || 0),
-            s_rate: parseFloat(batch.sale_rate || batch.s_rate || 0),
+            purchase_rate: Number.isFinite(resolvedPurchaseRate) ? resolvedPurchaseRate : 0,
+            mrp: Number.isFinite(resolvedMrp) ? resolvedMrp : 0,
+            // Batch specific rates - from selected batch, with item fallbacks
+            ws_rate: Number.isFinite(resolvedWsRate) ? resolvedWsRate : 0,
+            spl_rate: Number.isFinite(resolvedSplRate) ? resolvedSplRate : 0,
+            s_rate: Number.isFinite(resolvedSRate) ? resolvedSRate : 0,
             discount_percent: 0,
-            cgst_percent: parseFloat(batch.cgst_percent || 0),
-            sgst_percent: parseFloat(batch.sgst_percent || 0),
-            cess_percent: parseFloat(batch.cess_percent || 0),
-            total_cl_qty: parseFloat(batch.total_cl_qty || 0),
+            cgst_percent: Number.isFinite(resolvedCgst) ? resolvedCgst : 0,
+            sgst_percent: Number.isFinite(resolvedSgst) ? resolvedSgst : 0,
+            cess_percent: Number.isFinite(resolvedCess) ? resolvedCess : 0,
+            total_cl_qty: Number.isFinite(resolvedTotalClQty) ? resolvedTotalClQty : 0,
             return_qty: 0,
             return_fqty: 0
         };
@@ -1939,6 +2065,14 @@ Do you still want to add this batch to the return?`;
 
     // Handle Discount and Complete Row
     function handleDiscountAndCompleteRow(rowIndex) {
+        if (disPercentEnterLoopLock) {
+            return;
+        }
+        disPercentEnterLoopLock = true;
+        setTimeout(() => {
+            disPercentEnterLoopLock = false;
+        }, 220);
+
         const row = document.getElementById(`row-${rowIndex}`);
         if (!row) return;
         
@@ -1956,12 +2090,19 @@ Do you still want to add this batch to the return?`;
         
         // Clear additional details section
         clearAdditionalDetails();
-        
-        // Remove focus
-        document.activeElement.blur();
-        
+
         // Clear selection
         selectedRowIndex = null;
+
+        // Continue loop: trigger Add Row and move cursor to new row code field
+        setTimeout(() => {
+            const addRowBtn = document.getElementById('addRowBtn');
+            if (addRowBtn) {
+                addRowBtn.click();
+            } else {
+                addNewRow();
+            }
+        }, 30);
     }
 
     // Mark row as completed (green background)
@@ -2285,7 +2426,119 @@ Do you still want to add this batch to the return?`;
             alert('Please select a supplier first!');
             return;
         }
-        openInsertOrdersModal();
+
+        const tbody = document.getElementById('itemsTableBody');
+        if (!tbody) return;
+
+        const rowIndex = currentRowIndex++;
+        const row = document.createElement('tr');
+        row.id = `row-${rowIndex}`;
+
+        const blankItemData = {
+            item_id: '',
+            item_code: '',
+            item_name: '',
+            batch_id: '',
+            batch_no: '',
+            expiry_date: '',
+            packing: '',
+            unit: 'PCS',
+            company_name: '',
+            hsn_code: '',
+            purchase_rate: 0,
+            mrp: 0,
+            ws_rate: 0,
+            spl_rate: 0,
+            s_rate: 0,
+            discount_percent: 0,
+            cgst_percent: 0,
+            sgst_percent: 0,
+            cess_percent: 0,
+            total_cl_qty: 0,
+            return_qty: 0,
+            return_fqty: 0
+        };
+
+        row.dataset.itemData = JSON.stringify(blankItemData);
+        row.dataset.completed = 'false';
+
+        row.innerHTML = `
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][code]" value="" placeholder="Press Enter"
+                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); if (typeof event.stopImmediatePropagation === 'function') { event.stopImmediatePropagation(); } openItemModalForRow(${rowIndex}); return false; }"
+                       onfocus="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][name]" value="" readonly>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][batch]" value="" readonly>
+            </td>
+            <td>
+                <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="" readonly>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1"
+                       onchange="calculateRowAmount(${rowIndex})"
+                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }"
+                       onfocus="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
+                       onchange="calculateRowAmount(${rowIndex})"
+                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'purchase_rate'); return false; }"
+                       onfocus="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][purchase_rate]" value="0.00" step="0.01"
+                       onchange="calculateRowAmount(${rowIndex})"
+                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'dis_percent'); return false; }"
+                       onfocus="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="items[${rowIndex}][dis_percent]" value="0" step="0.01"
+                       onchange="handleDiscountChange(${rowIndex})"
+                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndCompleteRow(${rowIndex}); return false; }"
+                       onfocus="selectRowForCalculation(${rowIndex})">
+            </td>
+            <td>
+                <input type="number" class="form-control readonly-field" name="items[${rowIndex}][ft_rate]" value="0.00" step="0.01" readonly>
+            </td>
+            <td>
+                <input type="number" class="form-control readonly-field" name="items[${rowIndex}][ft_amount]" value="0.00" readonly>
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+            <input type="hidden" name="items[${rowIndex}][item_id]" value="">
+            <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
+            <input type="hidden" name="items[${rowIndex}][hsn_code]" value="">
+            <input type="hidden" name="items[${rowIndex}][company_name]" value="">
+            <input type="hidden" name="items[${rowIndex}][packing]" value="">
+            <input type="hidden" name="items[${rowIndex}][unit]" value="">
+            <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="0">
+            <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="0">
+            <input type="hidden" name="items[${rowIndex}][cess_percent]" value="0">
+        `;
+
+        tbody.appendChild(row);
+
+        row.addEventListener('click', function() {
+            selectRowForCalculation(rowIndex);
+        });
+
+        recalculateTotals();
+        selectRowForCalculation(rowIndex);
+
+        setTimeout(() => {
+            const codeInput = row.querySelector('input[name*="[code]"]');
+            if (codeInput) {
+                codeInput.focus();
+                codeInput.select();
+            }
+        }, 80);
     }
 
     // Save Transaction
@@ -2337,6 +2590,7 @@ Do you still want to add this batch to the return?`;
             closeInsertOrdersModal();
             closeCreditAdjustmentModal();
             closePastReturnsModal();
+            closeConfirmModal();
         }
     });
 
@@ -2401,11 +2655,11 @@ Do you still want to add this batch to the return?`;
                                         <th style="width: 80px; text-align: center;">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="pastReturnsTableBody">
                                     ${transactions.length === 0 ? 
                                         '<tr><td colspan="7" class="text-center text-muted">No purchase returns found</td></tr>' :
                                         transactions.map(trn => `
-                                            <tr>
+                                            <tr class="past-return-row" data-transaction-id="${trn.id}">
                                                 <td><strong>${trn.pr_no || ''}</strong></td>
                                                 <td>${trn.return_date || ''}</td>
                                                 <td>${trn.supplier_name || ''}</td>
@@ -2413,7 +2667,8 @@ Do you still want to add this batch to the return?`;
                                                 <td>${trn.uid || 'MASTER'}</td>
                                                 <td style="text-align: right;">₹${trn.amount || '0.00'}</td>
                                                 <td style="text-align: center;">
-                                                    <button type="button" class="btn btn-sm btn-success" 
+                                                    <button type="button" class="btn btn-sm btn-success past-return-load-btn"
+                                                            data-transaction-id="${trn.id}" 
                                                             onclick="loadPastReturn(${trn.id})"
                                                             style="font-size: 9px; padding: 2px 8px;">
                                                         <i class="bi bi-download"></i> Load
@@ -2428,7 +2683,7 @@ Do you still want to add this batch to the return?`;
                     </div>
                     <div class="past-returns-modal-footer">
                         <span style="font-size: 11px; color: #666;">Total: ${transactions.length} record(s) (Last 100)</span>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="closePastReturnsModal()">Close</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="pastReturnsCloseBtn" onclick="closePastReturnsModal()">Close</button>
                     </div>
                 </div>
             </div>
@@ -2445,7 +2700,119 @@ Do you still want to add this batch to the return?`;
         setTimeout(() => {
             document.getElementById('pastReturnsModalBackdrop').classList.add('show');
             document.getElementById('pastReturnsModal').classList.add('show');
+            initPastReturnsModalKeyboard();
         }, 10);
+    }
+
+    function getPastReturnsRows() {
+        return Array.from(document.querySelectorAll('#pastReturnsTableBody .past-return-row[data-transaction-id]'));
+    }
+
+    function setPastReturnsActiveRow(index) {
+        const rows = getPastReturnsRows();
+        if (!rows.length) {
+            pastReturnsActiveIndex = -1;
+            return;
+        }
+
+        if (index < 0) index = rows.length - 1;
+        if (index >= rows.length) index = 0;
+        pastReturnsActiveIndex = index;
+
+        rows.forEach((row, idx) => {
+            row.classList.toggle('kb-active', idx === pastReturnsActiveIndex);
+        });
+
+        const activeRow = rows[pastReturnsActiveIndex];
+        activeRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        const loadBtn = activeRow.querySelector('.past-return-load-btn');
+        if (loadBtn) loadBtn.focus();
+    }
+
+    function destroyPastReturnsModalKeyboard() {
+        if (pastReturnsModalKeydownHandler) {
+            window.removeEventListener('keydown', pastReturnsModalKeydownHandler, true);
+            pastReturnsModalKeydownHandler = null;
+        }
+        pastReturnsActiveIndex = -1;
+    }
+
+    function initPastReturnsModalKeyboard() {
+        destroyPastReturnsModalKeyboard();
+
+        const modal = document.getElementById('pastReturnsModal');
+        if (!modal) return;
+
+        const rows = getPastReturnsRows();
+        rows.forEach((row, idx) => {
+            row.addEventListener('click', () => setPastReturnsActiveRow(idx));
+            row.addEventListener('dblclick', () => {
+                const trnId = row.dataset.transactionId;
+                if (trnId) loadPastReturn(trnId);
+            });
+        });
+
+        if (rows.length) {
+            setPastReturnsActiveRow(0);
+        } else {
+            document.getElementById('pastReturnsCloseBtn')?.focus();
+        }
+
+        pastReturnsModalKeydownHandler = function(e) {
+            if (!document.getElementById('pastReturnsModal')) return;
+            const rowsNow = getPastReturnsRows();
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                closePastReturnsModal();
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                if (rowsNow.length) setPastReturnsActiveRow(pastReturnsActiveIndex + 1);
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                if (rowsNow.length) setPastReturnsActiveRow(pastReturnsActiveIndex - 1);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                const target = e.target;
+                const isCloseBtn = target && target.id === 'pastReturnsCloseBtn';
+                const isLoadBtn = target && target.classList && target.classList.contains('past-return-load-btn');
+                if (!rowsNow.length && !isCloseBtn) return;
+
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+
+                if (isCloseBtn) {
+                    closePastReturnsModal();
+                    return;
+                }
+
+                if (isLoadBtn) {
+                    target.click();
+                    return;
+                }
+
+                const row = rowsNow[pastReturnsActiveIndex] || rowsNow[0];
+                const trnId = row?.dataset?.transactionId;
+                if (trnId) loadPastReturn(trnId);
+            }
+        };
+
+        window.addEventListener('keydown', pastReturnsModalKeydownHandler, true);
     }
 
     // Close Past Returns Modal
@@ -2455,6 +2822,7 @@ Do you still want to add this batch to the return?`;
         
         if (modal) modal.classList.remove('show');
         if (backdrop) backdrop.classList.remove('show');
+        destroyPastReturnsModalKeyboard();
         
         setTimeout(() => {
             if (modal) modal.remove();
@@ -2527,6 +2895,34 @@ Do you still want to add this batch to the return?`;
         });
     }
 
+    function focusTableAfterInvoiceLoad() {
+        const tbody = document.getElementById('itemsTableBody');
+        if (!tbody) return;
+
+        const firstRow = tbody.querySelector('tr');
+        if (!firstRow) return;
+
+        const rowId = firstRow.id || '';
+        const rowIndex = Number(rowId.replace('row-', ''));
+        if (!Number.isNaN(rowIndex) && typeof selectRowForCalculation === 'function') {
+            selectRowForCalculation(rowIndex);
+        }
+
+        const targetInput =
+            firstRow.querySelector('input[name*="[qty]"]') ||
+            firstRow.querySelector('input[name*="[batch]"]') ||
+            firstRow.querySelector('input[name*="[code]"]');
+
+        if (!targetInput) return;
+
+        setTimeout(() => {
+            targetInput.focus();
+            if (targetInput.tagName === 'INPUT' && targetInput.type === 'number') {
+                targetInput.select();
+            }
+        }, 120);
+    }
+
     // Populate Transaction Data into Form
     function populateTransactionData(data) {
         const header = data.header;
@@ -2557,8 +2953,38 @@ Do you still want to add this batch to the return?`;
         document.getElementById('trn_no').value = header.pr_no || '';
         console.log('Set PR No:', header.pr_no);
         
-        // Set supplier
+        // Set supplier (custom searchable dropdown)
         if (header.supplier_id) {
+            const supplierIdStr = String(header.supplier_id);
+            const supplierName = header.supplier_name || '';
+            const supplierInput = document.getElementById('supplierSearchInput');
+            const supplierHidden = document.getElementById('supplier_id');
+            const matchedItem = document.querySelector(`#supplierDropdownList .dropdown-item[data-value="${supplierIdStr}"]`);
+            const supplierCode = matchedItem?.dataset?.code || '';
+
+            if (supplierHidden) {
+                supplierHidden.value = supplierIdStr;
+                supplierHidden.dataset.supplierName = supplierName;
+                supplierHidden.dataset.supplierCode = supplierCode;
+            }
+
+            if (supplierInput) {
+                supplierInput.value = supplierCode ? `${supplierCode} - ${supplierName}` : supplierName;
+            }
+
+            document.querySelectorAll('#supplierDropdownList .dropdown-item').forEach((item) => {
+                item.classList.toggle('selected', item.dataset.value === supplierIdStr);
+            });
+
+            setSelectedSupplier(supplierIdStr, supplierName, supplierCode);
+            setSupplierDropdownReadonly(true);
+        } else {
+            setSelectedSupplier('', '', '');
+            setSupplierDropdownReadonly(false);
+        }
+
+        // Set supplier
+        if (false && header.supplier_id) {
             const supplierField = $('#supplier_id');
             const supplierIdStr = String(header.supplier_id);
             
@@ -2713,8 +3139,12 @@ Do you still want to add this batch to the return?`;
         // Clear calculation sections
         clearCalculationSection();
         clearAdditionalDetails();
-        
-        alert(`Purchase Return ${header.pr_no} loaded successfully!`);
+
+        // Keep flow keyboard-first after loading from modal/PR number
+        setTimeout(() => {
+            focusTableAfterInvoiceLoad();
+        }, 450);
+        console.log(`Purchase Return ${header.pr_no} loaded successfully`);
     }
 
     // Credit Adjustment Modal Variables
@@ -2762,6 +3192,143 @@ Do you still want to add this batch to the return?`;
             console.error('Error:', error);
             alert('Failed to load invoices');
         });
+    }
+
+    function getCreditAdjustInputs() {
+        return Array.from(document.querySelectorAll('#creditAdjustModal .adjust-amount-input'));
+    }
+
+    function getCreditAdjustButtons() {
+        const saveBtn = document.getElementById('creditAdjustSaveBtn');
+        const cancelBtn = document.getElementById('creditAdjustCancelBtn');
+        return [saveBtn, cancelBtn].filter(Boolean);
+    }
+
+    function setActiveCreditAdjustInput(index) {
+        const inputs = getCreditAdjustInputs();
+        if (!inputs.length) return;
+
+        const len = inputs.length;
+        creditAdjustActiveInputIndex = ((index % len) + len) % len;
+
+        inputs.forEach((input, i) => {
+            input.classList.toggle('kb-active-choice', i === creditAdjustActiveInputIndex);
+        });
+
+        const active = inputs[creditAdjustActiveInputIndex];
+        active.focus({ preventScroll: true });
+        active.select();
+        active.scrollIntoView({ block: 'nearest' });
+    }
+
+    function setActiveCreditAdjustButton(index) {
+        const buttons = getCreditAdjustButtons();
+        if (!buttons.length) return;
+
+        const len = buttons.length;
+        creditAdjustActiveButtonIndex = ((index % len) + len) % len;
+
+        buttons.forEach((btn, i) => {
+            btn.classList.toggle('kb-active-choice', i === creditAdjustActiveButtonIndex);
+        });
+
+        buttons[creditAdjustActiveButtonIndex].focus({ preventScroll: true });
+    }
+
+    function unbindCreditAdjustModalKeyboard() {
+        if (!creditAdjustModalKeydownHandler) return;
+        document.removeEventListener('keydown', creditAdjustModalKeydownHandler, true);
+        creditAdjustModalKeydownHandler = null;
+    }
+
+    function bindCreditAdjustModalKeyboard() {
+        unbindCreditAdjustModalKeyboard();
+
+        const inputs = getCreditAdjustInputs();
+        if (inputs.length) {
+            inputs.forEach((input, idx) => {
+                input.addEventListener('focus', function() {
+                    creditAdjustActiveInputIndex = idx;
+                    inputs.forEach((i, j) => i.classList.toggle('kb-active-choice', j === idx));
+                });
+            });
+            setActiveCreditAdjustInput(0);
+        } else {
+            setActiveCreditAdjustButton(0);
+        }
+
+        creditAdjustModalKeydownHandler = function(e) {
+            const modal = document.getElementById('creditAdjustModal');
+            if (!modal || !modal.classList.contains('show')) {
+                unbindCreditAdjustModalKeyboard();
+                return;
+            }
+
+            const isCtrlS = (e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S');
+            const key = e.key;
+            if (!isCtrlS && !['Escape', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (isCtrlS) {
+                saveCreditAdjustment();
+                return;
+            }
+
+            if (key === 'Escape') {
+                closeCreditAdjustmentModal();
+                return;
+            }
+
+            const activeEl = document.activeElement;
+            const inputsNow = getCreditAdjustInputs();
+            const buttonsNow = getCreditAdjustButtons();
+            const activeInputIndex = inputsNow.indexOf(activeEl);
+            const activeButtonIndex = buttonsNow.indexOf(activeEl);
+
+            if (activeInputIndex !== -1) {
+                if (key === 'ArrowDown' || key === 'Enter') {
+                    setActiveCreditAdjustInput(activeInputIndex + 1);
+                    return;
+                }
+                if (key === 'ArrowUp') {
+                    setActiveCreditAdjustInput(activeInputIndex - 1);
+                    return;
+                }
+                if (key === 'ArrowRight') {
+                    setActiveCreditAdjustButton(0);
+                    return;
+                }
+            }
+
+            if (activeButtonIndex !== -1) {
+                if (key === 'ArrowLeft' || key === 'ArrowUp') {
+                    setActiveCreditAdjustButton(activeButtonIndex - 1);
+                    return;
+                }
+                if (key === 'ArrowRight' || key === 'ArrowDown') {
+                    setActiveCreditAdjustButton(activeButtonIndex + 1);
+                    return;
+                }
+                if (key === 'Enter') {
+                    const btn = buttonsNow[activeButtonIndex];
+                    if (btn) btn.click();
+                    return;
+                }
+            }
+
+            if (inputsNow.length) {
+                setActiveCreditAdjustInput(0);
+            } else if (buttonsNow.length) {
+                setActiveCreditAdjustButton(0);
+            }
+        };
+
+        document.addEventListener('keydown', creditAdjustModalKeydownHandler, true);
     }
 
     // Show Credit Adjustment Modal
@@ -2839,10 +3406,13 @@ Do you still want to add this batch to the return?`;
                         <div style="font-size: 13px; color: #d00;">
                             <strong>BALANCE (Rs): </strong><span id="totalBalance">${(returnNetAmount - initialTotalAdjusted).toFixed(2)}</span>
                         </div>
-                        <div>
+                        <div class="d-flex align-items-center gap-2">
                             <span style="font-size: 11px; color: #666; margin-right: 10px;">EXIT : &lt;ESC&gt;</span>
-                            <button type="button" class="btn btn-success btn-sm" onclick="saveCreditAdjustment()">
+                            <button type="button" class="btn btn-success btn-sm" id="creditAdjustSaveBtn" onclick="saveCreditAdjustment()">
                                 <i class="bi bi-check-circle"></i> Save
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="creditAdjustCancelBtn" onclick="closeCreditAdjustmentModal()">
+                                <i class="bi bi-x-circle"></i> Cancel
                             </button>
                         </div>
                     </div>
@@ -2861,6 +3431,7 @@ Do you still want to add this batch to the return?`;
         setTimeout(() => {
             document.getElementById('creditAdjustModalBackdrop').classList.add('show');
             document.getElementById('creditAdjustModal').classList.add('show');
+            bindCreditAdjustModalKeyboard();
         }, 10);
     }
 
@@ -2916,6 +3487,7 @@ Do you still want to add this batch to the return?`;
 
     // Close Credit Adjustment Modal
     function closeCreditAdjustmentModal() {
+        unbindCreditAdjustModalKeyboard();
         const modal = document.getElementById('creditAdjustModal');
         const backdrop = document.getElementById('creditAdjustModalBackdrop');
         
@@ -3047,9 +3619,15 @@ Do you still want to add this batch to the return?`;
             window.markAsSaving();
         }
         
-        // Submit to server
-        fetch('{{ route("admin.purchase-return.store") }}', {
-            method: 'POST',
+        // Submit to server (update existing transaction if loaded in modification page)
+        const isUpdate = currentTransactionId !== null && currentTransactionId !== undefined;
+        const saveUrl = isUpdate
+            ? `{{ url('admin/purchase-return') }}/${currentTransactionId}`
+            : '{{ route("admin.purchase-return.store") }}';
+        const method = isUpdate ? 'PUT' : 'POST';
+
+        fetch(saveUrl, {
+            method: method,
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -3069,6 +3647,79 @@ Do you still want to add this batch to the return?`;
             console.error('Error:', error);
             alert('Error saving purchase return');
         });
+    }
+
+    function getConfirmModalButtons() {
+        const noBtn = document.getElementById('confirmNoBtn');
+        const yesBtn = document.getElementById('confirmYesBtn');
+        return [noBtn, yesBtn].filter(Boolean);
+    }
+
+    function setConfirmModalActiveButton(index) {
+        const buttons = getConfirmModalButtons();
+        if (!buttons.length) return;
+
+        const len = buttons.length;
+        confirmModalActiveIndex = ((index % len) + len) % len;
+
+        buttons.forEach((btn, i) => {
+            const active = i === confirmModalActiveIndex;
+            btn.classList.toggle('kb-active-choice', active);
+            btn.setAttribute('data-kb-active', active ? '1' : '0');
+        });
+
+        buttons[confirmModalActiveIndex].focus({ preventScroll: true });
+    }
+
+    function unbindConfirmModalKeyboard() {
+        if (!confirmModalKeydownHandler) return;
+        document.removeEventListener('keydown', confirmModalKeydownHandler, true);
+        confirmModalKeydownHandler = null;
+    }
+
+    function bindConfirmModalKeyboard() {
+        unbindConfirmModalKeyboard();
+
+        confirmModalKeydownHandler = function(e) {
+            const modal = document.getElementById('confirmModal');
+            if (!modal || !modal.classList.contains('show')) {
+                unbindConfirmModalKeyboard();
+                return;
+            }
+
+            const key = e.key;
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (key === 'ArrowLeft' || key === 'ArrowUp') {
+                setConfirmModalActiveButton(confirmModalActiveIndex - 1);
+                return;
+            }
+
+            if (key === 'ArrowRight' || key === 'ArrowDown') {
+                setConfirmModalActiveButton(confirmModalActiveIndex + 1);
+                return;
+            }
+
+            if (key === 'Enter') {
+                const buttons = getConfirmModalButtons();
+                const btn = buttons[confirmModalActiveIndex];
+                if (btn) btn.click();
+                return;
+            }
+
+            if (key === 'Escape') {
+                closeConfirmModal();
+            }
+        };
+
+        document.addEventListener('keydown', confirmModalKeydownHandler, true);
+        setConfirmModalActiveButton(0);
     }
 
     // Ask user if they want to adjust credit note
@@ -3097,8 +3748,8 @@ Do you still want to add this batch to the return?`;
                         <p style="font-size: 14px; margin: 0;">Do you want to adjust this return amount against supplier's outstanding invoices?</p>
                     </div>
                     <div class="confirm-modal-footer">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="closeConfirmAndSave()">No, Just Save</button>
-                        <button type="button" class="btn btn-success btn-sm" onclick="closeConfirmAndOpenAdjustment()">Yes, Adjust</button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="confirmNoBtn" onclick="closeConfirmAndSave()">No, Just Save</button>
+                        <button type="button" class="btn btn-success btn-sm" id="confirmYesBtn" onclick="closeConfirmAndOpenAdjustment()">Yes, Adjust</button>
                     </div>
                 </div>
             </div>
@@ -3108,10 +3759,12 @@ Do you still want to add this batch to the return?`;
         setTimeout(() => {
             document.getElementById('confirmModalBackdrop').classList.add('show');
             document.getElementById('confirmModal').classList.add('show');
+            bindConfirmModalKeyboard();
         }, 10);
     }
 
     function closeConfirmModal() {
+        unbindConfirmModalKeyboard();
         const modal = document.getElementById('confirmModal');
         const backdrop = document.getElementById('confirmModalBackdrop');
         if (modal) modal.remove();
@@ -3126,6 +3779,79 @@ Do you still want to add this batch to the return?`;
     function closeConfirmAndOpenAdjustment() {
         closeConfirmModal();
         openCreditAdjustmentModal();
+    }
+
+    function getSuccessModalButtons() {
+        const newBtn = document.getElementById('successNewBtn');
+        const okBtn = document.getElementById('successOkBtn');
+        return [newBtn, okBtn].filter(Boolean);
+    }
+
+    function setSuccessModalActiveButton(index) {
+        const buttons = getSuccessModalButtons();
+        if (!buttons.length) return;
+
+        const len = buttons.length;
+        successModalActiveIndex = ((index % len) + len) % len;
+
+        buttons.forEach((btn, i) => {
+            const isActive = i === successModalActiveIndex;
+            btn.classList.toggle('kb-active-choice', isActive);
+            btn.setAttribute('data-kb-active', isActive ? '1' : '0');
+        });
+
+        buttons[successModalActiveIndex].focus({ preventScroll: true });
+    }
+
+    function unbindSuccessModalKeyboard() {
+        if (!successModalKeydownHandler) return;
+        document.removeEventListener('keydown', successModalKeydownHandler, true);
+        successModalKeydownHandler = null;
+    }
+
+    function bindSuccessModalKeyboard() {
+        unbindSuccessModalKeyboard();
+
+        successModalKeydownHandler = function(e) {
+            const modal = document.getElementById('successModal');
+            if (!modal || !modal.classList.contains('show')) {
+                unbindSuccessModalKeyboard();
+                return;
+            }
+
+            const key = e.key;
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (key === 'ArrowLeft' || key === 'ArrowUp') {
+                setSuccessModalActiveButton(successModalActiveIndex - 1);
+                return;
+            }
+
+            if (key === 'ArrowRight' || key === 'ArrowDown') {
+                setSuccessModalActiveButton(successModalActiveIndex + 1);
+                return;
+            }
+
+            if (key === 'Enter') {
+                const buttons = getSuccessModalButtons();
+                const btn = buttons[successModalActiveIndex];
+                if (btn) btn.click();
+                return;
+            }
+
+            if (key === 'Escape') {
+                closeSuccessModal();
+            }
+        };
+
+        document.addEventListener('keydown', successModalKeydownHandler, true);
+        setSuccessModalActiveButton(1); // default on OK
     }
 
     // Original Save Transaction (without adjustments)
@@ -3149,10 +3875,10 @@ Do you still want to add this batch to the return?`;
                         <p style="margin-top: 10px;"><strong>Net Amount:</strong> ₹${parseFloat(netAmount).toFixed(2)}</p>
                     </div>
                     <div class="success-modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" onclick="closeSuccessAndNew()">
+                        <button type="button" class="btn btn-outline-secondary" id="successNewBtn" onclick="closeSuccessAndNew()">
                             <i class="bi bi-plus-circle me-1"></i> New Return
                         </button>
-                        <button type="button" class="btn btn-success" onclick="closeSuccessModal()">
+                        <button type="button" class="btn btn-success" id="successOkBtn" onclick="closeSuccessModal()">
                             <i class="bi bi-check me-1"></i> OK
                         </button>
                     </div>
@@ -3189,11 +3915,13 @@ Do you still want to add this batch to the return?`;
         setTimeout(() => {
             document.getElementById('successModalBackdrop').classList.add('show');
             document.getElementById('successModal').classList.add('show');
+            bindSuccessModalKeyboard();
         }, 10);
     }
 
     // Close Success Modal
     function closeSuccessModal() {
+        unbindSuccessModalKeyboard();
         const modal = document.getElementById('successModal');
         const backdrop = document.getElementById('successModalBackdrop');
         
@@ -3209,6 +3937,7 @@ Do you still want to add this batch to the return?`;
 
     // Close Success Modal and Start New Return
     function closeSuccessAndNew() {
+        unbindSuccessModalKeyboard();
         const modal = document.getElementById('successModal');
         const backdrop = document.getElementById('successModalBackdrop');
         
@@ -3303,6 +4032,14 @@ Do you still want to add this batch to the return?`;
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+}
+
+.past-return-row {
+    cursor: pointer;
+}
+
+.past-return-row.kb-active td {
+    background: #dbeafe !important;
 }
 
 /* Credit Adjustment Modal Styles */
@@ -3424,6 +4161,15 @@ Do you still want to add this batch to the return?`;
 .adjust-amount-input:focus {
     border-color: #0066cc !important;
     outline: none;
+}
+
+#creditAdjustModal .adjust-amount-input.kb-active-choice,
+#creditAdjustModal .kb-active-choice,
+#confirmModal .kb-active-choice,
+#successModal .kb-active-choice {
+    outline: 2px solid #0d6efd;
+    outline-offset: 1px;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
 /* Confirmation Modal Styles */

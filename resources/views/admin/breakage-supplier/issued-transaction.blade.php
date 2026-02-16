@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Breakage/Expiry to Supplier - Issued Transaction')
+@section('disable_select2', '1')
 
 @push('styles')
 <style>
@@ -11,6 +12,45 @@
     .field-group { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
     .inner-card { background: #e8f4f8; border: 1px solid #b8d4e0; padding: 8px; border-radius: 3px; }
     .readonly-field { background-color: #e9ecef !important; }
+    
+    /* Custom searchable dropdown (supplier) */
+    .custom-dropdown-wrapper { position: relative; width: 100%; }
+    .custom-dropdown-menu { 
+        display: none; 
+        position: absolute; 
+        top: 100%; 
+        left: 0; 
+        width: 100%; 
+        max-height: 300px; 
+        overflow-y: auto; 
+        background: white; 
+        border: 1px solid #ccc; 
+        border-radius: 4px; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        z-index: 1000;
+    }
+    .custom-dropdown-menu .dropdown-item { 
+        padding: 6px 10px; 
+        cursor: pointer; 
+        font-size: 11px;
+    }
+    .custom-dropdown-menu .dropdown-item:hover { 
+        background-color: #f1f5ff; 
+    }
+    .custom-dropdown-menu .dropdown-item.active { 
+        background-color: #cfe2ff; 
+    }
+    .custom-dropdown-menu .dropdown-header { 
+        padding: 8px 12px; 
+        background: #f8f9fa; 
+        border-bottom: 1px solid #dee2e6; 
+        font-weight: 600; 
+        font-size: 11px;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar { width: 6px; }
+    .custom-dropdown-menu::-webkit-scrollbar-track { background: #f1f1f1; }
+    .custom-dropdown-menu::-webkit-scrollbar-thumb { background: #888; border-radius: 3px; }
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover { background: #555; }
     
     /* Items Table (Sale transaction style) */
     .table-compact { font-size: 11px; margin-bottom: 0; }
@@ -64,6 +104,11 @@
     /* Action Buttons */
     .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
     .action-buttons .btn { min-width: 100px; }
+    
+    /* Br/Ex Custom Dropdown */
+    .br-ex-input { font-size: 11px !important; padding: 2px 4px !important; }
+    .br-ex-dropdown { font-family: inherit; }
+    .br-ex-option:hover { background-color: #e3f2fd !important; color: #000 !important; }
 </style>
 @endpush
 
@@ -74,7 +119,45 @@
         <a href="{{ route('admin.breakage-supplier.issued-index') }}" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-list"></i> View All</a>
     </div>
 
-    <form id="bsiForm" autocomplete="off">
+    {{-- GST Vno Enter handler - defined early so inline onkeydown works --}}
+    <script>
+    function handleGstVnoEnter() {
+        console.log('🔥 handleGstVnoEnter() called - GST Vno Enter key pressed');
+        
+        // Try showItemModal first (defined in main script block)
+        if (typeof showItemModal === 'function') {
+            console.log('✓ Calling showItemModal()');
+            showItemModal();
+            return;
+        }
+        
+        // Direct fallback: open the reusable modal component
+        if (typeof openItemModal_chooseItemsModal === 'function') {
+            console.log('✓ Calling openItemModal_chooseItemsModal() directly');
+            openItemModal_chooseItemsModal();
+            return;
+        }
+        
+        // Last resort fallback: open old-style modal
+        var backdrop = document.getElementById('itemModalBackdrop');
+        var modal = document.getElementById('itemModal');
+        if (backdrop && modal) {
+            console.log('✓ Opening fallback item modal');
+            backdrop.classList.add('show');
+            modal.classList.add('show');
+            var searchInput = document.getElementById('itemSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+            }
+            return;
+        }
+        
+        console.error('✗ No modal function found!');
+    }
+    </script>
+
+    <form id="bsiForm" autocomplete="off" onsubmit="return false;">
         @csrf
         <!-- Header Section -->
         <div class="header-section">
@@ -87,12 +170,42 @@
                 <div class="col-md-10">
                     <div class="inner-card">
                         <div class="row g-2">
-                            <div class="col-md-5"><div class="field-group"><label style="width:55px;">Supplier:</label><select id="supplier_id" name="supplier_id" class="form-control" onchange="updateSupplierName()"><option value="">Select Supplier</option>@foreach($suppliers as $s)<option value="{{ $s->supplier_id }}" data-name="{{ $s->name }}">{{ $s->name }}</option>@endforeach</select></div></div>
-                            <div class="col-md-3"><div class="field-group"><label>R(epl)/C(redit):</label><select id="note_type" name="note_type" class="form-control" style="width:50px;"><option value="C">C</option><option value="R">R</option></select></div></div>
+                            <div class="col-md-5">
+                                <div class="field-group">
+                                    <label style="width:55px;">Supplier:</label>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%;">
+                                        <input type="text" class="form-control" id="supplierSearchInput" placeholder="Type to search supplier..." autocomplete="off">
+                                        <input type="hidden" name="supplier_id" id="supplier_id">
+                                        <div id="supplierDropdown" class="custom-dropdown-menu">
+                                            <div class="dropdown-header">Select Supplier</div>
+                                            <div id="supplierList">
+                                                @foreach($suppliers as $s)
+                                                    <div class="dropdown-item" data-id="{{ $s->supplier_id }}" data-name="{{ $s->name }}">
+                                                        {{ $s->name }}
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label>R(epl)/C(redit):</label>
+                                    <div class="custom-dropdown-wrapper" style="width: 60px; position: relative;">
+                                        <input type="text" class="form-control text-center" id="noteTypeSearchInput" placeholder="" autocomplete="off" readonly style="cursor: pointer; width: 60px;">
+                                        <input type="hidden" name="note_type" id="note_type" value="C">
+                                        <div id="noteTypeDropdown" class="custom-dropdown-menu" style="width: 60px;">
+                                            <div class="dropdown-item" data-value="C">C</div>
+                                            <div class="dropdown-item" data-value="R">R</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-md-4"><div class="field-group"><label>Tax[Y/N]:</label><input type="text" id="tax_flag" name="tax_flag" class="form-control text-center" value="N" maxlength="1" style="width:30px;"><label class="ms-2">Inc.</label><input type="text" id="inc_flag" name="inc_flag" class="form-control text-center" value="N" maxlength="1" style="width:30px;"></div></div>
                         </div>
                         <div class="row g-2 mt-1">
-                            <div class="col-md-3"><div class="field-group"><label>GST Vno.:</label><input type="text" id="gst_vno" name="gst_vno" class="form-control"></div></div>
+                            <div class="col-md-3"><div class="field-group"><label>GST Vno.:</label><input type="text" id="gst_vno" name="gst_vno" class="form-control" onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();handleGstVnoEnter();return false;}"></div></div>
                             <div class="col-md-2"><div class="field-group"><label>Dis:</label><input type="number" id="dis_count" class="form-control readonly-field text-end" value="0" readonly style="width:45px;"></div></div>
                             <div class="col-md-2"><div class="field-group"><label>Rpl:</label><input type="number" id="rpl_count" class="form-control readonly-field text-end" value="0" readonly style="width:45px;"></div></div>
                             <div class="col-md-2"><div class="field-group"><label>Brk.:</label><input type="number" id="brk_count" class="form-control readonly-field text-end" value="0" readonly style="width:45px;"></div></div>
@@ -267,14 +380,102 @@
 
 @push('scripts')
 <script>
+console.log('SCRIPT STARTED');
+
 let rowIndex = 0, allItems = [], selectedRowIndex = null, selectedItem = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadItems();
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F2') { e.preventDefault(); showItemModal(); }
-        if (e.key === 'Escape') { closeItemModal(); closeBatchModal(); }
-    });
+    try {
+        console.log('=== DOMContentLoaded Event Fired ===');
+        console.log('Initializing modules...');
+        
+        // Prevent form submission on Enter key
+        const bsiForm = document.getElementById('bsiForm');
+        if (bsiForm) {
+            bsiForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.log('Form submission prevented');
+                return false;
+            });
+            
+            bsiForm.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    // GST Vno field has its own capture-phase handler that triggers Add Item
+                    if (e.target.id === 'gst_vno') {
+                        return; // Handled by field-specific capture-phase handler
+                    }
+                    
+                    // Prevent default form submission for all other fields
+                    e.preventDefault();
+                    console.log('Enter pressed in form on:', e.target.id || e.target.name);
+                }
+            });
+            console.log('✓ Form submit prevention added');
+        }
+        
+        loadItems();
+        console.log('✓ loadItems called');
+    } catch(e) {
+        console.error('Error in loadItems:', e);
+        alert('Error in loadItems: ' + e.message);
+    }
+    
+    try {
+        initSupplierDropdown();
+        console.log('✓ initSupplierDropdown called');
+    } catch(e) {
+        console.error('Error in initSupplierDropdown:', e);
+        alert('Error in initSupplierDropdown: ' + e.message);
+    }
+    
+    try {
+        initNoteTypeDropdown();
+        console.log('✓ initNoteTypeDropdown called');
+    } catch(e) {
+        console.error('Error in initNoteTypeDropdown:', e);
+        alert('Error in initNoteTypeDropdown: ' + e.message);
+    }
+    
+    try {
+        initHeaderFieldNavigation();
+        console.log('✓ initHeaderFieldNavigation called');
+    } catch(e) {
+        console.error('Error in initHeaderFieldNavigation:', e);
+        alert('Error in initHeaderFieldNavigation: ' + e.message);
+    }
+    
+    try {
+        initGlobalKeyboardShortcuts();
+        console.log('✓ initGlobalKeyboardShortcuts called');
+    } catch(e) {
+        console.error('Error in initGlobalKeyboardShortcuts:', e);
+        alert('Error in initGlobalKeyboardShortcuts: ' + e.message);
+    }
+    
+    // Verify GST Vno handler is properly attached
+    setTimeout(() => {
+        const gstVnoField = document.getElementById('gst_vno');
+        if (gstVnoField) {
+            console.log('✅ GST Vno field verified — Enter key will trigger Add Item (F2)');
+        } else {
+            console.error('❌ GST Vno field NOT found in DOM');
+        }
+    }, 200);
+    
+    // Set default focus on date field
+    setTimeout(() => {
+        try {
+            const dateField = document.getElementById('transaction_date');
+            if (dateField) {
+                dateField.focus();
+                console.log('✓ Default focus set on date field');
+            }
+        } catch(e) {
+            console.error('Error setting focus:', e);
+        }
+    }, 100);
+    
+    console.log('=== All Initialization Complete ===');
 });
 
 function updateDayName() {
@@ -296,10 +497,13 @@ function loadItems() {
 
 // Item Modal - Redirect to reusable modal component
 function showItemModal() {
+    console.log('showItemModal called');
     // Use reusable item selection modal
     if (typeof openItemModal_chooseItemsModal === 'function') {
+        console.log('Using reusable modal component');
         openItemModal_chooseItemsModal();
     } else {
+        console.log('Using fallback modal');
         // Fallback to old modal behavior
         document.getElementById('itemModalBackdrop').classList.add('show');
         document.getElementById('itemModal').classList.add('show');
@@ -434,16 +638,40 @@ function addItemRow(item, batch) {
     tr.id = `row_${idx}`;
     tr.onclick = function() { selectRow(idx); };
     tr.innerHTML = `
-        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][batch_no]" value="${batch?.batch_no || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][expiry]" value="${batch?.expiry_date || ''}" readonly class="readonly-field"></td>
-        <td><input type="number" name="items[${idx}][qty]" value="" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][free_qty]" value="0" min="0" class="text-end"></td>
-        <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B">Brk</option><option value="E">Exp</option></select></td>
+        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field" 
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'item_code')"></td>
+        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'item_name')"></td>
+        <td><input type="text" name="items[${idx}][batch_no]" value="${batch?.batch_no || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'batch_no')"></td>
+        <td><input type="text" name="items[${idx}][expiry]" value="${batch?.expiry_date || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'expiry')"></td>
+        <td><input type="number" name="items[${idx}][qty]" value="" min="0" class="text-end" 
+                   onchange="calculateRowAmount(${idx})" 
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'qty')"></td>
+        <td><input type="number" name="items[${idx}][free_qty]" value="0" min="0" class="text-end"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'free_qty')"></td>
+        <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'rate')"></td>
+        <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'dis_percent')"></td>
+        <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'scm_percent')"></td>
+        <td style="position:relative;">
+            <input type="text" class="form-control text-center br-ex-input" id="br_ex_display_${idx}" 
+                   value="Brk" readonly style="cursor:pointer;width:55px;"
+                   onfocus="openBrExDropdown(${idx})"
+                   onclick="openBrExDropdown(${idx})"
+                   onkeydown="handleBrExKeyDown(event, ${idx})">
+            <input type="hidden" name="items[${idx}][br_ex]" id="br_ex_${idx}" value="B">
+            <div class="br-ex-dropdown" id="br_ex_dropdown_${idx}" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid #ccc;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:55px;">
+                <div class="br-ex-option" data-value="B" onclick="selectBrEx(${idx},'B','Brk')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Brk</div>
+                <div class="br-ex-option" data-value="E" onclick="selectBrEx(${idx},'E','Exp')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Exp</div>
+            </div>
+        </td>
         <td><input type="number" name="items[${idx}][amount]" value="0" step="0.01" class="text-end readonly-field" readonly></td>
         <td>
             <button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button>
@@ -462,6 +690,16 @@ function addItemRow(item, batch) {
     `;
     tbody.appendChild(tr);
     selectRow(idx);
+    
+    // Focus on qty field after adding row
+    setTimeout(() => {
+        const qtyInput = tr.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
+    
     calculateTotals();
 }
 
@@ -572,7 +810,7 @@ function calculateTotals() {
         const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
         const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
         const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
-        const brEx = row.querySelector('select[name*="[br_ex]"]')?.value || 'B';
+        const brEx = row.querySelector('input[name*="[br_ex]"]')?.value || 'B';
         
         const cgstPercent = parseFloat(row.querySelector('input[type="hidden"][name*="[cgst]"]')?.value) || 0;
         const sgstPercent = parseFloat(row.querySelector('input[type="hidden"][name*="[sgst]"]')?.value) || 0;
@@ -639,6 +877,7 @@ function saveTransaction() {
     .then(r => r.json())
     .then(data => {
         if (data.success) {
+            if (typeof resetFormDirty === 'function') resetFormDirty();
             alert('Transaction saved successfully!');
             window.location.href = '{{ route("admin.breakage-supplier.issued-index") }}';
         } else {
@@ -659,6 +898,815 @@ function cancelTransaction() {
 
 function viewOnScreen() {
     alert('View on screen feature - Coming soon');
+}
+
+// ============================================
+// KEYBOARD NAVIGATION FUNCTIONS
+// ============================================
+
+// Initialize Supplier Dropdown with Keyboard Navigation
+function initSupplierDropdown() {
+    const supplierSearchInput = document.getElementById('supplierSearchInput');
+    const supplierDropdown = document.getElementById('supplierDropdown');
+    const supplierIdInput = document.getElementById('supplier_id');
+    const supplierList = document.getElementById('supplierList');
+    
+    if (!supplierSearchInput || !supplierDropdown || !supplierIdInput || !supplierList) return;
+    
+    let supplierActiveIndex = -1;
+    
+    // Get visible supplier items
+    function getVisibleSupplierItems() {
+        return Array.from(supplierList.querySelectorAll('.dropdown-item')).filter(item => 
+            item.style.display !== 'none'
+        );
+    }
+    
+    // Set active supplier item
+    function setActiveSupplierItem(index) {
+        const items = getVisibleSupplierItems();
+        items.forEach(item => item.classList.remove('active'));
+        if (index >= 0 && index < items.length) {
+            items[index].classList.add('active');
+            items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            supplierActiveIndex = index;
+        }
+    }
+    
+    // Select supplier item
+    function selectSupplierItem(item, closeDropdown = false) {
+        const supplierId = item.getAttribute('data-id');
+        const supplierName = item.getAttribute('data-name');
+        
+        console.log('selectSupplierItem called', { supplierId, supplierName, closeDropdown });
+        
+        supplierSearchInput.value = supplierName;
+        supplierIdInput.value = supplierId;
+        document.getElementById('supplier_name').value = supplierName;
+        
+        if (closeDropdown) {
+            console.log('Closing dropdown and moving focus...');
+            supplierDropdown.style.display = 'none';
+            
+            // Blur the supplier input first to ensure clean focus transfer
+            supplierSearchInput.blur();
+            
+            // Move focus to next field (noteTypeSearchInput) after dropdown closes
+            setTimeout(() => {
+                const noteTypeField = document.getElementById('noteTypeSearchInput');
+                const noteTypeDropdownEl = document.getElementById('noteTypeDropdown');
+                console.log('Attempting to focus noteTypeSearchInput:', noteTypeField);
+                if (noteTypeField && noteTypeDropdownEl) {
+                    noteTypeField.focus();
+                    // Manually open the dropdown
+                    noteTypeDropdownEl.style.display = 'block';
+                    console.log('✓ Focus moved to noteTypeSearchInput and dropdown opened');
+                    console.log('Active element after focus:', document.activeElement.id);
+                    
+                    // Trigger the focus event to set active index
+                    const focusEvent = new Event('focus');
+                    noteTypeField.dispatchEvent(focusEvent);
+                } else {
+                    console.error('✗ noteTypeSearchInput field not found');
+                }
+            }, 100);
+        }
+        return true;
+    }
+    
+    // Filter suppliers
+    function filterSuppliers(searchText) {
+        const search = searchText.toLowerCase();
+        const items = supplierList.querySelectorAll('.dropdown-item');
+        let visibleCount = 0;
+        
+        items.forEach(item => {
+            const name = item.getAttribute('data-name').toLowerCase();
+            if (name.includes(search)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        supplierActiveIndex = visibleCount > 0 ? 0 : -1;
+        if (visibleCount > 0) {
+            setActiveSupplierItem(0);
+        }
+    }
+    
+    // Event listeners
+    supplierSearchInput.addEventListener('focus', function() {
+        supplierDropdown.style.display = 'block';
+        filterSuppliers(this.value || '');
+    });
+    
+    supplierSearchInput.addEventListener('input', function() {
+        filterSuppliers(this.value);
+        supplierDropdown.style.display = 'block';
+    });
+    
+    // Enter key on supplier input should also move to next field if dropdown is closed
+    supplierSearchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && supplierDropdown.style.display === 'none' && supplierIdInput.value) {
+            e.preventDefault();
+            const noteTypeField = document.getElementById('note_type');
+            if (noteTypeField) {
+                noteTypeField.focus();
+            }
+        }
+    });
+    
+    // Click outside to close
+    document.addEventListener('click', function(e) {
+        if (!supplierSearchInput.contains(e.target) && !supplierDropdown.contains(e.target)) {
+            supplierDropdown.style.display = 'none';
+        }
+    });
+    
+    // Click on item
+    supplierList.addEventListener('click', function(e) {
+        const item = e.target.closest('.dropdown-item');
+        if (item) {
+            e.preventDefault();
+            e.stopPropagation();
+            selectSupplierItem(item, true);
+        }
+    });
+    
+    // Keyboard navigation
+    supplierSearchInput.addEventListener('keydown', function(e) {
+        console.log('Supplier input keydown:', e.key);
+        
+        // Prevent Tab key
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            console.log('Tab key prevented on supplier');
+            return false;
+        }
+        
+        if (e.key === 'Enter') {
+            console.log('Enter key pressed on supplier input');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const visibleItems = getVisibleSupplierItems();
+            console.log('Visible items:', visibleItems.length, 'Active index:', supplierActiveIndex);
+            
+            let selected = false;
+            if (supplierActiveIndex >= 0 && visibleItems[supplierActiveIndex]) {
+                console.log('Selecting active item at index:', supplierActiveIndex);
+                selected = selectSupplierItem(visibleItems[supplierActiveIndex], true);
+            } else if (visibleItems.length >= 1) {
+                console.log('Selecting first visible item');
+                selected = selectSupplierItem(visibleItems[0], true);
+            }
+            
+            // If selection was successful, ensure dropdown is closed
+            if (selected) {
+                console.log('Selection successful, closing dropdown');
+                supplierDropdown.style.display = 'none';
+            } else {
+                console.log('Selection failed');
+            }
+            
+            return false;
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            const items = getVisibleSupplierItems();
+            if (!items.length) return;
+            if (supplierDropdown.style.display !== 'block') {
+                supplierDropdown.style.display = 'block';
+            }
+            const nextIndex = supplierActiveIndex < 0 ? 0 : Math.min(supplierActiveIndex + 1, items.length - 1);
+            setActiveSupplierItem(nextIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            const items = getVisibleSupplierItems();
+            if (!items.length) return;
+            if (supplierDropdown.style.display !== 'block') {
+                supplierDropdown.style.display = 'block';
+            }
+            const prevIndex = supplierActiveIndex <= 0 ? 0 : supplierActiveIndex - 1;
+            setActiveSupplierItem(prevIndex);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            supplierDropdown.style.display = 'none';
+        }
+    }, true);
+    
+    // Global capture to ensure dropdown selection works
+    window.addEventListener('keydown', function(e) {
+        const activeEl = document.activeElement;
+        const isSupplierFocus = activeEl === supplierSearchInput || supplierDropdown.contains(activeEl);
+        const isDropdownOpen = supplierDropdown.style.display === 'block';
+        
+        if (!isSupplierFocus || !isDropdownOpen) return;
+
+        if (e.key === 'Enter') {
+            console.log('Global Enter handler triggered for supplier dropdown');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const visibleItems = getVisibleSupplierItems();
+            console.log('Global handler - Visible items:', visibleItems.length, 'Active index:', supplierActiveIndex);
+            
+            let selected = false;
+            if (supplierActiveIndex >= 0 && visibleItems[supplierActiveIndex]) {
+                console.log('Global handler - Selecting active item');
+                selected = selectSupplierItem(visibleItems[supplierActiveIndex], true);
+            } else if (visibleItems.length >= 1) {
+                console.log('Global handler - Selecting first item');
+                selected = selectSupplierItem(visibleItems[0], true);
+            }
+            
+            // If selection was successful, ensure dropdown is closed
+            if (selected) {
+                console.log('Global handler - Selection successful');
+                supplierDropdown.style.display = 'none';
+            }
+            
+            return false;
+        }
+    }, true);
+}
+
+// Initialize Note Type (R/C) Dropdown with Auto-Open and Keyboard Navigation
+function initNoteTypeDropdown() {
+    const noteTypeSearchInput = document.getElementById('noteTypeSearchInput');
+    const noteTypeDropdown = document.getElementById('noteTypeDropdown');
+    const noteTypeHiddenInput = document.getElementById('note_type');
+    
+    if (!noteTypeSearchInput || !noteTypeDropdown || !noteTypeHiddenInput) return;
+    
+    let noteTypeActiveIndex = -1;
+    
+    // Set initial display value
+    noteTypeSearchInput.value = noteTypeHiddenInput.value || 'C';
+    
+    // Get visible note type items
+    function getVisibleNoteTypeItems() {
+        return Array.from(noteTypeDropdown.querySelectorAll('.dropdown-item'));
+    }
+    
+    // Set active note type item
+    function setActiveNoteTypeItem(index) {
+        const items = getVisibleNoteTypeItems();
+        items.forEach(item => item.classList.remove('active'));
+        if (index >= 0 && index < items.length) {
+            items[index].classList.add('active');
+            items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            noteTypeActiveIndex = index;
+        }
+    }
+    
+    // Select note type item
+    function selectNoteTypeItem(item, closeDropdown = false) {
+        const value = item.getAttribute('data-value');
+        
+        console.log('selectNoteTypeItem called', { value, closeDropdown });
+        
+        noteTypeSearchInput.value = value;
+        noteTypeHiddenInput.value = value;
+        
+        if (closeDropdown) {
+            console.log('Closing note type dropdown and moving focus...');
+            noteTypeDropdown.style.display = 'none';
+            
+            // Blur the input first
+            noteTypeSearchInput.blur();
+            
+            // Move focus to next field (tax_flag)
+            requestAnimationFrame(() => {
+                const taxFlagField = document.getElementById('tax_flag');
+                console.log('Attempting to focus tax_flag:', taxFlagField);
+                if (taxFlagField) {
+                    taxFlagField.focus();
+                    taxFlagField.select();
+                    console.log('✓ Focus moved to tax_flag');
+                } else {
+                    console.error('✗ tax_flag field not found');
+                }
+            });
+        }
+        return true;
+    }
+    
+    // Open dropdown on focus
+    noteTypeSearchInput.addEventListener('focus', function() {
+        console.log('Note type field focused - opening dropdown');
+        noteTypeDropdown.style.display = 'block';
+        
+        // Set active index to current value
+        const items = getVisibleNoteTypeItems();
+        const currentValue = noteTypeHiddenInput.value;
+        const currentIndex = items.findIndex(item => item.getAttribute('data-value') === currentValue);
+        setActiveNoteTypeItem(currentIndex >= 0 ? currentIndex : 0);
+    });
+    
+    // Open dropdown on click
+    noteTypeSearchInput.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (noteTypeDropdown.style.display === 'block') {
+            noteTypeDropdown.style.display = 'none';
+        } else {
+            noteTypeDropdown.style.display = 'block';
+            const items = getVisibleNoteTypeItems();
+            const currentValue = noteTypeHiddenInput.value;
+            const currentIndex = items.findIndex(item => item.getAttribute('data-value') === currentValue);
+            setActiveNoteTypeItem(currentIndex >= 0 ? currentIndex : 0);
+        }
+    });
+    
+    // Click outside to close
+    document.addEventListener('click', function(e) {
+        if (!noteTypeSearchInput.contains(e.target) && !noteTypeDropdown.contains(e.target)) {
+            noteTypeDropdown.style.display = 'none';
+        }
+    });
+    
+    // Click on item
+    noteTypeDropdown.addEventListener('click', function(e) {
+        const item = e.target.closest('.dropdown-item');
+        if (item) {
+            e.preventDefault();
+            e.stopPropagation();
+            selectNoteTypeItem(item, true);
+        }
+    });
+    
+    // Keyboard navigation
+    noteTypeSearchInput.addEventListener('keydown', function(e) {
+        console.log('Note type input keydown:', e.key);
+        
+        // Prevent Tab key
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            console.log('Tab key prevented on note type');
+            return false;
+        }
+        
+        if (e.key === 'Enter') {
+            console.log('Enter key pressed on note type input');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const items = getVisibleNoteTypeItems();
+            console.log('Items:', items.length, 'Active index:', noteTypeActiveIndex);
+            
+            let selected = false;
+            if (noteTypeActiveIndex >= 0 && items[noteTypeActiveIndex]) {
+                console.log('Selecting active item at index:', noteTypeActiveIndex);
+                selected = selectNoteTypeItem(items[noteTypeActiveIndex], true);
+            } else if (items.length >= 1) {
+                console.log('Selecting first item');
+                selected = selectNoteTypeItem(items[0], true);
+            }
+            
+            if (selected) {
+                console.log('Selection successful, closing dropdown');
+                noteTypeDropdown.style.display = 'none';
+            }
+            
+            return false;
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            const items = getVisibleNoteTypeItems();
+            if (!items.length) return;
+            if (noteTypeDropdown.style.display !== 'block') {
+                noteTypeDropdown.style.display = 'block';
+            }
+            const nextIndex = noteTypeActiveIndex < 0 ? 0 : Math.min(noteTypeActiveIndex + 1, items.length - 1);
+            setActiveNoteTypeItem(nextIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            const items = getVisibleNoteTypeItems();
+            if (!items.length) return;
+            if (noteTypeDropdown.style.display !== 'block') {
+                noteTypeDropdown.style.display = 'block';
+            }
+            const prevIndex = noteTypeActiveIndex <= 0 ? 0 : noteTypeActiveIndex - 1;
+            setActiveNoteTypeItem(prevIndex);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            noteTypeDropdown.style.display = 'none';
+        }
+    }, true);
+    
+    // Global capture to ensure dropdown selection works
+    window.addEventListener('keydown', function(e) {
+        const activeEl = document.activeElement;
+        const isNoteTypeFocus = activeEl === noteTypeSearchInput || noteTypeDropdown.contains(activeEl);
+        const isDropdownOpen = noteTypeDropdown.style.display === 'block';
+        
+        if (!isNoteTypeFocus || !isDropdownOpen) return;
+
+        if (e.key === 'Enter') {
+            console.log('Global Enter handler triggered for note type dropdown');
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const items = getVisibleNoteTypeItems();
+            console.log('Global handler - Items:', items.length, 'Active index:', noteTypeActiveIndex);
+            
+            let selected = false;
+            if (noteTypeActiveIndex >= 0 && items[noteTypeActiveIndex]) {
+                console.log('Global handler - Selecting active item');
+                selected = selectNoteTypeItem(items[noteTypeActiveIndex], true);
+            } else if (items.length >= 1) {
+                console.log('Global handler - Selecting first item');
+                selected = selectNoteTypeItem(items[0], true);
+            }
+            
+            if (selected) {
+                console.log('Global handler - Selection successful');
+                noteTypeDropdown.style.display = 'none';
+            }
+            
+            return false;
+        }
+    }, true);
+}
+
+// Initialize Header Field Navigation
+function initHeaderFieldNavigation() {
+    console.log('initHeaderFieldNavigation called');
+    
+    // Prevent Tab key navigation on all header fields (but allow Enter key)
+    const headerFields = [
+        'transaction_date',
+        'supplierSearchInput',
+        'noteTypeSearchInput',
+        'tax_flag',
+        'inc_flag',
+        'gst_vno'
+    ];
+    
+    headerFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('keydown', function(e) {
+                // Only prevent Tab, NOT Enter
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    console.log('Tab key prevented on', fieldId);
+                }
+                // Let Enter key pass through to field-specific handlers
+            });
+        }
+    });
+    
+    // Tax Flag (Y/N) field
+    const taxFlagField = document.getElementById('tax_flag');
+    if (taxFlagField) {
+        taxFlagField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Enter pressed on tax_flag, moving to inc_flag');
+                
+                const incFlagField = document.getElementById('inc_flag');
+                if (incFlagField) {
+                    incFlagField.focus();
+                    incFlagField.select();
+                    console.log('✓ Focus moved to inc_flag');
+                }
+            }
+        });
+    }
+    
+    // Inc field
+    const incFlagField = document.getElementById('inc_flag');
+    if (incFlagField) {
+        incFlagField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Enter pressed on inc_flag, moving to gst_vno');
+                
+                const gstVnoField = document.getElementById('gst_vno');
+                if (gstVnoField) {
+                    gstVnoField.focus();
+                    gstVnoField.select();
+                    console.log('✓ Focus moved to gst_vno');
+                }
+            }
+        });
+    }
+    
+    // GST Vno field - Enter key triggers Add Item (F2) modal
+    // NOTE: The primary handler is the INLINE onkeydown on the HTML element itself.
+    // This addEventListener is a backup in case the inline handler is ever removed.
+    const gstVnoField = document.getElementById('gst_vno');
+    
+    if (gstVnoField) {
+        gstVnoField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                console.log('🔥 GST VNO ENTER (JS backup handler)');
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                handleGstVnoEnter();
+                return false;
+            }
+        }, true); // Capture phase
+        console.log('✅ GST Vno Enter handler attached (inline + JS backup)');
+    }
+    
+    // Date field
+    const dateField = document.getElementById('transaction_date');
+    if (dateField) {
+        dateField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Enter pressed on date, moving to supplier');
+                
+                const supplierField = document.getElementById('supplierSearchInput');
+                if (supplierField) {
+                    supplierField.focus();
+                    supplierField.select();
+                    console.log('✓ Focus moved to supplier');
+                }
+            }
+        });
+    }
+}
+
+// Move to Next Field in Row
+function moveToNextField(rowIndex, nextFieldName) {
+    const row = document.getElementById(`row_${rowIndex}`);
+    if (!row) return;
+    
+    // Special case for br_ex - focus the display input and open dropdown
+    if (nextFieldName === 'br_ex') {
+        const brExDisplay = document.getElementById(`br_ex_display_${rowIndex}`);
+        if (brExDisplay) {
+            setTimeout(() => {
+                brExDisplay.focus();
+                openBrExDropdown(rowIndex); // Explicitly open dropdown
+            }, 50);
+        }
+        return;
+    }
+    
+    const nextField = row.querySelector(`[name*="[${nextFieldName}]"]`);
+    if (nextField) {
+        setTimeout(() => {
+            nextField.focus();
+            if (nextField.tagName === 'INPUT' && nextField.type === 'number') {
+                nextField.select();
+            }
+        }, 50);
+    }
+}
+
+// Move to Previous Field in Row (Shift+Enter)
+function moveToPrevField(rowIndex, prevFieldName) {
+    const row = document.getElementById(`row_${rowIndex}`);
+    if (!row) return;
+    
+    // Special case for br_ex - focus the display input and open dropdown
+    if (prevFieldName === 'br_ex') {
+        const brExDisplay = document.getElementById(`br_ex_display_${rowIndex}`);
+        if (brExDisplay) {
+            setTimeout(() => {
+                brExDisplay.focus();
+                openBrExDropdown(rowIndex); // Explicitly open dropdown
+            }, 50);
+        }
+        return;
+    }
+    
+    const prevField = row.querySelector(`[name*="[${prevFieldName}]"]`);
+    if (prevField) {
+        setTimeout(() => {
+            prevField.focus();
+            if (prevField.tagName === 'INPUT' && prevField.type === 'number') {
+                prevField.select();
+            }
+        }, 50);
+    }
+}
+
+// ============================================
+// Br/Ex Custom Dropdown Functions
+// ============================================
+
+function openBrExDropdown(idx) {
+    closeAllBrExDropdowns();
+    const dropdown = document.getElementById(`br_ex_dropdown_${idx}`);
+    if (dropdown) {
+        dropdown.style.display = 'block';
+        const currentVal = document.getElementById(`br_ex_${idx}`).value;
+        dropdown.querySelectorAll('.br-ex-option').forEach(opt => {
+            if (opt.dataset.value === currentVal) {
+                opt.style.backgroundColor = '#0d6efd';
+                opt.style.color = '#fff';
+            } else {
+                opt.style.backgroundColor = '';
+                opt.style.color = '';
+            }
+        });
+    }
+}
+
+function closeBrExDropdown(idx) {
+    const dropdown = document.getElementById(`br_ex_dropdown_${idx}`);
+    if (dropdown) dropdown.style.display = 'none';
+}
+
+function closeAllBrExDropdowns() {
+    document.querySelectorAll('.br-ex-dropdown').forEach(d => d.style.display = 'none');
+}
+
+function selectBrEx(idx, value, label) {
+    document.getElementById(`br_ex_${idx}`).value = value;
+    document.getElementById(`br_ex_display_${idx}`).value = label;
+    closeBrExDropdown(idx);
+    handleRowComplete(idx);
+}
+
+function handleBrExKeyDown(event, idx) {
+    const dropdown = document.getElementById(`br_ex_dropdown_${idx}`);
+    const isOpen = dropdown && dropdown.style.display !== 'none';
+    
+    // Block spacebar - dropdown opens only via focus, not spacebar
+    if (event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+    }
+    
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        event.stopPropagation();
+        const currentVal = document.getElementById(`br_ex_${idx}`).value;
+        if (currentVal === 'B') {
+            document.getElementById(`br_ex_${idx}`).value = 'E';
+            document.getElementById(`br_ex_display_${idx}`).value = 'Exp';
+        } else {
+            document.getElementById(`br_ex_${idx}`).value = 'B';
+            document.getElementById(`br_ex_display_${idx}`).value = 'Brk';
+        }
+        if (isOpen) openBrExDropdown(idx);
+        return;
+    }
+    
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        closeBrExDropdown(idx);
+        if (event.shiftKey) {
+            // Shift+Enter: go back to scm_percent
+            moveToPrevField(idx, 'scm_percent');
+        } else {
+            handleRowComplete(idx);
+        }
+        return;
+    }
+    
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        closeBrExDropdown(idx);
+        return;
+    }
+    
+    if (event.key.toLowerCase() === 'b') {
+        event.preventDefault();
+        document.getElementById(`br_ex_${idx}`).value = 'B';
+        document.getElementById(`br_ex_display_${idx}`).value = 'Brk';
+        if (isOpen) openBrExDropdown(idx);
+        return;
+    }
+    if (event.key.toLowerCase() === 'e') {
+        event.preventDefault();
+        document.getElementById(`br_ex_${idx}`).value = 'E';
+        document.getElementById(`br_ex_display_${idx}`).value = 'Exp';
+        if (isOpen) openBrExDropdown(idx);
+        return;
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.br-ex-input') && !e.target.closest('.br-ex-dropdown')) {
+        closeAllBrExDropdowns();
+    }
+});
+
+// Handle Grid Enter Key Navigation
+function handleGridEnterKey(event, rowIndex, currentField) {
+    if (event.key !== 'Enter') return;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Define field navigation order
+    const fieldOrder = [
+        'item_code',
+        'item_name', 
+        'batch_no',
+        'expiry',
+        'qty',
+        'free_qty',
+        'rate',
+        'dis_percent',
+        'scm_percent',
+        'br_ex'
+    ];
+    
+    const currentIndex = fieldOrder.indexOf(currentField);
+    
+    // Shift+Enter: move to PREVIOUS field
+    if (event.shiftKey) {
+        if (currentIndex > 0) {
+            const prevFieldName = fieldOrder[currentIndex - 1];
+            moveToPrevField(rowIndex, prevFieldName);
+        }
+        return;
+    }
+    
+    // Special handling for item_code - open item modal
+    if (currentField === 'item_code') {
+        showItemModal();
+        return;
+    }
+    
+    // If it's the last field (br_ex), complete the row and add new one
+    if (currentField === 'br_ex') {
+        handleRowComplete(rowIndex);
+        return;
+    }
+    
+    // Move to next field in the order
+    if (currentIndex >= 0 && currentIndex < fieldOrder.length - 1) {
+        const nextFieldName = fieldOrder[currentIndex + 1];
+        moveToNextField(rowIndex, nextFieldName);
+    }
+}
+
+// Handle Row Complete - Called when Enter is pressed on last field (Br/Ex)
+function handleRowComplete(rowIndex) {
+    console.log('Row completed:', rowIndex);
+    const row = document.getElementById(`row_${rowIndex}`);
+    if (!row) return;
+    
+    // Calculate the row amount
+    calculateRowAmount(rowIndex);
+    
+    // Recalculate totals
+    calculateTotals();
+    
+    // Add new row and focus on first field
+    setTimeout(() => {
+        showItemModal();
+    }, 100);
+}
+
+// Initialize Global Keyboard Shortcuts
+function initGlobalKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // F2 - Add Item
+        if (e.key === 'F2') {
+            e.preventDefault();
+            showItemModal();
+        }
+        
+        // Escape - Close Modals
+        if (e.key === 'Escape') {
+            closeItemModal();
+            closeBatchModal();
+        }
+        
+        // Ctrl+S - Save Transaction
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+            e.stopPropagation();
+            saveTransaction();
+        }
+    });
+}
+
+// Update supplier name (legacy function for compatibility)
+function updateSupplierName() {
+    const supplierIdInput = document.getElementById('supplier_id');
+    const supplierSearchInput = document.getElementById('supplierSearchInput');
+    if (supplierIdInput && supplierIdInput.value) {
+        const item = document.querySelector(`#supplierList .dropdown-item[data-id="${supplierIdInput.value}"]`);
+        if (item && supplierSearchInput) {
+            supplierSearchInput.value = item.getAttribute('data-name');
+            document.getElementById('supplier_name').value = item.getAttribute('data-name');
+        }
+    }
 }
 </script>
 @endpush

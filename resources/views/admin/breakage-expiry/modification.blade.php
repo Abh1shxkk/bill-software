@@ -3309,10 +3309,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.__kbBeModCtrlSBound = true;
     }
 
-    // Initial focus
+    // Initial focus - Set to Date field as per form flow
     setTimeout(() => {
-        const seriesInput = document.getElementById('seriesInput');
-        if (seriesInput) seriesInput.focus();
+        const transactionDate = document.getElementById('transactionDate');
+        if (transactionDate) {
+            transactionDate.focus();
+            transactionDate.select();
+        }
     }, 100);
 });
 
