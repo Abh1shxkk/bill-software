@@ -2449,6 +2449,7 @@ function addNewRow() {
     row.innerHTML = `
         <td>
             <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value=""
+                   data-custom-enter="true"
                    onkeydown="if(event.key === 'Enter') { event.preventDefault(); openItemSelectionModal(); return false; }"
                    placeholder="">
         </td>
@@ -4414,6 +4415,34 @@ function initReusableModalEnterCapture() {
     window.__kbBeModalEnterBound = true;
 }
 
+// Fallback: Ensure Enter on table Code field always opens item selection modal.
+function initTableCodeEnterCapture() {
+    if (window.__kbBeCodeEnterCaptureBound) return;
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' && e.keyCode !== 13) return;
+
+        const active = document.activeElement;
+        if (!active) return;
+
+        // Target only code fields inside items table that are not readonly
+        const isCodeField =
+            active.matches &&
+            active.matches('#itemsTableBody input[name*="[code]"]') &&
+            !active.readOnly;
+        if (!isCodeField) return;
+
+        console.log('[KB-BE][Capture][Table] Code Enter -> openItemSelectionModal');
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        openItemSelectionModal();
+    }, true);
+
+    window.__kbBeCodeEnterCaptureBound = true;
+}
+
 // Fallback: Ensure Enter on table Dis% always creates next row.
 function initTableDiscountEnterCapture() {
     if (window.__kbBeDisEnterCaptureBound) return;
@@ -4705,6 +4734,7 @@ function initHeaderKeyboardNavigation() {
         initSalesmanDropdown();
         initReusableModalEnterCapture();
         initDropdownEnterCapture();
+        initTableCodeEnterCapture();
         initTableDiscountEnterCapture();
         initHeaderKeyboardNavigation();
         

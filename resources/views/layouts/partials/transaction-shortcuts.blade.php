@@ -141,6 +141,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // For INPUT elements
             if (tagName === 'input') {
+                // Don't interfere with fields that have their own custom Enter handler
+                if (activeElement.hasAttribute('data-custom-enter')) {
+                    return;
+                }
+                
                 e.preventDefault();
                 e.stopPropagation();
                 

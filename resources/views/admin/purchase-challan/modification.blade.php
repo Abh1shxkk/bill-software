@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Purchase Challan Modification')
+@section('disable_select2', '1')
 
 @section('content')
 <style>
@@ -287,6 +288,47 @@
         display: block;
         opacity: 1;
     }
+
+    /* Searchable dropdown (custom, keyboard-friendly) */
+    .searchable-dropdown {
+        position: relative;
+    }
+    .searchable-dropdown-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+        border-radius: 0 0 0.375rem 0.375rem;
+        background: #fff;
+        z-index: 1080;
+        display: none;
+    }
+    .searchable-dropdown-list .dropdown-item {
+        padding: 0.35rem 0.55rem;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background: #e7f1ff;
+    }
+    .searchable-dropdown-list .dropdown-item.selected {
+        background: #0d6efd;
+        color: #fff;
+    }
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
+    }
     
     /* Action buttons styling */
     #itemsTableBody td:last-child {
@@ -539,12 +581,30 @@
                         <!-- Row 2: Supplier -->
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <label class="mb-0" style="white-space: nowrap;">Supplier :</label>
-                            <select class="form-control form-control-sm" name="supplier_id" id="supplierSelect" style="width: 150px;" autocomplete="off">
-                                <option value="">Select Supplier</option>
-                                @foreach($suppliers ?? [] as $supplier)
-                                    <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="searchable-dropdown" id="supplierDropdownWrapper" style="width: 260px;">
+                                <input type="text"
+                                       id="supplierSearchInput"
+                                       class="form-control searchable-dropdown-input"
+                                       placeholder="Type to search supplier..."
+                                       autocomplete="off">
+                                <div class="searchable-dropdown-list" id="supplierDropdownList">
+                                    <div class="dropdown-item" data-value="" data-name="" data-code="">Select Supplier</div>
+                                    @foreach($suppliers ?? [] as $supplier)
+                                        <div class="dropdown-item"
+                                             data-value="{{ $supplier->supplier_id }}"
+                                             data-name="{{ $supplier->name }}"
+                                             data-code="{{ $supplier->supplier_id }}">
+                                            {{ $supplier->supplier_id }} - {{ $supplier->name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <select class="form-control form-control-sm no-select2 d-none" name="supplier_id" id="supplierSelect" autocomplete="off">
+                                    <option value="">Select Supplier</option>
+                                    @foreach($suppliers ?? [] as $supplier)
+                                        <option value="{{ $supplier->supplier_id }}">{{ $supplier->supplier_id }} - {{ $supplier->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
                     
@@ -984,8 +1044,8 @@
             </table>
         </div>
         <div class="pending-orders-footer" style="padding: 8px 15px;">
-            <button type="button" class="btn btn-sm btn-secondary" onclick="closeChallansModal()">Close (Esc)</button>
-            <button type="button" class="btn btn-sm btn-primary" onclick="loadSelectedChallanFromModal()">Load Selected</button>
+            <button type="button" class="btn btn-sm btn-secondary" id="closeChallansModalBtn" onclick="closeChallansModal()">Close (Esc)</button>
+            <button type="button" class="btn btn-sm btn-primary" id="loadSelectedChallanBtn" onclick="loadSelectedChallanFromModal()">Load Selected</button>
         </div>
     </div>
 </div>
@@ -2514,6 +2574,12 @@ function openChallansModal() {
     backdrop.style.display = 'block';
     modal.classList.add('show');
     modal.style.display = 'block';
+    modal.setAttribute('tabindex', '-1');
+    setTimeout(() => {
+        if (modal.classList.contains('show')) {
+            modal.focus();
+        }
+    }, 0);
     
     // Fetch ALL challans (for modification)
     const url = `{{ url('/admin/purchase-challan/all-challans') }}`;
@@ -2586,6 +2652,9 @@ function selectModalChallanRow(row, challanId, challanNo) {
     // Store selection
     selectedModalChallanId = challanId;
     selectedModalChallanNo = challanNo;
+    const rows = Array.from(document.querySelectorAll('.challan-modal-row'));
+    window.__pcModChallanRowIndex = rows.indexOf(row);
+    window.__pcModChallanModalMode = 'rows';
 }
 
 // Load selected challan from modal
@@ -2816,11 +2885,6 @@ function populateChallanData(challan) {
         // Dispatch change event to update any UI libraries attached to the select
         const event = new Event('change', { bubbles: true });
         supplierSelect.dispatchEvent(event);
-        
-        // Try jQuery trigger if available (for Select2 etc)
-        if (typeof $ !== 'undefined' && $(supplierSelect).length) {
-            $(supplierSelect).trigger('change');
-        }
         
         // Verify selection
         console.log('Final supplier value:', supplierSelect.value, 'Selected text:', supplierSelect.options[supplierSelect.selectedIndex]?.text);
@@ -4327,6 +4391,328 @@ function loadChallanIntoPurchase(challanId, challanNo) {
             alert('Error loading challan details');
         });
 }
+</script>
+
+<script>
+(function() {
+    'use strict';
+
+    function focusField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.focus();
+        if (typeof el.select === 'function' && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+            el.select();
+        }
+    }
+
+    function initSearchableDropdown(config) {
+        const input = document.getElementById(config.inputId);
+        const list = document.getElementById(config.listId);
+        const select = document.getElementById(config.selectId);
+        if (!input || !list || !select) return null;
+
+        let highlightedIndex = -1;
+        let isOpen = false;
+
+        function getVisibleItems() {
+            return Array.from(list.querySelectorAll('.dropdown-item:not(.hidden)'));
+        }
+
+        function show() {
+            if (input.readOnly || select.disabled) return;
+            list.style.display = 'block';
+            isOpen = true;
+        }
+
+        function hide() {
+            list.style.display = 'none';
+            isOpen = false;
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(function(item) {
+                item.classList.remove('highlighted');
+            });
+        }
+
+        function filter(term) {
+            const search = (term || '').toLowerCase().trim();
+            list.querySelectorAll('.dropdown-item').forEach(function(item) {
+                const text = item.textContent.toLowerCase();
+                const code = (item.dataset.code || '').toLowerCase();
+                const name = (item.dataset.name || '').toLowerCase();
+                const visible = !search || text.includes(search) || code.includes(search) || name.includes(search);
+                item.classList.toggle('hidden', !visible);
+            });
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(function(item) {
+                item.classList.remove('highlighted');
+            });
+        }
+
+        function highlight(index) {
+            const items = getVisibleItems();
+            items.forEach(function(item) {
+                item.classList.remove('highlighted');
+            });
+            if (index >= 0 && index < items.length) {
+                highlightedIndex = index;
+                items[index].classList.add('highlighted');
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function syncInputFromSelect() {
+            const value = select.value;
+            if (!value) {
+                input.value = '';
+                list.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('selected'); });
+                return;
+            }
+
+            const option = Array.from(select.options).find(function(o) {
+                return String(o.value) === String(value);
+            });
+            if (!option) return;
+
+            input.value = option.text || '';
+            list.querySelectorAll('.dropdown-item').forEach(function(i) {
+                i.classList.toggle('selected', String(i.dataset.value) === String(value));
+            });
+        }
+
+        function selectItem(item, focusNext) {
+            const value = item.dataset.value || '';
+            if (select.value !== value) {
+                select.value = value;
+            }
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            syncInputFromSelect();
+            hide();
+
+            if (focusNext !== false && typeof config.onSelect === 'function') {
+                config.onSelect();
+            }
+        }
+
+        input.addEventListener('focus', function() {
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('input', function() {
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            const items = getVisibleItems();
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
+                } else {
+                    highlight(highlightedIndex < items.length - 1 ? highlightedIndex + 1 : 0);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
+                } else {
+                    highlight(highlightedIndex > 0 ? highlightedIndex - 1 : items.length - 1);
+                }
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                if (isOpen) {
+                    e.preventDefault();
+                    const targetItem = (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                    if (targetItem) {
+                        selectItem(targetItem, true);
+                    } else if (typeof config.onSelect === 'function') {
+                        config.onSelect();
+                    }
+                } else if (typeof config.onEnterWhenClosed === 'function') {
+                    e.preventDefault();
+                    config.onEnterWhenClosed();
+                }
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                hide();
+            }
+
+            if (e.key === 'Tab' && isOpen) {
+                const targetItem = (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                if (targetItem) selectItem(targetItem, false);
+                hide();
+            }
+        });
+
+        list.addEventListener('mousedown', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            e.preventDefault();
+            selectItem(item, true);
+        });
+
+        select.addEventListener('change', syncInputFromSelect);
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById(config.wrapperId);
+            if (wrapper && !wrapper.contains(e.target)) hide();
+        });
+
+        syncInputFromSelect();
+        return { focus: function() { input.focus(); } };
+    }
+
+    function isPastChallanModalOpen() {
+        const modal = document.getElementById('purchaseChallansModal');
+        return !!(modal && modal.classList.contains('show') && modal.style.display !== 'none');
+    }
+
+    function getPastChallanRows() {
+        return Array.from(document.querySelectorAll('.challan-modal-row'));
+    }
+
+    function setPastChallanActiveRow(index, ensureScroll) {
+        const rows = getPastChallanRows();
+        if (!rows.length) return;
+        const max = rows.length - 1;
+        const safeIndex = Math.max(0, Math.min(index, max));
+        const row = rows[safeIndex];
+        selectModalChallanRow(row, row.dataset.challanId, row.dataset.challanNo);
+        if (ensureScroll !== false) {
+            row.scrollIntoView({ block: 'nearest' });
+        }
+        window.__pcModChallanRowIndex = safeIndex;
+        window.__pcModChallanModalMode = 'rows';
+    }
+
+    function setPastChallanFooter(index) {
+        const buttons = [
+            document.getElementById('closeChallansModalBtn'),
+            document.getElementById('loadSelectedChallanBtn')
+        ].filter(Boolean);
+        if (!buttons.length) return;
+        const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+        buttons.forEach(function(btn, i) {
+            btn.classList.toggle('btn-outline-primary', i === safeIndex);
+        });
+        buttons[safeIndex].focus();
+        window.__pcModChallanFooterIndex = safeIndex;
+        window.__pcModChallanModalMode = 'footer';
+    }
+
+    function initPastChallanModalKeyboard() {
+        if (window.__pcModPastModalKbBound) return;
+        window.__pcModPastModalKbBound = true;
+        window.__pcModChallanRowIndex = -1;
+        window.__pcModChallanFooterIndex = 1;
+        window.__pcModChallanModalMode = 'rows';
+
+        window.addEventListener('keydown', function(e) {
+            if (!isPastChallanModalOpen()) return;
+            if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Tab'].includes(e.key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (e.key === 'Escape') {
+                closeChallansModal();
+                focusField('searchChallanNo');
+                return;
+            }
+
+            const rows = getPastChallanRows();
+            if (e.key === 'ArrowDown') {
+                if (!rows.length) return;
+                if (!Number.isInteger(window.__pcModChallanRowIndex) || window.__pcModChallanRowIndex < 0) {
+                    setPastChallanActiveRow(0, true);
+                } else {
+                    setPastChallanActiveRow(Math.min(window.__pcModChallanRowIndex + 1, rows.length - 1), true);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                if (!rows.length) return;
+                if (!Number.isInteger(window.__pcModChallanRowIndex) || window.__pcModChallanRowIndex < 0) {
+                    setPastChallanActiveRow(rows.length - 1, true);
+                } else {
+                    setPastChallanActiveRow(Math.max(window.__pcModChallanRowIndex - 1, 0), true);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowRight') {
+                setPastChallanFooter((window.__pcModChallanFooterIndex || 0) + 1);
+                return;
+            }
+
+            if (e.key === 'ArrowLeft') {
+                setPastChallanFooter((window.__pcModChallanFooterIndex || 0) - 1);
+                return;
+            }
+
+            if (e.key === 'Tab') {
+                setPastChallanFooter((window.__pcModChallanFooterIndex || 0) + 1);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                if (window.__pcModChallanModalMode === 'footer') {
+                    const footerButtons = [
+                        document.getElementById('closeChallansModalBtn'),
+                        document.getElementById('loadSelectedChallanBtn')
+                    ].filter(Boolean);
+                    const idx = Number.isInteger(window.__pcModChallanFooterIndex) ? window.__pcModChallanFooterIndex : 1;
+                    if (footerButtons[idx]) footerButtons[idx].click();
+                    return;
+                }
+
+                if (rows.length) {
+                    const idx = Number.isInteger(window.__pcModChallanRowIndex) ? window.__pcModChallanRowIndex : 0;
+                    setPastChallanActiveRow(idx, false);
+                    loadSelectedChallanFromModal();
+                }
+            }
+        }, true);
+    }
+
+    function initPurchaseChallanModificationKeyboard() {
+        initSearchableDropdown({
+            wrapperId: 'supplierDropdownWrapper',
+            inputId: 'supplierSearchInput',
+            listId: 'supplierDropdownList',
+            selectId: 'supplierSelect',
+            onSelect: function() {
+                focusField('searchChallanNo');
+            },
+            onEnterWhenClosed: function() {
+                focusField('searchChallanNo');
+            }
+        });
+        initPastChallanModalKeyboard();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPurchaseChallanModificationKeyboard);
+    } else {
+        initPurchaseChallanModificationKeyboard();
+    }
+})();
 </script>
 
 @endsection

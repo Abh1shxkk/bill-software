@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Sale Challan Modification')
+@section('disable_select2', '1')
 
 @section('content')
 <style>
@@ -246,6 +247,47 @@
         display: block;
         opacity: 1;
     }
+
+    /* Searchable dropdown (custom, keyboard-friendly) */
+    .searchable-dropdown {
+        position: relative;
+    }
+    .searchable-dropdown-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+        border-radius: 0 0 0.375rem 0.375rem;
+        background: #fff;
+        z-index: 1080;
+        display: none;
+    }
+    .searchable-dropdown-list .dropdown-item {
+        padding: 0.35rem 0.55rem;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background: #e7f1ff;
+    }
+    .searchable-dropdown-list .dropdown-item.selected {
+        background: #0d6efd;
+        color: #fff;
+    }
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
+    }
     
     /* Legacy modal classes for backward compatibility */
     .choose-items-modal {
@@ -355,6 +397,11 @@
         padding: 3px 6px;
     }
 
+    #invoicesTableBody tr.kb-active,
+    #invoicesTableBody tr.kb-active td {
+        background-color: #cfe8ff !important;
+    }
+
     /* Alert Modal Styles */
     .alert-modal {
         display: none;
@@ -434,6 +481,11 @@
         display: flex;
         justify-content: center;
         gap: 10px;
+    }
+
+    .alert-modal-footer button.kb-active {
+        outline: 2px solid #0d6efd;
+        outline-offset: 1px;
     }
     
     .alert-modal-backdrop {
@@ -576,7 +628,7 @@
                 <div class="header-row">
                     <div class="field-group">
                         <label>Series:</label>
-                        <select class="form-control" name="series" id="seriesSelect" style="width: 60px;" onchange="updateInvoiceType()">
+                        <select class="form-control no-select2" name="series" id="seriesSelect" style="width: 60px;" onchange="updateInvoiceType()">
                             <option value="SB" selected>SB</option>
                             <option value="S2">S2</option>
                         </select>
@@ -591,12 +643,37 @@
                     
                     <div class="field-group">
                         <label>Customer:</label>
-                        <select class="form-control readonly-field" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" disabled>
-                            <option value="">-- Select Customer --</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-code="{{ $customer->code ?? '' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                            @endforeach
-                        </select>
+                        <div class="searchable-dropdown" id="customerDropdownWrapper" style="width: 250px;">
+                            <input type="text"
+                                   id="customerSearchInput"
+                                   class="form-control searchable-dropdown-input readonly-field"
+                                   placeholder="-- Select Customer --"
+                                   autocomplete="off"
+                                   data-custom-enter="true"
+                                   readonly>
+                            <div class="searchable-dropdown-list" id="customerDropdownList">
+                                <div class="dropdown-item" data-value="" data-name="" data-code="">-- Select Customer --</div>
+                                @foreach($customers as $customer)
+                                    <div class="dropdown-item"
+                                         data-value="{{ $customer->id }}"
+                                         data-name="{{ $customer->name }}"
+                                         data-code="{{ $customer->code ?? '' }}">
+                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                    </div>
+                                @endforeach
+                            </div>
+                            <select class="form-control readonly-field no-select2"
+                                    name="customer_id"
+                                    id="customerSelect"
+                                    style="display: none;"
+                                    autocomplete="off"
+                                    disabled>
+                                <option value="">-- Select Customer --</option>
+                                @foreach($customers as $customer)
+                                    <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-code="{{ $customer->code ?? '' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
@@ -611,12 +688,37 @@
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man:</label>
-                            <select class="form-control readonly-field" name="salesman_id" id="salesmanSelect" style="width: 170px;" autocomplete="off" disabled>
-                                <option value="">-- Select Salesman --</option>
-                                @foreach($salesmen as $salesman)
-                                    <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}" data-code="{{ $salesman->code ?? '' }}">{{ $salesman->code ?? '' }} - {{ $salesman->name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="searchable-dropdown" id="salesmanDropdownWrapper" style="width: 170px;">
+                                <input type="text"
+                                       id="salesmanSearchInput"
+                                       class="form-control searchable-dropdown-input readonly-field"
+                                       placeholder="-- Select Salesman --"
+                                       autocomplete="off"
+                                       data-custom-enter="true"
+                                       readonly>
+                                <div class="searchable-dropdown-list" id="salesmanDropdownList">
+                                    <div class="dropdown-item" data-value="" data-name="" data-code="">-- Select Salesman --</div>
+                                    @foreach($salesmen as $salesman)
+                                        <div class="dropdown-item"
+                                             data-value="{{ $salesman->id }}"
+                                             data-name="{{ $salesman->name }}"
+                                             data-code="{{ $salesman->code ?? '' }}">
+                                            {{ $salesman->code ?? '' }} - {{ $salesman->name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <select class="form-control readonly-field no-select2"
+                                        name="salesman_id"
+                                        id="salesmanSelect"
+                                        style="display: none;"
+                                        autocomplete="off"
+                                        disabled>
+                                    <option value="">-- Select Salesman --</option>
+                                    @foreach($salesmen as $salesman)
+                                        <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}" data-code="{{ $salesman->code ?? '' }}">{{ $salesman->code ?? '' }} - {{ $salesman->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="text-center">
                             <button type="button" class="btn btn-warning btn-sm" id="chooseItemsBtn" onclick="handleChooseItemsClick()" style="width: 100%;">
@@ -1062,6 +1164,7 @@ let itemIndex = -1;
 let currentSelectedRowIndex = null;
 let pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
+let pendingTableFocusTarget = null; // 'batch' | 'code' | null
 
 // Load items on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -1122,6 +1225,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial button state check on page load
     checkChooseItemsButtonState();
+    initInvoicesModalKeyboardHandlers();
     
     // Item search in modal
     const itemSearchInput = document.getElementById('itemSearchInput');
@@ -1976,9 +2080,11 @@ function addRowEventListeners(row, rowIndex) {
                 e.preventDefault();
                 calculateRowAmount(rowIndex);
                 calculateTotal();
-                
-                // Move to next row (this will mark row complete, turn green, and update summary)
-                moveToNextRow(rowIndex);
+
+                // Finalize current row, then trigger Add Row flow and move cursor to new row code
+                updateRowColor(rowIndex);
+                calculateSummary();
+                triggerAddRowAndFocusCode();
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 navigateToRow(rowIndex - 1);
@@ -2018,6 +2124,9 @@ function addRowEventListeners(row, rowIndex) {
     // Listen for item name changes
     const nameInput = row.querySelector('input[name*="[item_name]"]');
     if (nameInput) {
+        // Item name should come from selected item, not manual typing.
+        nameInput.readOnly = true;
+        nameInput.style.background = '#f8f9fa';
         nameInput.addEventListener('blur', function() {
             updateDetailedSummary(rowIndex);
         });
@@ -2057,6 +2166,70 @@ function navigateToRow(targetRowIndex) {
         qtyField.focus();
         // Don't select - let user continue typing
     }
+}
+
+function focusRowCodeField(rowIndex, selectText = false) {
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (!row) return false;
+
+    const codeField = row.querySelector('input[name*="[code]"]');
+    if (!codeField) return false;
+
+    selectRow(rowIndex);
+    codeField.focus();
+    if (selectText && typeof codeField.select === 'function') {
+        codeField.select();
+    }
+    return true;
+}
+
+function focusFirstTableCodeField() {
+    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr[data-row-index]'));
+    if (!rows.length) return false;
+    const firstIndex = parseInt(rows[0].getAttribute('data-row-index'), 10);
+    if (isNaN(firstIndex)) return false;
+    return focusRowCodeField(firstIndex, true);
+}
+
+function focusRowBatchField(rowIndex, selectText = false) {
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (!row) return false;
+
+    const batchField = row.querySelector('input[name*="[batch]"]');
+    if (!batchField) return false;
+
+    selectRow(rowIndex);
+    batchField.focus();
+    if (selectText && typeof batchField.select === 'function') {
+        batchField.select();
+    }
+    return true;
+}
+
+function focusFirstTableBatchField() {
+    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr[data-row-index]'));
+    if (!rows.length) return false;
+    const firstIndex = parseInt(rows[0].getAttribute('data-row-index'), 10);
+    if (isNaN(firstIndex)) return false;
+    return focusRowBatchField(firstIndex, true);
+}
+
+function triggerAddRowAndFocusCode() {
+    const oldIndex = itemIndex;
+    const addRowBtn = document.querySelector('button[onclick="addNewRow()"]');
+    if (addRowBtn) {
+        addRowBtn.click();
+    } else {
+        addNewRow();
+    }
+
+    setTimeout(() => {
+        if (itemIndex > oldIndex) {
+            focusRowCodeField(itemIndex, true);
+        } else {
+            focusFirstTableCodeField();
+        }
+    }, 140);
 }
 
 // Move to next row (create new if needed)
@@ -2836,6 +3009,12 @@ function clearFormAfterSave() {
     // Clear customer and salesman
     document.getElementById('customerSelect').value = '';
     document.getElementById('salesmanSelect').value = '';
+    document.getElementById('customerSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
+    document.getElementById('salesmanSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
+    const customerInput = document.getElementById('customerSearchInput');
+    const salesmanInput = document.getElementById('salesmanSearchInput');
+    if (customerInput) customerInput.value = '';
+    if (salesmanInput) salesmanInput.value = '';
     
     // Clear all item rows
     const tbody = document.getElementById('itemsTableBody');
@@ -2927,6 +3106,7 @@ async function filterInvoicesByDate() {
 
 // Open All Invoices Modal
 function openAllInvoicesModal() {
+    initInvoicesModalKeyboardHandlers();
     loadInvoices(); // Load all invoices without date filter
 }
 
@@ -2937,6 +3117,165 @@ function closeInvoicesModal() {
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
+    window.__saleChallanModInvoiceRowIndex = -1;
+}
+
+function isInvoicesModalOpen() {
+    const modal = document.getElementById('invoicesModal');
+    return !!(modal && modal.classList.contains('show'));
+}
+
+function getInvoiceModalRows() {
+    return Array.from(document.querySelectorAll('#invoicesTableBody tr[data-transaction-id]'));
+}
+
+function setActiveInvoiceModalRow(index, ensureVisible = true) {
+    const rows = getInvoiceModalRows();
+    rows.forEach(row => {
+        row.classList.remove('kb-active');
+        row.removeAttribute('aria-selected');
+    });
+
+    if (!rows.length) {
+        window.__saleChallanModInvoiceRowIndex = -1;
+        return;
+    }
+
+    let safeIndex = index;
+    if (safeIndex < 0) safeIndex = 0;
+    if (safeIndex >= rows.length) safeIndex = rows.length - 1;
+
+    rows[safeIndex].classList.add('kb-active');
+    rows[safeIndex].setAttribute('aria-selected', 'true');
+    rows[safeIndex].setAttribute('tabindex', '-1');
+    window.__saleChallanModInvoiceRowIndex = safeIndex;
+
+    if (ensureVisible) {
+        rows[safeIndex].scrollIntoView({ block: 'nearest' });
+    }
+    rows[safeIndex].focus({ preventScroll: true });
+}
+
+function triggerActiveInvoiceModalRowSelection() {
+    const rows = getInvoiceModalRows();
+    if (!rows.length) return;
+
+    const idx = Number.isInteger(window.__saleChallanModInvoiceRowIndex)
+        ? window.__saleChallanModInvoiceRowIndex
+        : 0;
+
+    const safeIndex = Math.max(0, Math.min(idx, rows.length - 1));
+    const transactionId = parseInt(rows[safeIndex].getAttribute('data-transaction-id'), 10);
+    if (!transactionId) return;
+
+    selectInvoice(transactionId);
+}
+
+function handleInvoicesModalKeyDown(e, source) {
+    if (!isInvoicesModalOpen()) return;
+
+    const key = e.key;
+    if (key !== 'ArrowDown' && key !== 'ArrowUp' && key !== 'Enter' && key !== 'Escape') return;
+
+    // keyup fallback path: if keydown was already handled for same key just before, skip this keyup
+    if (e.type === 'keyup') {
+        const lastTs = window.__saleChallanModInvoiceKeydownTs || 0;
+        const lastKey = window.__saleChallanModInvoiceLastKey || '';
+        if ((Date.now() - lastTs) < 120 && lastKey === key) {
+            return;
+        }
+    } else if (e.type === 'keydown') {
+        window.__saleChallanModInvoiceKeydownTs = Date.now();
+        window.__saleChallanModInvoiceLastKey = key;
+    }
+
+    // De-duplicate same keyboard event across window/document/modal capture listeners
+    if (e.__saleChallanModInvoiceHandled) return;
+    e.__saleChallanModInvoiceHandled = true;
+
+    console.log('[KB-SCMOD][InvoicesModal]', {
+        source: source || 'unknown',
+        eventType: e.type || 'keydown',
+        key: key,
+        target: e.target ? (e.target.id || e.target.tagName || null) : null,
+        activeElement: document.activeElement ? (document.activeElement.id || document.activeElement.tagName || null) : null,
+        rows: getInvoiceModalRows().length,
+        activeRowIndex: window.__saleChallanModInvoiceRowIndex
+    });
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+    }
+
+    if (key === 'Escape') {
+        closeInvoicesModal();
+        const invoiceNo = document.getElementById('invoiceNo');
+        if (invoiceNo) {
+            invoiceNo.focus();
+            if (typeof invoiceNo.select === 'function') invoiceNo.select();
+        }
+        return;
+    }
+
+    const rows = getInvoiceModalRows();
+    if (!rows.length) return;
+
+    if (!Number.isInteger(window.__saleChallanModInvoiceRowIndex) || window.__saleChallanModInvoiceRowIndex < 0) {
+        window.__saleChallanModInvoiceRowIndex = 0;
+    }
+
+    if (key === 'ArrowDown') {
+        setActiveInvoiceModalRow(window.__saleChallanModInvoiceRowIndex + 1, true);
+        return;
+    }
+
+    if (key === 'ArrowUp') {
+        setActiveInvoiceModalRow(window.__saleChallanModInvoiceRowIndex - 1, true);
+        return;
+    }
+
+    if (key === 'Enter') {
+        triggerActiveInvoiceModalRowSelection();
+    }
+}
+
+function initInvoicesModalKeyboardHandlers() {
+    if (window.__saleChallanModInvoicesKbBound) return;
+    window.__saleChallanModInvoicesKbBound = true;
+    window.__saleChallanModInvoiceRowIndex = -1;
+    window.__saleChallanModInvoiceKeydownTs = 0;
+    window.__saleChallanModInvoiceLastKey = '';
+
+    const invoicesModal = document.getElementById('invoicesModal');
+    if (invoicesModal) {
+        invoicesModal.addEventListener('keydown', function(e) {
+            handleInvoicesModalKeyDown(e, 'modal-capture');
+        }, true);
+        invoicesModal.addEventListener('keyup', function(e) {
+            handleInvoicesModalKeyDown(e, 'modal-capture-keyup');
+        }, true);
+        console.log('[KB-SCMOD] invoices modal capture key handler attached');
+    } else {
+        console.warn('[KB-SCMOD] #invoicesModal not found for keyboard handler');
+    }
+
+    document.addEventListener('keydown', function(e) {
+        handleInvoicesModalKeyDown(e, 'document-capture');
+    }, true);
+    document.addEventListener('keyup', function(e) {
+        handleInvoicesModalKeyDown(e, 'document-capture-keyup');
+    }, true);
+
+    window.addEventListener('keydown', function(e) {
+        handleInvoicesModalKeyDown(e, 'window-capture');
+    }, true);
+    window.addEventListener('keyup', function(e) {
+        handleInvoicesModalKeyDown(e, 'window-capture-keyup');
+    }, true);
+
+    console.log('[KB-SCMOD] invoices modal keyboard handlers initialized');
 }
 
 // Load Invoices (with optional date filter)
@@ -2949,6 +3288,12 @@ async function loadInvoices(fromDate = null, toDate = null) {
     // Show modal with loading state
     modal.classList.add('show');
     backdrop.classList.add('show');
+    modal.setAttribute('tabindex', '-1');
+    setTimeout(() => {
+        if (isInvoicesModalOpen()) {
+            modal.focus();
+        }
+    }, 0);
     tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Loading invoices...</td></tr>';
     
     // Update title based on filter
@@ -2975,7 +3320,7 @@ async function loadInvoices(fromDate = null, toDate = null) {
             tbody.innerHTML = '';
             challans.forEach((challan, index) => {
                 const row = `
-                    <tr style="cursor: pointer;" onclick="selectInvoice(${challan.id})" onmouseover="this.style.backgroundColor='#f0f8ff'" onmouseout="this.style.backgroundColor=''">
+                    <tr style="cursor: pointer;" data-transaction-id="${challan.id}" onclick="selectInvoice(${challan.id})">
                         <td class="text-center">${challan.challan_no}</td>
                         <td class="text-center">${challan.challan_date}</td>
                         <td>${challan.customer_name}</td>
@@ -2990,17 +3335,27 @@ async function loadInvoices(fromDate = null, toDate = null) {
                 `;
                 tbody.innerHTML += row;
             });
+
+            getInvoiceModalRows().forEach((row, rowIndex) => {
+                row.addEventListener('mouseenter', function() {
+                    setActiveInvoiceModalRow(rowIndex, false);
+                });
+            });
+
+            setActiveInvoiceModalRow(0, false);
             
             // Update total count
             document.getElementById('invoicesTotal').textContent = `Total: ${challans.length} challan(s)`;
         } else {
             tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No challans found</td></tr>';
             document.getElementById('invoicesTotal').textContent = 'Total: 0 challan(s)';
+            window.__saleChallanModInvoiceRowIndex = -1;
         }
     } catch (error) {
         console.error('Error loading challans:', error);
         tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading challans</td></tr>';
         showAlert('Error loading challans: ' + error.message, 'error', 'Load Failed');
+        window.__saleChallanModInvoiceRowIndex = -1;
     }
 }
 
@@ -3041,6 +3396,7 @@ async function loadTransactionByInvoiceNo(invoiceNo) {
         
         if (data.success && data.transaction) {
             populateFormWithTransaction(data.transaction);
+            pendingTableFocusTarget = 'batch';
             showAlert('Invoice loaded successfully!\n\nYou can now modify the transaction or add more items.', 'success', 'Invoice Loaded');
             return true;
         } else {
@@ -3087,6 +3443,7 @@ async function selectInvoice(transactionId) {
         
         if (data.success && data.transaction) {
             populateFormWithTransaction(data.transaction);
+            pendingTableFocusTarget = 'batch';
             showAlert('Challan loaded successfully!\n\nYou can now modify the challan.', 'success', 'Challan Loaded');
         } else {
             showAlert('Error: ' + (data.message || 'Failed to load challan'), 'error', 'Load Failed');
@@ -3547,7 +3904,7 @@ async function updateSale(transactionId) {
     }
     
     try {
-        const url = `{{ url('/admin/sale/modification') }}/${transactionId}`;
+        const url = `{{ url('/admin/sale-challan/modification') }}/${transactionId}`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -3773,6 +4130,7 @@ function showAlert(message, type = 'error', title = null) {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        primeAlertModalKeyboardDefault();
     }, 10);
 }
 
@@ -3803,6 +4161,7 @@ function showSuccessModalWithReload(message, title = 'Success') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        primeAlertModalKeyboardDefault();
     }, 10);
 }
 
@@ -3818,6 +4177,44 @@ function reloadPageAfterSuccess() {
 // Store callback functions globally
 let confirmCallback = null;
 let cancelCallback = null;
+let alertModalActiveBtnIndex = -1;
+
+function isAlertModalOpen() {
+    const modal = document.getElementById('alertModal');
+    return !!(modal && modal.classList.contains('show') && modal.style.display !== 'none');
+}
+
+function getAlertModalButtons() {
+    const modal = document.getElementById('alertModal');
+    if (!modal) return [];
+    return Array.from(modal.querySelectorAll('.alert-modal-footer button:not([disabled])'));
+}
+
+function setAlertModalActiveButton(index, shouldFocus = true) {
+    const buttons = getAlertModalButtons();
+    buttons.forEach(btn => btn.classList.remove('kb-active'));
+
+    if (!buttons.length) {
+        alertModalActiveBtnIndex = -1;
+        return;
+    }
+
+    let safeIndex = index;
+    if (safeIndex < 0) safeIndex = 0;
+    if (safeIndex >= buttons.length) safeIndex = buttons.length - 1;
+
+    buttons[safeIndex].classList.add('kb-active');
+    alertModalActiveBtnIndex = safeIndex;
+    if (shouldFocus) {
+        buttons[safeIndex].focus();
+    }
+}
+
+function primeAlertModalKeyboardDefault() {
+    const buttons = getAlertModalButtons();
+    if (!buttons.length) return;
+    setAlertModalActiveButton(buttons.length - 1, true);
+}
 
 // Confirmation Modal Function
 function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
@@ -3853,6 +4250,7 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        primeAlertModalKeyboardDefault();
     }, 10);
 }
 
@@ -3884,11 +4282,25 @@ function closeAlert() {
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
+    getAlertModalButtons().forEach(btn => btn.classList.remove('kb-active'));
+    alertModalActiveBtnIndex = -1;
     
     // Hide after animation
     setTimeout(() => {
         modal.style.display = 'none';
         backdrop.style.display = 'none';
+
+        if (pendingTableFocusTarget) {
+            const target = pendingTableFocusTarget;
+            pendingTableFocusTarget = null;
+            setTimeout(() => {
+                if (target === 'batch') {
+                    focusFirstTableBatchField();
+                } else {
+                    focusFirstTableCodeField();
+                }
+            }, 60);
+        }
     }, 400);
 }
 
@@ -3899,6 +4311,394 @@ document.addEventListener('DOMContentLoaded', function() {
         alertBackdrop.addEventListener('click', closeAlert);
     }
 });
+
+// Alert modal keyboard flow:
+// Left/Right/Tab switch button, Enter triggers active button, Esc closes modal.
+document.addEventListener('keydown', function(e) {
+    if (!isAlertModalOpen()) return;
+    if (!['ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Tab'].includes(e.key)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+    }
+
+    if (e.key === 'Escape') {
+        closeAlert();
+        return;
+    }
+
+    const buttons = getAlertModalButtons();
+    if (!buttons.length) return;
+
+    if (!Number.isInteger(alertModalActiveBtnIndex) || alertModalActiveBtnIndex < 0 || alertModalActiveBtnIndex >= buttons.length) {
+        alertModalActiveBtnIndex = buttons.length - 1;
+    }
+
+    if (e.key === 'ArrowLeft') {
+        setAlertModalActiveButton((alertModalActiveBtnIndex - 1 + buttons.length) % buttons.length, true);
+        return;
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'Tab') {
+        setAlertModalActiveButton((alertModalActiveBtnIndex + 1) % buttons.length, true);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        buttons[alertModalActiveBtnIndex].click();
+    }
+}, true);
+</script>
+
+<script>
+(function() {
+    'use strict';
+
+    function initSearchableDropdown(config) {
+        const input = document.getElementById(config.inputId);
+        const list = document.getElementById(config.listId);
+        const select = document.getElementById(config.selectId);
+        if (!input || !list || !select) return null;
+
+        let highlightedIndex = -1;
+        let isOpen = false;
+
+        function getVisibleItems() {
+            return Array.from(list.querySelectorAll('.dropdown-item:not(.hidden)'));
+        }
+
+        function show() {
+            if (input.readOnly || select.disabled) return;
+            list.style.display = 'block';
+            isOpen = true;
+        }
+
+        function hide() {
+            list.style.display = 'none';
+            isOpen = false;
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function rebuildFromSelect() {
+            list.innerHTML = '';
+            Array.from(select.options).forEach(option => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.dataset.value = option.value || '';
+                item.dataset.name = option.getAttribute('data-name') || '';
+                item.dataset.code = option.getAttribute('data-code') || '';
+                item.textContent = option.text || '';
+                list.appendChild(item);
+            });
+            syncInputFromSelect();
+        }
+
+        function filter(term) {
+            const search = (term || '').toLowerCase().trim();
+            list.querySelectorAll('.dropdown-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const code = (item.dataset.code || '').toLowerCase();
+                const name = (item.dataset.name || '').toLowerCase();
+                const visible = !search || text.includes(search) || code.includes(search) || name.includes(search);
+                item.classList.toggle('hidden', !visible);
+            });
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function highlight(index) {
+            const items = getVisibleItems();
+            items.forEach(item => item.classList.remove('highlighted'));
+            if (index >= 0 && index < items.length) {
+                highlightedIndex = index;
+                items[index].classList.add('highlighted');
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function syncInputFromSelect() {
+            const option = select.options[select.selectedIndex];
+            input.value = option ? (option.text || '') : '';
+            list.querySelectorAll('.dropdown-item').forEach(item => {
+                item.classList.toggle('selected', String(item.dataset.value) === String(select.value));
+            });
+            input.readOnly = !!select.disabled;
+        }
+
+        function selectItem(item, focusNext = true) {
+            if (select.disabled) return;
+            const value = item.dataset.value || '';
+            if (select.value !== value) {
+                select.value = value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            syncInputFromSelect();
+            hide();
+            if (focusNext && typeof config.onSelect === 'function') {
+                config.onSelect();
+            }
+        }
+
+        input.addEventListener('focus', function() {
+            rebuildFromSelect();
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('input', function() {
+            if (input.readOnly || select.disabled) return;
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            if (input.readOnly || select.disabled) return;
+
+            const items = getVisibleItems();
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
+                } else {
+                    highlight(highlightedIndex < items.length - 1 ? highlightedIndex + 1 : 0);
+                }
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
+                } else {
+                    highlight(highlightedIndex > 0 ? highlightedIndex - 1 : items.length - 1);
+                }
+                return;
+            }
+            if (e.key === 'Enter') {
+                if (!isOpen) return;
+                e.preventDefault();
+                const targetItem =
+                    (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                if (targetItem) selectItem(targetItem, true);
+                return;
+            }
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                hide();
+            }
+            if (e.key === 'Tab') {
+                if (isOpen) hide();
+            }
+        });
+
+        list.addEventListener('mousedown', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            e.preventDefault();
+            selectItem(item, true);
+        });
+
+        select.addEventListener('change', syncInputFromSelect);
+
+        const observer = new MutationObserver(function() {
+            rebuildFromSelect();
+        });
+        observer.observe(select, { attributes: true, childList: true, subtree: true });
+
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById(config.wrapperId);
+            if (wrapper && !wrapper.contains(e.target)) hide();
+        });
+
+        rebuildFromSelect();
+        return {
+            focus: function() { input.focus(); },
+            sync: syncInputFromSelect
+        };
+    }
+
+    function focusField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.focus();
+        if (typeof el.select === 'function' && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+            el.select();
+        }
+    }
+
+    function getNextFocusable(order, currentId) {
+        const currentIdx = order.indexOf(currentId);
+        if (currentIdx < 0) return null;
+        for (let i = currentIdx + 1; i < order.length; i++) {
+            const el = document.getElementById(order[i]);
+            if (!el) continue;
+            if (el.disabled) continue;
+            return order[i];
+        }
+        return null;
+    }
+
+    function initHeaderKeyboardFlow() {
+        const order = ['seriesSelect', 'challanDate', 'invoiceNo', 'dueDate', 'cash', 'transfer', 'remarks', 'chooseItemsBtn'];
+        order.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.setAttribute('data-custom-enter', 'true');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            const active = document.activeElement;
+            if (!active || !active.id) return;
+            if (!order.includes(active.id)) return;
+            if (active.closest('#itemsTableBody')) return;
+
+            // Keep existing invoice loader behavior intact
+            if (active.id === 'invoiceNo') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (active.id === 'chooseItemsBtn') {
+                handleChooseItemsClick();
+                return;
+            }
+
+            const nextId = getNextFocusable(order, active.id);
+            if (nextId) focusField(nextId);
+        }, true);
+    }
+
+    function isAnyBlockingModalOpenForTableKeys() {
+        const modalSelectors = [
+            '#invoicesModal.show',
+            '#dateRangeModal.show',
+            '#chooseItemsModal.show',
+            '#batchSelectionModal.show',
+            '#alertModal.show',
+            '#saveOptionsModal.show',
+            '.pending-orders-modal.show',
+            '.custom-modal.show',
+            '.modal.show'
+        ];
+        return !!document.querySelector(modalSelectors.join(','));
+    }
+
+    function initTableEnterFallback() {
+        // Capture phase so row-level/global key handlers can't hijack Enter in grid flow
+        window.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            if (isAnyBlockingModalOpenForTableKeys()) return;
+
+            const target = e.target;
+            if (!target) return;
+
+            const row = target.closest('#itemsTableBody tr[data-row-index]');
+            if (!row) return;
+
+            const rowIndex = parseInt(row.getAttribute('data-row-index') || '-1', 10);
+            if (isNaN(rowIndex) || rowIndex < 0) return;
+
+            const fieldName = String(target.name || '');
+            if (!fieldName) return;
+
+            // Dis% Enter -> finalize row + trigger Add Row + focus new row code
+            if (fieldName.includes('[discount]')) {
+                console.log('[KB-SCMOD][TableCapture] Dis% Enter', { rowIndex, fieldName });
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+
+                calculateRowAmount(rowIndex);
+                calculateTotal();
+                updateRowColor(rowIndex);
+                calculateSummary();
+                triggerAddRowAndFocusCode();
+                return;
+            }
+
+            // Code Enter -> open item chooser
+            if (fieldName.includes('[code]')) {
+                console.log('[KB-SCMOD][TableCapture] Code Enter', { rowIndex, fieldName });
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                openChooseItemsModal();
+            }
+        }, true);
+    }
+
+    function initCtrlSSaveShortcut() {
+        if (window.__saleChallanModCtrlSBound) return;
+        window.__saleChallanModCtrlSBound = true;
+
+        window.addEventListener('keydown', function(e) {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            if ((e.key || '').toLowerCase() !== 's') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (isAnyBlockingModalOpenForTableKeys()) {
+                console.log('[KB-SCMOD] Ctrl+S ignored (modal open)');
+                return;
+            }
+
+            if (typeof saveSale === 'function') {
+                console.log('[KB-SCMOD] Ctrl+S -> saveSale()');
+                saveSale();
+            }
+        }, true);
+    }
+
+    function initSaleChallanModificationKeyboard() {
+        const customerDropdown = initSearchableDropdown({
+            wrapperId: 'customerDropdownWrapper',
+            inputId: 'customerSearchInput',
+            listId: 'customerDropdownList',
+            selectId: 'customerSelect'
+        });
+
+        const salesmanDropdown = initSearchableDropdown({
+            wrapperId: 'salesmanDropdownWrapper',
+            inputId: 'salesmanSearchInput',
+            listId: 'salesmanDropdownList',
+            selectId: 'salesmanSelect'
+        });
+
+        initHeaderKeyboardFlow();
+        initInvoicesModalKeyboardHandlers();
+        initTableEnterFallback();
+        initCtrlSSaveShortcut();
+
+        // Keep display synced if existing logic updates selects programmatically
+        if (customerDropdown) customerDropdown.sync();
+        if (salesmanDropdown) salesmanDropdown.sync();
+
+        // Start from invoice no (common flow for modification)
+        setTimeout(function() {
+            focusField('invoiceNo');
+        }, 120);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSaleChallanModificationKeyboard);
+    } else {
+        initSaleChallanModificationKeyboard();
+    }
+})();
 </script>
 
 <!-- Toast Container -->

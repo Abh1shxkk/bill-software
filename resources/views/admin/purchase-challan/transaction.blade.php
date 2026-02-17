@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Purchase Challan Transaction')
+@section('disable_select2', '1')
 
 @section('content')
 <style>
@@ -287,6 +288,52 @@
         display: block;
         opacity: 1;
     }
+
+    /* Searchable dropdown (custom, keyboard-friendly) */
+    .searchable-dropdown {
+        position: relative;
+    }
+    .searchable-dropdown-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+        border-radius: 0 0 0.375rem 0.375rem;
+        background: #fff;
+        z-index: 1080;
+        display: none;
+    }
+    .searchable-dropdown-list .dropdown-item {
+        padding: 0.35rem 0.55rem;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background: #e7f1ff;
+    }
+    .searchable-dropdown-list .dropdown-item.selected {
+        background: #0d6efd;
+        color: #fff;
+    }
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
+    }
+
+    .alert-modal-footer button.kb-active {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+    }
     
     /* Action buttons styling */
     #itemsTableBody td:last-child {
@@ -519,17 +566,35 @@
                         <!-- Row 2: Supplier -->
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <label class="mb-0" style="white-space: nowrap;">Supplier :</label>
-                            <select class="form-control form-control-sm" name="supplier_id" id="supplierSelect" style="width: 150px;" autocomplete="off">
-                                <option value="">Select Supplier</option>
-                                @foreach($suppliers ?? [] as $supplier)
-                                    <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="searchable-dropdown" id="supplierDropdownWrapper" style="width: 260px;">
+                                <input type="text"
+                                       id="supplierSearchInput"
+                                       class="form-control searchable-dropdown-input"
+                                       placeholder="Type to search supplier..."
+                                       autocomplete="off">
+                                <div class="searchable-dropdown-list" id="supplierDropdownList">
+                                    <div class="dropdown-item" data-value="" data-name="" data-code="">Select Supplier</div>
+                                    @foreach($suppliers ?? [] as $supplier)
+                                        <div class="dropdown-item"
+                                             data-value="{{ $supplier->supplier_id }}"
+                                             data-name="{{ $supplier->name }}"
+                                             data-code="{{ $supplier->supplier_id }}">
+                                            {{ $supplier->supplier_id }} - {{ $supplier->name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <select class="form-control form-control-sm no-select2 d-none" name="supplier_id" id="supplierSelect" autocomplete="off">
+                                    <option value="">Select Supplier</option>
+                                    @foreach($suppliers ?? [] as $supplier)
+                                        <option value="{{ $supplier->supplier_id }}">{{ $supplier->supplier_id }} - {{ $supplier->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         
                         <!-- Row 3: Insert Orders Button (Small) -->
                         <div class="mb-2">
-                            <button type="button" class="btn btn-sm btn-info" onclick="openPendingOrdersModal()" style="padding: 4px 12px;">
+                            <button type="button" class="btn btn-sm btn-info" id="insertOrdersBtn" onclick="openPendingOrdersModal()" style="padding: 4px 12px;">
                                 <i class="bi bi-list-check"></i> Insert Orders
                             </button>
                         </div>
@@ -968,7 +1033,7 @@
             </div>
         </div>
         <div class="pending-orders-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePendingOrdersModal()">
+            <button type="button" class="btn btn-secondary" id="pendingOrdersExitBtn" onclick="closePendingOrdersModal()">
                 <i class="bi bi-x-circle"></i> Exit ( Esc )
             </button>
             <button type="button" class="btn btn-primary" id="generateInvoiceBtn">
@@ -997,75 +1062,85 @@ let currentSelectedRow = null;
 window.onItemBatchSelectedFromModal = function(item, batch) {
     console.log('Item selected from reusable modal:', item);
     console.log('Batch selected from reusable modal:', batch);
-    
-    // Create new row for purchase challan
+
     const tbody = document.getElementById('itemsTableBody');
-    const rowIndex = tbody.querySelectorAll('tr').length;
-    
-    // Format expiry date
-    let expiryDisplay = '';
-    if (batch.expiry_date) {
-        try {
-            const expiryDate = new Date(batch.expiry_date);
-            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
-        } catch (e) {
-            expiryDisplay = batch.expiry_date;
+    if (!tbody) return;
+
+    let rowIndex = Number.isInteger(insertRowIndex) ? insertRowIndex : -1;
+    const allRows = tbody.querySelectorAll('tr');
+    if (rowIndex < 0 || rowIndex >= allRows.length) {
+        addNewRow();
+        rowIndex = tbody.querySelectorAll('tr').length - 1;
+    }
+
+    const row = tbody.querySelectorAll('tr')[rowIndex];
+    if (!row) return;
+
+    const itemCode = item.code || item.bar_code || item.id || '';
+    const itemName = item.name || '';
+    const batchNo = batch.batch_no || batch.batch || '';
+    const purRate = parseFloat(batch.p_rate || batch.pur_rate || batch.purchase_rate || item.pur_rate || 0);
+    const ftRate = parseFloat(batch.mrp || batch.ft_rate || item.mrp || purRate || 0);
+
+    let expDisplay = '';
+    const rawExp = batch.expiry_date || batch.exp || batch.expiry || '';
+    if (rawExp) {
+        const d = new Date(rawExp);
+        if (!isNaN(d.getTime())) {
+            expDisplay = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+        } else {
+            expDisplay = String(rawExp);
         }
     }
-    
-    const purchaseRate = parseFloat(batch.p_rate || batch.pur_rate || batch.purchase_rate || 0);
-    
-    const row = document.createElement('tr');
-    row.id = `row-${rowIndex}`;
-    row.setAttribute('data-row-index', rowIndex);
-    row.setAttribute('data-item-id', item.id);
-    row.setAttribute('data-batch-id', batch.id);
+
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    const nameInput = row.querySelector('input[name*="[name]"]');
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expInput = row.querySelector('input[name*="[exp]"]');
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    const fQtyInput = row.querySelector('input[name*="[free_qty]"]');
+    const purRateInput = row.querySelector('input[name*="[pur_rate]"]');
+    const disInput = row.querySelector('input[name*="[dis_percent]"]');
+    const ftRateInput = row.querySelector('input[name*="[mrp]"], input[name*="[ft_rate]"]');
+
+    if (codeInput) codeInput.value = itemCode;
+    if (nameInput) nameInput.value = itemName;
+    if (batchInput) batchInput.value = batchNo;
+    if (expInput) expInput.value = expDisplay;
+    if (qtyInput && (qtyInput.value === '' || qtyInput.value === '0')) qtyInput.value = '0';
+    if (fQtyInput && fQtyInput.value === '') fQtyInput.value = '0';
+    if (purRateInput) purRateInput.value = purRate.toFixed(2);
+    if (disInput && disInput.value === '') disInput.value = '0';
+    if (ftRateInput) ftRateInput.value = ftRate.toFixed(2);
+
+    row.setAttribute('data-item-id', item.id || '');
+    row.setAttribute('data-batch-id', batch.id || '');
     row.setAttribute('data-hsn-code', item.hsn_code || '');
     row.setAttribute('data-cgst', item.cgst_percent || 0);
     row.setAttribute('data-sgst', item.sgst_percent || 0);
-    
-    row.innerHTML = `
-        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][item_name]" value="${item.name || ''}" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
-        <td><input type="number" class="form-control item-qty" name="items[${rowIndex}][qty]" value="0" step="1" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control item-fqty" name="items[${rowIndex}][free_qty]" value="0" step="1" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control" name="items[${rowIndex}][pur_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control item-dis-percent" name="items[${rowIndex}][dis_percent]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})" onclick="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control" name="items[${rowIndex}][ft_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" onclick="selectRow(${rowIndex})" readonly></td>
-        <td><input type="number" class="form-control readonly-field" name="items[${rowIndex}][ft_amount]" value="0.00" readonly></td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-danger" onclick="deleteRow(${rowIndex})" style="padding: 2px 6px;">
-                <i class="bi bi-trash"></i>
-            </button>
-        </td>
-        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
-        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
-        <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="${item.cgst_percent || 0}">
-        <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="${item.sgst_percent || 0}">
-        <input type="hidden" name="items[${rowIndex}][mrp]" value="${batch.mrp || 0}">
-    `;
-    
-    tbody.appendChild(row);
-    
-    // Select the new row
+
+    if (!rowGstData[rowIndex]) rowGstData[rowIndex] = {};
+    rowGstData[rowIndex].s_rate = parseFloat(item.s_rate || 0);
+    rowGstData[rowIndex].ws_rate = parseFloat(item.ws_rate || 0);
+    rowGstData[rowIndex].spl_rate = parseFloat(item.spl_rate || 0);
+    rowGstData[rowIndex].mrp = ftRate;
+
+    if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
+    if (typeof fetchItemDetailsForCalculation === 'function' && itemCode) {
+        fetchItemDetailsForCalculation(itemCode, rowIndex);
+    }
     if (typeof selectRow === 'function') {
         selectRow(rowIndex);
     }
-    
-    // Focus on qty input
+
+    insertRowIndex = null;
+
     setTimeout(() => {
-        const qtyInput = row.querySelector('input[name*="[qty]"]');
-        if (qtyInput) {
-            qtyInput.focus();
-            qtyInput.select();
+        if (batchInput) {
+            batchInput.focus();
+            if (typeof batchInput.select === 'function') batchInput.select();
         }
-    }, 100);
-    
-    alert('Item added! Enter quantity.');
-    if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
-    if (typeof calculateTotals === 'function') calculateTotals();
+    }, 80);
 };
 
 // S.Rate Enter key navigation to next row
@@ -2040,6 +2115,7 @@ function displayPendingOrders(orders) {
     
     orders.forEach((order, index) => {
         const row = document.createElement('tr');
+        row.setAttribute('data-row-index', index);
         row.style.cursor = 'pointer';
         row.setAttribute('data-order-no', order.order_no);
         
@@ -2047,6 +2123,8 @@ function displayPendingOrders(orders) {
         row.addEventListener('click', function() {
             tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-primary'));
             this.classList.add('table-primary');
+            window.__pcTxnPendingRowIndex = index;
+            window.__pcTxnPendingMode = 'rows';
         });
         
         row.innerHTML = `
@@ -2060,6 +2138,15 @@ function displayPendingOrders(orders) {
         
         tbody.appendChild(row);
     });
+
+    const firstRow = tbody.querySelector('tr[data-order-no]');
+    if (firstRow) {
+        firstRow.classList.add('table-primary');
+        window.__pcTxnPendingRowIndex = 0;
+        window.__pcTxnPendingMode = 'rows';
+    } else {
+        window.__pcTxnPendingRowIndex = -1;
+    }
 }
 
 // Generate Invoice button
@@ -2100,12 +2187,12 @@ function loadOrderItems(orderNo) {
                 // Close modal
                 closePendingOrdersModal();
                 
-                // Focus on first cell
+                // Focus on first row batch field
                 setTimeout(() => {
-                    const firstInput = document.querySelector('#itemsTableBody tr:first-child input');
-                    if (firstInput) {
-                        firstInput.focus();
-                        firstInput.select();
+                    const firstBatch = document.querySelector('#itemsTableBody tr:first-child input[name*="[batch]"]');
+                    if (firstBatch) {
+                        firstBatch.focus();
+                        firstBatch.select();
                     }
                 }, 300);
             }
@@ -2121,32 +2208,36 @@ function populateItemsTable(items) {
     const tbody = document.getElementById('itemsTableBody');
     tbody.innerHTML = '';
     
-    // Ensure minimum 10 rows
-    const minRows = 10;
-    const totalRows = Math.max(items.length, minRows);
+    const rowsToRender = Array.isArray(items) ? items : [];
+    if (!rowsToRender.length) {
+        currentActiveRow = 0;
+        isRowSelected = false;
+        clearCalculationSection();
+        return;
+    }
     
-    for (let index = 0; index < totalRows; index++) {
-        const item = items[index] || {}; // Empty object if no item data
+    for (let index = 0; index < rowsToRender.length; index++) {
+        const item = rowsToRender[index] || {};
         
         // Calculate amount: pur_rate * qty
         const qty = parseFloat(item.order_qty) || 0;
         const purRate = parseFloat(item.pur_rate) || 0;
         const amount = (qty * purRate).toFixed(2);
+        const ftRate = parseFloat(item.ft_rate || item.mrp || purRate || 0).toFixed(2);
         
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><input type="text" class="form-control" name="items[${index}][code]" value="${item.item_code || ''}" tabindex="${index * 10 + 1}" autocomplete="off"></td>
-            <td><input type="text" class="form-control" name="items[${index}][name]" value="${item.item_name || ''}" tabindex="${index * 10 + 2}" autocomplete="off"></td>
-            <td><input type="text" class="form-control" name="items[${index}][batch]" tabindex="${index * 10 + 3}" autocomplete="off"></td>
-            <td><input type="text" class="form-control" name="items[${index}][exp]" tabindex="${index * 10 + 4}" autocomplete="off"></td>
+            <td><input type="text" class="form-control item-code-trigger" name="items[${index}][code]" value="${item.item_code || ''}" tabindex="${index * 10 + 1}" autocomplete="off" readonly placeholder="Press Enter"></td>
+            <td><input type="text" class="form-control" name="items[${index}][name]" value="${item.item_name || ''}" tabindex="${index * 10 + 2}" autocomplete="off" readonly></td>
+            <td><input type="text" class="form-control" name="items[${index}][batch]" value="${item.batch_no || item.batch || ''}" tabindex="${index * 10 + 3}" autocomplete="off"></td>
+            <td><input type="text" class="form-control" name="items[${index}][exp]" value="${item.expiry_date || item.exp || ''}" tabindex="${index * 10 + 4}" autocomplete="off"></td>
             <td><input type="number" class="form-control item-qty" name="items[${index}][qty]" value="${item.order_qty || ''}" tabindex="${index * 10 + 5}" autocomplete="off" data-row="${index}"></td>
             <td><input type="number" class="form-control item-fqty" name="items[${index}][free_qty]" value="${item.free_qty || ''}" tabindex="${index * 10 + 6}" autocomplete="off" data-row="${index}"></td>
             <td><input type="number" class="form-control item-pur-rate" name="items[${index}][pur_rate]" value="${item.pur_rate || ''}" step="0.01" tabindex="${index * 10 + 7}" autocomplete="off" data-row="${index}"></td>
-            <td><input type="number" class="form-control item-dis-percent" name="items[${index}][dis_percent]" step="0.01" tabindex="${index * 10 + 8}" autocomplete="off" data-row="${index}"></td>
-            <td><input type="number" class="form-control" name="items[${index}][mrp]" value="${item.mrp || ''}" step="0.01" tabindex="${index * 10 + 9}" autocomplete="off"></td>
+            <td><input type="number" class="form-control item-dis-percent" name="items[${index}][dis_percent]" value="${item.dis_percent || 0}" step="0.01" tabindex="${index * 10 + 8}" autocomplete="off" data-row="${index}"></td>
+            <td><input type="number" class="form-control item-ft-rate" name="items[${index}][mrp]" value="${ftRate}" step="0.01" tabindex="${index * 10 + 9}" autocomplete="off"></td>
             <td><input type="number" class="form-control readonly-field item-amount" name="items[${index}][amount]" value="${amount || ''}" readonly tabindex="-1"></td>
             <td class="text-center">
-                <button type="button" class="btn btn-sm btn-primary" onclick="openInsertItemModal(${index})" title="Insert Item" style="padding: 4px 8px; margin-right: 5px; font-weight: bold;">+</button>
                 <button type="button" class="btn btn-sm btn-danger" onclick="deleteRow(${index})" title="Delete Row" style="padding: 4px 8px; font-weight: bold;">×</button>
             </td>
         `;
@@ -2182,6 +2273,13 @@ function populateItemsTable(items) {
     // Set first row as selected (full row selection mode)
     currentActiveRow = 0;
     selectRow(0);
+    setTimeout(() => {
+        const firstBatch = document.querySelector('#itemsTableBody tr:first-child input[name*="[batch]"]');
+        if (firstBatch) {
+            firstBatch.focus();
+            firstBatch.select();
+        }
+    }, 60);
     
     // Check all rows after populating
     checkAllRowsComplete();
@@ -3416,6 +3514,20 @@ function closeToast(toastId) {
 }
 
 // Enhanced Alert Modal Functions
+function focusAlertDefaultButton(preferredIndex = null) {
+    const buttons = Array.from(document.querySelectorAll('#alertModal .alert-modal-footer button:not([disabled])'));
+    if (!buttons.length) return;
+
+    buttons.forEach(btn => btn.classList.remove('kb-active'));
+    const defaultIndex = Number.isInteger(preferredIndex)
+        ? Math.max(0, Math.min(preferredIndex, buttons.length - 1))
+        : buttons.length - 1;
+
+    buttons[defaultIndex].classList.add('kb-active');
+    buttons[defaultIndex].focus();
+    window.__pcTxnAlertBtnIndex = defaultIndex;
+}
+
 function showAlert(message, type = 'error', title = null) {
     // Use toast for warning and error messages (red color for errors)
     if (type === 'warning' || type === 'error') {
@@ -3468,6 +3580,7 @@ function showAlert(message, type = 'error', title = null) {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        focusAlertDefaultButton(0);
     }, 10);
 }
 
@@ -3498,6 +3611,7 @@ function showSuccessModalWithReload(message, title = 'Success') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        focusAlertDefaultButton(0);
     }, 10);
 }
 
@@ -3548,6 +3662,7 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        focusAlertDefaultButton(1);
     }, 10);
 }
 
@@ -3576,6 +3691,8 @@ function handleConfirmCancel() {
 function closeAlert() {
     const modal = document.getElementById('alertModal');
     const backdrop = document.getElementById('alertBackdrop');
+    const buttons = modal ? modal.querySelectorAll('.alert-modal-footer button') : [];
+    buttons.forEach(btn => btn.classList.remove('kb-active'));
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
@@ -3618,181 +3735,544 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- Purchase Challan Selection Modal -->
-<div id="purchaseChallanBackdrop" class="pending-orders-backdrop"></div>
-<div id="purchaseChallanModal" class="pending-orders-modal">
-    <div class="pending-orders-content">
-        <div class="pending-orders-header" style="background: #28a745; border-bottom-color: #1e7e34;">
-            <h5 class="pending-orders-title">Pending Purchase Challans</h5>
-            <button type="button" class="btn-close-modal" onclick="closePurchaseChallanModal()">×</button>
-        </div>
-        <div class="pending-orders-body" style="max-height: 500px; overflow-y: auto;">
-            <table class="table table-bordered table-hover mb-0">
-                <thead class="bg-light" style="position: sticky; top: 0; z-index: 10;">
-                    <tr>
-                        <th>Challan No</th>
-                        <th>Supplier Invoice No</th>
-                        <th>Challan Date</th>
-                        <th>Invoice Date</th>
-                        <th>Net Amount</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody id="challanTableBody">
-                    <tr>
-                        <td colspan="7" class="text-center">Select a supplier to view pending challans</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="pending-orders-footer">
-            <button type="button" class="btn btn-secondary" onclick="closePurchaseChallanModal()">Close</button>
-        </div>
-    </div>
-</div>
-
 <script>
-// Add change event to supplier select
-document.addEventListener('DOMContentLoaded', function() {
-    const supplierSelect = document.getElementById('supplierSelect');
-    if (supplierSelect) {
-        let previousValue = '';
-        
-        supplierSelect.addEventListener('focus', function() {
-            previousValue = this.value;
-        });
-        
-        supplierSelect.addEventListener('change', function() {
-            const supplierId = this.value;
-            if (supplierId && supplierId !== previousValue) {
-                showPurchaseChallanModal(supplierId);
-            }
+(function() {
+    'use strict';
+
+    function isPurchaseChallanTxnModalOpen() {
+        const ids = ['pendingOrdersModal', 'mrpDetailsModal', 'insertItemModal', 'alertModal'];
+        return ids.some(function(id) {
+            const el = document.getElementById(id);
+            return !!(el && (el.classList.contains('show') || el.style.display === 'block'));
         });
     }
-});
 
-// Function to show Purchase Challan modal
-function showPurchaseChallanModal(supplierId) {
-    const modal = document.getElementById('purchaseChallanModal');
-    const backdrop = document.getElementById('purchaseChallanBackdrop');
-    const tableBody = document.getElementById('challanTableBody');
-    
-    // Show loading
-    tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading challans...</td></tr>';
-    
-    // Show modal
-    backdrop.classList.add('show');
-    modal.classList.add('show');
-    
-    // Fetch challans from API
-    fetch(`/admin/purchase-challan/supplier/${supplierId}/challans`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.challans.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No pending challans found for this supplier</td></tr>';
+    function isAlertModalOpen() {
+        const modal = document.getElementById('alertModal');
+        return !!(modal && modal.classList.contains('show') && modal.style.display !== 'none');
+    }
+
+    function getAlertModalButtons() {
+        const modal = document.getElementById('alertModal');
+        if (!modal) return [];
+        return Array.from(modal.querySelectorAll('.alert-modal-footer button:not([disabled])'));
+    }
+
+    function setAlertModalActiveButton(index, focus) {
+        const buttons = getAlertModalButtons();
+        if (!buttons.length) return;
+
+        const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+        buttons.forEach(function(btn, i) {
+            btn.classList.toggle('kb-active', i === safeIndex);
+        });
+        window.__pcTxnAlertBtnIndex = safeIndex;
+
+        if (focus !== false) {
+            buttons[safeIndex].focus();
+        }
+    }
+
+    function initAlertModalKeyboard() {
+        if (window.__pcTxnAlertKbBound) return;
+        window.__pcTxnAlertKbBound = true;
+        window.__pcTxnAlertBtnIndex = -1;
+
+        window.addEventListener('keydown', function(e) {
+            if (!isAlertModalOpen()) return;
+            if (!['ArrowLeft', 'ArrowRight', 'Tab', 'Enter', 'Escape'].includes(e.key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            const buttons = getAlertModalButtons();
+            if (!buttons.length) {
+                if (e.key === 'Escape' && typeof closeAlert === 'function') {
+                    closeAlert();
+                }
+                return;
+            }
+
+            if (!Number.isInteger(window.__pcTxnAlertBtnIndex) || window.__pcTxnAlertBtnIndex < 0 || window.__pcTxnAlertBtnIndex >= buttons.length) {
+                setAlertModalActiveButton(buttons.length - 1, true);
+            }
+
+            if (e.key === 'Escape') {
+                if (typeof closeAlert === 'function') closeAlert();
+                return;
+            }
+
+            if (e.key === 'ArrowLeft') {
+                setAlertModalActiveButton(window.__pcTxnAlertBtnIndex - 1, true);
+                return;
+            }
+
+            if (e.key === 'ArrowRight' || e.key === 'Tab') {
+                setAlertModalActiveButton(window.__pcTxnAlertBtnIndex + 1, true);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                const idx = Number.isInteger(window.__pcTxnAlertBtnIndex) ? window.__pcTxnAlertBtnIndex : buttons.length - 1;
+                const btn = buttons[idx];
+                if (btn) btn.click();
+            }
+        }, true);
+    }
+
+    function focusField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.focus();
+        if (typeof el.select === 'function' && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+            el.select();
+        }
+    }
+
+    function initSearchableDropdown(config) {
+        const input = document.getElementById(config.inputId);
+        const list = document.getElementById(config.listId);
+        const select = document.getElementById(config.selectId);
+        if (!input || !list || !select) return null;
+
+        let highlightedIndex = -1;
+        let isOpen = false;
+
+        function getVisibleItems() {
+            return Array.from(list.querySelectorAll('.dropdown-item:not(.hidden)'));
+        }
+
+        function show() {
+            if (input.readOnly || select.disabled) return;
+            list.style.display = 'block';
+            isOpen = true;
+        }
+
+        function hide() {
+            list.style.display = 'none';
+            isOpen = false;
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(function(item) {
+                item.classList.remove('highlighted');
+            });
+        }
+
+        function filter(term) {
+            const search = (term || '').toLowerCase().trim();
+            list.querySelectorAll('.dropdown-item').forEach(function(item) {
+                const text = item.textContent.toLowerCase();
+                const code = (item.dataset.code || '').toLowerCase();
+                const name = (item.dataset.name || '').toLowerCase();
+                const visible = !search || text.includes(search) || code.includes(search) || name.includes(search);
+                item.classList.toggle('hidden', !visible);
+            });
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(function(item) {
+                item.classList.remove('highlighted');
+            });
+        }
+
+        function highlight(index) {
+            const items = getVisibleItems();
+            items.forEach(function(item) {
+                item.classList.remove('highlighted');
+            });
+            if (index >= 0 && index < items.length) {
+                highlightedIndex = index;
+                items[index].classList.add('highlighted');
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function syncInputFromSelect() {
+            const value = select.value;
+            if (!value) {
+                input.value = '';
+                list.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('selected'); });
+                return;
+            }
+
+            const option = Array.from(select.options).find(function(o) {
+                return String(o.value) === String(value);
+            });
+            if (!option) return;
+
+            input.value = option.text || '';
+            list.querySelectorAll('.dropdown-item').forEach(function(i) {
+                i.classList.toggle('selected', String(i.dataset.value) === String(value));
+            });
+        }
+
+        function selectItem(item, focusNext) {
+            const value = item.dataset.value || '';
+            if (select.value !== value) {
+                select.value = value;
+            }
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            syncInputFromSelect();
+            hide();
+
+            if (focusNext !== false && typeof config.onSelect === 'function') {
+                config.onSelect();
+            }
+        }
+
+        input.addEventListener('focus', function() {
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('input', function() {
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            const items = getVisibleItems();
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
                 } else {
-                    let html = '';
-                    data.challans.forEach(challan => {
-                        html += `
-                            <tr>
-                                <td>${challan.challan_no}</td>
-                                <td>${challan.supplier_invoice_no || 'N/A'}</td>
-                                <td>${challan.challan_date}</td>
-                                <td>${challan.supplier_invoice_date || 'N/A'}</td>
-                                <td class="text-end">₹${challan.net_amount}</td>
-                                <td><span class="badge bg-warning text-dark">${challan.status}</span></td>
-                                <td>
-                                    <button type="button" class="btn btn-sm btn-primary" onclick="loadChallanIntoPurchase(${challan.id}, '${challan.challan_no}')">
-                                        <i class="bi bi-download"></i> Load
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                    tableBody.innerHTML = html;
+                    highlight(highlightedIndex < items.length - 1 ? highlightedIndex + 1 : 0);
                 }
-            } else {
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error: ${data.message}</td></tr>`;
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading challans</td></tr>';
-        });
-}
 
-// Function to close Purchase Challan modal
-function closePurchaseChallanModal() {
-    const modal = document.getElementById('purchaseChallanModal');
-    const backdrop = document.getElementById('purchaseChallanBackdrop');
-    
-    modal.classList.remove('show');
-    backdrop.classList.remove('show');
-    
-    // After closing challan modal, check if there are pending orders to show
-    const supplierId = document.getElementById('supplierSelect')?.value;
-    if (supplierId) {
-        // Small delay to allow modal close animation to complete
-        setTimeout(() => {
-            loadPendingOrders(supplierId);
-        }, 300);
-    }
-}
-
-// Function to load challan into purchase transaction
-function loadChallanIntoPurchase(challanId, challanNo) {
-    // Confirm with user
-    if (!confirm('This will load the challan items into the current form. Continue?')) {
-        return;
-    }
-    
-    // Fetch challan details
-    fetch(`/admin/purchase-challan/fetch-bill/${challanNo}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const bill = data.bill;
-                
-                // Populate header fields (if not already set)
-                if (!document.getElementById('billDate').value) {
-                    document.getElementById('billDate').value = bill.challan_date || '';
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
+                } else {
+                    highlight(highlightedIndex > 0 ? highlightedIndex - 1 : items.length - 1);
                 }
-                if (!document.getElementById('billNo').value) {
-                    document.getElementById('billNo').value = bill.supplier_invoice_no || '';
-                }
-                document.getElementById('receiveDate').value = bill.challan_date || '';
-                document.getElementById('dueDate').value = bill.due_date || '';
-                document.getElementById('remarks').value = bill.remarks || '';
-                
-                // Add items from challan  
-                if (bill.items && bill.items.length > 0) {
-                    // Note: You need to integrate this with your existing row adding logic
-                    // This is a simplified version - adjust based on your actual implementation
-                    bill.items.forEach((item, index) => {
-                        // Your existing addNewRow() logic here, but pre-populated with item data
-                        console.log('Add item:', item);
-                    });
-                }
-                
-                // Close modal
-                closePurchaseChallanModal();
-                
-                // Show success message
-                alert('Challan loaded successfully! Please review and save.');
-                
-                // Store challan ID for later reference (when saving, mark as invoiced)
-                document.getElementById('purchaseForm').dataset.challanId = challanId;
-            } else {
-                alert('Error loading challan: ' + data.message);
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading challan details');
+
+            if (e.key === 'Enter') {
+                if (isOpen) {
+                    e.preventDefault();
+                    const targetItem = (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                    if (targetItem) {
+                        selectItem(targetItem, true);
+                    } else if (typeof config.onSelect === 'function') {
+                        config.onSelect();
+                    }
+                } else if (typeof config.onEnterWhenClosed === 'function') {
+                    e.preventDefault();
+                    config.onEnterWhenClosed();
+                }
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                hide();
+            }
+
+            if (e.key === 'Tab' && isOpen) {
+                const targetItem = (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                if (targetItem) selectItem(targetItem, false);
+                hide();
+            }
         });
-}
+
+        list.addEventListener('mousedown', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            e.preventDefault();
+            selectItem(item, true);
+        });
+
+        select.addEventListener('change', syncInputFromSelect);
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById(config.wrapperId);
+            if (wrapper && !wrapper.contains(e.target)) {
+                hide();
+            }
+        });
+
+        syncInputFromSelect();
+        return { focus: function() { input.focus(); } };
+    }
+
+    function getPendingOrderRows() {
+        return Array.from(document.querySelectorAll('#pendingOrdersBody tr[data-order-no]'));
+    }
+
+    function setPendingOrderRow(index, ensureScroll) {
+        const rows = getPendingOrderRows();
+        if (!rows.length) return;
+        const max = rows.length - 1;
+        const safeIndex = Math.max(0, Math.min(index, max));
+        rows.forEach(function(row) { row.classList.remove('table-primary'); });
+        rows[safeIndex].classList.add('table-primary');
+        if (ensureScroll !== false) {
+            rows[safeIndex].scrollIntoView({ block: 'nearest' });
+        }
+        window.__pcTxnPendingRowIndex = safeIndex;
+        window.__pcTxnPendingMode = 'rows';
+    }
+
+    function setPendingOrderFooter(index) {
+        const buttons = [
+            document.getElementById('pendingOrdersExitBtn'),
+            document.getElementById('generateInvoiceBtn')
+        ].filter(Boolean);
+        if (!buttons.length) return;
+        const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+        buttons.forEach(function(btn, i) {
+            btn.classList.toggle('btn-outline-primary', i === safeIndex);
+        });
+        buttons[safeIndex].focus();
+        window.__pcTxnPendingFooterIndex = safeIndex;
+        window.__pcTxnPendingMode = 'footer';
+    }
+
+    function isPendingOrdersModalOpen() {
+        const modal = document.getElementById('pendingOrdersModal');
+        return !!(modal && modal.classList.contains('show'));
+    }
+
+    function initPendingOrdersModalKeyboard() {
+        if (window.__pcTxnPendingKbBound) return;
+        window.__pcTxnPendingKbBound = true;
+        window.__pcTxnPendingRowIndex = -1;
+        window.__pcTxnPendingFooterIndex = 1;
+        window.__pcTxnPendingMode = 'rows';
+
+        window.addEventListener('keydown', function(e) {
+            if (!isPendingOrdersModalOpen()) return;
+            if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Tab'].includes(e.key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (e.key === 'Escape') {
+                closePendingOrdersModal();
+                focusField('insertOrdersBtn');
+                return;
+            }
+
+            const rows = getPendingOrderRows();
+
+            if (e.key === 'ArrowDown') {
+                if (!rows.length) return;
+                if (!Number.isInteger(window.__pcTxnPendingRowIndex) || window.__pcTxnPendingRowIndex < 0) {
+                    setPendingOrderRow(0, true);
+                } else {
+                    setPendingOrderRow(Math.min(window.__pcTxnPendingRowIndex + 1, rows.length - 1), true);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                if (!rows.length) return;
+                if (!Number.isInteger(window.__pcTxnPendingRowIndex) || window.__pcTxnPendingRowIndex < 0) {
+                    setPendingOrderRow(rows.length - 1, true);
+                } else {
+                    setPendingOrderRow(Math.max(window.__pcTxnPendingRowIndex - 1, 0), true);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowRight') {
+                setPendingOrderFooter((window.__pcTxnPendingFooterIndex || 0) + 1);
+                return;
+            }
+
+            if (e.key === 'ArrowLeft') {
+                setPendingOrderFooter((window.__pcTxnPendingFooterIndex || 0) - 1);
+                return;
+            }
+
+            if (e.key === 'Tab') {
+                setPendingOrderFooter((window.__pcTxnPendingFooterIndex || 0) + 1);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                if (window.__pcTxnPendingMode === 'footer') {
+                    const footerButtons = [
+                        document.getElementById('pendingOrdersExitBtn'),
+                        document.getElementById('generateInvoiceBtn')
+                    ].filter(Boolean);
+                    const footerIndex = Number.isInteger(window.__pcTxnPendingFooterIndex) ? window.__pcTxnPendingFooterIndex : 1;
+                    if (footerButtons[footerIndex]) {
+                        footerButtons[footerIndex].click();
+                    }
+                    return;
+                }
+
+                if (rows.length) {
+                    const idx = Number.isInteger(window.__pcTxnPendingRowIndex) ? window.__pcTxnPendingRowIndex : 0;
+                    setPendingOrderRow(idx, false);
+                    const generateBtn = document.getElementById('generateInvoiceBtn');
+                    if (generateBtn) generateBtn.click();
+                }
+            }
+        }, true);
+    }
+
+    function initHeaderKeyboardFlow() {
+        const order = ['billDate', 'supplierSearchInput', 'insertOrdersBtn'];
+        order.forEach(function(id) {
+            const el = document.getElementById(id);
+            if (el) el.setAttribute('data-custom-enter', 'true');
+        });
+
+        const insertBtn = document.getElementById('insertOrdersBtn');
+        if (insertBtn && !insertBtn.dataset.kbBound) {
+            insertBtn.dataset.kbBound = '1';
+            insertBtn.addEventListener('keydown', function(e) {
+                if (e.key !== 'Enter') return;
+                e.preventDefault();
+                e.stopPropagation();
+                openPendingOrdersModal();
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            if (isPurchaseChallanTxnModalOpen()) return;
+
+            const active = document.activeElement;
+            if (!active || !active.id || !order.includes(active.id)) return;
+            if (active.closest('#itemsTableBody')) return;
+
+            if (active.id === 'supplierSearchInput') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (active.id === 'insertOrdersBtn') {
+                openPendingOrdersModal();
+                return;
+            }
+
+            const idx = order.indexOf(active.id);
+            if (idx >= 0 && idx < order.length - 1) {
+                focusField(order[idx + 1]);
+            }
+        }, true);
+    }
+
+    function initTableEnterFallback() {
+        if (window.__pcTxnTableEnterBound) return;
+        window.__pcTxnTableEnterBound = true;
+
+        window.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            if (isPurchaseChallanTxnModalOpen()) return;
+            const target = e.target;
+            if (!target) return;
+            const row = target.closest('#itemsTableBody tr');
+            if (!row) return;
+            if (target.readOnly || target.disabled) return;
+
+            const fieldName = target.name || '';
+            let rowIndex = -1;
+            const nameMatch = fieldName.match(/^items\[(\d+)\]/);
+            if (nameMatch) rowIndex = parseInt(nameMatch[1], 10);
+            if (isNaN(rowIndex) || rowIndex < 0) {
+                rowIndex = Array.from(document.querySelectorAll('#itemsTableBody tr')).indexOf(row);
+            }
+            if (isNaN(rowIndex) || rowIndex < 0) return;
+
+            if (fieldName.includes('[dis_percent]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+
+                if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
+                if (typeof calculateAndSaveGstForRow === 'function') calculateAndSaveGstForRow(rowIndex);
+                addNewRow();
+
+                setTimeout(function() {
+                    const newRow = document.querySelectorAll('#itemsTableBody tr')[rowIndex + 1];
+                    const codeInput = newRow ? newRow.querySelector('input[name*="[code]"]') : null;
+                    if (codeInput) {
+                        codeInput.focus();
+                        if (typeof codeInput.select === 'function') codeInput.select();
+                    }
+                }, 80);
+                return;
+            }
+
+            if (fieldName.includes('[code]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                openInsertItemModal(rowIndex);
+            }
+        }, true);
+    }
+
+    function initCtrlSSaveShortcut() {
+        if (window.__pcTxnCtrlSBound) return;
+        window.__pcTxnCtrlSBound = true;
+
+        window.addEventListener('keydown', function(e) {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            if ((e.key || '').toLowerCase() !== 's') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (isPurchaseChallanTxnModalOpen()) return;
+            if (typeof savePurchaseChallan === 'function') {
+                savePurchaseChallan();
+            }
+        }, true);
+    }
+
+    function initPurchaseChallanTxnKeyboard() {
+        initSearchableDropdown({
+            wrapperId: 'supplierDropdownWrapper',
+            inputId: 'supplierSearchInput',
+            listId: 'supplierDropdownList',
+            selectId: 'supplierSelect',
+            onSelect: function() {
+                focusField('insertOrdersBtn');
+            },
+            onEnterWhenClosed: function() {
+                focusField('insertOrdersBtn');
+            }
+        });
+
+        initHeaderKeyboardFlow();
+        initPendingOrdersModalKeyboard();
+        initAlertModalKeyboard();
+        initTableEnterFallback();
+        initCtrlSSaveShortcut();
+
+        setTimeout(function() {
+            focusField('billDate');
+        }, 120);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPurchaseChallanTxnKeyboard);
+    } else {
+        initPurchaseChallanTxnKeyboard();
+    }
+})();
 </script>
 
 <!-- Item and Batch Selection Modal Components -->
@@ -3815,3 +4295,6 @@ function loadChallanIntoPurchase(challanId, challanNo) {
 ])
 
 @endsection
+
+
+

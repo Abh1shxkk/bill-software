@@ -124,11 +124,15 @@ class BreakageSupplierController extends Controller
 
                 $expiryInput = $item['expiry'] ?? null;
                 $expiryDate = null;
+                $expiryDisplay = null;
                 if ($expiryInput) {
                     try {
-                        $expiryDate = \Carbon\Carbon::parse($expiryInput)->format('Y-m-d');
+                        $parsedExpiry = \Carbon\Carbon::parse($expiryInput);
+                        $expiryDate = $parsedExpiry->format('Y-m-d');
+                        $expiryDisplay = $parsedExpiry->format('m/y');
                     } catch (\Exception $e) {
                         $expiryDate = null;
+                        $expiryDisplay = substr($expiryInput, 0, 20);
                     }
                 }
 
@@ -163,7 +167,7 @@ class BreakageSupplierController extends Controller
                     'item_code' => $item['code'] ?? $item['item_code'] ?? '',
                     'item_name' => $item['name'] ?? $item['item_name'] ?? '',
                     'batch_no' => $item['batch'] ?? $item['batch_no'] ?? '',
-                    'expiry' => $expiryInput,
+                    'expiry' => $expiryDisplay,
                     'expiry_date' => $expiryDate,
                     'qty' => $qty,
                     'free_qty' => $item['free_qty'] ?? 0,
@@ -334,11 +338,15 @@ class BreakageSupplierController extends Controller
 
                 $expiryInput = $item['expiry'] ?? null;
                 $expiryDate = null;
+                $expiryDisplay = null;
                 if ($expiryInput) {
                     try {
-                        $expiryDate = \Carbon\Carbon::parse($expiryInput)->format('Y-m-d');
+                        $parsedExpiry = \Carbon\Carbon::parse($expiryInput);
+                        $expiryDate = $parsedExpiry->format('Y-m-d');
+                        $expiryDisplay = $parsedExpiry->format('m/y');
                     } catch (\Exception $e) {
                         $expiryDate = null;
+                        $expiryDisplay = substr($expiryInput, 0, 20);
                     }
                 }
 
@@ -373,7 +381,7 @@ class BreakageSupplierController extends Controller
                     'item_code' => $item['code'] ?? $item['item_code'] ?? '',
                     'item_name' => $item['name'] ?? $item['item_name'] ?? '',
                     'batch_no' => $item['batch'] ?? $item['batch_no'] ?? '',
-                    'expiry' => $expiryInput,
+                    'expiry' => $expiryDisplay,
                     'expiry_date' => $expiryDate,
                     'qty' => $qty,
                     'free_qty' => $item['free_qty'] ?? 0,

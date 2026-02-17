@@ -333,9 +333,561 @@ let currentFinalAmount = 0;
 document.addEventListener('DOMContentLoaded', function() {
     loadInvoices();
     loadHsnCodes();
+    
+    // Global ESC key handler
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') { closeInvoiceModal(); closeHsnModal(); closeAdjustModal(); }
     });
+    
+    // ==========================================
+    // PHASE 1: AUTO-FOCUS DATE FIELD ON PAGE LOAD
+    // ==========================================
+    setTimeout(function() {
+        const dateField = document.getElementById('transaction_date');
+        if (dateField) {
+            dateField.focus();
+            dateField.select();
+        }
+    }, 100);
+    
+    // ==========================================
+    // PHASE 2: ENTER KEY SEQUENTIAL NAVIGATION
+    // Date → Party Trn No → Party Date → Claim [Y/N] → Received as Debit Note → Claim Amount → Load Invoice
+    // ==========================================
+    const enterSequence = [
+        'transaction_date',
+        'party_trn_no',
+        'party_date',
+        'claim_flag',
+        'received_as_debit_note',
+        'claim_amount'
+    ];
+    
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (e.ctrlKey || e.altKey) return;
+        
+        // Skip if any modal is open
+        const invoiceModal = document.getElementById('invoiceModal');
+        const hsnModal = document.getElementById('hsnModal');
+        const adjustModal = document.getElementById('adjustModal');
+        if (invoiceModal.classList.contains('show') || 
+            hsnModal.classList.contains('show') || 
+            adjustModal.classList.contains('show')) return;
+        
+        const activeEl = document.activeElement;
+        if (!activeEl || !activeEl.id) return;
+        
+        // Remarks → Trigger Update (before sequence check since remarks isn't in sequence)
+        if (activeEl.id === 'remarks' && !e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const updateBtn = document.getElementById('updateBtn');
+            if (updateBtn && !updateBtn.disabled) {
+                updateBtn.click();
+            }
+            return;
+        }
+        
+        const currentIdx = enterSequence.indexOf(activeEl.id);
+        if (currentIdx === -1) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Shift+Enter → move to PREVIOUS field
+        if (e.shiftKey) {
+            if (currentIdx > 0) {
+                const prevField = document.getElementById(enterSequence[currentIdx - 1]);
+                if (prevField) {
+                    prevField.focus();
+                    prevField.select();
+                }
+            }
+            return;
+        }
+        
+        // PHASE 3: Claim Amount → Auto Load Invoice
+        if (activeEl.id === 'claim_amount') {
+            showInvoiceModal();
+            return;
+        }
+        
+        // Move to next field in sequence
+        if (currentIdx < enterSequence.length - 1) {
+            const nextField = document.getElementById(enterSequence[currentIdx + 1]);
+            if (nextField) {
+                nextField.focus();
+                nextField.select();
+            }
+        }
+    }, true); // Capture phase
+    
+    // ==========================================
+    // CTRL+ENTER → JUMP TO ROUND OFF FIELD
+    // ==========================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const roundOffField = document.getElementById('round_off');
+            if (roundOffField) {
+                roundOffField.focus();
+                roundOffField.select();
+            }
+        }
+    }, true);
+    
+    // ==========================================
+    // CTRL+S → UPDATE TRANSACTION
+    // ==========================================
+    let isSaving = false;
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (isSaving) return;
+            isSaving = true;
+            
+            if (typeof updateTransaction === 'function') {
+                updateTransaction();
+            }
+            
+            setTimeout(function() { isSaving = false; }, 1000);
+        }
+    }, true);
+    
+    // ==========================================
+    // PHASE 4: LOAD INVOICE MODAL KEYBOARD CONTROL
+    // Arrow navigation, Enter selection, highlighting
+    // ==========================================
+    let invoiceSelectedIndex = -1;
+    
+    // Must use capture + stopImmediatePropagation to beat transaction-shortcuts.blade.php
+    document.addEventListener('keydown', function(e) {
+        const invoiceModal = document.getElementById('invoiceModal');
+        if (!invoiceModal || !invoiceModal.classList.contains('show')) return;
+        
+        const tbody = document.getElementById('invoicesListBody');
+        const rows = Array.from(tbody.querySelectorAll('tr.invoice-row'));
+        
+        // Arrow Down → next row
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Blur search input so arrows don't move text cursor
+            const searchInput = document.getElementById('invoiceSearchInput');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            
+            if (!rows.length) return;
+            
+            if (invoiceSelectedIndex < rows.length - 1) {
+                invoiceSelectedIndex++;
+            } else if (invoiceSelectedIndex === -1) {
+                invoiceSelectedIndex = 0; // Auto-select first row
+            }
+            highlightInvoiceRow(rows, invoiceSelectedIndex);
+            return;
+        }
+        
+        // Arrow Up → previous row
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Blur search input
+            const searchInput = document.getElementById('invoiceSearchInput');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            
+            if (!rows.length) return;
+            
+            if (invoiceSelectedIndex > 0) {
+                invoiceSelectedIndex--;
+            } else if (invoiceSelectedIndex === -1 && rows.length > 0) {
+                invoiceSelectedIndex = 0; // Auto-select first row
+            }
+            highlightInvoiceRow(rows, invoiceSelectedIndex);
+            return;
+        }
+        
+        // Enter → select highlighted row
+        if (e.key === 'Enter') {
+            // If search input is focused, let Enter re-filter, don't select row
+            const searchInput = document.getElementById('invoiceSearchInput');
+            if (document.activeElement === searchInput && invoiceSelectedIndex === -1) {
+                return; // Let search work normally
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (!rows.length) return;
+            
+            // If no row selected yet, select first one
+            if (invoiceSelectedIndex === -1 && rows.length > 0) {
+                invoiceSelectedIndex = 0;
+                highlightInvoiceRow(rows, invoiceSelectedIndex);
+                return;
+            }
+            
+            if (invoiceSelectedIndex >= 0 && invoiceSelectedIndex < rows.length) {
+                rows[invoiceSelectedIndex].click();
+            }
+            return;
+        }
+        
+        // Any letter/number key → refocus search input for typing
+        if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+            const searchInput = document.getElementById('invoiceSearchInput');
+            if (searchInput && document.activeElement !== searchInput) {
+                searchInput.focus();
+                // Reset row selection when user types
+                invoiceSelectedIndex = -1;
+                highlightInvoiceRow(rows, -1);
+            }
+        }
+    }, true); // Capture phase
+    
+    function highlightInvoiceRow(rows, index) {
+        // Remove all highlights
+        rows.forEach(row => {
+            row.style.backgroundColor = '';
+            row.style.fontWeight = '';
+            row.classList.remove('table-active');
+        });
+        // Add highlight to selected row
+        if (index >= 0 && index < rows.length) {
+            rows[index].style.backgroundColor = '#cce5ff';
+            rows[index].style.fontWeight = 'bold';
+            rows[index].classList.add('table-active');
+            rows[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+    
+    // Reset invoice selection when modal opens/closes
+    const invoiceModalEl = document.getElementById('invoiceModal');
+    if (invoiceModalEl) {
+        const invoiceObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (invoiceModalEl.classList.contains('show')) {
+                        // Modal opened - reset selection and focus search
+                        invoiceSelectedIndex = -1;
+                        setTimeout(function() {
+                            const searchInput = document.getElementById('invoiceSearchInput');
+                            if (searchInput) searchInput.focus();
+                        }, 150);
+                    } else {
+                        // Modal closed - reset selection
+                        invoiceSelectedIndex = -1;
+                    }
+                }
+            });
+        });
+        invoiceObserver.observe(invoiceModalEl, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    // ==========================================
+    // PURCHASE ADJUSTMENT MODAL KEYBOARD CONTROL
+    // Left/Right for Save/Cancel, Up/Down for inputs
+    // ==========================================
+    const adjustModalEl = document.getElementById('adjustModal');
+    if (adjustModalEl) {
+        // Document-level: Left/Right Arrow + Enter on buttons
+        document.addEventListener('keydown', function(e) {
+            if (!adjustModalEl.classList.contains('show')) return;
+            
+            // Skip if Invoice modal is also open
+            const invoiceModal = document.getElementById('invoiceModal');
+            if (invoiceModal && invoiceModal.classList.contains('show')) return;
+            
+            const saveBtn = adjustModalEl.querySelector('button.btn-success');
+            const cancelBtn = adjustModalEl.querySelector('button.btn-secondary');
+            
+            if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                if (saveBtn) saveBtn.focus();
+                return;
+            }
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                if (cancelBtn) cancelBtn.focus();
+                return;
+            }
+            if (e.target.tagName === 'BUTTON' && adjustModalEl.contains(e.target) && e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                e.target.click();
+                return;
+            }
+        }, true);
+        
+        // Modal-level: Up/Down/Enter for adjust-inputs
+        adjustModalEl.addEventListener('keydown', function(e) {
+            const isAdjustInput = e.target.classList.contains('adjust-input');
+            if (!isAdjustInput) return;
+            
+            const inputs = Array.from(document.querySelectorAll('.adjust-input'));
+            const currentIndex = inputs.indexOf(e.target);
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                    inputs[currentIndex + 1].select();
+                }
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentIndex > 0) {
+                    inputs[currentIndex - 1].focus();
+                    inputs[currentIndex - 1].select();
+                }
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
+                    inputs[currentIndex + 1].focus();
+                    inputs[currentIndex + 1].select();
+                } else {
+                    const closeBtn = adjustModalEl.querySelector('button.btn-secondary');
+                    if (closeBtn) closeBtn.focus();
+                }
+                return;
+            }
+        });
+        
+        // Auto-focus when modal opens
+        const adjustObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (adjustModalEl.classList.contains('show')) {
+                        setTimeout(function() {
+                            const firstInput = document.querySelector('.adjust-input');
+                            if (firstInput) {
+                                firstInput.focus();
+                                firstInput.select();
+                            } else {
+                                const closeBtn = adjustModalEl.querySelector('button.btn-secondary');
+                                if (closeBtn) closeBtn.focus();
+                            }
+                        }, 150);
+                    }
+                }
+            });
+        });
+        adjustObserver.observe(adjustModalEl, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    // ==========================================
+    // HSN TABLE ENTER KEY NAVIGATION
+    // Amount → Qty → next row Amount → ... → Round Off
+    // ==========================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (e.ctrlKey || e.altKey) return;
+        
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+        
+        // Only handle editable HSN table inputs
+        if (!activeEl.classList.contains('hsn-editable')) return;
+        if (!activeEl.closest('#hsnTableBody')) return;
+        
+        // Skip if any modal is open
+        const invoiceModal = document.getElementById('invoiceModal');
+        const hsnModal = document.getElementById('hsnModal');
+        const adjustModal = document.getElementById('adjustModal');
+        if ((invoiceModal && invoiceModal.classList.contains('show')) || 
+            (hsnModal && hsnModal.classList.contains('show')) || 
+            (adjustModal && adjustModal.classList.contains('show'))) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Get all editable inputs in HSN table (Amount, Qty for each row)
+        const allEditable = Array.from(document.querySelectorAll('#hsnTableBody .hsn-editable'));
+        const currentIndex = allEditable.indexOf(activeEl);
+        
+        // Shift+Enter → move to PREVIOUS editable field
+        if (e.shiftKey) {
+            if (currentIndex > 0) {
+                allEditable[currentIndex - 1].focus();
+                allEditable[currentIndex - 1].select();
+            } else {
+                // First Amount field → go back to Claim Amount
+                const claimAmount = document.getElementById('claim_amount');
+                if (claimAmount) {
+                    claimAmount.focus();
+                    claimAmount.select();
+                }
+            }
+            return;
+        }
+        
+        // Enter → move to NEXT editable field
+        if (currentIndex >= 0 && currentIndex < allEditable.length - 1) {
+            allEditable[currentIndex + 1].focus();
+            allEditable[currentIndex + 1].select();
+        } else {
+            // Last Qty field → directly open "Add HSN Code" modal
+            showHsnModal();
+        }
+    }, true); // Capture phase
+    
+    // ==========================================
+    // SELECT HSN CODE MODAL KEYBOARD CONTROL
+    // Arrow navigation, Enter selection, highlighting
+    // ==========================================
+    let hsnSelectedIndex = -1;
+    
+    document.addEventListener('keydown', function(e) {
+        const hsnModal = document.getElementById('hsnModal');
+        if (!hsnModal || !hsnModal.classList.contains('show')) return;
+        
+        const tbody = document.getElementById('hsnListBody');
+        const rows = Array.from(tbody.querySelectorAll('tr.invoice-row'));
+        
+        // Arrow Down → next row
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Blur search input so arrows don't move text cursor
+            const searchInput = document.getElementById('hsnSearchInput');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            
+            if (!rows.length) return;
+            
+            if (hsnSelectedIndex < rows.length - 1) {
+                hsnSelectedIndex++;
+            } else if (hsnSelectedIndex === -1) {
+                hsnSelectedIndex = 0;
+            }
+            highlightHsnRow(rows, hsnSelectedIndex);
+            return;
+        }
+        
+        // Arrow Up → previous row
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const searchInput = document.getElementById('hsnSearchInput');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            
+            if (!rows.length) return;
+            
+            if (hsnSelectedIndex > 0) {
+                hsnSelectedIndex--;
+            } else if (hsnSelectedIndex === -1 && rows.length > 0) {
+                hsnSelectedIndex = 0;
+            }
+            highlightHsnRow(rows, hsnSelectedIndex);
+            return;
+        }
+        
+        // Enter → select highlighted row
+        if (e.key === 'Enter') {
+            const searchInput = document.getElementById('hsnSearchInput');
+            if (document.activeElement === searchInput && hsnSelectedIndex === -1) {
+                return; // Let search work normally
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (!rows.length) return;
+            
+            if (hsnSelectedIndex === -1 && rows.length > 0) {
+                hsnSelectedIndex = 0;
+                highlightHsnRow(rows, hsnSelectedIndex);
+                return;
+            }
+            
+            if (hsnSelectedIndex >= 0 && hsnSelectedIndex < rows.length) {
+                rows[hsnSelectedIndex].click();
+            }
+            return;
+        }
+        
+        // Any letter/number key → refocus search input for typing
+        if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+            const searchInput = document.getElementById('hsnSearchInput');
+            if (searchInput && document.activeElement !== searchInput) {
+                searchInput.focus();
+                hsnSelectedIndex = -1;
+                highlightHsnRow(rows, -1);
+            }
+        }
+    }, true);
+    
+    function highlightHsnRow(rows, index) {
+        rows.forEach(row => {
+            row.style.backgroundColor = '';
+            row.style.fontWeight = '';
+            row.classList.remove('table-active');
+        });
+        if (index >= 0 && index < rows.length) {
+            rows[index].style.backgroundColor = '#c3e6cb';
+            rows[index].style.fontWeight = 'bold';
+            rows[index].classList.add('table-active');
+            rows[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+    
+    // Reset HSN selection when modal opens/closes
+    const hsnModalEl = document.getElementById('hsnModal');
+    if (hsnModalEl) {
+        const hsnObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (hsnModalEl.classList.contains('show')) {
+                        hsnSelectedIndex = -1;
+                        setTimeout(function() {
+                            const searchInput = document.getElementById('hsnSearchInput');
+                            if (searchInput) searchInput.focus();
+                        }, 150);
+                    } else {
+                        hsnSelectedIndex = -1;
+                    }
+                }
+            });
+        });
+        hsnObserver.observe(hsnModalEl, { attributes: true, attributeFilter: ['class'] });
+    }
 });
 
 // Format date for HTML date input (YYYY-MM-DD)
@@ -446,6 +998,15 @@ function populateForm(data) {
     
     document.getElementById('updateBtn').disabled = false;
     document.getElementById('deleteBtn').disabled = false;
+    
+    // Auto-focus first Amount field in HSN table after invoice loads
+    setTimeout(function() {
+        const firstAmountInput = document.querySelector('#hsnTableBody input[name*="[amount]"]');
+        if (firstAmountInput) {
+            firstAmountInput.focus();
+            firstAmountInput.select();
+        }
+    }, 200);
 }
 
 function renderAdjustmentSection(adjustments) {
@@ -625,14 +1186,23 @@ function addHSNRowWithData(data) {
     tr.onclick = function() { selectHsnRow(idx); };
     tr.innerHTML = `
         <td><input type="text" name="hsn[${idx}][hsn_code]" class="form-control readonly-field" value="${data.hsn_code || ''}" readonly></td>
-        <td><input type="number" name="hsn[${idx}][amount]" class="form-control text-end" value="${parseFloat(data.amount || 0).toFixed(2)}" onchange="calculateRowGST(${idx}); calculateTotals();"></td>
+        <td><input type="number" name="hsn[${idx}][amount]" class="form-control text-end hsn-editable" value="${parseFloat(data.amount || 0).toFixed(2)}" onchange="calculateRowGST(${idx}); calculateTotals();"></td>
         <td><input type="number" name="hsn[${idx}][gst_percent]" class="form-control text-end readonly-field" value="${parseFloat(data.gst_percent || 0).toFixed(2)}" readonly></td>
         <td><input type="number" name="hsn[${idx}][igst_percent]" class="form-control text-end readonly-field" value="${parseFloat(data.igst_percent || 0).toFixed(2)}" readonly></td>
         <td><input type="number" name="hsn[${idx}][gst_amount]" class="form-control text-end readonly-field" value="${data.gst_amount || gstAmt}" readonly></td>
-        <td><input type="number" name="hsn[${idx}][qty]" class="form-control text-end" value="${parseInt(data.qty || 1)}"></td>
+        <td><input type="number" name="hsn[${idx}][qty]" class="form-control text-end hsn-editable" value="${parseInt(data.qty || 1)}"></td>
     `;
     tbody.appendChild(tr);
     selectHsnRow(idx);
+    
+    // Auto-focus the Amount field of the new row
+    setTimeout(function() {
+        const amountInput = tr.querySelector('input[name*="[amount]"]');
+        if (amountInput) {
+            amountInput.focus();
+            amountInput.select();
+        }
+    }, 100);
 }
 
 function selectHsnRow(idx) {

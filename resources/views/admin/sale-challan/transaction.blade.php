@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Sale Challan Transaction')
+@section('disable_select2', '1')
 
 @section('content')
 <style>
@@ -271,6 +272,47 @@
     .pending-orders-backdrop.show {
         display: block;
         opacity: 1;
+    }
+
+    /* Searchable dropdown (custom, keyboard-friendly) */
+    .searchable-dropdown {
+        position: relative;
+    }
+    .searchable-dropdown-input:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    }
+    .searchable-dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        border: 1px solid #ced4da;
+        border-radius: 0 0 0.375rem 0.375rem;
+        background: #fff;
+        z-index: 1080;
+        display: none;
+    }
+    .searchable-dropdown-list .dropdown-item {
+        padding: 0.35rem 0.55rem;
+        cursor: pointer;
+        font-size: 11px;
+        border-bottom: 1px solid #f1f3f5;
+    }
+    .searchable-dropdown-list .dropdown-item:last-child {
+        border-bottom: none;
+    }
+    .searchable-dropdown-list .dropdown-item.highlighted {
+        background: #e7f1ff;
+    }
+    .searchable-dropdown-list .dropdown-item.selected {
+        background: #0d6efd;
+        color: #fff;
+    }
+    .searchable-dropdown-list .dropdown-item.hidden {
+        display: none;
     }
     
     /* Legacy modal classes for backward compatibility */
@@ -605,21 +647,69 @@
                     <div style="min-width: 300px;">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Customer:</label>
-                            <select class="form-control" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" onchange="updateCustomerName(); fetchCustomerDue();">
-                                <option value="">Select Customer</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="searchable-dropdown" id="customerDropdownWrapper" style="width: 250px;">
+                                <input type="text"
+                                       id="customerSearchInput"
+                                       class="form-control searchable-dropdown-input"
+                                       placeholder="Type to search customer..."
+                                       autocomplete="off"
+                                       data-custom-enter="true">
+                                <div class="searchable-dropdown-list" id="customerDropdownList">
+                                    <div class="dropdown-item" data-value="" data-name="" data-code="">Select Customer</div>
+                                    @foreach($customers as $customer)
+                                        <div class="dropdown-item"
+                                             data-value="{{ $customer->id }}"
+                                             data-name="{{ $customer->name }}"
+                                             data-code="{{ $customer->code ?? '' }}">
+                                            {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <select class="form-control no-select2"
+                                        name="customer_id"
+                                        id="customerSelect"
+                                        style="display: none;"
+                                        autocomplete="off"
+                                        onchange="updateCustomerName(); fetchCustomerDue();">
+                                    <option value="">Select Customer</option>
+                                    @foreach($customers as $customer)
+                                        <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-code="{{ $customer->code ?? '' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man:</label>
-                            <select class="form-control" name="salesman_id" id="salesmanSelect" autocomplete="off" onchange="updateSalesmanName()" style="width: 150px;">
-                                <option value="">Select</option>
-                                @foreach($salesmen as $salesman)
-                                    <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->code ?? '' }}</option>
-                                @endforeach
-                            </select>
+                            <div class="searchable-dropdown" id="salesmanDropdownWrapper" style="width: 170px;">
+                                <input type="text"
+                                       id="salesmanSearchInput"
+                                       class="form-control searchable-dropdown-input"
+                                       placeholder="Type to search salesman..."
+                                       autocomplete="off"
+                                       data-custom-enter="true">
+                                <div class="searchable-dropdown-list" id="salesmanDropdownList">
+                                    <div class="dropdown-item" data-value="" data-name="" data-code="">Select</div>
+                                    @foreach($salesmen as $salesman)
+                                        <div class="dropdown-item"
+                                             data-value="{{ $salesman->id }}"
+                                             data-name="{{ $salesman->name }}"
+                                             data-code="{{ $salesman->code ?? '' }}">
+                                            {{ $salesman->code ?? '' }} - {{ $salesman->name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                                <select class="form-control no-select2"
+                                        name="salesman_id"
+                                        id="salesmanSelect"
+                                        autocomplete="off"
+                                        style="display: none;"
+                                        onchange="updateSalesmanName()">
+                                    <option value="">Select</option>
+                                    @foreach($salesmen as $salesman)
+                                        <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}" data-code="{{ $salesman->code ?? '' }}">{{ $salesman->code ?? '' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="chooseItemsBtn" onclick="openChooseItemsModal()">
@@ -1350,7 +1440,8 @@ function openChooseItemsModal() {
     const customerId = document.getElementById('customerSelect')?.value;
     if (!customerId) {
         showAlert('Please select Customer first!\n\nCustomer selection is required before choosing items.', 'warning', 'Customer Required');
-        document.getElementById('customerSelect').focus();
+        const customerInput = document.getElementById('customerSearchInput');
+        if (customerInput) customerInput.focus();
         return;
     }
     
@@ -1358,7 +1449,8 @@ function openChooseItemsModal() {
     const salesmanId = document.getElementById('salesmanSelect')?.value;
     if (!salesmanId) {
         showAlert('Please select Sales Man first!\n\nSales Man selection is required before choosing items.', 'warning', 'Sales Man Required');
-        document.getElementById('salesmanSelect').focus();
+        const salesmanInput = document.getElementById('salesmanSearchInput');
+        if (salesmanInput) salesmanInput.focus();
         return;
     }
     
@@ -1930,6 +2022,9 @@ function populateExistingRow(row, item, batch) {
     if (expiryInput) expiryInput.value = expiryDisplay;
     if (rateInput) rateInput.value = rate.toFixed(2);
     if (mrpInput) mrpInput.value = parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2);
+
+    // Keep table Enter handling isolated from global Enter navigation
+    ensureRowKeyboardInputAttributes(row);
     
     // Store item data in row attributes
     row.setAttribute('data-item-id', item.id);
@@ -2013,14 +2108,14 @@ function addItemToTable(item, batch) {
         }
         
         targetRow.innerHTML = `
-            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly data-custom-enter="true"></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" data-custom-enter="true"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="${parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2)}" step="0.01" style="font-size: 10px;" readonly></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][amount]" id="amount_${itemIndex}" value="0.00" style="font-size: 10px;" readonly></td>
             <td class="p-0 text-center">
@@ -2101,9 +2196,19 @@ function addItemToTable(item, batch) {
 // Add event listeners to row for editing functionality
 function addRowEventListeners(row, rowIndex) {
     console.log('🔧 Adding event listeners for row', rowIndex);
+
+    // Prevent global header Enter handlers from hijacking table field Enter
+    ensureRowKeyboardInputAttributes(row);
+
+    // Avoid duplicate bindings when row is reused
+    if (row.dataset.rowKeyboardBound === '1') {
+        return;
+    }
+    row.dataset.rowKeyboardBound = '1';
     
     // Use event delegation on the row itself for better reliability
     row.addEventListener('keydown', function(e) {
+        if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) return;
         if (e.key !== 'Enter' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
         
         const target = e.target;
@@ -2132,26 +2237,23 @@ function addRowEventListeners(row, rowIndex) {
                 if (discount) { discount.focus(); discount.select(); }
             }
             else if (fieldName.includes('[discount]')) {
-                console.log('⏎ Enter on Dis% → Row Complete (GREEN)');
+                console.log('⏎ Enter on Dis% → Row Complete + Add New Row');
                 calculateRowAmount(rowIndex);
                 
                 // Mark row as complete (GREEN)
                 markRowComplete(rowIndex);
                 
-                // Remove focus
-                target.blur();
-                
-                // Clear row selection
-                currentSelectedRowIndex = null;
-                
+                // Add next row and move cursor to its code field
+                addNewRow();
+
                 // Clear sections for next item
                 clearCalculationSection();
                 clearDetailedSummary();
-                
+
                 // Recalculate summary
                 calculateSummary();
-                
-                console.log('✅ Row', rowIndex, 'completed');
+
+                console.log('✅ Row', rowIndex, 'completed, new row added');
             }
         }
         else if (e.key === 'ArrowUp') {
@@ -2177,15 +2279,12 @@ function addRowEventListeners(row, rowIndex) {
         });
         
         codeInput.addEventListener('keydown', function(e) {
+            if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) return;
             if (e.key === 'Enter') {
                 e.preventDefault();
-                const itemCode = this.value.trim();
-                if (itemCode) {
-                    fetchItemDetailsForRow(itemCode, rowIndex);
-                }
-                // Move to next field
-                const nextInput = row.querySelector('input[name*="[item_name]"]');
-                if (nextInput) nextInput.focus();
+                e.stopPropagation();
+                // Open item component (Choose Items modal flow)
+                openChooseItemsModal();
             }
         });
     }
@@ -2213,6 +2312,13 @@ function addRowEventListeners(row, rowIndex) {
             updateDetailedSummary(rowIndex);
         });
     }
+}
+
+function ensureRowKeyboardInputAttributes(row) {
+    if (!row) return;
+    row.querySelectorAll('input[name*="[code]"], input[name*="[qty]"], input[name*="[free_qty]"], input[name*="[rate]"], input[name*="[discount]"]').forEach(function(input) {
+        input.setAttribute('data-custom-enter', 'true');
+    });
 }
 
 // Navigate to specific row
@@ -2773,14 +2879,14 @@ function addNewRow() {
     });
     
     newRow.innerHTML = `
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly data-custom-enter="true"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" data-custom-enter="true"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" readonly></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][amount]" id="amount_${itemIndex}" value="0.00" style="font-size: 10px;" readonly></td>
         <td class="p-0 text-center">
@@ -2806,6 +2912,8 @@ function addNewRow() {
             codeInput.focus();
         }
     }, 100);
+
+    return itemIndex;
 }
 
 // Delete row
@@ -3073,6 +3181,12 @@ function clearFormAfterSave() {
     // Clear customer and salesman
     document.getElementById('customerSelect').value = '';
     document.getElementById('salesmanSelect').value = '';
+    document.getElementById('customerSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
+    document.getElementById('salesmanSelect')?.dispatchEvent(new Event('change', { bubbles: true }));
+    const customerInput = document.getElementById('customerSearchInput');
+    const salesmanInput = document.getElementById('salesmanSearchInput');
+    if (customerInput) customerInput.value = '';
+    if (salesmanInput) salesmanInput.value = '';
     
     // Clear all item rows
     const tbody = document.getElementById('itemsTableBody');
@@ -3357,6 +3471,112 @@ function closeAlert() {
     }, 400);
 }
 
+function isAlertModalOpen() {
+    const modal = document.getElementById('alertModal');
+    return !!(modal && modal.classList.contains('show'));
+}
+
+function getActiveKeyboardModal() {
+    const modalSelector = [
+        '#alertModal',
+        '#saveOptionsModal',
+        '#chooseItemsModal',
+        '#batchSelectionModal',
+        '#reusableItemsModal',
+        '#reusableBatchModal',
+        '.pending-orders-modal',
+        '.custom-modal',
+        '.modal',
+        '.swal2-container',
+        '.swal2-popup'
+    ].join(', ');
+
+    const modals = Array.from(document.querySelectorAll(modalSelector)).filter(function(el) {
+        const styles = window.getComputedStyle(el);
+        return styles.display !== 'none' && styles.visibility !== 'hidden';
+    });
+
+    if (!modals.length) return null;
+
+    modals.sort(function(a, b) {
+        const za = parseInt(window.getComputedStyle(a).zIndex || '0', 10);
+        const zb = parseInt(window.getComputedStyle(b).zIndex || '0', 10);
+        return zb - za;
+    });
+
+    return modals[0];
+}
+
+function isAnyKeyboardLockModalOpen() {
+    return !!getActiveKeyboardModal();
+}
+
+function triggerAlertModalDefaultAction() {
+    const modal = document.getElementById('alertModal');
+    if (!modal) return;
+    const buttons = modal.querySelectorAll('.alert-modal-footer button:not([disabled])');
+    if (!buttons || !buttons.length) return;
+
+    // Default action is the right-most button:
+    // single-button modal => OK
+    // confirm modal => Yes
+    const actionBtn = buttons[buttons.length - 1];
+    actionBtn.click();
+}
+
+// Alert modal keyboard handling:
+// Enter => OK/Yes action
+document.addEventListener('keydown', function(e) {
+    if (!isAlertModalOpen()) return;
+    if (e.key !== 'Enter') return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+    }
+
+    triggerAlertModalDefaultAction();
+}, true);
+
+// Modal keyboard lock:
+// If any modal is open, block outside-focus key actions so keyboard works only in modal.
+window.addEventListener('keydown', function(e) {
+    const activeModal = getActiveKeyboardModal();
+    if (!activeModal) return;
+
+    const target = e.target;
+    if (target && activeModal.contains(target)) return;
+
+    const key = e.key || '';
+    const isSaveShortcut = (e.ctrlKey || e.metaKey) && key.toLowerCase() === 's';
+    const lockKeys = ['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    if (!lockKeys.includes(key) && !isSaveShortcut) return;
+
+    console.log('[KB-SC][ModalLock] blocked outside-modal key', {
+        key: key,
+        modalId: activeModal.id || null
+    });
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+    }
+
+    if (key === 'Enter' && activeModal.id === 'alertModal') {
+        triggerAlertModalDefaultAction();
+        return;
+    }
+
+    const focusable = activeModal.querySelector(
+        'input:not([disabled]), button:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable) {
+        focusable.focus();
+    }
+}, true);
+
 // Close modal when clicking backdrop
 document.addEventListener('DOMContentLoaded', function() {
     const alertBackdrop = document.getElementById('alertBackdrop');
@@ -3364,6 +3584,346 @@ document.addEventListener('DOMContentLoaded', function() {
         alertBackdrop.addEventListener('click', closeAlert);
     }
 });
+</script>
+
+<script>
+(function() {
+    'use strict';
+
+    function initSearchableDropdown(config) {
+        const input = document.getElementById(config.inputId);
+        const list = document.getElementById(config.listId);
+        const select = document.getElementById(config.selectId);
+        if (!input || !list || !select) return null;
+
+        let highlightedIndex = -1;
+        let isOpen = false;
+
+        function getVisibleItems() {
+            return Array.from(list.querySelectorAll('.dropdown-item:not(.hidden)'));
+        }
+
+        function show() {
+            list.style.display = 'block';
+            isOpen = true;
+        }
+
+        function hide() {
+            list.style.display = 'none';
+            isOpen = false;
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function filter(term) {
+            const search = (term || '').toLowerCase().trim();
+            list.querySelectorAll('.dropdown-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                const code = (item.dataset.code || '').toLowerCase();
+                const name = (item.dataset.name || '').toLowerCase();
+                const visible = !search || text.includes(search) || code.includes(search) || name.includes(search);
+                item.classList.toggle('hidden', !visible);
+            });
+            highlightedIndex = -1;
+            list.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function highlight(index) {
+            const items = getVisibleItems();
+            items.forEach(item => item.classList.remove('highlighted'));
+            if (index >= 0 && index < items.length) {
+                highlightedIndex = index;
+                items[index].classList.add('highlighted');
+                items[index].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function syncInputFromSelect() {
+            const value = select.value;
+            if (!value) {
+                input.value = '';
+                list.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
+                return;
+            }
+
+            const option = Array.from(select.options).find(o => String(o.value) === String(value));
+            if (!option) return;
+
+            input.value = option.text || '';
+            list.querySelectorAll('.dropdown-item').forEach(i => {
+                i.classList.toggle('selected', String(i.dataset.value) === String(value));
+            });
+        }
+
+        function selectItem(item, focusNext = true) {
+            const value = item.dataset.value || '';
+            if (select.value !== value) {
+                select.value = value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            } else {
+                // keep downstream behavior consistent
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            syncInputFromSelect();
+            hide();
+
+            if (focusNext && typeof config.onSelect === 'function') {
+                config.onSelect();
+            }
+        }
+
+        input.addEventListener('focus', function() {
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('input', function() {
+            show();
+            filter(this.value);
+        });
+
+        input.addEventListener('keydown', function(e) {
+            const items = getVisibleItems();
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
+                } else {
+                    highlight(highlightedIndex < items.length - 1 ? highlightedIndex + 1 : 0);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isOpen) {
+                    show();
+                    filter(this.value);
+                } else {
+                    highlight(highlightedIndex > 0 ? highlightedIndex - 1 : items.length - 1);
+                }
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                if (isOpen) {
+                    e.preventDefault();
+                    const targetItem =
+                        (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                    if (targetItem) {
+                        selectItem(targetItem, true);
+                    } else if (typeof config.onSelect === 'function') {
+                        config.onSelect();
+                    }
+                } else if (typeof config.onEnterWhenClosed === 'function') {
+                    e.preventDefault();
+                    config.onEnterWhenClosed();
+                }
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                hide();
+            }
+
+            if (e.key === 'Tab') {
+                if (isOpen) {
+                    const targetItem =
+                        (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                    if (targetItem) selectItem(targetItem, false);
+                    hide();
+                }
+            }
+        });
+
+        list.addEventListener('mousedown', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            e.preventDefault();
+            selectItem(item, true);
+        });
+
+        select.addEventListener('change', syncInputFromSelect);
+
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById(config.wrapperId);
+            if (wrapper && !wrapper.contains(e.target)) {
+                hide();
+            }
+        });
+
+        syncInputFromSelect();
+        return {
+            focus: () => input.focus(),
+            hide
+        };
+    }
+
+    function focusField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.focus();
+        if (typeof el.select === 'function' && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+            el.select();
+        }
+    }
+
+    function initHeaderKeyboardFlow() {
+        const order = ['challanDate', 'customerSearchInput', 'salesmanSearchInput', 'dueDate', 'remarks', 'chooseItemsBtn'];
+        order.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.setAttribute('data-custom-enter', 'true');
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+
+            const active = document.activeElement;
+            if (!active || !active.id || !order.includes(active.id)) return;
+            if (active.closest('#itemsTableBody')) return;
+
+            // Allow dropdowns to handle Enter when open
+            if (active.id === 'customerSearchInput' || active.id === 'salesmanSearchInput') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            if (active.id === 'chooseItemsBtn') {
+                openChooseItemsModal();
+                return;
+            }
+
+            const idx = order.indexOf(active.id);
+            if (idx >= 0 && idx < order.length - 1) {
+                focusField(order[idx + 1]);
+            }
+        }, true);
+    }
+
+    function initTableEnterFallback() {
+        // Run at window capture phase so page-level global handlers can't hijack Enter
+        window.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) return;
+            const target = e.target;
+            if (!target) return;
+            const row = target.closest('#itemsTableBody tr[data-row-index]');
+            if (!row) return;
+
+            const fieldName = target.name || '';
+            const rowIndex = parseInt(row.getAttribute('data-row-index') || '-1', 10);
+            if (isNaN(rowIndex) || rowIndex < 0) return;
+
+            if (fieldName.includes('[discount]')) {
+                console.log('[KB-SC][Capture] Dis% Enter', { rowIndex: rowIndex, fieldName: fieldName });
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+
+                calculateRowAmount(rowIndex);
+                markRowComplete(rowIndex);
+                addNewRow();
+                clearCalculationSection();
+                clearDetailedSummary();
+                calculateSummary();
+                return;
+            }
+
+            if (fieldName.includes('[code]')) {
+                console.log('[KB-SC][Capture] Code Enter', { rowIndex: rowIndex, fieldName: fieldName });
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                openChooseItemsModal();
+            }
+        }, true);
+    }
+
+    function isBlockingModalOpenForSave() {
+        if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) {
+            return true;
+        }
+        return !!document.querySelector('.swal2-container[style*=\"display: block\"], .swal2-popup.swal2-show');
+    }
+
+    function initCtrlSSaveShortcut() {
+        if (window.__saleChallanCtrlSBound) return;
+        window.__saleChallanCtrlSBound = true;
+
+        // Capture phase so global handlers cannot override this shortcut
+        window.addEventListener('keydown', function(e) {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            if ((e.key || '').toLowerCase() !== 's') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            if (isBlockingModalOpenForSave()) {
+                console.log('[KB-SC] Ctrl+S ignored (modal open)');
+                return;
+            }
+
+            if (typeof saveChallan === 'function') {
+                console.log('[KB-SC] Ctrl+S -> saveChallan()');
+                saveChallan();
+            }
+        }, true);
+    }
+
+    function initSaleChallanTransactionKeyboard() {
+        const customerDropdown = initSearchableDropdown({
+            wrapperId: 'customerDropdownWrapper',
+            inputId: 'customerSearchInput',
+            listId: 'customerDropdownList',
+            selectId: 'customerSelect',
+            onSelect: function() {
+                focusField('salesmanSearchInput');
+            },
+            onEnterWhenClosed: function() {
+                focusField('salesmanSearchInput');
+            }
+        });
+
+        const salesmanDropdown = initSearchableDropdown({
+            wrapperId: 'salesmanDropdownWrapper',
+            inputId: 'salesmanSearchInput',
+            listId: 'salesmanDropdownList',
+            selectId: 'salesmanSelect',
+            onSelect: function() {
+                focusField('dueDate');
+            },
+            onEnterWhenClosed: function() {
+                focusField('dueDate');
+            }
+        });
+
+        initHeaderKeyboardFlow();
+        initTableEnterFallback();
+        initCtrlSSaveShortcut();
+
+        // Start from date field as requested flow
+        setTimeout(function() {
+            focusField('challanDate');
+        }, 120);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSaleChallanTransactionKeyboard);
+    } else {
+        initSaleChallanTransactionKeyboard();
+    }
+})();
 </script>
 
 <!-- Toast Container -->

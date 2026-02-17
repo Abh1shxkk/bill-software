@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Breakage/Expiry Dump - Modification')
+@section('disable_select2', '1')
 
 @push('styles')
 <style>
@@ -48,6 +49,8 @@
     .modal-footer-custom { padding: 8px 12px; border-top: 1px solid #ddd; text-align: right; }
     .item-row:hover, .batch-row:hover { background: #e3f2fd !important; cursor: pointer; }
     .item-row.selected, .batch-row.selected { background: #007bff !important; color: #fff !important; }
+    .dump-row.active > td { background: #007bff !important; color: #fff !important; }
+    .dump-row { cursor: pointer; }
 </style>
 @endpush
 
@@ -189,7 +192,7 @@
         <button type="button" class="btn btn-sm btn-light" onclick="closeDumpModal()">&times;</button>
     </div>
     <div class="modal-body-custom">
-        <input type="text" id="dumpSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by Trn No..." onkeyup="searchDumps()">
+        <input type="text" id="dumpSearchInput" class="form-control form-control-sm mb-2" placeholder="Search by Trn No..." data-custom-enter="true" oninput="searchDumps()">
         <div class="table-responsive" style="max-height: 300px;">
             <table class="table table-sm table-bordered table-hover mb-0" style="font-size: 11px;">
                 <thead class="table-light sticky-top"><tr><th>Trn No</th><th>Date</th><th class="text-end">Amount</th></tr></thead>
@@ -267,14 +270,25 @@
 @push('scripts')
 <script>
 let rowIndex = 0, allItems = [], selectedRowIndex = null, selectedItem = null, currentTransactionId = null;
+let dumpActiveIndex = -1, dumpRows = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F2') { e.preventDefault(); showItemModal(); }
-        if (e.key === 'Escape') { closeItemModal(); closeBatchModal(); closeDumpModal(); }
-    });
+    initHeaderFieldNavigation();
+    initGlobalKeyboardShortcuts();
+    initDumpModalKeyboardHandlers();
+    
+    // Focus date field on load
+    setTimeout(() => {
+        const dateField = document.getElementById('transaction_date');
+        if (dateField) { dateField.focus(); }
+    }, 200);
 });
+
+function isDumpModalOpen() {
+    const modal = document.getElementById('dumpModal');
+    return !!(modal && modal.classList.contains('show'));
+}
 
 function updateDayName() {
     const d = new Date(document.getElementById('transaction_date').value);
@@ -288,39 +302,233 @@ function loadItems() {
         .catch(e => console.error('Error loading items:', e));
 }
 
-// Dump Modal
+// ============================================
+// Header Field Navigation
+// ============================================
+function initHeaderFieldNavigation() {
+    const headerFields = ['transaction_date', 'narration'];
+    
+    // Block Tab on header fields
+    headerFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') { e.preventDefault(); }
+            });
+        }
+    });
+    
+    // Date → Enter → focus narration
+    const dateField = document.getElementById('transaction_date');
+    if (dateField) {
+        dateField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                const narrationField = document.getElementById('narration');
+                if (narrationField) { narrationField.focus(); }
+            }
+        });
+    }
+    
+    // Narration → Enter → trigger Load Dump modal
+    const narrationField = document.getElementById('narration');
+    if (narrationField) {
+        narrationField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                showLoadDumpModal();
+            }
+        });
+    }
+}
+
+// ============================================
+// Global Keyboard Shortcuts
+// ============================================
+function initGlobalKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        // F2 - Add Item
+        if (e.key === 'F2') { e.preventDefault(); showItemModal(); }
+        
+        // Escape - Close Modals
+        if (e.key === 'Escape') { closeItemModal(); closeBatchModal(); closeDumpModal(); }
+        
+        // Ctrl+S - Update Transaction
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+            e.stopPropagation();
+            updateTransaction();
+        }
+    });
+}
+
+// ============================================
+// Load Dump Modal with Keyboard Handlers
+// ============================================
 function showLoadDumpModal() {
+    console.log('[KB-DUMP] showLoadDumpModal called');
     document.getElementById('dumpModalBackdrop').classList.add('show');
     document.getElementById('dumpModal').classList.add('show');
     document.getElementById('dumpSearchInput').value = '';
+    dumpActiveIndex = -1;
     loadDumps();
+    setTimeout(() => {
+        const si = document.getElementById('dumpSearchInput');
+        if (si) si.focus();
+    }, 150);
 }
 
 function closeDumpModal() {
+    console.log('[KB-DUMP] closeDumpModal called');
     document.getElementById('dumpModalBackdrop').classList.remove('show');
     document.getElementById('dumpModal').classList.remove('show');
+    dumpActiveIndex = -1;
+}
+
+function initDumpModalKeyboardHandlers() {
+    const searchInput = document.getElementById('dumpSearchInput');
+    const dumpModal = document.getElementById('dumpModal');
+    if (searchInput) {
+        searchInput.addEventListener('keydown', handleDumpModalKeyDown);
+        console.log('[KB-DUMP] keydown attached on #dumpSearchInput');
+    } else {
+        console.warn('[KB-DUMP] #dumpSearchInput not found');
+    }
+
+    if (dumpModal) {
+        dumpModal.addEventListener('keydown', handleDumpModalKeyDown, true);
+        console.log('[KB-DUMP] capture keydown attached on #dumpModal');
+    } else {
+        console.warn('[KB-DUMP] #dumpModal not found');
+    }
+
+    // Capture-phase fallback to block global handlers from hijacking keys
+    // while this modal is open.
+    window.addEventListener('keydown', function(e) {
+        if (!isDumpModalOpen()) return;
+        if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+
+        console.log('[KB-DUMP][Capture][Window]', {
+            key: e.key,
+            activeElement: document.activeElement ? (document.activeElement.id || document.activeElement.tagName) : null,
+            rowsCount: dumpRows.length,
+            activeIndex: dumpActiveIndex
+        });
+
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') {
+            e.stopImmediatePropagation();
+        }
+
+        handleDumpModalKeyDown(e);
+    }, true);
+}
+
+// Dump modal keyboard handler
+function handleDumpModalKeyDown(e) {
+    if (!isDumpModalOpen()) return;
+    if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+
+    console.log('[KB-DUMP][Handler] keydown', {
+        key: e.key,
+        targetId: e.target ? (e.target.id || e.target.tagName) : null,
+        activeElement: document.activeElement ? (document.activeElement.id || document.activeElement.tagName) : null,
+        rowsCount: dumpRows.length,
+        activeIndex: dumpActiveIndex
+    });
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dumpRows.length > 0) {
+            const nextIndex = dumpActiveIndex < dumpRows.length - 1 ? dumpActiveIndex + 1 : 0;
+            setActiveDumpRow(nextIndex);
+        }
+        return false;
+    }
+    
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dumpRows.length > 0) {
+            const prevIndex = dumpActiveIndex > 0 ? dumpActiveIndex - 1 : dumpRows.length - 1;
+            setActiveDumpRow(prevIndex);
+        }
+        return false;
+    }
+    
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dumpRows.length > 0 && dumpActiveIndex < 0) {
+            setActiveDumpRow(0);
+        }
+        if (dumpActiveIndex >= 0 && dumpActiveIndex < dumpRows.length) {
+            const dumpId = dumpRows[dumpActiveIndex].dataset.dumpId;
+            loadDump(parseInt(dumpId));
+        }
+        return false;
+    }
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeDumpModal();
+        document.getElementById('narration').focus();
+        return false;
+    }
 }
 
 function loadDumps(search = '') {
+    console.log('[KB-DUMP] loadDumps called', { search: search || '' });
     fetch(`{{ route('admin.breakage-supplier.get-dump-past-invoices') }}?search=${encodeURIComponent(search)}`)
         .then(r => r.json())
         .then(dumps => {
             const tbody = document.getElementById('dumpsListBody');
+            console.log('[KB-DUMP] loadDumps response', { count: Array.isArray(dumps) ? dumps.length : 0, dumps });
             if (!dumps.length) {
                 tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-muted">No dump transactions found</td></tr>';
+                dumpRows = [];
                 return;
             }
-            tbody.innerHTML = dumps.map(dump => `
-                <tr class="invoice-row" onclick="loadDump(${dump.id})">
+            tbody.innerHTML = dumps.map((dump, i) => `
+                <tr class="dump-row" data-dump-id="${dump.id}" data-index="${i}" onclick="loadDump(${dump.id})">
                     <td><strong>${dump.trn_no}</strong></td>
                     <td>${dump.transaction_date ? new Date(dump.transaction_date).toLocaleDateString() : '-'}</td>
                     <td class="text-end">${parseFloat(dump.total_inv_amt || 0).toFixed(2)}</td>
                 </tr>
             `).join('');
+            dumpRows = Array.from(tbody.querySelectorAll('.dump-row'));
+            console.log('[KB-DUMP] rows rendered', { rowsCount: dumpRows.length });
+            dumpActiveIndex = -1;
+            if (dumpRows.length > 0) {
+                setActiveDumpRow(0);
+            }
         })
         .catch(() => {
+            console.error('[KB-DUMP] loadDumps failed');
             document.getElementById('dumpsListBody').innerHTML = '<tr><td colspan="3" class="text-center text-danger py-3">Error loading dumps</td></tr>';
+            dumpRows = [];
         });
+}
+
+function setActiveDumpRow(index) {
+    dumpRows.forEach(row => {
+        row.classList.remove('active');
+    });
+    
+    if (index >= 0 && index < dumpRows.length) {
+        dumpActiveIndex = index;
+        const activeRow = dumpRows[dumpActiveIndex];
+        activeRow.classList.add('active');
+        console.log('[KB-DUMP] active row set', { index: dumpActiveIndex, dumpId: activeRow.dataset.dumpId });
+        
+        // Scroll into view
+        activeRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
 }
 
 function searchDumps() {
@@ -333,6 +541,12 @@ function loadDump(id) {
         .then(data => {
             populateForm(data);
             closeDumpModal();
+            
+            // After loading, focus the first row's qty field
+            setTimeout(() => {
+                const firstQty = document.querySelector('#itemsTableBody tr:first-child input[name*="[qty]"]');
+                if (firstQty) { firstQty.focus(); firstQty.select(); }
+            }, 200);
         })
         .catch(e => {
             console.error(e);
@@ -370,52 +584,90 @@ function addItemRowFromData(item) {
     tr.id = `row_${idx}`;
     tr.onclick = function() { selectRow(idx); };
     tr.innerHTML = `
-        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][batch_no]" value="${item.batch_no || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][expiry]" value="${item.expiry_date || ''}" readonly class="readonly-field"></td>
-        <td><input type="number" name="items[${idx}][qty]" value="${item.qty || ''}" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][free_qty]" value="${item.free_qty || 0}" min="0" class="text-end"></td>
-        <td><input type="number" name="items[${idx}][rate]" value="${parseFloat(item.rate || 0).toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][dis_percent]" value="${item.dis_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][scm_percent]" value="${item.scm_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B" ${item.br_ex === 'B' ? 'selected' : ''}>Brk</option><option value="E" ${item.br_ex === 'E' ? 'selected' : ''}>Exp</option></select></td>
+        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'item_code')"></td>
+        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'item_name')"></td>
+        <td><input type="text" name="items[${idx}][batch_no]" value="${item.batch_no || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'batch_no')"></td>
+        <td><input type="text" name="items[${idx}][expiry]" value="${item.expiry_date || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'expiry')"></td>
+        <td><input type="number" name="items[${idx}][qty]" value="${item.qty || ''}" min="0" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'qty')"></td>
+        <td><input type="number" name="items[${idx}][free_qty]" value="${item.free_qty || 0}" min="0" class="text-end"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'free_qty')"></td>
+        <td><input type="number" name="items[${idx}][rate]" value="${parseFloat(item.rate || 0).toFixed(2)}" step="0.01" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'rate')"></td>
+        <td><input type="number" name="items[${idx}][dis_percent]" value="${item.dis_percent || 0}" step="0.01" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'dis_percent')"></td>
+        <td><input type="number" name="items[${idx}][scm_percent]" value="${item.scm_percent || 0}" step="0.01" class="text-end" 
+                   data-custom-enter="true"
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'scm_percent')"></td>
+        <td style="position:relative;">
+            <input type="text" class="form-control text-center br-ex-input" id="br_ex_display_${idx}" 
+                   value="${item.br_ex === 'E' ? 'Exp' : 'Brk'}" readonly style="cursor:pointer;width:55px;"
+                   onfocus="openBrExDropdown(${idx})"
+                   onclick="openBrExDropdown(${idx})"
+                   onkeydown="handleBrExKeyDown(event, ${idx})">
+            <input type="hidden" name="items[${idx}][br_ex]" id="br_ex_${idx}" value="${item.br_ex || 'B'}">
+            <div class="br-ex-dropdown" id="br_ex_dropdown_${idx}" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid #ccc;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:55px;">
+                <div class="br-ex-option" data-value="B" onclick="selectBrEx(${idx},'B','Brk')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Brk</div>
+                <div class="br-ex-option" data-value="E" onclick="selectBrEx(${idx},'E','Exp')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Exp</div>
+            </div>
+        </td>
         <td><input type="number" name="items[${idx}][amount]" value="${parseFloat(item.amount || 0).toFixed(2)}" step="0.01" class="text-end readonly-field" readonly></td>
-        <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
-        <input type="hidden" name="items[${idx}][id]" value="${item.id || ''}">
-        <input type="hidden" name="items[${idx}][item_id]" value="${item.item_id || ''}">
-        <input type="hidden" name="items[${idx}][batch_id]" value="${item.batch_id || ''}">
-        <input type="hidden" name="items[${idx}][mrp]" value="${item.mrp || 0}">
-        <input type="hidden" name="items[${idx}][purchase_rate]" value="${item.purchase_rate || 0}">
-        <input type="hidden" name="items[${idx}][sale_rate]" value="${item.sale_rate || 0}">
-        <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
-        <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
-        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
-        <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
-        <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
-        <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
+        <td>
+            <button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button>
+            <input type="hidden" name="items[${idx}][id]" value="${item.id || ''}">
+            <input type="hidden" name="items[${idx}][item_id]" value="${item.item_id || ''}">
+            <input type="hidden" name="items[${idx}][batch_id]" value="${item.batch_id || ''}">
+            <input type="hidden" name="items[${idx}][mrp]" value="${item.mrp || 0}">
+            <input type="hidden" name="items[${idx}][purchase_rate]" value="${item.purchase_rate || 0}">
+            <input type="hidden" name="items[${idx}][sale_rate]" value="${item.sale_rate || 0}">
+            <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
+            <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
+            <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
+            <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
+            <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
+            <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
+        </td>
     `;
     tbody.appendChild(tr);
 }
 
-// Item Modal - Bridge function to use reusable modal
+// ============================================
+// Item Modal Bridge
+// ============================================
 function showItemModal() {
-    console.log('showItemModal called - attempting to use reusable modal');
     if (typeof openItemModal_breakageSupplierDumpModItemModal === 'function') {
-        console.log('Using reusable item modal');
         openItemModal_breakageSupplierDumpModItemModal();
     } else {
-        console.log('Fallback to legacy modal');
         _legacy_showItemModal();
+    }
+}
+
+function closeItemModal() {
+    if (typeof closeItemModal_breakageSupplierDumpModItemModal === 'function') {
+        closeItemModal_breakageSupplierDumpModItemModal();
+    } else {
+        _legacy_closeItemModal();
+    }
+}
+
+function closeBatchModal() {
+    if (typeof closeModal_breakageSupplierDumpModBatchModal === 'function') {
+        closeModal_breakageSupplierDumpModBatchModal();
+    } else {
+        _legacy_closeBatchModal();
     }
 }
 
 // Callback function when item and batch are selected from reusable modal
 window.onItemBatchSelectedFromModal = function(item, batch) {
-    console.log('Item selected from modal:', item);
-    console.log('Batch selected from modal:', batch);
-    
-    // Transform item to match expected format
     const transformedItem = {
         id: item.id,
         item_code: item.bar_code || item.code || '',
@@ -428,7 +680,6 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         sgst: item.sgst_percent || 0
     };
     
-    // Transform batch to match expected format
     const transformedBatch = {
         id: batch.id,
         batch_no: batch.batch_no || '',
@@ -439,11 +690,12 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         quantity: batch.qty || batch.quantity || 0
     };
     
-    // Use existing addItemRow function
     addItemRow(transformedItem, transformedBatch);
 };
 
-// Legacy Item Modal Functions
+// ============================================
+// Legacy Item/Batch Modal Functions
+// ============================================
 function _legacy_showItemModal() {
     document.getElementById('itemModalBackdrop').classList.add('show');
     document.getElementById('itemModal').classList.add('show');
@@ -532,6 +784,9 @@ function _legacy_selectBatch(batch) {
     addItemRow(selectedItem, batch);
 }
 
+// ============================================
+// Add Item Row with Keyboard Handlers
+// ============================================
 function addItemRow(item, batch) {
     const tbody = document.getElementById('itemsTableBody');
     const idx = rowIndex++;
@@ -541,35 +796,259 @@ function addItemRow(item, batch) {
     tr.id = `row_${idx}`;
     tr.onclick = function() { selectRow(idx); };
     tr.innerHTML = `
-        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][batch_no]" value="${batch?.batch_no || ''}" readonly class="readonly-field"></td>
-        <td><input type="text" name="items[${idx}][expiry]" value="${batch?.expiry_date || ''}" readonly class="readonly-field"></td>
-        <td><input type="number" name="items[${idx}][qty]" value="0" min="0" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][free_qty]" value="0" min="0" class="text-end"></td>
-        <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B">Brk</option><option value="E">Exp</option></select></td>
+        <td><input type="text" name="items[${idx}][item_code]" value="${item.item_code || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'item_code')"></td>
+        <td><input type="text" name="items[${idx}][item_name]" value="${item.item_name || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'item_name')"></td>
+        <td><input type="text" name="items[${idx}][batch_no]" value="${batch?.batch_no || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'batch_no')"></td>
+        <td><input type="text" name="items[${idx}][expiry]" value="${batch?.expiry_date || ''}" readonly class="readonly-field"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'expiry')"></td>
+        <td><input type="number" name="items[${idx}][qty]" value="" min="0" class="text-end" 
+                   onchange="calculateRowAmount(${idx})" 
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'qty')"></td>
+        <td><input type="number" name="items[${idx}][free_qty]" value="0" min="0" class="text-end"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'free_qty')"></td>
+        <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'rate')"></td>
+        <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" 
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'dis_percent')"></td>
+        <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" 
+                   data-custom-enter="true"
+                   onchange="calculateRowAmount(${idx})"
+                   onkeydown="handleGridEnterKey(event, ${idx}, 'scm_percent')"></td>
+        <td style="position:relative;">
+            <input type="text" class="form-control text-center br-ex-input" id="br_ex_display_${idx}" 
+                   value="Brk" readonly style="cursor:pointer;width:55px;"
+                   onfocus="openBrExDropdown(${idx})"
+                   onclick="openBrExDropdown(${idx})"
+                   onkeydown="handleBrExKeyDown(event, ${idx})">
+            <input type="hidden" name="items[${idx}][br_ex]" id="br_ex_${idx}" value="B">
+            <div class="br-ex-dropdown" id="br_ex_dropdown_${idx}" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid #ccc;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:55px;">
+                <div class="br-ex-option" data-value="B" onclick="selectBrEx(${idx},'B','Brk')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Brk</div>
+                <div class="br-ex-option" data-value="E" onclick="selectBrEx(${idx},'E','Exp')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Exp</div>
+            </div>
+        </td>
         <td><input type="number" name="items[${idx}][amount]" value="0" step="0.01" class="text-end readonly-field" readonly></td>
-        <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
-        <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
-        <input type="hidden" name="items[${idx}][batch_id]" value="${batch?.id || ''}">
-        <input type="hidden" name="items[${idx}][mrp]" value="${batch?.mrp || 0}">
-        <input type="hidden" name="items[${idx}][purchase_rate]" value="${batch?.purchase_rate || 0}">
-        <input type="hidden" name="items[${idx}][sale_rate]" value="${batch?.sale_rate || 0}">
-        <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
-        <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
-        <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
-        <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
-        <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
-        <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
+        <td>
+            <button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button>
+            <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
+            <input type="hidden" name="items[${idx}][batch_id]" value="${batch?.id || ''}">
+            <input type="hidden" name="items[${idx}][mrp]" value="${batch?.mrp || 0}">
+            <input type="hidden" name="items[${idx}][purchase_rate]" value="${batch?.purchase_rate || 0}">
+            <input type="hidden" name="items[${idx}][sale_rate]" value="${batch?.sale_rate || 0}">
+            <input type="hidden" name="items[${idx}][cgst]" value="${item.cgst || 0}">
+            <input type="hidden" name="items[${idx}][sgst]" value="${item.sgst || 0}">
+            <input type="hidden" name="items[${idx}][company_name]" value="${item.company_name || ''}">
+            <input type="hidden" name="items[${idx}][packing]" value="${item.packing || ''}">
+            <input type="hidden" name="items[${idx}][unit]" value="${item.unit || ''}">
+            <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
+        </td>
     `;
     tbody.appendChild(tr);
     selectRow(idx);
-    calculateRowAmount(idx);
+    
+    // Focus on qty field after adding row
+    setTimeout(() => {
+        const qtyInput = tr.querySelector('input[name*="[qty]"]');
+        if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+    }, 100);
+    
+    calculateTotals();
+    document.getElementById('updateBtn').disabled = false;
 }
 
+// ============================================
+// Grid Enter Key Navigation
+// ============================================
+function handleGridEnterKey(event, rowIndex, currentField) {
+    if (event.key !== 'Enter') return;
+    
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const fieldOrder = [
+        'item_code', 'item_name', 'batch_no', 'expiry',
+        'qty', 'free_qty', 'rate', 'dis_percent', 'scm_percent', 'br_ex'
+    ];
+    
+    const currentIndex = fieldOrder.indexOf(currentField);
+    
+    // Shift+Enter: move to PREVIOUS field
+    if (event.shiftKey) {
+        if (currentIndex > 0) {
+            moveToPrevField(rowIndex, fieldOrder[currentIndex - 1]);
+        }
+        return;
+    }
+    
+    // item_code → open item modal
+    if (currentField === 'item_code') { showItemModal(); return; }
+    
+    // scm_percent → calculate, then open item modal for NEXT item
+    if (currentField === 'scm_percent') {
+        calculateRowAmount(rowIndex);
+        calculateTotals();
+        setTimeout(() => { showItemModal(); }, 100);
+        return;
+    }
+    
+    // br_ex (last field) → handleRowComplete
+    if (currentField === 'br_ex') { handleRowComplete(rowIndex); return; }
+    
+    // Otherwise: move to next field
+    if (currentIndex >= 0 && currentIndex < fieldOrder.length - 1) {
+        moveToNextField(rowIndex, fieldOrder[currentIndex + 1]);
+    }
+}
+
+// Handle Row Complete
+function handleRowComplete(rowIndex) {
+    const row = document.getElementById(`row_${rowIndex}`);
+    if (!row) return;
+    calculateRowAmount(rowIndex);
+    calculateTotals();
+    setTimeout(() => { showItemModal(); }, 100);
+}
+
+// Move to Next Field in Row
+function moveToNextField(rowIndex, nextFieldName) {
+    const row = document.getElementById(`row_${rowIndex}`);
+    if (!row) return;
+    
+    if (nextFieldName === 'br_ex') {
+        const brExDisplay = document.getElementById(`br_ex_display_${rowIndex}`);
+        if (brExDisplay) {
+            setTimeout(() => { brExDisplay.focus(); openBrExDropdown(rowIndex); }, 50);
+        }
+        return;
+    }
+    
+    const nextField = row.querySelector(`[name*="[${nextFieldName}]"]`);
+    if (nextField) {
+        setTimeout(() => {
+            nextField.focus();
+            if (nextField.tagName === 'INPUT' && nextField.type === 'number') { nextField.select(); }
+        }, 50);
+    }
+}
+
+// Move to Previous Field in Row
+function moveToPrevField(rowIndex, prevFieldName) {
+    const row = document.getElementById(`row_${rowIndex}`);
+    if (!row) return;
+    
+    if (prevFieldName === 'br_ex') {
+        const brExDisplay = document.getElementById(`br_ex_display_${rowIndex}`);
+        if (brExDisplay) {
+            setTimeout(() => { brExDisplay.focus(); openBrExDropdown(rowIndex); }, 50);
+        }
+        return;
+    }
+    
+    const prevField = row.querySelector(`[name*="[${prevFieldName}]"]`);
+    if (prevField) {
+        setTimeout(() => {
+            prevField.focus();
+            if (prevField.tagName === 'INPUT' && prevField.type === 'number') { prevField.select(); }
+        }, 50);
+    }
+}
+
+// ============================================
+// Br/Ex Custom Dropdown Functions
+// ============================================
+function openBrExDropdown(idx) {
+    closeAllBrExDropdowns();
+    const dropdown = document.getElementById(`br_ex_dropdown_${idx}`);
+    if (dropdown) {
+        dropdown.style.display = 'block';
+        const currentVal = document.getElementById(`br_ex_${idx}`).value;
+        dropdown.querySelectorAll('.br-ex-option').forEach(opt => {
+            if (opt.dataset.value === currentVal) {
+                opt.style.backgroundColor = '#0d6efd'; opt.style.color = '#fff';
+            } else {
+                opt.style.backgroundColor = ''; opt.style.color = '';
+            }
+        });
+    }
+}
+
+function closeBrExDropdown(idx) {
+    const dropdown = document.getElementById(`br_ex_dropdown_${idx}`);
+    if (dropdown) dropdown.style.display = 'none';
+}
+
+function closeAllBrExDropdowns() {
+    document.querySelectorAll('.br-ex-dropdown').forEach(d => d.style.display = 'none');
+}
+
+function selectBrEx(idx, value, label) {
+    document.getElementById(`br_ex_${idx}`).value = value;
+    document.getElementById(`br_ex_display_${idx}`).value = label;
+    closeBrExDropdown(idx);
+    handleRowComplete(idx);
+}
+
+function handleBrExKeyDown(event, idx) {
+    const dropdown = document.getElementById(`br_ex_dropdown_${idx}`);
+    const isOpen = dropdown && dropdown.style.display !== 'none';
+    
+    if (event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault(); event.stopPropagation(); return;
+    }
+    
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault(); event.stopPropagation();
+        const currentVal = document.getElementById(`br_ex_${idx}`).value;
+        if (currentVal === 'B') {
+            document.getElementById(`br_ex_${idx}`).value = 'E';
+            document.getElementById(`br_ex_display_${idx}`).value = 'Exp';
+        } else {
+            document.getElementById(`br_ex_${idx}`).value = 'B';
+            document.getElementById(`br_ex_display_${idx}`).value = 'Brk';
+        }
+        if (isOpen) openBrExDropdown(idx);
+        return;
+    }
+    
+    if (event.key === 'Enter') {
+        event.preventDefault(); event.stopPropagation();
+        closeBrExDropdown(idx);
+        if (event.shiftKey) { moveToPrevField(idx, 'scm_percent'); }
+        else { handleRowComplete(idx); }
+        return;
+    }
+    
+    if (event.key === 'Escape') { event.preventDefault(); closeBrExDropdown(idx); return; }
+    
+    if (event.key.toLowerCase() === 'b') {
+        event.preventDefault();
+        document.getElementById(`br_ex_${idx}`).value = 'B';
+        document.getElementById(`br_ex_display_${idx}`).value = 'Brk';
+        if (isOpen) openBrExDropdown(idx);
+        return;
+    }
+    if (event.key.toLowerCase() === 'e') {
+        event.preventDefault();
+        document.getElementById(`br_ex_${idx}`).value = 'E';
+        document.getElementById(`br_ex_display_${idx}`).value = 'Exp';
+        if (isOpen) openBrExDropdown(idx);
+        return;
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.br-ex-input') && !e.target.closest('.br-ex-dropdown')) {
+        closeAllBrExDropdowns();
+    }
+});
+
+// ============================================
+// Row Selection & Footer
+// ============================================
 function selectRow(idx) {
     document.querySelectorAll('#itemsTableBody tr').forEach(tr => tr.classList.remove('row-selected'));
     const row = document.getElementById(`row_${idx}`);
@@ -583,7 +1062,6 @@ function selectRow(idx) {
 function updateFooterFromRow(row) {
     const getValue = (name) => row.querySelector(`input[name*="[${name}]"]`)?.value || '';
     
-    // Update Gray Section (Section 2)
     const cgst = parseFloat(getValue('cgst')) || 0;
     const sgst = parseFloat(getValue('sgst')) || 0;
     const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
@@ -597,7 +1075,6 @@ function updateFooterFromRow(row) {
     document.getElementById('footer_prate').value = getValue('purchase_rate');
     document.getElementById('footer_srate').value = getValue('sale_rate');
     
-    // Update Purple Section (Section 3)
     document.getElementById('footer_pack').value = getValue('packing');
     document.getElementById('footer_comp').value = getValue('company_name');
     document.getElementById('footer_unit').value = getValue('unit');
@@ -623,6 +1100,9 @@ function updateFooterFromRow(row) {
     document.getElementById('footer_tax_amt').value = taxAmt.toFixed(2);
 }
 
+// ============================================
+// Calculations
+// ============================================
 function calculateRowAmount(idx) {
     const row = document.getElementById(`row_${idx}`);
     if (!row) return;
@@ -633,17 +1113,12 @@ function calculateRowAmount(idx) {
     
     row.querySelector('input[name*="[amount]"]').value = amount.toFixed(2);
     
-    if (selectedRowIndex === idx) {
-        updateFooterFromRow(row);
-    }
+    if (selectedRowIndex === idx) { updateFooterFromRow(row); }
     calculateTotals();
 }
 
 function calculateTotals() {
-    let totalNtAmt = 0;
-    let totalDisAmt = 0;
-    let totalScmAmt = 0;
-    let totalTax = 0;
+    let totalNtAmt = 0, totalDisAmt = 0, totalScmAmt = 0, totalTax = 0;
     
     document.querySelectorAll('#itemsTableBody tr').forEach(row => {
         const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
@@ -676,6 +1151,9 @@ function calculateTotals() {
     document.getElementById('total_inv_amt').value = invAmt.toFixed(2);
 }
 
+// ============================================
+// Row Management
+// ============================================
 function removeRow(idx) {
     document.getElementById(`row_${idx}`)?.remove();
     calculateTotals();
@@ -690,6 +1168,9 @@ function deleteSelectedItem() {
     }
 }
 
+// ============================================
+// Update & Cancel
+// ============================================
 function updateTransaction() {
     if (!currentTransactionId) {
         alert('Please load a dump transaction first');

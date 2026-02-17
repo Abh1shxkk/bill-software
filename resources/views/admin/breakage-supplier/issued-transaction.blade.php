@@ -205,7 +205,7 @@
                             <div class="col-md-4"><div class="field-group"><label>Tax[Y/N]:</label><input type="text" id="tax_flag" name="tax_flag" class="form-control text-center" value="N" maxlength="1" style="width:30px;"><label class="ms-2">Inc.</label><input type="text" id="inc_flag" name="inc_flag" class="form-control text-center" value="N" maxlength="1" style="width:30px;"></div></div>
                         </div>
                         <div class="row g-2 mt-1">
-                            <div class="col-md-3"><div class="field-group"><label>GST Vno.:</label><input type="text" id="gst_vno" name="gst_vno" class="form-control" onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();handleGstVnoEnter();return false;}"></div></div>
+                            <div class="col-md-3"><div class="field-group"><label>GST Vno.:</label><input type="text" id="gst_vno" name="gst_vno" class="form-control" data-custom-enter="true" onkeydown="if(event.key==='Enter'){event.preventDefault();event.stopPropagation();handleGstVnoEnter();return false;}"></div></div>
                             <div class="col-md-2"><div class="field-group"><label>Dis:</label><input type="number" id="dis_count" class="form-control readonly-field text-end" value="0" readonly style="width:45px;"></div></div>
                             <div class="col-md-2"><div class="field-group"><label>Rpl:</label><input type="number" id="rpl_count" class="form-control readonly-field text-end" value="0" readonly style="width:45px;"></div></div>
                             <div class="col-md-2"><div class="field-group"><label>Brk.:</label><input type="number" id="brk_count" class="form-control readonly-field text-end" value="0" readonly style="width:45px;"></div></div>
@@ -658,6 +658,7 @@ function addItemRow(item, batch) {
                    onchange="calculateRowAmount(${idx})"
                    onkeydown="handleGridEnterKey(event, ${idx}, 'dis_percent')"></td>
         <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" 
+                   data-custom-enter="true"
                    onchange="calculateRowAmount(${idx})"
                    onkeydown="handleGridEnterKey(event, ${idx}, 'scm_percent')"></td>
         <td style="position:relative;">
@@ -1638,6 +1639,16 @@ function handleGridEnterKey(event, rowIndex, currentField) {
     // Special handling for item_code - open item modal
     if (currentField === 'item_code') {
         showItemModal();
+        return;
+    }
+    
+    // Special handling for scm_percent - complete row and open item modal for next item
+    if (currentField === 'scm_percent') {
+        calculateRowAmount(rowIndex);
+        calculateTotals();
+        setTimeout(() => {
+            showItemModal();
+        }, 100);
         return;
     }
     
