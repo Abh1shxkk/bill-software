@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Breakage/Expiry to Supplier - Issued Modification')
+@section('disable_select2', '1')
 
 @push('styles')
 <style>
@@ -48,7 +49,8 @@
     .modal-body-custom { padding: 12px; max-height: 400px; overflow-y: auto; }
     .modal-footer-custom { padding: 8px 12px; border-top: 1px solid #ddd; text-align: right; }
     .item-row:hover, .batch-row:hover, .invoice-row:hover { background: #e3f2fd !important; cursor: pointer; }
-    .item-row.selected, .batch-row.selected { background: #007bff !important; color: #fff !important; }
+    .item-row.selected, .batch-row.selected, .invoice-row.selected { background: #007bff !important; color: #fff !important; }
+    .invoice-row.table-active { background: #cce5ff !important; font-weight: bold; }
     
     /* Action Buttons */
     .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
@@ -61,7 +63,7 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h6 class="mb-0"><i class="bi bi-pencil-square me-1"></i> Breakage/Expiry to Supplier - Issued Modification</h6>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-info btn-sm text-white py-0" onclick="showLoadInvoiceModal()"><i class="bi bi-folder-open me-1"></i> Load Invoice</button>
+            <button type="button" class="btn btn-info btn-sm text-white py-0" id="btn_load_invoice" onclick="showLoadInvoiceModal()"><i class="bi bi-folder-open me-1"></i> Load Invoice</button>
             <a href="{{ route('admin.breakage-supplier.issued-index') }}" class="btn btn-outline-secondary btn-sm py-0"><i class="bi bi-list"></i> View All</a>
         </div>
     </div>
@@ -81,8 +83,8 @@
                 <div class="col-md-10">
                     <div class="inner-card">
                         <div class="row g-2">
-                            <div class="col-md-5"><div class="field-group"><label style="width:55px;">Supplier:</label><select id="supplier_id" name="supplier_id" class="form-control" onchange="updateSupplierName()"><option value="">Select Supplier</option>@foreach($suppliers ?? [] as $s)<option value="{{ $s->supplier_id }}" data-name="{{ $s->name }}">{{ $s->name }}</option>@endforeach</select></div></div>
-                            <div class="col-md-3"><div class="field-group"><label>R(epl)/C(redit):</label><select id="note_type" name="note_type" class="form-control" style="width:50px;"><option value="C">C</option><option value="R">R</option></select></div></div>
+                            <div class="col-md-5"><div class="field-group"><label style="width:55px;">Supplier:</label><select id="supplier_id" name="supplier_id" class="form-control no-select2" onchange="updateSupplierName()"><option value="">Select Supplier</option>@foreach($suppliers ?? [] as $s)<option value="{{ $s->supplier_id }}" data-name="{{ $s->name }}">{{ $s->name }}</option>@endforeach</select></div></div>
+                            <div class="col-md-3"><div class="field-group"><label>R(epl)/C(redit):</label><select id="note_type" name="note_type" class="form-control no-select2" style="width:50px;"><option value="C">C</option><option value="R">R</option></select></div></div>
                             <div class="col-md-4"><div class="field-group"><label>Tax[Y/N]:</label><input type="text" id="tax_flag" name="tax_flag" class="form-control text-center" value="N" maxlength="1" style="width:30px;"><label class="ms-2">Inc.</label><input type="text" id="inc_flag" name="inc_flag" class="form-control text-center" value="N" maxlength="1" style="width:30px;"></div></div>
                         </div>
                         <div class="row g-2 mt-1">
@@ -285,11 +287,174 @@ let rowIndex = 0, allItems = [], selectedRowIndex = null, selectedItem = null, c
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
+    
+    
+    // Auto-focus the date field on page load (AFTER all initializations)
+    setTimeout(function() {
+        const dateField = document.getElementById('transaction_date');
+        if (dateField) dateField.focus();
+    }, 1200);
+    
     document.addEventListener('keydown', function(e) {
         if (e.key === 'F2') { e.preventDefault(); showItemModal(); }
-        if (e.key === 'Escape') { closeItemModal(); closeBatchModal(); closeInvoiceModal(); }
+        if (e.key === 'Escape') { _legacy_closeItemModal(); _legacy_closeBatchModal(); closeInvoiceModal(); }
     });
+    
+    // ==========================================
+    // LOAD INVOICE MODAL KEYBOARD NAVIGATION
+    // Arrow Up/Down, Enter selection, Esc close, highlight
+    // ==========================================
+    let invoiceSelectedIndex = -1;
+    
+    // Expose setter for loadInvoices callback
+    window.setInvoiceHighlight = function(idx) {
+        invoiceSelectedIndex = idx;
+    };
+    window.highlightInvoiceRow = function(rows) {
+        // Remove all highlights
+        rows.forEach(function(row) {
+            row.style.backgroundColor = '';
+            row.style.fontWeight = '';
+            row.classList.remove('table-active');
+        });
+        // Add highlight to selected row
+        if (invoiceSelectedIndex >= 0 && invoiceSelectedIndex < rows.length) {
+            rows[invoiceSelectedIndex].style.backgroundColor = '#cce5ff';
+            rows[invoiceSelectedIndex].style.fontWeight = 'bold';
+            rows[invoiceSelectedIndex].classList.add('table-active');
+            rows[invoiceSelectedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    };
+    
+    // Capture-phase keydown for invoice modal navigation
+    document.addEventListener('keydown', function(e) {
+        const invoiceModal = document.getElementById('invoiceModal');
+        if (!invoiceModal || !invoiceModal.classList.contains('show')) return;
+        
+        const tbody = document.getElementById('invoicesListBody');
+        const rows = Array.from(tbody.querySelectorAll('tr.invoice-row'));
+        
+        // Arrow Down → next row
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Blur search input so arrows don't move text cursor
+            const searchInput = document.getElementById('invoiceSearchInput');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            
+            if (!rows.length) return;
+            
+            if (invoiceSelectedIndex < rows.length - 1) {
+                invoiceSelectedIndex++;
+            } else if (invoiceSelectedIndex === -1) {
+                invoiceSelectedIndex = 0; // Auto-select first row
+            }
+            window.highlightInvoiceRow(rows);
+            return;
+        }
+        
+        // Arrow Up → previous row or back to search
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (!rows.length) return;
+            
+            if (invoiceSelectedIndex > 0) {
+                invoiceSelectedIndex--;
+                window.highlightInvoiceRow(rows);
+            } else if (invoiceSelectedIndex === 0) {
+                // On first row → move focus back to search input
+                invoiceSelectedIndex = -1;
+                window.highlightInvoiceRow(rows); // Remove all highlights
+                const searchInput = document.getElementById('invoiceSearchInput');
+                if (searchInput) searchInput.focus();
+            } else if (invoiceSelectedIndex === -1 && rows.length > 0) {
+                invoiceSelectedIndex = 0; // Auto-select first row
+                window.highlightInvoiceRow(rows);
+            }
+            return;
+        }
+        
+        // Enter → select highlighted row and load invoice
+        if (e.key === 'Enter') {
+            // If search input is focused and no row selected, let Enter re-filter
+            const searchInput = document.getElementById('invoiceSearchInput');
+            if (document.activeElement === searchInput && invoiceSelectedIndex === -1) {
+                return; // Let search work normally
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (!rows.length) return;
+            
+            // If no row selected yet, select first one
+            if (invoiceSelectedIndex === -1 && rows.length > 0) {
+                invoiceSelectedIndex = 0;
+                window.highlightInvoiceRow(rows);
+                return;
+            }
+            
+            // Load the selected invoice
+            if (invoiceSelectedIndex >= 0 && invoiceSelectedIndex < rows.length) {
+                rows[invoiceSelectedIndex].click();
+            }
+            return;
+        }
+        
+        // Escape → close modal
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeInvoiceModal();
+            return;
+        }
+        
+        // Any letter/number key → refocus search input for typing
+        if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+            const searchInput = document.getElementById('invoiceSearchInput');
+            if (searchInput && document.activeElement !== searchInput) {
+                searchInput.focus();
+                // Reset row selection when user starts typing
+                invoiceSelectedIndex = -1;
+                window.highlightInvoiceRow(rows);
+            }
+        }
+    }, true); // Capture phase to beat other handlers
+    
+    // Reset invoice selection when modal opens/closes via MutationObserver
+    const invoiceModalEl = document.getElementById('invoiceModal');
+    if (invoiceModalEl) {
+        const invoiceObserver = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (invoiceModalEl.classList.contains('show')) {
+                        // Modal opened - reset selection and focus search
+                        invoiceSelectedIndex = -1;
+                        setTimeout(function() {
+                            const searchInput = document.getElementById('invoiceSearchInput');
+                            if (searchInput) searchInput.focus();
+                        }, 150);
+                    } else {
+                        // Modal closed - reset selection
+                        invoiceSelectedIndex = -1;
+                    }
+                }
+            });
+        });
+        invoiceObserver.observe(invoiceModalEl, { attributes: true, attributeFilter: ['class'] });
+    }
 });
+
+
 
 function updateDayName() {
     const d = new Date(document.getElementById('transaction_date').value);
@@ -313,6 +478,10 @@ function showLoadInvoiceModal() {
     document.getElementById('invoiceModalBackdrop').classList.add('show');
     document.getElementById('invoiceModal').classList.add('show');
     document.getElementById('invoiceSearchInput').value = '';
+    if (typeof window.setInvoiceHighlight === 'function') {
+        window.setInvoiceHighlight(-1); // Reset highlight
+    }
+    setTimeout(() => document.getElementById('invoiceSearchInput').focus(), 100);
     loadInvoices();
 }
 
@@ -338,6 +507,18 @@ function loadInvoices(search = '') {
                     <td class="text-end">${parseFloat(inv.total_inv_amt || 0).toFixed(2)}</td>
                 </tr>
             `).join('');
+
+            // Reset highlight and refocus search after invoices load
+            if (typeof window.setInvoiceHighlight === 'function') {
+                window.setInvoiceHighlight(-1); // Start with no selection
+                setTimeout(() => {
+                    const allRows = document.querySelectorAll('#invoicesListBody .invoice-row');
+                    window.highlightInvoiceRow(Array.from(allRows));
+                    document.getElementById('invoiceSearchInput').focus();
+                }, 50);
+            } else {
+                setTimeout(() => document.getElementById('invoiceSearchInput').focus(), 50);
+            }
         })
         .catch(() => {
             document.getElementById('invoicesListBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger py-3">Error loading invoices</td></tr>';
@@ -402,6 +583,19 @@ function populateForm(data) {
     calculateTotals();
     document.getElementById('updateBtn').disabled = false;
     console.log('Form populated successfully');
+
+    // Auto-focus Qty field of first row after invoice load
+    setTimeout(() => {
+        const firstRow = document.querySelector('#itemsTableBody tr');
+        if (firstRow) {
+            const qtyInput = firstRow.querySelector('input[name*="[qty]"]');
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+                console.log('Auto-focused Qty field of first row');
+            }
+        }
+    }, 200);
 }
 
 function addItemRowFromData(item) {
@@ -443,7 +637,7 @@ function addItemRowFromData(item) {
         <td><input type="number" name="items[${idx}][rate]" value="${parseFloat(item.rate || 0).toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][dis_percent]" value="${item.dis_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][scm_percent]" value="${item.scm_percent || 0}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B" ${brExValue === 'B' ? 'selected' : ''}>Brk</option><option value="E" ${brExValue === 'E' ? 'selected' : ''}>Exp</option></select></td>
+        <td><select name="items[${idx}][br_ex]" class="form-control br-ex-select no-select2" id="br_ex_${idx}"><option value="B" ${brExValue === 'B' ? 'selected' : ''}>Brk</option><option value="E" ${brExValue === 'E' ? 'selected' : ''}>Exp</option></select></td>
         <td><input type="number" name="items[${idx}][amount]" value="${parseFloat(item.amount || 0).toFixed(2)}" step="0.01" class="text-end readonly-field" readonly></td>
         <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
         <input type="hidden" name="items[${idx}][id]" value="${item.id || ''}">
@@ -460,6 +654,7 @@ function addItemRowFromData(item) {
         <input type="hidden" name="items[${idx}][hsn_code]" value="${hsnValue}">
     `;
     tbody.appendChild(tr);
+    
     
     // Select this row to update footer
     selectRow(idx);
@@ -617,7 +812,7 @@ function addItemRow(item, batch) {
         <td><input type="number" name="items[${idx}][rate]" value="${rate.toFixed(2)}" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][dis_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
         <td><input type="number" name="items[${idx}][scm_percent]" value="0" step="0.01" class="text-end" onchange="calculateRowAmount(${idx})"></td>
-        <td><select name="items[${idx}][br_ex]" class="form-control"><option value="B">Brk</option><option value="E">Exp</option></select></td>
+        <td><select name="items[${idx}][br_ex]" class="form-control br-ex-select no-select2" id="br_ex_${idx}"><option value="B">Brk</option><option value="E">Exp</option></select></td>
         <td><input type="number" name="items[${idx}][amount]" value="0" step="0.01" class="text-end readonly-field" readonly></td>
         <td><button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow(${idx})">&times;</button></td>
         <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
@@ -633,8 +828,19 @@ function addItemRow(item, batch) {
         <input type="hidden" name="items[${idx}][hsn_code]" value="${item.hsn_code || ''}">
     `;
     tbody.appendChild(tr);
+    
+
     selectRow(idx);
     calculateTotals();
+    
+    // Focus Qty field
+    setTimeout(() => {
+        const qtyInput = tr.querySelector(`input[name="items[${idx}][qty]"]`);
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+    }, 100);
 }
 
 function selectRow(idx) {
@@ -797,6 +1003,445 @@ function calculateRowAmount(idx) {
     }
 }
 
+// ============================================
+// KEYBOARD NAVIGATION SYSTEM
+// ============================================
+(function() {
+    'use strict';
+
+    // -----------------------------------------------
+    // Explicit header-field navigation order.
+    // Enter key walks through these, then opens the Item Modal.
+    // -----------------------------------------------
+    const HEADER_FIELD_ORDER = [
+        'transaction_date',   // input[type="date"]
+        'supplier_id',        // select (native)
+        'note_type',          // select (native)
+        'tax_flag',           // input[text]
+        'inc_flag',           // input[text]
+        'gst_vno'             // input[text]  → after this, Enter opens item modal
+    ];
+
+    // -----------------------------------------------
+    // Focus a field by ID (native selects)
+    // -----------------------------------------------
+    function focusField(id) {
+        const el = document.getElementById(id);
+        if (!el) return false;
+
+        el.focus();
+        if (el.tagName === 'SELECT') {
+            try { el.showPicker(); } catch(e) { /* browser doesn't support showPicker */ }
+        } else if (el.tagName === 'INPUT' && el.type !== 'checkbox' && el.type !== 'radio') {
+            el.select();
+        }
+        return true;
+    }
+
+    // -----------------------------------------------
+    // Table helpers
+    // -----------------------------------------------
+    function isInItemsTable(el) {
+        return el && el.closest('#itemsTableBody') !== null;
+    }
+
+    function getTableCellInfo(el) {
+        const td = el.closest('td');
+        const tr = el.closest('tr');
+        if (!td || !tr) return null;
+        const tbody = tr.closest('tbody');
+        if (!tbody) return null;
+        const cells = Array.from(tr.querySelectorAll('td'));
+        const rows  = Array.from(tbody.querySelectorAll('tr'));
+        return {
+            col: cells.indexOf(td),
+            row: rows.indexOf(tr),
+            totalCols: cells.length,
+            totalRows: rows.length
+        };
+    }
+
+    function focusCell(rowIdx, colIdx) {
+        const tbody = document.getElementById('itemsTableBody');
+        if (!tbody) return false;
+        const rows = tbody.querySelectorAll('tr');
+        if (rowIdx < 0 || rowIdx >= rows.length) return false;
+        const cells = rows[rowIdx].querySelectorAll('td');
+        if (colIdx < 0 || colIdx >= cells.length) return false;
+        const input = cells[colIdx].querySelector(
+            'input:not([readonly]):not([disabled]):not(.readonly-field), select:not([disabled])'
+        );
+        if (!input) return false;
+
+        input.focus();
+        if (input.tagName === 'SELECT') {
+            try { input.showPicker(); } catch(e) { /* browser doesn't support showPicker */ }
+        } else if (typeof input.select === 'function' && input.tagName === 'INPUT') {
+            input.select();
+        }
+        document.querySelectorAll('#itemsTableBody tr').forEach(r => r.classList.remove('row-selected'));
+        rows[rowIdx].classList.add('row-selected');
+        return true;
+    }
+
+    function focusNextEditableCell(rowIdx, startCol, totalCols) {
+        for (let c = startCol; c < totalCols; c++) {
+            if (focusCell(rowIdx, c)) return true;
+        }
+        return false;
+    }
+
+    // -----------------------------------------------
+    // Helper: resolve active element ID
+    // -----------------------------------------------
+    function resolveActiveElement(active) {
+        if (active.id && HEADER_FIELD_ORDER.includes(active.id)) {
+            return active.id;
+        }
+        return active.id;
+    }
+
+    // -----------------------------------------------
+    // ENTER key handler
+    // -----------------------------------------------
+    function handleEnter(e) {
+        let active = document.activeElement;
+        
+        // Debugging
+        console.log('Enter pressed on:', active.tagName, active.id, active.className);
+        
+        if (active.tagName === 'BUTTON' || active.tagName === 'TEXTAREA') return;
+
+
+        const direction = e.shiftKey ? -1 : 1;
+        
+        // DIRECT & EXPLICIT HANDLERS FOR CRITICAL HEADER FIELDS
+        // We handle these first to ensure no logic skips them
+        if (active.id === 'tax_flag' && direction === 1) {
+            console.log('Direct handler: Tax -> Inc');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const inc = document.getElementById('inc_flag');
+            if (inc) {
+                inc.focus();
+                setTimeout(() => inc.select(), 10);
+            }
+            return;
+        }
+
+        if (active.id === 'inc_flag' && direction === 1) {
+            console.log('Direct handler: Inc -> GST');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const gst = document.getElementById('gst_vno');
+            if (gst) {
+                gst.focus();
+                setTimeout(() => gst.select(), 10);
+            }
+            return;
+        }
+
+        // REVERSE NAVIGATION (Shift+Enter)
+        if (active.id === 'gst_vno' && direction === -1) {
+            console.log('Direct handler: GST -> Inc (Reverse)');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const inc = document.getElementById('inc_flag');
+            if (inc) {
+                inc.focus();
+                setTimeout(() => inc.select(), 10);
+            }
+            return;
+        }
+
+        if (active.id === 'inc_flag' && direction === -1) {
+            console.log('Direct handler: Inc -> Tax (Reverse)');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const tax = document.getElementById('tax_flag');
+            if (tax) {
+                tax.focus();
+                setTimeout(() => tax.select(), 10);
+            }
+            return;
+        }
+        
+        if (active.id === 'gst_vno' && direction === 1) {
+            console.log('Direct handler: GST -> Load Invoice Button');
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const invBtn = document.getElementById('btn_load_invoice');
+            if (invBtn) {
+                invBtn.focus();
+                // Trigger click after a very short delay to ensure focus is registered
+                setTimeout(() => invBtn.click(), 50);
+            }
+            return;
+        }
+
+        // Standard logic for other fields
+        const currentId = resolveActiveElement(active);
+        const headerIdx = HEADER_FIELD_ORDER.indexOf(currentId);
+
+        if (headerIdx !== -1) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            const nextIdx = headerIdx + direction;
+
+            if (nextIdx < 0) return;
+
+            if (nextIdx >= HEADER_FIELD_ORDER.length) {
+                showItemModal();
+                return;
+            }
+
+            focusField(HEADER_FIELD_ORDER[nextIdx]);
+            return;
+        }
+
+        // ----- Items table navigation -----
+        if (isInItemsTable(active)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const info = getTableCellInfo(active);
+            if (!info) return;
+
+            if (direction === 1) {
+                if (focusNextEditableCell(info.row, info.col + 1, info.totalCols)) return;
+                if (info.row < info.totalRows - 1) {
+                    if (focusNextEditableCell(info.row + 1, 0, info.totalCols)) return;
+                }
+                showItemModal();
+            } else {
+                for (let c = info.col - 1; c >= 0; c--) {
+                    if (focusCell(info.row, c)) return;
+                }
+                if (info.row > 0) {
+                     for (let c = info.totalCols - 1; c >= 0; c--) {
+                        if (focusCell(info.row - 1, c)) return;
+                    }
+                }
+                focusField(HEADER_FIELD_ORDER[HEADER_FIELD_ORDER.length - 1]);
+            }
+            return;
+        }
+    }
+
+
+    // -----------------------------------------------
+    // ARROW key handler (table only)
+    // -----------------------------------------------
+    function handleArrows(e) {
+        const active = document.activeElement;
+        if (!isInItemsTable(active)) return;
+        
+        const info = getTableCellInfo(active);
+        if (!info) return;
+
+        let handled = false;
+        switch (e.key) {
+            case 'ArrowDown':
+                if (info.row < info.totalRows - 1) handled = focusCell(info.row + 1, info.col);
+                break;
+            case 'ArrowUp':
+                if (info.row > 0) handled = focusCell(info.row - 1, info.col);
+                break;
+            case 'ArrowRight':
+                if (active.tagName === 'INPUT' && active.selectionStart === active.value.length) {
+                    for (let c = info.col + 1; c < info.totalCols; c++) {
+                        if (focusCell(info.row, c)) { handled = true; break; }
+                    }
+                }
+                break;
+            case 'ArrowLeft':
+                if (active.tagName === 'INPUT' && active.selectionStart === 0) {
+                    for (let c = info.col - 1; c >= 0; c--) {
+                        if (focusCell(info.row, c)) { handled = true; break; }
+                    }
+                }
+                break;
+        }
+        
+        if (handled) {
+            e.preventDefault();
+            console.log('Table navigation handled:', e.key, 'Row:', info.row, 'Col:', info.col);
+        }
+    }
+
+    // -----------------------------------------------
+    // Modal keyboard navigation (Item & Batch only)
+    // Invoice modal is handled by the DOMContentLoaded capture-phase handler
+    // -----------------------------------------------
+    let itemHighlight = -1;
+    let batchHighlight = -1;
+
+    function handleItemModalKeys(e) {
+        const rows = document.querySelectorAll('#itemsListBody .item-row');
+        if (!rows.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            itemHighlight = (itemHighlight + 1) % rows.length;
+            rows.forEach(r => r.classList.remove('selected'));
+            rows[itemHighlight].classList.add('selected');
+            rows[itemHighlight].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            itemHighlight = itemHighlight <= 0 ? rows.length - 1 : itemHighlight - 1;
+            rows.forEach(r => r.classList.remove('selected'));
+            rows[itemHighlight].classList.add('selected');
+            rows[itemHighlight].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (document.activeElement.id === 'itemSearchInput') {
+                const highlighted = document.querySelector('#itemsListBody .item-row.selected');
+                if (highlighted) highlighted.click();
+                else if (rows[0]) rows[0].click();
+            } else if (itemHighlight >= 0 && itemHighlight < rows.length) {
+                rows[itemHighlight].click();
+            }
+        }
+    }
+
+    function handleBatchModalKeys(e) {
+        const rows = document.querySelectorAll('#batchesListBody .batch-row');
+        if (!rows.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            batchHighlight = (batchHighlight + 1) % rows.length;
+            rows.forEach(r => r.classList.remove('selected'));
+            rows[batchHighlight].classList.add('selected');
+            rows[batchHighlight].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            batchHighlight = batchHighlight <= 0 ? rows.length - 1 : batchHighlight - 1;
+            rows.forEach(r => r.classList.remove('selected'));
+            rows[batchHighlight].classList.add('selected');
+            rows[batchHighlight].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (batchHighlight >= 0 && batchHighlight < rows.length) {
+                rows[batchHighlight].click();
+            } else if (rows[0]) {
+                rows[0].click();
+            }
+        }
+    }
+    
+    // -----------------------------------------------
+    // GLOBAL TRACKERS
+    // -----------------------------------------------
+    let isShiftHeld = false;
+    document.addEventListener('keydown', e => { if (e.key === 'Shift') isShiftHeld = true; });
+    document.addEventListener('keyup', e => { if (e.key === 'Shift') isShiftHeld = false; });
+
+    // -----------------------------------------------
+    // MAIN KEYDOWN LISTENER (capture phase)
+    // -----------------------------------------------
+    document.addEventListener('keydown', function(e) {
+        // --- TOP PRIORITY: Ctrl+S → Save/Update Transaction ---
+        if (e.key === 's' && e.ctrlKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (typeof updateTransaction === 'function') {
+                updateTransaction();
+            }
+            return;
+        }
+
+        // --- PRIORITY 1: Modal handling (highest priority) ---
+        const itemModal    = document.getElementById('itemModal');
+        const batchModal   = document.getElementById('batchModal');
+        const invoiceModal = document.getElementById('invoiceModal');
+
+        // Invoice modal keyboard navigation is handled by the
+        // DOMContentLoaded capture-phase handler — skip here entirely
+        if (invoiceModal && invoiceModal.classList.contains('show')) {
+            return;
+        }
+
+        if (itemModal && itemModal.classList.contains('show')) {
+            handleItemModalKeys(e);
+            if (e.key === 'Escape') { e.preventDefault(); _legacy_closeItemModal(); itemHighlight = -1; }
+            return;
+        }
+        if (batchModal && batchModal.classList.contains('show')) {
+            handleBatchModalKeys(e);
+            if (e.key === 'Escape') { e.preventDefault(); _legacy_closeBatchModal(); batchHighlight = -1; }
+            return;
+        }
+
+        // --- PRIORITY 2: Main form handling ---
+        switch (e.key) {
+            case 'Enter':
+                handleEnter(e);
+                break;
+            case 'ArrowDown':
+            case 'ArrowUp':
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                handleArrows(e);
+                break;
+            case 'F2':
+                e.preventDefault();
+                showItemModal();
+                break;
+        }
+    }, true);
+
+    // Visual focus styles
+    const style = document.createElement('style');
+    style.textContent = `
+        .bsi-form input:focus, .bsi-form select:focus {
+            outline: 2px solid #0d6efd !important;
+            outline-offset: 1px;
+            box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        }
+        #itemsTableBody tr:focus-within td { background: #e7f3ff !important; }
+        #itemsListBody .item-row.selected,
+        #batchesListBody .batch-row.selected {
+            background: #007bff !important;
+            color: #fff !important;
+        }
+    `;
+    document.head.appendChild(style);
+
+})();
+
+
+function updateDayName() {
+    const dateInput = document.getElementById('transaction_date');
+    const dayInput = document.getElementById('day_name');
+    if (!dateInput || !dayInput) return;
+    const dateVal = dateInput.value;
+    if (dateVal) {
+        const date = new Date(dateVal);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        if (!isNaN(date.getDay())) {
+            dayInput.value = days[date.getDay()];
+        } else {
+            dayInput.value = '';
+        }
+    } else {
+        dayInput.value = '';
+    }
+}
+
+function updateSupplierName() {
+    const supplierSelect = document.getElementById('supplier_id');
+    const supplierNameInput = document.getElementById('supplier_name');
+    if (!supplierSelect || !supplierNameInput) return;
+    const selectedOption = supplierSelect.options[supplierSelect.selectedIndex];
+    if (selectedOption) {
+        supplierNameInput.value = selectedOption.text;
+    } else {
+        supplierNameInput.value = '';
+    }
+}
+
 function updateTransaction() {
     const transactionId = document.getElementById('transaction_id').value;
     if (!transactionId) { alert('No transaction loaded'); return; }
@@ -808,27 +1453,44 @@ function updateTransaction() {
     if (!rows.length) { alert('Please add at least one item'); return; }
     
     const formData = new FormData(document.getElementById('bsiForm'));
+    formData.append('_method', 'PUT');
+    
+    // Log form data for debugging
+    console.log('Update Request Payload:');
+    for (var pair of formData.entries()) {
+        console.log(pair[0] + ', ' + pair[1]);
+    }
     
     fetch(`{{ url('admin/breakage-supplier/issued') }}/${transactionId}`, {
         method: 'POST',
         body: formData,
         headers: { 
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'X-HTTP-Method-Override': 'PUT'
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
         }
     })
-    .then(r => r.json())
+    .then(r => {
+        if (!r.ok) {
+            return r.text().then(text => {
+                console.error('Server error response:', r.status, text);
+                throw new Error('Server error ' + r.status + ': ' + text.substring(0, 200));
+            });
+        }
+        return r.json();
+    })
     .then(data => {
         if (data.success) {
-            alert('Transaction updated successfully!');
+            if (typeof resetFormDirty === 'function') resetFormDirty();
+            // Show debug info in alert to verify what server received
+            const serverDate = data.debug_payload ? data.debug_payload.transaction_date : 'N/A';
+            alert('Transaction updated successfully!\nServer received date: ' + serverDate);
             window.location.href = '{{ route("admin.breakage-supplier.issued-index") }}';
         } else {
             alert(data.message || 'Error updating transaction');
         }
     })
     .catch(e => {
-        console.error('Error:', e);
-        alert('Error updating transaction');
+        console.error('Update error:', e);
+        alert('Error updating transaction: ' + e.message);
     });
 }
 
@@ -838,4 +1500,3 @@ function cancelModification() {
     }
 }
 </script>
-@endpush
