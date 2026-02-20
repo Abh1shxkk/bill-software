@@ -135,6 +135,14 @@
         background-color: #e9ecef !important;
         cursor: not-allowed;
     }
+
+    /* Keyboard focus visibility (blue border) */
+    .kb-focus-active {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 1px !important;
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+    }
     
     /* Row selection highlight */
     .row-selected {
@@ -440,6 +448,13 @@
         opacity: 1;
     }
 
+    /* Keyboard highlight for modal action buttons */
+    .kbd-highlight {
+        outline: 3px solid #0d6efd !important;
+        outline-offset: 2px !important;
+        box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.3) !important;
+    }
+
     /* Toast Notification Styles */
     .toast-container {
         position: fixed;
@@ -468,6 +483,12 @@
         background: #ffc107;
         color: #212529;
         border-left-color: #e0a800;
+    }
+    
+    .toast-notification.success {
+        background: #28a745;
+        color: white;
+        border-left-color: #1e7e34;
     }
     
     .toast-notification.show {
@@ -554,8 +575,8 @@
                     <div class="header-section mb-2" style="background: #fff3cd; border-color: #ffc107;">
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0 fw-bold">Challan No. :</label>
-                            <input type="text" class="form-control" id="searchChallanNo" placeholder="Enter Challan No." style="width: 150px;" onkeypress="if(event.key==='Enter'){handleInsertOrders(); return false;}">
-                            <button type="button" class="btn btn-sm btn-info" onclick="handleInsertOrders()">
+                            <input type="text" class="form-control" id="searchChallanNo" placeholder="Enter Challan No." style="width: 150px;" onkeydown="return handleChallanNoEnter(event);">
+                            <button type="button" class="btn btn-sm btn-info" id="insertOrdersBtn" onclick="handleInsertOrders()" onkeydown="return handleInsertOrdersButtonEnter(event);">
                                 <i class="bi bi-list-check"></i> Insert Orders
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearForm()">
@@ -956,7 +977,7 @@
             </div>
         </div>
         <div class="pending-orders-footer" style="padding: 10px 15px; text-align: right; background: #f8f9fa;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeMrpDetailsModal()" style="margin-right: 10px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="mrpCancelBtn" onclick="closeMrpDetailsModal()" style="margin-right: 10px;">
                 <i class="bi bi-x-circle"></i> Cancel
             </button>
             <button type="button" class="btn btn-primary btn-sm" id="saveMrpDetailsBtn">
@@ -1055,6 +1076,100 @@
 let currentSelectedRow = null;
 let selectedModalChallanId = null;
 let selectedModalChallanNo = null;
+let mrpFocusMode = 'fields'; // 'fields' | 'actions'
+let mrpActionIndex = 0; // 0 = Cancel, 1 = Save
+
+// Callback when item + batch are selected from reusable shared modal component
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('[KB-PC-MOD] Item selected from reusable modal:', item);
+    console.log('[KB-PC-MOD] Batch selected from reusable modal:', batch);
+
+    const tbody = document.getElementById('itemsTableBody');
+    if (!tbody) return;
+
+    let rowIndex = Number.isInteger(insertRowIndex) ? insertRowIndex : -1;
+    let rows = tbody.querySelectorAll('tr');
+    if (rowIndex < 0 || rowIndex >= rows.length) {
+        if (typeof addNewRow === 'function') {
+            const idx = addNewRow();
+            rowIndex = Number.isInteger(idx) ? idx : (tbody.querySelectorAll('tr').length - 1);
+            rows = tbody.querySelectorAll('tr');
+        } else {
+            return;
+        }
+    }
+
+    const row = rows[rowIndex];
+    if (!row) return;
+
+    const itemCode = item.code || item.bar_code || item.id || '';
+    const itemName = item.name || '';
+    const batchNo = batch.batch_no || batch.batch || '';
+    const purRate = parseFloat(batch.p_rate || batch.pur_rate || batch.purchase_rate || item.pur_rate || 0);
+    const ftRate = parseFloat(batch.mrp || batch.ft_rate || item.mrp || purRate || 0);
+
+    let expDisplay = '';
+    const rawExp = batch.expiry_date || batch.exp || batch.expiry || '';
+    if (rawExp) {
+        const d = new Date(rawExp);
+        if (!isNaN(d.getTime())) {
+            expDisplay = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getFullYear()).slice(-2)}`;
+        } else {
+            expDisplay = String(rawExp);
+        }
+    }
+
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    const nameInput = row.querySelector('input[name*="[name]"]');
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expInput = row.querySelector('input[name*="[exp]"]');
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    const fQtyInput = row.querySelector('input[name*="[free_qty]"]');
+    const purRateInput = row.querySelector('input[name*="[pur_rate]"]');
+    const disInput = row.querySelector('input[name*="[dis_percent]"]');
+    const ftRateInput = row.querySelector('input[name*="[ft_rate]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+
+    if (codeInput) codeInput.value = itemCode;
+    if (nameInput) nameInput.value = itemName;
+    if (batchInput) batchInput.value = batchNo;
+    if (expInput) expInput.value = expDisplay;
+    if (qtyInput && (qtyInput.value === '' || qtyInput.value === '0')) qtyInput.value = '0';
+    if (fQtyInput && fQtyInput.value === '') fQtyInput.value = '0';
+    if (purRateInput) purRateInput.value = purRate.toFixed(2);
+    if (disInput && disInput.value === '') disInput.value = '0';
+    if (ftRateInput) ftRateInput.value = ftRate.toFixed(2);
+    if (mrpInput && (!mrpInput.value || mrpInput.value === '0' || mrpInput.value === '0.00')) {
+        mrpInput.value = ftRate.toFixed(2);
+    }
+
+    row.setAttribute('data-item-id', item.id || '');
+    row.setAttribute('data-batch-id', batch.id || '');
+    row.setAttribute('data-hsn-code', item.hsn_code || '');
+    row.setAttribute('data-cgst', item.cgst_percent || 0);
+    row.setAttribute('data-sgst', item.sgst_percent || 0);
+
+    if (!rowGstData[rowIndex]) rowGstData[rowIndex] = {};
+    rowGstData[rowIndex].s_rate = parseFloat(item.s_rate || 0);
+    rowGstData[rowIndex].ws_rate = parseFloat(item.ws_rate || 0);
+    rowGstData[rowIndex].spl_rate = parseFloat(item.spl_rate || 0);
+    rowGstData[rowIndex].mrp = ftRate;
+
+    if (typeof fetchItemDetailsForCalculation === 'function' && itemCode) {
+        fetchItemDetailsForCalculation(itemCode, rowIndex);
+    }
+
+    insertRowIndex = null;
+    currentActiveRow = rowIndex;
+    isRowSelected = false;
+
+    setTimeout(() => {
+        if (batchInput) {
+            batchInput.focus();
+            if (typeof batchInput.select === 'function') batchInput.select();
+        }
+    }, 80);
+};
 
 // Update day name when date changes
 function updateDayName() {
@@ -1067,68 +1182,93 @@ function updateDayName() {
     }
 }
 
-// S.Rate Enter key navigation to next row
-document.addEventListener('DOMContentLoaded', function() {
+// S.Rate Enter key navigation - add new row and focus code field
+function initCalcSRateAndSaveHotkeys() {
+    if (window.__pcModCalcSRateHotkeysBound) return;
+    window.__pcModCalcSRateHotkeysBound = true;
+
     const sRateField = document.getElementById('calc_s_rate');
     if (sRateField) {
         // Save s_rate when user changes it (input/change event)
         sRateField.addEventListener('input', function(e) {
             if (currentActiveRow !== null && currentActiveRow !== undefined) {
                 const sRateValue = parseFloat(e.target.value) || 0;
-                // Initialize rowGstData if it doesn't exist
                 if (!rowGstData[currentActiveRow]) {
                     rowGstData[currentActiveRow] = {};
                 }
-                // Save s_rate for this row
                 rowGstData[currentActiveRow].s_rate = sRateValue;
                 console.log(`S.Rate saved for row ${currentActiveRow}:`, sRateValue);
             }
         });
-        
+
         sRateField.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                console.log('S.Rate Enter pressed');
-                console.log('currentActiveRow:', currentActiveRow);
-                console.log('isRowSelected before:', isRowSelected);
-                
-                // Save s_rate before calculating GST
-                if (currentActiveRow !== null && currentActiveRow !== undefined) {
-                    const sRateValue = parseFloat(e.target.value) || 0;
-                    if (!rowGstData[currentActiveRow]) {
-                        rowGstData[currentActiveRow] = {};
-                    }
-                    rowGstData[currentActiveRow].s_rate = sRateValue;
-                }
-                
-                // Calculate and save GST amounts for current row before moving
-                calculateAndSaveGstForRow(currentActiveRow);
-                
-                // Small delay to ensure calculation is saved
-                setTimeout(() => {
-                    // Select next row (full row selection with blue highlight)
-                    const rows = document.querySelectorAll('#itemsTableBody tr');
-                    const nextRowIndex = currentActiveRow + 1;
-                    console.log('nextRowIndex:', nextRowIndex, 'Total rows:', rows.length);
-                    
-                    if (nextRowIndex < rows.length) {
-                        // Prevent default behavior completely
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        // Select next row with full row highlight (blue background)
-                        selectRow(nextRowIndex);
-                        
-                        console.log('After moving to next row - currentActiveRow:', currentActiveRow);
-                        console.log('isRowSelected:', isRowSelected);
-                    } else {
-                        console.log('No more rows available');
-                    }
-                }, 100);
+            if (e.key !== 'Enter') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
             }
+
+            console.log('S.Rate Enter pressed - will add new row');
+            console.log('currentActiveRow:', currentActiveRow);
+
+            if (currentActiveRow !== null && currentActiveRow !== undefined) {
+                const sRateValue = parseFloat(e.target.value) || 0;
+                if (!rowGstData[currentActiveRow]) {
+                    rowGstData[currentActiveRow] = {};
+                }
+                rowGstData[currentActiveRow].s_rate = sRateValue;
+            }
+
+            // Save totals for current row before moving to next row
+            calculateAndSaveGstForRow(currentActiveRow);
+
+            setTimeout(() => {
+                addNewRow();
+
+                const tbody = document.getElementById('itemsTableBody');
+                if (!tbody) return;
+                const rows = tbody.querySelectorAll('tr');
+                const newRowIndex = rows.length - 1;
+                const newRow = rows[newRowIndex];
+                const codeInput = newRow ? newRow.querySelector('input[name*="[code]"]') : null;
+
+                if (codeInput) {
+                    currentActiveRow = newRowIndex;
+                    isRowSelected = false;
+                    codeInput.focus();
+                    if (typeof codeInput.select === 'function') {
+                        codeInput.select();
+                    }
+                    console.log(`New row ${newRowIndex} added, focused on code field`);
+                }
+            }, 80);
         });
     }
-});
+
+    // Ctrl+S to save/update purchase challan
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Ctrl+S pressed - saving purchase challan');
+
+            const challanId = document.getElementById('challanId').value;
+            if (challanId) {
+                updatePurchaseChallan();
+            } else {
+                showAlert('No challan loaded to update. Please load a challan first.', 'warning');
+            }
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCalcSRateAndSaveHotkeys);
+} else {
+    initCalcSRateAndSaveHotkeys();
+}
 
 // Setup on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -1771,9 +1911,17 @@ function openMrpDetailsModal() {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
-        // Focus on MRP input
-        document.getElementById('mrp_value').focus();
-        document.getElementById('mrp_value').select();
+        // Focus on Case input first (same as transaction blade)
+        const caseInput = document.getElementById('mrp_case');
+        if (caseInput) {
+            caseInput.focus();
+            caseInput.select();
+        }
+        mrpFocusMode = 'fields';
+        mrpActionIndex = 0;
+        const cancelBtn = document.getElementById('mrpCancelBtn');
+        const saveBtn = document.getElementById('saveMrpDetailsBtn');
+        [cancelBtn, saveBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
     }, 10);
 }
 
@@ -1909,6 +2057,121 @@ if (saveMrpBtn) saveMrpBtn.addEventListener('click', function() {
     }
 });
 
+// ============================================
+// MRP DETAILS MODAL KEYBOARD HANDLING
+// ============================================
+function handleMrpDetailsKeyboard(e) {
+    const modal = document.getElementById('mrpDetailsModal');
+    if (!modal || !modal.classList.contains('show')) return false;
+
+    const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+    const fieldOrder = [
+        'mrp_case',
+        'mrp_box',
+        'mrp_value',
+        'mrp_pur_rate',
+        'mrp_sale_rate',
+        'mrp_ws_rate',
+        'mrp_spl_rate',
+        'mrp_excise'
+    ];
+
+    const fields = fieldOrder.map(id => document.getElementById(id)).filter(Boolean);
+    const cancelBtn = document.getElementById('mrpCancelBtn');
+    const saveBtn = document.getElementById('saveMrpDetailsBtn');
+    const actionButtons = [cancelBtn, saveBtn].filter(Boolean);
+
+    // Ensure focus mode resets when focusing any field
+    fields.forEach(field => {
+        field.addEventListener('focus', function() {
+            mrpFocusMode = 'fields';
+            actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+        }, { once: true });
+    });
+
+    function highlightAction(index) {
+        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+        const btn = actionButtons[index];
+        if (btn) btn.classList.add('kbd-highlight');
+    }
+
+    function clearActionHighlight() {
+        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
+    }
+
+    if (mrpFocusMode === 'fields' && isEnter) {
+        const activeEl = document.activeElement;
+        // Force action mode after Excise (last field)
+        if (activeEl && activeEl.id === 'mrp_excise') {
+            mrpFocusMode = 'actions';
+            mrpActionIndex = 0;
+            highlightAction(mrpActionIndex);
+            if (actionButtons[0]) actionButtons[0].focus();
+            return true;
+        }
+        const idx = fields.indexOf(activeEl);
+        if (idx >= 0 && idx < fields.length - 1) {
+            const nextField = fields[idx + 1];
+            if (nextField) {
+                nextField.focus();
+                if (nextField.select) nextField.select();
+            }
+        } else {
+            // Move to actions after last field
+            mrpFocusMode = 'actions';
+            mrpActionIndex = 0;
+            highlightAction(mrpActionIndex);
+            if (actionButtons[0]) actionButtons[0].focus();
+        }
+        return true;
+    }
+
+    if (mrpFocusMode === 'actions' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        if (actionButtons.length === 0) return true;
+        if (e.key === 'ArrowLeft') {
+            mrpActionIndex = mrpActionIndex <= 0 ? actionButtons.length - 1 : mrpActionIndex - 1;
+        } else {
+            mrpActionIndex = mrpActionIndex >= actionButtons.length - 1 ? 0 : mrpActionIndex + 1;
+        }
+        highlightAction(mrpActionIndex);
+        return true;
+    }
+
+    if (mrpFocusMode === 'actions' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        mrpFocusMode = 'fields';
+        clearActionHighlight();
+        const firstField = fields[0];
+        if (firstField) {
+            firstField.focus();
+            if (firstField.select) firstField.select();
+        }
+        return true;
+    }
+
+    if (mrpFocusMode === 'actions' && isEnter) {
+        const btn = actionButtons[mrpActionIndex];
+        if (btn) btn.click();
+        return true;
+    }
+
+    if (e.key === 'Escape') {
+        closeMrpDetailsModal();
+        return true;
+    }
+
+    return false;
+}
+
+// Use window capture to preempt other handlers
+window.addEventListener('keydown', function(e) {
+    const handled = handleMrpDetailsKeyboard(e);
+    if (handled) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+}, true);
+
 // Enable specific row for editing
 function enableRow(rowIndex) {
     const rows = document.querySelectorAll('#itemsTableBody tr');
@@ -1998,6 +2261,21 @@ function focusFirstInput(rowIndex) {
 document.addEventListener('keydown', function(e) {
     // Only handle if row is selected (not in cell edit mode)
     if (isRowSelected) {
+        const target = e.target;
+        if (target instanceof HTMLElement) {
+            const inItemsTable = !!target.closest('#itemsTableBody');
+            const isFormControl = target.matches('input, button, select, textarea, a, [tabindex]');
+            // Do not let row-selection handler hijack Enter/Arrow keys from header controls/buttons
+            if (!inItemsTable && isFormControl) {
+                console.log('[KB-PC-MOD][RowSelectionBypass]', {
+                    key: e.key,
+                    targetId: target.id || null,
+                    tag: target.tagName
+                });
+                return;
+            }
+        }
+
         const rows = document.querySelectorAll('#itemsTableBody tr');
         
         if (e.key === 'Enter') {
@@ -2200,7 +2478,7 @@ function populateItemsTable(items) {
 
 // Add Enter key navigation with MRP modal trigger
 function addRowNavigationWithMrpModal(row, rowIndex) {
-    const inputs = row.querySelectorAll('input:not([readonly])');
+    const inputs = row.querySelectorAll('input:not([readonly]):not([type="hidden"])');
     
     inputs.forEach((input, colIndex) => {
         // Add focus listener to populate calculation section when entering any cell
@@ -2222,12 +2500,22 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
         
         // Add keyboard navigation listener
         input.addEventListener('keydown', function(e) {
+            const inputName = input.getAttribute('name') || '';
+            const isFreeQtyField = input.classList.contains('item-fqty') || /\[(free_qty|fqty)\]/.test(inputName);
+            const isDisField = input.classList.contains('item-dis-percent') || /\[dis_percent\]/.test(inputName);
+            const isFtRateField = input.classList.contains('item-ft-rate') || /\[ft_rate\]/.test(inputName);
+
             // Enter key navigation
             if (e.key === 'Enter') {
                 e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                isRowSelected = false;
                 
                 // Check if this is the F.Qty field
-                if (input.classList.contains('item-fqty')) {
+                if (isFreeQtyField) {
                     console.log('F.Qty Enter pressed, rowIndex:', rowIndex);
                     // Get item code from current row
                     const itemCode = row.querySelector('input[name*="[code]"]').value;
@@ -2245,11 +2533,24 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
                         openEmptyMrpModal();
                     }
                 }
-                // Check if this is the Dis% field
-                else if (input.classList.contains('item-dis-percent')) {
-                    console.log('Dis% Enter pressed, moving to S.Rate in calculation section');
-                    console.log('Current row index:', rowIndex);
-                    // Update current active row before moving to S.Rate
+                // Check if this is the Dis% field - move to F.T. Rate
+                else if (isDisField) {
+                    console.log('Dis% Enter pressed, moving to F.T. Rate field');
+                    currentActiveRow = rowIndex;
+                    
+                    // Move to F.T. Rate field in the same row
+                    const ftRateInput = row.querySelector('.item-ft-rate, input[name*="[ft_rate]"]');
+                    if (ftRateInput && !ftRateInput.disabled) {
+                        ftRateInput.focus();
+                        if (typeof ftRateInput.select === 'function') {
+                            ftRateInput.select();
+                        }
+                    }
+                }
+                // Check if this is the F.T. Rate field - move to S.Rate in calc section
+                else if (isFtRateField) {
+                    console.log('F.T. Rate Enter pressed, moving to S.Rate in calculation section');
+                    console.log('[KB-PC-MOD] FT->SRate', { rowIndex, inputName });
                     currentActiveRow = rowIndex;
                     
                     // Calculate and save GST amounts for this row
@@ -2259,7 +2560,9 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
                     const sRateField = document.getElementById('calc_s_rate');
                     if (sRateField) {
                         sRateField.focus();
-                        sRateField.select();
+                        if (typeof sRateField.select === 'function') {
+                            sRateField.select();
+                        }
                     }
                 } else {
                     // Move to next input in same row
@@ -2541,13 +2844,114 @@ function addRowNavigation(row, rowIndex) {
 
 // ============ INSERT ORDERS / CHALLANS MODAL FUNCTIONS ============
 
+function focusInsertOrdersButton(reason) {
+    const btn = document.getElementById('insertOrdersBtn');
+    console.log('[KB-PC-MOD] focusInsertOrdersButton', {
+        reason: reason || 'n/a',
+        found: !!btn,
+        activeBefore: document.activeElement?.id || document.activeElement?.tagName
+    });
+
+    if (!btn) return false;
+
+    try {
+        btn.focus({ preventScroll: true });
+    } catch (err) {
+        btn.focus();
+    }
+
+    // Retry focus in case any global handler steals focus in same tick
+    setTimeout(() => {
+        if (document.activeElement !== btn) {
+            try {
+                btn.focus({ preventScroll: true });
+            } catch (err) {
+                btn.focus();
+            }
+        }
+        console.log('[KB-PC-MOD] insertOrdersBtn focus check (t+0)', {
+            activeAfter: document.activeElement?.id || document.activeElement?.tagName
+        });
+    }, 0);
+
+    setTimeout(() => {
+        if (document.activeElement !== btn) {
+            try {
+                btn.focus({ preventScroll: true });
+            } catch (err) {
+                btn.focus();
+            }
+        }
+        console.log('[KB-PC-MOD] insertOrdersBtn focus check (t+60ms)', {
+            activeAfter: document.activeElement?.id || document.activeElement?.tagName
+        });
+    }, 60);
+
+    return true;
+}
+
+// Challan No. Enter flow:
+// - If challan no exists: load challan directly
+// - If empty: trigger Insert Orders button flow (open challan modal)
+function handleChallanNoEnter(event) {
+    if (!event || event.key !== 'Enter') return true;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') {
+        event.stopImmediatePropagation();
+    }
+
+    const challanNo = document.getElementById('searchChallanNo')?.value?.trim() || '';
+    console.log('[KB-PC-MOD] handleChallanNoEnter', {
+        challanNo,
+        active: document.activeElement?.id || document.activeElement?.tagName
+    });
+
+    if (challanNo) {
+        searchChallan(true);
+    } else {
+        if (!focusInsertOrdersButton('challan-empty-enter')) {
+            // Fallback: if button is missing, open challan list directly
+            openChallansModal();
+        }
+    }
+
+    return false;
+}
+
+// Insert Orders button keyboard handler:
+// Enter/Space should trigger the same flow as click
+function handleInsertOrdersButtonEnter(event) {
+    if (!event) return true;
+    if (event.key !== 'Enter' && event.key !== ' ') return true;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof event.stopImmediatePropagation === 'function') {
+        event.stopImmediatePropagation();
+    }
+
+    console.log('[KB-PC-MOD] handleInsertOrdersButtonEnter', {
+        key: event.key,
+        active: document.activeElement?.id || document.activeElement?.tagName
+    });
+
+    handleInsertOrders();
+    return false;
+}
+
 // Handle Insert Orders button click
 function handleInsertOrders() {
     const challanNo = document.getElementById('searchChallanNo').value.trim();
+    console.log('[KB-PC-MOD] handleInsertOrders', {
+        challanNo,
+        active: document.activeElement?.id || document.activeElement?.tagName
+    });
     
     if (challanNo) {
         // If challan no. is entered, directly search and load it
-        searchChallan();
+        searchChallan(true);
     } else {
         // If no challan no., open modal to show all challans
         openChallansModal();
@@ -2726,7 +3130,8 @@ function loadSelectedChallanFromModal() {
                     }))
                 };
                 populateChallanData(transformedData);
-                showAlert('Challan loaded successfully!', 'success');
+                // Use toast instead of modal alert so focus isn't stolen from table
+                showToast('Challan loaded successfully!', 'success', 'Success');
             } else {
                 showAlert(data.message || 'Challan not found', 'error');
             }
@@ -2804,7 +3209,7 @@ document.addEventListener('keydown', function(e) {
 // ============ SEARCH CHALLAN FUNCTIONS ============
 
 // Search Challan by number
-function searchChallan() {
+function searchChallan(focusTableAfterLoad = true) {
     const challanNo = document.getElementById('searchChallanNo').value.trim();
     if (!challanNo) {
         showAlert('Please enter Challan No. to search', 'warning');
@@ -2821,8 +3226,9 @@ function searchChallan() {
             // Handle both 'bill' and 'transaction' response formats
             const challanData = data.bill || data.transaction;
             if (data.success && challanData) {
-                populateChallanData(challanData);
-                showAlert('Challan loaded successfully!', 'success');
+                populateChallanData(challanData, focusTableAfterLoad);
+                // Use toast instead of modal alert so focus isn't stolen from table
+                showToast('Challan loaded successfully!', 'success', 'Success');
             } else {
                 showAlert(data.message || 'Challan not found', 'error');
             }
@@ -2834,7 +3240,7 @@ function searchChallan() {
 }
 
 // Populate form with challan data
-function populateChallanData(challan) {
+function populateChallanData(challan, focusTableAfterLoad = true) {
     console.log('Populating challan data:', challan);
     
     // Set flag to prevent modal opening during supplier selection
@@ -2940,6 +3346,49 @@ function populateChallanData(challan) {
     // Enable update button and show delete button
     document.getElementById('updateBtn').disabled = false;
     document.getElementById('deleteChallanBtn').style.display = 'inline-block';
+
+    if (focusTableAfterLoad) {
+        // Use a longer delay to ensure rows are fully rendered and no modal steals focus
+        setTimeout(() => {
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (!firstRow) return;
+            
+            // Scroll the table into view first
+            const tableContainer = document.getElementById('itemsTableContainer');
+            if (tableContainer) {
+                tableContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            
+            // Focus on Qty field after loading challan data
+            const focusInput =
+                firstRow.querySelector('input[name*="[qty]"]:not([readonly]):not([disabled])') ||
+                firstRow.querySelector('input:not([readonly]):not([disabled])');
+            if (focusInput) {
+                currentActiveRow = 0;
+                isRowSelected = false;
+                focusInput.focus();
+                if (typeof focusInput.select === 'function') {
+                    focusInput.select();
+                }
+                console.log('Focus set to qty field in first row after challan load');
+            }
+        }, 300);
+        
+        // Double-check focus after a longer delay (in case something steals it)
+        setTimeout(() => {
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (!firstRow) return;
+            
+            const qtyInput = firstRow.querySelector('input[name*="[qty]"]:not([readonly]):not([disabled])');
+            if (qtyInput && document.activeElement !== qtyInput) {
+                currentActiveRow = 0;
+                isRowSelected = false;
+                qtyInput.focus();
+                qtyInput.select();
+                console.log('Re-focused qty field (focus was stolen)');
+            }
+        }, 500);
+    }
     
     console.log('Challan data populated successfully');
 }
@@ -2959,7 +3408,7 @@ function addChallanItemRow(item, index) {
     const purRate = item.p_rate || item.purchase_rate || 0;
     const disPercent = item.discount_percent || 0;
     const mrp = item.mrp || 0;
-    const ftRate = item.ft_rate || item.sale_rate || mrp || 0;
+    const ftRate = item.ft_rate || item.sale_rate || item.s_rate || mrp || 0;
     const netAmount = item.net_amount || 0;
     
     const row = document.createElement('tr');
@@ -2972,7 +3421,7 @@ function addChallanItemRow(item, index) {
         <td><input type="number" class="form-control item-fqty" name="items[${index}][free_qty]" value="${freeQty}" autocomplete="off"></td>
         <td><input type="number" class="form-control item-pur-rate" name="items[${index}][pur_rate]" value="${parseFloat(purRate).toFixed(2)}" step="0.01" autocomplete="off"></td>
         <td><input type="number" class="form-control item-dis-percent" name="items[${index}][dis_percent]" value="${parseFloat(disPercent).toFixed(2)}" step="0.01" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-ft-rate" name="items[${index}][ft_rate]" value="${parseFloat(ftRate).toFixed(2)}" step="0.01" autocomplete="off"></td>
+        <td><input type="number" class="form-control item-ft-rate" name="items[${index}][ft_rate]" value="${parseFloat(ftRate).toFixed(2)}" step="0.01" autocomplete="off"><input type="hidden" name="items[${index}][mrp]" value="${parseFloat(mrp).toFixed(2)}"></td>
         <td><input type="number" class="form-control readonly-field item-amount" name="items[${index}][amount]" value="${parseFloat(netAmount).toFixed(2)}" readonly></td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-primary" onclick="openInsertItemModal(${index})" title="Insert Item" style="padding: 4px 8px; margin-right: 5px; font-weight: bold;">+</button>
@@ -2994,7 +3443,7 @@ function addChallanItemRow(item, index) {
         taxAmount: (parseFloat(item.cgst_amount || 0) + parseFloat(item.sgst_amount || 0) + parseFloat(item.cess_amount || 0)).toFixed(2),
         netAmount: parseFloat(netAmount).toFixed(2),
         amount: parseFloat(netAmount).toFixed(2),
-        s_rate: item.ft_rate || item.sale_rate || 0,
+        s_rate: item.ft_rate || item.sale_rate || item.s_rate || 0,
         batch_id: item.batch_id || null
     };
     
@@ -3174,6 +3623,7 @@ function updatePurchaseChallan() {
         const itemName = row.querySelector(`input[name="items[${index}][name]"]`)?.value?.trim();
         const qty = parseFloat(row.querySelector(`input[name="items[${index}][qty]"]`)?.value) || 0;
         const purRate = parseFloat(row.querySelector(`input[name="items[${index}][pur_rate]"]`)?.value) || 0;
+        const ftRate = parseFloat(row.querySelector(`input[name="items[${index}][ft_rate]"]`)?.value) || 0;
         
         // Only add rows that have meaningful data
         // Must have: (item_code OR item_name) AND (qty > 0 OR pur_rate > 0)
@@ -3197,7 +3647,9 @@ function updatePurchaseChallan() {
                 amount: parseFloat(row.querySelector(`input[name="items[${index}][amount]"]`)?.value) || 0,
                 
                 // Rates from rowGstData (user-modified via MRP modal or from item master)
-                s_rate: (calculatedData.s_rate !== undefined && calculatedData.s_rate !== null) ? parseFloat(calculatedData.s_rate) : 0,
+                s_rate: (calculatedData.s_rate !== undefined && calculatedData.s_rate !== null)
+                    ? parseFloat(calculatedData.s_rate)
+                    : ftRate,
                 ws_rate: (calculatedData.ws_rate !== undefined && calculatedData.ws_rate !== null) ? parseFloat(calculatedData.ws_rate) : 0,
                 spl_rate: (calculatedData.spl_rate !== undefined && calculatedData.spl_rate !== null) ? parseFloat(calculatedData.spl_rate) : 0,
                 
@@ -3335,7 +3787,7 @@ function addNewRow() {
         <td><input type="number" class="form-control item-fqty" name="items[${newIndex}][free_qty]" autocomplete="off"></td>
         <td><input type="number" class="form-control item-pur-rate" name="items[${newIndex}][pur_rate]" step="0.01" autocomplete="off"></td>
         <td><input type="number" class="form-control item-dis-percent" name="items[${newIndex}][dis_percent]" step="0.01" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-ft-rate" name="items[${newIndex}][ft_rate]" step="0.01" autocomplete="off"></td>
+        <td><input type="number" class="form-control item-ft-rate" name="items[${newIndex}][ft_rate]" step="0.01" autocomplete="off"><input type="hidden" name="items[${newIndex}][mrp]" value="0.00"></td>
         <td><input type="number" class="form-control readonly-field item-amount" name="items[${newIndex}][amount]" readonly></td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-primary" onclick="openInsertItemModal(${newIndex})" title="Insert Item" style="padding: 4px 8px; margin-right: 5px; font-weight: bold;">+</button>
@@ -3370,6 +3822,7 @@ function addNewRow() {
     });
     
     console.log(`New row ${newIndex} added`);
+    return newIndex;
 }
 
 // Delete row from table (uses currentActiveRow if no index provided)
@@ -3446,6 +3899,12 @@ function showBillDetails() {
 function openInsertItemModal(rowIndex) {
     console.log('Opening insert modal for row:', rowIndex);
     insertRowIndex = rowIndex;
+
+    // Prefer reusable shared item component modal
+    if (typeof openItemModal_reusableItemsModal === 'function') {
+        openItemModal_reusableItemsModal();
+        return;
+    }
     
     const modal = document.getElementById('insertItemModal');
     const backdrop = document.getElementById('insertItemBackdrop');
@@ -3482,6 +3941,11 @@ function openInsertItemModal(rowIndex) {
 
 // Close Insert Item Modal
 function closeInsertItemModal() {
+    // Prefer reusable shared item component modal
+    if (typeof closeItemModal_reusableItemsModal === 'function') {
+        closeItemModal_reusableItemsModal();
+    }
+
     const modal = document.getElementById('insertItemModal');
     const backdrop = document.getElementById('insertItemBackdrop');
     
@@ -3964,6 +4428,10 @@ function showToast(message, type = 'error', title = null) {
     
     let defaultTitle, icon;
     switch(type) {
+        case 'success':
+            defaultTitle = 'Success';
+            icon = '✅';
+            break;
         case 'warning':
             defaultTitle = 'Warning';
             icon = '⚠️';
@@ -4014,6 +4482,48 @@ function closeToast(toastId) {
 }
 
 // Enhanced Alert Modal Functions
+function isAlertModalOpen() {
+    const modal = document.getElementById('alertModal');
+    const backdrop = document.getElementById('alertBackdrop');
+    return !!(
+        modal &&
+        backdrop &&
+        modal.classList.contains('show') &&
+        backdrop.classList.contains('show') &&
+        modal.style.display !== 'none'
+    );
+}
+
+function getAlertFooterButtons() {
+    return Array.from(document.querySelectorAll('#alertModal .alert-modal-footer button'));
+}
+
+function setAlertActiveButton(index) {
+    const buttons = getAlertFooterButtons();
+    if (!buttons.length) return;
+    const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+    window.__pcModAlertBtnIndex = safeIndex;
+    buttons.forEach((btn, i) => {
+        btn.classList.toggle('kb-focus-active', i === safeIndex);
+    });
+    const activeBtn = buttons[safeIndex];
+    if (activeBtn) {
+        try {
+            activeBtn.focus({ preventScroll: true });
+        } catch (err) {
+            activeBtn.focus();
+        }
+    }
+    console.log('[KB-PC-MOD][Alert] active button', {
+        index: safeIndex,
+        text: activeBtn?.textContent?.trim() || ''
+    });
+}
+
+function focusAlertDefaultButton() {
+    setTimeout(() => setAlertActiveButton(0), 30);
+}
+
 function showAlert(message, type = 'error', title = null) {
     // Use toast for warning and error messages (red color for errors)
     if (type === 'warning' || type === 'error') {
@@ -4066,6 +4576,7 @@ function showAlert(message, type = 'error', title = null) {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        focusAlertDefaultButton();
     }, 10);
 }
 
@@ -4096,6 +4607,7 @@ function showSuccessModalWithReload(message, title = 'Success') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        focusAlertDefaultButton();
     }, 10);
 }
 
@@ -4146,6 +4658,8 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        // Default to "Yes" for quick confirm keyboard flow
+        setTimeout(() => setAlertActiveButton(1), 30);
     }, 10);
 }
 
@@ -4182,6 +4696,8 @@ function closeAlert() {
     setTimeout(() => {
         modal.style.display = 'none';
         backdrop.style.display = 'none';
+        window.__pcModAlertBtnIndex = 0;
+        document.querySelectorAll('#alertModal .kb-focus-active').forEach(el => el.classList.remove('kb-focus-active'));
     }, 400);
 }
 
@@ -4190,6 +4706,51 @@ document.addEventListener('DOMContentLoaded', function() {
     const alertBackdrop = document.getElementById('alertBackdrop');
     if (alertBackdrop) {
         alertBackdrop.addEventListener('click', closeAlert);
+    }
+
+    // Alert modal keyboard handling:
+    // Enter = click active button, Left/Right = switch footer buttons, Esc = close
+    if (!window.__pcModAlertKbBound) {
+        window.__pcModAlertKbBound = true;
+        window.__pcModAlertBtnIndex = 0;
+
+        document.addEventListener('keydown', function(e) {
+            if (!isAlertModalOpen()) return;
+            if (!['Enter', 'Escape', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            const buttons = getAlertFooterButtons();
+            if (!buttons.length) return;
+
+            if (e.key === 'Escape') {
+                closeAlert();
+                return;
+            }
+
+            if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
+                setAlertActiveButton((window.__pcModAlertBtnIndex || 0) - 1);
+                return;
+            }
+
+            if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey)) {
+                setAlertActiveButton((window.__pcModAlertBtnIndex || 0) + 1);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                const idx = Number.isInteger(window.__pcModAlertBtnIndex) ? window.__pcModAlertBtnIndex : 0;
+                console.log('[KB-PC-MOD][Alert] Enter click', {
+                    index: idx,
+                    text: buttons[idx]?.textContent?.trim() || ''
+                });
+                buttons[idx].click();
+            }
+        }, true);
     }
 });
 </script>
@@ -4691,7 +5252,233 @@ function loadChallanIntoPurchase(challanId, challanNo) {
         }, true);
     }
 
+    function initKeyboardFocusDebugOutline() {
+        if (window.__pcModFocusOutlineBound) return;
+        window.__pcModFocusOutlineBound = true;
+
+        const focusableSelector = 'input, select, textarea, button, .searchable-dropdown-input, .btn';
+
+        document.addEventListener('focusin', function(e) {
+            const target = e.target;
+            if (!(target instanceof HTMLElement)) return;
+
+            document.querySelectorAll('.kb-focus-active').forEach(function(el) {
+                if (el !== target) el.classList.remove('kb-focus-active');
+            });
+
+            if (target.matches(focusableSelector)) {
+                target.classList.add('kb-focus-active');
+                console.log('[KB-PC-MOD][FocusIn]', {
+                    id: target.id || null,
+                    tag: target.tagName,
+                    name: target.getAttribute('name') || null
+                });
+            }
+        }, true);
+
+        document.addEventListener('focusout', function(e) {
+            const target = e.target;
+            if (!(target instanceof HTMLElement)) return;
+            setTimeout(function() {
+                if (document.activeElement !== target) {
+                    target.classList.remove('kb-focus-active');
+                }
+            }, 0);
+        }, true);
+    }
+
+    function initChallanNoEnterCaptureFallback() {
+        if (window.__pcModChallanNoCaptureBound) return;
+        window.__pcModChallanNoCaptureBound = true;
+
+        document.addEventListener('keydown', function(e) {
+            const target = e.target;
+            if (!target || target.id !== 'searchChallanNo') return;
+            if (e.key !== 'Enter') return;
+
+            console.log('[KB-PC-MOD][Capture] Enter on Challan No', {
+                value: (target.value || '').trim(),
+                activeBefore: document.activeElement?.id || document.activeElement?.tagName
+            });
+
+            handleChallanNoEnter(e);
+        }, true);
+    }
+
+    function initInsertOrdersEnterCaptureFallback() {
+        if (window.__pcModInsertOrdersCaptureBound) return;
+        window.__pcModInsertOrdersCaptureBound = true;
+
+        document.addEventListener('keydown', function(e) {
+            const target = e.target;
+            if (!target || target.id !== 'insertOrdersBtn') return;
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+
+            console.log('[KB-PC-MOD][Capture] Enter/Space on Insert Orders', {
+                key: e.key,
+                activeBefore: document.activeElement?.id || document.activeElement?.tagName
+            });
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            handleInsertOrders();
+        }, true);
+    }
+
+    function initTableFlowCaptureFallback() {
+        if (window.__pcModTableFlowCaptureBound) return;
+        window.__pcModTableFlowCaptureBound = true;
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            const target = e.target;
+            if (!(target instanceof HTMLElement)) return;
+
+            // 1) F.T. Rate Enter -> S.Rate
+            const inItemsTable = !!target.closest('#itemsTableBody');
+            if (inItemsTable && target.matches('input')) {
+                const inputName = target.getAttribute('name') || '';
+                const isCode = /\[code\]/.test(inputName);
+                const isFtRate = target.classList.contains('item-ft-rate') || /\[ft_rate\]/.test(inputName);
+
+                if (isCode) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === 'function') {
+                        e.stopImmediatePropagation();
+                    }
+
+                    const row = target.closest('tr');
+                    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+                    const rowIndex = rows.indexOf(row);
+                    if (rowIndex >= 0) {
+                        currentActiveRow = rowIndex;
+                        isRowSelected = false;
+                        openInsertItemModal(rowIndex);
+                        console.log('[KB-PC-MOD][Capture][Code->ItemModal]', { rowIndex });
+                    }
+                    return;
+                }
+
+                if (isFtRate) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === 'function') {
+                        e.stopImmediatePropagation();
+                    }
+
+                    const row = target.closest('tr');
+                    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+                    const rowIndex = rows.indexOf(row);
+                    if (rowIndex >= 0) {
+                        currentActiveRow = rowIndex;
+                        isRowSelected = false;
+                        calculateAndSaveGstForRow(rowIndex);
+                    }
+
+                    const sRateField = document.getElementById('calc_s_rate');
+                    if (sRateField) {
+                        sRateField.focus();
+                        if (typeof sRateField.select === 'function') {
+                            sRateField.select();
+                        }
+                    }
+
+                    console.log('[KB-PC-MOD][Capture][FT->SRate]', {
+                        rowIndex,
+                        activeAfter: document.activeElement?.id || document.activeElement?.tagName
+                    });
+                    return;
+                }
+            }
+
+            // 2) S.Rate Enter -> Add Row + focus new row code
+            if (target.id === 'calc_s_rate') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+
+                if (currentActiveRow !== null && currentActiveRow !== undefined) {
+                    const sRateValue = parseFloat(target.value) || 0;
+                    if (!rowGstData[currentActiveRow]) {
+                        rowGstData[currentActiveRow] = {};
+                    }
+                    rowGstData[currentActiveRow].s_rate = sRateValue;
+                    calculateAndSaveGstForRow(currentActiveRow);
+                }
+
+                const newRowIndex = addNewRow();
+                const rows = document.querySelectorAll('#itemsTableBody tr');
+                const newRow = rows[newRowIndex];
+                const codeInput = newRow ? newRow.querySelector('input[name*="[code]"]') : null;
+                if (codeInput) {
+                    currentActiveRow = newRowIndex;
+                    isRowSelected = false;
+                    setTimeout(function() {
+                        codeInput.focus();
+                        if (typeof codeInput.select === 'function') {
+                            codeInput.select();
+                        }
+                    }, 30);
+                }
+
+                console.log('[KB-PC-MOD][Capture][SRate->AddRow]', {
+                    newRowIndex,
+                    activeAfter: document.activeElement?.id || document.activeElement?.tagName
+                });
+            }
+        }, true);
+    }
+
+    function initCtrlSUpdateCapture() {
+        if (window.__pcModCtrlSBound) return;
+        window.__pcModCtrlSBound = true;
+
+        document.addEventListener('keydown', function(e) {
+            const key = (e.key || '').toLowerCase();
+            if (!(e.ctrlKey || e.metaKey) || key !== 's') return;
+
+            // If modal is open, don't trigger page save
+            const blockingModal = document.querySelector('#insertItemModal.show, #mrpDetailsModal.show, #purchaseChallansModal.show, #alertModal.show, #reusableItemsModal.show, #reusableBatchModal.show');
+            if (blockingModal) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                return;
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') {
+                e.stopImmediatePropagation();
+            }
+
+            const challanId = (document.getElementById('challanId')?.value || '').trim();
+            console.log('[KB-PC-MOD][Capture][Ctrl+S]', { challanId });
+
+            if (challanId) {
+                updatePurchaseChallan();
+            } else {
+                showAlert('No challan loaded to update. Please load a challan first.', 'warning');
+            }
+        }, true);
+    }
+
     function initPurchaseChallanModificationKeyboard() {
+        initKeyboardFocusDebugOutline();
+        initChallanNoEnterCaptureFallback();
+        initInsertOrdersEnterCaptureFallback();
+        initTableFlowCaptureFallback();
+        initCtrlSUpdateCapture();
+
         initSearchableDropdown({
             wrapperId: 'supplierDropdownWrapper',
             inputId: 'supplierSearchInput',
@@ -4714,5 +5501,24 @@ function loadChallanIntoPurchase(challanId, challanNo) {
     }
 })();
 </script>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'reusableItemsModal',
+    'module' => 'purchase-challan',
+    'showStock' => true,
+    'rateType' => 'p_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'reusableBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'reusableBatchModal',
+    'module' => 'purchase-challan',
+    'showOnlyAvailable' => false,
+    'rateType' => 'p_rate',
+    'showCostDetails' => true,
+])
 
 @endsection

@@ -32,20 +32,24 @@
                 </div>
                 <div class="col-md-2">
                     <label for="dayName" class="form-label">Day</label>
-                    <input type="text" class="form-control readonly-field" id="dayName" readonly>
+                    <input type="text" class="form-control readonly-field" id="dayName" readonly tabindex="-1">
                 </div>
                 <div class="col-md-2">
                     <label for="creditNoteNo" class="form-label">Credit Note No.</label>
                     <input type="text" class="form-control readonly-field" id="creditNoteNo" 
-                           value="{{ $nextCreditNoteNo }}" readonly>
+                           value="{{ $nextCreditNoteNo }}" readonly tabindex="-1">
                 </div>
                 <div class="col-md-3">
                     <label for="reason" class="form-label">Reason</label>
-                    <select class="form-select" id="reason" name="reason">
-                        <option value="">Select Reason</option>
-                        <option value="Rate Diff.">Rate Diff.</option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="reasonDisplay" placeholder="Select Reason" readonly style="cursor: pointer; background-color: #fff;">
+                        <input type="hidden" id="reason" name="reason">
+                        <i class="bi bi-chevron-down position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="pointer-events: none;"></i>
+                        <div id="reasonOptions" class="list-group position-absolute w-100 shadow-sm start-0" style="display:none; z-index: 1050; border: 1px solid #dee2e6;">
+                            <a href="#" class="list-group-item list-group-item-action py-2" data-value="Rate Diff.">Rate Diff.</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2" data-value="Other">Other</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -74,9 +78,14 @@
                             </div>
                             <div class="col-12">
                                 <label for="partySelect" class="form-label">Party Name <span class="text-danger">*</span></label>
-                                <select class="form-select no-select2" id="partySelect" name="credit_party_id">
-                                    <option value="">Type to search...</option>
-                                </select>
+                                <div class="position-relative party-search-container">
+                                    <!-- Visual Input for searching -->
+                                    <input type="text" class="form-control" id="partySearchInput" placeholder="Type to search..." autocomplete="off">
+                                    <!-- Hidden Input for actual value submission -->
+                                    <input type="hidden" id="partySelect" name="credit_party_id">
+                                    <!-- Results Dropdown -->
+                                    <div id="partySearchResults" class="list-group position-absolute w-100 shadow-sm start-0" style="display:none; z-index: 1050; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #ddd;"></div>
+                                </div>
                                 <small class="text-muted">Start typing to search for suppliers</small>
                             </div>
                             <div class="col-md-6">
@@ -338,12 +347,43 @@
 let hsnRowCount = 0;
 let hsnCodesData = [];
 let currentPartyType = 'S'; // S = Supplier, C = Customer
+let searchTimeout = null;
+let partySearchResults = [];
+let currentFocusIndex = -1; // For search results navigation
+
+// Field Navigation Order
+const FIELD_ORDER = [
+    'creditNoteDate',
+    'creditNoteNo', // Readonly
+    'reasonDisplay', // Use Display Input for Custom Dropdown
+    'partySupplier', // Radio Group Start (Supplier)
+    'partySearchInput',
+    'salesmanSelect',
+    'accountPurchase', // Radio Group Start (Purchase)
+    'accountNo',
+    'invRefNo',
+    'invoiceDate',
+    'gstVno',
+    // Save buttons logic handled separately
+];
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     
-    // Initialize Select2 AJAX for party dropdown
-    initPartySelect2();
+    // PREVENT form submission on Enter key globally
+    document.getElementById('creditNoteForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Initialize Custom Party Search
+    initPartySearch();
+    
+    // Initialize Custom Reason Dropdown
+    initCustomReasonDropdown();
+    
+    // Initialize Keyboard Navigation
+    initKeyboardNavigation();
     
     // Date change handler
     document.getElementById('creditNoteDate').addEventListener('change', updateDayName);
@@ -368,78 +408,605 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Initialize Select2 with AJAX for party dropdown
-function initPartySelect2() {
-    const $partySelect = $('#partySelect');
+// --- Custom Reason Dropdown Logic ---
+function initCustomReasonDropdown() {
+    const displayInput = document.getElementById('reasonDisplay');
+    const hiddenInput = document.getElementById('reason');
+    const optionsContainer = document.getElementById('reasonOptions');
+    const options = optionsContainer.querySelectorAll('.list-group-item');
+    let activeIndex = -1;
+    let openedProgrammatically = false; // Flag to prevent focus handler from resetting state
+
+    if (!displayInput || !optionsContainer) return;
+
+    // Expose a method to open dropdown programmatically from outside
+    window.openReasonDropdownProgrammatically = function() {
+        openedProgrammatically = true;
+        displayInput.focus();
+        optionsContainer.style.display = 'block';
+        activeIndex = 0; // Pre-highlight first option for immediate arrow key use
+        highlightOption(activeIndex);
+        // Reset flag after a tick
+        setTimeout(function() {
+            openedProgrammatically = false;
+        }, 50);
+    };
+
+    // Open on Focus (only if not opened programmatically)
+    displayInput.addEventListener('focus', function() {
+        if (!openedProgrammatically) {
+            optionsContainer.style.display = 'block';
+            activeIndex = -1; // Reset active index for manual focus
+            highlightOption(activeIndex);
+        }
+    });
+
+    // Close on Blur (with timeout to allow click)
+    displayInput.addEventListener('blur', function() {
+        setTimeout(() => {
+            optionsContainer.style.display = 'none';
+        }, 200);
+    });
     
-    // Destroy existing Select2 if any
-    if ($partySelect.hasClass('select2-hidden-accessible')) {
-        $partySelect.select2('destroy');
+    // Toggle on Click
+    displayInput.addEventListener('click', function() {
+        if (optionsContainer.style.display === 'none') {
+            optionsContainer.style.display = 'block';
+            activeIndex = -1;
+            highlightOption(activeIndex);
+            displayInput.focus();
+        } else {
+            optionsContainer.style.display = 'none';
+        }
+    });
+
+    // Handle Option Selection
+    options.forEach((option, index) => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectOption(this);
+        });
+        
+        // Ensure mouseover updates active index for visual feedback
+        option.addEventListener('mouseenter', function() {
+            activeIndex = index;
+            highlightOption(activeIndex);
+        });
+    });
+
+    function selectOption(optionElement) {
+        const value = optionElement.getAttribute('data-value');
+        const text = optionElement.textContent.trim();
+        
+        hiddenInput.value = value;
+        displayInput.value = text; // Show text but value is used in backend
+        optionsContainer.style.display = 'none';
+        
+        // After selecting reason, move cursor to Party Name search field
+        setTimeout(function() {
+            var partySearch = document.getElementById('partySearchInput');
+            if (partySearch) {
+                partySearch.focus();
+            }
+        }, 30);
     }
-    
-    // Clear the select
-    $partySelect.empty().append('<option value="">Type to search...</option>');
-    
-    const searchUrl = '{{ route("admin.credit-note.search-parties") }}';
-    console.log('Initializing Party Select2 with URL:', searchUrl, 'Party Type:', currentPartyType);
-    
-    $partySelect.select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: currentPartyType === 'S' ? 'Search supplier...' : 'Search customer...',
-        allowClear: true,
-        minimumInputLength: 0,
-        ajax: {
-            url: searchUrl,
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                console.log('Making AJAX request with:', params.term, currentPartyType);
-                return {
-                    q: params.term || '',
-                    party_type: currentPartyType,
-                    page: params.page || 1
-                };
-            },
-            processResults: function(data, params) {
-                console.log('Received results:', data);
-                params.page = params.page || 1;
-                return {
-                    results: data.results || [],
-                    pagination: {
-                        more: data.pagination ? data.pagination.more : false
-                    }
-                };
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error, xhr.responseText);
-            },
-            cache: true
-        },
-        language: {
-            searching: function() {
-                return 'Searching...';
-            },
-            noResults: function() {
-                return 'No results found';
-            },
-            loadingMore: function() {
-                return 'Loading more...';
-            },
-            errorLoading: function() {
-                return 'Error loading results';
+
+    function highlightOption(index) {
+        options.forEach(opt => opt.classList.remove('active'));
+        if (index >= 0 && index < options.length) {
+            options[index].classList.add('active');
+            options[index].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // Keyboard Handling for Dropdown
+    displayInput.addEventListener('keydown', function(e) {
+        // If dropdown is closed and user presses navigation keys, open it
+        if (optionsContainer.style.display === 'none' || optionsContainer.style.display === '') {
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                optionsContainer.style.display = 'block';
+                activeIndex = 0;
+                highlightOption(activeIndex);
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                optionsContainer.style.display = 'block';
+                activeIndex = 0;
+                highlightOption(activeIndex);
+                return;
             }
         }
-    }).on('select2:select', function(e) {
-        // Store party name for form submission
-        const selectedData = e.params.data;
-        if (selectedData) {
-            window.selectedPartyName = selectedData.text;
-            console.log('Selected party:', selectedData);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = (activeIndex + 1) % options.length;
+            highlightOption(activeIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = (activeIndex - 1 + options.length) % options.length;
+            highlightOption(activeIndex);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeIndex >= 0 && activeIndex < options.length) {
+                selectOption(options[activeIndex]);
+            } else if (optionsContainer.style.display === 'block') {
+                 // If open but no selection, select first
+                 if (options.length > 0) selectOption(options[0]);
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            optionsContainer.style.display = 'none';
+        } else if (e.key === 'Tab') {
+            optionsContainer.style.display = 'none';
         }
-    }).on('select2:open', function() {
-        console.log('Dropdown opened, triggering search...');
     });
+}
+
+// --- Keyboard Navigation Logic ---
+function initKeyboardNavigation() {
+    // ==============================================
+    // Ctrl+S to Save Credit Note
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 's' && e.ctrlKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (typeof saveCreditNote === 'function') {
+                saveCreditNote();
+            }
+        }
+    });
+
+    // ==============================================
+    // DOCUMENT-LEVEL CAPTURE: Intercept Enter on Date field
+    // This fires BEFORE the date input's internal shadow DOM processing
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const activeEl = document.activeElement;
+            
+            // ---- Handle Ctrl+Enter → jump to TCS Amount ----
+            if (e.ctrlKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                var tcsField = document.getElementById('tcsAmount');
+                if (tcsField) {
+                    tcsField.focus();
+                    tcsField.select();
+                }
+                return false;
+            }
+            
+            // ---- Handle Date field Enter → jump to Reason ----
+            if (activeEl && activeEl.id === 'creditNoteDate' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                activeEl.blur();
+                
+                setTimeout(function() {
+                    var reasonDisplay = document.getElementById('reasonDisplay');
+                    var reasonOptions = document.getElementById('reasonOptions');
+                    
+                    if (reasonDisplay) {
+                        reasonDisplay.focus();
+                        
+                        setTimeout(function() {
+                            if (reasonOptions) {
+                                reasonOptions.style.display = 'block';
+                                var firstOption = reasonOptions.querySelector('.list-group-item');
+                                if (firstOption) {
+                                    reasonOptions.querySelectorAll('.list-group-item').forEach(function(opt) {
+                                        opt.classList.remove('active');
+                                    });
+                                    firstOption.classList.add('active');
+                                }
+                            }
+                        }, 20);
+                    }
+                }, 50);
+                
+                return false;
+            }
+            
+            // ---- Handle Reason dropdown Enter → select highlighted option ----
+            if (activeEl && activeEl.id === 'reasonDisplay') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                var reasonOptions = document.getElementById('reasonOptions');
+                var reasonHidden = document.getElementById('reason');
+                
+                // Check if dropdown is open and has a highlighted option
+                var activeOption = reasonOptions ? reasonOptions.querySelector('.list-group-item.active') : null;
+                
+                if (activeOption) {
+                    // SELECT the highlighted option
+                    var value = activeOption.getAttribute('data-value');
+                    var text = activeOption.textContent.trim();
+                    
+                    reasonHidden.value = value;
+                    activeEl.value = text;
+                    
+                    // Close dropdown
+                    if (reasonOptions) reasonOptions.style.display = 'none';
+                    
+                    // Blur reason field
+                    activeEl.blur();
+                    
+                    // Move cursor to Supplier radio button
+                    setTimeout(function() {
+                        var supplierRadio = document.getElementById('partySupplier');
+                        if (supplierRadio) {
+                            supplierRadio.focus();
+                        }
+                    }, 50);
+                } else {
+                    // No option highlighted - open dropdown and highlight first
+                    if (reasonOptions) {
+                        reasonOptions.style.display = 'block';
+                        var firstOpt = reasonOptions.querySelector('.list-group-item');
+                        if (firstOpt) {
+                            firstOpt.classList.add('active');
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            
+            // ---- Handle Supplier/Customer radio Enter → jump to Party Name ----
+            if (activeEl && (activeEl.id === 'partySupplier' || activeEl.id === 'partyCustomer')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                setTimeout(function() {
+                    var partySearch = document.getElementById('partySearchInput');
+                    if (partySearch) {
+                        partySearch.focus();
+                    }
+                }, 30);
+                
+                return false;
+            }
+            
+            // ---- Handle Party Name search Enter → select highlighted party ----
+            if (activeEl && activeEl.id === 'partySearchInput') {
+                var partyResults = document.getElementById('partySearchResults');
+                
+                if (partyResults && partyResults.style.display === 'block') {
+                    var activeItem = partyResults.querySelector('.list-group-item.active');
+                    
+                    if (activeItem) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        
+                        // Click the highlighted item to select the party
+                        activeItem.click();
+                        
+                        // selectParty() already handles moving to Salesman
+                        
+                        return false;
+                    }
+                }
+            }
+            
+            // ---- Handle Account Type radio Enter → jump to Account No ----
+            if (activeEl && (activeEl.id === 'accountPurchase' || activeEl.id === 'accountSale' || activeEl.id === 'accountGeneral')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                setTimeout(function() {
+                    var accountNo = document.getElementById('accountNo');
+                    if (accountNo) {
+                        accountNo.focus();
+                    }
+                }, 30);
+                
+                return false;
+            }
+            
+            // ---- Handle Amount field Enter → trigger Insert button ----
+            if (activeEl && activeEl.id === 'amount') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                if (typeof openHsnModal === 'function') {
+                    openHsnModal();
+                }
+                
+                return false;
+            }
+            
+            // ---- Handle HSN row Amount field Enter → trigger Insert button ----
+            if (activeEl && activeEl.classList.contains('hsn-amount')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                if (typeof openHsnModal === 'function') {
+                    openHsnModal();
+                }
+                
+                return false;
+            }
+        }
+    }, true); // CAPTURE PHASE - fires before any element-level handlers
+
+    // ==============================================
+    // General Enter key navigation for other fields
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const target = e.target;
+            
+            // Allow Custom Reason Dropdown to handle its own Enter
+            if (target.id === 'reasonDisplay') return;
+
+            // Allow Party Search to handle its own Enter
+            if (target.id === 'partySearchInput') return;
+
+            if (target.tagName === 'BUTTON' || target.tagName === 'A') return;
+            if (target.tagName === 'TEXTAREA') return;
+
+            // Allow native behavior for Select elements
+            if (target.tagName === 'SELECT') return;
+
+            // Date field is handled by capture-phase listener above
+            if (target.id === 'creditNoteDate') return;
+
+            e.preventDefault();
+            const direction = e.shiftKey ? -1 : 1;
+            navigateField(target, direction);
+        }
+    });
+
+    // Auto-advance on Select change
+    FIELD_ORDER.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.tagName === 'SELECT') {
+            el.addEventListener('change', function() {
+                navigateField(this, 1);
+            });
+        }
+    });
+}
+
+// --- Custom Party Search Logic ---
+function initPartySearch() {
+    const searchInput = document.getElementById('partySearchInput');
+    const hiddenInput = document.getElementById('partySelect');
+    const resultsContainer = document.getElementById('partySearchResults');
+
+    // Input Handler
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        hiddenInput.value = ''; // Clear ID while typing
+        
+        if (query.length === 0) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetchParties(query);
+        }, 300);
+    });
+
+    // Focus / Blur Handlers
+    searchInput.addEventListener('focus', function() {
+        // Trigger search immediately on focus, even if empty
+        fetchParties(this.value.trim());
+    });
+
+    // Handle clicks outside to close dropdown
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = 'none';
+        }
+    });
+
+    // Keyboard navigation within search results
+    searchInput.addEventListener('keydown', function(e) {
+        if (resultsContainer.style.display === 'block') {
+            const items = resultsContainer.querySelectorAll('.list-group-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentFocusIndex++;
+                if (currentFocusIndex >= items.length) currentFocusIndex = 0;
+                highlightItem(items, currentFocusIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentFocusIndex--;
+                if (currentFocusIndex < 0) currentFocusIndex = items.length - 1;
+                highlightItem(items, currentFocusIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentFocusIndex > -1 && items[currentFocusIndex]) {
+                    items[currentFocusIndex].click();
+                }
+            }
+        }
+    });
+}
+
+function fetchParties(query) {
+    const searchUrl = '{{ route("admin.credit-note.search-parties") }}';
+    const resultsContainer = document.getElementById('partySearchResults');
+    
+    resultsContainer.innerHTML = '<div class="p-2 text-muted"><i class="bi bi-hourglass-split"></i> Searching...</div>';
+    resultsContainer.style.display = 'block';
+
+    fetch(`${searchUrl}?q=${encodeURIComponent(query)}&party_type=${currentPartyType}&page=1`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        renderPartyResults(data.results || []);
+    })
+    .catch(error => {
+        console.error('Error fetching parties:', error);
+        resultsContainer.innerHTML = '<div class="p-2 text-danger">Error loading results</div>';
+    });
+}
+
+function renderPartyResults(results) {
+    const resultsContainer = document.getElementById('partySearchResults');
+    resultsContainer.innerHTML = '';
+    currentFocusIndex = -1;
+
+    if (results.length === 0) {
+        resultsContainer.innerHTML = '<div class="p-2 text-muted">No results found</div>';
+        return;
+    }
+
+    results.forEach((party, index) => {
+        const item = document.createElement('a');
+        item.href = '#';
+        item.className = 'list-group-item list-group-item-action';
+        item.textContent = party.text || party.name; 
+        item.dataset.id = party.id;
+        item.dataset.name = party.name; 
+
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectParty(party);
+        });
+
+        resultsContainer.appendChild(item);
+    });
+}
+
+function selectParty(party) {
+    document.getElementById('partySearchInput').value = party.text || party.name;
+    document.getElementById('partySelect').value = party.id;
+    document.getElementById('partySearchResults').style.display = 'none';
+    window.selectedPartyName = party.text || party.name; 
+    
+    // After selecting party, move cursor to Salesman field and open dropdown
+    setTimeout(function() {
+        var salesmanSelect = document.getElementById('salesmanSelect');
+        if (salesmanSelect) {
+            salesmanSelect.focus();
+            // Open the select dropdown automatically
+            try {
+                salesmanSelect.showPicker();
+            } catch(err) {
+                // Fallback: simulate mousedown to open native dropdown
+                var event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+                salesmanSelect.dispatchEvent(event);
+            }
+        }
+    }, 50);
+}
+
+function highlightItem(items, index) {
+    items.forEach(item => item.classList.remove('active'));
+    if (items[index]) {
+        items[index].classList.add('active');
+        items[index].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+// --- Keyboard Navigation Logic ---
+function navigateField(currentElement, direction) {
+    let currentIndex = -1;
+    let currentId = currentElement.id;
+
+    if (currentElement.type === 'radio') {
+        if (currentElement.name === 'credit_party_type') {
+            currentIndex = FIELD_ORDER.indexOf('partySupplier');
+        } else if (currentElement.name === 'debit_account_type') {
+            currentIndex = FIELD_ORDER.indexOf('accountPurchase');
+        }
+    } else {
+        currentIndex = FIELD_ORDER.indexOf(currentId);
+    }
+
+    if (currentIndex === -1) return; 
+
+    // Special handling: Date field -> skip Day field -> go directly to Reason Custom Dropdown
+    if (currentId === 'creditNoteDate' && direction === 1) {
+        if (typeof window.openReasonDropdownProgrammatically === 'function') {
+            window.openReasonDropdownProgrammatically();
+        }
+        return;
+    }
+
+    let nextIndex = currentIndex + direction;
+
+    if (nextIndex < 0) return; 
+    if (nextIndex >= FIELD_ORDER.length) {
+        const saveBtn = document.querySelector('.btn-primary');
+        if (saveBtn) saveBtn.focus();
+        return;
+    }
+
+    const nextId = FIELD_ORDER[nextIndex];
+    let nextElement = document.getElementById(nextId);
+
+    if (nextId === 'partySupplier' || nextId === 'accountPurchase') {
+        const groupName = (nextId === 'partySupplier') ? 'credit_party_type' : 'debit_account_type';
+        const checkedRadio = document.querySelector(`input[name="${groupName}"]:checked`);
+        if (checkedRadio) nextElement = checkedRadio;
+    }
+    
+    if (nextElement) {
+        // Skip disabled, hidden, or readonly fields 
+        // EXCEPTION: 'reasonDisplay' is readonly but interactive
+        // EXCEPTION: SELECT and TEXTAREA are interactive even if readonly (rare but safer)
+        if (nextElement.disabled || nextElement.offsetParent === null) {
+             navigateField({ id: nextId, type: nextElement.type, name: nextElement.name }, direction);
+             return;
+        }
+
+        if (nextElement.readOnly && nextElement.id !== 'reasonDisplay' && nextElement.tagName !== 'SELECT' && nextElement.tagName !== 'TEXTAREA') {
+            navigateField({ id: nextId, type: nextElement.type, name: nextElement.name }, direction);
+            return;
+        }
+        
+        nextElement.focus();
+        
+        if (nextElement.tagName === 'INPUT' && nextElement.select && nextElement.id !== 'reasonDisplay') {
+            nextElement.select(); 
+        }
+
+    }
+}
+
+function updatePartyDropdown() {
+    const searchInput = document.getElementById('partySearchInput');
+    const hiddenInput = document.getElementById('partySelect');
+    
+    searchInput.value = '';
+    hiddenInput.value = '';
+    document.getElementById('partySearchResults').style.display = 'none';
+    
+    const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
+    
+    const helpText = document.querySelector('.party-search-container + small'); 
+    if (helpText) {
+        helpText.textContent = partyType === 'S' ? 'Start typing to search for suppliers' : 'Start typing to search for customers';
+    }
+    searchInput.placeholder = partyType === 'S' ? 'Search supplier...' : 'Search customer...';
+    
+    if (partyType === 'S') {
+        document.getElementById('accountPurchase').checked = true;
+    } else {
+        document.getElementById('accountSale').checked = true;
+    }
 }
 
 function debounce(func, wait) {
@@ -454,7 +1021,6 @@ function debounce(func, wait) {
     };
 }
 
-// Update day name based on date
 function updateDayName() {
     const dateInput = document.getElementById('creditNoteDate');
     if (dateInput.value) {
@@ -464,31 +1030,6 @@ function updateDayName() {
     }
 }
 
-// Update party dropdown based on type
-function updatePartyDropdown() {
-    const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
-    
-    // Clear current selection
-    $('#partySelect').val(null).trigger('change');
-    
-    // Update placeholder and help text
-    const helpText = document.querySelector('#partySelect + small');
-    if (helpText) {
-        helpText.textContent = partyType === 'S' ? 'Start typing to search for suppliers' : 'Start typing to search for customers';
-    }
-    
-    // Auto-select account type
-    if (partyType === 'S') {
-        document.getElementById('accountPurchase').checked = true;
-    } else {
-        document.getElementById('accountSale').checked = true;
-    }
-    
-    // Reinitialize Select2 with updated party type
-    initPartySelect2();
-}
-
-// Load HSN codes from server
 function loadHsnCodes() {
     fetch('{{ route("admin.hsn-codes.index") }}?all=1', {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -499,6 +1040,11 @@ function loadHsnCodes() {
         renderHsnCodes(hsnCodesData);
         document.getElementById('hsn_modal_loading').style.display = 'none';
         document.getElementById('hsn_modal_table_container').style.display = 'block';
+        
+        if (hsnCodesData.length === 0) {
+            document.getElementById('hsn_modal_no_results').style.display = 'block';
+            document.getElementById('hsn_modal_table_container').style.display = 'none';
+        }
     })
     .catch(error => {
         console.error('Error loading HSN codes:', error);
@@ -506,23 +1052,22 @@ function loadHsnCodes() {
     });
 }
 
-// Render HSN codes in modal
+var hsnModalActiveIndex = -1;
+
 function renderHsnCodes(codes) {
     const tbody = document.getElementById('hsn_codes_list');
     tbody.innerHTML = '';
+    hsnModalActiveIndex = -1;
     
-    if (codes.length === 0) {
-        document.getElementById('hsn_modal_table_container').style.display = 'none';
-        document.getElementById('hsn_modal_no_results').style.display = 'block';
-        return;
-    }
+    if (codes.length === 0) return;
     
-    document.getElementById('hsn_modal_table_container').style.display = 'block';
-    document.getElementById('hsn_modal_no_results').style.display = 'none';
-    
-    codes.forEach(code => {
+    codes.forEach((code, index) => {
         const gstPercent = parseFloat(code.cgst_percent || 0) + parseFloat(code.sgst_percent || 0);
         const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.setAttribute('data-hsn-code', code.hsn_code);
+        tr.setAttribute('data-cgst', code.cgst_percent || 0);
+        tr.setAttribute('data-sgst', code.sgst_percent || 0);
         tr.innerHTML = `
             <td><strong>${code.hsn_code}</strong></td>
             <td class="small">${code.description || '-'}</td>
@@ -533,11 +1078,27 @@ function renderHsnCodes(codes) {
                 </button>
             </td>
         `;
+        // Click on row to select
+        tr.addEventListener('click', function() {
+            selectHsnCode(code.hsn_code, code.cgst_percent || 0, code.sgst_percent || 0);
+        });
         tbody.appendChild(tr);
     });
 }
 
-// Filter HSN codes
+function highlightHsnRow(index) {
+    var rows = document.querySelectorAll('#hsn_codes_list tr');
+    rows.forEach(function(row) {
+        row.style.backgroundColor = '';
+        row.classList.remove('table-primary');
+    });
+    if (index >= 0 && index < rows.length) {
+        rows[index].classList.add('table-primary');
+        rows[index].style.backgroundColor = '#cfe2ff';
+        rows[index].scrollIntoView({ block: 'nearest' });
+    }
+}
+
 function filterHsnCodes() {
     const searchTerm = document.getElementById('hsn_modal_search').value.toLowerCase();
     const filtered = hsnCodesData.filter(code => 
@@ -547,13 +1108,13 @@ function filterHsnCodes() {
     renderHsnCodes(filtered);
 }
 
-// Open HSN modal
 function openHsnModal() {
     const modal = document.getElementById('hsnCodeModal');
     const backdrop = document.getElementById('hsnModalBackdrop');
     
     document.getElementById('hsn_modal_search').value = '';
     renderHsnCodes(hsnCodesData);
+    hsnModalActiveIndex = -1;
     
     backdrop.style.display = 'block';
     modal.style.display = 'block';
@@ -566,7 +1127,39 @@ function openHsnModal() {
     }, 10);
 }
 
-// Close HSN modal
+// HSN Modal keyboard navigation
+document.addEventListener('keydown', function(e) {
+    var modal = document.getElementById('hsnCodeModal');
+    if (!modal || modal.style.display !== 'block') return;
+    
+    var rows = document.querySelectorAll('#hsn_codes_list tr');
+    if (rows.length === 0) return;
+    
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        hsnModalActiveIndex++;
+        if (hsnModalActiveIndex >= rows.length) hsnModalActiveIndex = 0;
+        highlightHsnRow(hsnModalActiveIndex);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        hsnModalActiveIndex--;
+        if (hsnModalActiveIndex < 0) hsnModalActiveIndex = rows.length - 1;
+        highlightHsnRow(hsnModalActiveIndex);
+    } else if (e.key === 'Enter' && hsnModalActiveIndex >= 0) {
+        e.preventDefault();
+        var selectedRow = rows[hsnModalActiveIndex];
+        if (selectedRow) {
+            var hsnCode = selectedRow.getAttribute('data-hsn-code');
+            var cgst = parseFloat(selectedRow.getAttribute('data-cgst'));
+            var sgst = parseFloat(selectedRow.getAttribute('data-sgst'));
+            selectHsnCode(hsnCode, cgst, sgst);
+        }
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeHsnModal();
+    }
+});
+
 function closeHsnModal() {
     const modal = document.getElementById('hsnCodeModal');
     const backdrop = document.getElementById('hsnModalBackdrop');
@@ -581,14 +1174,12 @@ function closeHsnModal() {
     }, 300);
 }
 
-// Select HSN code and add row
 function selectHsnCode(hsnCode, cgstPercent, sgstPercent) {
     const gstPercent = parseFloat(cgstPercent) + parseFloat(sgstPercent);
     addHsnRowWithData(hsnCode, gstPercent, cgstPercent, sgstPercent);
     closeHsnModal();
 }
 
-// Add HSN row with data
 function addHsnRowWithData(hsnCode, gstPercent, cgstPercent, sgstPercent) {
     const tbody = document.getElementById('hsnTableBody');
     const row = document.createElement('tr');
@@ -610,14 +1201,10 @@ function addHsnRowWithData(hsnCode, gstPercent, cgstPercent, sgstPercent) {
     `;
     
     tbody.appendChild(row);
-    
-    // Focus on amount field
     row.querySelector('.hsn-amount').focus();
-    
     hsnRowCount++;
 }
 
-// Delete HSN row
 function deleteHsnRow(rowIndex) {
     const row = document.querySelector(`tr[data-row="${rowIndex}"]`);
     if (row) {
@@ -626,7 +1213,6 @@ function deleteHsnRow(rowIndex) {
     }
 }
 
-// Calculate GST for a row
 function calculateGst(rowIndex) {
     const row = document.querySelector(`tr[data-row="${rowIndex}"]`);
     if (!row) return;
@@ -644,7 +1230,6 @@ function calculateGst(rowIndex) {
     calculateTotals();
 }
 
-// Calculate totals
 function calculateTotals() {
     let grossAmount = 0;
     let totalGst = 0;
@@ -670,7 +1255,6 @@ function calculateTotals() {
     document.getElementById('cnAmount').value = cnAmount.toFixed(2);
 }
 
-// Save credit note - Entry point
 function saveCreditNote(print = false) {
     window.printAfterSave = print;
     
@@ -693,15 +1277,7 @@ function saveCreditNote(print = false) {
         const amount = row.querySelector('.hsn-amount')?.value;
         
         if (hsnCode || parseFloat(amount) > 0) {
-            items.push({
-                hsn_code: hsnCode,
-                amount: amount,
-                gst_percent: row.querySelector('.hsn-gst')?.value || 0,
-                cgst_percent: row.querySelector('.hsn-cgst-percent')?.value || 0,
-                cgst_amount: row.querySelector('.hsn-cgst-amount')?.value || 0,
-                sgst_percent: row.querySelector('.hsn-sgst-percent')?.value || 0,
-                sgst_amount: row.querySelector('.hsn-sgst-amount')?.value || 0,
-            });
+            items.push({ hsn_code: hsnCode, amount: amount }); // Simplified check
         }
     });
     
@@ -710,55 +1286,100 @@ function saveCreditNote(print = false) {
         return;
     }
     
-    // Store CN amount for adjustment
     window.cnAmount = parseFloat(document.getElementById('cnAmount').value || 0);
-    
-    // Show save options modal
     showSaveOptionsModal();
 }
 
-// Show Save Options Modal
+
+
+var saveModalActiveIndex = 0;
+
 function showSaveOptionsModal() {
     const modal = document.getElementById('saveOptionsModal');
     modal.classList.add('show');
+    saveModalActiveIndex = 0;
     
-    document.addEventListener('keydown', handleSaveOptionsEsc);
+    // Use capture phase so arrow keys work reliably
+    document.addEventListener('keydown', handleSaveOptionsKeys, true);
+
+    setTimeout(function() {
+        highlightSaveButton(saveModalActiveIndex);
+    }, 100);
 }
 
-// Close Save Options Modal
 function closeSaveOptionsModal() {
     const modal = document.getElementById('saveOptionsModal');
     modal.classList.remove('show');
-    document.removeEventListener('keydown', handleSaveOptionsEsc);
+    document.removeEventListener('keydown', handleSaveOptionsKeys, true);
 }
 
-function handleSaveOptionsEsc(e) {
-    if (e.key === 'Escape') closeSaveOptionsModal();
+function highlightSaveButton(index) {
+    var modal = document.getElementById('saveOptionsModal');
+    var buttons = modal.querySelectorAll('.save-options-buttons .btn');
+    
+    buttons.forEach(function(btn) {
+        btn.style.outline = '';
+        btn.style.outlineOffset = '';
+        btn.style.transform = '';
+        btn.style.boxShadow = '';
+    });
+    
+    if (index >= 0 && index < buttons.length) {
+        buttons[index].focus();
+        buttons[index].style.outline = '3px solid #fff';
+        buttons[index].style.outlineOffset = '2px';
+        buttons[index].style.transform = 'scale(1.05)';
+        buttons[index].style.boxShadow = '0 0 15px rgba(0,0,0,0.3)';
+    }
 }
 
-// Save Without Adjustment
+function handleSaveOptionsKeys(e) {
+    var modal = document.getElementById('saveOptionsModal');
+    if (!modal.classList.contains('show')) return;
+    
+    var buttons = modal.querySelectorAll('.save-options-buttons .btn');
+    if (buttons.length === 0) return;
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        closeSaveOptionsModal();
+        return;
+    }
+    
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        saveModalActiveIndex++;
+        if (saveModalActiveIndex >= buttons.length) saveModalActiveIndex = 0;
+        highlightSaveButton(saveModalActiveIndex);
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        saveModalActiveIndex--;
+        if (saveModalActiveIndex < 0) saveModalActiveIndex = buttons.length - 1;
+        highlightSaveButton(saveModalActiveIndex);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (saveModalActiveIndex >= 0 && buttons[saveModalActiveIndex]) {
+            buttons[saveModalActiveIndex].click();
+        }
+    }
+}
+
 function saveWithoutAdjustment() {
     closeSaveOptionsModal();
     submitCreditNote(false, []);
 }
 
-// Save With Adjustment
 function saveWithAdjustment() {
     closeSaveOptionsModal();
-    
     const partyId = document.getElementById('partySelect').value;
     const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
-    
-    if (!partyId) {
-        alert('Please select a party first');
-        return;
-    }
-    
-    // Fetch party invoices for adjustment
     fetchPartyInvoices(partyId, partyType);
 }
 
-// Fetch Party Invoices for Adjustment
 function fetchPartyInvoices(partyId, partyType) {
     fetch('{{ route("admin.credit-note.party-invoices") }}', {
         method: 'POST',
@@ -767,10 +1388,7 @@ function fetchPartyInvoices(partyId, partyType) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
             'Accept': 'application/json'
         },
-        body: JSON.stringify({
-            party_id: partyId,
-            party_type: partyType
-        })
+        body: JSON.stringify({ party_id: partyId, party_type: partyType })
     })
     .then(response => response.json())
     .then(data => {
@@ -781,12 +1399,10 @@ function fetchPartyInvoices(partyId, partyType) {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
         alert('Error loading invoices');
     });
 }
 
-// Show Adjustment Modal
 function showAdjustmentModal(invoices, cnAmount) {
     const modalHTML = `
         <div class="adjustment-modal-backdrop" id="adjustmentModalBackdrop"></div>
@@ -798,203 +1414,137 @@ function showAdjustmentModal(invoices, cnAmount) {
                 </div>
                 <div class="adjustment-modal-body">
                     <div style="max-height: 350px; overflow-y: auto;">
-                        <table class="table table-bordered table-sm" style="font-size: 12px; margin-bottom: 0;">
-                            <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+                        <table class="table table-bordered table-striped">
+                            <thead class="sticky-top bg-light">
                                 <tr>
-                                    <th style="width: 50px; text-align: center;">Sr.</th>
-                                    <th style="width: 120px; text-align: center;">Invoice No.</th>
-                                    <th style="width: 100px; text-align: center;">Date</th>
-                                    <th style="width: 110px; text-align: right;">Bill Amt.</th>
-                                    <th style="width: 110px; text-align: center;">Adjusted</th>
-                                    <th style="width: 110px; text-align: right;">Balance</th>
+                                    <th>Date</th>
+                                    <th>Ref No.</th>
+                                    <th>Bill Amt</th>
+                                    <th>Balance</th>
+                                    <th style="width: 150px;">Adjust Amt</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                ${invoices.length > 0 ? invoices.map((invoice, index) => {
-                                    const balance = parseFloat(invoice.balance || invoice.bill_amount || 0);
-                                    return `
+                                ${invoices.map((inv, index) => `
                                     <tr>
-                                        <td style="text-align: center;">${index + 1}</td>
-                                        <td style="text-align: center;">${invoice.trans_no || invoice.invoice_no || '-'}</td>
-                                        <td style="text-align: center;">${invoice.date || '-'}</td>
-                                        <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${balance.toFixed(2)}</td>
-                                        <td style="text-align: center;">
-                                            <input type="number" class="form-control form-control-sm adjustment-input" 
-                                                   id="adj_${invoice.id}" 
-                                                   data-invoice-id="${invoice.id}"
-                                                   data-balance="${balance}"
-                                                   value="0.00" 
-                                                   min="0" 
-                                                   max="${balance}"
-                                                   step="0.01"
-                                                   onchange="updateAdjustmentBalance()"
-                                                   onkeyup="updateAdjustmentBalance()"
-                                                   style="width: 90px; text-align: right;">
-                                        </td>
-                                        <td style="text-align: right;" id="balance_${invoice.id}">
-                                            <span style="color: #28a745;">₹ ${balance.toFixed(2)}</span>
+                                        <td>${inv.date}</td>
+                                        <td>${inv.trans_no}</td>
+                                        <td>${inv.bill_amount.toFixed(2)}</td>
+                                        <td>${inv.balance.toFixed(2)}</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm adjust-amount" 
+                                                data-id="${inv.id}" 
+                                                data-balance="${inv.balance}"
+                                                step="0.01" 
+                                                min="0" 
+                                                max="${inv.balance}"
+                                                placeholder="0.00">
                                         </td>
                                     </tr>
-                                `}).join('') : '<tr><td colspan="6" class="text-center text-muted py-3">No pending invoices found</td></tr>'}
+                                `).join('')}
                             </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="4" class="text-end">Total Adjusted:</th>
+                                    <th id="totalAdjustedDisplay">0.00 / ${cnAmount.toFixed(2)}</th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
-                    <div style="margin-top: 15px; padding: 12px; background: #f8f9fa; border-radius: 6px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <span style="font-weight: 500; color: #6c757d;"><kbd>ESC</kbd> to close</span>
-                            <span style="font-weight: bold; font-size: 15px; color: #0d6efd;">
-                                Amount to Adjust: <span id="adjustmentBalance">₹ ${cnAmount.toFixed(2)}</span>
-                            </span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <label style="font-weight: 500; color: #495057; white-space: nowrap;">Auto Adjust:</label>
-                            <input type="number" id="autoAdjustAmount" class="form-control form-control-sm" 
-                                   style="width: 120px;" step="0.01" value="${cnAmount.toFixed(2)}">
-                            <button type="button" class="btn btn-info btn-sm" onclick="autoDistributeAmount()">
-                                <i class="bi bi-magic me-1"></i>Distribute
-                            </button>
-                        </div>
+                    <div class="mt-3 text-end">
+                        <button type="button" class="btn btn-secondary me-2" onclick="closeAdjustmentModal()">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="submitAdjustments(${cnAmount})">Save Adjustments</button>
                     </div>
-                </div>
-                <div class="adjustment-modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeAdjustmentModal()">
-                        <i class="bi bi-x-circle me-1"></i>Cancel
-                    </button>
-                    <button type="button" class="btn btn-success btn-sm" onclick="saveAdjustment()">
-                        <i class="bi bi-check-circle me-1"></i>Save & Submit
-                    </button>
                 </div>
             </div>
         </div>
     `;
     
-    // Remove existing modal if any
-    const existingModal = document.getElementById('adjustmentModal');
-    if (existingModal) existingModal.remove();
-    const existingBackdrop = document.getElementById('adjustmentModalBackdrop');
-    if (existingBackdrop) existingBackdrop.remove();
+    const div = document.createElement('div');
+    div.innerHTML = modalHTML;
+    document.body.appendChild(div);
     
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    autoDistributeAdjustment(cnAmount);
     
-    window.adjustmentAmount = cnAmount;
-    
-    setTimeout(() => {
-        document.getElementById('adjustmentModalBackdrop').classList.add('show');
-        document.getElementById('adjustmentModal').classList.add('show');
-    }, 10);
-    
-    document.addEventListener('keydown', handleAdjustmentEsc);
+    document.querySelectorAll('.adjust-amount').forEach(input => {
+        input.addEventListener('input', updateTotalAdjusted);
+    });
 }
 
-function handleAdjustmentEsc(e) {
-    if (e.key === 'Escape') closeAdjustmentModal();
+function closeAdjustmentModal() {
+    const backdrop = document.getElementById('adjustmentModalBackdrop');
+    const modal = document.getElementById('adjustmentModal');
+    if (backdrop) backdrop.remove();
+    if (modal) modal.parentElement.remove(); 
 }
 
-// Update adjustment balance
-function updateAdjustmentBalance() {
-    const inputs = document.querySelectorAll('.adjustment-input');
-    let totalAdjusted = 0;
+function autoDistributeAdjustment(totalAmount) {
+    let remaining = totalAmount;
+    const inputs = document.querySelectorAll('.adjust-amount');
     
     inputs.forEach(input => {
-        let adjusted = parseFloat(input.value || 0);
-        const invoiceId = input.getAttribute('data-invoice-id');
-        const maxBalance = parseFloat(input.getAttribute('data-balance'));
-        
-        if (adjusted > maxBalance) {
-            input.value = maxBalance.toFixed(2);
-            adjusted = maxBalance;
+        if (remaining <= 0) {
+            input.value = '';
+            return;
         }
         
-        totalAdjusted += adjusted;
+        const balance = parseFloat(input.dataset.balance);
+        const adjust = Math.min(balance, remaining);
         
-        const newBalance = maxBalance - adjusted;
-        const balanceCell = document.getElementById(`balance_${invoiceId}`);
-        if (balanceCell) {
-            const color = newBalance === 0 ? '#28a745' : (newBalance < 0 ? '#dc3545' : '#28a745');
-            balanceCell.innerHTML = `<span style="color: ${color}; font-weight: ${newBalance === 0 ? 'bold' : 'normal'};">₹ ${newBalance.toFixed(2)}</span>`;
-        }
+        input.value = adjust.toFixed(2);
+        remaining -= adjust;
     });
     
-    const remaining = window.adjustmentAmount - totalAdjusted;
-    const balanceEl = document.getElementById('adjustmentBalance');
-    balanceEl.textContent = `₹ ${remaining.toFixed(2)}`;
-    balanceEl.style.color = remaining === 0 ? '#28a745' : (remaining < 0 ? '#dc3545' : '#0d6efd');
+    updateTotalAdjusted();
 }
 
-// Auto Distribute Amount
-function autoDistributeAmount() {
-    const totalAmount = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
+function updateTotalAdjusted() {
+    let total = 0;
+    document.querySelectorAll('.adjust-amount').forEach(input => {
+        total += parseFloat(input.value || 0);
+    });
     
-    if (totalAmount <= 0) {
-        alert('Please enter a valid amount');
-        return;
+    const display = document.getElementById('totalAdjustedDisplay');
+    const split = display.textContent.split('/');
+    const cnTotal = split[1].trim();
+    
+    display.textContent = `${total.toFixed(2)} / ${cnTotal}`;
+    
+    if (total > parseFloat(cnTotal)) {
+        display.classList.add('text-danger');
+    } else {
+        display.classList.remove('text-danger');
     }
-    
-    document.querySelectorAll('.adjustment-input').forEach(input => input.value = '');
-    
-    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
-    const transactions = inputs.map(input => ({
-        input: input,
-        balance: parseFloat(input.getAttribute('data-balance'))
-    })).filter(t => t.balance > 0).sort((a, b) => b.balance - a.balance);
-    
-    let remaining = totalAmount;
-    
-    transactions.forEach(t => {
-        if (remaining <= 0) return;
-        const adjustAmount = Math.min(remaining, t.balance);
-        t.input.value = adjustAmount.toFixed(2);
-        remaining -= adjustAmount;
-    });
-    
-    updateAdjustmentBalance();
 }
 
-// Close Adjustment Modal
-function closeAdjustmentModal() {
-    const modal = document.getElementById('adjustmentModal');
-    const backdrop = document.getElementById('adjustmentModalBackdrop');
-    
-    if (modal) modal.classList.remove('show');
-    if (backdrop) backdrop.classList.remove('show');
-    
-    setTimeout(() => {
-        if (modal) modal.remove();
-        if (backdrop) backdrop.remove();
-    }, 300);
-    
-    document.removeEventListener('keydown', handleAdjustmentEsc);
-}
-
-// Save Adjustment
-function saveAdjustment() {
-    const inputs = document.querySelectorAll('.adjustment-input');
+function submitAdjustments(maxAmount) {
+    let total = 0;
     const adjustments = [];
     
-    inputs.forEach(input => {
-        const adjusted = parseFloat(input.value || 0);
-        if (adjusted > 0) {
+    document.querySelectorAll('.adjust-amount').forEach(input => {
+        const val = parseFloat(input.value || 0);
+        if (val > 0) {
+            total += val;
             adjustments.push({
-                invoice_id: input.getAttribute('data-invoice-id'),
-                adjusted_amount: adjusted
+                invoice_id: input.dataset.id,
+                adjusted_amount: val
             });
         }
     });
     
-    const remainingText = document.getElementById('adjustmentBalance').textContent.replace('₹', '').trim();
-    const remaining = parseFloat(remainingText);
+    if (total > maxAmount) {
+        alert(`Total adjustment (${total.toFixed(2)}) cannot exceed Credit Note amount (${maxAmount.toFixed(2)})`);
+        return;
+    }
     
-    if (remaining !== 0) {
-        if (!confirm(`Balance remaining is ₹${remaining.toFixed(2)}. Continue anyway?`)) {
-            return;
-        }
+    if (adjustments.length === 0) {
+        if (!confirm('No adjustments made. Save without linking invoices?')) return;
     }
     
     closeAdjustmentModal();
     submitCreditNote(true, adjustments);
 }
 
-// Submit Credit Note
 function submitCreditNote(withAdjustment = false, adjustments = []) {
     const items = [];
     document.querySelectorAll('#hsnTableBody tr').forEach(row => {
@@ -1016,10 +1566,8 @@ function submitCreditNote(withAdjustment = false, adjustments = []) {
     
     const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
     const partyId = document.getElementById('partySelect').value;
-    // Get party name from Select2 selected data
-    const $partySelect = $('#partySelect');
-    const selectedData = $partySelect.select2('data')[0];
-    const partyName = selectedData ? selectedData.text : '';
+    // Fix: Get Name from Custom Input, NOT Select2
+    const partyName = document.getElementById('partySearchInput').value;
     
     const data = {
         header: {
@@ -1057,7 +1605,6 @@ function submitCreditNote(withAdjustment = false, adjustments = []) {
         : '{{ route("admin.credit-note.store") }}';
     const method = creditNoteId ? 'PUT' : 'POST';
     
-    // 🔥 Mark as saving to prevent exit confirmation dialog
     if (typeof window.markAsSaving === 'function') {
         window.markAsSaving();
     }

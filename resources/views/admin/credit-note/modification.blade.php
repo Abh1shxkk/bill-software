@@ -33,7 +33,7 @@
                 </div>
             </div>
             <div class="col-md-2">
-                <button class="btn btn-outline-info w-100" type="button" onclick="openCreditNotesModal()">
+                <button class="btn btn-outline-info w-100" type="button" id="browseBtn" onclick="openCreditNotesModal()">
                     <i class="bi bi-list-ul me-1"></i> Browse
                 </button>
             </div>
@@ -58,15 +58,15 @@
                 </div>
                 <div class="col-md-2">
                     <label for="dayName" class="form-label">Day</label>
-                    <input type="text" class="form-control readonly-field" id="dayName" readonly>
+                    <input type="text" class="form-control readonly-field" id="dayName" readonly tabindex="-1">
                 </div>
                 <div class="col-md-2">
                     <label for="creditNoteNo" class="form-label">Credit Note No.</label>
-                    <input type="text" class="form-control readonly-field" id="creditNoteNo" readonly>
+                    <input type="text" class="form-control readonly-field" id="creditNoteNo" readonly tabindex="-1">
                 </div>
                 <div class="col-md-3">
                     <label for="reason" class="form-label">Reason</label>
-                    <select class="form-select" id="reason" name="reason">
+                    <select class="form-select no-select2" id="reason" name="reason">
                         <option value="">Select Reason</option>
                         <option value="Rate Diff.">Rate Diff.</option>
                         <option value="Other">Other</option>
@@ -99,14 +99,19 @@
                             </div>
                             <div class="col-12">
                                 <label for="partySelect" class="form-label">Party Name <span class="text-danger">*</span></label>
-                                <select class="form-select no-select2" id="partySelect" name="credit_party_id">
-                                    <option value="">Type to search...</option>
-                                </select>
+                                <div class="position-relative party-search-container">
+                                    <!-- Visual Input for searching -->
+                                    <input type="text" class="form-control" id="partySearchInput" placeholder="Type to search..." autocomplete="off">
+                                    <!-- Hidden Input for actual value submission -->
+                                    <input type="hidden" id="partySelect" name="credit_party_id">
+                                    <!-- Results Dropdown -->
+                                    <div id="partySearchResults" class="list-group position-absolute w-100 shadow-sm start-0" style="display:none; z-index: 1050; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #ddd;"></div>
+                                </div>
                                 <small class="text-muted">Start typing to search for suppliers</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="salesmanSelect" class="form-label">Sales Man</label>
-                                <select class="form-select" id="salesmanSelect" name="salesman_id">
+                                <select class="form-select no-select2" id="salesmanSelect" name="salesman_id">
                                     <option value="">Select Salesman</option>
                                     @foreach($salesmen as $salesman)
                                         <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
@@ -226,15 +231,15 @@
                     <div class="row g-2">
                         <div class="col-6">
                             <label class="form-label small">Gross Amount</label>
-                            <input type="number" class="form-control form-control-sm readonly-field" id="grossAmount" name="gross_amount" value="0.00" readonly>
+                            <input type="number" class="form-control form-control-sm readonly-field" id="grossAmount" name="gross_amount" value="0.00" readonly tabindex="-1">
                         </div>
                         <div class="col-6">
                             <label class="form-label small">Total GST</label>
-                            <input type="number" class="form-control form-control-sm readonly-field" id="totalGst" name="total_gst" value="0.00" readonly>
+                            <input type="number" class="form-control form-control-sm readonly-field" id="totalGst" name="total_gst" value="0.00" readonly tabindex="-1">
                         </div>
                         <div class="col-6">
                             <label class="form-label small">Net Amount</label>
-                            <input type="number" class="form-control form-control-sm readonly-field" id="netAmount" name="net_amount" value="0.00" readonly>
+                            <input type="number" class="form-control form-control-sm readonly-field" id="netAmount" name="net_amount" value="0.00" readonly tabindex="-1">
                         </div>
                         <div class="col-6">
                             <label class="form-label small">TCS</label>
@@ -246,7 +251,7 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold text-success">CN Amount</label>
-                            <input type="number" class="form-control form-control-sm fw-bold text-success readonly-field" id="cnAmount" name="cn_amount" value="0.00" readonly style="font-size: 16px;">
+                            <input type="number" class="form-control form-control-sm fw-bold text-success readonly-field" id="cnAmount" name="cn_amount" value="0.00" readonly tabindex="-1" style="font-size: 16px;">
                         </div>
                     </div>
                 </div>
@@ -376,12 +381,54 @@
 <script>
 let hsnRowCount = 0;
 let currentPartyType = 'S'; // S = Supplier, C = Customer
+let searchTimeout = null;
+let currentFocusIndex = -1; // For search results navigation
+
+// ============================================================
+// FIELD NAVIGATION ORDER for Enter Key
+// ============================================================
+const FIELD_ORDER = [
+    'searchCreditNoteNo',
+    'browseBtn',        // Browse button
+    'creditNoteDate',
+    'reason',           // Native <select>
+    'partySupplier',    // Radio Group Start (Supplier/Customer)
+    'partySearchInput', // Custom Party Search Input
+    'salesmanSelect',   // Native <select>
+    'accountPurchase',  // Radio Group Start (Purchase/Sale/General)
+    'accountNo',
+    'invRefNo',
+    'invoiceDate',
+    'gstVno',
+    'partyTrnNo',
+    'partyTrnDate',
+    'amount',
+    'narration',
+    'tcsAmount',
+    'roundOff',
+    'updateBtn'         // Final → Update button
+];
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     
-    // Initialize Select2 AJAX for party dropdown
-    initPartySelect2();
+    // Initialize Custom Party Search
+    initPartySearch();
+    
+    // PREVENT form submission on Enter key globally
+    document.getElementById('creditNoteForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    // Initialize Keyboard Navigation
+    initKeyboardNavigation();
+    
+    // Initialize Browse Modal Keyboard Navigation
+    initBrowseModalKeyboard();
+    
+    // Initialize Adjustment Modal Keyboard Navigation
+    initAdjustmentModalKeyboard();
     
     document.getElementById('creditNoteDate').addEventListener('change', updateDayName);
     
@@ -392,80 +439,1154 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
+    // Auto-focus search field on page load
+    setTimeout(function() {
+        var searchField = document.getElementById('searchCreditNoteNo');
+        if (searchField) {
+            searchField.focus();
+            searchField.select();
+        }
+    }, 100);
+    
     // Auto-load if preload credit note no is provided
     @if($preloadCreditNoteNo)
         searchCreditNote();
     @endif
 });
 
-// Initialize Select2 with AJAX for party dropdown
-function initPartySelect2() {
-    const $partySelect = $('#partySelect');
-    
-    // Destroy existing Select2 if any
-    if ($partySelect.hasClass('select2-hidden-accessible')) {
-        $partySelect.select2('destroy');
-    }
-    
-    // Clear the select
-    $partySelect.empty().append('<option value="">Type to search...</option>');
-    
-    const searchUrl = '{{ route("admin.credit-note.search-parties") }}';
-    console.log('Initializing Party Select2 with URL:', searchUrl, 'Party Type:', currentPartyType);
-    
-    $partySelect.select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: currentPartyType === 'S' ? 'Search supplier...' : 'Search customer...',
-        allowClear: true,
-        minimumInputLength: 0,
-        ajax: {
-            url: searchUrl,
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                console.log('Making AJAX request with:', params.term, currentPartyType);
-                return {
-                    q: params.term || '',
-                    party_type: currentPartyType,
-                    page: params.page || 1
-                };
-            },
-            processResults: function(data, params) {
-                console.log('Received results:', data);
-                params.page = params.page || 1;
-                return {
-                    results: data.results || [],
-                    pagination: {
-                        more: data.pagination ? data.pagination.more : false
-                    }
-                };
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error, xhr.responseText);
-            },
-            cache: true
-        },
-        language: {
-            searching: function() {
-                return 'Searching...';
-            },
-            noResults: function() {
-                return 'No results found';
-            },
-            loadingMore: function() {
-                return 'Loading more...';
-            },
-            errorLoading: function() {
-                return 'Error loading results';
+// ============================================================
+// KEYBOARD NAVIGATION SYSTEM
+// ============================================================
+function initKeyboardNavigation() {
+
+    // ==============================================
+    // Escape Key → Close any open modal
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            // Close Browse Credit Notes Modal
+            var creditNotesModal = document.getElementById('creditNotesModal');
+            if (creditNotesModal && creditNotesModal.classList.contains('show')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                closeCreditNotesModal();
+                // Focus Browse button after closing
+                setTimeout(function() {
+                    var browseBtn = document.getElementById('browseBtn');
+                    if (browseBtn) browseBtn.focus();
+                }, 50);
+                return false;
+            }
+            
+            // Close Adjustment Modal
+            var adjustmentModal = document.getElementById('adjustmentModal');
+            if (adjustmentModal && adjustmentModal.classList.contains('show')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                closeAdjustmentModal();
+                return false;
             }
         }
-    }).on('select2:select', function(e) {
-        const selectedData = e.params.data;
-        if (selectedData) {
-            console.log('Selected party:', selectedData);
+    }, true);
+
+    // ==============================================
+    // Ctrl+S → Update Credit Note
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var updateBtn = document.getElementById('updateBtn');
+            if (updateBtn && !updateBtn.disabled && typeof updateCreditNote === 'function') {
+                updateCreditNote();
+            }
+        }
+    }, true);
+
+    // ==============================================
+    // DOCUMENT-LEVEL CAPTURE: Main Enter Key Handler
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+        
+        // Skip if any modal is open
+        var creditNotesModal = document.getElementById('creditNotesModal');
+        var adjustmentModal = document.getElementById('adjustmentModal');
+        if ((creditNotesModal && creditNotesModal.classList.contains('show')) ||
+            (adjustmentModal && adjustmentModal.classList.contains('show'))) {
+            return; // Let modal handlers deal with it
+        }
+        
+        // ---- Handle Ctrl+Enter → jump to TCS Amount ----
+        if (e.ctrlKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var tcsField = document.getElementById('tcsAmount');
+            if (tcsField) {
+                tcsField.focus();
+                tcsField.select();
+            }
+            return false;
+        }
+        
+        // ============================================
+        // SHIFT+ENTER → BACKWARD NAVIGATION (ALL FIELDS)
+        // ============================================
+        if (e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Browse button → back to Search Credit Note No.
+            if (activeEl.id === 'browseBtn') {
+                var searchField = document.getElementById('searchCreditNoteNo');
+                if (searchField) { searchField.focus(); searchField.select(); }
+                return false;
+            }
+            
+            // Credit Note Date → back to Browse button
+            if (activeEl.id === 'creditNoteDate') {
+                var browseBtn = document.getElementById('browseBtn');
+                if (browseBtn) { browseBtn.focus(); }
+                return false;
+            }
+            
+            // Reason → back to Date
+            if (activeEl.id === 'reason') {
+                var dateField = document.getElementById('creditNoteDate');
+                if (dateField) { dateField.focus(); }
+                return false;
+            }
+            
+            // Party Type radios → back to Reason
+            if (activeEl.id === 'partySupplier' || activeEl.id === 'partyCustomer') {
+                var reason = document.getElementById('reason');
+                if (reason) {
+                    reason.focus();
+                    try {
+                        reason.showPicker();
+                    } catch(err) {
+                        var event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+                        reason.dispatchEvent(event);
+                    }
+                }
+                return false;
+            }
+            
+            // Party Search Input → back to Party Type radio
+            if (activeEl.id === 'partySearchInput') {
+                var checkedRadio = document.querySelector('input[name="credit_party_type"]:checked');
+                if (checkedRadio) { checkedRadio.focus(); }
+                return false;
+            }
+            
+            // Salesman → back to Party Search Input
+            if (activeEl.id === 'salesmanSelect') {
+                var partySearch = document.getElementById('partySearchInput');
+                if (partySearch) {
+                    partySearch.focus();
+                    partySearch.select();
+                }
+                return false;
+            }
+            
+            // Account Type radios → back to Salesman
+            if (activeEl.id === 'accountPurchase' || activeEl.id === 'accountSale' || activeEl.id === 'accountGeneral') {
+                var salesman = document.getElementById('salesmanSelect');
+                if (salesman) { salesman.focus(); }
+                return false;
+            }
+            
+            // Account No → back to Account Type radio
+            if (activeEl.id === 'accountNo') {
+                var checkedRadio = document.querySelector('input[name="debit_account_type"]:checked');
+                if (checkedRadio) { checkedRadio.focus(); }
+                return false;
+            }
+            
+            // Inv Ref No → back to Account No
+            if (activeEl.id === 'invRefNo') {
+                var accountNo = document.getElementById('accountNo');
+                if (accountNo) { accountNo.focus(); accountNo.select(); }
+                return false;
+            }
+            
+            // Invoice Date → back to Inv Ref No
+            if (activeEl.id === 'invoiceDate') {
+                var invRefNo = document.getElementById('invRefNo');
+                if (invRefNo) { invRefNo.focus(); invRefNo.select(); }
+                return false;
+            }
+            
+            // GST Vno → back to Invoice Date
+            if (activeEl.id === 'gstVno') {
+                var invoiceDate = document.getElementById('invoiceDate');
+                if (invoiceDate) { invoiceDate.focus(); }
+                return false;
+            }
+            
+            // Party Trn No → back to GST Vno
+            if (activeEl.id === 'partyTrnNo') {
+                var gstVno = document.getElementById('gstVno');
+                if (gstVno) { gstVno.focus(); gstVno.select(); }
+                return false;
+            }
+            
+            // Party Trn Date → back to Party Trn No
+            if (activeEl.id === 'partyTrnDate') {
+                var partyTrnNo = document.getElementById('partyTrnNo');
+                if (partyTrnNo) { partyTrnNo.focus(); partyTrnNo.select(); }
+                return false;
+            }
+            
+            // Amount → back to Party Trn Date
+            if (activeEl.id === 'amount') {
+                var partyTrnDate = document.getElementById('partyTrnDate');
+                if (partyTrnDate) { partyTrnDate.focus(); }
+                return false;
+            }
+            
+            // Narration → back to Amount
+            if (activeEl.id === 'narration') {
+                var amount = document.getElementById('amount');
+                if (amount) { amount.focus(); amount.select(); }
+                return false;
+            }
+            
+            // TCS Amount → back to Narration
+            if (activeEl.id === 'tcsAmount') {
+                var narration = document.getElementById('narration');
+                if (narration) { narration.focus(); }
+                return false;
+            }
+            
+            // Round Off → back to TCS Amount
+            if (activeEl.id === 'roundOff') {
+                var tcsAmount = document.getElementById('tcsAmount');
+                if (tcsAmount) { tcsAmount.focus(); tcsAmount.select(); }
+                return false;
+            }
+            
+            // Update button → back to Round Off
+            if (activeEl.id === 'updateBtn') {
+                var roundOff = document.getElementById('roundOff');
+                if (roundOff) { roundOff.focus(); roundOff.select(); }
+                return false;
+            }
+            
+            // HSN amount → back to previous HSN row or Amount field
+            if (activeEl.classList.contains('hsn-amount')) {
+                var allHsnAmounts = Array.from(document.querySelectorAll('#hsnTableBody .hsn-amount'));
+                var currentIdx = allHsnAmounts.indexOf(activeEl);
+                
+                if (currentIdx > 0) {
+                    allHsnAmounts[currentIdx - 1].focus();
+                    allHsnAmounts[currentIdx - 1].select();
+                } else {
+                    var amount = document.getElementById('amount');
+                    if (amount) { amount.focus(); amount.select(); }
+                }
+                return false;
+            }
+            
+            // General input fields → navigate backward using FIELD_ORDER
+            if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT' || activeEl.tagName === 'TEXTAREA') {
+                navigateField(activeEl, -1);
+                return false;
+            }
+            
+            return false;
+        }
+        
+        // ============================================
+        // ENTER → FORWARD NAVIGATION
+        // ============================================
+        
+        // ---- Handle Browse button Enter → open Browse modal ----
+        if (activeEl.id === 'browseBtn') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            openCreditNotesModal();
+            return false;
+        }
+        
+        // Skip other buttons and links - let them work normally
+        if (activeEl.tagName === 'BUTTON' || activeEl.tagName === 'A') return;
+        
+        // ---- Handle Party Search Input Enter → select highlighted party ----
+        if (activeEl.id === 'partySearchInput') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var partyResults = document.getElementById('partySearchResults');
+            
+            // If dropdown is visible, select highlighted item
+            if (partyResults && partyResults.style.display === 'block') {
+                var activeItem = partyResults.querySelector('.list-group-item.active');
+                
+                if (activeItem) {
+                    // Click the highlighted item to select the party
+                    activeItem.click();
+                } else {
+                    // No item highlighted → highlight the first one
+                    var firstItem = partyResults.querySelector('.list-group-item');
+                    if (firstItem) {
+                        currentFocusIndex = 0;
+                        var allItems = partyResults.querySelectorAll('.list-group-item');
+                        highlightItem(allItems, 0);
+                    }
+                }
+            } else {
+                // Dropdown not visible → if party already selected, move to Salesman
+                var hiddenInput = document.getElementById('partySelect');
+                if (hiddenInput && hiddenInput.value) {
+                    setTimeout(function() {
+                        var salesmanSelect = document.getElementById('salesmanSelect');
+                        if (salesmanSelect) {
+                            salesmanSelect.focus();
+                            try {
+                                salesmanSelect.showPicker();
+                            } catch(err) {
+                                var event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+                                salesmanSelect.dispatchEvent(event);
+                            }
+                        }
+                    }, 50);
+                }
+            }
+            return false;
+        }
+        
+        // ---- Handle Search Credit Note No. Enter → trigger search, then move to Browse ----
+        if (activeEl.id === 'searchCreditNoteNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (activeEl.value.trim()) {
+                searchCreditNote();
+            }
+            
+            // Move cursor to Browse button
+            setTimeout(function() {
+                var browseBtn = document.getElementById('browseBtn');
+                if (browseBtn) {
+                    browseBtn.focus();
+                }
+            }, 50);
+            return false;
+        }
+        
+        // ---- Handle Date field Enter → jump to Reason ----
+        if (activeEl.id === 'creditNoteDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            activeEl.blur();
+            
+            setTimeout(function() {
+                var reasonSelect = document.getElementById('reason');
+                if (reasonSelect) {
+                    reasonSelect.focus();
+                    // Auto-open the select dropdown
+                    try {
+                        reasonSelect.showPicker();
+                    } catch(err) {
+                        var event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+                        reasonSelect.dispatchEvent(event);
+                    }
+                }
+            }, 50);
+            
+            return false;
+        }
+        
+        // ---- Handle Reason select Enter → jump to checked Party Type radio and trigger it ----
+        if (activeEl.id === 'reason') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var checkedRadio = document.querySelector('input[name="credit_party_type"]:checked');
+                if (checkedRadio) {
+                    checkedRadio.focus();
+                    checkedRadio.click();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Supplier/Customer radio Enter → jump to Party Name search ----
+        if (activeEl.id === 'partySupplier' || activeEl.id === 'partyCustomer') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var partySearch = document.getElementById('partySearchInput');
+                if (partySearch) {
+                    partySearch.focus();
+                    partySearch.select();
+                }
+            }, 50);
+            
+            return false;
+        }
+        
+        // ---- Handle Salesman select Enter → jump to Account Type radio ----
+        if (activeEl.id === 'salesmanSelect') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var checkedRadio = document.querySelector('input[name="debit_account_type"]:checked');
+                if (checkedRadio) {
+                    checkedRadio.focus();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Account Type radio Enter → jump to Account No ----
+        if (activeEl.id === 'accountPurchase' || activeEl.id === 'accountSale' || activeEl.id === 'accountGeneral') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var accountNo = document.getElementById('accountNo');
+                if (accountNo) {
+                    accountNo.focus();
+                    accountNo.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Account No Enter → jump to Inv. Ref. No. ----
+        if (activeEl.id === 'accountNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var invRefNo = document.getElementById('invRefNo');
+                if (invRefNo) {
+                    invRefNo.focus();
+                    invRefNo.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Inv. Ref. No. Enter → jump to Invoice Date ----
+        if (activeEl.id === 'invRefNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var invoiceDate = document.getElementById('invoiceDate');
+                if (invoiceDate) {
+                    invoiceDate.focus();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Invoice Date Enter → jump to GST Vno. ----
+        if (activeEl.id === 'invoiceDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var gstVno = document.getElementById('gstVno');
+                if (gstVno) {
+                    gstVno.focus();
+                    gstVno.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle GST Vno. Enter → jump to Party Trn. No. ----
+        if (activeEl.id === 'gstVno') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var partyTrnNo = document.getElementById('partyTrnNo');
+                if (partyTrnNo) {
+                    partyTrnNo.focus();
+                    partyTrnNo.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Party Trn. No. Enter → jump to Party Trn Date ----
+        if (activeEl.id === 'partyTrnNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var partyTrnDate = document.getElementById('partyTrnDate');
+                if (partyTrnDate) {
+                    partyTrnDate.focus();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Party Trn Date Enter → jump to Amount ----
+        if (activeEl.id === 'partyTrnDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var amount = document.getElementById('amount');
+                if (amount) {
+                    amount.focus();
+                    amount.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Amount field Enter → trigger Add Row ----
+        if (activeEl.id === 'amount') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Trigger Add Row
+            setTimeout(function() {
+                addHsnRow();
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Narration → allow normal textarea behavior ----
+        if (activeEl.id === 'narration') {
+            return; // Allow normal textarea Enter (newline)
+        }
+        
+        // ---- Handle TCS Amount Enter → jump to Round Off ----
+        if (activeEl.id === 'tcsAmount') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var roundOff = document.getElementById('roundOff');
+                if (roundOff) {
+                    roundOff.focus();
+                    roundOff.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Round Off Enter → jump to Update button ----
+        if (activeEl.id === 'roundOff') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                var updateBtn = document.getElementById('updateBtn');
+                if (updateBtn && !updateBtn.disabled) {
+                    updateBtn.focus();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle HSN row HSN Code field Enter → jump to Amount in same row ----
+        if (activeEl.name && activeEl.name.match(/items\[\d+\]\[hsn_code\]/)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var row = activeEl.closest('tr');
+            if (row) {
+                var amountField = row.querySelector('.hsn-amount');
+                if (amountField) {
+                    amountField.focus();
+                    amountField.select();
+                }
+            }
+            return false;
+        }
+        
+        // ---- Handle HSN row Amount field Enter → jump to GST% in same row ----
+        if (activeEl.classList.contains('hsn-amount')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var row = activeEl.closest('tr');
+            if (row) {
+                var gstField = row.querySelector('.hsn-gst');
+                if (gstField) {
+                    gstField.focus();
+                    gstField.select();
+                }
+            }
+            return false;
+        }
+        
+        // ---- Handle HSN row GST% field Enter → trigger Add Row ----
+        if (activeEl.classList.contains('hsn-gst')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Trigger GST calculation for current row first
+            var row = activeEl.closest('tr');
+            if (row) {
+                var rowIndex = row.getAttribute('data-row');
+                if (rowIndex !== null) {
+                    calculateGst(parseInt(rowIndex));
+                }
+            }
+            
+            // Then add a new row
+            setTimeout(function() {
+                addHsnRow();
+            }, 50);
+            
+            return false;
+        }
+        
+        // ---- General: Handle regular text/number inputs with Enter ----
+        if (activeEl.tagName === 'INPUT' && (activeEl.type === 'text' || activeEl.type === 'number' || activeEl.type === 'date')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            navigateField(activeEl, 1);
+            return false;
+        }
+        
+    }, true); // CAPTURE PHASE
+    
+    
+    // ==============================================
+    // Auto-advance on Reason Select change
+    // ==============================================
+    var reasonSelect = document.getElementById('reason');
+    if (reasonSelect) {
+        reasonSelect.addEventListener('change', function() {
+            setTimeout(function() {
+                var checkedRadio = document.querySelector('input[name="credit_party_type"]:checked');
+                if (checkedRadio) {
+                    checkedRadio.focus();
+                }
+            }, 30);
+        });
+    }
+    
+    // ==============================================
+    // Auto-advance on Salesman Select change
+    // ==============================================
+    var salesmanSelect = document.getElementById('salesmanSelect');
+    if (salesmanSelect) {
+        salesmanSelect.addEventListener('change', function() {
+            setTimeout(function() {
+                var checkedRadio = document.querySelector('input[name="debit_account_type"]:checked');
+                if (checkedRadio) {
+                    checkedRadio.focus();
+                }
+            }, 30);
+        });
+    }
+}
+
+// ============================================================
+// FIELD NAVIGATION HELPER
+// ============================================================
+function navigateField(currentElement, direction) {
+    var currentIndex = -1;
+    var currentId = currentElement.id;
+
+    // Map radio buttons to their group representative in FIELD_ORDER
+    if (currentElement.type === 'radio') {
+        if (currentElement.name === 'credit_party_type') {
+            currentIndex = FIELD_ORDER.indexOf('partySupplier');
+        } else if (currentElement.name === 'debit_account_type') {
+            currentIndex = FIELD_ORDER.indexOf('accountPurchase');
+        }
+    } else {
+        currentIndex = FIELD_ORDER.indexOf(currentId);
+    }
+
+    if (currentIndex === -1) return;
+
+    var nextIndex = currentIndex + direction;
+
+    if (nextIndex < 0) return;
+    if (nextIndex >= FIELD_ORDER.length) {
+        var updateBtn = document.getElementById('updateBtn');
+        if (updateBtn && !updateBtn.disabled) {
+            updateBtn.focus();
+        }
+        return;
+    }
+
+    var nextId = FIELD_ORDER[nextIndex];
+    var nextElement = document.getElementById(nextId);
+
+    // Handle radio groups: focus the checked radio
+    if (nextId === 'partySupplier' || nextId === 'accountPurchase') {
+        var groupName = (nextId === 'partySupplier') ? 'credit_party_type' : 'debit_account_type';
+        var checkedRadio = document.querySelector('input[name="' + groupName + '"]:checked');
+        if (checkedRadio) nextElement = checkedRadio;
+    }
+    
+    // Handle custom party search input
+    if (nextId === 'partySearchInput') {
+        var partySearch = document.getElementById('partySearchInput');
+        if (partySearch) {
+            partySearch.focus();
+            partySearch.select();
+        }
+        return;
+    }
+    
+    // Handle Update button
+    if (nextId === 'updateBtn') {
+        var updateBtn = document.getElementById('updateBtn');
+        if (updateBtn && !updateBtn.disabled) {
+            updateBtn.focus();
+        }
+        return;
+    }
+
+    if (!nextElement) {
+        // Skip to next field if element not found
+        navigateField({ id: nextId, type: 'text', name: '' }, direction);
+        return;
+    }
+
+    // Skip disabled, hidden, or readonly fields
+    if (nextElement.disabled || nextElement.offsetParent === null) {
+        navigateField({ id: nextId, type: nextElement.type, name: nextElement.name }, direction);
+        return;
+    }
+
+    if (nextElement.readOnly && nextElement.tagName !== 'SELECT' && nextElement.tagName !== 'TEXTAREA') {
+        navigateField({ id: nextId, type: nextElement.type, name: nextElement.name }, direction);
+        return;
+    }
+
+    nextElement.focus();
+
+    // Select text for input fields
+    if (nextElement.tagName === 'INPUT' && nextElement.select) {
+        nextElement.select();
+    }
+    
+    // Auto-open native selects
+    if (nextElement.tagName === 'SELECT') {
+        try {
+            nextElement.showPicker();
+        } catch(err) {
+            var event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            nextElement.dispatchEvent(event);
+        }
+    }
+}
+
+// ============================================================
+// BROWSE CREDIT NOTES MODAL - KEYBOARD NAVIGATION
+// ============================================================
+function initBrowseModalKeyboard() {
+    var browseSelectedIndex = -1;
+    
+    document.addEventListener('keydown', function(e) {
+        var creditNotesModal = document.getElementById('creditNotesModal');
+        if (!creditNotesModal || !creditNotesModal.classList.contains('show')) return;
+        
+        var tbody = document.getElementById('creditNotesModalBody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        // Filter out non-data rows (loading, empty messages)
+        rows = rows.filter(function(row) {
+            return row.querySelector('button') !== null;
+        });
+        
+        // Arrow Down → next row
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Blur search input
+            var searchInput = document.getElementById('modalSearchInput');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            
+            if (!rows.length) return;
+            
+            if (browseSelectedIndex < rows.length - 1) {
+                browseSelectedIndex++;
+            } else if (browseSelectedIndex === -1) {
+                browseSelectedIndex = 0;
+            }
+            highlightBrowseRow(rows, browseSelectedIndex);
+            return;
+        }
+        
+        // Arrow Up → previous row
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var searchInput = document.getElementById('modalSearchInput');
+            if (document.activeElement === searchInput) {
+                searchInput.blur();
+            }
+            
+            if (!rows.length) return;
+            
+            if (browseSelectedIndex > 0) {
+                browseSelectedIndex--;
+            } else if (browseSelectedIndex === -1 && rows.length > 0) {
+                browseSelectedIndex = 0;
+            }
+            highlightBrowseRow(rows, browseSelectedIndex);
+            return;
+        }
+        
+        // Enter → select highlighted row
+        if (e.key === 'Enter') {
+            var searchInput = document.getElementById('modalSearchInput');
+            if (document.activeElement === searchInput && browseSelectedIndex === -1) {
+                return; // Let search work normally
+            }
+            
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (!rows.length) return;
+            
+            if (browseSelectedIndex === -1 && rows.length > 0) {
+                browseSelectedIndex = 0;
+                highlightBrowseRow(rows, browseSelectedIndex);
+                return;
+            }
+            
+            if (browseSelectedIndex >= 0 && browseSelectedIndex < rows.length) {
+                var selectBtn = rows[browseSelectedIndex].querySelector('button');
+                if (selectBtn) selectBtn.click();
+            }
+            return;
+        }
+        
+        // Escape → close modal
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeCreditNotesModal();
+            browseSelectedIndex = -1;
+            return;
+        }
+        
+        // Any letter/number key → refocus search input
+        if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+            var searchInput = document.getElementById('modalSearchInput');
+            if (searchInput && document.activeElement !== searchInput) {
+                searchInput.focus();
+                browseSelectedIndex = -1;
+                highlightBrowseRow(rows, -1);
+            }
+        }
+    }, true);
+    
+    function highlightBrowseRow(rows, index) {
+        rows.forEach(function(row) {
+            row.style.backgroundColor = '';
+            row.style.fontWeight = '';
+            row.classList.remove('table-active');
+        });
+        if (index >= 0 && index < rows.length) {
+            rows[index].style.backgroundColor = '#cce5ff';
+            rows[index].style.fontWeight = 'bold';
+            rows[index].classList.add('table-active');
+            rows[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+    
+    // Reset selection when modal opens
+    var creditNotesModalEl = document.getElementById('creditNotesModal');
+    if (creditNotesModalEl) {
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.attributeName === 'class') {
+                    if (creditNotesModalEl.classList.contains('show')) {
+                        browseSelectedIndex = -1;
+                        setTimeout(function() {
+                            var searchInput = document.getElementById('modalSearchInput');
+                            if (searchInput) searchInput.focus();
+                        }, 150);
+                    } else {
+                        browseSelectedIndex = -1;
+                    }
+                }
+            });
+        });
+        observer.observe(creditNotesModalEl, { attributes: true, attributeFilter: ['class'] });
+    }
+}
+
+// ============================================================
+// ADJUSTMENT MODAL - KEYBOARD NAVIGATION
+// ============================================================
+function initAdjustmentModalKeyboard() {
+    var adjustmentModal = document.getElementById('adjustmentModal');
+    if (!adjustmentModal) return;
+    
+    document.addEventListener('keydown', function(e) {
+        if (!adjustmentModal.classList.contains('show')) return;
+        
+        var activeEl = document.activeElement;
+        
+        // Escape → close
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeAdjustmentModal();
+            return;
+        }
+        
+        // Handle adjustment inputs navigation
+        if (activeEl && activeEl.classList.contains('adjustment-input')) {
+            var inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+            var currentIdx = inputs.indexOf(activeEl);
+            
+            if (e.key === 'ArrowDown' || (e.key === 'Enter' && !e.shiftKey)) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                if (currentIdx >= 0 && currentIdx < inputs.length - 1) {
+                    inputs[currentIdx + 1].focus();
+                    inputs[currentIdx + 1].select();
+                } else {
+                    // Last input → focus Save button
+                    var saveBtn = adjustmentModal.querySelector('.btn-success');
+                    if (saveBtn) saveBtn.focus();
+                }
+                return;
+            }
+            
+            if (e.key === 'ArrowUp' || (e.key === 'Enter' && e.shiftKey)) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                if (currentIdx > 0) {
+                    inputs[currentIdx - 1].focus();
+                    inputs[currentIdx - 1].select();
+                }
+                return;
+            }
+        }
+        
+        // Handle button Enter
+        if (activeEl && activeEl.tagName === 'BUTTON' && adjustmentModal.contains(activeEl)) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                activeEl.click();
+                return;
+            }
+        }
+    }, true);
+    
+    // Auto-focus first input when modal opens
+    var adjustObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === 'class') {
+                if (adjustmentModal.classList.contains('show')) {
+                    setTimeout(function() {
+                        var firstInput = document.querySelector('.adjustment-input');
+                        if (firstInput) {
+                            firstInput.focus();
+                            firstInput.select();
+                        }
+                    }, 300);
+                }
+            }
+        });
+    });
+    adjustObserver.observe(adjustmentModal, { attributes: true, attributeFilter: ['class'] });
+}
+
+// --- Custom Party Search Logic ---
+function initPartySearch() {
+    const searchInput = document.getElementById('partySearchInput');
+    const hiddenInput = document.getElementById('partySelect');
+    const resultsContainer = document.getElementById('partySearchResults');
+
+    // Input Handler
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        hiddenInput.value = ''; // Clear ID while typing
+        
+        if (query.length === 0) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetchParties(query);
+        }, 300);
+    });
+
+    // Focus Handler - trigger search on focus
+    searchInput.addEventListener('focus', function() {
+        fetchParties(this.value.trim());
+    });
+
+    // Handle clicks outside to close dropdown
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = 'none';
         }
     });
+
+    // Keyboard navigation within search results
+    searchInput.addEventListener('keydown', function(e) {
+        if (resultsContainer.style.display === 'block') {
+            const items = resultsContainer.querySelectorAll('.list-group-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentFocusIndex++;
+                if (currentFocusIndex >= items.length) currentFocusIndex = 0;
+                highlightItem(items, currentFocusIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentFocusIndex--;
+                if (currentFocusIndex < 0) currentFocusIndex = items.length - 1;
+                highlightItem(items, currentFocusIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentFocusIndex > -1 && items[currentFocusIndex]) {
+                    items[currentFocusIndex].click();
+                }
+            }
+        }
+    });
+}
+
+function fetchParties(query) {
+    const searchUrl = '{{ route("admin.credit-note.search-parties") }}';
+    const resultsContainer = document.getElementById('partySearchResults');
+    
+    resultsContainer.innerHTML = '<div class="p-2 text-muted"><i class="bi bi-hourglass-split"></i> Searching...</div>';
+    resultsContainer.style.display = 'block';
+
+    fetch(`${searchUrl}?q=${encodeURIComponent(query)}&party_type=${currentPartyType}&page=1`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        renderPartyResults(data.results || []);
+    })
+    .catch(error => {
+        console.error('Error fetching parties:', error);
+        resultsContainer.innerHTML = '<div class="p-2 text-danger">Error loading results</div>';
+    });
+}
+
+function renderPartyResults(results) {
+    const resultsContainer = document.getElementById('partySearchResults');
+    resultsContainer.innerHTML = '';
+    currentFocusIndex = -1;
+
+    if (results.length === 0) {
+        resultsContainer.innerHTML = '<div class="p-2 text-muted">No results found</div>';
+        return;
+    }
+
+    results.forEach((party, index) => {
+        const item = document.createElement('a');
+        item.href = '#';
+        item.className = 'list-group-item list-group-item-action';
+        item.textContent = party.text || party.name;
+        item.dataset.id = party.id;
+        item.dataset.name = party.name;
+
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectParty(party);
+        });
+
+        resultsContainer.appendChild(item);
+    });
+}
+
+function selectParty(party) {
+    document.getElementById('partySearchInput').value = party.text || party.name;
+    document.getElementById('partySelect').value = party.id;
+    document.getElementById('partySearchResults').style.display = 'none';
+    window.selectedPartyName = party.text || party.name;
+    
+    // After selecting party, move cursor to Salesman field and open dropdown
+    setTimeout(function() {
+        var salesmanSelect = document.getElementById('salesmanSelect');
+        if (salesmanSelect) {
+            salesmanSelect.focus();
+            try {
+                salesmanSelect.showPicker();
+            } catch(err) {
+                var event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+                salesmanSelect.dispatchEvent(event);
+            }
+        }
+    }, 50);
+}
+
+function highlightItem(items, index) {
+    items.forEach(item => item.classList.remove('active'));
+    if (items[index]) {
+        items[index].classList.add('active');
+        items[index].scrollIntoView({ block: 'nearest' });
+    }
 }
 
 function updateDayName() {
@@ -478,19 +1599,20 @@ function updateDayName() {
 }
 
 function updatePartyDropdown() {
+    const searchInput = document.getElementById('partySearchInput');
+    const hiddenInput = document.getElementById('partySelect');
+    
+    searchInput.value = '';
+    hiddenInput.value = '';
+    document.getElementById('partySearchResults').style.display = 'none';
+    
     const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
     
-    // Clear current selection
-    $('#partySelect').val(null).trigger('change');
-    
-    // Update placeholder and help text
-    const helpText = document.querySelector('#partySelect + small');
+    const helpText = document.querySelector('.party-search-container + small');
     if (helpText) {
         helpText.textContent = partyType === 'S' ? 'Start typing to search for suppliers' : 'Start typing to search for customers';
     }
-    
-    // Reinitialize Select2 with updated party type
-    initPartySelect2();
+    searchInput.placeholder = partyType === 'S' ? 'Search supplier...' : 'Search customer...';
 }
 
 function searchCreditNote() {
@@ -557,31 +1679,23 @@ function populateCreditNoteData(cn) {
         document.getElementById('partySupplier').checked = true;
     }
     
-    // Initialize Select2 with the current party type
-    initPartySelect2();
+    // Pre-select the party in custom search input
+    if (cn.credit_party_id && cn.credit_party_name) {
+        document.getElementById('partySearchInput').value = cn.credit_party_name;
+        document.getElementById('partySelect').value = cn.credit_party_id;
+        window.selectedPartyName = cn.credit_party_name;
+        console.log('Pre-selected party:', cn.credit_party_name, cn.credit_party_id);
+    }
     
-    // Pre-select the party in Select2 - use setTimeout to ensure Select2 is fully initialized
-    setTimeout(function() {
-        if (cn.credit_party_id && cn.credit_party_name) {
-            const $partySelect = $('#partySelect');
-            // Clear existing options first
-            $partySelect.empty();
-            // Create and append the option
-            const newOption = new Option(cn.credit_party_name, cn.credit_party_id, true, true);
-            $partySelect.append(newOption).trigger('change');
-            console.log('Pre-selected party:', cn.credit_party_name, cn.credit_party_id);
-        }
-        
-        // Set salesman and reason using jQuery for Select2 compatibility
-        if (cn.salesman_id) {
-            $('#salesmanSelect').val(cn.salesman_id).trigger('change');
-            console.log('Pre-selected salesman:', cn.salesman_id);
-        }
-        if (cn.reason) {
-            $('#reason').val(cn.reason).trigger('change');
-            console.log('Pre-selected reason:', cn.reason);
-        }
-    }, 100);
+    // Set salesman and reason
+    if (cn.salesman_id) {
+        document.getElementById('salesmanSelect').value = cn.salesman_id;
+        console.log('Pre-selected salesman:', cn.salesman_id);
+    }
+    if (cn.reason) {
+        document.getElementById('reason').value = cn.reason;
+        console.log('Pre-selected reason:', cn.reason);
+    }
     
     // Debit account
     if (cn.debit_account_type === 'S') {
@@ -653,6 +1767,15 @@ function addHsnRow() {
     
     tbody.appendChild(row);
     hsnRowCount++;
+    
+    // Auto-focus the first field (HSN Code) of the newly added row
+    setTimeout(function() {
+        var firstInput = row.querySelector('input[type="text"]');
+        if (firstInput) {
+            firstInput.focus();
+            firstInput.select();
+        }
+    }, 50);
 }
 
 function addHsnRowWithData(item) {
@@ -758,10 +1881,8 @@ function updateCreditNote() {
     });
     
     const partyType = document.querySelector('input[name="credit_party_type"]:checked').value;
-    // Get party name from Select2 selected data
-    const $partySelect = $('#partySelect');
-    const selectedData = $partySelect.select2('data')[0];
-    const partyName = selectedData ? selectedData.text : '';
+    // Get party name from custom search input
+    const partyName = document.getElementById('partySearchInput').value || window.selectedPartyName || '';
     
     const data = {
         header: {
@@ -933,6 +2054,14 @@ function selectCreditNoteFromModal(creditNoteNo) {
     // Set the credit note number and search
     document.getElementById('searchCreditNoteNo').value = creditNoteNo;
     searchCreditNote();
+    
+    // After selection, move cursor to Date field
+    setTimeout(function() {
+        var dateField = document.getElementById('creditNoteDate');
+        if (dateField) {
+            dateField.focus();
+        }
+    }, 300);
 }
 
 // ============ ADJUSTMENT MODAL FUNCTIONS ============

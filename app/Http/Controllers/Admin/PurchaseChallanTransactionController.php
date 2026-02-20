@@ -334,6 +334,7 @@ class PurchaseChallanTransactionController extends Controller
                         'p_rate' => $item->purchase_rate,
                         'discount_percent' => $item->discount_percent,
                         'mrp' => $item->mrp,
+                        'sale_rate' => $item->sale_rate ?? 0,
                         's_rate' => $item->sale_rate ?? 0,
                         'cgst_percent' => $item->cgst_percent,
                         'sgst_percent' => $item->sgst_percent,

@@ -334,6 +334,10 @@
         outline: 2px solid #0d6efd;
         outline-offset: 2px;
     }
+    .pending-orders-footer button.kb-active {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+    }
     
     /* Action buttons styling */
     #itemsTableBody td:last-child {
@@ -948,7 +952,7 @@
             </div>
         </div>
         <div class="pending-orders-footer" style="padding: 10px 15px; text-align: right; background: #f8f9fa;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeMrpDetailsModal()" style="margin-right: 10px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="cancelMrpDetailsBtn" onclick="closeMrpDetailsModal()" style="margin-right: 10px;">
                 <i class="bi bi-x-circle"></i> Cancel
             </button>
             <button type="button" class="btn btn-primary btn-sm" id="saveMrpDetailsBtn">
@@ -1164,6 +1168,10 @@ document.addEventListener('DOMContentLoaded', function() {
         sRateField.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
                 console.log('S.Rate Enter pressed');
                 console.log('currentActiveRow:', currentActiveRow);
                 console.log('isRowSelected before:', isRowSelected);
@@ -1180,27 +1188,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Calculate and save GST amounts for current row before moving
                 calculateAndSaveGstForRow(currentActiveRow);
                 
-                // Small delay to ensure calculation is saved
+                // Create new row and move cursor to code for loop flow
                 setTimeout(() => {
-                    // Select next row (full row selection with blue highlight)
-                    const rows = document.querySelectorAll('#itemsTableBody tr');
-                    const nextRowIndex = currentActiveRow + 1;
-                    console.log('nextRowIndex:', nextRowIndex, 'Total rows:', rows.length);
-                    
-                    if (nextRowIndex < rows.length) {
-                        // Prevent default behavior completely
-                        e.stopPropagation();
-                        e.stopImmediatePropagation();
-                        
-                        // Select next row with full row highlight (blue background)
-                        selectRow(nextRowIndex);
-                        
-                        console.log('After moving to next row - currentActiveRow:', currentActiveRow);
-                        console.log('isRowSelected:', isRowSelected);
-                    } else {
-                        console.log('No more rows available');
+                    if (typeof addNewRow === 'function') {
+                        let newIndex = addNewRow();
+                        if (!Number.isInteger(newIndex)) {
+                            newIndex = document.querySelectorAll('#itemsTableBody tr').length - 1;
+                        }
+                        setTimeout(() => {
+                            const newRow = document.querySelectorAll('#itemsTableBody tr')[newIndex];
+                            const codeInput = newRow ? newRow.querySelector('input[name*="[code]"]') : null;
+                            if (codeInput) {
+                                codeInput.focus();
+                                if (typeof codeInput.select === 'function') codeInput.select();
+                            }
+                        }, 50);
                     }
-                }, 100);
+                }, 80);
             }
         });
     }
@@ -1839,9 +1843,14 @@ function openMrpDetailsModal() {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
-        // Focus on MRP input
-        document.getElementById('mrp_value').focus();
-        document.getElementById('mrp_value').select();
+        const firstField = document.getElementById('mrp_case');
+        if (firstField) {
+            firstField.focus();
+            firstField.select();
+        }
+        window.__pcTxnMrpMode = 'fields';
+        window.__pcTxnMrpFieldIndex = 0;
+        window.__pcTxnMrpFooterIndex = 0;
     }, 10);
 }
 
@@ -1849,6 +1858,11 @@ function openMrpDetailsModal() {
 function closeMrpDetailsModal() {
     const modal = document.getElementById('mrpDetailsModal');
     const backdrop = document.getElementById('mrpDetailsBackdrop');
+    const buttons = [document.getElementById('cancelMrpDetailsBtn'), document.getElementById('saveMrpDetailsBtn')].filter(Boolean);
+    buttons.forEach(btn => btn.classList.remove('kb-active'));
+    window.__pcTxnMrpMode = 'fields';
+    window.__pcTxnMrpFieldIndex = 0;
+    window.__pcTxnMrpFooterIndex = 0;
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
@@ -2063,6 +2077,12 @@ function focusFirstInput(rowIndex) {
 
 // Global keyboard listener for row selection mode
 document.addEventListener('keydown', function(e) {
+    const mrpModal = document.getElementById('mrpDetailsModal');
+    const pendingModal = document.getElementById('pendingOrdersModal');
+    if ((mrpModal && mrpModal.classList.contains('show')) || (pendingModal && pendingModal.classList.contains('show'))) {
+        return;
+    }
+
     // Only handle if row is selected (not in cell edit mode)
     if (isRowSelected) {
         const rows = document.querySelectorAll('#itemsTableBody tr');
@@ -2334,15 +2354,22 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
                 }
                 // Check if this is the Dis% field
                 else if (input.classList.contains('item-dis-percent')) {
-                    console.log('Dis% Enter pressed, moving to S.Rate in calculation section');
-                    console.log('Current row index:', rowIndex);
-                    // Update current active row before moving to S.Rate
                     currentActiveRow = rowIndex;
-                    
-                    // Calculate and save GST amounts for this row
-                    calculateAndSaveGstForRow(rowIndex);
-                    
-                    // Move to S.Rate in calculation section
+                    if (typeof calculateRowAmount === 'function') {
+                        calculateRowAmount(rowIndex);
+                    }
+                    const ftRateField = row.querySelector('.item-ft-rate, input[name*="[ft_rate]"], input[name*="[mrp]"]');
+                    if (ftRateField && !ftRateField.disabled) {
+                        ftRateField.focus();
+                        if (typeof ftRateField.select === 'function') ftRateField.select();
+                    }
+                }
+                // Check if this is the F.T. Rate field
+                else if (input.classList.contains('item-ft-rate') || (input.name || '').includes('[ft_rate]') || (input.name || '').includes('[mrp]')) {
+                    currentActiveRow = rowIndex;
+                    if (typeof calculateRowAmount === 'function') {
+                        calculateRowAmount(rowIndex);
+                    }
                     const sRateField = document.getElementById('calc_s_rate');
                     if (sRateField) {
                         sRateField.focus();
@@ -2675,6 +2702,7 @@ function savePurchaseChallan() {
         const itemName = row.querySelector(`input[name="items[${index}][name]"]`)?.value?.trim();
         const qty = parseFloat(row.querySelector(`input[name="items[${index}][qty]"]`)?.value) || 0;
         const purRate = parseFloat(row.querySelector(`input[name="items[${index}][pur_rate]"]`)?.value) || 0;
+        const ftRate = parseFloat(row.querySelector(`input[name="items[${index}][ft_rate]"]`)?.value) || 0;
         
         // Only add rows that have meaningful data
         // Must have: (item_code OR item_name) AND (qty > 0 OR pur_rate > 0)
@@ -2698,7 +2726,9 @@ function savePurchaseChallan() {
                 amount: parseFloat(row.querySelector(`input[name="items[${index}][amount]"]`)?.value) || 0,
                 
                 // Rates from rowGstData (user-modified via MRP modal or from item master)
-                s_rate: (calculatedData.s_rate !== undefined && calculatedData.s_rate !== null) ? parseFloat(calculatedData.s_rate) : 0,
+                s_rate: (calculatedData.s_rate !== undefined && calculatedData.s_rate !== null)
+                    ? parseFloat(calculatedData.s_rate)
+                    : ftRate,
                 ws_rate: (calculatedData.ws_rate !== undefined && calculatedData.ws_rate !== null) ? parseFloat(calculatedData.ws_rate) : 0,
                 spl_rate: (calculatedData.spl_rate !== undefined && calculatedData.spl_rate !== null) ? parseFloat(calculatedData.spl_rate) : 0,
                 
@@ -2870,6 +2900,7 @@ function addNewRow() {
     });
     
     console.log(`New row ${newIndex} added`);
+    return newIndex;
 }
 
 // Delete row from table (uses currentActiveRow if no index provided)
@@ -2944,8 +2975,14 @@ function showBillDetails() {
 
 // Open Insert Item Modal
 function openInsertItemModal(rowIndex) {
-    console.log('Opening insert modal for row:', rowIndex);
+    console.log('Opening item modal for row:', rowIndex);
     insertRowIndex = rowIndex;
+
+    // Prefer reusable shared item component modal
+    if (typeof openItemModal_reusableItemsModal === 'function') {
+        openItemModal_reusableItemsModal();
+        return;
+    }
     
     const modal = document.getElementById('insertItemModal');
     const backdrop = document.getElementById('insertItemBackdrop');
@@ -2982,6 +3019,11 @@ function openInsertItemModal(rowIndex) {
 
 // Close Insert Item Modal
 function closeInsertItemModal() {
+    // Prefer reusable shared item component modal
+    if (typeof closeItemModal_reusableItemsModal === 'function') {
+        closeItemModal_reusableItemsModal();
+    }
+
     const modal = document.getElementById('insertItemModal');
     const backdrop = document.getElementById('insertItemBackdrop');
     
@@ -3740,7 +3782,7 @@ document.addEventListener('DOMContentLoaded', function() {
     'use strict';
 
     function isPurchaseChallanTxnModalOpen() {
-        const ids = ['pendingOrdersModal', 'mrpDetailsModal', 'insertItemModal', 'alertModal'];
+        const ids = ['pendingOrdersModal', 'mrpDetailsModal', 'insertItemModal', 'reusableItemsModal', 'reusableBatchModal', 'alertModal'];
         return ids.some(function(id) {
             const el = document.getElementById(id);
             return !!(el && (el.classList.contains('show') || el.style.display === 'block'));
@@ -3819,6 +3861,124 @@ document.addEventListener('DOMContentLoaded', function() {
                 const idx = Number.isInteger(window.__pcTxnAlertBtnIndex) ? window.__pcTxnAlertBtnIndex : buttons.length - 1;
                 const btn = buttons[idx];
                 if (btn) btn.click();
+            }
+        }, true);
+    }
+
+    function isMrpDetailsModalOpen() {
+        const modal = document.getElementById('mrpDetailsModal');
+        return !!(modal && modal.classList.contains('show') && modal.style.display !== 'none');
+    }
+
+    function getMrpModalFields() {
+        return [
+            document.getElementById('mrp_case'),
+            document.getElementById('mrp_box'),
+            document.getElementById('mrp_value'),
+            document.getElementById('mrp_pur_rate'),
+            document.getElementById('mrp_sale_rate'),
+            document.getElementById('mrp_ws_rate'),
+            document.getElementById('mrp_spl_rate'),
+            document.getElementById('mrp_excise')
+        ].filter(Boolean);
+    }
+
+    function getMrpModalButtons() {
+        return [
+            document.getElementById('cancelMrpDetailsBtn'),
+            document.getElementById('saveMrpDetailsBtn')
+        ].filter(Boolean);
+    }
+
+    function focusMrpModalField(index) {
+        const fields = getMrpModalFields();
+        if (!fields.length) return;
+        const safeIndex = Math.max(0, Math.min(index, fields.length - 1));
+        fields[safeIndex].focus();
+        if (typeof fields[safeIndex].select === 'function') {
+            fields[safeIndex].select();
+        }
+        window.__pcTxnMrpMode = 'fields';
+        window.__pcTxnMrpFieldIndex = safeIndex;
+    }
+
+    function setMrpModalActiveButton(index, focus) {
+        const buttons = getMrpModalButtons();
+        if (!buttons.length) return;
+        const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+        buttons.forEach(function(btn, i) {
+            btn.classList.toggle('kb-active', i === safeIndex);
+        });
+        window.__pcTxnMrpMode = 'footer';
+        window.__pcTxnMrpFooterIndex = safeIndex;
+        if (focus !== false) {
+            buttons[safeIndex].focus();
+        }
+    }
+
+    function initMrpModalKeyboard() {
+        if (window.__pcTxnMrpKbBound) return;
+        window.__pcTxnMrpKbBound = true;
+        window.__pcTxnMrpMode = 'fields';
+        window.__pcTxnMrpFieldIndex = 0;
+        window.__pcTxnMrpFooterIndex = 0;
+
+        window.addEventListener('keydown', function(e) {
+            if (!isMrpDetailsModalOpen()) return;
+            if (!['Enter', 'ArrowLeft', 'ArrowRight', 'Tab', 'Escape'].includes(e.key)) return;
+
+            const fields = getMrpModalFields();
+            const buttons = getMrpModalButtons();
+            const active = document.activeElement;
+            const fieldIndex = fields.indexOf(active);
+            const buttonIndex = buttons.indexOf(active);
+
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                if (typeof closeMrpDetailsModal === 'function') closeMrpDetailsModal();
+                return;
+            }
+
+            if (e.key === 'Enter' && fieldIndex >= 0) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+
+                if (fieldIndex < fields.length - 1) {
+                    focusMrpModalField(fieldIndex + 1);
+                } else {
+                    setMrpModalActiveButton(0, true);
+                }
+                return;
+            }
+
+            const inFooter = (window.__pcTxnMrpMode === 'footer') || (buttonIndex >= 0);
+            if (!inFooter) return;
+
+            if (e.key === 'ArrowRight' || (e.key === 'Tab' && !e.shiftKey)) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                setMrpModalActiveButton((Number.isInteger(window.__pcTxnMrpFooterIndex) ? window.__pcTxnMrpFooterIndex : 0) + 1, true);
+                return;
+            }
+
+            if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                setMrpModalActiveButton((Number.isInteger(window.__pcTxnMrpFooterIndex) ? window.__pcTxnMrpFooterIndex : 0) - 1, true);
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+                const idx = Number.isInteger(window.__pcTxnMrpFooterIndex) ? window.__pcTxnMrpFooterIndex : 0;
+                if (buttons[idx]) buttons[idx].click();
             }
         }, true);
     }
@@ -4175,6 +4335,40 @@ document.addEventListener('DOMContentLoaded', function() {
             if (isPurchaseChallanTxnModalOpen()) return;
             const target = e.target;
             if (!target) return;
+
+            if (target.id === 'calc_s_rate') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+
+                if (currentActiveRow !== null && currentActiveRow !== undefined) {
+                    const sRateValue = parseFloat(target.value) || 0;
+                    if (!rowGstData[currentActiveRow]) rowGstData[currentActiveRow] = {};
+                    rowGstData[currentActiveRow].s_rate = sRateValue;
+                }
+                if (typeof calculateAndSaveGstForRow === 'function') {
+                    calculateAndSaveGstForRow(currentActiveRow);
+                }
+
+                if (typeof addNewRow === 'function') {
+                    let newIndex = addNewRow();
+                    if (!Number.isInteger(newIndex)) {
+                        newIndex = document.querySelectorAll('#itemsTableBody tr').length - 1;
+                    }
+                    setTimeout(function() {
+                        const newRow = document.querySelectorAll('#itemsTableBody tr')[newIndex];
+                        const codeInput = newRow ? newRow.querySelector('input[name*="[code]"]') : null;
+                        if (codeInput) {
+                            codeInput.focus();
+                            if (typeof codeInput.select === 'function') codeInput.select();
+                        }
+                    }, 50);
+                }
+                return;
+            }
+
             const row = target.closest('#itemsTableBody tr');
             if (!row) return;
             if (target.readOnly || target.disabled) return;
@@ -4196,17 +4390,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
-                if (typeof calculateAndSaveGstForRow === 'function') calculateAndSaveGstForRow(rowIndex);
-                addNewRow();
+                const ftRateInput = row.querySelector('.item-ft-rate, input[name*="[ft_rate]"], input[name*="[mrp]"]');
+                if (ftRateInput) {
+                    ftRateInput.focus();
+                    if (typeof ftRateInput.select === 'function') ftRateInput.select();
+                }
+                return;
+            }
 
-                setTimeout(function() {
-                    const newRow = document.querySelectorAll('#itemsTableBody tr')[rowIndex + 1];
-                    const codeInput = newRow ? newRow.querySelector('input[name*="[code]"]') : null;
-                    if (codeInput) {
-                        codeInput.focus();
-                        if (typeof codeInput.select === 'function') codeInput.select();
-                    }
-                }, 80);
+            if (fieldName.includes('[ft_rate]') || fieldName.includes('[mrp]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof e.stopImmediatePropagation === 'function') {
+                    e.stopImmediatePropagation();
+                }
+                if (typeof calculateRowAmount === 'function') calculateRowAmount(rowIndex);
+                if (typeof calculateAndSaveGstForRow === 'function') calculateAndSaveGstForRow(rowIndex);
+                const sRateField = document.getElementById('calc_s_rate');
+                if (sRateField) {
+                    sRateField.focus();
+                    if (typeof sRateField.select === 'function') sRateField.select();
+                }
                 return;
             }
 
@@ -4258,6 +4462,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         initHeaderKeyboardFlow();
         initPendingOrdersModalKeyboard();
+        initMrpModalKeyboard();
         initAlertModalKeyboard();
         initTableEnterFallback();
         initCtrlSSaveShortcut();
