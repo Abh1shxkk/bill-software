@@ -41,11 +41,15 @@
                 </div>
                 <div class="col-md-3">
                     <label for="reason" class="form-label">Reason</label>
-                    <select class="form-select" id="reason" name="reason">
-                        <option value="">Select Reason</option>
-                        <option value="Rate Diff.">Rate Diff.</option>
-                        <option value="Other">Other</option>
-                    </select>
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="reasonDisplay" placeholder="Select Reason" readonly style="cursor: pointer; background-color: #fff;">
+                        <input type="hidden" id="reason" name="reason">
+                        <i class="bi bi-chevron-down position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="pointer-events: none;"></i>
+                        <div id="reasonOptions" class="list-group position-absolute w-100 shadow-sm start-0 custom-options" style="display:none; z-index: 1050; border: 1px solid #dee2e6; max-height: 200px; overflow-y: auto;">
+                            <a href="#" class="list-group-item list-group-item-action py-2" data-value="Rate Diff.">Rate Diff.</a>
+                            <a href="#" class="list-group-item list-group-item-action py-2" data-value="Other">Other</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -74,19 +78,28 @@
                             </div>
                             <div class="col-12">
                                 <label for="partySelect" class="form-label">Party Name <span class="text-danger">*</span></label>
-                                <select class="form-select no-select2" id="partySelect" name="debit_party_id">
-                                    <option value="">Type to search...</option>
-                                </select>
+                                <div class="position-relative party-search-container">
+                                    <!-- Visual Input for searching -->
+                                    <input type="text" class="form-control" id="partySearchInput" placeholder="Type to search..." autocomplete="off">
+                                    <!-- Hidden Input for actual value submission -->
+                                    <input type="hidden" id="partySelect" name="debit_party_id">
+                                    <!-- Results Dropdown -->
+                                    <div id="partySearchResults" class="list-group position-absolute w-100 shadow-sm start-0" style="display:none; z-index: 1050; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #ddd;"></div>
+                                </div>
                                 <small class="text-muted">Start typing to search for suppliers</small>
                             </div>
                             <div class="col-md-6">
                                 <label for="salesmanSelect" class="form-label">Sales Man</label>
-                                <select class="form-select" id="salesmanSelect" name="salesman_id">
-                                    <option value="">Select Salesman</option>
-                                    @foreach($salesmen as $salesman)
-                                        <option value="{{ $salesman->id }}">{{ $salesman->name }}</option>
-                                    @endforeach
-                                </select>
+                                <div class="position-relative">
+                                    <input type="text" class="form-control" id="salesmanDisplay" placeholder="Select Salesman" readonly style="cursor: pointer; background-color: #fff;">
+                                    <input type="hidden" id="salesmanSelect" name="salesman_id">
+                                    <i class="bi bi-chevron-down position-absolute top-50 end-0 translate-middle-y me-3 text-muted" style="pointer-events: none;"></i>
+                                    <div id="salesmanOptions" class="list-group position-absolute w-100 shadow-sm start-0 custom-options" style="display:none; z-index: 1050; border: 1px solid #dee2e6; max-height: 200px; overflow-y: auto;">
+                                        @foreach($salesmen as $salesman)
+                                            <a href="#" class="list-group-item list-group-item-action py-2" data-value="{{ $salesman->id }}">{{ $salesman->name }}</a>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -153,7 +166,7 @@
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-header bg-info text-white py-2 d-flex justify-content-between align-items-center">
             <h6 class="mb-0"><i class="bi bi-table me-2"></i> HSN Details</h6>
-            <button type="button" class="btn btn-light btn-sm" onclick="openHsnModal()">
+            <button type="button" id="insertHsnBtn" class="btn btn-light btn-sm" onclick="openHsnModal()">
                 <i class="bi bi-plus-circle me-1"></i> Insert
             </button>
         </div>
@@ -338,11 +351,36 @@ let hsnRowCount = 0;
 let hsnCodesData = [];
 let currentPartyType = 'S'; // S = Supplier, C = Customer
 
+// ============================================================
+// FIELD NAVIGATION ORDER for Enter Key
+// ============================================================
+const FIELD_ORDER = [
+    'debitNoteDate',
+    'reasonDisplay',
+    'partySupplier',
+    'partySearchInput',
+    'salesmanDisplay',
+    'accountPurchase',
+    'accountNo',
+    'invRefNo',
+    'invoiceDate',
+    'gstVno',
+    'partyTrnNo',
+    'partyTrnDate',
+    'amount',
+    'narration',
+    'tcsAmount',
+    'roundOff'
+];
+
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     
-    // Initialize Select2 AJAX for party dropdown
-    initPartySelect2();
+    // Initialize Custom Party Search (Replacing Select2)
+    initPartySearch();
+    
+    // Initialize keyboard navigation
+    initKeyboardNavigation();
     
     document.getElementById('debitNoteDate').addEventListener('change', updateDayName);
     
@@ -359,91 +397,305 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load HSN codes
     loadHsnCodes();
     
-    // Close modal on Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') closeHsnModal();
-    });
+    // Auto-focus date field on page load
+    setTimeout(function() {
+        const dateField = document.getElementById('debitNoteDate');
+        if (dateField) dateField.focus();
+    }, 300);
+    
+    initCustomDropdowns();
 });
 
-// Initialize Select2 with AJAX for party dropdown
-function initPartySelect2() {
-    const $partySelect = $('#partySelect');
-    
-    // Destroy existing Select2 if any
-    if ($partySelect.hasClass('select2-hidden-accessible')) {
-        $partySelect.select2('destroy');
-    }
-    
-    // Clear the select
-    $partySelect.empty().append('<option value="">Type to search...</option>');
-    
-    const searchUrl = '{{ route("admin.debit-note.search-parties") }}';
-    console.log('Initializing Party Select2 with URL:', searchUrl, 'Party Type:', currentPartyType);
-    
-    $partySelect.select2({
-        theme: 'bootstrap-5',
-        width: '100%',
-        placeholder: currentPartyType === 'S' ? 'Search supplier...' : 'Search customer...',
-        allowClear: true,
-        minimumInputLength: 0,
-        ajax: {
-            url: searchUrl,
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                console.log('Making AJAX request with:', params.term, currentPartyType);
-                return {
-                    q: params.term || '',
-                    party_type: currentPartyType,
-                    page: params.page || 1
-                };
-            },
-            processResults: function(data, params) {
-                console.log('Received results:', data);
-                params.page = params.page || 1;
-                return {
-                    results: data.results || [],
-                    pagination: {
-                        more: data.pagination ? data.pagination.more : false
-                    }
-                };
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error, xhr.responseText);
-            },
-            cache: true
-        },
-        language: {
-            searching: function() {
-                return 'Searching...';
-            },
-            noResults: function() {
-                return 'No results found';
-            },
-            loadingMore: function() {
-                return 'Loading more...';
-            },
-            errorLoading: function() {
-                return 'Error loading results';
+function initCustomDropdowns() {
+    // Reason Dropdown Helper
+    var reasonDisplay = document.getElementById('reasonDisplay');
+    var reasonOptions = document.getElementById('reasonOptions');
+    var reasonHidden = document.getElementById('reason');
+
+    if (reasonDisplay && reasonOptions) {
+        reasonDisplay.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var isShowing = reasonOptions.style.display === 'block';
+            document.querySelectorAll('.list-group.position-absolute').forEach(el => {
+                if(el.id !== 'partySearchResults') el.style.display = 'none';
+            });
+            reasonOptions.style.display = isShowing ? 'none' : 'block';
+        });
+
+        reasonOptions.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                e.stopPropagation();
+                reasonHidden.value = e.target.getAttribute('data-value');
+                reasonDisplay.value = e.target.textContent.trim();
+                reasonOptions.style.display = 'none';
+                
+                // Trigger transition
+                setTimeout(function() {
+                    const checkedRadio = document.querySelector('input[name="debit_party_type"]:checked');
+                    if (checkedRadio) checkedRadio.focus();
+                }, 30);
             }
+        });
+    }
+
+    // Salesman Dropdown Helper
+    var salesmanDisplay = document.getElementById('salesmanDisplay');
+    var salesmanOptions = document.getElementById('salesmanOptions');
+    var salesmanHidden = document.getElementById('salesmanSelect');
+
+    if (salesmanDisplay && salesmanOptions) {
+        salesmanDisplay.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var isShowing = salesmanOptions.style.display === 'block';
+            document.querySelectorAll('.list-group.position-absolute').forEach(el => {
+                if(el.id !== 'partySearchResults') el.style.display = 'none';
+            });
+            salesmanOptions.style.display = isShowing ? 'none' : 'block';
+        });
+
+        salesmanOptions.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                e.stopPropagation();
+                salesmanHidden.value = e.target.getAttribute('data-value');
+                salesmanDisplay.value = e.target.textContent.trim();
+                salesmanOptions.style.display = 'none';
+                
+                // Trigger transition
+                setTimeout(function() {
+                    const checkedRadio = document.querySelector('input[name="credit_account_type"]:checked');
+                    if (checkedRadio) checkedRadio.focus();
+                }, 30);
+            }
+        });
+    }
+
+    // Close options when clicking outside
+    document.addEventListener('click', function(e) {
+        if (reasonDisplay && !reasonDisplay.contains(e.target) && !reasonOptions.contains(e.target)) {
+            reasonOptions.style.display = 'none';
         }
-    }).on('select2:select', function(e) {
-        const selectedData = e.params.data;
-        if (selectedData) {
-            console.log('Selected party:', selectedData);
+        if (salesmanDisplay && !salesmanDisplay.contains(e.target) && !salesmanOptions.contains(e.target)) {
+            salesmanOptions.style.display = 'none';
+        }
+    });
+
+    // Keyboard navigation within custom options
+    function setupOptionsKeys(displayEl, optionsEl, hiddenInput) {
+        if (!displayEl || !optionsEl) return;
+        
+        displayEl.addEventListener('keydown', function(e) {
+            var isShowing = optionsEl.style.display === 'block';
+            
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isShowing) {
+                    optionsEl.style.display = 'block';
+                    var firstOpt = optionsEl.querySelector('.list-group-item');
+                    if (firstOpt) {
+                        optionsEl.querySelectorAll('.list-group-item').forEach(i => i.classList.remove('active'));
+                        firstOpt.classList.add('active');
+                    }
+                    return;
+                }
+                
+                var items = Array.from(optionsEl.querySelectorAll('.list-group-item'));
+                var activeIdx = items.findIndex(i => i.classList.contains('active'));
+                
+                if (activeIdx === -1) {
+                    activeIdx = 0;
+                } else if (e.key === 'ArrowDown') {
+                    activeIdx = (activeIdx + 1) % items.length;
+                } else {
+                    activeIdx = (activeIdx - 1 + items.length) % items.length;
+                }
+                
+                items.forEach(i => i.classList.remove('active'));
+                items[activeIdx].classList.add('active');
+                items[activeIdx].scrollIntoView({ block: 'nearest' });
+            }
+        });
+    }
+
+    setupOptionsKeys(reasonDisplay, reasonOptions, reasonHidden);
+    setupOptionsKeys(salesmanDisplay, salesmanOptions, salesmanHidden);
+}
+
+// --- Custom Party Search Logic (Replacing Select2) ---
+let searchTimeout = null;
+let currentFocusIndex = -1; // For search results navigation
+
+function initPartySearch() {
+    const searchInput = document.getElementById('partySearchInput');
+    const hiddenInput = document.getElementById('partySelect');
+    const resultsContainer = document.getElementById('partySearchResults');
+    
+    console.log('Initializing Party Search...');
+    console.log('Search Input:', searchInput);
+    console.log('Hidden Input:', hiddenInput);
+    console.log('Results Container:', resultsContainer);
+    
+    if (!searchInput || !hiddenInput || !resultsContainer) {
+        console.error('Party search elements not found!');
+        return;
+    }
+
+    // Input Handler
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        console.log('Search query:', query);
+        hiddenInput.value = ''; // Clear ID while typing
+        
+        if (query.length === 0) {
+            // Wait, fetch default parties instead of hiding
+        }
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            fetchParties(query);
+        }, 300);
+    });
+
+    // Focus Handler - trigger search on focus
+    searchInput.addEventListener('focus', function() {
+        fetchParties(this.value.trim());
+    });
+
+    // Handle clicks outside to close dropdown
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = 'none';
+        }
+    });
+
+    // Keyboard navigation within search results
+    searchInput.addEventListener('keydown', function(e) {
+        if (resultsContainer.style.display === 'block') {
+            const items = resultsContainer.querySelectorAll('.list-group-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentFocusIndex++;
+                if (currentFocusIndex >= items.length) currentFocusIndex = 0;
+                highlightItem(items, currentFocusIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentFocusIndex--;
+                if (currentFocusIndex < 0) currentFocusIndex = items.length - 1;
+                highlightItem(items, currentFocusIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentFocusIndex > -1 && items[currentFocusIndex]) {
+                    items[currentFocusIndex].click();
+                }
+            }
         }
     });
 }
 
+function fetchParties(query) {
+    const searchUrl = '{{ route("admin.debit-note.search-parties") }}';
+    const resultsContainer = document.getElementById('partySearchResults');
+    
+    console.log('Fetching parties with query:', query);
+    console.log('Search URL:', searchUrl);
+    console.log('Party Type:', currentPartyType);
+    
+    resultsContainer.innerHTML = '<div class="p-2 text-muted"><i class="bi bi-hourglass-split"></i> Searching...</div>';
+    resultsContainer.style.display = 'block';
+
+    fetch(`${searchUrl}?q=${encodeURIComponent(query)}&party_type=${currentPartyType}&page=1`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Received data:', data);
+        renderPartyResults(data.results || []);
+    })
+    .catch(error => {
+        console.error('Error fetching parties:', error);
+        resultsContainer.innerHTML = '<div class="p-2 text-danger">Error loading results</div>';
+    });
+}
+
+function renderPartyResults(results) {
+    const resultsContainer = document.getElementById('partySearchResults');
+    resultsContainer.innerHTML = '';
+    currentFocusIndex = -1;
+
+    if (results.length === 0) {
+        resultsContainer.innerHTML = '<div class="p-2 text-muted">No results found</div>';
+        return;
+    }
+
+    results.forEach((party, index) => {
+        const item = document.createElement('a');
+        item.href = '#';
+        item.className = 'list-group-item list-group-item-action';
+        item.textContent = party.text || party.name;
+        item.dataset.id = party.id;
+        item.dataset.name = party.name;
+
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectParty(party);
+        });
+
+        resultsContainer.appendChild(item);
+    });
+}
+
+function selectParty(party) {
+    document.getElementById('partySearchInput').value = party.text || party.name;
+    document.getElementById('partySelect').value = party.id;
+    document.getElementById('partySearchResults').style.display = 'none';
+    window.selectedPartyName = party.text || party.name;
+    
+    // After selecting party, move cursor to Salesman field and open dropdown
+    setTimeout(function() {
+        const salesmanDisplay = document.getElementById('salesmanDisplay');
+        const salesmanOptions = document.getElementById('salesmanOptions');
+        if (salesmanDisplay) {
+            salesmanDisplay.focus();
+            if(salesmanOptions) {
+                salesmanOptions.style.display = 'block';
+                var firstOption = salesmanOptions.querySelector('.list-group-item');
+                if (firstOption) {
+                    salesmanOptions.querySelectorAll('.list-group-item').forEach(o => o.classList.remove('active'));
+                    firstOption.classList.add('active');
+                }
+            }
+        }
+    }, 50);
+}
+
+function highlightItem(items, index) {
+    items.forEach(item => item.classList.remove('active'));
+    if (items[index]) {
+        items[index].classList.add('active');
+        items[index].scrollIntoView({ block: 'nearest' });
+    }
+}
+
 function updatePartyDropdown() {
-    // Clear current selection
-    $('#partySelect').val(null).trigger('change');
+    const searchInput = document.getElementById('partySearchInput');
+    const hiddenInput = document.getElementById('partySelect');
+    
+    searchInput.value = '';
+    hiddenInput.value = '';
+    document.getElementById('partySearchResults').style.display = 'none';
+    
+    const partyType = document.querySelector('input[name="debit_party_type"]:checked').value;
     
     // Update help text
-    const helpText = document.querySelector('#partySelect + small');
+    const helpText = document.querySelector('.party-search-container + small');
     if (helpText) {
-        helpText.textContent = currentPartyType === 'S' ? 'Start typing to search for suppliers' : 'Start typing to search for customers';
+        helpText.textContent = partyType === 'S' ? 'Start typing to search for suppliers' : 'Start typing to search for customers';
     }
+    searchInput.placeholder = partyType === 'S' ? 'Search supplier...' : 'Search customer...';
     
     // Auto-select appropriate account type
     if (currentPartyType === 'S') {
@@ -451,9 +703,6 @@ function updatePartyDropdown() {
     } else {
         document.getElementById('accountSale').checked = true;
     }
-    
-    // Reinitialize Select2 with updated party type
-    initPartySelect2();
 }
 
 function debounce(func, wait) {
@@ -541,6 +790,9 @@ function openHsnModal() {
     const modal = document.getElementById('hsnCodeModal');
     const backdrop = document.getElementById('hsnModalBackdrop');
     
+    // Store the currently focused element
+    modalTriggerElement = document.activeElement;
+    
     document.getElementById('hsn_modal_search').value = '';
     renderHsnCodes(hsnCodesData);
     
@@ -552,21 +804,155 @@ function openHsnModal() {
         backdrop.classList.add('show');
         modal.classList.add('show');
         document.getElementById('hsn_modal_search').focus();
+        
+        // Initialize HSN modal keyboard navigation
+        initHsnModalKeyboard();
     }, 10);
 }
 
+// HSN Modal Keyboard Navigation
+let hsnSelectedIndex = -1;
+
+function initHsnModalKeyboard() {
+    // Remove existing listener if any
+    document.removeEventListener('keydown', handleHsnModalKeyboard);
+    
+    // Add keyboard navigation
+    document.addEventListener('keydown', handleHsnModalKeyboard, true);
+}
+
+function handleHsnModalKeyboard(e) {
+    const modal = document.getElementById('hsnCodeModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    
+    const tbody = document.getElementById('hsn_codes_list');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Arrow Down → next row
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Blur search input
+        const searchInput = document.getElementById('hsn_modal_search');
+        if (document.activeElement === searchInput) {
+            searchInput.blur();
+        }
+        
+        if (!rows.length) return;
+        
+        if (hsnSelectedIndex < rows.length - 1) {
+            hsnSelectedIndex++;
+        } else if (hsnSelectedIndex === -1) {
+            hsnSelectedIndex = 0;
+        }
+        highlightHsnRow(rows, hsnSelectedIndex);
+        return;
+    }
+    
+    // Arrow Up → previous row
+    if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const searchInput = document.getElementById('hsn_modal_search');
+        if (document.activeElement === searchInput) {
+            searchInput.blur();
+        }
+        
+        if (!rows.length) return;
+        
+        if (hsnSelectedIndex > 0) {
+            hsnSelectedIndex--;
+        } else if (hsnSelectedIndex === -1 && rows.length > 0) {
+            hsnSelectedIndex = 0;
+        }
+        highlightHsnRow(rows, hsnSelectedIndex);
+        return;
+    }
+    
+    // Enter → select highlighted row
+    if (e.key === 'Enter') {
+        const searchInput = document.getElementById('hsn_modal_search');
+        if (document.activeElement === searchInput && hsnSelectedIndex === -1) {
+            return; // Let search work normally
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!rows.length) return;
+        
+        if (hsnSelectedIndex === -1 && rows.length > 0) {
+            hsnSelectedIndex = 0;
+            highlightHsnRow(rows, hsnSelectedIndex);
+            return;
+        }
+        
+        if (hsnSelectedIndex >= 0 && hsnSelectedIndex < rows.length) {
+            const selectBtn = rows[hsnSelectedIndex].querySelector('button');
+            if (selectBtn) selectBtn.click();
+        }
+        return;
+    }
+    
+    // Escape → close modal
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        closeHsnModal(false); // No HSN selected
+        hsnSelectedIndex = -1;
+        return;
+    }
+    
+    // Any letter/number key → refocus search input
+    if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+        const searchInput = document.getElementById('hsn_modal_search');
+        if (searchInput && document.activeElement !== searchInput) {
+            searchInput.focus();
+            hsnSelectedIndex = -1;
+            highlightHsnRow(rows, -1);
+        }
+    }
+}
+
+function highlightHsnRow(rows, index) {
+    rows.forEach(function(row) {
+        row.style.backgroundColor = '';
+        row.style.fontWeight = '';
+        row.classList.remove('table-active');
+    });
+    if (index >= 0 && index < rows.length) {
+        rows[index].style.backgroundColor = '#cce5ff';
+        rows[index].style.fontWeight = 'bold';
+        rows[index].classList.add('table-active');
+        rows[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+}
+
 // Close HSN modal
-function closeHsnModal() {
+function closeHsnModal(hsnSelected = false) {
     const modal = document.getElementById('hsnCodeModal');
     const backdrop = document.getElementById('hsnModalBackdrop');
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
     
+    // Remove keyboard listener
+    document.removeEventListener('keydown', handleHsnModalKeyboard, true);
+    hsnSelectedIndex = -1;
+    
     setTimeout(() => {
         modal.style.display = 'none';
         backdrop.style.display = 'none';
         document.body.style.overflow = '';
+        
+        // If no HSN was selected, restore focus to the trigger element
+        if (!hsnSelected && modalTriggerElement) {
+            setTimeout(() => {
+                modalTriggerElement.focus();
+                if (modalTriggerElement.select) modalTriggerElement.select();
+            }, 100);
+        }
     }, 300);
 }
 
@@ -574,7 +960,7 @@ function closeHsnModal() {
 function selectHsnCode(hsnCode, cgstPercent, sgstPercent) {
     const gstPercent = parseFloat(cgstPercent) + parseFloat(sgstPercent);
     addHsnRowWithData(hsnCode, gstPercent, cgstPercent, sgstPercent);
-    closeHsnModal();
+    closeHsnModal(true); // Pass true to indicate HSN was selected
 }
 
 // Add HSN row with data
@@ -657,6 +1043,8 @@ function calculateTotals() {
 }
 
 // Save debit note - Entry point
+let modalTriggerElement = null; // Global variable to store trigger element for all modals
+
 function saveDebitNote(print = false) {
     window.printAfterSave = print;
     
@@ -699,6 +1087,9 @@ function saveDebitNote(print = false) {
     // Store DN amount for adjustment
     window.dnAmount = parseFloat(document.getElementById('dnAmount').value || 0);
     
+    // Store current focused element
+    modalTriggerElement = document.activeElement;
+    
     // Show save options modal
     showSaveOptionsModal();
 }
@@ -708,32 +1099,85 @@ function showSaveOptionsModal() {
     const modal = document.getElementById('saveOptionsModal');
     modal.classList.add('show');
     
-    document.addEventListener('keydown', handleSaveOptionsEsc);
+    document.addEventListener('keydown', handleSaveOptionsKeyboard, true);
+    
+    // Focus first button
+    setTimeout(() => {
+        const firstBtn = modal.querySelector('.save-options-buttons button.btn-secondary');
+        if (firstBtn) firstBtn.focus();
+    }, 100);
 }
 
 // Close Save Options Modal
-function closeSaveOptionsModal() {
+function closeSaveOptionsModal(optionSelected = false) {
     const modal = document.getElementById('saveOptionsModal');
     modal.classList.remove('show');
-    document.removeEventListener('keydown', handleSaveOptionsEsc);
+    document.removeEventListener('keydown', handleSaveOptionsKeyboard, true);
+    
+    // If no option selected, restore focus
+    if (!optionSelected && modalTriggerElement) {
+        setTimeout(() => {
+            modalTriggerElement.focus();
+            if (modalTriggerElement.select) modalTriggerElement.select();
+        }, 100);
+    }
 }
 
-function handleSaveOptionsEsc(e) {
-    if (e.key === 'Escape') closeSaveOptionsModal();
+function handleSaveOptionsKeyboard(e) {
+    const modal = document.getElementById('saveOptionsModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (activeEl && activeEl.tagName === 'BUTTON' && modal.contains(activeEl)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            activeEl.click();
+            return;
+        }
+    }
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeSaveOptionsModal(false);
+        return;
+    }
+    
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        const buttons = Array.from(modal.querySelectorAll('.save-options-buttons button'));
+        if (buttons.length === 0) return;
+        
+        const activeIdx = buttons.indexOf(document.activeElement);
+        let nextIdx = 0;
+        
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+            nextIdx = activeIdx >= 0 ? (activeIdx + 1) % buttons.length : 0;
+        } else {
+            nextIdx = activeIdx >= 0 ? (activeIdx - 1 + buttons.length) % buttons.length : buttons.length - 1;
+        }
+        
+        buttons[nextIdx].focus();
+    }
 }
 
 // Save Without Adjustment
 function saveWithoutAdjustment() {
-    closeSaveOptionsModal();
+    closeSaveOptionsModal(true); // Option selected
     submitDebitNote(false, []);
 }
 
 // Save With Adjustment
 function saveWithAdjustment() {
-    closeSaveOptionsModal();
+    closeSaveOptionsModal(true); // Option selected
     
     const partyId = document.getElementById('partySelect').value;
-    const partyType = document.querySelector('input[name="debit_party_type"]:checked').value;
+    const partyType = document.querySelector('input[name="debit_party_type"]:checked')?.value;
     
     if (!partyId) {
         alert('Please select a party first');
@@ -905,11 +1349,24 @@ function showAdjustmentModal(invoices, dnAmount) {
         document.getElementById('adjustmentModal').classList.add('show');
     }, 10);
     
-    document.addEventListener('keydown', handleAdjustmentEsc);
+    document.addEventListener('keydown', handleAdjustmentKeyboard, true);
 }
 
-function handleAdjustmentEsc(e) {
-    if (e.key === 'Escape') closeAdjustmentModal();
+function handleAdjustmentKeyboard(e) {
+    const modal = document.getElementById('adjustmentModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeAdjustmentModal(false);
+    } else if (e.key === 's' && e.ctrlKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveAdjustment();
+    }
 }
 
 // Update adjustment balance
@@ -995,7 +1452,7 @@ function autoDistributeAmount() {
 }
 
 // Close Adjustment Modal
-function closeAdjustmentModal() {
+function closeAdjustmentModal(adjustmentSaved = false) {
     const modal = document.getElementById('adjustmentModal');
     const backdrop = document.getElementById('adjustmentModalBackdrop');
     
@@ -1005,9 +1462,17 @@ function closeAdjustmentModal() {
     setTimeout(() => {
         if (modal) modal.remove();
         if (backdrop) backdrop.remove();
+        
+        // If no adjustment saved, restore focus
+        if (!adjustmentSaved && modalTriggerElement) {
+            setTimeout(() => {
+                modalTriggerElement.focus();
+                if (modalTriggerElement.select) modalTriggerElement.select();
+            }, 100);
+        }
     }, 300);
     
-    document.removeEventListener('keydown', handleAdjustmentEsc);
+    document.removeEventListener('keydown', handleAdjustmentKeyboard, true);
 }
 
 // Save Adjustment
@@ -1035,7 +1500,7 @@ function saveAdjustment() {
         }
     }
     
-    closeAdjustmentModal();
+    closeAdjustmentModal(true); // Adjustment saved
     submitDebitNote(true, adjustments);
 }
 
@@ -1061,10 +1526,8 @@ function submitDebitNote(withAdjustment = false, adjustments = []) {
     
     const partyType = document.querySelector('input[name="debit_party_type"]:checked').value;
     const partyId = document.getElementById('partySelect').value;
-    // Get party name from Select2 selected data
-    const $partySelect = $('#partySelect');
-    const selectedData = $partySelect.select2('data')[0];
-    const partyName = selectedData ? selectedData.text : '';
+    // Get party name from custom search input
+    const partyName = document.getElementById('partySearchInput').value || window.selectedPartyName || '';
     
     const data = {
         header: {
@@ -1126,6 +1589,779 @@ function submitDebitNote(withAdjustment = false, adjustments = []) {
         console.error('Error:', error);
         alert('Error saving debit note');
     });
+}
+
+// ============================================================
+// KEYBOARD NAVIGATION SYSTEM
+// ============================================================
+function initKeyboardNavigation() {
+    // PREVENT form submission on Enter key globally
+    document.getElementById('debitNoteForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        return false;
+    });
+    
+    // ==============================================
+    // TAB KEY - Switch between Left (Debit) and Right (Credit) sections
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+            const activeEl = document.activeElement;
+            
+            // Define left section fields (Debit - Party)
+            const leftSectionFields = ['partySupplier', 'partyCustomer', 'partySelect', 'salesmanSelect'];
+            
+            // Define right section fields (Credit - Account)
+            const rightSectionFields = ['accountPurchase', 'accountSale', 'accountGeneral', 'accountNo', 'invRefNo', 'invoiceDate', 'gstVno'];
+            
+            // Check if we're in left section and on last field (salesmanSelect)
+            if (activeEl.id === 'salesmanDisplay') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Jump to right section - Account Type radio
+                setTimeout(function() {
+                    const accountRadio = document.querySelector('input[name="credit_account_type"]:checked');
+                    if (accountRadio) {
+                        accountRadio.focus();
+                    }
+                }, 30);
+                return false;
+            }
+            
+            // Check if we're in right section and on last field (gstVno)
+            if (activeEl.id === 'gstVno') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Jump to Party Transaction Details section
+                setTimeout(function() {
+                    const partyTrnNo = document.getElementById('partyTrnNo');
+                    if (partyTrnNo) {
+                        partyTrnNo.focus();
+                        partyTrnNo.select();
+                    }
+                }, 30);
+                return false;
+            }
+        }
+        
+        // ==============================================
+        // SHIFT+TAB - Reverse section switching
+        // ==============================================
+        if (e.key === 'Tab' && e.shiftKey && !e.ctrlKey && !e.altKey) {
+            const activeEl = document.activeElement;
+            
+            // If on first field of right section (Account Type), go back to left section last field
+            if (activeEl.id === 'accountPurchase' || activeEl.id === 'accountSale' || activeEl.id === 'accountGeneral') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Jump back to left section - Salesman
+                setTimeout(function() {
+                    const salesmanDisplay = document.getElementById('salesmanDisplay');
+                    if (salesmanDisplay) {
+                        salesmanDisplay.focus();
+                    }
+                }, 30);
+                return false;
+            }
+            
+            // If on first field of Party Transaction Details, go back to right section last field
+            if (activeEl.id === 'partyTrnNo') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Jump back to right section - GST Vno
+                setTimeout(function() {
+                    const gstVno = document.getElementById('gstVno');
+                    if (gstVno) {
+                        gstVno.focus();
+                        gstVno.select();
+                    }
+                }, 30);
+                return false;
+            }
+        }
+    }, true);
+    
+    // ==============================================
+    // Escape Key → Close any open modal
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Close HSN Modal
+            const hsnModal = document.getElementById('hsnCodeModal');
+            if (hsnModal && hsnModal.classList.contains('show')) {
+                closeHsnModal();
+                return false;
+            }
+            
+            // Close Adjustment Modal
+            const adjustmentModal = document.getElementById('adjustmentModal');
+            if (adjustmentModal && adjustmentModal.classList.contains('show')) {
+                closeAdjustmentModal();
+                return false;
+            }
+            
+            // Close Save Options Modal
+            const saveOptionsModal = document.getElementById('saveOptionsModal');
+            if (saveOptionsModal && saveOptionsModal.classList.contains('show')) {
+                closeSaveOptionsModal();
+                return false;
+            }
+        }
+    }, true);
+
+    // ==============================================
+    // Ctrl+S → Save Debit Note
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+            // Skip global save if any modal is open
+            const hsnModal = document.getElementById('hsnCodeModal');
+            const adjustmentModal = document.getElementById('adjustmentModal');
+            const saveOptionsModal = document.getElementById('saveOptionsModal');
+            
+            if ((hsnModal && hsnModal.classList.contains('show')) ||
+                (adjustmentModal && adjustmentModal.classList.contains('show')) ||
+                (saveOptionsModal && saveOptionsModal.classList.contains('show'))) {
+                return; // Let modal handlers deal with it
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            saveDebitNote(false);
+        }
+    }, true);
+    
+    // ==============================================
+    // F2 → Open HSN Modal
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F2') {
+            e.preventDefault();
+            openHsnModal();
+        }
+    }, true);
+    
+    // ==============================================
+    // Ctrl+Enter → Jump to TCS Amount
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const tcsField = document.getElementById('tcsAmount');
+            if (tcsField) {
+                tcsField.focus();
+                tcsField.select();
+            }
+            return false;
+        }
+    }, true);
+
+    // ==============================================
+    // DOCUMENT-LEVEL CAPTURE: Main Enter Key Handler
+    // ==============================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+        
+        // Skip if any modal is open
+        const hsnModal = document.getElementById('hsnCodeModal');
+        const adjustmentModal = document.getElementById('adjustmentModal');
+        const saveOptionsModal = document.getElementById('saveOptionsModal');
+        if ((hsnModal && hsnModal.classList.contains('show')) ||
+            (adjustmentModal && adjustmentModal.classList.contains('show')) ||
+            (saveOptionsModal && saveOptionsModal.classList.contains('show'))) {
+            return; // Let modal handlers deal with it
+        }
+        
+        // ============================================
+        // SHIFT+ENTER → BACKWARD NAVIGATION
+        // ============================================
+        if (e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Date → nothing (first field)
+            if (activeEl.id === 'debitNoteDate') {
+                return false;
+            }
+            
+            // Reason → back to Date
+            if (activeEl.id === 'reasonDisplay') {
+                const dateField = document.getElementById('debitNoteDate');
+                if (dateField) dateField.focus();
+                return false;
+            }
+            
+            // Party Type radios → back to Reason
+            if (activeEl.id === 'partySupplier' || activeEl.id === 'partyCustomer') {
+                const reasonDisplay = document.getElementById('reasonDisplay');
+                if (reasonDisplay) {
+                    reasonDisplay.focus();
+                    var reasonOptions = document.getElementById('reasonOptions');
+                    if (reasonOptions) reasonOptions.style.display = 'block';
+                }
+                return false;
+            }
+            
+            // Party Search Input → back to Party Type radio
+            if (activeEl.id === 'partySearchInput') {
+                const checkedRadio = document.querySelector('input[name="debit_party_type"]:checked');
+                if (checkedRadio) checkedRadio.focus();
+                return false;
+            }
+            
+            // Salesman → back to Party Search Input
+            if (activeEl.id === 'salesmanDisplay') {
+                const partySearch = document.getElementById('partySearchInput');
+                if (partySearch) { partySearch.focus(); partySearch.select(); }
+                return false;
+            }
+            
+            // Account Type radios → back to Salesman
+            if (activeEl.id === 'accountPurchase' || activeEl.id === 'accountSale' || activeEl.id === 'accountGeneral') {
+                const salesmanDisplay = document.getElementById('salesmanDisplay');
+                if (salesmanDisplay) { 
+                    salesmanDisplay.focus(); 
+                    var salesmanOptions = document.getElementById('salesmanOptions');
+                    if (salesmanOptions) salesmanOptions.style.display = 'block';
+                }
+                return false;
+            }
+            
+            // Account No → back to Account Type radio
+            if (activeEl.id === 'accountNo') {
+                const checkedRadio = document.querySelector('input[name="credit_account_type"]:checked');
+                if (checkedRadio) checkedRadio.focus();
+                return false;
+            }
+            
+            // Inv Ref No → back to Account No
+            if (activeEl.id === 'invRefNo') {
+                const accountNo = document.getElementById('accountNo');
+                if (accountNo) { accountNo.focus(); accountNo.select(); }
+                return false;
+            }
+            
+            // Invoice Date → back to Inv Ref No
+            if (activeEl.id === 'invoiceDate') {
+                const invRefNo = document.getElementById('invRefNo');
+                if (invRefNo) { invRefNo.focus(); invRefNo.select(); }
+                return false;
+            }
+            
+            // GST Vno → back to Invoice Date
+            if (activeEl.id === 'gstVno') {
+                const invoiceDate = document.getElementById('invoiceDate');
+                if (invoiceDate) invoiceDate.focus();
+                return false;
+            }
+            
+            // Party Trn No → back to GST Vno
+            if (activeEl.id === 'partyTrnNo') {
+                const gstVno = document.getElementById('gstVno');
+                if (gstVno) { gstVno.focus(); gstVno.select(); }
+                return false;
+            }
+            
+            // Party Trn Date → back to Party Trn No
+            if (activeEl.id === 'partyTrnDate') {
+                const partyTrnNo = document.getElementById('partyTrnNo');
+                if (partyTrnNo) { partyTrnNo.focus(); partyTrnNo.select(); }
+                return false;
+            }
+            
+            // Amount → back to Party Trn Date
+            if (activeEl.id === 'amount') {
+                const partyTrnDate = document.getElementById('partyTrnDate');
+                if (partyTrnDate) partyTrnDate.focus();
+                return false;
+            }
+            
+            // Narration → back to Amount
+            if (activeEl.id === 'narration') {
+                const amount = document.getElementById('amount');
+                if (amount) { amount.focus(); amount.select(); }
+                return false;
+            }
+            
+            // TCS Amount → back to Narration
+            if (activeEl.id === 'tcsAmount') {
+                const narration = document.getElementById('narration');
+                if (narration) narration.focus();
+                return false;
+            }
+            
+            // Round Off → back to TCS Amount
+            if (activeEl.id === 'roundOff') {
+                const tcsAmount = document.getElementById('tcsAmount');
+                if (tcsAmount) { tcsAmount.focus(); tcsAmount.select(); }
+                return false;
+            }
+            
+            // HSN amount → back to previous HSN row or Amount field
+            if (activeEl.classList.contains('hsn-amount')) {
+                const allHsnAmounts = Array.from(document.querySelectorAll('#hsnTableBody .hsn-amount'));
+                const currentIdx = allHsnAmounts.indexOf(activeEl);
+                
+                if (currentIdx > 0) {
+                    allHsnAmounts[currentIdx - 1].focus();
+                    allHsnAmounts[currentIdx - 1].select();
+                } else {
+                    const amount = document.getElementById('amount');
+                    if (amount) { amount.focus(); amount.select(); }
+                }
+                return false;
+            }
+            
+            return false;
+        }
+        
+        // ============================================
+        // ENTER → FORWARD NAVIGATION
+        // ============================================
+        
+        // Handle buttons - explicitly trigger their click to ensure they work reliably on Enter
+        if (activeEl.tagName === 'BUTTON' || activeEl.tagName === 'A') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            activeEl.click();
+            return false;
+        }
+        
+        // ---- Handle Date field Enter → jump to Reason ----
+        if (activeEl.id === 'debitNoteDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            activeEl.blur();
+            
+            setTimeout(function() {
+                const reasonDisplay = document.getElementById('reasonDisplay');
+                const reasonOptions = document.getElementById('reasonOptions');
+                if (reasonDisplay) {
+                    reasonDisplay.focus();
+                    if (reasonOptions) {
+                        reasonOptions.style.display = 'block';
+                        var firstOption = reasonOptions.querySelector('.list-group-item');
+                        if (firstOption) {
+                            reasonOptions.querySelectorAll('.list-group-item').forEach(o => o.classList.remove('active'));
+                            firstOption.classList.add('active');
+                        }
+                    }
+                }
+            }, 50);
+            
+            return false;
+        }
+        
+        // ---- Handle Reason select Enter → jump to checked Party Type radio ----
+        if (activeEl.id === 'reasonDisplay') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var reasonOptions = document.getElementById('reasonOptions');
+            var activeOption = reasonOptions ? reasonOptions.querySelector('.list-group-item.active') : null;
+            
+            if (activeOption) {
+                var value = activeOption.getAttribute('data-value');
+                var text = activeOption.textContent.trim();
+                document.getElementById('reason').value = value;
+                activeEl.value = text;
+                if (reasonOptions) reasonOptions.style.display = 'none';
+                
+                setTimeout(function() {
+                    const checkedRadio = document.querySelector('input[name="debit_party_type"]:checked');
+                    if (checkedRadio) checkedRadio.focus();
+                }, 30);
+            } else {
+                if (reasonOptions) reasonOptions.style.display = 'block';
+            }
+            
+            return false;
+        }
+        
+        // ---- Handle Supplier/Customer radio Enter → jump to Party Search Input ----
+        if (activeEl.id === 'partySupplier' || activeEl.id === 'partyCustomer') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const partySearch = document.getElementById('partySearchInput');
+                if (partySearch) {
+                    partySearch.focus();
+                    partySearch.select();
+                }
+            }, 50);
+            
+            return false;
+        }
+        
+        // ---- Handle Party Search Input Enter → jump to Salesman (only if party selected) ----
+        if (activeEl.id === 'partySearchInput') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const partyResults = document.getElementById('partySearchResults');
+            
+            // If dropdown is visible, select highlighted item
+            if (partyResults && partyResults.style.display === 'block') {
+                const activeItem = partyResults.querySelector('.list-group-item.active');
+                
+                if (activeItem) {
+                    // Click the highlighted item to select the party
+                    activeItem.click();
+                } else {
+                    // No item highlighted → highlight the first one
+                    const firstItem = partyResults.querySelector('.list-group-item');
+                    if (firstItem) {
+                        currentFocusIndex = 0;
+                        const allItems = partyResults.querySelectorAll('.list-group-item');
+                        highlightItem(allItems, 0);
+                    }
+                }
+            } else {
+                // Dropdown not visible → if party already selected, move to Salesman
+                const hiddenInput = document.getElementById('partySelect');
+                if (hiddenInput && hiddenInput.value) {
+                    setTimeout(function() {
+                        const salesmanDisplay = document.getElementById('salesmanDisplay');
+                        const salesmanOptions = document.getElementById('salesmanOptions');
+                        if (salesmanDisplay) {
+                            salesmanDisplay.focus();
+                            if(salesmanOptions) {
+                                salesmanOptions.style.display = 'block';
+                                var firstOption = salesmanOptions.querySelector('.list-group-item');
+                                if (firstOption) {
+                                    salesmanOptions.querySelectorAll('.list-group-item').forEach(o => o.classList.remove('active'));
+                                    firstOption.classList.add('active');
+                                }
+                            }
+                        }
+                    }, 50);
+                }
+            }
+            return false;
+        }
+        
+        // ---- Handle Salesman select Enter → jump to Account Type radio ----
+        if (activeEl.id === 'salesmanDisplay') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            var salesmanOptions = document.getElementById('salesmanOptions');
+            var activeOption = salesmanOptions ? salesmanOptions.querySelector('.list-group-item.active') : null;
+            
+            if (activeOption) {
+                var value = activeOption.getAttribute('data-value');
+                var text = activeOption.textContent.trim();
+                document.getElementById('salesmanSelect').value = value;
+                activeEl.value = text;
+                if (salesmanOptions) salesmanOptions.style.display = 'none';
+                
+                setTimeout(function() {
+                    const checkedRadio = document.querySelector('input[name="credit_account_type"]:checked');
+                    if (checkedRadio) checkedRadio.focus();
+                }, 30);
+            } else {
+                if (salesmanOptions) salesmanOptions.style.display = 'block';
+            }
+            
+            return false;
+        }
+        
+        // ---- Handle Account Type radio Enter → jump to Account No ----
+        if (activeEl.id === 'accountPurchase' || activeEl.id === 'accountSale' || activeEl.id === 'accountGeneral') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const accountNo = document.getElementById('accountNo');
+                if (accountNo) {
+                    accountNo.focus();
+                    accountNo.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Account No Enter → jump to Inv. Ref. No. ----
+        if (activeEl.id === 'accountNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const invRefNo = document.getElementById('invRefNo');
+                if (invRefNo) {
+                    invRefNo.focus();
+                    invRefNo.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Inv. Ref. No. Enter → jump to Invoice Date ----
+        if (activeEl.id === 'invRefNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const invoiceDate = document.getElementById('invoiceDate');
+                if (invoiceDate) {
+                    invoiceDate.focus();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Invoice Date Enter → jump to GST Vno. ----
+        if (activeEl.id === 'invoiceDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            activeEl.blur();
+            
+            setTimeout(function() {
+                const gstVno = document.getElementById('gstVno');
+                if (gstVno) {
+                    gstVno.focus();
+                    gstVno.select();
+                }
+            }, 50);
+            
+            return false;
+        }
+        
+        // ---- Handle GST Vno. Enter → jump to Party Trn. No. ----
+        if (activeEl.id === 'gstVno') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const partyTrnNo = document.getElementById('partyTrnNo');
+                if (partyTrnNo) {
+                    partyTrnNo.focus();
+                    partyTrnNo.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Party Trn. No. Enter → jump to Party Trn. Date ----
+        if (activeEl.id === 'partyTrnNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const partyTrnDate = document.getElementById('partyTrnDate');
+                if (partyTrnDate) {
+                    partyTrnDate.focus();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Party Trn. Date Enter → jump to Amount ----
+        if (activeEl.id === 'partyTrnDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            activeEl.blur();
+            
+            setTimeout(function() {
+                const amount = document.getElementById('amount');
+                if (amount) {
+                    amount.focus();
+                    amount.select();
+                }
+            }, 50);
+            
+            return false;
+        }
+        
+        // ---- Handle Amount field Enter → jump to Insert button ----
+        if (activeEl.id === 'amount') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const insertBtn = document.getElementById('insertHsnBtn');
+                if (insertBtn) {
+                    insertBtn.focus();
+                    insertBtn.click(); // Auto-open modal as soon as focus lands
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Narration → allow normal textarea behavior ----
+        if (activeEl.id === 'narration') {
+            return; // Allow normal textarea Enter (newline)
+        }
+        
+        // ---- Handle TCS Amount Enter → jump to Round Off ----
+        if (activeEl.id === 'tcsAmount') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const roundOff = document.getElementById('roundOff');
+                if (roundOff) {
+                    roundOff.focus();
+                    roundOff.select();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle Round Off Enter → focus Save button ----
+        if (activeEl.id === 'roundOff') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            setTimeout(function() {
+                const saveBtn = document.querySelector('button[onclick*="saveDebitNote"]');
+                if (saveBtn) {
+                    saveBtn.focus();
+                }
+            }, 30);
+            
+            return false;
+        }
+        
+        // ---- Handle HSN row Amount field Enter → next row ----
+        if (activeEl.classList.contains('hsn-amount')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            const allHsnAmounts = Array.from(document.querySelectorAll('#hsnTableBody .hsn-amount'));
+            const currentIdx = allHsnAmounts.indexOf(activeEl);
+            
+            if (currentIdx >= 0 && currentIdx < allHsnAmounts.length - 1) {
+                // Move to next row's amount
+                allHsnAmounts[currentIdx + 1].focus();
+                allHsnAmounts[currentIdx + 1].select();
+            } else {
+                // Last HSN row → move to Insert button and trigger it
+                setTimeout(function() {
+                    const insertBtn = document.getElementById('insertHsnBtn');
+                    if (insertBtn) {
+                        insertBtn.focus();
+                        insertBtn.click();
+                    }
+                }, 30);
+            }
+            
+            return false;
+        }
+        
+        // ---- General: Handle regular text/number inputs with Enter ----
+        if (activeEl.tagName === 'INPUT' && (activeEl.type === 'text' || activeEl.type === 'number' || activeEl.type === 'date')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            navigateField(activeEl, 1);
+            return false;
+        }
+        
+    }, true); // CAPTURE PHASE
+    
+    // We removed auto-advance on Select change since the custom dropdown handles it directly
+}
+
+// ============================================================
+// FIELD NAVIGATION HELPER
+// ============================================================
+function navigateField(currentElement, direction) {
+    const currentIndex = FIELD_ORDER.indexOf(currentElement.id);
+    if (currentIndex === -1) return;
+
+    const nextIndex = currentIndex + direction;
+    if (nextIndex < 0 || nextIndex >= FIELD_ORDER.length) return;
+
+    const nextId = FIELD_ORDER[nextIndex];
+    let nextElement = document.getElementById(nextId);
+
+    // Handle radio groups
+    if (nextId === 'partySupplier' || nextId === 'accountPurchase') {
+        const groupName = (nextId === 'partySupplier') ? 'debit_party_type' : 'credit_account_type';
+        const checkedRadio = document.querySelector(`input[name="${groupName}"]:checked`);
+        if (checkedRadio) nextElement = checkedRadio;
+    }
+    
+    // Handle custom party search input
+    if (nextId === 'partySearchInput') {
+        const partySearch = document.getElementById('partySearchInput');
+        if (partySearch) {
+            partySearch.focus();
+            partySearch.select();
+        }
+        return;
+    }
+
+    if (!nextElement || nextElement.disabled || nextElement.offsetParent === null) {
+        navigateField({ id: nextId }, direction);
+        return;
+    }
+
+    if (nextElement.readOnly && nextElement.tagName !== 'SELECT' && nextElement.tagName !== 'TEXTAREA') {
+        navigateField({ id: nextId }, direction);
+        return;
+    }
+
+    nextElement.focus();
+
+    if (nextElement.tagName === 'INPUT' && nextElement.select) {
+        nextElement.select();
+    }
+    
+    if (nextElement.tagName === 'SELECT') {
+        try {
+            nextElement.showPicker();
+        } catch(err) {
+            const event = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            nextElement.dispatchEvent(event);
+        }
+    }
 }
 
 </script>
