@@ -58,6 +58,30 @@
         color: #155724 !important;
         border-color: #28a745 !important;
     }
+    
+    /* Custom searchable dropdown */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #f1f5ff;
+    }
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #e3ebff;
+    }
+    .custom-dropdown-menu .dropdown-item.active {
+        background-color: #e3ebff;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -89,12 +113,29 @@
                     <div class="col-md-4">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Bank :</label>
-                            <select class="form-control" id="bankSelect" style="width: 230px;">
-                                <option value="">Select Bank</option>
-                                @foreach($banks as $bank)
-                                <option value="{{ $bank->alter_code }}">{{ $bank->name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="custom-dropdown-wrapper" style="width: 230px; position: relative;">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="bankSearchInput" 
+                                       placeholder="Select Bank"
+                                       autocomplete="off"
+                                       style="width: 100%;">
+                                <input type="hidden" id="bankSelect" name="bank_code">
+                                <i class="bi bi-chevron-down" style="position: absolute; right: 10px; top: 5px; cursor: pointer;" onclick="document.getElementById('bankSearchInput').focus()"></i>
+                                
+                                <div id="bankDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                    <div id="bankList" class="dropdown-list">
+                                        @foreach($banks as $bank)
+                                            <div class="dropdown-item" 
+                                                 data-id="{{ $bank->alter_code }}" 
+                                                 data-name="{{ $bank->name }}"
+                                                 style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                                {{ $bank->name }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4 text-end">
@@ -191,7 +232,7 @@
             <button type="button" class="btn-close-modal" onclick="closeSupplierModal()">&times;</button>
         </div>
         <div class="modal-body-box">
-            <input type="text" class="form-control mb-3" id="supplierSearch" placeholder="Search by code or name..." onkeyup="filterSuppliers()">
+            <input type="text" class="form-control mb-3" id="supplierSearch" placeholder="Search by code or name..." oninput="filterSuppliers()">
             <div id="supplierList" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
         <div class="modal-footer-box">
@@ -295,11 +336,167 @@ let rowBankDetails = {};
 document.addEventListener('DOMContentLoaded', function() {
     buildSupplierList();
     
-    document.getElementById('paymentDate').addEventListener('change', function() {
+    const paymentDate = document.getElementById('paymentDate');
+    paymentDate.addEventListener('change', function() {
         const date = new Date(this.value);
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         document.getElementById('dayName').value = days[date.getDay()];
     });
+    
+    const paymentForm = document.getElementById('paymentForm');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    }
+
+    // Auto-focus on first field (Date)
+    setTimeout(() => {
+        if(paymentDate) paymentDate.focus();
+    }, 100);
+
+    // Custom Bank Dropdown functionality
+    const bankSearchInput = document.getElementById('bankSearchInput');
+    const bankDropdown = document.getElementById('bankDropdown');
+    const bankSelect = document.getElementById('bankSelect');
+    const bankList = document.getElementById('bankList');
+    
+    let bankActiveIndex = -1;
+
+    function getVisibleBankItems() {
+        return Array.from(bankList.querySelectorAll('.dropdown-item:not([style*="display: none"])'));
+    }
+
+    function setActiveBankItem(index) {
+        const items = getVisibleBankItems();
+        items.forEach(item => item.classList.remove('active'));
+        if (index < 0 || index >= items.length) {
+            bankActiveIndex = -1;
+            return;
+        }
+        bankActiveIndex = index;
+        const activeItem = items[index];
+        activeItem.classList.add('active');
+        activeItem.scrollIntoView({ block: 'nearest' });
+    }
+
+    function filterBanks(searchTerm) {
+        const items = bankList.querySelectorAll('.dropdown-item');
+        let visibleCount = 0;
+        const normalized = (searchTerm || '').toLowerCase();
+        items.forEach(item => {
+            const name = (item.getAttribute('data-name') || '').toLowerCase();
+            if (name.includes(normalized)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        setActiveBankItem(-1);
+    }
+
+    function selectBankItem(item) {
+        if (!item) return false;
+        const bankId = item.getAttribute('data-id');
+        const name = item.getAttribute('data-name') || '';
+        bankSearchInput.value = name;
+        bankSelect.value = bankId || '';
+        bankDropdown.style.display = 'none';
+        
+        // Auto-focus next field (Ledger)
+        setTimeout(() => {
+            $('#ledger').focus();
+            $('#ledger').select();
+        }, 50);
+        return true;
+    }
+
+    if (bankSearchInput) {
+        bankSearchInput.addEventListener('focus', function() {
+            bankDropdown.style.display = 'block';
+            filterBanks(this.value || '');
+        });
+
+        bankSearchInput.addEventListener('input', function() {
+            filterBanks(this.value);
+            bankDropdown.style.display = 'block';
+        });
+
+        bankSearchInput.addEventListener('keydown', function(e) {
+            const visibleItems = getVisibleBankItems();
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (bankActiveIndex < visibleItems.length - 1) {
+                    setActiveBankItem(bankActiveIndex + 1);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (bankActiveIndex > 0) {
+                    setActiveBankItem(bankActiveIndex - 1);
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (bankActiveIndex >= 0 && visibleItems[bankActiveIndex]) {
+                    selectBankItem(visibleItems[bankActiveIndex]);
+                } else if (visibleItems.length > 0) {
+                    selectBankItem(visibleItems[0]);
+                } else if (bankSearchInput.value === '') {
+                    // Optional: allow tabbing/entering past without selection if empty
+                    bankDropdown.style.display = 'none';
+                    setTimeout(() => {
+                        $('#ledger').focus();
+                        $('#ledger').select();
+                    }, 50);
+                }
+            } else if (e.key === 'Escape') {
+                bankDropdown.style.display = 'none';
+            }
+        });
+        
+        // Click on item
+        bankList.addEventListener('click', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            selectBankItem(item);
+        });
+
+        // Click outside closes dropdown
+        document.addEventListener('click', function(e) {
+            if (!bankSearchInput.contains(e.target) && !bankDropdown.contains(e.target)) {
+                bankDropdown.style.display = 'none';
+            }
+        });
+    }
+
+    // Enter key navigation: Date -> Bank
+    if (paymentDate) {
+        paymentDate.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (bankSearchInput) {
+                    bankSearchInput.focus();
+                }
+            }
+        });
+    }
+
+    // Enter key navigation: Ledger -> Add Party
+    const ledger = document.getElementById('ledger');
+    if (ledger) {
+        ledger.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                openSupplierModal();
+            }
+        });
+    }
 });
 
 function buildSupplierList() {
@@ -313,39 +510,129 @@ function buildSupplierList() {
 
 function filterSuppliers() {
     const search = document.getElementById('supplierSearch').value.toLowerCase();
+    let hasVisible = false;
+    let firstVisibleObj = null;
+
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => {
         const code = item.dataset.code.toLowerCase();
         const name = item.dataset.name.toLowerCase();
-        item.style.display = (code.includes(search) || name.includes(search)) ? '' : 'none';
+        
+        if (code.includes(search) || name.includes(search)) {
+            item.style.display = '';
+            if (!hasVisible) {
+                firstVisibleObj = item;
+                hasVisible = true;
+            }
+        } else {
+            item.style.display = 'none';
+            item.classList.remove('selected');
+        }
     });
+
+    if (firstVisibleObj) {
+        selectSupplierItem(firstVisibleObj, false);
+    }
 }
 
-function selectSupplierItem(el) {
+function selectSupplierItem(el, scrollTo = true) {
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedSupplier = { id: el.dataset.id, code: el.dataset.code, name: el.dataset.name };
+    if(el) {
+        el.classList.add('selected');
+        selectedSupplier = { id: el.dataset.id, code: el.dataset.code, name: el.dataset.name };
+        if(scrollTo) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    }
 }
 
 function openSupplierModal() {
     selectedSupplier = null;
     document.getElementById('supplierSearch').value = '';
+    
+    // Remove any existing listener first
+    document.removeEventListener('keydown', handleSupplierModalKeydown);
+    
     filterSuppliers();
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
     document.getElementById('supplierModalBackdrop').classList.add('show');
     document.getElementById('supplierModal').classList.add('show');
-    setTimeout(() => document.getElementById('supplierSearch').focus(), 100);
+    
+    // Add keyboard listener for navigation
+    document.addEventListener('keydown', handleSupplierModalKeydown);
+    
+    setTimeout(() => {
+        document.getElementById('supplierSearch').focus();
+        // pre-select first item if it exists
+        const firstVisible = document.querySelector('#supplierList .supplier-list-item[style*="display: none"]');
+        if (firstVisible) {
+            // we have to check visually because style display none is applied in filter
+            const visibleItems = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
+            if(visibleItems.length > 0) selectSupplierItem(visibleItems[0], false);
+        } else {
+            const first = document.querySelector('#supplierList .supplier-list-item');
+            if (first) selectSupplierItem(first, false);
+        }
+    }, 100);
+}
+
+function handleSupplierModalKeydown(e) {
+    const modal = document.getElementById('supplierModal');
+    if (!modal.classList.contains('show')) return;
+    
+    // Allow typing in the search box
+    const searchInput = document.getElementById('supplierSearch');
+    const isSearchFocused = document.activeElement === searchInput;
+    
+    // Exit if it's not a navigation key
+    if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const items = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
+    if (items.length === 0) return;
+    
+    let currentIndex = items.findIndex(el => el.classList.contains('selected'));
+    
+    if (e.key === 'ArrowDown') {
+        let nextIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+        selectSupplierItem(items[nextIndex], true);
+    } 
+    else if (e.key === 'ArrowUp') {
+        let prevIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+        selectSupplierItem(items[prevIndex], true);
+    } 
+    else if (e.key === 'Enter') {
+        if (currentIndex >= 0) {
+            confirmSupplierSelection();
+        }
+    }
 }
 
 function closeSupplierModal() {
     document.getElementById('supplierModalBackdrop').classList.remove('show');
     document.getElementById('supplierModal').classList.remove('show');
+    document.removeEventListener('keydown', handleSupplierModalKeydown);
 }
 
 function confirmSupplierSelection() {
     if (!selectedSupplier) { alert('Please select a supplier'); return; }
+    const newRowIndex = itemRowCount; // Capturing the index before addItemRow increments it
     addItemRow(selectedSupplier);
     fetchSupplierOutstanding(selectedSupplier.id);
     closeSupplierModal();
+    
+    // Auto-focus on the Cheque No field of the newly added row
+    setTimeout(() => {
+        const tr = document.getElementById(`itemRow_${newRowIndex}`);
+        if (tr) {
+            const chequeNoInput = tr.querySelector('.cheque-no');
+            if (chequeNoInput) {
+                chequeNoInput.focus();
+                chequeNoInput.select();
+            }
+        }
+    }, 150);
 }
 
 function fetchSupplierOutstanding(supplierId) {
@@ -458,17 +745,18 @@ function addItemRow(supplier) {
         }
     });
     
-    // Amount - Press Enter to open Adjustment Modal
+    // Amount - Press Enter to open Add Party modal
     const amountInput = tr.querySelector('.amount-input');
     amountInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
+            e.stopPropagation();
             const amount = parseFloat(this.value || 0);
             if (amount > 0) {
                 setUnadjustedAmount(tr, amount);
                 updateTotals();
-                openAdjustmentModalDirect();
             }
+            openSupplierModal();
         }
     });
     amountInput.addEventListener('change', function() {
@@ -824,6 +1112,21 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Tab' && e.shiftKey) {
         e.preventDefault();
         copyParty();
+    }
+    
+    // Ctrl+S to save transaction
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const saveBtn = document.querySelector('.btn-primary[onclick*="savePayment"]');
+        if (saveBtn) {
+            saveBtn.click();
+        } else if (typeof savePayment === 'function') {
+            savePayment();
+        }
+        return false;
     }
 });
 

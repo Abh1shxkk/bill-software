@@ -28,6 +28,22 @@
     #itemsTableBody tr { cursor: pointer; }
     #itemsTableBody tr:hover { background-color: #f0f7ff; }
     
+    /* Load Payment Modal row highlight */
+    #loadPaymentsList tr.load-row-selected,
+    #loadPaymentsList tr.load-row-selected:hover,
+    .table-hover #loadPaymentsList tr.load-row-selected,
+    .table-hover tbody tr.load-row-selected:hover { 
+        background-color: #007bff !important; 
+        color: white !important; 
+    }
+    #loadPaymentsList tr.load-row-selected td,
+    #loadPaymentsList tr.load-row-selected:hover td { 
+        color: white !important; 
+        font-weight: 600; 
+        background-color: #007bff !important;
+    }
+    #loadPaymentsList tr { transition: background-color 0.15s ease; }
+    
     .supplier-modal, .adjustment-modal, .bank-modal, .load-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.7); z-index: 10003; opacity: 0; transition: all 0.3s ease; }
     .supplier-modal.show, .adjustment-modal.show, .bank-modal.show, .load-modal.show { display: block; transform: translate(-50%, -50%) scale(1); opacity: 1; }
     .supplier-modal { width: 90%; max-width: 700px; }
@@ -51,6 +67,39 @@
     .bank-field-group { display: flex; align-items: center; margin-bottom: 10px; }
     .bank-field-group label { width: 100px; font-weight: 600; font-size: 12px; }
     .bank-field-group input, .bank-field-group select { flex: 1; font-size: 12px; padding: 4px 8px; height: 28px; border: 1px solid #ced4da; }
+    
+    /* Cash Highlighted Style */
+    .cheque-no.cash-highlighted {
+        font-weight: bold !important;
+        text-transform: uppercase !important;
+        background-color: #d4edda !important;
+        color: #155724 !important;
+        border-color: #28a745 !important;
+    }
+    
+    /* Custom searchable dropdown */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #f1f5ff;
+    }
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #e3ebff;
+    }
+    .custom-dropdown-menu .dropdown-item.active {
+        background-color: #e3ebff;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -67,12 +116,12 @@
             <div class="col-md-3">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text">TRN NO.</span>
-                    <input type="text" class="form-control" id="searchTrnNo" placeholder="Enter Trn No">
-                    <button class="btn btn-primary" type="button" onclick="loadPayment()"><i class="bi bi-search"></i></button>
+                    <input type="text" class="form-control" id="searchTrnNo" placeholder="Enter Trn No" onkeydown="if(event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); document.getElementById('searchBtn').click(); }">
+                    <button class="btn btn-primary" id="searchBtn" type="button" onclick="loadPayment();"><i class="bi bi-search"></i></button>
                 </div>
             </div>
             <div class="col-md-3">
-                <button class="btn btn-outline-info btn-sm" onclick="openLoadModal()"><i class="bi bi-folder-open me-1"></i> Load Payment</button>
+                <button class="btn btn-outline-info btn-sm" id="loadPaymentBtn" type="button" onclick="openLoadModal()"><i class="bi bi-folder-open me-1"></i> Load Payment</button>
             </div>
         </div>
     </div>
@@ -102,12 +151,29 @@
                     <div class="col-md-4">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Bank :</label>
-                            <select class="form-control" id="bankSelect" style="width: 230px;">
-                                <option value="">Select Bank</option>
-                                @foreach($banks as $bank)
-                                <option value="{{ $bank->alter_code }}">{{ $bank->name }}</option>
-                                @endforeach
-                            </select>
+                            <div class="custom-dropdown-wrapper" style="width: 230px; position: relative;">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="bankSearchInput" 
+                                       placeholder="Select Bank"
+                                       autocomplete="off"
+                                       style="width: 100%;">
+                                <input type="hidden" id="bankSelect" name="bank_code">
+                                <i class="bi bi-chevron-down" style="position: absolute; right: 10px; top: 5px; cursor: pointer;" onclick="document.getElementById('bankSearchInput').focus()"></i>
+                                
+                                <div id="bankDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                    <div id="bankList" class="dropdown-list">
+                                        @foreach($banks as $bank)
+                                            <div class="dropdown-item" 
+                                                 data-id="{{ $bank->alter_code }}" 
+                                                 data-name="{{ $bank->name }}"
+                                                 style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                                {{ $bank->name }}
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-4 text-end">
@@ -224,7 +290,7 @@
             <button type="button" class="btn-close-modal" onclick="closeSupplierModal()">&times;</button>
         </div>
         <div class="modal-body-box">
-            <input type="text" class="form-control mb-3" id="supplierSearch" placeholder="Search by code or name..." onkeyup="filterSuppliers()">
+            <input type="text" class="form-control mb-3" id="supplierSearch" placeholder="Search by code or name..." oninput="filterSuppliers()">
             <div id="supplierList" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
         <div class="modal-footer-box">
@@ -307,12 +373,172 @@ let rowBankDetails = {};
 
 document.addEventListener('DOMContentLoaded', function() {
     buildSupplierList();
-    document.getElementById('paymentDate').addEventListener('change', function() {
-        const date = new Date(this.value);
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        document.getElementById('dayName').value = days[date.getDay()];
-    });
     
+    const paymentDate = document.getElementById('paymentDate');
+    if (paymentDate) {
+        paymentDate.addEventListener('change', function() {
+            if (!this.value) return;
+            const date = new Date(this.value);
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            document.getElementById('dayName').value = days[date.getDay()];
+        });
+        
+        // Enter key navigation: Date -> Bank, Shift+Enter: Date -> TRN NO
+        paymentDate.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                document.getElementById('searchTrnNo').focus();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                const bankSearchInput = document.getElementById('bankSearchInput');
+                if (bankSearchInput) bankSearchInput.focus();
+            }
+        });
+    }
+
+    // Custom Bank Dropdown functionality
+    const bankSearchInput = document.getElementById('bankSearchInput');
+    const bankDropdown = document.getElementById('bankDropdown');
+    const bankSelect = document.getElementById('bankSelect');
+    const bankList = document.getElementById('bankList');
+    
+    let bankActiveIndex = -1;
+
+    function getVisibleBankItems() {
+        return Array.from(bankList.querySelectorAll('.dropdown-item:not([style*="display: none"])'));
+    }
+
+    function setActiveBankItem(index) {
+        const items = getVisibleBankItems();
+        items.forEach(item => item.classList.remove('active'));
+        if (index < 0 || index >= items.length) {
+            bankActiveIndex = -1;
+            return;
+        }
+        bankActiveIndex = index;
+        const activeItem = items[index];
+        activeItem.classList.add('active');
+        activeItem.scrollIntoView({ block: 'nearest' });
+    }
+
+    function filterBanks(searchTerm) {
+        const items = bankList.querySelectorAll('.dropdown-item');
+        let visibleCount = 0;
+        const normalized = (searchTerm || '').toLowerCase();
+        items.forEach(item => {
+            const name = (item.getAttribute('data-name') || '').toLowerCase();
+            if (name.includes(normalized)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        setActiveBankItem(-1);
+    }
+
+    function selectBankItem(item) {
+        if (!item) return false;
+        const bankId = item.getAttribute('data-id');
+        const name = item.getAttribute('data-name') || '';
+        bankSearchInput.value = name;
+        bankSelect.value = bankId || '';
+        bankDropdown.style.display = 'none';
+        
+        // Auto-focus next field (Ledger)
+        setTimeout(() => {
+            $('#ledger').focus();
+            $('#ledger').select();
+        }, 50);
+        return true;
+    }
+
+    if (bankSearchInput) {
+        bankSearchInput.addEventListener('focus', function() {
+            bankDropdown.style.display = 'block';
+            filterBanks(this.value || '');
+        });
+
+        bankSearchInput.addEventListener('input', function() {
+            filterBanks(this.value);
+            bankDropdown.style.display = 'block';
+        });
+
+        bankSearchInput.addEventListener('keydown', function(e) {
+            const visibleItems = getVisibleBankItems();
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (bankActiveIndex < visibleItems.length - 1) setActiveBankItem(bankActiveIndex + 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (bankActiveIndex > 0) setActiveBankItem(bankActiveIndex - 1);
+            } else if (e.key === 'Enter' && e.shiftKey) {
+                // Shift+Enter: Bank -> Date
+                e.preventDefault();
+                e.stopPropagation();
+                bankDropdown.style.display = 'none';
+                document.getElementById('paymentDate').focus();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (bankActiveIndex >= 0 && visibleItems[bankActiveIndex]) {
+                    selectBankItem(visibleItems[bankActiveIndex]);
+                } else if (visibleItems.length > 0) {
+                    selectBankItem(visibleItems[0]);
+                } else if (bankSearchInput.value === '') {
+                    bankDropdown.style.display = 'none';
+                    setTimeout(() => {
+                        $('#ledger').focus();
+                        $('#ledger').select();
+                    }, 50);
+                }
+            } else if (e.key === 'Escape') {
+                bankDropdown.style.display = 'none';
+            }
+        });
+        
+        bankList.addEventListener('click', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (item) selectBankItem(item);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!bankSearchInput.contains(e.target) && !bankDropdown.contains(e.target)) {
+                bankDropdown.style.display = 'none';
+            }
+        });
+    }
+
+    // Enter key navigation: Ledger -> Add Party, Shift+Enter: Ledger -> Bank
+    const ledger = document.getElementById('ledger');
+    if (ledger) {
+        ledger.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                document.getElementById('bankSearchInput').focus();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                openSupplierModal();
+            }
+        });
+    }
+    
+    // Fallback form prevent submission
+    const paymentForm = document.getElementById('paymentForm');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            return false;
+        });
+    }
+    
+    setTimeout(() => {
+        if(document.getElementById('searchTrnNo')) document.getElementById('searchTrnNo').focus();
+    }, 100);
+
     const urlParams = new URLSearchParams(window.location.search);
     const trnNo = urlParams.get('trn_no');
     if (trnNo) { document.getElementById('searchTrnNo').value = trnNo; loadPayment(); }
@@ -330,42 +556,129 @@ function filterSuppliers() {
     });
 }
 
-function selectSupplierItem(el) {
+function handleSupplierModalKeydown(e) {
+    if (e.key === 'Escape') {
+        closeSupplierModal();
+        return;
+    }
+    
+    const searchInput = document.getElementById('supplierSearch');
+    const items = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
+    
+    if (items.length === 0) return;
+
+    let selectedIndex = items.findIndex(item => item.classList.contains('selected'));
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (selectedIndex < items.length - 1) {
+            selectedIndex++;
+            selectSupplierItem(items[selectedIndex], true);
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (selectedIndex > 0) {
+            selectedIndex--;
+            selectSupplierItem(items[selectedIndex], true);
+        } else if (selectedIndex === 0) {
+            document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
+            searchInput.focus();
+        }
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedIndex !== -1) {
+            confirmSupplierSelection();
+        } else if (document.activeElement === searchInput && items.length > 0) {
+            selectSupplierItem(items[0], false);
+            confirmSupplierSelection();
+        }
+    }
+}
+
+function selectSupplierItem(el, scroll = false) {
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
+    if (!el) return;
     el.classList.add('selected');
     selectedSupplier = { id: el.dataset.id, code: el.dataset.code, name: el.dataset.name };
+    if (scroll) el.scrollIntoView({ block: 'nearest' });
 }
 
 function openSupplierModal() {
     selectedSupplier = null;
     document.getElementById('supplierSearch').value = '';
+    
+    // Remove any existing listener first
+    document.removeEventListener('keydown', handleSupplierModalKeydown);
+    
     filterSuppliers();
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
     document.getElementById('supplierModalBackdrop').classList.add('show');
     document.getElementById('supplierModal').classList.add('show');
-    setTimeout(() => document.getElementById('supplierSearch').focus(), 100);
+    
+    // Add keyboard listener for navigation
+    document.addEventListener('keydown', handleSupplierModalKeydown);
+    
+    setTimeout(() => {
+        document.getElementById('supplierSearch').focus();
+        // pre-select first visible item
+        const visibleItems = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
+        if(visibleItems.length > 0) selectSupplierItem(visibleItems[0], false);
+    }, 100);
 }
 
 function closeSupplierModal() {
+    document.removeEventListener('keydown', handleSupplierModalKeydown);
     document.getElementById('supplierModalBackdrop').classList.remove('show');
     document.getElementById('supplierModal').classList.remove('show');
 }
 
 function confirmSupplierSelection() {
     if (!selectedSupplier) { alert('Please select a supplier'); return; }
+    const newRowIndex = itemRowCount; // Capturing the index before addItemRow increments it
     addItemRow(selectedSupplier);
     fetchSupplierOutstanding(selectedSupplier.id);
     closeSupplierModal();
+    
+    // Auto-focus on the Cheque No field of the newly added row
+    setTimeout(() => {
+        const tr = document.getElementById(`itemRow_${newRowIndex}`);
+        if (tr) {
+            const chequeNoInput = tr.querySelector('.cheque-no');
+            if (chequeNoInput) {
+                chequeNoInput.focus();
+                chequeNoInput.select();
+            }
+        }
+    }, 150);
 }
 
+let isLoadPaymentBusy = false;
+
 function loadPayment() {
-    const trnNo = document.getElementById('searchTrnNo').value;
-    if (!trnNo) { alert('Please enter a transaction number'); return; }
+    if (isLoadPaymentBusy) return;
+    const trnNo = document.getElementById('searchTrnNo').value.trim();
+    if (!trnNo) { 
+        isLoadPaymentBusy = true;
+        alert('Please enter a transaction number');
+        document.getElementById('searchTrnNo').blur();
+        setTimeout(() => {
+            isLoadPaymentBusy = false;
+            const lpBtn = document.getElementById('loadPaymentBtn');
+            if(lpBtn) lpBtn.click();
+        }, 200);
+        return; 
+    }
     
     fetch(`{{ url('admin/supplier-payment/get-by-trn') }}/${trnNo}`)
         .then(r => r.json())
         .then(data => {
-            if (data.success && data.payment) { populatePaymentData(data.payment); }
+            if (data.success && data.payment) { 
+                populatePaymentData(data.payment); 
+                setTimeout(() => {
+                    const pd = document.getElementById('paymentDate');
+                    if(pd) pd.focus();
+                }, 100);
+            }
             else { alert(data.message || 'Payment not found'); }
         })
         .catch(err => { console.error('Error:', err); alert('Error loading payment'); });
@@ -378,11 +691,19 @@ function populatePaymentData(payment) {
     document.getElementById('trnNo').value = payment.trn_no;
     document.getElementById('ledger').value = payment.ledger || 'SL';
     
-    // Set bank value - handle Select2
+    // Set bank value
     const bankSelect = document.getElementById('bankSelect');
+    const bankSearchInput = document.getElementById('bankSearchInput');
     bankSelect.value = payment.bank_code || '';
-    if (typeof $ !== 'undefined' && $(bankSelect).data('select2')) {
-        $(bankSelect).val(payment.bank_code || '').trigger('change');
+    if (bankSearchInput) {
+        if (payment.bank_code) {
+            const item = document.querySelector(`.dropdown-item[data-id="${payment.bank_code}"]`);
+            if (item) {
+                bankSearchInput.value = item.getAttribute('data-name') || '';
+            }
+        } else {
+            bankSearchInput.value = '';
+        }
     }
     
     document.getElementById('currencyDetail').checked = payment.currency_detail;
@@ -475,39 +796,80 @@ function addItemRow(supplier) {
 
 function setupRowEventListeners(tr, rowIndex) {
     const chequeNoInput = tr.querySelector('.cheque-no');
+    
+    function updateCashHighlight() {
+        const val = chequeNoInput.value.trim().toLowerCase();
+        if (val === 'cash') chequeNoInput.classList.add('cash-highlighted');
+        else chequeNoInput.classList.remove('cash-highlighted');
+    }
+    
+    // Initial check just in case
+    updateCashHighlight();
+
     chequeNoInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && e.shiftKey) {
+            // Shift+Enter: Cheque No -> Ledger (or previous row's Amount)
             e.preventDefault();
-            if (this.value) {
+            e.stopPropagation();
+            const allRows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+            const currentIdx = allRows.indexOf(tr);
+            if (currentIdx > 0) {
+                const prevRow = allRows[currentIdx - 1];
+                const prevAmount = prevRow.querySelector('.amount-input');
+                if (prevAmount) prevAmount.focus();
+            } else {
+                document.getElementById('ledger').focus();
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const val = this.value.trim().toLowerCase();
+            if (val && val !== 'cash') {
                 tr.dataset.paymentType = 'cheque';
                 openBankModal(rowIndex);
             } else {
+                if(val === 'cash') this.value = 'CASH';
+                updateCashHighlight();
                 tr.querySelector('.cheque-date').focus();
             }
         }
     });
     chequeNoInput.addEventListener('change', function() {
-        tr.dataset.paymentType = this.value ? 'cheque' : 'cash';
+        const val = this.value.trim().toLowerCase();
+        if(val === 'cash') this.value = 'CASH';
+        updateCashHighlight();
+        tr.dataset.paymentType = (val && val !== 'cash') ? 'cheque' : 'cash';
         updateTotals();
     });
     
     const chequeDateInput = tr.querySelector('.cheque-date');
     chequeDateInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && e.shiftKey) {
+            // Shift+Enter: Cheque Date -> Cheque No
+            e.preventDefault();
+            e.stopPropagation();
+            chequeNoInput.focus();
+        } else if (e.key === 'Enter') {
             e.preventDefault();
             tr.querySelector('.amount-input').focus();
         }
     });
     
+    // Amount - Press Enter to open Add Party modal
     const amountInput = tr.querySelector('.amount-input');
     amountInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
+        if (e.key === 'Enter' && e.shiftKey) {
+            // Shift+Enter: Amount -> Cheque Date
             e.preventDefault();
+            e.stopPropagation();
+            tr.querySelector('.cheque-date').focus();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
             const amount = parseFloat(this.value || 0);
             if (amount > 0) {
                 updateTotals();
-                openAdjustmentModalDirect();
             }
+            openSupplierModal();
         }
     });
     amountInput.addEventListener('change', function() { updateTotals(); });
@@ -632,7 +994,58 @@ function saveBankDetails() {
 }
 
 // Load Modal
+let loadModalSelectedIndex = -1;
+
+function handleLoadModalKeydown(e) {
+    const rows = Array.from(document.querySelectorAll('#loadPaymentsList tr[data-trn-no]'));
+    if (rows.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (loadModalSelectedIndex < rows.length - 1) {
+            loadModalSelectedIndex++;
+        } else {
+            loadModalSelectedIndex = 0;
+        }
+        highlightLoadRow(rows, loadModalSelectedIndex);
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (loadModalSelectedIndex > 0) {
+            loadModalSelectedIndex--;
+        } else {
+            loadModalSelectedIndex = rows.length - 1;
+        }
+        highlightLoadRow(rows, loadModalSelectedIndex);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (loadModalSelectedIndex >= 0 && rows[loadModalSelectedIndex]) {
+            rows[loadModalSelectedIndex].click();
+        }
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeLoadModal();
+    }
+}
+
+function highlightLoadRow(rows, index) {
+    rows.forEach(r => r.classList.remove('load-row-selected'));
+    if (index >= 0 && rows[index]) {
+        rows[index].classList.add('load-row-selected');
+        rows[index].scrollIntoView({ block: 'nearest' });
+    }
+}
+
 function openLoadModal() {
+    loadModalSelectedIndex = -1;
+    document.removeEventListener('keydown', handleLoadModalKeydown, true);
     document.getElementById('loadModalBackdrop').classList.add('show');
     document.getElementById('loadModal').classList.add('show');
     
@@ -641,15 +1054,29 @@ function openLoadModal() {
     fetch('{{ url("admin/supplier-payment/get-payments") }}')
         .then(r => r.json())
         .then(data => {
-            if (data.success && data.payments) displayPaymentsList(data.payments);
+            if (data.success && data.payments) {
+                displayPaymentsList(data.payments);
+                // Auto-select first row
+                setTimeout(() => {
+                    const rows = Array.from(document.querySelectorAll('#loadPaymentsList tr[data-trn-no]'));
+                    if (rows.length > 0) {
+                        loadModalSelectedIndex = 0;
+                        highlightLoadRow(rows, 0);
+                    }
+                }, 50);
+            }
             else document.getElementById('loadPaymentsList').innerHTML = '<tr><td colspan="4" class="text-center text-muted">No payments found</td></tr>';
         })
         .catch(() => {
             document.getElementById('loadPaymentsList').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading payments</td></tr>';
         });
+    
+    // Add keyboard listener in CAPTURE phase (before global index shortcuts)
+    document.addEventListener('keydown', handleLoadModalKeydown, true);
 }
 
 function closeLoadModal() {
+    document.removeEventListener('keydown', handleLoadModalKeydown, true);
     document.getElementById('loadModalBackdrop').classList.remove('show');
     document.getElementById('loadModal').classList.remove('show');
 }
@@ -664,6 +1091,7 @@ function displayPaymentsList(payments) {
     payments.forEach(p => {
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
+        tr.dataset.trnNo = p.trn_no;
         tr.onclick = function() { document.getElementById('searchTrnNo').value = p.trn_no; closeLoadModal(); loadPayment(); };
         tr.innerHTML = `<td>${p.trn_no}</td><td>${p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-GB') : '-'}</td><td>${p.bank_name || '-'}</td><td class="text-end">${(parseFloat(p.total_cash || 0) + parseFloat(p.total_cheque || 0)).toFixed(2)}</td>`;
         tbody.appendChild(tr);
@@ -881,8 +1309,28 @@ function deletePayment() {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') { closeSupplierModal(); closeAdjustmentModal(); closeBankModal(); closeLoadModal(); }
+    if (e.key === 'Escape') {
+        // Don't interfere if load modal handler is active
+        const loadModal = document.getElementById('loadModal');
+        if (loadModal && loadModal.classList.contains('show')) return;
+        closeSupplierModal(); closeAdjustmentModal(); closeBankModal();
+    }
     if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); copyParty(); }
+    
+    // Ctrl+S to save transaction
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const saveBtn = document.getElementById('btnUpdate');
+        if (saveBtn && !saveBtn.disabled) {
+            saveBtn.click();
+        } else if (typeof updatePayment === 'function') {
+            updatePayment();
+        }
+        return false;
+    }
 });
 
 document.getElementById('bankModal').addEventListener('keydown', function(e) {
