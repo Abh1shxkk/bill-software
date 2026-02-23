@@ -1,6 +1,6 @@
-{{-- Transaction Shortcuts Partial --}}
-{{-- End key to save transaction/modification --}}
-{{-- Enter key to move to next field (like traditional billing software) --}}
+
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -317,3 +317,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+<?php /**PATH C:\xampp\htdocs\bill-software\resources\views/layouts/partials/transaction-shortcuts.blade.php ENDPATH**/ ?>

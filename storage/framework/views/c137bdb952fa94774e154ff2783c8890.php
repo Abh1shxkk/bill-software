@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Replacement Note Transaction'); ?>
 
-@section('title', 'Replacement Note Transaction')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .rn-form { font-size: 11px; }
     .rn-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
@@ -48,9 +46,9 @@
         background-color: #cce5ff;
     }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="rn-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -59,7 +57,7 @@
                 <div class="text-muted small">Create new replacement note</div>
             </div>
             <div>
-                <a href="{{ route('admin.replacement-note.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.replacement-note.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list me-1"></i> View All
                 </a>
             </div>
@@ -68,7 +66,7 @@
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
                 <form id="rnForm" method="POST" autocomplete="off">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <!-- Header Section -->
                     <div class="header-section">
                         <div class="d-flex gap-3 mb-2">
@@ -76,15 +74,15 @@
                             <div style="width: 180px;">
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">Date:</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" style="width: 120px;" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required>
+                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" style="width: 120px;" value="<?php echo e(date('Y-m-d')); ?>" onchange="updateDayName()" required>
                                 </div>
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">Day:</label>
-                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field" style="width: 120px;" value="{{ date('l') }}" readonly>
+                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field" style="width: 120px;" value="<?php echo e(date('l')); ?>" readonly>
                                 </div>
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">Trn.No:</label>
-                                    <input type="text" id="rn_no" name="rn_no" class="form-control readonly-field" style="width: 120px;" value="{{ $nextRnNo }}" readonly>
+                                    <input type="text" id="rn_no" name="rn_no" class="form-control readonly-field" style="width: 120px;" value="<?php echo e($nextRnNo); ?>" readonly>
                                 </div>
                             </div>
 
@@ -97,9 +95,9 @@
                                             <div class="custom-dropdown-container">
                                                 <input type="text" id="supplierSearchInput" class="form-control" style="flex: 1;" placeholder="Search supplier..." autocomplete="off">
                                                 <div class="custom-dropdown-list" id="supplierDropdownList">
-                                                    @foreach($suppliers as $supplier)
-                                                    <div class="custom-dropdown-item" data-value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</div>
-                                                    @endforeach
+                                                    <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <div class="custom-dropdown-item" data-value="<?php echo e($supplier->supplier_id); ?>" data-name="<?php echo e($supplier->name); ?>"><?php echo e($supplier->name); ?></div>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                 </div>
                                             </div>
                                             <input type="hidden" id="supplier_id" name="supplier_id" value="">
@@ -245,7 +243,7 @@
 </section>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'reusableItemsModal',
     'module' => 'replacement-note',
     'showStock' => true,
@@ -253,15 +251,15 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'reusableBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'reusableBatchModal',
     'module' => 'replacement-note',
     'showOnlyAvailable' => true,
     'rateType' => 'p_rate',
     'showCostDetails' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- Remarks Modal -->
 <div class="modal fade" id="remarksModal" tabindex="-1">
@@ -281,10 +279,10 @@
         </div>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'chooseItemsModal',
     'module' => 'replacement-note',
     'showStock' => true,
@@ -292,17 +290,17 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'batchSelectionModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'batchSelectionModal',
     'module' => 'replacement-note',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
@@ -564,7 +562,7 @@ function updateSupplierName() {
 
 // Load Items
 function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}')
+    fetch('<?php echo e(route("admin.items.get-all")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data.items || [];
@@ -684,7 +682,7 @@ function checkBatch(rowIndex) {
     pendingBatchRowIndex = rowIndex;
     pendingBatchItemData = row.dataset.itemData ? JSON.parse(row.dataset.itemData) : {};
     
-    fetch(`{{ route('admin.batches.check-batch') }}?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(route('admin.batches.check-batch')); ?>?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.exists && data.batches && data.batches.length > 0) {
@@ -1079,7 +1077,7 @@ function selectInsertItem(item) {
     closeItemModal();
     
     // Fetch batches for this item
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${item.id}`)
         .then(response => response.json())
         .then(data => {
             // Filter to only show batches with qty > 0 (available stock)
@@ -1347,7 +1345,7 @@ function saveTransaction() {
     const supplierName = window.selectedSupplierName || document.getElementById('supplierSearchInput')?.value || '';
     
     const data = {
-        _token: '{{ csrf_token() }}',
+        _token: '<?php echo e(csrf_token()); ?>',
         transaction_date: document.getElementById('transaction_date').value,
         day_name: document.getElementById('day_name').value,
         supplier_id: supplierId,
@@ -1374,11 +1372,11 @@ function saveTransaction() {
         window.markAsSaving();
     }
     
-    fetch('{{ route("admin.replacement-note.store") }}', {
+    fetch('<?php echo e(route("admin.replacement-note.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(data)
     })
@@ -1386,7 +1384,7 @@ function saveTransaction() {
     .then(result => {
         if (result.success) {
             alert('Replacement note saved successfully! RN No: ' + result.rn_no);
-            window.location.href = '{{ route("admin.replacement-note.index") }}';
+            window.location.href = '<?php echo e(route("admin.replacement-note.index")); ?>';
         } else {
             alert('Error: ' + (result.message || 'Failed to save'));
         }
@@ -1422,4 +1420,6 @@ document.addEventListener('keydown', function(e) {
     }
 }, true);
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/replacement-note/transaction.blade.php ENDPATH**/ ?>

@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Replacement Note Modification'); ?>
 
-@section('title', 'Replacement Note Modification')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 8px; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; }
@@ -40,18 +38,18 @@
         background-color: #cce5ff;
     }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="compact-form py-2">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Replacement Note Modification</h5>
             <div>
-                <a href="{{ route('admin.replacement-note.transaction') }}" class="btn btn-primary btn-sm">
+                <a href="<?php echo e(route('admin.replacement-note.transaction')); ?>" class="btn btn-primary btn-sm">
                     <i class="bi bi-plus-circle"></i> New
                 </a>
-                <a href="{{ route('admin.replacement-note.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.replacement-note.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list"></i> View All
                 </a>
             </div>
@@ -60,7 +58,7 @@
         <div class="card shadow-sm">
             <div class="card-body p-2">
                 <form id="rnForm">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <input type="hidden" id="transaction_id">
                     
                     <!-- Header -->
@@ -76,9 +74,9 @@
                                 <div class="custom-dropdown-container">
                                     <input type="text" id="supplierSearchInput" class="form-control" placeholder="Search supplier..." autocomplete="off">
                                     <div class="custom-dropdown-list" id="supplierDropdownList">
-                                        @foreach($suppliers as $supplier)
-                                        <div class="custom-dropdown-item" data-value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</div>
-                                        @endforeach
+                                        <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <div class="custom-dropdown-item" data-value="<?php echo e($supplier->supplier_id); ?>" data-name="<?php echo e($supplier->name); ?>"><?php echo e($supplier->name); ?></div>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </div>
                                 </div>
                                 <input type="hidden" id="supplier_id" name="supplier_id" value="">
@@ -164,7 +162,7 @@
 <div id="modalContainer"></div>
 
 <!-- Reusable Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'reusableItemsModal',
     'module' => 'replacement-note-modification',
     'showStock' => true,
@@ -172,19 +170,19 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'reusableBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'reusableBatchModal',
     'module' => 'replacement-note-modification',
     'showOnlyAvailable' => true,
     'rateType' => 'p_rate',
     'showCostDetails' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0, itemsData = [], currentTransactionId = null, selectedRowIndex = null;
 
@@ -441,7 +439,7 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
 };
 
 function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}')
+    fetch('<?php echo e(route("admin.items.get-all")); ?>')
         .then(r => r.json())
         .then(d => itemsData = d.items || [])
         .catch(e => console.error(e));
@@ -449,7 +447,7 @@ function loadItems() {
 
 function loadTransaction(id) {
     console.log('Loading transaction ID:', id);
-    fetch(`{{ url('admin/replacement-note/details') }}/${id}`)
+    fetch(`<?php echo e(url('admin/replacement-note/details')); ?>/${id}`)
         .then(r => {
             if (!r.ok) throw new Error('Network response not ok: ' + r.status);
             return r.json();
@@ -693,9 +691,9 @@ function saveTransaction() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/replacement-note/update') }}/${currentTransactionId}`, {
+    fetch(`<?php echo e(url('admin/replacement-note/update')); ?>/${currentTransactionId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({
             transaction_date: transactionDate,
             day_name: document.getElementById('day_name').value || '',
@@ -726,15 +724,15 @@ function saveTransaction() {
 
 function deleteTransaction() {
     if (!currentTransactionId || !confirm('Delete this replacement note?')) return;
-    fetch(`{{ url('admin/replacement-note') }}/${currentTransactionId}`, {
+    fetch(`<?php echo e(url('admin/replacement-note')); ?>/${currentTransactionId}`, {
         method: 'DELETE',
-        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        headers: { 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' }
     })
     .then(r => r.json())
     .then(result => {
         if (result.success) {
             alert('Deleted!');
-            window.location.href = '{{ route("admin.replacement-note.index") }}';
+            window.location.href = '<?php echo e(route("admin.replacement-note.index")); ?>';
         } else alert('Error: ' + (result.message || 'Delete failed'));
     }).catch(e => alert('Error deleting'));
 }
@@ -742,7 +740,7 @@ function deleteTransaction() {
 let invoiceModalKeydownHandler = null;
 
 function openInsertInvoiceModal() {
-    fetch('{{ route("admin.replacement-note.past-notes") }}')
+    fetch('<?php echo e(route("admin.replacement-note.past-notes")); ?>')
         .then(r => r.json())
         .then(d => {
             const txs = d.transactions || [];
@@ -924,7 +922,7 @@ function checkBatch(rowIndex) {
     
     const itemData = row.dataset.itemData ? JSON.parse(row.dataset.itemData) : {};
     
-    fetch(`{{ route('admin.batches.check-batch') }}?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(route('admin.batches.check-batch')); ?>?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(r => r.json())
         .then(d => {
             if (d.exists && d.batches && d.batches.length > 0) {
@@ -1150,7 +1148,7 @@ function selectInsertItem(item) {
     pendingItemForBatch = item;
     closeItemModal();
     
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${item.id}`)
         .then(r => r.json())
         .then(d => {
             const availableBatches = (d.batches || []).filter(b => (b.qty || 0) > 0);
@@ -1241,6 +1239,8 @@ function closeModal() {
     document.getElementById('modalContainer').innerHTML = '';
 }
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
 
 
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/replacement-note/modification.blade.php ENDPATH**/ ?>

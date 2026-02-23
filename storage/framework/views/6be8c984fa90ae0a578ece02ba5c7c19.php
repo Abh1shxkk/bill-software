@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Quotation - Modification'); ?>
 
-@section('title', 'Quotation - Modification')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .qt-form { font-size: 11px; }
     .qt-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; }
@@ -56,9 +54,9 @@
         outline-offset: 2px;
     }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="qt-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -70,7 +68,7 @@
                 <button type="button" class="btn btn-warning btn-sm" id="loadQuotationBtn" onclick="showLoadModal()" tabindex="1" style="transition: box-shadow 0.2s;">
                     <i class="bi bi-folder2-open me-1"></i> Load Quotation
                 </button>
-                <a href="{{ route('admin.quotation.transaction') }}" class="btn btn-success btn-sm">
+                <a href="<?php echo e(route('admin.quotation.transaction')); ?>" class="btn btn-success btn-sm">
                     <i class="bi bi-plus-circle me-1"></i> New Quotation
                 </a>
             </div>
@@ -79,8 +77,8 @@
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
                 <form id="qtForm" method="POST" autocomplete="off" onsubmit="return false;">
-                    @csrf
-                    @method('PUT')
+                    <?php echo csrf_field(); ?>
+                    <?php echo method_field('PUT'); ?>
                     <input type="hidden" id="quotation_id" name="quotation_id" value="">
                     
                     <div class="header-section">
@@ -88,7 +86,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="quotation_date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required tabindex="1" data-custom-enter>
+                                    <input type="date" id="quotation_date" name="date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" required tabindex="1" data-custom-enter>
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 40px;">T.No :</label>
@@ -101,9 +99,9 @@
                                     <div class="custom-dropdown-container">
                                         <input type="text" id="customerSearchInput" class="form-control" placeholder="Search customer..." autocomplete="off" tabindex="10" data-custom-enter>
                                         <div class="custom-dropdown-list" id="customerDropdownList">
-                                            @foreach($customers as $customer)
-                                            <div class="custom-dropdown-item" data-value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->name }}</div>
-                                            @endforeach
+                                            <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <div class="custom-dropdown-item" data-value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>"><?php echo e($customer->name); ?></div>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </div>
                                     </div>
                                     <input type="hidden" id="customer_id" name="customer_id" value="">
@@ -189,7 +187,7 @@
 </section>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'chooseItemsModal',
     'module' => 'quotation-modification',
     'showStock' => true,
@@ -197,19 +195,19 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'batchSelectionModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'batchSelectionModal',
     'module' => 'quotation-modification',
     'showOnlyAvailable' => false,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 // Prevent global transaction-shortcuts from auto-focusing the first input
 window.SKIP_AUTO_FOCUS = true;
@@ -637,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadItems() {
-    fetch('{{ route("admin.quotation.getItems") }}')
+    fetch('<?php echo e(route("admin.quotation.getItems")); ?>')
         .then(response => response.json())
         .then(data => { itemsData = data || []; })
         .catch(error => console.error('Error:', error));
@@ -727,7 +725,7 @@ function clearLoadModalHighlight(rows) {
 }
 
 function loadQuotations(search = '') {
-    fetch(`{{ route("admin.quotation.getQuotations") }}?search=${encodeURIComponent(search)}`)
+    fetch(`<?php echo e(route("admin.quotation.getQuotations")); ?>?search=${encodeURIComponent(search)}`)
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('quotationsListBody');
@@ -764,7 +762,7 @@ function closeLoadModal() {
 
 function selectQuotation(id) {
     closeLoadModal();
-    fetch(`{{ url('admin/quotation') }}/${id}/edit`, { headers: { 'Accept': 'application/json' } })
+    fetch(`<?php echo e(url('admin/quotation')); ?>/${id}/edit`, { headers: { 'Accept': 'application/json' } })
         .then(response => response.json())
         .then(data => { if (data && data.id) populateForm(data); else alert('Quotation not found'); })
         .catch(error => { console.error('Error:', error); alert('Error loading quotation'); });
@@ -1000,9 +998,9 @@ function updateQuotation() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/quotation') }}/${loadedQuotationId}`, {
+    fetch(`<?php echo e(url('admin/quotation')); ?>/${loadedQuotationId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({
             date: document.getElementById('quotation_date').value,
             customer_id: document.getElementById('customer_id').value,
@@ -1015,7 +1013,7 @@ function updateQuotation() {
     })
     .then(response => response.json())
     .then(result => {
-        if (result.success) { alert('Quotation updated: ' + result.quotation_no); window.location.href = '{{ route("admin.quotation.index") }}'; }
+        if (result.success) { alert('Quotation updated: ' + result.quotation_no); window.location.href = '<?php echo e(route("admin.quotation.index")); ?>'; }
         else { alert('Error: ' + result.message); }
     })
     .catch(error => { console.error('Error:', error); alert('Error updating quotation'); });
@@ -1025,13 +1023,13 @@ function cancelQuotation() {
     if (!loadedQuotationId) { alert('Please load a quotation first'); return; }
     if (!confirm('Are you sure you want to cancel this quotation?')) return;
     
-    fetch(`{{ url('admin/quotation') }}/${loadedQuotationId}/cancel`, {
+    fetch(`<?php echo e(url('admin/quotation')); ?>/${loadedQuotationId}/cancel`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' }
     })
     .then(response => response.json())
     .then(result => {
-        if (result.success) { alert('Quotation cancelled'); window.location.href = '{{ route("admin.quotation.index") }}'; }
+        if (result.success) { alert('Quotation cancelled'); window.location.href = '<?php echo e(route("admin.quotation.index")); ?>'; }
         else { alert('Error: ' + result.message); }
     })
     .catch(error => { console.error('Error:', error); alert('Error cancelling quotation'); });
@@ -1071,4 +1069,5 @@ window.addEventListener('keyup', function(e) {
     }
 }, true);
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/quotation/modification.blade.php ENDPATH**/ ?>

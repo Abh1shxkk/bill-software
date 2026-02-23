@@ -194,12 +194,19 @@
         border: 1px solid #ced4da;
         border-radius: 0;
     }
+    /* Load Invoices modal row highlight */
+    #invoicesListBody tr.inv-row-selected td {
+        background-color: #007bff !important;
+        color: white !important;
+        font-weight: 600;
+    }
+    #invoicesListBody tr { cursor: pointer; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
     <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Receipt Modification</h5>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-info btn-sm" onclick="openLoadInvoicesModal()">
+        <button type="button" class="btn btn-info btn-sm" id="loadInvoicesBtn" onclick="openLoadInvoicesModal()">
             <i class="bi bi-file-earmark-text me-1"></i> Load Invoices
         </button>
         <a href="{{ route('admin.customer-receipt.transaction') }}" class="btn btn-primary btn-sm">
@@ -471,12 +478,23 @@
         <div class="bank-modal-body">
             <div class="bank-field-group">
                 <label>Bank :</label>
-                <select class="form-control" id="chequeBankName">
+                <!-- hidden native select -->
+                <select class="custom-select-hidden no-select2" id="chequeBankName" style="display:none;">
                     <option value="">Select Bank</option>
                     @foreach($banks as $bank)
                     <option value="{{ $bank->name }}">{{ $bank->name }}</option>
                     @endforeach
                 </select>
+                <!-- custom searchable wrapper -->
+                <div style="flex:1; position:relative;" id="bankModalDropWrapper">
+                    <input type="text" class="form-control" id="bankModalSearchInput"
+                           placeholder="Search bank..." autocomplete="off">
+                    <div id="bankModalDropList"
+                         style="display:none; position:absolute; top:100%; left:0; width:100%;
+                                max-height:200px; overflow-y:auto; background:white;
+                                border:1px solid #ced4da; border-radius:4px;
+                                box-shadow:0 4px 8px rgba(0,0,0,0.15); z-index:99999;"></div>
+                </div>
             </div>
             <div class="bank-field-group">
                 <label>Area :</label>
@@ -488,8 +506,8 @@
             </div>
         </div>
         <div class="bank-modal-footer">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeBankModal()">Cancel</button>
-            <button type="button" class="btn btn-primary btn-sm" onclick="saveBankDetails()">OK</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="bankCancelBtn" onclick="closeBankModal()">Cancel</button>
+            <button type="button" class="btn btn-primary btn-sm" id="bankOkBtn" onclick="saveBankDetails()">OK</button>
         </div>
     </div>
 </div>
@@ -503,7 +521,7 @@
             <button type="button" class="btn-close-modal" onclick="closeCustomerModal()">&times;</button>
         </div>
         <div class="customer-modal-body">
-            <input type="text" class="form-control mb-3" id="customerSearch" placeholder="Search by code or name..." onkeyup="filterCustomers()">
+            <input type="text" class="form-control mb-3" id="customerSearch" placeholder="Search by code or name..." oninput="filterCustomers()">
             <div id="customerList" style="max-height: 300px; overflow-y: auto;">
             </div>
         </div>
@@ -595,11 +613,54 @@ function filterCustomers() {
         const name = item.dataset.name.toLowerCase();
         item.style.display = (code.includes(search) || name.includes(search)) ? '' : 'none';
     });
+    // Re-highlight first visible item after filter
+    if (typeof _selectCustItem === 'function') {
+        const first = Array.from(document.querySelectorAll('#customerList .customer-list-item'))
+            .find(el => el.style.display !== 'none');
+        if (first) _selectCustItem(first);
+    }
 }
 
 function selectCustomerItem(el) {
     document.querySelectorAll('#customerList .customer-list-item').forEach(item => item.classList.remove('selected'));
     el.classList.add('selected');
+    selectedCustomer = { id: el.dataset.id, code: el.dataset.code, name: el.dataset.name };
+}
+
+function _handleCustomerModalKey(e) {
+    const modal = document.getElementById('customerModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    if (e.key === 'Escape') { closeCustomerModal(); return; }
+
+    const items = Array.from(document.querySelectorAll('#customerList .customer-list-item'))
+        .filter(el => el.style.display !== 'none');
+    if (items.length === 0) return;
+
+    let idx = items.findIndex(it => it.classList.contains('selected'));
+
+    if (e.key === 'ArrowDown') {
+        if (idx < items.length - 1) _selectCustItem(items[idx + 1]);
+        return;
+    }
+    if (e.key === 'ArrowUp') {
+        if (idx > 0) _selectCustItem(items[idx - 1]);
+        return;
+    }
+    if (e.key === 'Enter') {
+        if (idx >= 0) confirmCustomerSelection();
+        else if (items.length > 0) { _selectCustItem(items[0]); confirmCustomerSelection(); }
+        return;
+    }
+}
+
+function _selectCustItem(el) {
+    document.querySelectorAll('#customerList .customer-list-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    el.scrollIntoView({ block: 'nearest' });
     selectedCustomer = { id: el.dataset.id, code: el.dataset.code, name: el.dataset.name };
 }
 
@@ -610,27 +671,37 @@ function openCustomerModal() {
     document.querySelectorAll('#customerList .customer-list-item').forEach(item => item.classList.remove('selected'));
     document.getElementById('customerModalBackdrop').classList.add('show');
     document.getElementById('customerModal').classList.add('show');
-    document.getElementById('customerSearch').focus();
+    window.removeEventListener('keydown', _handleCustomerModalKey, true);
+    window.addEventListener('keydown', _handleCustomerModalKey, true);
+    setTimeout(() => {
+        document.getElementById('customerSearch').focus();
+        // Auto-highlight first visible item
+        const first = Array.from(document.querySelectorAll('#customerList .customer-list-item'))
+            .find(el => el.style.display !== 'none');
+        if (first) _selectCustItem(first);
+    }, 50);
 }
 
 function closeCustomerModal() {
+    window.removeEventListener('keydown', _handleCustomerModalKey, true);
     document.getElementById('customerModalBackdrop').classList.remove('show');
     document.getElementById('customerModal').classList.remove('show');
 }
 
 function confirmCustomerSelection() {
-    if (!selectedCustomer) {
-        alert('Please select a customer');
-        return;
-    }
-    
-    // Add new row with selected customer
+    if (!selectedCustomer) { alert('Please select a customer'); return; }
     addItemRow(selectedCustomer);
-    
-    // Fetch outstanding invoices for this customer
     fetchCustomerOutstanding(selectedCustomer.id);
-    
     closeCustomerModal();
+    // Focus cheque-no of new (last) row
+    setTimeout(() => {
+        const rows = document.querySelectorAll('#itemsTableBody tr');
+        const lastRow = rows[rows.length - 1];
+        if (lastRow) {
+            const chequeNo = lastRow.querySelector('.cheque-no');
+            if (chequeNo) { chequeNo.focus(); chequeNo.select(); }
+        }
+    }, 80);
 }
 
 // Outstanding pagination state
@@ -737,7 +808,7 @@ function addItemRow(customer = null) {
             <input type="hidden" class="cheque-closed-on" name="items[${itemRowCount}][cheque_closed_on]">
         </td>
         <td><input type="date" class="form-control cheque-date" name="items[${itemRowCount}][cheque_date]"></td>
-        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="" onchange="calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModalForRow(this.closest('tr'))"></td>
+        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="" onchange="calculateTotals(); updateRowStatus(this.closest('tr'))"></td>
         <td><input type="number" class="form-control text-end unadjusted" name="items[${itemRowCount}][unadjusted]" step="0.01" value=""></td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Remove"><i class="bi bi-trash"></i></button>
@@ -1183,33 +1254,162 @@ function onChequeNoChange(input) {
         document.getElementById('chequeBankName').value = bankName;
         document.getElementById('chequeBankArea').value = bankArea;
         document.getElementById('chequeClosedOn').value = closedOn;
-        
+        // Pre-fill visible search input
+        const bsi = document.getElementById('bankModalSearchInput');
+        if (bsi) bsi.value = bankName;
+
         openBankModal();
     }
 }
 
 // Open Bank Modal
+/* ── Bank Modal custom searchable dropdown ── */
+let _bankDrop = null;
+
+function _initBankModalDrop() {
+    const selectEl  = document.getElementById('chequeBankName');
+    const inputEl   = document.getElementById('bankModalSearchInput');
+    const listEl    = document.getElementById('bankModalDropList');
+    if (!selectEl || !inputEl || !listEl) return;
+
+    let hilIdx = -1, visible = [];
+
+    function buildList(filter) {
+        const term = (filter || '').toLowerCase();
+        listEl.innerHTML = '';
+        hilIdx = -1; visible = [];
+        const frag = document.createDocumentFragment();
+        let cnt = 0;
+        Array.from(selectEl.options).forEach(opt => {
+            if (!opt.value) return;
+            const txt = opt.textContent.trim();
+            if (term && !txt.toLowerCase().includes(term)) return;
+            const div = document.createElement('div');
+            div.className = 'searchable-select-item';
+            div.dataset.value = opt.value;
+            div.textContent = txt;
+            div.style.cssText = 'padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;';
+            if (opt.value === selectEl.value) div.style.background = '#e8f0fe';
+            div.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                doSelect(this);
+                setTimeout(() => document.getElementById('chequeBankArea').focus(), 0);
+            });
+            frag.appendChild(div);
+            cnt++;
+        });
+        if (cnt === 0) { listEl.innerHTML = '<div style="padding:8px;color:#999;">No results</div>'; }
+        else { listEl.appendChild(frag); visible = Array.from(listEl.querySelectorAll('.searchable-select-item')); }
+    }
+
+    function hilAt(idx) {
+        visible.forEach(v => { v.style.background = ''; v.style.fontWeight = ''; });
+        if (idx < 0) idx = 0;
+        if (idx >= visible.length) idx = visible.length - 1;
+        hilIdx = idx;
+        if (visible[idx]) { visible[idx].style.background = '#007bff'; visible[idx].style.color = 'white'; visible[idx].scrollIntoView({ block: 'nearest' }); }
+    }
+
+    function openDrop(filter) {
+        buildList(filter !== undefined ? filter : '');
+        listEl.style.display = 'block';
+        if (visible.length > 0) {
+            const sel = visible.findIndex(v => v.dataset.value === selectEl.value);
+            hilAt(sel >= 0 ? sel : 0);
+        }
+    }
+
+    function hideDrop() { listEl.style.display = 'none'; hilIdx = -1; }
+    function isOpen() { return listEl.style.display === 'block'; }
+
+    function doSelect(el) {
+        selectEl.value = el.dataset.value;
+        inputEl.value  = el.textContent.trim();
+        hideDrop();
+    }
+
+    function syncInput() {
+        const opt = selectEl.options[selectEl.selectedIndex];
+        inputEl.value = (opt && opt.value) ? opt.textContent.trim() : '';
+    }
+
+    inputEl.addEventListener('focus', () => openDrop(''));
+    inputEl.addEventListener('input', () => { buildList(inputEl.value); listEl.style.display = 'block'; if (visible.length === 1) hilAt(0); });
+
+    _bankDrop = {
+        isOpen, hideDrop, openDrop, syncInput,
+        hilUp:   () => { if (hilIdx > 0) hilAt(hilIdx - 1); },
+        hilDown: () => { if (hilIdx < visible.length - 1) hilAt(hilIdx + 1); },
+        selectHil: () => { if (hilIdx >= 0 && visible[hilIdx]) { doSelect(visible[hilIdx]); return true; } return false; }
+    };
+    syncInput();
+}
+
+function _handleBankModalKey(e) {
+    const modal = document.getElementById('bankModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    const MANAGED = ['Enter','Escape','ArrowDown','ArrowUp','ArrowLeft','ArrowRight'];
+    if (!MANAGED.includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    if (e.key === 'Escape') {
+        if (_bankDrop && _bankDrop.isOpen()) { _bankDrop.syncInput(); _bankDrop.hideDrop(); }
+        else closeBankModal();
+        return;
+    }
+    if (e.key === 'ArrowDown') { if (_bankDrop) { if (!_bankDrop.isOpen()) _bankDrop.openDrop(''); else _bankDrop.hilDown(); } return; }
+    if (e.key === 'ArrowUp')   { if (_bankDrop && _bankDrop.isOpen()) _bankDrop.hilUp(); return; }
+
+    if (e.key === 'Enter') {
+        // If bank dropdown open → select highlighted
+        if (_bankDrop && _bankDrop.isOpen()) {
+            _bankDrop.selectHil();
+            setTimeout(() => document.getElementById('chequeBankArea').focus(), 0);
+            return;
+        }
+        // Normal field navigation: Bank → Area → ClosedOn → OK button
+        const order = ['bankModalSearchInput','chequeBankArea','chequeClosedOn'];
+        const idx = order.indexOf(document.activeElement?.id || '');
+        if (idx >= 0 && idx < order.length - 1) {
+            document.getElementById(order[idx + 1]).focus();
+        } else if (document.activeElement?.id === 'chequeClosedOn') {
+            // After date → move to OK button
+            document.getElementById('bankOkBtn').focus();
+        } else if (document.activeElement?.id === 'bankOkBtn' || document.activeElement?.id === 'bankCancelBtn') {
+            document.activeElement.click();
+        } else {
+            saveBankDetails();
+        }
+        return;
+    }
+
+    // ArrowLeft/Right to navigate between Cancel and OK buttons
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        const active = document.activeElement?.id;
+        if (active === 'bankOkBtn') document.getElementById('bankCancelBtn').focus();
+        else if (active === 'bankCancelBtn') document.getElementById('bankOkBtn').focus();
+        return;
+    }
+}
+
 function openBankModal() {
     document.getElementById('bankModalBackdrop').classList.add('show');
     document.getElementById('bankModal').classList.add('show');
-    document.getElementById('chequeBankName').focus();
-    
-    // Add ESC key listener
-    document.addEventListener('keydown', handleBankEsc);
-}
-
-// Handle ESC key for bank modal
-function handleBankEsc(e) {
-    if (e.key === 'Escape') {
-        closeBankModal();
-    }
+    window.removeEventListener('keydown', _handleBankModalKey, true);
+    window.addEventListener('keydown', _handleBankModalKey, true);
+    setTimeout(() => {
+        _initBankModalDrop();
+        const inp = document.getElementById('bankModalSearchInput');
+        if (inp) inp.focus();
+    }, 50);
 }
 
 // Close Bank Modal
 function closeBankModal() {
+    window.removeEventListener('keydown', _handleBankModalKey, true);
+    _bankDrop = null;
     document.getElementById('bankModalBackdrop').classList.remove('show');
     document.getElementById('bankModal').classList.remove('show');
-    document.removeEventListener('keydown', handleBankEsc);
 }
 
 // Save Bank Details
@@ -1226,19 +1426,69 @@ function saveBankDetails() {
     currentBankRow.querySelector('.cheque-closed-on').value = closedOn;
     
     closeBankModal();
+
+    // Move cursor to cheque-date field of the same row
+    setTimeout(() => {
+        const dateInput = currentBankRow.querySelector('.cheque-date');
+        if (dateInput) dateInput.focus();
+    }, 50);
 }
 
 // ==================== LOAD INVOICES MODAL ====================
 let currentReceiptId = null;
 
+let _loadInvHighlightIdx = -1;
+let _loadInvRows = [];
+
+function _highlightLoadInvRow(idx) {
+    _loadInvRows = Array.from(document.querySelectorAll('#invoicesListBody tr[data-receipt-id]'));
+    _loadInvRows.forEach(r => r.classList.remove('inv-row-selected'));
+    if (idx < 0) idx = 0;
+    if (idx >= _loadInvRows.length) idx = _loadInvRows.length - 1;
+    _loadInvHighlightIdx = idx;
+    if (_loadInvRows[idx]) {
+        _loadInvRows[idx].classList.add('inv-row-selected');
+        _loadInvRows[idx].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+function _handleLoadInvKey(e) {
+    const modal = document.getElementById('loadInvoicesModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    _loadInvRows = Array.from(document.querySelectorAll('#invoicesListBody tr[data-receipt-id]'));
+
+    if (e.key === 'Escape') { closeLoadInvoicesModal(); return; }
+    if (e.key === 'ArrowDown') {
+        _highlightLoadInvRow(_loadInvHighlightIdx + 1); return;
+    }
+    if (e.key === 'ArrowUp') {
+        _highlightLoadInvRow(_loadInvHighlightIdx - 1); return;
+    }
+    if (e.key === 'Enter') {
+        if (_loadInvHighlightIdx >= 0 && _loadInvRows[_loadInvHighlightIdx]) {
+            const id = _loadInvRows[_loadInvHighlightIdx].dataset.receiptId;
+            if (id) loadReceiptById(parseInt(id));
+        }
+        return;
+    }
+}
+
 function openLoadInvoicesModal() {
+    _loadInvHighlightIdx = -1;
+    _loadInvRows = [];
+    window.removeEventListener('keydown', _handleLoadInvKey, true);
     document.getElementById('loadInvoicesModalBackdrop').classList.add('show');
     document.getElementById('loadInvoicesModal').classList.add('show');
-    // Auto-load all past invoices
+    window.addEventListener('keydown', _handleLoadInvKey, true);
     loadPastInvoices();
 }
 
 function closeLoadInvoicesModal() {
+    window.removeEventListener('keydown', _handleLoadInvKey, true);
     document.getElementById('loadInvoicesModalBackdrop').classList.remove('show');
     document.getElementById('loadInvoicesModal').classList.remove('show');
 }
@@ -1262,8 +1512,8 @@ function loadPastInvoices() {
         })
         .then(data => {
             if (data.success && data.receipts && data.receipts.length > 0) {
-                tbody.innerHTML = data.receipts.map(r => `
-                    <tr${r.has_returned_cheque ? ' style="background-color: #ffe6e6;"' : ''}>
+                tbody.innerHTML = data.receipts.map((r, idx) => `
+                    <tr data-receipt-id="${r.id}" ${r.has_returned_cheque ? 'style="background-color: #ffe6e6;"' : ''} onclick="${r.has_returned_cheque ? '' : `loadReceiptById(${r.id})`}" ${r.has_returned_cheque ? '' : 'style="cursor:pointer;"'}>
                         <td><strong>${r.trn_no || '-'}</strong></td>
                         <td>${r.receipt_date || '-'}</td>
                         <td>${r.salesman_name || '-'}</td>
@@ -1272,11 +1522,13 @@ function loadPastInvoices() {
                         <td class="text-center">
                             ${r.has_returned_cheque 
                                 ? '<span class="badge bg-danger" title="Cheque Returned - Cannot Modify"><i class="bi bi-exclamation-triangle me-1"></i>Returned</span>'
-                                : `<button type="button" class="btn btn-sm btn-primary" onclick="loadReceiptById(${r.id})"><i class="bi bi-download"></i> Load</button>`
+                                : `<button type="button" class="btn btn-sm btn-primary" onclick="event.stopPropagation();loadReceiptById(${r.id})"><i class="bi bi-download"></i> Load</button>`
                             }
                         </td>
                     </tr>
                 `).join('');
+                // Auto-highlight first row
+                setTimeout(() => _highlightLoadInvRow(0), 30);
             } else if (data.success && (!data.receipts || data.receipts.length === 0)) {
                 tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No receipts found in database.</td></tr>';
             } else {
@@ -1296,6 +1548,14 @@ function loadReceiptById(id) {
             if (data.success) {
                 closeLoadInvoicesModal();
                 populateFormWithReceipt(data.receipt);
+                // Focus first row cheque-no after load
+                setTimeout(() => {
+                    const firstRow = document.querySelector('#itemsTableBody tr');
+                    if (firstRow) {
+                        const chequeNo = firstRow.querySelector('.cheque-no');
+                        if (chequeNo) { chequeNo.focus(); chequeNo.select(); }
+                    }
+                }, 200);
             } else if (data.is_returned) {
                 // Show special warning for returned cheques
                 closeLoadInvoicesModal();
@@ -1493,7 +1753,7 @@ function addItemRowFromData(item) {
             <input type="hidden" class="cheque-closed-on" name="items[${itemRowCount}][cheque_closed_on]" value="${item.cheque_closed_on || ''}">
         </td>
         <td><input type="date" class="form-control cheque-date" name="items[${itemRowCount}][cheque_date]" value="${chequeDate}"></td>
-        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="${item.amount || ''}" onchange="calculateTotals(); updateRowStatus(this.closest('tr')); openAdjustmentModalForRow(this.closest('tr'))"></td>
+        <td><input type="number" class="form-control text-end amount" name="items[${itemRowCount}][amount]" step="0.01" value="${item.amount || ''}" onchange="calculateTotals(); updateRowStatus(this.closest('tr'))"></td>
         <td><input type="number" class="form-control text-end unadjusted readonly-field" name="items[${itemRowCount}][unadjusted]" step="0.01" value="${item.unadjusted || ''}" readonly></td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Remove"><i class="bi bi-trash"></i></button>
@@ -1506,5 +1766,101 @@ function addItemRowFromData(item) {
         row.classList.add('row-complete');
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// GLOBAL WINDOW CAPTURE KEYBOARD HANDLERS
+// ═══════════════════════════════════════════════════════════════════
+
+function _anyModalOpen() {
+    const ids = ['customerModal','adjustmentModal','bankModal','loadInvoicesModal'];
+    return ids.some(id => {
+        const el = document.getElementById(id);
+        return el && el.classList.contains('show');
+    });
+}
+
+/* ── Date field: Enter → Ledger ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'receiptDate') return;
+    if (_anyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const ledger = document.getElementById('ledger');
+    if (ledger) ledger.focus();
+}, true);
+
+/* ── Ledger field: Enter → Load Invoices button ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'ledger') return;
+    if (_anyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const btn = document.getElementById('loadInvoicesBtn');
+    if (btn) btn.focus();
+}, true);
+
+/* ── Load Invoices button: Enter → open modal ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'loadInvoicesBtn') return;
+    if (_anyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    openLoadInvoicesModal();
+}, true);
+
+/* ── Amount field: Enter → next row cheque-no OR Add Party ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    const active = document.activeElement;
+    if (!active || !active.classList.contains('amount')) return;
+    if (_anyModalOpen()) return;
+
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    // Update totals
+    calculateTotals();
+    updateRowStatus(active.closest('tr'));
+
+    // Find next row
+    const allRows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+    const myRow   = active.closest('tr');
+    const myIdx   = allRows.indexOf(myRow);
+    const nextRow = allRows[myIdx + 1];
+
+    if (nextRow) {
+        const nextCheque = nextRow.querySelector('.cheque-no');
+        if (nextCheque) { nextCheque.focus(); nextCheque.select(); }
+    } else {
+        // No next row → Add Party
+        openCustomerModal();
+    }
+}, true);
+
+/* ── Ctrl+S → save receipt ── */
+window.addEventListener('keydown', function(e) {
+    if (!(e.ctrlKey || e.metaKey) || e.key !== 's') return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (_anyModalOpen()) return;
+    const btn = document.getElementById('btnSave');
+    if (btn) btn.click();
+}, true);
+
+/* ── Escape: close any open modal ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('loadInvoicesModal')?.classList.contains('show')) { closeLoadInvoicesModal(); e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return; }
+    if (document.getElementById('customerModal')?.classList.contains('show'))     { closeCustomerModal(); e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return; }
+    if (document.getElementById('bankModal')?.classList.contains('show'))         { closeBankModal(); e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return; }
+    if (document.getElementById('adjustmentModal')?.classList.contains('show'))   { closeAdjustmentModal(); e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); return; }
+}, true);
+
+/* ── Initial focus on Date field ── */
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const d = document.getElementById('receiptDate');
+        if (d) d.focus();
+    }, 100);
+});
+
 </script>
 @endsection

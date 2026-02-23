@@ -116,7 +116,7 @@
             <div class="col-md-3">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text">TRN NO.</span>
-                    <input type="text" class="form-control" id="searchTrnNo" placeholder="Enter Trn No" onkeydown="if(event.key === 'Enter') { event.preventDefault(); event.stopPropagation(); document.getElementById('searchBtn').click(); }">
+                    <input type="text" class="form-control" id="searchTrnNo" placeholder="Enter Trn No">
                     <button class="btn btn-primary" id="searchBtn" type="button" onclick="loadPayment();"><i class="bi bi-search"></i></button>
                 </div>
             </div>
@@ -557,41 +557,51 @@ function filterSuppliers() {
 }
 
 function handleSupplierModalKeydown(e) {
+    const modal = document.getElementById('supplierModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    const MANAGED = ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'];
+    if (!MANAGED.includes(e.key)) return;
+
+    // Block ALL other handlers
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
     if (e.key === 'Escape') {
         closeSupplierModal();
         return;
     }
-    
-    const searchInput = document.getElementById('supplierSearch');
-    const items = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
-    
+
+    const items = Array.from(document.querySelectorAll('#supplierList .supplier-list-item'))
+        .filter(el => el.style.display !== 'none');
     if (items.length === 0) return;
 
     let selectedIndex = items.findIndex(item => item.classList.contains('selected'));
 
     if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (selectedIndex < items.length - 1) {
-            selectedIndex++;
-            selectSupplierItem(items[selectedIndex], true);
-        }
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
+        const nextIdx = selectedIndex < items.length - 1 ? selectedIndex + 1 : 0;
+        selectSupplierItem(items[nextIdx], true);
+        return;
+    }
+
+    if (e.key === 'ArrowUp') {
         if (selectedIndex > 0) {
-            selectedIndex--;
-            selectSupplierItem(items[selectedIndex], true);
-        } else if (selectedIndex === 0) {
-            document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
-            searchInput.focus();
+            selectSupplierItem(items[selectedIndex - 1], true);
+        } else {
+            selectSupplierItem(items[items.length - 1], true);
         }
-    } else if (e.key === 'Enter') {
-        e.preventDefault();
+        return;
+    }
+
+    if (e.key === 'Enter') {
         if (selectedIndex !== -1) {
             confirmSupplierSelection();
-        } else if (document.activeElement === searchInput && items.length > 0) {
-            selectSupplierItem(items[0], false);
+        } else if (items.length > 0) {
+            selectSupplierItem(items[0], true);
             confirmSupplierSelection();
         }
+        return;
     }
 }
 
@@ -606,28 +616,33 @@ function selectSupplierItem(el, scroll = false) {
 function openSupplierModal() {
     selectedSupplier = null;
     document.getElementById('supplierSearch').value = '';
-    
-    // Remove any existing listener first
-    document.removeEventListener('keydown', handleSupplierModalKeydown);
-    
+
+    // Remove any stale listeners
+    window.removeEventListener('keydown', handleSupplierModalKeydown, true);
+    const srch = document.getElementById('supplierSearch');
+    if (srch) srch.removeEventListener('input', filterSuppliers);
+
     filterSuppliers();
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
     document.getElementById('supplierModalBackdrop').classList.add('show');
     document.getElementById('supplierModal').classList.add('show');
-    
-    // Add keyboard listener for navigation
-    document.addEventListener('keydown', handleSupplierModalKeydown);
-    
+
+    // window CAPTURE — fires before every other handler
+    window.addEventListener('keydown', handleSupplierModalKeydown, true);
+    if (srch) srch.addEventListener('input', filterSuppliers);
+
     setTimeout(() => {
-        document.getElementById('supplierSearch').focus();
-        // pre-select first visible item
-        const visibleItems = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
-        if(visibleItems.length > 0) selectSupplierItem(visibleItems[0], false);
-    }, 100);
+        if (srch) srch.focus();
+        const visibleItems = Array.from(document.querySelectorAll('#supplierList .supplier-list-item'))
+            .filter(el => el.style.display !== 'none');
+        if (visibleItems.length > 0) selectSupplierItem(visibleItems[0], true);
+    }, 80);
 }
 
 function closeSupplierModal() {
-    document.removeEventListener('keydown', handleSupplierModalKeydown);
+    window.removeEventListener('keydown', handleSupplierModalKeydown, true);
+    const srch = document.getElementById('supplierSearch');
+    if (srch) srch.removeEventListener('input', filterSuppliers);
     document.getElementById('supplierModalBackdrop').classList.remove('show');
     document.getElementById('supplierModal').classList.remove('show');
 }
@@ -652,32 +667,31 @@ function confirmSupplierSelection() {
     }, 150);
 }
 
-let isLoadPaymentBusy = false;
-
 function loadPayment() {
-    if (isLoadPaymentBusy) return;
     const trnNo = document.getElementById('searchTrnNo').value.trim();
-    if (!trnNo) { 
-        isLoadPaymentBusy = true;
-        alert('Please enter a transaction number');
-        document.getElementById('searchTrnNo').blur();
-        setTimeout(() => {
-            isLoadPaymentBusy = false;
-            const lpBtn = document.getElementById('loadPaymentBtn');
-            if(lpBtn) lpBtn.click();
-        }, 200);
-        return; 
+    if (!trnNo) {
+        // Empty TRN → focus Load Payment button
+        const lpBtn = document.getElementById('loadPaymentBtn');
+        if (lpBtn) lpBtn.focus();
+        return;
     }
     
     fetch(`{{ url('admin/supplier-payment/get-by-trn') }}/${trnNo}`)
         .then(r => r.json())
         .then(data => {
             if (data.success && data.payment) { 
-                populatePaymentData(data.payment); 
+                populatePaymentData(data.payment);
+                // After load → cursor on first row cheque-no
                 setTimeout(() => {
+                    const firstRow = document.querySelector('#itemsTableBody tr');
+                    if (firstRow) {
+                        const chequeNo = firstRow.querySelector('.cheque-no');
+                        if (chequeNo) { chequeNo.focus(); chequeNo.select(); return; }
+                    }
+                    // No rows → focus paymentDate
                     const pd = document.getElementById('paymentDate');
-                    if(pd) pd.focus();
-                }, 100);
+                    if (pd) pd.focus();
+                }, 150);
             }
             else { alert(data.message || 'Payment not found'); }
         })
@@ -854,22 +868,14 @@ function setupRowEventListeners(tr, rowIndex) {
         }
     });
     
-    // Amount - Press Enter to open Add Party modal
+    // Amount - Enter → next row cheque-no OR Add Party if no next row
     const amountInput = tr.querySelector('.amount-input');
+    // Store row ref on the element so window handler can find it
+    amountInput._parentTr = tr;
     amountInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && e.shiftKey) {
-            // Shift+Enter: Amount -> Cheque Date
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             tr.querySelector('.cheque-date').focus();
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation();
-            const amount = parseFloat(this.value || 0);
-            if (amount > 0) {
-                updateTotals();
-            }
-            openSupplierModal();
         }
     });
     amountInput.addEventListener('change', function() { updateTotals(); });
@@ -1307,34 +1313,122 @@ function deletePayment() {
     .catch(err => alert('Error deleting payment'));
 }
 
-// Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        // Don't interfere if load modal handler is active
-        const loadModal = document.getElementById('loadModal');
-        if (loadModal && loadModal.classList.contains('show')) return;
-        closeSupplierModal(); closeAdjustmentModal(); closeBankModal();
-    }
-    if (e.key === 'Tab' && e.shiftKey) { e.preventDefault(); copyParty(); }
-    
-    // Ctrl+S to save transaction
-    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        
-        const saveBtn = document.getElementById('btnUpdate');
-        if (saveBtn && !saveBtn.disabled) {
-            saveBtn.click();
-        } else if (typeof updatePayment === 'function') {
-            updatePayment();
-        }
-        return false;
-    }
-});
+// ═══════════════════════════════════════════════════════════════════
+// GLOBAL KEYBOARD HANDLERS — window capture phase (fires before ALL
+// layout/global handlers — no conflicts possible)
+// ═══════════════════════════════════════════════════════════════════
 
-document.getElementById('bankModal').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); saveBankDetails(); }
-});
+/* ── Helper: which modal is open right now ── */
+function _activeModal() {
+    const ids = ['loadModal','supplierModal','bankModal','adjustmentModal'];
+    return ids.find(id => {
+        const el = document.getElementById(id);
+        return el && el.classList.contains('show');
+    }) || null;
+}
+
+/* ── Amount field: Enter → next row cheque-no OR Add Party ─────── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    const active = document.activeElement;
+    if (!active || !active.classList.contains('amount-input')) return;
+    if (_activeModal()) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    updateTotals();
+
+    const tr = active._parentTr || active.closest('tr');
+    if (!tr) return;
+
+    const allRows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+    const myIdx   = allRows.indexOf(tr);
+    const nextRow = allRows[myIdx + 1];
+
+    if (nextRow) {
+        const nextCheque = nextRow.querySelector('.cheque-no');
+        if (nextCheque) { nextCheque.focus(); nextCheque.select(); }
+        selectRow(parseInt(nextRow.dataset.rowIndex));
+    } else {
+        openSupplierModal();
+    }
+}, true);
+
+/* ── TRN NO field: Enter → load OR focus loadPaymentBtn ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'searchTrnNo') return;
+    if (_activeModal()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const val = document.getElementById('searchTrnNo').value.trim();
+    if (val) {
+        loadPayment();           // has TRN → fetch & load
+    } else {
+        // No TRN → move focus to Load Payment button
+        const btn = document.getElementById('loadPaymentBtn');
+        if (btn) btn.focus();
+    }
+}, true);
+
+/* ── Load Payment button: Enter → open modal ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'loadPaymentBtn') return;
+    if (_activeModal()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    openLoadModal();
+}, true);
+
+/* ── Load Payment modal: ArrowUp/Down/Enter/Escape ── */
+/* Already handled inside handleLoadModalKeydown added in document capture.
+   That handler is registered/removed by openLoadModal/closeLoadModal — keep it. */
+
+/* ── Ctrl+S → direct save ── */
+window.addEventListener('keydown', function(e) {
+    if (!(e.ctrlKey || e.metaKey) || e.key !== 's') return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (_activeModal()) return;
+    const saveBtn = document.getElementById('btnUpdate');
+    if (saveBtn && !saveBtn.disabled) saveBtn.click();
+}, true);
+
+/* ── Escape: close any open modal ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    const m = _activeModal();
+    if (!m) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (m === 'loadModal')       closeLoadModal();
+    else if (m === 'supplierModal')    closeSupplierModal();
+    else if (m === 'bankModal')        closeBankModal();
+    else if (m === 'adjustmentModal')  closeAdjustmentModal();
+}, true);
+
+/* ── Shift+Tab: copy party ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Tab' || !e.shiftKey) return;
+    if (_activeModal()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    copyParty();
+}, true);
+
+/* ── Bank modal: Enter navigates Bank→Area→ClosedOn→Save ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    const modal = document.getElementById('bankModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const order = ['chequeBankName','chequeBankArea','chequeClosedOn'];
+    const idx = order.indexOf(document.activeElement?.id || '');
+    if (idx >= 0 && idx < order.length - 1) {
+        document.getElementById(order[idx + 1]).focus();
+    } else {
+        saveBankDetails();
+    }
+}, true);
+
+
 </script>
 @endsection

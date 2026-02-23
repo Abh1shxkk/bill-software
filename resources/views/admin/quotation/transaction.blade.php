@@ -26,6 +26,12 @@
     .modal-body-custom { padding: 1rem; max-height: 400px; overflow-y: auto; }
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
+    
+    /* Custom Dropdown Styles */
+    .custom-dropdown-container { position: relative; width: 100%; }
+    .custom-dropdown-list { display: none; position: absolute; z-index: 1000; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ced4da; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px; }
+    .custom-dropdown-item { padding: 6px 10px; cursor: pointer; font-size: 11px; }
+    .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #007bff; color: white; }
 </style>
 @endpush
 
@@ -73,12 +79,15 @@
                             <div class="col-md-4">
                                 <div class="field-group mb-1">
                                     <label style="width: 50px;">Name :</label>
-                                    <select id="customer_id" name="customer_id" class="form-select" onchange="updateCustomerName()">
-                                        <option value="">-- Select Customer --</option>
-                                        @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown-container w-100">
+                                        <input type="text" id="customerSearchInput" class="form-control" placeholder="Search Customer..." autocomplete="off">
+                                        <input type="hidden" id="customer_id" name="customer_id">
+                                        <div id="customerDropdown" class="custom-dropdown-list">
+                                            @foreach($customers as $customer)
+                                            <div class="custom-dropdown-item" data-id="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->name }}</div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                     <input type="hidden" id="customer_name" name="customer_name" value="">
                                 </div>
                                 <div class="field-group mb-1">
@@ -121,10 +130,10 @@
                             </table>
                         </div>
                         <div class="text-center mt-2 d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
+                            <button type="button" class="btn btn-sm btn-success" id="addRowBtn" onclick="addNewRow()">
                                 <i class="bi bi-plus-circle"></i> Add Row
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="showAddItemsModal()">
+                            <button type="button" class="btn btn-sm btn-primary" id="addItemsBtn" onclick="showAddItemsModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
                         </div>
@@ -236,9 +245,21 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     console.log('Item selected from reusable modal:', item);
     console.log('Batch selected from reusable modal:', batch);
     
-    // Create a new row with item and batch data
     const tbody = document.getElementById('itemsTableBody');
-    const rowIndex = currentRowIndex++;
+    let rowIndex = currentRowIndex;
+    let row;
+    
+    // Re-use currently selected empty row if requested from an existing row
+    if (selectedRowIndex !== null && document.getElementById(`row-${selectedRowIndex}`)) {
+        rowIndex = selectedRowIndex;
+        row = document.getElementById(`row-${rowIndex}`);
+    } else {
+        // Create a new row if coming straight from "Add Items" outside of the grid
+        rowIndex = currentRowIndex++;
+        row = document.createElement('tr');
+        row.id = `row-${rowIndex}`;
+        tbody.appendChild(row);
+    }
     
     // Format expiry date
     let expiryDisplay = '';
@@ -255,8 +276,6 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     const saleRate = parseFloat(batch.s_rate || batch.avg_s_rate || item.s_rate || 0);
     const mrp = parseFloat(batch.mrp || batch.avg_mrp || item.mrp || 0);
     
-    const row = document.createElement('tr');
-    row.id = `row-${rowIndex}`;
     row.dataset.rowIndex = rowIndex;
     row.dataset.itemId = item.id;
     row.dataset.batchId = batch.id;
@@ -268,8 +287,8 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][item_name]" value="${item.name || ''}" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="1" step="0.001" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="${saleRate.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="1" step="0.001" onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="${saleRate.toFixed(2)}" step="0.01" onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items[${rowIndex}][amount]" value="${saleRate.toFixed(2)}" readonly></td>
         <td>
@@ -281,8 +300,6 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
             <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || ''}">
         </td>
     `;
-    
-    tbody.appendChild(row);
     
     // Update footer display
     if (typeof updateFooter === 'function') {
@@ -308,6 +325,76 @@ document.addEventListener('DOMContentLoaded', function() {
     // Don't add empty row on load - rows will be created when items are selected
     // Initialize date/day if needed
     updateDayName();
+    
+    // Keyboard navigation handlers
+    const qtDate = document.getElementById('quotation_date');
+    const custInput = document.getElementById('customerSearchInput');
+    const remarks = document.getElementById('remarks');
+    const terms = document.getElementById('terms');
+    const disc = document.getElementById('discount_percent');
+
+    if (qtDate) {
+        qtDate.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                // setTimeout ensures this Enter event is 100% done
+                // before customerSearchInput gets focus + dropdown opens
+                setTimeout(() => {
+                    if (custInput) {
+                        custInput.value = '';
+                        custInput.focus();
+                    }
+                }, 10);
+            }
+        }, true);
+    }
+
+    if (remarks) {
+        remarks.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey && custInput) { custInput.focus(); }
+                else if (!e.shiftKey && terms) { terms.focus(); }
+            }
+        });
+    }
+
+    if (terms) {
+        terms.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey && remarks) { remarks.focus(); }
+                else if (!e.shiftKey) { showAddItemsModal(); }
+            }
+        });
+    }
+
+    if (disc) {
+        disc.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (e.shiftKey && terms) { terms.focus(); }
+                else if (!e.shiftKey) { 
+                    // Open Add Items modal directly instead of just focusing the button
+                    const btn = document.getElementById('addItemsBtn');
+                    if(btn) btn.focus();
+                    showAddItemsModal();
+                }
+            }
+        });
+    }
+
+    const addItemsBtn = document.getElementById('addItemsBtn');
+    if (addItemsBtn) {
+        addItemsBtn.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                showAddItemsModal();
+            }
+        });
+    }
 });
 
 function updateDayName() {
@@ -320,17 +407,145 @@ function updateDayName() {
     }
 }
 
-function updateCustomerName() {
-    const customerSelect = document.getElementById('customer_id');
-    const customerNameInput = document.getElementById('customer_name');
-    const selectedOption = customerSelect.options[customerSelect.selectedIndex];
-    
-    if (selectedOption && selectedOption.dataset.name) {
-        customerNameInput.value = selectedOption.dataset.name;
-    } else {
-        customerNameInput.value = '';
+// ============== CUSTOM CUSTOMER DROPDOWN ==============
+const customerSearchInput = document.getElementById('customerSearchInput');
+const customerIdInput     = document.getElementById('customer_id');
+const customerNameInput   = document.getElementById('customer_name');
+const customerDropdown    = document.getElementById('customerDropdown');
+
+// Track highlighted item as a DIRECT DOM reference — no index sync issues
+let _customerHighlighted = null;
+
+function getVisibleCustomerItems() {
+    if (!customerDropdown) return [];
+    return Array.from(customerDropdown.querySelectorAll('.custom-dropdown-item'))
+        .filter(el => el.style.display !== 'none');
+}
+
+function setHighlightedCustomer(el) {
+    // Clear previous
+    if (_customerHighlighted) _customerHighlighted.classList.remove('active');
+    _customerHighlighted = el || null;
+    if (_customerHighlighted) {
+        _customerHighlighted.classList.add('active');
+        _customerHighlighted.scrollIntoView({ block: 'nearest' });
     }
 }
+
+function moveHighlight(direction) {
+    const items = getVisibleCustomerItems();
+    if (!items.length) return;
+    const idx = _customerHighlighted ? items.indexOf(_customerHighlighted) : -1;
+    let next = idx + direction;
+    if (next < 0) next = 0;
+    if (next >= items.length) next = items.length - 1;
+    setHighlightedCustomer(items[next]);
+}
+
+function filterCustomers(searchTerm) {
+    if (!customerDropdown) return;
+    const norm = (searchTerm || '').toLowerCase();
+    customerDropdown.querySelectorAll('.custom-dropdown-item').forEach(item => {
+        const name = (item.getAttribute('data-name') || '').toLowerCase();
+        item.style.display = name.includes(norm) ? 'block' : 'none';
+    });
+    setHighlightedCustomer(null); // reset highlight after filter
+}
+
+function selectCustomerItem(item) {
+    if (!item) return false;
+    const id   = item.getAttribute('data-id');
+    const name = item.getAttribute('data-name');
+    customerSearchInput.value = name;
+    customerIdInput.value     = id;
+    if (customerNameInput) customerNameInput.value = name;
+    customerDropdown.style.display = 'none';
+    setHighlightedCustomer(null);
+    setTimeout(() => {
+        const remarks = document.getElementById('remarks');
+        if (remarks) remarks.focus();
+    }, 50);
+    return true;
+}
+
+// ── Window-level CAPTURE handler for customer dropdown keys ─────
+// Fires FIRST (capture phase). Only acts when dropdown is visible
+// AND customerSearchInput has focus — avoids interfering with other fields.
+window.addEventListener('keydown', function(e) {
+    // Only handle when customer dropdown is open
+    if (!customerDropdown || customerDropdown.style.display === 'none') return;
+    // Only handle when focus is inside the customer search input
+    if (document.activeElement !== customerSearchInput) return;
+    if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    if (e.key === 'ArrowDown') { moveHighlight(1); return; }
+    if (e.key === 'ArrowUp')   { moveHighlight(-1); return; }
+    if (e.key === 'Escape') {
+        customerDropdown.style.display = 'none';
+        setHighlightedCustomer(null);
+        return;
+    }
+    if (e.key === 'Enter') {
+        if (e.shiftKey) {
+            customerDropdown.style.display = 'none';
+            setHighlightedCustomer(null);
+            const qtDate = document.getElementById('quotation_date');
+            if (qtDate) qtDate.focus();
+            return;
+        }
+        if (_customerHighlighted) {
+            // Highlighted item exists → select immediately (single Enter)
+            selectCustomerItem(_customerHighlighted);
+        } else {
+            // Nothing highlighted — highlight first item
+            const items = getVisibleCustomerItems();
+            if (items.length > 0) {
+                setHighlightedCustomer(items[0]);
+            } else {
+                customerDropdown.style.display = 'none';
+                const remarks = document.getElementById('remarks');
+                if (remarks) remarks.focus();
+            }
+        }
+    }
+}, true /* capture phase = fires before all other handlers */);
+
+if (customerSearchInput) {
+    customerSearchInput.addEventListener('focus', function() {
+        filterCustomers(this.value);
+        customerDropdown.style.display = 'block';
+        customerSearchInput.select();
+        // Auto-highlight the first visible item immediately
+        // so ONE Enter press is enough to select
+        const items = getVisibleCustomerItems();
+        if (items.length > 0) {
+            setHighlightedCustomer(items[0]);
+        }
+    });
+
+    customerSearchInput.addEventListener('input', function() {
+        filterCustomers(this.value);
+        customerDropdown.style.display = 'block';
+        customerIdInput.value = '';
+        if (customerNameInput) customerNameInput.value = '';
+    });
+
+    customerDropdown.addEventListener('mousedown', function(e) {
+        const item = e.target.closest('.custom-dropdown-item');
+        if (item) { e.preventDefault(); selectCustomerItem(item); }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!customerSearchInput.contains(e.target) && !customerDropdown.contains(e.target)) {
+            customerDropdown.style.display = 'none';
+        }
+    });
+}
+// ====================================================
 
 // Debounce helper
 function debounce(func, wait) {
@@ -438,8 +653,8 @@ function addNewRow() {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][item_name]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" readonly></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="0" step="0.001" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="0" step="0.001" onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="0" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly></td>
         <td>
@@ -451,9 +666,13 @@ function addNewRow() {
             <input type="hidden" name="items[${rowIndex}][unit]" value="">
         </td>
     `;
-    
     tbody.appendChild(row);
     selectRow(rowIndex);
+    
+    setTimeout(() => {
+        const codeInput = row.querySelector('input[name*="[code]"]');
+        if (codeInput) codeInput.focus();
+    }, 50);
 }
 
 function selectRow(rowIndex) {
@@ -523,6 +742,45 @@ function handleCodeKeydown(event, rowIndex) {
     }
 }
 
+function handleQtyKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (event.shiftKey) {
+            // Optionally could navigate backwards if required, but staying normal for now
+        } else {
+            const row = document.getElementById(`row-${rowIndex}`);
+            if (row) {
+                const rateInput = row.querySelector('input[name*="[rate]"]');
+                if (rateInput) {
+                    rateInput.focus();
+                    rateInput.select();
+                }
+            }
+        }
+    }
+}
+
+function handleRateKeydown(event, rowIndex) {
+    // Shift+Enter → go back to Qty
+    if (event.key === 'Enter' && event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        const row = document.getElementById(`row-${rowIndex}`);
+        if (row) {
+            const qtyInput = row.querySelector('input[name*="[qty]"]');
+            if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+        }
+    }
+    // Plain Enter → open Add Items modal
+    if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        showAddItemsModal();
+    }
+}
+
 function showItemModal(rowIndex) {
     selectedRowIndex = rowIndex;
     currentSearchTerm = '';
@@ -530,8 +788,8 @@ function showItemModal(rowIndex) {
     hasMoreItems = true;
     
     // Try to use the new reusable item selection modal
-    if (typeof openItemModal_chooseItemsModal === 'function') {
-        openItemModal_chooseItemsModal();
+    if (typeof window.openItemModal_chooseItemsModal === 'function') {
+        window.openItemModal_chooseItemsModal();
         return;
     }
     
@@ -723,8 +981,9 @@ function closeBatchModal() {
 // Add Items Modal - allows selecting multiple items at once
 function showAddItemsModal() {
     // Try to use the new reusable item selection modal
-    if (typeof openItemModal_chooseItemsModal === 'function') {
-        openItemModal_chooseItemsModal();
+    if (typeof window.openItemModal_chooseItemsModal === 'function') {
+        selectedRowIndex = null; // Ensure new row gets created
+        window.openItemModal_chooseItemsModal();
         return;
     }
     
@@ -779,7 +1038,10 @@ function showAddItemsModal() {
         </div>`;
     
     document.body.insertAdjacentHTML('beforeend', html);
-    document.getElementById('addItemsSearchInput')?.focus();
+    setTimeout(() => {
+        const srch = document.getElementById('addItemsSearchInput');
+        if (srch) { srch.focus(); srch.select(); }
+    }, 60);
     // Load initial items via AJAX
     searchAddItemsAjax('', 1);
 }
@@ -950,8 +1212,8 @@ function processNextPendingItem() {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][item_name]" value="" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" readonly></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="${qty}" step="0.001" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="${qty}" step="0.001" onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="0" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly></td>
         <td>
@@ -1166,5 +1428,63 @@ function cancelQuotation() {
         window.location.href = '{{ route("admin.quotation.index") }}';
     }
 }
+
+// ── RATE FIELD: Enter → open Add Items modal ──────────────────────
+// Window capture phase fires ABSOLUTELY FIRST — before browser default,
+// before form submit, before any button click. This prevents the X button
+// from being triggered when Enter is pressed in a rate input.
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' || e.shiftKey || e.ctrlKey || e.metaKey) return;
+    const active = document.activeElement;
+    if (!active) return;
+    // Check if focus is on a rate input in the items table
+    const isRateInput = active.matches('input[name*="[rate]"]') &&
+                        active.closest('#itemsTableBody');
+    if (!isRateInput) return;
+
+    // KILL the event completely — nothing else sees it
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    // Open modal in next tick so event is fully gone
+    setTimeout(() => showAddItemsModal(), 0);
+}, true /* capture = fires before ALL other handlers */);
+
+// Also block keyup on rate fields so button doesn't react to keyup
+window.addEventListener('keyup', function(e) {
+    if (e.key !== 'Enter') return;
+    const active = document.activeElement;
+    if (!active) return;
+    if (active.matches('input[name*="[rate]"]') && active.closest('#itemsTableBody')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+}, true);
+
+// Global Shortcuts — window CAPTURE phase, fires before everything
+window.addEventListener('keydown', function(e) {
+    // Ctrl+S → Save (works from any field/state)
+    if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveQuotation();
+        return;
+    }
+    // Ctrl+Enter → jump to Srlno
+    if (e.ctrlKey && e.key === 'Enter') {
+        const hasOpenModal = document.querySelector('.batch-modal.show, [id$="Modal"].show');
+        if (hasOpenModal) return;
+        const srlno = document.getElementById('srlno');
+        if (srlno) {
+            e.preventDefault();
+            e.stopPropagation();
+            srlno.focus();
+            srlno.select();
+        }
+    }
+}, true /* capture phase */);
 </script>
 @endpush

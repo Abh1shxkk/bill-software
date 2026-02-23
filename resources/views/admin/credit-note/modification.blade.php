@@ -183,8 +183,8 @@
     <div class="card shadow-sm border-0 mb-3">
         <div class="card-header bg-info text-white py-2 d-flex justify-content-between align-items-center">
             <h6 class="mb-0"><i class="bi bi-table me-2"></i> HSN Details</h6>
-            <button type="button" class="btn btn-light btn-sm" onclick="addHsnRow()">
-                <i class="bi bi-plus-circle me-1"></i> Add Row
+            <button type="button" class="btn btn-light btn-sm" id="insertHsnBtn" onclick="openHsnModal()">
+                <i class="bi bi-plus-circle me-1"></i> Insert
             </button>
         </div>
         <div class="card-body p-0">
@@ -287,6 +287,62 @@
 <!-- Hidden field for credit note ID -->
 <input type="hidden" id="creditNoteId" value="">
 
+<!-- HSN Code Selection Modal - Right Sliding -->
+<div id="hsnCodeModal" class="hsn-modal">
+    <div class="hsn-modal-content">
+        <div class="hsn-modal-header">
+            <h5 class="hsn-modal-title">
+                <i class="bi bi-upc-scan me-2"></i>Select HSN Code
+            </h5>
+            <button type="button" class="btn-close-modal" onclick="closeHsnModal()" title="Close">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="hsn-modal-body" id="hsnModalBody">
+            <!-- Search Box -->
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="bi bi-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" id="hsn_modal_search" 
+                           placeholder="Search HSN code or description..." autocomplete="off">
+                </div>
+            </div>
+            
+            <!-- Loading Spinner -->
+            <div id="hsn_modal_loading" class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="mt-2 text-muted">Loading HSN codes...</div>
+            </div>
+            
+            <!-- HSN Codes List -->
+            <div id="hsn_modal_table_container" style="display: none;">
+                <table class="table table-hover mb-0">
+                    <thead class="sticky-top bg-white">
+                        <tr>
+                            <th class="fw-semibold text-dark">HSN Code</th>
+                            <th class="fw-semibold text-dark">Description</th>
+                            <th class="fw-semibold text-dark text-center">GST%</th>
+                            <th class="fw-semibold text-dark text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="hsn_codes_list">
+                        <!-- HSN codes will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="hsn_modal_no_results" class="text-center py-5 text-muted" style="display: none;">
+                <i class="bi bi-search fs-1 d-block mb-2"></i>
+                <p class="mb-0">No HSN codes found</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="hsnModalBackdrop" class="hsn-modal-backdrop" onclick="closeHsnModal()"></div>
+
 <!-- Browse Credit Notes Modal - Custom -->
 <div class="custom-modal-backdrop" id="creditNotesModalBackdrop" onclick="closeCreditNotesModal()"></div>
 <div class="custom-modal" id="creditNotesModal">
@@ -380,6 +436,8 @@
 @push('scripts')
 <script>
 let hsnRowCount = 0;
+let hsnCodesData = [];
+let hsnModalActiveIndex = -1;
 let currentPartyType = 'S'; // S = Supplier, C = Customer
 let searchTimeout = null;
 let currentFocusIndex = -1; // For search results navigation
@@ -452,6 +510,15 @@ document.addEventListener('DOMContentLoaded', function() {
     @if($preloadCreditNoteNo)
         searchCreditNote();
     @endif
+    
+    // Load HSN codes
+    loadHsnCodes();
+    
+    // HSN search handler
+    var hsnSearchInput = document.getElementById('hsn_modal_search');
+    if (hsnSearchInput) {
+        hsnSearchInput.addEventListener('input', debounce(filterHsnCodes, 300));
+    }
 });
 
 // ============================================================
@@ -519,8 +586,11 @@ function initKeyboardNavigation() {
         // Skip if any modal is open
         var creditNotesModal = document.getElementById('creditNotesModal');
         var adjustmentModal = document.getElementById('adjustmentModal');
+        var hsnCodeModal = document.getElementById('hsnCodeModal');
+        
         if ((creditNotesModal && creditNotesModal.classList.contains('show')) ||
-            (adjustmentModal && adjustmentModal.classList.contains('show'))) {
+            (adjustmentModal && adjustmentModal.classList.contains('show')) ||
+            (hsnCodeModal && hsnCodeModal.classList.contains('show'))) {
             return; // Let modal handlers deal with it
         }
         
@@ -981,15 +1051,16 @@ function initKeyboardNavigation() {
             return false;
         }
         
-        // ---- Handle Amount field Enter → trigger Add Row ----
+        // ---- Handle Amount field Enter → trigger Insert button (open modal) ----
         if (activeEl.id === 'amount') {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
             
-            // Trigger Add Row
             setTimeout(function() {
-                addHsnRow();
+                if (typeof openHsnModal === 'function') {
+                    openHsnModal();
+                }
             }, 30);
             
             return false;
@@ -1050,25 +1121,8 @@ function initKeyboardNavigation() {
             return false;
         }
         
-        // ---- Handle HSN row Amount field Enter → jump to GST% in same row ----
+        // ---- Handle HSN row Amount field Enter → open HSN Modal ----
         if (activeEl.classList.contains('hsn-amount')) {
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            
-            var row = activeEl.closest('tr');
-            if (row) {
-                var gstField = row.querySelector('.hsn-gst');
-                if (gstField) {
-                    gstField.focus();
-                    gstField.select();
-                }
-            }
-            return false;
-        }
-        
-        // ---- Handle HSN row GST% field Enter → trigger Add Row ----
-        if (activeEl.classList.contains('hsn-gst')) {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
@@ -1082,10 +1136,11 @@ function initKeyboardNavigation() {
                 }
             }
             
-            // Then add a new row
             setTimeout(function() {
-                addHsnRow();
-            }, 50);
+                if (typeof openHsnModal === 'function') {
+                    openHsnModal();
+                }
+            }, 30);
             
             return false;
         }
@@ -1477,9 +1532,15 @@ function initPartySearch() {
         }, 300);
     });
 
-    // Focus Handler - trigger search on focus
+    // Focus Handler - only search if no party selected yet
     searchInput.addEventListener('focus', function() {
-        fetchParties(this.value.trim());
+        var hidden = document.getElementById('partySelect');
+        // If already selected (modification mode), just show current value, don't re-search
+        if (hidden && hidden.value) {
+            resultsContainer.style.display = 'none';
+            return;
+        }
+        if (this.value.trim().length > 0) fetchParties(this.value.trim());
     });
 
     // Handle clicks outside to close dropdown
@@ -1745,48 +1806,190 @@ function populateCreditNoteData(cn) {
     console.log('Credit note data populated successfully');
 }
 
-function addHsnRow() {
-    const tbody = document.getElementById('hsnTableBody');
-    const row = document.createElement('tr');
-    row.setAttribute('data-row', hsnRowCount);
-    
-    row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${hsnRowCount}][hsn_code]"></td>
-        <td><input type="number" class="form-control form-control-sm hsn-amount" name="items[${hsnRowCount}][amount]" step="0.01" value="0.00" onchange="calculateGst(${hsnRowCount})"></td>
-        <td><input type="number" class="form-control form-control-sm hsn-gst" name="items[${hsnRowCount}][gst_percent]" step="0.01" value="0.00" onchange="calculateGst(${hsnRowCount})"></td>
-        <td><input type="number" class="form-control form-control-sm hsn-cgst-percent readonly-field" name="items[${hsnRowCount}][cgst_percent]" step="0.01" value="0.00" readonly></td>
-        <td><input type="number" class="form-control form-control-sm hsn-cgst-amount readonly-field" name="items[${hsnRowCount}][cgst_amount]" step="0.01" value="0.00" readonly></td>
-        <td><input type="number" class="form-control form-control-sm hsn-sgst-percent readonly-field" name="items[${hsnRowCount}][sgst_percent]" step="0.01" value="0.00" readonly></td>
-        <td><input type="number" class="form-control form-control-sm hsn-sgst-amount readonly-field" name="items[${hsnRowCount}][sgst_amount]" step="0.01" value="0.00" readonly></td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteHsnRow(${hsnRowCount})" title="Delete">
-                <i class="bi bi-trash"></i>
-            </button>
-        </td>
-    `;
-    
-    tbody.appendChild(row);
-    hsnRowCount++;
-    
-    // Auto-focus the first field (HSN Code) of the newly added row
-    setTimeout(function() {
-        var firstInput = row.querySelector('input[type="text"]');
-        if (firstInput) {
-            firstInput.focus();
-            firstInput.select();
+function loadHsnCodes() {
+    fetch('{{ route("admin.hsn-codes.index") }}?all=1', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        hsnCodesData = data;
+        renderHsnCodes(hsnCodesData);
+        document.getElementById('hsn_modal_loading').style.display = 'none';
+        document.getElementById('hsn_modal_table_container').style.display = 'block';
+        
+        if (hsnCodesData.length === 0) {
+            document.getElementById('hsn_modal_no_results').style.display = 'block';
+            document.getElementById('hsn_modal_table_container').style.display = 'none';
         }
-    }, 50);
+    })
+    .catch(error => {
+        console.error('Error loading HSN codes:', error);
+        document.getElementById('hsn_modal_loading').innerHTML = '<p class="text-danger">Error loading HSN codes</p>';
+    });
 }
 
-function addHsnRowWithData(item) {
+function renderHsnCodes(codes) {
+    const tbody = document.getElementById('hsn_codes_list');
+    tbody.innerHTML = '';
+    hsnModalActiveIndex = -1;
+    
+    if (codes.length === 0) return;
+    
+    codes.forEach((code, index) => {
+        const gstPercent = parseFloat(code.cgst_percent || 0) + parseFloat(code.sgst_percent || 0);
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.setAttribute('data-hsn-code', code.hsn_code);
+        tr.setAttribute('data-cgst', code.cgst_percent || 0);
+        tr.setAttribute('data-sgst', code.sgst_percent || 0);
+        tr.innerHTML = `
+            <td><strong>${code.hsn_code}</strong></td>
+            <td class="small">${code.description || '-'}</td>
+            <td class="text-center"><span class="badge bg-success">${gstPercent.toFixed(2)}%</span></td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-primary" onclick="selectHsnCode('${code.hsn_code}', ${code.cgst_percent || 0}, ${code.sgst_percent || 0})">
+                    <i class="bi bi-plus-circle"></i> Select
+                </button>
+            </td>
+        `;
+        // Click on row to select
+        tr.addEventListener('click', function() {
+            selectHsnCode(code.hsn_code, code.cgst_percent || 0, code.sgst_percent || 0);
+        });
+        tbody.appendChild(tr);
+    });
+}
+
+function highlightHsnRow(index) {
+    var rows = document.querySelectorAll('#hsn_codes_list tr');
+    rows.forEach(function(row) {
+        row.style.backgroundColor = '';
+        row.classList.remove('table-primary');
+    });
+    if (index >= 0 && index < rows.length) {
+        rows[index].classList.add('table-primary');
+        rows[index].style.backgroundColor = '#cfe2ff';
+        rows[index].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+function filterHsnCodes() {
+    const searchTerm = document.getElementById('hsn_modal_search').value.toLowerCase();
+    const filtered = hsnCodesData.filter(code => 
+        code.hsn_code.toLowerCase().includes(searchTerm) || 
+        (code.description && code.description.toLowerCase().includes(searchTerm))
+    );
+    renderHsnCodes(filtered);
+}
+
+function openHsnModal() {
+    const modal = document.getElementById('hsnCodeModal');
+    const backdrop = document.getElementById('hsnModalBackdrop');
+    
+    document.getElementById('hsn_modal_search').value = '';
+    renderHsnCodes(hsnCodesData);
+    hsnModalActiveIndex = -1;
+    
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    setTimeout(() => {
+        backdrop.classList.add('show');
+        modal.classList.add('show');
+        document.getElementById('hsn_modal_search').focus();
+        // Auto-highlight first row
+        var rows = document.querySelectorAll('#hsn_codes_list tr');
+        if (rows.length > 0) {
+            hsnModalActiveIndex = 0;
+            highlightHsnRow(0);
+        }
+    }, 10);
+}
+
+// HSN Modal keyboard navigation — window CAPTURE phase (fires first, no conflicts)
+window.addEventListener('keydown', function(e) {
+    var modal = document.getElementById('hsnCodeModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    var MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    var rows = Array.from(document.querySelectorAll('#hsn_codes_list tr'));
+    if (rows.length === 0 && e.key !== 'Escape') return;
+
+    if (e.key === 'ArrowDown') {
+        if (hsnModalActiveIndex < rows.length - 1) hsnModalActiveIndex++;
+        else hsnModalActiveIndex = 0;
+        highlightHsnRow(hsnModalActiveIndex);
+        return;
+    }
+    if (e.key === 'ArrowUp') {
+        if (hsnModalActiveIndex > 0) hsnModalActiveIndex--;
+        else hsnModalActiveIndex = rows.length - 1;
+        highlightHsnRow(hsnModalActiveIndex);
+        return;
+    }
+    if (e.key === 'Enter') {
+        var idx = hsnModalActiveIndex >= 0 ? hsnModalActiveIndex : 0;
+        var selectedRow = rows[idx];
+        if (selectedRow) {
+            var hsnCode = selectedRow.getAttribute('data-hsn-code');
+            var cgst = parseFloat(selectedRow.getAttribute('data-cgst') || 0);
+            var sgst = parseFloat(selectedRow.getAttribute('data-sgst') || 0);
+            selectHsnCode(hsnCode, cgst, sgst);
+        }
+        return;
+    }
+    if (e.key === 'Escape') {
+        closeHsnModal();
+        return;
+    }
+}, true); // <-- capture phase
+
+function closeHsnModal() {
+    const modal = document.getElementById('hsnCodeModal');
+    const backdrop = document.getElementById('hsnModalBackdrop');
+    
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 300);
+}
+
+function selectHsnCode(hsnCode, cgstPercent, sgstPercent) {
+    const gstPercent = parseFloat(cgstPercent) + parseFloat(sgstPercent);
+    addHsnRowWithData({
+        hsn_code: hsnCode,
+        gst_percent: gstPercent,
+        cgst_percent: cgstPercent,
+        sgst_percent: sgstPercent,
+        amount: 0.00
+    }, true);
+    closeHsnModal();
+}
+
+function addHsnRow() {
+    addHsnRowWithData({});
+}
+
+function addHsnRowWithData(item, isNewFromModal = false) {
     const tbody = document.getElementById('hsnTableBody');
     const row = document.createElement('tr');
     row.setAttribute('data-row', hsnRowCount);
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${hsnRowCount}][hsn_code]" value="${item.hsn_code || ''}"></td>
-        <td><input type="number" class="form-control form-control-sm hsn-amount" name="items[${hsnRowCount}][amount]" step="0.01" value="${item.amount || 0}" onchange="calculateGst(${hsnRowCount})"></td>
-        <td><input type="number" class="form-control form-control-sm hsn-gst" name="items[${hsnRowCount}][gst_percent]" step="0.01" value="${item.gst_percent || 0}" onchange="calculateGst(${hsnRowCount})"></td>
+        <td><input type="text" class="form-control form-control-sm hsn-code readonly-field" name="items[${hsnRowCount}][hsn_code]" value="${item.hsn_code || ''}" readonly></td>
+        <td><input type="number" class="form-control form-control-sm hsn-amount" name="items[${hsnRowCount}][amount]" step="0.01" value="${item.amount || 0}" onchange="calculateGst(${hsnRowCount})" onkeyup="calculateGst(${hsnRowCount})"></td>
+        <td><input type="number" class="form-control form-control-sm hsn-gst readonly-field" name="items[${hsnRowCount}][gst_percent]" step="0.01" value="${item.gst_percent || 0}" readonly></td>
         <td><input type="number" class="form-control form-control-sm hsn-cgst-percent readonly-field" name="items[${hsnRowCount}][cgst_percent]" step="0.01" value="${item.cgst_percent || 0}" readonly></td>
         <td><input type="number" class="form-control form-control-sm hsn-cgst-amount readonly-field" name="items[${hsnRowCount}][cgst_amount]" step="0.01" value="${item.cgst_amount || 0}" readonly></td>
         <td><input type="number" class="form-control form-control-sm hsn-sgst-percent readonly-field" name="items[${hsnRowCount}][sgst_percent]" step="0.01" value="${item.sgst_percent || 0}" readonly></td>
@@ -1800,6 +2003,16 @@ function addHsnRowWithData(item) {
     
     tbody.appendChild(row);
     hsnRowCount++;
+    
+    if (isNewFromModal) {
+        setTimeout(function() {
+            var input = row.querySelector('.hsn-amount');
+            if (input) {
+                input.focus();
+                input.select();
+            }
+        }, 50);
+    }
 }
 
 function deleteHsnRow(rowIndex) {
@@ -2380,6 +2593,117 @@ function saveAdjustments() {
     padding: 20px;
     max-height: calc(90vh - 60px);
     overflow-y: auto;
+}
+
+/* HSN Modal Styles */
+.hsn-modal {
+    display: none;
+    position: fixed;
+    top: 60px;
+    right: -450px;
+    width: 450px;
+    bottom: 45px;
+    background: #fff;
+    z-index: 1060;
+    box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+    transition: right 0.3s ease;
+    border-radius: 8px 0 0 8px;
+    overflow: hidden;
+}
+
+.hsn-modal.show {
+    right: 0;
+}
+
+.hsn-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    z-index: 1055;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.hsn-modal-backdrop.show {
+    opacity: 1;
+}
+
+.hsn-modal-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.hsn-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: #fff;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.hsn-modal-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.btn-close-modal {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    transition: color 0.2s;
+}
+
+.btn-close-modal:hover {
+    color: #dc3545;
+}
+
+.hsn-modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #fff;
+}
+
+.hsn-modal-body .table {
+    font-size: 13px;
+}
+
+.hsn-modal-body .table th {
+    border-top: none;
+    padding: 10px 8px;
+    background: #f8f9fa;
+    font-weight: 600;
+}
+
+.hsn-modal-body .table td {
+    padding: 10px 8px;
+    vertical-align: middle;
+}
+
+.hsn-modal-body .table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.hsn-modal-body .badge {
+    font-weight: 500;
+    padding: 5px 10px;
+}
+
+.hsn-modal-body .btn-sm {
+    padding: 4px 12px;
+    font-size: 12px;
 }
 </style>
 @endpush

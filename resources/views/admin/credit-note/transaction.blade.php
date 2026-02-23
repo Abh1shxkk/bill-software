@@ -567,6 +567,11 @@ function initKeyboardNavigation() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             const activeEl = document.activeElement;
+
+            // HSN modal is active -> let modal-specific handler manage Enter
+            if (isHsnModalOpen()) {
+                return;
+            }
             
             // ---- Handle Ctrl+Enter → jump to TCS Amount ----
             if (e.ctrlKey) {
@@ -750,6 +755,9 @@ function initKeyboardNavigation() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             const target = e.target;
+
+            // Block page-level Enter navigation while HSN modal is open
+            if (isHsnModalOpen()) return;
             
             // Allow Custom Reason Dropdown to handle its own Enter
             if (target.id === 'reasonDisplay') return;
@@ -781,6 +789,11 @@ function initKeyboardNavigation() {
             });
         }
     });
+}
+
+function isHsnModalOpen() {
+    var modal = document.getElementById('hsnCodeModal');
+    return !!(modal && modal.style.display === 'block');
 }
 
 // --- Custom Party Search Logic ---
@@ -1128,37 +1141,55 @@ function openHsnModal() {
 }
 
 // HSN Modal keyboard navigation
-document.addEventListener('keydown', function(e) {
-    var modal = document.getElementById('hsnCodeModal');
-    if (!modal || modal.style.display !== 'block') return;
-    
+function handleHsnModalKeyboard(e) {
+    if (!isHsnModalOpen()) return;
+    if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+
+    // Handle at window capture level so modal key flow wins over page/global handlers
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    console.log('[KB-CN][HSN] key', { key: e.key, activeIndex: hsnModalActiveIndex });
+
+    if (e.key === 'Escape') {
+        closeHsnModal();
+        return;
+    }
+
     var rows = document.querySelectorAll('#hsn_codes_list tr');
     if (rows.length === 0) return;
-    
+
     if (e.key === 'ArrowDown') {
-        e.preventDefault();
         hsnModalActiveIndex++;
         if (hsnModalActiveIndex >= rows.length) hsnModalActiveIndex = 0;
         highlightHsnRow(hsnModalActiveIndex);
-    } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
+        return;
+    }
+
+    if (e.key === 'ArrowUp') {
         hsnModalActiveIndex--;
         if (hsnModalActiveIndex < 0) hsnModalActiveIndex = rows.length - 1;
         highlightHsnRow(hsnModalActiveIndex);
-    } else if (e.key === 'Enter' && hsnModalActiveIndex >= 0) {
-        e.preventDefault();
-        var selectedRow = rows[hsnModalActiveIndex];
-        if (selectedRow) {
-            var hsnCode = selectedRow.getAttribute('data-hsn-code');
-            var cgst = parseFloat(selectedRow.getAttribute('data-cgst'));
-            var sgst = parseFloat(selectedRow.getAttribute('data-sgst'));
-            selectHsnCode(hsnCode, cgst, sgst);
-        }
-    } else if (e.key === 'Escape') {
-        e.preventDefault();
-        closeHsnModal();
+        return;
     }
-});
+
+    // Enter -> select highlighted row (default first row if none highlighted yet)
+    if (hsnModalActiveIndex < 0) {
+        hsnModalActiveIndex = 0;
+        highlightHsnRow(hsnModalActiveIndex);
+    }
+
+    var selectedRow = rows[hsnModalActiveIndex];
+    if (!selectedRow) return;
+
+    var hsnCode = selectedRow.getAttribute('data-hsn-code');
+    var cgst = parseFloat(selectedRow.getAttribute('data-cgst') || 0);
+    var sgst = parseFloat(selectedRow.getAttribute('data-sgst') || 0);
+    console.log('[KB-CN][HSN] Enter select', { index: hsnModalActiveIndex, hsnCode: hsnCode, cgst: cgst, sgst: sgst });
+    selectHsnCode(hsnCode, cgst, sgst);
+}
+window.addEventListener('keydown', handleHsnModalKeyboard, true);
 
 function closeHsnModal() {
     const modal = document.getElementById('hsnCodeModal');

@@ -113,7 +113,7 @@
         // Try to find table body with common IDs
         const tbody = document.querySelector('[id$="-table-body"], .module-table-body, table tbody');
         if (!tbody) return [];
-        
+
         return Array.from(tbody.querySelectorAll('tr')).filter(tr => {
             const tds = tr.querySelectorAll('td');
             // If row has only 1 td with colspan, it's an empty state row
@@ -136,19 +136,19 @@
      */
     function selectRow(row) {
         if (!row) return;
-        
+
         // Find the tbody
         const tbody = row.closest('tbody');
         if (!tbody) return;
-        
+
         // Remove selection from all rows
         tbody.querySelectorAll('tr.row-selected').forEach(r => {
             r.classList.remove('row-selected');
         });
-        
+
         // Select the new row
         row.classList.add('row-selected');
-        
+
         // Scroll into view
         row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -159,10 +159,20 @@
      */
     function handleArrowNavigation(event) {
         if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return false;
-        
+
+        // Skip if a modal is open (let modal handle its own navigation)
+        const openModal = document.querySelector('.pending-orders-modal.show, .modal.show, [class*="modal"].show, .offcanvas.show');
+        if (openModal) {
+            return false;
+        }
+
+        // Skip if Select2 is open anywhere
+        if (document.querySelector('.select2-container--open')) {
+            return false;
+        }
         // Don't handle if typing in input
         if (isInputFocused()) return false;
-        
+
         // Check if module-shortcuts is handling this page
         // If a specific module table body exists (like supplier-table-body, item-table-body),
         // then module-shortcuts.blade.php is included and will handle arrow navigation
@@ -171,24 +181,24 @@
             // Module shortcuts handles this - skip to avoid duplicate handling
             return false;
         }
-        
+
         // Only handle if no module-specific table body exists (fallback for pages without module-shortcuts)
         event.preventDefault();
         event.stopPropagation();
-        
+
         const rows = getAllDataRows();
         if (rows.length === 0) {
             showToast('No rows available', 'warning');
             return true;
         }
-        
+
         const currentRow = getSelectedRow();
         let currentIndex = -1;
-        
+
         if (currentRow) {
             currentIndex = rows.findIndex(r => r === currentRow);
         }
-        
+
         // If no row selected, select first on ArrowDown, last on ArrowUp
         if (currentIndex === -1) {
             if (event.key === 'ArrowDown') {
@@ -198,7 +208,7 @@
             }
             return true;
         }
-        
+
         if (event.key === 'ArrowUp') {
             if (currentIndex > 0) {
                 selectRow(rows[currentIndex - 1]);
@@ -229,7 +239,7 @@
                 }
             }
         }
-        
+
         return true;
     }
 
@@ -241,7 +251,7 @@
         // Check if module-shortcuts is handling this page
         const moduleTableBody = document.querySelector('[id$="-table-body"]');
         const hasModuleShortcuts = moduleTableBody && moduleTableBody.id !== 'module-table-body';
-        
+
         switch (action) {
             case 'add':
                 // Look for "Add New" or "Create" button
@@ -351,20 +361,20 @@
         // Check if module-shortcuts is handling this page
         const moduleTableBody = document.querySelector('[id$="-table-body"]');
         const hasModuleShortcuts = moduleTableBody && moduleTableBody.id !== 'module-table-body';
-        
+
         // Skip arrow key handling if module-shortcuts handles this page
         if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && hasModuleShortcuts) {
             // Let module-shortcuts handle arrow navigation
             return;
         }
-        
+
         // Handle arrow key navigation for pages without module-shortcuts
         if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
             if (handleArrowNavigation(event)) {
                 return;
             }
         }
-        
+
         // Skip if global help panel is handling
         if (event.key === 'F1' || event.key === 'Escape') {
             return;
@@ -401,7 +411,7 @@
      */
     function init() {
         document.addEventListener('keydown', handleKeyDown, true);
-        
+
         // Add row selection styles
         const style = document.createElement('style');
         style.textContent = `
@@ -432,19 +442,19 @@
             }
         `;
         document.head.appendChild(style);
-        
+
         // Add click to select row functionality
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             const row = e.target.closest('table tbody tr');
             if (!row) return;
-            
+
             // Don't select if clicking on buttons/links/checkboxes
             if (e.target.closest('a, button, input, .form-check')) return;
-            
+
             // Check if this is a data row (not empty state)
             const tds = row.querySelectorAll('td');
             if (tds.length === 1 && tds[0].hasAttribute('colspan')) return;
-            
+
             selectRow(row);
         });
 

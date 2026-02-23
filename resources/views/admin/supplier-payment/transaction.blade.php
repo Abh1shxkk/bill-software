@@ -405,11 +405,12 @@ document.addEventListener('DOMContentLoaded', function() {
         bankSearchInput.value = name;
         bankSelect.value = bankId || '';
         bankDropdown.style.display = 'none';
-        
-        // Auto-focus next field (Ledger)
+
+        // After bank selection, directly continue with Add Party flow
         setTimeout(() => {
-            $('#ledger').focus();
-            $('#ledger').select();
+            if (typeof openSupplierModal === 'function') {
+                openSupplierModal();
+            }
         }, 50);
         return true;
     }
@@ -426,6 +427,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         bankSearchInput.addEventListener('keydown', function(e) {
+            if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) {
+                // Block any page/global key handlers while bank dropdown is active
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }
+
             const visibleItems = getVisibleBankItems();
             
             if (e.key === 'ArrowDown') {
@@ -441,6 +448,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 e.stopPropagation();
+                e.stopImmediatePropagation();
                 
                 if (bankActiveIndex >= 0 && visibleItems[bankActiveIndex]) {
                     selectBankItem(visibleItems[bankActiveIndex]);
@@ -455,6 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 50);
                 }
             } else if (e.key === 'Escape') {
+                e.preventDefault();
                 bankDropdown.style.display = 'none';
             }
         });
@@ -472,6 +481,54 @@ document.addEventListener('DOMContentLoaded', function() {
                 bankDropdown.style.display = 'none';
             }
         });
+
+        // Capture-level handler: bank dropdown must own Enter/Arrow flow
+        // (prevents global keyboard handlers from stealing Enter and moving focus elsewhere)
+        document.addEventListener('keydown', function(e) {
+            if (!bankDropdown || bankDropdown.style.display !== 'block') return;
+            if (document.activeElement !== bankSearchInput) return;
+            if (!['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const visibleItems = getVisibleBankItems();
+            if (e.key === 'ArrowDown') {
+                if (visibleItems.length === 0) return;
+                if (bankActiveIndex < visibleItems.length - 1) {
+                    setActiveBankItem(bankActiveIndex + 1);
+                } else {
+                    setActiveBankItem(0);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                if (visibleItems.length === 0) return;
+                if (bankActiveIndex > 0) {
+                    setActiveBankItem(bankActiveIndex - 1);
+                } else {
+                    setActiveBankItem(visibleItems.length - 1);
+                }
+                return;
+            }
+
+            if (e.key === 'Enter') {
+                if (bankActiveIndex >= 0 && visibleItems[bankActiveIndex]) {
+                    selectBankItem(visibleItems[bankActiveIndex]);
+                } else if (visibleItems.length > 0) {
+                    selectBankItem(visibleItems[0]);
+                } else {
+                    bankDropdown.style.display = 'none';
+                }
+                return;
+            }
+
+            if (e.key === 'Escape') {
+                bankDropdown.style.display = 'none';
+            }
+        }, true);
     }
 
     // Enter key navigation: Date -> Bank
@@ -588,6 +645,7 @@ function handleSupplierModalKeydown(e) {
     
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
     
     const items = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
     if (items.length === 0) return;
@@ -603,7 +661,15 @@ function handleSupplierModalKeydown(e) {
         selectSupplierItem(items[prevIndex], true);
     } 
     else if (e.key === 'Enter') {
-        if (currentIndex >= 0) {
+        // Fallback: if no row is marked selected, pick first visible row
+        if (currentIndex < 0 && items.length > 0) {
+            selectSupplierItem(items[0], true);
+            currentIndex = 0;
+        }
+
+        if (currentIndex >= 0 && items[currentIndex]) {
+            // Ensure selectedSupplier object is synced with highlighted row
+            selectSupplierItem(items[currentIndex], false);
             confirmSupplierSelection();
         }
     }
@@ -751,12 +817,8 @@ function addItemRow(supplier) {
         if (e.key === 'Enter') {
             e.preventDefault();
             e.stopPropagation();
-            const amount = parseFloat(this.value || 0);
-            if (amount > 0) {
-                setUnadjustedAmount(tr, amount);
-                updateTotals();
-            }
-            openSupplierModal();
+            e.stopImmediatePropagation();
+            triggerAddPartyFromAmountInput(this);
         }
     });
     amountInput.addEventListener('change', function() {
@@ -764,6 +826,32 @@ function addItemRow(supplier) {
         setUnadjustedAmount(tr, amount);
         updateTotals();
     });
+}
+
+function triggerAddPartyFromAmountInput(inputEl) {
+    if (!inputEl) return;
+    const tr = inputEl.closest('tr');
+    if (!tr) return;
+
+    const amount = parseFloat(inputEl.value || 0);
+    if (amount > 0) {
+        setUnadjustedAmount(tr, amount);
+        updateTotals();
+    }
+
+    if (isAnyPaymentModalOpen()) return;
+    openSupplierModal();
+}
+
+function isAnyPaymentModalOpen() {
+    const supplierModal = document.getElementById('supplierModal');
+    const bankModal = document.getElementById('bankModal');
+    const adjustmentModal = document.getElementById('adjustmentModal');
+    return !!(
+        (supplierModal && supplierModal.classList.contains('show')) ||
+        (bankModal && bankModal.classList.contains('show')) ||
+        (adjustmentModal && adjustmentModal.classList.contains('show'))
+    );
 }
 
 // Set unadjusted amount = entered amount (before adjustment)
@@ -1102,6 +1190,19 @@ function savePayment() {
 
 function deletePayment() { alert('This is a new payment. Nothing to delete.'); }
 
+// Capture-phase fallback:
+// Ensure Enter on amount field always triggers Add Party flow
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    const activeEl = document.activeElement;
+    if (!activeEl || !activeEl.classList || !activeEl.classList.contains('amount-input')) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    triggerAddPartyFromAmountInput(activeEl);
+}, true);
+
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
@@ -1110,6 +1211,15 @@ document.addEventListener('keydown', function(e) {
         closeBankModal();
     }
     if (e.key === 'Tab' && e.shiftKey) {
+        const activeEl = document.activeElement;
+        const bankSearchInput = document.getElementById('bankSearchInput');
+        const bankDropdown = document.getElementById('bankDropdown');
+        const isBankContext =
+            (bankSearchInput && activeEl === bankSearchInput) ||
+            (bankDropdown && bankDropdown.style.display === 'block');
+        if (isBankContext) {
+            return;
+        }
         e.preventDefault();
         copyParty();
     }
