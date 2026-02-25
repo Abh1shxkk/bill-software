@@ -127,6 +127,45 @@
     .row-selected {
         background-color: #e7f3ff !important;
     }
+
+    /* Custom Dropdown Styles */
+    .custom-dropdown-wrapper {
+        position: relative;
+    }
+    
+    .custom-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        min-width: 60px;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1050;
+        padding: 4px 0;
+        margin-top: 1px;
+    }
+    
+    .custom-dropdown-menu.show {
+        display: block;
+    }
+    
+    .custom-dropdown-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        transition: background-color 0.2s;
+    }
+    
+    .custom-dropdown-item:hover,
+    .custom-dropdown-item.highlighted {
+        background-color: #e9ecef;
+        color: #0d6efd;
+    }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -299,9 +338,153 @@ let selectedRowIndex = -1;
 let currentItemData = null;
 let allItems = [];
 
+// ============================================================
+// MASTER KEYBOARD EVENT INTERCEPTOR
+// Captures Enter keys for specific workflow paths
+// ============================================================
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        // Skip if any modal is open
+        var itemModal = document.getElementById('stockAdjustmentItemModal');
+        var batchModal = document.getElementById('stockAdjustmentBatchModal');
+        if ((itemModal && itemModal.classList.contains('show')) ||
+            (batchModal && batchModal.classList.contains('show'))) {
+            return; // Let modal handlers deal with it
+        }
+
+        // Determine if backwards navigation (Shift+Enter)
+        if (e.shiftKey) {
+            // Remarks -> Date
+            if (activeEl.id === 'remarks') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                document.getElementById('adjustmentDate')?.focus();
+                return false;
+            }
+            
+            // Sh/Ex Display -> Previous Row Qty OR Remarks
+            if (activeEl.classList.contains('adjustment-type-display')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Close dropdown if open
+                document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                
+                var row = activeEl.closest('tr');
+                var previousRow = row ? row.previousElementSibling : null;
+                
+                if (previousRow && previousRow.tagName === 'TR') {
+                    // Go back to previous row's Qty
+                    var qtyInput = previousRow.querySelector('.qty-input');
+                    if (qtyInput) {
+                        qtyInput.focus();
+                        qtyInput.select();
+                    }
+                } else {
+                    // First row -> go to remarks
+                    document.getElementById('remarks')?.focus();
+                }
+                return false;
+            }
+            
+            // Qty -> Sh/Ex
+            if (activeEl.classList.contains('qty-input')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                var row = activeEl.closest('tr');
+                if (row) {
+                    var shExDisplay = row.querySelector('.adjustment-type-display');
+                    if (shExDisplay) {
+                        shExDisplay.focus();
+                    }
+                }
+                return false;
+            }
+            return; // Exit if shift+enter didn't match anything
+        }
+
+        // --- NORMAL ENTER (Forward Navigation) ---
+
+        // Date -> Remarks
+        if (activeEl.id === 'adjustmentDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            document.getElementById('remarks')?.focus();
+            return false;
+        }
+
+        // Remarks -> Insert Item (open modal)
+        if (activeEl.id === 'remarks') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (typeof openItemModal === 'function') openItemModal();
+            return false;
+        }
+
+        // Sh/Ex -> Qty
+        if (activeEl.classList.contains('adjustment-type-display')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Close dropdown if open
+            document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                
+            var row = activeEl.closest('tr');
+            if (row) {
+                var qtyInput = row.querySelector('.qty-input');
+                if (qtyInput) {
+                    qtyInput.focus();
+                    qtyInput.select();
+                }
+            }
+            return false;
+        }
+
+        // Qty inside row -> Insert Item
+        if (activeEl.classList.contains('qty-input')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (typeof openItemModal === 'function') openItemModal();
+            return false;
+        }
+    }
+    
+    // Ctrl+S -> Save (handled here AND below for compatibility)
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveTransaction();
+        return false;
+    }
+}, true);
+
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
     document.getElementById('adjustmentDate').addEventListener('change', updateDayName);
+    
+    // Auto-focus Date field initially
+    setTimeout(() => {
+        document.getElementById('adjustmentDate')?.focus();
+    }, 100);
+});
+
+// Close custom dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.custom-dropdown-wrapper')) {
+        document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+    }
 });
 
 function debounce(func, wait) {
@@ -387,11 +570,16 @@ function addItemRow(item, batch) {
             <input type="text" class="form-control form-control-sm readonly-field" value="${expiryDate}" readonly>
             <input type="hidden" name="items[${rowCount}][expiry_date]" value="${batch.expiry_date || ''}">
         </td>
-        <td>
-            <select class="form-control form-control-sm adjustment-type" name="items[${rowCount}][adjustment_type]" onchange="updateRowStyle(${rowCount})">
-                <option value="S">S</option>
-                <option value="E">E</option>
-            </select>
+        <td class="custom-dropdown-wrapper">
+            <input type="text" class="form-control form-control-sm cursor-pointer adjustment-type-display text-center" 
+                   value="S" readonly style="background: white !important; cursor: pointer; height: 26px; padding: 2px 4px;"
+                   onkeydown="handleShExKeydown(event, this, ${rowCount})"
+                   onclick="toggleShExDropdown(${rowCount})">
+            <input type="hidden" class="adjustment-type" name="items[${rowCount}][adjustment_type]" value="S">
+            <div class="custom-dropdown-menu" id="shExDropdown_${rowCount}">
+                <div class="custom-dropdown-item" onclick="selectShEx('S', ${rowCount})">S (Shortage)</div>
+                <div class="custom-dropdown-item" onclick="selectShEx('E', ${rowCount})">E (Excess)</div>
+            </div>
         </td>
         <td>
             <input type="number" class="form-control form-control-sm qty-input" name="items[${rowCount}][qty]" value="0" step="0.01" min="0" onchange="calculateRowAmount(${rowCount})" onkeyup="calculateRowAmount(${rowCount})">
@@ -423,9 +611,13 @@ function addItemRow(item, batch) {
         }
     });
     
-    // Focus on Sh/Ex select
-    const shExSelect = row.querySelector('.adjustment-type');
-    shExSelect.focus();
+    // Focus on Sh/Ex custom input display after modal close animation
+    setTimeout(function() {
+        const shExDisplay = row.querySelector('.adjustment-type-display');
+        if (shExDisplay) {
+            shExDisplay.focus();
+        }
+    }, 120);
     
     // Update detail section
     updateDetailSection(item, batch);
@@ -643,6 +835,96 @@ function saveTransaction() {
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
     });
+}
+
+function toggleShExDropdown(rowIndex) {
+    // Hide all other open dropdowns first
+    document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => {
+        if(m.id !== 'shExDropdown_' + rowIndex) m.classList.remove('show');
+    });
+    
+    const menu = document.getElementById('shExDropdown_' + rowIndex);
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+function selectShEx(val, rowIndex) {
+    const row = document.querySelector(`tr[data-row="${rowIndex}"]`);
+    if (!row) return;
+    
+    // Update display input
+    const displayInput = row.querySelector('.adjustment-type-display');
+    if (displayInput) displayInput.value = val;
+    
+    // Update hidden input
+    const hiddenInput = row.querySelector('.adjustment-type');
+    if (hiddenInput) {
+        hiddenInput.value = val;
+        // Trigger style and amount updates
+        updateRowStyle(rowIndex);
+        calculateRowAmount(rowIndex);
+    }
+    
+    // Close dropdown
+    const menu = document.getElementById('shExDropdown_' + rowIndex);
+    if (menu) menu.classList.remove('show');
+}
+
+function handleShExKeydown(e, el, rowIndex) {
+    const menu = document.getElementById('shExDropdown_' + rowIndex);
+    if (!menu) return;
+    
+    // Press 's'
+    if (e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        selectShEx('S', rowIndex);
+        return;
+    }
+    
+    // Press 'e'
+    if (e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        selectShEx('E', rowIndex);
+        return;
+    }
+    
+    // Enter key
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        if (menu.classList.contains('show')) {
+            menu.classList.remove('show');
+        }
+        
+        // Move to Qty input
+        const row = el.closest('tr');
+        if (row) {
+            const qtyInput = row.querySelector('.qty-input');
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }
+    }
+    
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!menu.classList.contains('show')) {
+            menu.classList.add('show');
+        } else {
+            const currentVal = el.value;
+            selectShEx(currentVal === 'S' ? 'E' : 'S', rowIndex);
+            menu.classList.add('show');
+        }
+    }
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        menu.classList.remove('show');
+    }
 }
 
 function escapeHtml(text) {

@@ -310,6 +310,20 @@ function initSupplierDropdown() {
 function initKeyboardNavigation() {
     const dateField = document.getElementById('transaction_date');
     const loadBtn = document.getElementById('loadInvoiceBtn');
+    let loadInvoiceEnterLock = false;
+
+    function triggerLoadInvoiceFromKeyboard(source) {
+        const btn = document.getElementById('loadInvoiceBtn');
+        if (!btn) {
+            console.warn('[KB-RN-MOD] Load Invoice button not found', { source });
+            return;
+        }
+        console.log('[KB-RN-MOD] Trigger Load Invoice', {
+            source,
+            activeId: document.activeElement?.id || null
+        });
+        btn.click();
+    }
 
     // Date → Enter → Supplier Name
     if (dateField) {
@@ -319,6 +333,7 @@ function initKeyboardNavigation() {
                 e.stopPropagation();
                 e.stopImmediatePropagation();
                 loadBtn?.focus();
+                console.log('[KB-RN-MOD] Date Enter -> focus Load Invoice');
             }
         });
     }
@@ -332,6 +347,23 @@ function initKeyboardNavigation() {
         e.stopPropagation();
         e.stopImmediatePropagation();
         loadBtn?.focus();
+        console.log('[KB-RN-MOD] Date Enter (capture) -> focus Load Invoice');
+    }, true);
+
+    // Earliest capture guard for Enter on Load Invoice (prevents global conflicts)
+    window.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        const activeEl = document.activeElement;
+        if (!activeEl || activeEl.id !== 'loadInvoiceBtn') return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        if (loadInvoiceEnterLock) return;
+        loadInvoiceEnterLock = true;
+        triggerLoadInvoiceFromKeyboard('window-capture');
+        setTimeout(() => { loadInvoiceEnterLock = false; }, 120);
     }, true);
 
     // Load Invoice button → Enter → open modal (or back if Shift+Enter)
@@ -344,9 +376,16 @@ function initKeyboardNavigation() {
                 if (e.shiftKey) {
                     document.getElementById('supplierSearchInput')?.focus();
                 } else {
-                    openInsertInvoiceModal();
+                    if (loadInvoiceEnterLock) return;
+                    loadInvoiceEnterLock = true;
+                    triggerLoadInvoiceFromKeyboard('button-keydown');
+                    setTimeout(() => { loadInvoiceEnterLock = false; }, 120);
                 }
             }
+        });
+
+        loadBtn.addEventListener('click', function() {
+            console.log('[KB-RN-MOD] Load Invoice click fired');
         });
     }
 
@@ -373,6 +412,25 @@ function initKeyboardNavigation() {
                 caseField.select();
             }
         }
+    }, true);
+
+    // Hard guard: MRP Enter should never jump to action/delete
+    window.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+        if (!activeEl.matches('#itemsTableBody input[name*="[mrp]"]')) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof e.stopImmediatePropagation === 'function') {
+            e.stopImmediatePropagation();
+        }
+
+        const row = activeEl.closest('tr');
+        if (!row) return;
+        console.log('[KB-RN-MOD] Capture MRP Enter -> custom navigation');
+        handleMrpEnterNavigation(row);
     }, true);
 }
 
@@ -884,6 +942,10 @@ function handleBatchKeydown(event, rowIndex) {
 function handleGridEnterKey(event, fieldName, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') {
+            event.stopImmediatePropagation();
+        }
         const row = document.getElementById(`row-${rowIndex}`);
         if (!row) return;
         
@@ -893,20 +955,59 @@ function handleGridEnterKey(event, fieldName, rowIndex) {
             row.querySelector('input[name*="[mrp]"]')?.focus();
             row.querySelector('input[name*="[mrp]"]')?.select();
         } else if (fieldName === 'mrp') {
-            const nextRow = document.getElementById(`row-${rowIndex + 1}`);
-            if (nextRow) {
-                const nextBatch = nextRow.querySelector('input[name*="[batch]"]');
-                if (nextBatch) {
-                    nextBatch.focus();
-                    nextBatch.select();
-                } else {
-                    openInsertItemsModal();
-                }
-            } else {
-                openInsertItemsModal();
-            }
+            handleMrpEnterNavigation(row);
         }
     }
+}
+
+function handleMrpEnterNavigation(currentRow) {
+    if (!currentRow) return;
+
+    const triggerInsertItem = () => {
+        const insertBtn = Array.from(document.querySelectorAll('button'))
+            .find(btn => (btn.getAttribute('onclick') || '').includes('openInsertItemsModal'));
+        if (insertBtn) {
+            insertBtn.focus();
+            insertBtn.click();
+        } else {
+            openInsertItemsModal();
+        }
+    };
+
+    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+    const currentPos = rows.findIndex(r => r === currentRow);
+    const nextRow = currentPos >= 0 ? rows[currentPos + 1] : null;
+
+    if (!nextRow) {
+        console.log('[KB-RN-MOD] MRP Enter -> no next row, trigger Insert Item');
+        triggerInsertItem();
+        return;
+    }
+
+    const nextRowHasItem = !!(
+        (nextRow.dataset.itemId && String(nextRow.dataset.itemId).trim() !== '') ||
+        (nextRow.querySelector('input[name*="[name]"]')?.value || '').trim() !== '' ||
+        (nextRow.querySelector('input[name*="[code]"]')?.value || '').trim() !== ''
+    );
+
+    if (!nextRowHasItem) {
+        console.log('[KB-RN-MOD] MRP Enter -> next row empty, trigger Insert Item');
+        triggerInsertItem();
+        return;
+    }
+
+    const nextBatch = nextRow.querySelector('input[name*="[batch]"]');
+    if (nextBatch) {
+        console.log('[KB-RN-MOD] MRP Enter -> focus next row batch');
+        setTimeout(() => {
+            nextBatch.focus();
+            nextBatch.select();
+        }, 0);
+        return;
+    }
+
+    console.log('[KB-RN-MOD] MRP Enter -> next row has no batch input, trigger Insert Item');
+    triggerInsertItem();
 }
 
 function checkBatch(rowIndex) {

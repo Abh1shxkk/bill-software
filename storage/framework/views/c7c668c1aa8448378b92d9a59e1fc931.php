@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Return Replacement - Modification'); ?>
 
-@section('title', 'Sale Return Replacement - Modification')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 8px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
@@ -49,8 +47,8 @@
             <button class="btn btn-warning btn-sm" id="btnLoad" style="height: 28px;"><i class="bi bi-search"></i> Load</button>
             <button class="btn btn-outline-info btn-sm" id="btnBrowse" style="height: 28px;"><i class="bi bi-list-ul"></i> Browse</button>
         </div>
-        <a href="{{ route('admin.sale-return-replacement.transaction') }}" class="btn btn-success btn-sm"><i class="bi bi-plus"></i> New</a>
-        <a href="{{ route('admin.sale-return-replacement.index') }}" class="btn btn-primary btn-sm"><i class="bi bi-list"></i> View All</a>
+        <a href="<?php echo e(route('admin.sale-return-replacement.transaction')); ?>" class="btn btn-success btn-sm"><i class="bi bi-plus"></i> New</a>
+        <a href="<?php echo e(route('admin.sale-return-replacement.index')); ?>" class="btn btn-primary btn-sm"><i class="bi bi-list"></i> View All</a>
     </div>
 </div>
 
@@ -87,8 +85,8 @@
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
         <form id="modificationForm" method="POST" autocomplete="off" onsubmit="return false;">
-            @csrf
-            @method('PUT')
+            <?php echo csrf_field(); ?>
+            <?php echo method_field('PUT'); ?>
             <input type="hidden" name="id" id="trnId">
             
             <!-- Header Section -->
@@ -111,9 +109,9 @@
                         <div style="position: relative; width: 250px;" id="customerDropdownWrapper">
                             <input type="text" id="customerSearchInput" class="form-control" placeholder="Search customer..." autocomplete="off" style="width: 250px;" onblur="_onCustomerBlur()" oninput="_filterCustomers()">
                             <div id="customerDropList" style="display:none; position:absolute; z-index:99999; top:100%; left:0; width:100%; max-height:220px; overflow-y:auto; background:white; border:1px solid #ccc; box-shadow:0 4px 8px rgba(0,0,0,.15);">
-                                @foreach($customers as $customer)
-                                <div class="customer-drop-item" data-id="{{ $customer->id }}" data-label="{{ ($customer->code ?? '') . ' - ' . $customer->name }}" style="padding:5px 10px; cursor:pointer; font-size:11px;" onmousedown="_selectCustomerItem(this)">{{ ($customer->code ?? '') }} - {{ $customer->name }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="customer-drop-item" data-id="<?php echo e($customer->id); ?>" data-label="<?php echo e(($customer->code ?? '') . ' - ' . $customer->name); ?>" style="padding:5px 10px; cursor:pointer; font-size:11px;" onmousedown="_selectCustomerItem(this)"><?php echo e(($customer->code ?? '')); ?> - <?php echo e($customer->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                         <input type="hidden" id="customer_id" name="customer_id" value="">
@@ -341,7 +339,7 @@
     </div>
 </div>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 // ──────────────────────────────────────────────────────────────────────
 // CUSTOMER CUSTOM DROPDOWN
@@ -645,7 +643,7 @@ function loadTransaction(trnNo) {
         return;
     }
     $.ajax({
-        url: "{{ url('admin/sale-return-replacement/get') }}/" + trnNo,
+        url: "<?php echo e(url('admin/sale-return-replacement/get')); ?>/" + trnNo,
         method: "GET",
         success: function(res) {
             if (res.success) {
@@ -720,7 +718,7 @@ $('#btnUpdate').click(function() {
     let id = $('#trnId').val();
     if (!id) { alert('Please load a transaction first!'); return; }
     $.ajax({
-        url: "{{ url('admin/sale-return-replacement') }}/" + id,
+        url: "<?php echo e(url('admin/sale-return-replacement')); ?>/" + id,
         method: "POST",
         data: $('#modificationForm').serialize() + "&_method=PUT",
         success: function(response) {
@@ -755,9 +753,9 @@ $('#btnDelete').click(function() {
     if (!id) { alert('Please load a transaction first!'); return; }
     if (confirm('Are you sure you want to delete this transaction?')) {
         $.ajax({
-            url: "{{ url('admin/sale-return-replacement') }}/" + id,
+            url: "<?php echo e(url('admin/sale-return-replacement')); ?>/" + id,
             method: "POST",
-            data: { _method: 'DELETE', _token: "{{ csrf_token() }}" },
+            data: { _method: 'DELETE', _token: "<?php echo e(csrf_token()); ?>" },
             success: function(response) {
                 if (response.success) { alert('Transaction deleted!'); window.location.reload(); }
             },
@@ -784,7 +782,7 @@ function openBrowseModal() {
     browseSelectedIndex = -1;
     
     $.ajax({
-        url: "{{ route('admin.sale-return-replacement.all-transactions') }}",
+        url: "<?php echo e(route('admin.sale-return-replacement.all-transactions')); ?>",
         method: "GET",
         dataType: "json",
         success: function(res) {
@@ -1141,8 +1139,8 @@ $(document).ready(function() {
     }, 100);
 });
 </script>
-@endpush
-@include('components.modals.item-selection', [
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('components.modals.item-selection', [
     'id'           => 'saleReturnItemModal',
     'module'       => 'sale-return-replacement',
     'showStock'    => true,
@@ -1150,14 +1148,16 @@ $(document).ready(function() {
     'showCompany'  => true,
     'showHsn'      => false,
     'batchModalId' => 'saleReturnBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id'                => 'saleReturnBatchModal',
     'module'            => 'sale-return-replacement',
     'showOnlyAvailable' => false,
     'rateType'          => 'sale',
     'showCostDetails'   => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-return-replacement/modification.blade.php ENDPATH**/ ?>

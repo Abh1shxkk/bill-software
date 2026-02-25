@@ -32,8 +32,25 @@
     .create-batch-modal .modal-body-custom { background: #e8e8e8; }
     .create-batch-modal .form-label { color: #333; font-size: 12px; }
     .create-batch-modal input { font-size: 12px; }
+    /* Custom dropdown styles */
+    .custom-dropdown-container { position: relative; flex: 1; max-width: 400px; }
+    .custom-dropdown-list {
+        display: none; position: absolute; top: 100%; left: 0; right: 0;
+        max-height: 200px; overflow-y: auto; background: white;
+        border: 1px solid #ced4da; border-top: none; z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .custom-dropdown-item {
+        padding: 4px 8px; cursor: pointer; font-size: 11px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .custom-dropdown-item:hover, .custom-dropdown-item.highlighted {
+        background-color: #cce5ff;
+    }
 </style>
 @endpush
+
+@section('disable_select2', '1')
 
 @section('content')
 <section class="rn-form py-3">
@@ -52,7 +69,7 @@
 
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
-                <form id="rnForm" method="POST" autocomplete="off">
+                <form id="rnForm" method="POST" autocomplete="off" onsubmit="return false;">
                     @csrf
                     <!-- Header Section -->
                     <div class="header-section">
@@ -71,18 +88,21 @@
                             <!-- Supplier Field -->
                             <div class="field-group flex-grow-1">
                                 <label style="width: 70px;">Supplier :</label>
-                                <select id="supplier_id" name="supplier_id" class="form-control" style="flex: 1; max-width: 400px;" required>
-                                    <option value="">-</option>
-                                    @foreach($suppliers as $supplier)
-                                        <option value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</option>
-                                    @endforeach
-                                </select>
+                                <div class="custom-dropdown-container">
+                                    <input type="text" id="supplierSearchInput" class="form-control" placeholder="Search supplier..." autocomplete="off">
+                                    <div class="custom-dropdown-list" id="supplierDropdownList">
+                                        @foreach($suppliers as $supplier)
+                                        <div class="custom-dropdown-item" data-value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <input type="hidden" id="supplier_id" name="supplier_id" value="">
                             </div>
 
                             <!-- Rpl.No Field -->
                             <div class="field-group">
                                 <label style="width: 60px;">Rpl.No. :</label>
-                                <input type="text" id="rr_no" name="rr_no" class="form-control" style="width: 100px;" placeholder="Enter No." required>
+                                <input type="text" id="rr_no" name="rr_no" class="form-control" style="width: 100px;" placeholder="Enter No." required onkeydown="handleRplNoKeydown(event)">
                             </div>
                         </div>
                     </div>
@@ -114,7 +134,7 @@
                             <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                                 <i class="bi bi-plus-circle"></i> Add Row
                             </button>
-                            <button type="button" class="btn btn-sm btn-info" onclick="openItemModal()">
+                            <button type="button" class="btn btn-sm btn-info" id="selectItemBtn" onclick="openItemModal()">
                                 <i class="bi bi-list-check"></i> Select Item
                             </button>
                         </div>
@@ -307,7 +327,7 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" value="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" value="0" step="1" min="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleMrpKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][discount_percent]" value="0" step="0.01" min="0" max="100" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][discount_percent]" value="0" step="0.01" min="0" max="100" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleDiscountKeydown(event, ${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly></td>
         <td><button type="button" class="btn btn-sm btn-danger py-0 px-1" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
@@ -336,9 +356,169 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-    // Don't add empty row on load - items will be added via Insert Items button
     loadItems();
+    initSupplierDropdown();
+    initKeyboardNavigation();
+    // Focus date field on page load
+    document.getElementById('transaction_date')?.focus();
 });
+
+// ====================================================
+// CUSTOM SEARCHABLE SUPPLIER DROPDOWN (No Select2)
+// ====================================================
+function initSupplierDropdown() {
+    const searchInput = document.getElementById('supplierSearchInput');
+    const dropdownList = document.getElementById('supplierDropdownList');
+    const supplierIdInput = document.getElementById('supplier_id');
+    if (!searchInput || !dropdownList) return;
+
+    let highlightedIndex = -1;
+    const allItems = dropdownList.querySelectorAll('.custom-dropdown-item');
+
+    function showDropdown() {
+        dropdownList.style.display = 'block';
+        filterDropdown();
+    }
+
+    function hideDropdown() {
+        dropdownList.style.display = 'none';
+        highlightedIndex = -1;
+        clearHighlights();
+    }
+
+    function filterDropdown() {
+        const query = searchInput.value.toLowerCase().trim();
+        allItems.forEach(item => {
+            const name = item.dataset.name.toLowerCase();
+            item.style.display = (!query || name.includes(query)) ? 'block' : 'none';
+        });
+        highlightedIndex = -1;
+        clearHighlights();
+    }
+
+    function getVisibleItems() {
+        return Array.from(allItems).filter(item => item.style.display !== 'none');
+    }
+
+    function clearHighlights() {
+        allItems.forEach(item => item.classList.remove('highlighted'));
+    }
+
+    function highlightItem(index) {
+        const visible = getVisibleItems();
+        clearHighlights();
+        if (index >= 0 && index < visible.length) {
+            visible[index].classList.add('highlighted');
+            visible[index].scrollIntoView({ block: 'nearest' });
+            highlightedIndex = index;
+        }
+    }
+
+    function selectSupplierItem(item) {
+        supplierIdInput.value = item.dataset.value;
+        searchInput.value = item.dataset.name;
+        window.selectedSupplierName = item.dataset.name;
+        hideDropdown();
+        // Move focus to Rpl.No field
+        document.getElementById('rr_no')?.focus();
+    }
+
+    searchInput.addEventListener('focus', showDropdown);
+    searchInput.addEventListener('input', () => { showDropdown(); filterDropdown(); });
+    searchInput.addEventListener('blur', function() { setTimeout(hideDropdown, 200); });
+
+    // Element-level for non-nav keys (typing handled by input event)
+    // ArrowDown/Up/Enter/Escape handled by window capture below
+    searchInput._txSupplierDropdown = {
+        getVisible: getVisibleItems,
+        highlight: highlightItem,
+        select: selectSupplierItem,
+        hide: hideDropdown,
+        showDrop: showDropdown,
+        getIdx: () => highlightedIndex
+    };
+
+    dropdownList.addEventListener('mousedown', function(e) {
+        const item = e.target.closest('.custom-dropdown-item');
+        if (item) { e.preventDefault(); selectSupplierItem(item); }
+    });
+}
+
+// ====================================================
+// KEYBOARD NAVIGATION: Date → Supplier → Rpl.No → Insert Items
+// ====================================================
+function initKeyboardNavigation() {
+    const dateField = document.getElementById('transaction_date');
+
+    // Date → handled by window capture handler below
+    // (element-level consumed by browser date picker)
+
+    // Ctrl+S to save transaction globally
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const prAdjustModal = document.getElementById('prAdjustModal');
+            if (prAdjustModal && prAdjustModal.classList.contains('show')) {
+                saveWithAdjustments();
+                return;
+            }
+
+            saveTransaction();
+        }
+    }, true);
+
+    // Ctrl+Enter -> jump directly to Inc. field
+    document.addEventListener('keydown', function(e) {
+        if (!(e.ctrlKey || e.metaKey) || e.key !== 'Enter') return;
+
+        const hasModalOpen = document.querySelector(
+            '.pending-orders-modal.show, #pendingOrdersModal.show, #alertModal.show, ' +
+            '[id$="Modal"].show, [id$="Backdrop"].show, .modal.show'
+        );
+        if (hasModalOpen) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const inclusiveField = document.getElementById('inclusive');
+        inclusiveField?.focus();
+        inclusiveField?.select?.();
+    }, true);
+
+    // Rpl.No handled by window capture handler below
+}
+
+// Handle Rpl.No. Enter key - trigger Select Item button click
+function handleRplNoKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (event.shiftKey) {
+            document.getElementById('supplierSearchInput')?.focus();
+        } else {
+            const selectItemBtn = document.getElementById('selectItemBtn');
+            selectItemBtn?.focus();
+
+            // Reuse the exact same flow as the Select Item button click handler.
+            if (typeof openItemModal === 'function') {
+                openItemModal();
+            } else {
+                selectItemBtn?.click();
+            }
+        }
+        return false;
+    }
+}
+
+// Update Supplier Name (compatibility wrapper)
+function updateSupplierName() {
+    // Custom dropdown handles this now
+}
 
 // Update Day Name
 function updateDayName() {
@@ -349,14 +529,6 @@ function updateDayName() {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         dayInput.value = days[date.getDay()];
     }
-}
-
-// Update Supplier Name
-function updateSupplierName() {
-    const select = document.getElementById('supplier_id');
-    const option = select.options[select.selectedIndex];
-    // Store supplier name for later use
-    window.selectedSupplierName = option ? option.dataset.name : '';
 }
 
 // Load Items
@@ -385,9 +557,9 @@ function addNewRow() {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onblur="checkBatchOnBlur(${rowIndex})"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][discount_percent]" step="0.01" min="0" max="100" value="0" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleMrpKeydown(event, ${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][discount_percent]" step="0.01" min="0" max="100" value="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleDiscountKeydown(event, ${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
@@ -585,8 +757,39 @@ function handleMrpKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         calculateRowAmount(rowIndex);
-        // Move cursor to footer S.Rate field
-        document.getElementById('s_rate')?.focus();
+        const row = document.getElementById(`row-${rowIndex}`);
+        if (event.shiftKey) {
+            row?.querySelector('input[name*="[free_qty]"]')?.focus();
+        } else {
+            const discountInput = row?.querySelector('input[name*="[discount_percent]"]');
+            discountInput?.focus();
+            discountInput?.select?.();
+        }
+    }
+}
+
+function handleDiscountKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const row = document.getElementById(`row-${rowIndex}`);
+        if (event.shiftKey) {
+            row?.querySelector('input[name*="[mrp]"]')?.focus();
+            return;
+        }
+
+        calculateRowAmount(rowIndex);
+        row?.classList.add('row-complete');
+
+        const selectItemBtn = document.getElementById('selectItemBtn');
+        selectItemBtn?.focus();
+
+        if (typeof openItemModal === 'function') {
+            openItemModal();
+        } else {
+            selectItemBtn?.click();
+        }
     }
 }
 
@@ -680,6 +883,48 @@ function showBatchSelectionModal(batches, rowIndex, itemData) {
         </div>`;
     
     document.body.insertAdjacentHTML('beforeend', html);
+
+    // Register window capture keyboard handler for batch modal
+    window.removeEventListener('keydown', _txBatchModalKey, true);
+    window._txBatchRowIndex = rowIndex;
+    window._txBatchHilIdx = 0;
+    // Auto-highlight first row
+    setTimeout(function() {
+        const rows = document.querySelectorAll('#batchModal tbody tr');
+        if (rows.length > 0) { _txHighlightBatchRow(0); }
+    }, 30);
+    window.addEventListener('keydown', _txBatchModalKey, true);
+}
+
+function _txHighlightBatchRow(idx) {
+    const rows = Array.from(document.querySelectorAll('#batchModal tbody tr'));
+    rows.forEach(r => r.style.background = '');
+    if (idx >= 0 && idx < rows.length) {
+        rows[idx].style.background = '#007bff22';
+        rows[idx].style.outline = '2px solid #007bff';
+        rows[idx].scrollIntoView({ block: 'nearest' });
+        window._txBatchHilIdx = idx;
+    }
+}
+
+function _txBatchModalKey(e) {
+    const modal = document.getElementById('batchModal');
+    if (!modal) return;
+    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    const rows = Array.from(document.querySelectorAll('#batchModal tbody tr'));
+    if (e.key === 'Escape') { closeBatchModal(); return; }
+    if (rows.length === 0) return;
+    let idx = window._txBatchHilIdx || 0;
+    if (e.key === 'ArrowDown') { _txHighlightBatchRow(Math.min(idx + 1, rows.length - 1)); return; }
+    if (e.key === 'ArrowUp')   { _txHighlightBatchRow(Math.max(idx - 1, 0)); return; }
+    if (e.key === 'Enter') {
+        const btn = rows[idx]?.querySelector('button');
+        if (btn) btn.click();
+        return;
+    }
 }
 
 // Select Batch from Modal
@@ -863,6 +1108,7 @@ function createNewBatch() {
 
 // Close Batch Modal
 function closeBatchModal() {
+    window.removeEventListener('keydown', _txBatchModalKey, true);
     document.getElementById('batchModal')?.remove();
     document.getElementById('batchBackdrop')?.remove();
 }
@@ -945,6 +1191,8 @@ function cancelTransaction() {
 // Pending transaction data for adjustment
 let pendingTransactionData = null;
 let adjustmentData = [];
+let adjustConfirmSelectedIndex = 0;
+let adjustConfirmKeyHandler = null;
 
 // Save Transaction - Shows adjustment confirmation first
 function saveTransaction() {
@@ -1004,7 +1252,7 @@ function saveTransaction() {
         return;
     }
     
-    const supplierSelect = document.getElementById('supplier_id');
+    const supplierName = window.selectedSupplierName || document.getElementById('supplierSearchInput')?.value || '';
     
     // Store pending transaction data
     pendingTransactionData = {
@@ -1012,7 +1260,7 @@ function saveTransaction() {
         rr_no: document.getElementById('rr_no')?.value || '',
         transaction_date: document.getElementById('transaction_date')?.value || '',
         supplier_id: supplierId,
-        supplier_name: supplierSelect?.options[supplierSelect.selectedIndex]?.dataset.name || '',
+        supplier_name: supplierName,
         total_amount: document.getElementById('total_amount')?.value || '0',
         p_scm_percent: document.getElementById('p_scm_percent')?.value || '0',
         p_scm_amount: document.getElementById('p_scm_amount')?.value || '0',
@@ -1048,22 +1296,79 @@ function showAdjustmentConfirmModal() {
                 <p class="mb-0">Do you want to adjust this amount against Purchase Return transactions?</p>
             </div>
             <div class="modal-footer-custom d-flex justify-content-center gap-3">
-                <button type="button" class="btn btn-success" onclick="openPurchaseReturnAdjustmentModal()">
+                <button type="button" class="btn btn-success adjust-confirm-option" id="adjustConfirmYesBtn" onclick="openPurchaseReturnAdjustmentModal()">
                     <i class="bi bi-check-circle me-1"></i> Yes, Adjust
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="saveWithoutAdjustment()">
+                <button type="button" class="btn btn-secondary adjust-confirm-option" id="adjustConfirmNoBtn" onclick="saveWithoutAdjustment()">
                     <i class="bi bi-x-circle me-1"></i> No, Save Directly
                 </button>
             </div>
         </div>`;
     
     document.body.insertAdjacentHTML('beforeend', html);
+    initAdjustConfirmKeyboard();
 }
 
 // Close Adjustment Confirmation Modal
 function closeAdjustConfirmModal() {
     document.getElementById('adjustConfirmModal')?.remove();
     document.getElementById('adjustConfirmBackdrop')?.remove();
+    if (adjustConfirmKeyHandler) {
+        document.removeEventListener('keydown', adjustConfirmKeyHandler, true);
+        adjustConfirmKeyHandler = null;
+    }
+}
+
+function initAdjustConfirmKeyboard() {
+    const modal = document.getElementById('adjustConfirmModal');
+    if (!modal) return;
+
+    if (adjustConfirmKeyHandler) {
+        document.removeEventListener('keydown', adjustConfirmKeyHandler, true);
+        adjustConfirmKeyHandler = null;
+    }
+
+    const getButtons = () => Array.from(modal.querySelectorAll('.adjust-confirm-option'));
+    const setActiveButton = (index) => {
+        const buttons = getButtons();
+        if (buttons.length === 0) return;
+        adjustConfirmSelectedIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+        buttons[adjustConfirmSelectedIndex].focus();
+    };
+
+    setActiveButton(0);
+
+    adjustConfirmKeyHandler = function(e) {
+        const currentModal = document.getElementById('adjustConfirmModal');
+        if (!currentModal || !currentModal.classList.contains('show')) return;
+
+        if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveButton(adjustConfirmSelectedIndex + 1);
+        } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveButton(adjustConfirmSelectedIndex - 1);
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            const buttons = getButtons();
+            if (buttons[adjustConfirmSelectedIndex]) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                buttons[adjustConfirmSelectedIndex].click();
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeAdjustConfirmModal();
+        }
+    };
+
+    document.addEventListener('keydown', adjustConfirmKeyHandler, true);
 }
 
 // Save Without Adjustment
@@ -1295,5 +1600,92 @@ function submitTransaction() {
         alert('Error saving replacement received');
     });
 }
+
+// ═══════════════════════════════════════════════════════
+// GLOBAL WINDOW CAPTURE KEYBOARD HANDLERS
+// ═══════════════════════════════════════════════════════
+
+function _txAnyModalOpen() {
+    const selectors = ['#batchModal','#adjustConfirmModal','#prAdjustModal',
+                       '#createBatchModal','[id$="Modal"].show','[id$="Backdrop"].show'];
+    return selectors.some(s => document.querySelector(s));
+}
+
+/* ── Date → Supplier Name ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    if (document.activeElement?.id !== 'transaction_date') return;
+    if (_txAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    document.getElementById('supplierSearchInput')?.focus();
+}, true);
+
+/* ── Supplier Name dropdown navigation ── */
+window.addEventListener('keydown', function(e) {
+    const active = document.activeElement;
+    if (active?.id !== 'supplierSearchInput') return;
+    const dd = active._txSupplierDropdown;
+    if (!dd) return;
+    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    const visible = dd.getVisible();
+    const idx = dd.getIdx();
+
+    if (e.key === 'ArrowDown') {
+        dd.showDrop();
+        if (idx < visible.length - 1) dd.highlight(idx + 1);
+        return;
+    }
+    if (e.key === 'ArrowUp') {
+        if (idx > 0) dd.highlight(idx - 1);
+        return;
+    }
+    if (e.key === 'Escape') { dd.hide(); return; }
+    if (e.key === 'Enter') {
+        if (e.shiftKey) { document.getElementById('transaction_date')?.focus(); return; }
+        if (idx >= 0 && visible[idx]) dd.select(visible[idx]);
+        else if (visible.length > 0) dd.select(visible[0]);
+        else { dd.hide(); document.getElementById('rr_no')?.focus(); }
+        return;
+    }
+}, true);
+
+/* ── Rpl.No → Enter → open item modal ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'rr_no') return;
+    if (_txAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    handleRplNoKeydown(e);
+}, true);
+
+/* ── Dis.% → Enter → open Select Item modal ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    const active = document.activeElement;
+    if (!active || !active.name?.includes('[discount_percent]')) return;
+    if (_txAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const row = active.closest('tr');
+    const rowIndex = row ? parseInt(row.id.replace('row-', '')) : null;
+    if (rowIndex !== null) {
+        calculateRowAmount(rowIndex);
+        row.classList.add('row-complete');
+    }
+    if (typeof openItemModal === 'function') openItemModal();
+    else document.getElementById('selectItemBtn')?.click();
+}, true);
+
+/* ── prAdjustModal — upgrade Escape handler to window capture ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+    const m = document.getElementById('prAdjustModal');
+    if (!m) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (typeof closePRAdjustModal === 'function') closePRAdjustModal();
+}, true);
+
 </script>
 @endpush

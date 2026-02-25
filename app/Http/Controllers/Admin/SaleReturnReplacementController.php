@@ -139,22 +139,36 @@ class SaleReturnReplacementController extends Controller
         if (!$transaction) return response()->json(['success' => false, 'message' => 'Not found'], 404);
         
         $transactionData = $transaction->toArray();
-        $transactionData['trn_date'] = $transaction->trn_date; // Format?
+        $transactionData['trn_date'] = $transaction->trn_date ? $transaction->trn_date->format('Y-m-d') : '';
+        // Also format expiry dates in items for proper display
+        if (isset($transactionData['items'])) {
+            foreach ($transactionData['items'] as &$item) {
+                if (!empty($item['expiry_date'])) {
+                    try {
+                        $item['expiry_date'] = date('Y-m-d', strtotime($item['expiry_date']));
+                    } catch (\Exception $e) {}
+                }
+            }
+        }
         return response()->json(['success' => true, 'transaction' => $transactionData]);
     }
 
     public function update(Request $request, $id)
     {
-        // Implementation similar to store but update
-        // Skipping full implementation for brevity unless requested, but usually needed.
-        // Assuming modification blade uses this updates info.
-        
         $transaction = SaleReturnReplacementTransaction::findOrFail($id);
         try {
             DB::beginTransaction();
+
+            // Format trn_date properly
+            $trnDate = $request->trn_date;
+            if ($trnDate) {
+                try { $trnDate = date('Y-m-d', strtotime($trnDate)); } catch (\Exception $e) {}
+            }
+
             $transaction->update([
-                'trn_date' => $request->trn_date,
+                'trn_date' => $trnDate,
                 'customer_id' => $request->customer_id,
+                'customer_name' => Customer::find($request->customer_id)->name ?? '',
                 'fixed_discount' => $request->fixed_discount ?? 0,
                 'is_cash' => $request->is_cash ?? 'N',
                 'sc_percent' => $request->sc_percent ?? 0,
@@ -172,25 +186,38 @@ class SaleReturnReplacementController extends Controller
             ]);
 
             $transaction->items()->delete();
-             foreach ($request->items as $item) {
-                if (empty($item['item_code']) && empty($item['item_name'])) continue;
-                $itemId = $item['item_id'] ?? null;
-                // ... logic to find itemId if missing
-                
-                SaleReturnReplacementItem::create([
-                    'transaction_id' => $transaction->id,
-                    'item_id' => $itemId,
-                    'item_code' => $item['item_code'] ?? '',
-                    'item_name' => $item['item_name'] ?? '',
-                    'batch_no' => $item['batch_no'] ?? null,
-                    'expiry_date' => $item['expiry_date'] ?? null,
-                    'qty' => $item['qty'] ?? 0,
-                    'free_qty' => $item['free_qty'] ?? 0,
-                    'sale_rate' => $item['sale_rate'] ?? 0,
-                    'discount_percent' => $item['discount_percent'] ?? 0,
-                    'ft_rate' => $item['ft_rate'] ?? 0,
-                    'amount' => $item['amount'] ?? 0,
-                ]);
+            if ($request->items) {
+                foreach ($request->items as $item) {
+                    if (empty($item['item_code']) && empty($item['item_name']) && empty($item['item_id'])) continue;
+
+                    $itemId = $item['item_id'] ?? null;
+                    if (!$itemId && !empty($item['item_code'])) {
+                        $dbItem = Item::where('id', $item['item_code'])->first()
+                               ?? Item::where('item_code', $item['item_code'])->first();
+                        $itemId = $dbItem->id ?? null;
+                    }
+
+                    // Convert empty expiry_date to null
+                    $expiryDate = !empty($item['expiry_date']) ? $item['expiry_date'] : null;
+
+                    SaleReturnReplacementItem::create([
+                        'transaction_id' => $transaction->id,
+                        'item_id' => $itemId,
+                        'item_code' => $item['item_code'] ?? '',
+                        'item_name' => $item['item_name'] ?? '',
+                        'batch_no' => $item['batch_no'] ?? null,
+                        'expiry_date' => $expiryDate,
+                        'qty' => $item['qty'] ?? 0,
+                        'free_qty' => $item['free_qty'] ?? 0,
+                        'sale_rate' => $item['sale_rate'] ?? 0,
+                        'discount_percent' => $item['discount_percent'] ?? 0,
+                        'ft_rate' => $item['ft_rate'] ?? 0,
+                        'amount' => $item['amount'] ?? 0,
+                        'packing' => $item['packing'] ?? null,
+                        'unit' => $item['unit'] ?? null,
+                        'mrp' => $item['mrp'] ?? 0,
+                    ]);
+                }
             }
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Updated successfully']);
@@ -198,6 +225,26 @@ class SaleReturnReplacementController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function allTransactions()
+    {
+        $transactions = SaleReturnReplacementTransaction::with('customer')
+            ->orderByDesc('trn_date')
+            ->orderByDesc('trn_no')
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id'            => $t->id,
+                    'trn_no'        => $t->trn_no,
+                    'trn_date'      => $t->trn_date ? $t->trn_date->format('Y-m-d') : '',
+                    'customer_name' => $t->customer->name ?? $t->customer_name ?? '',
+                    'net_amt'       => $t->net_amt,
+                    'status'        => $t->status,
+                ];
+            });
+
+        return response()->json(['success' => true, 'data' => $transactions]);
     }
 
     public function destroy($id)

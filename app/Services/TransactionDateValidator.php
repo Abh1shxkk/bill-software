@@ -17,7 +17,7 @@ class TransactionDateValidator
         'sale_challan' => ['table' => 'sale_challan_transactions', 'date_column' => 'challan_date'],
         'sale_voucher' => ['table' => 'sale_vouchers', 'date_column' => 'voucher_date'],
         'sale_return_voucher' => ['table' => 'sale_return_vouchers', 'date_column' => 'voucher_date'],
-        'sale_return_replacement' => ['table' => 'sale_return_replacement_transactions', 'date_column' => 'transaction_date'],
+        'sale_return_replacement' => ['table' => 'sale_return_replacement_transactions', 'date_column' => 'trn_date'],
         
         // Purchase
         'purchase' => ['table' => 'purchase_transactions', 'date_column' => 'bill_date'],

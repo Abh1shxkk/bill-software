@@ -332,6 +332,7 @@ let currentOutstandingSupplierId = null;
 let adjustmentData = [];
 let currentBankRow = null;
 let rowBankDetails = {};
+let supplierModalEnterLock = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     buildSupplierList();
@@ -559,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function buildSupplierList() {
     const container = document.getElementById('supplierList');
     container.innerHTML = suppliers.map(s => `
-        <div class="supplier-list-item" data-id="${s.supplier_id}" data-code="${s.code || ''}" data-name="${s.name}" onclick="selectSupplierItem(this)">
+        <div class="supplier-list-item" data-id="${s.supplier_id || s.id || ''}" data-code="${s.code || ''}" data-name="${s.name}" onclick="selectSupplierItem(this)">
             <strong>${s.code || '-'}</strong> - ${s.name}
         </div>
     `).join('');
@@ -595,7 +596,7 @@ function selectSupplierItem(el, scrollTo = true) {
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
     if(el) {
         el.classList.add('selected');
-        selectedSupplier = { id: el.dataset.id, code: el.dataset.code, name: el.dataset.name };
+        selectedSupplier = { id: el.dataset.id || '', code: el.dataset.code || '', name: el.dataset.name || '' };
         if(scrollTo) {
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
@@ -605,31 +606,25 @@ function selectSupplierItem(el, scrollTo = true) {
 function openSupplierModal() {
     selectedSupplier = null;
     document.getElementById('supplierSearch').value = '';
-    
-    // Remove any existing listener first
+
+    // Remove any stale listeners (both phases)
+    window.removeEventListener('keydown', handleSupplierModalKeydown, true);
     document.removeEventListener('keydown', handleSupplierModalKeydown);
-    
+
     filterSuppliers();
     document.querySelectorAll('#supplierList .supplier-list-item').forEach(item => item.classList.remove('selected'));
     document.getElementById('supplierModalBackdrop').classList.add('show');
     document.getElementById('supplierModal').classList.add('show');
-    
-    // Add keyboard listener for navigation
-    document.addEventListener('keydown', handleSupplierModalKeydown);
-    
+
+    // CAPTURE phase — fires before ALL other handlers
+    window.addEventListener('keydown', handleSupplierModalKeydown, true);
+
     setTimeout(() => {
         document.getElementById('supplierSearch').focus();
-        // pre-select first item if it exists
-        const firstVisible = document.querySelector('#supplierList .supplier-list-item[style*="display: none"]');
-        if (firstVisible) {
-            // we have to check visually because style display none is applied in filter
-            const visibleItems = Array.from(document.querySelectorAll('#supplierList .supplier-list-item')).filter(el => el.style.display !== 'none');
-            if(visibleItems.length > 0) selectSupplierItem(visibleItems[0], false);
-        } else {
-            const first = document.querySelector('#supplierList .supplier-list-item');
-            if (first) selectSupplierItem(first, false);
-        }
-    }, 100);
+        const visibleItems = Array.from(document.querySelectorAll('#supplierList .supplier-list-item'))
+            .filter(el => el.style.display !== 'none');
+        if (visibleItems.length > 0) selectSupplierItem(visibleItems[0], false);
+    }, 80);
 }
 
 function handleSupplierModalKeydown(e) {
@@ -661,6 +656,9 @@ function handleSupplierModalKeydown(e) {
         selectSupplierItem(items[prevIndex], true);
     } 
     else if (e.key === 'Enter') {
+        if (supplierModalEnterLock) return;
+        supplierModalEnterLock = true;
+
         // Fallback: if no row is marked selected, pick first visible row
         if (currentIndex < 0 && items.length > 0) {
             selectSupplierItem(items[0], true);
@@ -672,16 +670,31 @@ function handleSupplierModalKeydown(e) {
             selectSupplierItem(items[currentIndex], false);
             confirmSupplierSelection();
         }
+
+        setTimeout(() => { supplierModalEnterLock = false; }, 120);
     }
 }
 
 function closeSupplierModal() {
+    window.removeEventListener('keydown', handleSupplierModalKeydown, true);
+    document.removeEventListener('keydown', handleSupplierModalKeydown);
     document.getElementById('supplierModalBackdrop').classList.remove('show');
     document.getElementById('supplierModal').classList.remove('show');
-    document.removeEventListener('keydown', handleSupplierModalKeydown);
+    supplierModalEnterLock = false;
 }
 
 function confirmSupplierSelection() {
+    if (!selectedSupplier) {
+        const selectedEl = document.querySelector('#supplierList .supplier-list-item.selected');
+        if (selectedEl) {
+            selectedSupplier = {
+                id: selectedEl.dataset.id || '',
+                code: selectedEl.dataset.code || '',
+                name: selectedEl.dataset.name || ''
+            };
+        }
+    }
+
     if (!selectedSupplier) { alert('Please select a supplier'); return; }
     const newRowIndex = itemRowCount; // Capturing the index before addItemRow increments it
     addItemRow(selectedSupplier);
@@ -1239,6 +1252,37 @@ document.addEventListener('keydown', function(e) {
         return false;
     }
 });
+
+// Capture fallback: when supplier modal is open, Enter must confirm highlighted supplier
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+
+    const modal = document.getElementById('supplierModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    if (!modal.contains(document.activeElement)) return;
+    if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+    if (supplierModalEnterLock) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+    }
+
+    const items = Array.from(document.querySelectorAll('#supplierList .supplier-list-item'))
+        .filter(el => el.style.display !== 'none');
+    if (items.length === 0) return;
+
+    let selectedEl = document.querySelector('#supplierList .supplier-list-item.selected');
+    if (!selectedEl || selectedEl.style.display === 'none') {
+        selectedEl = items[0];
+    }
+
+    supplierModalEnterLock = true;
+    selectSupplierItem(selectedEl, false);
+    confirmSupplierSelection();
+    setTimeout(() => { supplierModalEnterLock = false; }, 120);
+}, true);
 
 // Bank modal Enter key to save
 document.getElementById('bankModal').addEventListener('keydown', function(e) {

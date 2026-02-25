@@ -140,12 +140,15 @@
                     
                     <div class="field-group">
                         <label>Customer:</label>
-                        <select class="form-control" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off">
-                            <option value="">Select Customer</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                            @endforeach
-                        </select>
+                        <div style="position: relative; width: 250px;" id="customerDropdownWrapper">
+                            <input type="text" id="customerSearchInput" class="form-control" placeholder="Search customer..." autocomplete="off" style="width: 250px;" onblur="_onCustomerBlur()" oninput="_filterCustomers()">
+                            <div id="customerDropList" style="display:none; position:absolute; z-index:99999; top:100%; left:0; width:100%; max-height:220px; overflow-y:auto; background:white; border:1px solid #ccc; box-shadow:0 4px 8px rgba(0,0,0,.15);">
+                                @foreach($customers as $customer)
+                                <div class="customer-drop-item" data-id="{{ $customer->id }}" data-label="{{ ($customer->code ?? '') . ' - ' . $customer->name }}" style="padding:5px 10px; cursor:pointer; font-size:11px;" onmousedown="_selectCustomerItem(this)">{{ ($customer->code ?? '') }} - {{ $customer->name }}</div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <input type="hidden" id="customer_id" name="customer_id" value="">
                     </div>
                 </div>
                 
@@ -170,10 +173,17 @@
                             <div class="col-md-4">
                                 <div class="field-group">
                                     <label>Cash:</label>
-                                    <select class="form-control" name="is_cash" id="is_cash" style="width: 60px;">
-                                        <option value="N" selected>N</option>
-                                        <option value="Y">Y</option>
-                                    </select>
+                                    <div style="position:relative;" id="cashDropdownWrapper">
+                                        <input type="text" id="is_cash_display" class="form-control" value="N"
+                                               readonly style="width:60px; cursor:pointer; caret-color:transparent; background:white;"
+                                               onclick="_toggleCashDrop()"
+                                               onkeydown="_cashKeydown(event)">
+                                        <input type="hidden" id="is_cash" name="is_cash" value="N">
+                                        <div id="cashDropList" style="display:none; position:absolute; z-index:99999; top:100%; left:0; min-width:80px; background:white; border:1px solid #ccc; box-shadow:0 4px 8px rgba(0,0,0,.15);">
+                                            <div class="cash-drop-item" data-value="N" style="padding:5px 10px; cursor:pointer; font-size:11px; font-weight:600;" onmousedown="_selectCashItem(this)">N</div>
+                                            <div class="cash-drop-item" data-value="Y" style="padding:5px 10px; cursor:pointer; font-size:11px; font-weight:600;" onmousedown="_selectCashItem(this)">Y</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -217,19 +227,6 @@
                             </tr>
                         </thead>
                         <tbody id="itemsTableBody">
-                            <tr>
-                                <td><input type="text" class="form-control item-code" name="items[0][item_code]"></td>
-                                <td><input type="text" class="form-control item-name" name="items[0][item_name]"></td>
-                                <td><input type="text" class="form-control" name="items[0][batch_no]"></td>
-                                <td><input type="text" class="form-control" name="items[0][expiry_date]"></td>
-                                <td><input type="number" step="any" class="form-control qty" name="items[0][qty]"></td>
-                                <td><input type="number" step="any" class="form-control f-qty" name="items[0][free_qty]"></td>
-                                <td><input type="number" step="any" class="form-control sale-rate" name="items[0][sale_rate]"></td>
-                                <td><input type="number" step="any" class="form-control dis-percent" name="items[0][discount_percent]"></td>
-                                <td><input type="number" step="any" class="form-control ft-rate" name="items[0][ft_rate]"></td>
-                                <td><input type="number" step="any" class="form-control amount" name="items[0][amount]" readonly></td>
-                                <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row"><i class="bi bi-x"></i></button></td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -396,116 +393,527 @@
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Initialize Select2
-    $('#customerSelect').select2({ width: '250px' });
-    
-    // Update Day Name
-    window.updateDayName = function() {
-        const date = new Date($('#trn_date').val());
-        const options = { weekday: 'long' };
-        $('#dayName').val(date.toLocaleDateString('en-US', options));
-    };
+// ─── Customer custom dropdown ───────────────────────────────────────────────
+let _customerHighlightIdx = -1;
 
-    // Add Row functionality
-    function addNewRow() {
-        let rowCount = $('#itemsTableBody tr').length;
-        let newRow = `<tr>
-            <td><input type="text" class="form-control item-code" name="items[${rowCount}][item_code]"></td>
-            <td><input type="text" class="form-control item-name" name="items[${rowCount}][item_name]"></td>
-            <td><input type="text" class="form-control" name="items[${rowCount}][batch_no]"></td>
-            <td><input type="text" class="form-control" name="items[${rowCount}][expiry_date]"></td>
-            <td><input type="number" step="any" class="form-control qty" name="items[${rowCount}][qty]"></td>
-            <td><input type="number" step="any" class="form-control f-qty" name="items[${rowCount}][free_qty]"></td>
-            <td><input type="number" step="any" class="form-control sale-rate" name="items[${rowCount}][sale_rate]"></td>
-            <td><input type="number" step="any" class="form-control dis-percent" name="items[${rowCount}][discount_percent]"></td>
-            <td><input type="number" step="any" class="form-control ft-rate" name="items[${rowCount}][ft_rate]"></td>
-            <td><input type="number" step="any" class="form-control amount" name="items[${rowCount}][amount]" readonly></td>
-            <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row"><i class="bi bi-x"></i></button></td>
-        </tr>`;
-        $('#itemsTableBody').append(newRow);
-    }
+function _getAllCustomerItems() {
+    return document.querySelectorAll('#customerDropList .customer-drop-item');
+}
 
-    $('#addRowBtn, #addRowBtn2').click(function() {
-        addNewRow();
+function _filterCustomers() {
+    const q = document.getElementById('customerSearchInput').value.toLowerCase();
+    _getAllCustomerItems().forEach(el => {
+        el.style.display = el.dataset.label.toLowerCase().includes(q) ? '' : 'none';
     });
+    _customerHighlightIdx = -1;
+    _highlightCustomer(-1);
+    document.getElementById('customerDropList').style.display = 'block';
+}
 
-    // Remove Row
-    $(document).on('click', '.remove-row', function() {
-        if ($('#itemsTableBody tr').length > 1) {
-            $(this).closest('tr').remove();
-            calculateTotals();
+function _openCustomerDrop() {
+    _filterCustomers();
+}
+
+function _closeCustomerDrop() {
+    document.getElementById('customerDropList').style.display = 'none';
+}
+
+function _highlightCustomer(idx) {
+    const items = [..._getAllCustomerItems()].filter(el => el.style.display !== 'none');
+    items.forEach((el, i) => {
+        el.style.background = i === idx ? '#0d6efd' : '';
+        el.style.color      = i === idx ? '#fff'    : '';
+        if (i === idx) el.scrollIntoView({ block: 'nearest' });
+    });
+}
+
+function _selectCustomerItem(el) {
+    document.getElementById('customerSearchInput').value = el.dataset.label;
+    document.getElementById('customer_id').value         = el.dataset.id;
+    _closeCustomerDrop();
+    _customerHighlightIdx = -1;
+    // Move to Cash after selection
+    setTimeout(() => { document.getElementById('is_cash_display').focus(); }, 50);
+}
+
+function _onCustomerBlur() {
+    setTimeout(_closeCustomerDrop, 150);
+}
+
+// ─── Item count for row naming ───────────────────────────────────────────────
+let _rowCount = 0;
+
+// ─── Open item modal ─────────────────────────────────────────────────────────
+function _openItemModal() {
+    if (typeof openItemModal_saleReturnItemModal === 'function') {
+        openItemModal_saleReturnItemModal();
+    }
+}
+
+// ─── Modal bridge callbacks ───────────────────────────────────────────────────
+window.onItemSelectedFromModal = function(item) {
+    if (typeof openBatchModal_saleReturnBatchModal === 'function') {
+        openBatchModal_saleReturnBatchModal(item);
+    }
+};
+
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    _addItemRow(item, batch);
+};
+
+window.onBatchSelectedFromModal = function(item, batch) {
+    _addItemRow(item, batch);
+};
+
+function _addItemRow(item, batch) {
+    const tbody = document.getElementById('itemsTableBody');
+    const idx   = _rowCount;
+
+    const expiryRaw     = batch?.expiry_date || '';   // Y-m-d for DB
+    const expiryDisplay = expiryRaw
+        ? new Date(expiryRaw).toLocaleDateString('en-GB', { month: '2-digit', year: 'numeric' })
+        : '';
+    const saleRate = parseFloat(batch?.s_rate || item?.s_rate || item?.sale_rate || 0).toFixed(2);
+    const mrp      = parseFloat(batch?.mrp    || item?.mrp   || 0).toFixed(2);
+    const clQty    = parseFloat(batch?.qty    || 0);
+
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-row', idx);
+    tr.innerHTML = `
+        <td><input type="text"   class="form-control item-code readonly-field" name="items[${idx}][item_code]" value="${item.id}" readonly>
+            <input type="hidden" name="items[${idx}][item_id]" value="${item.id}">
+        </td>
+        <td><input type="text"   class="form-control item-name readonly-field" name="items[${idx}][item_name]" value="${escHtml(item.name)}" readonly>
+            <input type="hidden" name="items[${idx}][batch_id]"   value="${batch?.id || ''}">
+            <input type="hidden" name="items[${idx}][packing]"    value="${escHtml(item.packing || '')}">
+            <input type="hidden" name="items[${idx}][company]"    value="${escHtml(item.company_short_name || item.mfg_by || '')}">
+            <input type="hidden" name="items[${idx}][mrp]"        value="${mrp}">
+            <input type="hidden" name="items[${idx}][unit]"       value="${escHtml(item.unit || '1')}">
+            <input type="hidden" name="items[${idx}][cl_qty]"     value="${clQty}">
+        </td>
+        <td><input type="text"   class="form-control readonly-field" name="items[${idx}][batch_no]"     value="${escHtml(batch?.batch_no || '')}" readonly></td>
+        <td><input type="text"   class="form-control readonly-field" value="${expiryDisplay}" readonly>
+            <input type="hidden" name="items[${idx}][expiry_date]" value="${expiryRaw}">
+        </td>
+        <td><input type="number" step="any" class="form-control qty"         name="items[${idx}][qty]"               value=""></td>
+        <td><input type="number" step="any" class="form-control f-qty"       name="items[${idx}][free_qty]"          value="0"></td>
+        <td><input type="number" step="any" class="form-control sale-rate"   name="items[${idx}][sale_rate]"         value="${saleRate}"></td>
+        <td><input type="number" step="any" class="form-control dis-percent" name="items[${idx}][discount_percent]"  value="0"></td>
+        <td><input type="number" step="any" class="form-control ft-rate"     name="items[${idx}][ft_rate]"           value="${saleRate}"></td>
+        <td><input type="number" step="any" class="form-control amount"      name="items[${idx}][amount]"            value="0.00" readonly></td>
+        <td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row"><i class="bi bi-x"></i></button></td>
+    `;
+    tbody.appendChild(tr);
+
+    // Update detail section
+    document.getElementById('detailPacking').value  = item.packing || '';
+    document.getElementById('detailCompany').value  = item.company_short_name || item.mfg_by || '';
+    document.getElementById('detailMrp').value      = mrp;
+    document.getElementById('detailUnit').value     = item.unit || '1';
+    document.getElementById('detailClQty').value    = clQty;
+    document.getElementById('detailSrIno').value    = idx + 1;
+
+    _rowCount++;
+    _calcTotals();
+
+    // Focus qty of the new row
+    setTimeout(() => {
+        const qtyInput = tr.querySelector('.qty');
+        if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+    }, 60);
+}
+
+function escHtml(t) {
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+
+// ─── Row calc (delegated via jQuery, kept for compatibility) ─────────────────
+$(document).on('input', '.qty, .sale-rate, .dis-percent', function() {
+    const row    = $(this).closest('tr');
+    const qty    = parseFloat(row.find('.qty').val())         || 0;
+    const rate   = parseFloat(row.find('.sale-rate').val())   || 0;
+    const dis    = parseFloat(row.find('.dis-percent').val()) || 0;
+    const gross  = qty * rate;
+    const disAmt = gross * (dis / 100);
+    row.find('.amount').val((gross - disAmt).toFixed(2));
+    _calcTotals();
+});
+
+$(document).on('click', '.remove-row', function() {
+    if ($('#itemsTableBody tr').length > 1) {
+        $(this).closest('tr').remove();
+    }
+    _calcTotals();
+});
+
+$('#addRowBtn, #addRowBtn2').click(function() { _openItemModal(); });
+
+function _calcTotals() {
+    let total = 0;
+    $('#itemsTableBody tr').each(function() {
+        total += parseFloat($(this).find('.amount').val()) || 0;
+    });
+    const scPercent  = parseFloat($('#sc_percent').val())  || 0;
+    const taxPercent = parseFloat($('#tax_percent').val()) || 0;
+    const disAmt     = parseFloat($('#dis_amt').val())     || 0;
+    const scmAmt     = parseFloat($('#scm_amt').val())     || 0;
+    const scAmt      = total * (scPercent / 100);
+    const taxAmt     = total * (taxPercent / 100);
+    const net        = total + scAmt + taxAmt - disAmt - scmAmt;
+    $('#nt_amt').val(total.toFixed(2));
+    $('#ft_amt').val(total.toFixed(2));
+    $('#sc_amt').val(scAmt.toFixed(2));
+    $('#tax_amt').val(taxAmt.toFixed(2));
+    $('#net_amt').val(net.toFixed(2));
+}
+calculateTotals = _calcTotals; // expose as global alias
+
+$('#sc_percent, #tax_percent, #dis_amt, #scm_amt').on('input', _calcTotals);
+
+// ─── Day name ────────────────────────────────────────────────────────────────
+window.updateDayName = function() {
+    const date = new Date($('#trn_date').val());
+    $('#dayName').val(date.toLocaleDateString('en-US', { weekday: 'long' }));
+};
+
+// ─── Save ────────────────────────────────────────────────────────────────────
+function _save() {
+    $('#saveBtn').click();
+}
+
+$('#saveBtn').click(function() {
+    // ── Pre-save validation ──
+    const custId = document.getElementById('customer_id').value;
+    if (!custId) {
+        alert('Please select a customer.');
+        document.getElementById('customerSearchInput').focus();
+        return;
+    }
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    if (rows.length === 0) {
+        alert('Please add at least one item.');
+        return;
+    }
+    let hasValidRow = false;
+    rows.forEach(r => {
+        if (r.querySelector('[name*="[item_id]"]')?.value) hasValidRow = true;
+    });
+    if (!hasValidRow) {
+        alert('Please add at least one item.');
+        return;
+    }
+    // ── Fire ──
+    $.ajax({
+        url: "{{ route('admin.sale-return-replacement.store') }}",
+        method: 'POST',
+        data: $('#saleReturnReplacementForm').serialize(),
+        success: function(response) {
+            if (response.success) {
+                alert(response.message);
+                window.location.reload();
+            } else {
+                alert('Error: ' + response.message);
+            }
+        },
+        error: function(xhr) {
+            let msg = 'Error saving transaction';
+            try {
+                const resp = JSON.parse(xhr.responseText);
+                if (xhr.status === 422 && resp.errors) {
+                    // Laravel validation errors
+                    msg = Object.values(resp.errors).flat().join('\n');
+                } else {
+                    msg = resp.message || resp.error || JSON.stringify(resp);
+                }
+            } catch(e) {
+                msg = xhr.responseText?.substring(0, 300) || msg;
+            }
+            alert('Error (' + xhr.status + '):\n' + msg);
         }
     });
+});
 
-    // Calculate row amount and totals
-    $(document).on('input', '.qty, .sale-rate, .dis-percent', function() {
-        let row = $(this).closest('tr');
-        let qty = parseFloat(row.find('.qty').val()) || 0;
-        let rate = parseFloat(row.find('.sale-rate').val()) || 0;
-        let dis = parseFloat(row.find('.dis-percent').val()) || 0;
-        
-        let gross = qty * rate;
-        let disAmt = gross * (dis / 100);
-        let net = gross - disAmt;
-        
-        row.find('.amount').val(net.toFixed(2));
-        calculateTotals();
-    });
-    
-    $('#sc_percent, #tax_percent, #dis_amt, #scm_amt').on('input', function() {
-        calculateTotals();
-    });
+// ─── Cash custom dropdown ─────────────────────────────────────────────────────
+let _cashHighlightIdx = -1;
 
-    function calculateTotals() {
-        let totalAmount = 0;
-        
-        $('#itemsTableBody tr').each(function() {
-            let row = $(this);
-            let amount = parseFloat(row.find('.amount').val()) || 0;
-            totalAmount += amount;
+function _toggleCashDrop() {
+    const dl = document.getElementById('cashDropList');
+    if (dl.style.display === 'none') {
+        dl.style.display = 'block';
+        // Highlight current value
+        const items = document.querySelectorAll('.cash-drop-item');
+        const cur   = document.getElementById('is_cash').value;
+        items.forEach((el, i) => {
+            const active = el.dataset.value === cur;
+            el.style.background = active ? '#0d6efd' : '';
+            el.style.color      = active ? '#fff'    : '';
+            if (active) _cashHighlightIdx = i;
         });
-        
-        $('#nt_amt').val(totalAmount.toFixed(2));
-        $('#ft_amt').val(totalAmount.toFixed(2));
-        
-        // Footer Calcs
-        let scPercent = parseFloat($('#sc_percent').val()) || 0;
-        let scAmt = totalAmount * (scPercent / 100);
-        
-        let taxPercent = parseFloat($('#tax_percent').val()) || 0;
-        let taxAmt = totalAmount * (taxPercent / 100);
-        
-        let disAmt = parseFloat($('#dis_amt').val()) || 0;
-        let scmAmt = parseFloat($('#scm_amt').val()) || 0;
-        
-        let net = totalAmount + scAmt + taxAmt - disAmt - scmAmt;
-        
-        $('#sc_amt').val(scAmt.toFixed(2));
-        $('#tax_amt').val(taxAmt.toFixed(2));
-        $('#net_amt').val(net.toFixed(2));
+    } else {
+        dl.style.display = 'none';
+    }
+}
+
+function _closeCashDrop() {
+    document.getElementById('cashDropList').style.display = 'none';
+}
+
+function _selectCashItem(el) {
+    document.getElementById('is_cash_display').value = el.dataset.value;
+    document.getElementById('is_cash').value         = el.dataset.value;
+    _closeCashDrop();
+    _cashHighlightIdx = -1;
+    // Move to Fixed Dis
+    setTimeout(() => {
+        const fd = document.getElementById('fixed_discount');
+        fd.focus(); fd.select();
+    }, 50);
+}
+
+function _cashKeydown(e) {
+    const dl    = document.getElementById('cashDropList');
+    const items = [...document.querySelectorAll('.cash-drop-item')];
+    const open  = dl.style.display !== 'none';
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        if (!open) { _toggleCashDrop(); return; }
+        _cashHighlightIdx = e.key === 'ArrowDown'
+            ? (_cashHighlightIdx + 1) % items.length
+            : (_cashHighlightIdx - 1 + items.length) % items.length;
+        items.forEach((el, i) => {
+            el.style.background = i === _cashHighlightIdx ? '#0d6efd' : '';
+            el.style.color      = i === _cashHighlightIdx ? '#fff'    : '';
+        });
+        return;
+    }
+    if (e.key === 'Enter') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        if (open && _cashHighlightIdx >= 0) {
+            _selectCashItem(items[_cashHighlightIdx]);
+        } else if (!open) {
+            // Just move forward if already selected
+            const fd = document.getElementById('fixed_discount');
+            fd.focus(); fd.select();
+        }
+        return;
+    }
+    // Press N or Y directly
+    if (e.key.toLowerCase() === 'n' || e.key.toLowerCase() === 'y') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        const val = e.key.toUpperCase();
+        document.getElementById('is_cash_display').value = val;
+        document.getElementById('is_cash').value         = val;
+        _closeCashDrop();
+        setTimeout(() => { const fd = document.getElementById('fixed_discount'); fd.focus(); fd.select(); }, 50);
+        return;
+    }
+    if (e.key === 'Escape') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        _closeCashDrop(); return;
+    }
+}
+
+// Close cash drop when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#cashDropdownWrapper')) _closeCashDrop();
+});
+
+
+function _anyModalOpen() {
+    return (
+        !!document.querySelector('#saleReturnItemModal.show')  ||
+        !!document.querySelector('#saleReturnBatchModal.show')
+    );
+}
+
+// ============================================================
+// MASTER KEYBOARD HANDLER — window capture phase
+// Flow: Date → Customer → Cash → Fixed Dis → Remarks → Item Modal
+// ============================================================
+window.addEventListener('keydown', function(e) {
+
+    // ── Cash dropdown arrow/enter/escape (must check BEFORE generic Enter) ──
+    const cashList = document.getElementById('cashDropList');
+    const cashOpen = cashList && cashList.style.display !== 'none';
+
+    if (cashOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape')) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        _cashKeydown(e);
+        return;
     }
 
-    // Save Transaction
-    $('#saveBtn').click(function() {
-        $.ajax({
-            url: "{{ route('admin.sale-return-replacement.store') }}",
-            method: "POST",
-            data: $('#saleReturnReplacementForm').serialize(),
-            success: function(response) {
-                if(response.success) {
-                    alert(response.message);
-                    window.location.reload();
-                } else {
-                    alert('Error: ' + response.message);
-                }
-            },
-            error: function(xhr) {
-                alert('Error saving transaction');
+    // ── Customer dropdown arrow/enter/escape ──────────────────
+    const dropList = document.getElementById('customerDropList');
+    const dropOpen = dropList && dropList.style.display !== 'none';
+
+    if (dropOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape')) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const visible = [...document.querySelectorAll('#customerDropList .customer-drop-item')]
+                            .filter(el => el.style.display !== 'none');
+
+        if (e.key === 'ArrowDown') {
+            _customerHighlightIdx = (_customerHighlightIdx + 1) % visible.length;
+            _highlightCustomer(_customerHighlightIdx);
+        } else if (e.key === 'ArrowUp') {
+            _customerHighlightIdx = (_customerHighlightIdx - 1 + visible.length) % visible.length;
+            _highlightCustomer(_customerHighlightIdx);
+        } else if (e.key === 'Enter') {
+            if (_customerHighlightIdx >= 0 && visible[_customerHighlightIdx]) {
+                _selectCustomerItem(visible[_customerHighlightIdx]);
+            } else if (visible.length === 1) {
+                _selectCustomerItem(visible[0]);
             }
-        });
-    });
+        } else if (e.key === 'Escape') {
+            _closeCustomerDrop();
+        }
+        return;
+    }
+
+    // ── Skip if a modal is open ───────────────────────────────
+    if (_anyModalOpen()) return;
+
+    if (e.key === 'Enter') {
+        const el = document.activeElement;
+        if (!el) return;
+
+        // Date → open customer dropdown
+        if (el.id === 'trn_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const inp = document.getElementById('customerSearchInput');
+            inp.focus();
+            inp.select();
+            _openCustomerDrop();
+            return;
+        }
+
+        // Customer search input → open/navigate dropdown
+        if (el.id === 'customerSearchInput') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            _openCustomerDrop();
+            const visible = [...document.querySelectorAll('#customerDropList .customer-drop-item')]
+                                .filter(x => x.style.display !== 'none');
+            if (visible.length === 1) {
+                _selectCustomerItem(visible[0]);
+            } else {
+                _customerHighlightIdx = 0;
+                _highlightCustomer(0);
+            }
+            return;
+        }
+
+        // Cash → Fixed Dis
+        if (el.id === 'is_cash_display') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const fd = document.getElementById('fixed_discount');
+            fd.focus(); fd.select();
+            return;
+        }
+
+        // Fixed Dis → Remarks
+        if (el.id === 'fixed_discount') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('remarks').focus();
+            return;
+        }
+
+        // Remarks → Open item modal
+        if (el.id === 'remarks') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            _openItemModal();
+            return;
+        }
+
+
+        // ── Table row navigation: Qty → F.Qty → Rate → Dis% → FTRate → (next row Qty / Item Modal) ──
+
+        // Helper: focus + select an input
+        function _focusInput(inp) { if (inp) { inp.focus(); inp.select(); } }
+
+        if (el.classList.contains('qty')) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            _focusInput(el.closest('tr')?.querySelector('.f-qty'));
+            return;
+        }
+
+        if (el.classList.contains('f-qty')) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            _focusInput(el.closest('tr')?.querySelector('.sale-rate'));
+            return;
+        }
+
+        if (el.classList.contains('sale-rate')) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            _focusInput(el.closest('tr')?.querySelector('.dis-percent'));
+            return;
+        }
+
+        if (el.classList.contains('dis-percent')) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            _focusInput(el.closest('tr')?.querySelector('.ft-rate'));
+            return;
+        }
+
+        if (el.classList.contains('ft-rate')) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const nextTr = el.closest('tr')?.nextElementSibling;
+            if (nextTr && nextTr.querySelector('.qty')) {
+                _focusInput(nextTr.querySelector('.qty'));
+            } else {
+                _openItemModal();
+            }
+            return;
+        }
+    }
+
+    // ── Customer search input: open on focus keystrokes ───────
+    if (document.activeElement?.id === 'customerSearchInput' && !dropOpen) {
+        if (e.key.length === 1 || e.key === 'Backspace') {
+            setTimeout(() => {
+                if (document.getElementById('customerSearchInput').value.length >= 0) {
+                    document.getElementById('customerDropList').style.display = 'block';
+                }
+            }, 10);
+        }
+    }
+
+    // ── Ctrl+S → Save ─────────────────────────────────────────
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        _save();
+        return;
+    }
+
+}, true); // capture phase
+
+// ── On page load ──────────────────────────────────────────────────────────────
+$(document).ready(function() {
+    // Focus date on load
+    setTimeout(() => document.getElementById('trn_date')?.focus(), 100);
 });
 </script>
 @endpush
+@include('components.modals.item-selection', [
+    'id'           => 'saleReturnItemModal',
+    'module'       => 'sale-return-replacement',
+    'showStock'    => true,
+    'rateType'     => 'sale',
+    'showCompany'  => true,
+    'showHsn'      => false,
+    'batchModalId' => 'saleReturnBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id'                => 'saleReturnBatchModal',
+    'module'            => 'sale-return-replacement',
+    'showOnlyAvailable' => false,
+    'rateType'          => 'sale',
+    'showCostDetails'   => false,
+])
+
 @endsection

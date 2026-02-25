@@ -226,6 +226,45 @@
         background-color: #e7f3ff !important;
     }
 
+    /* Custom Dropdown Styles */
+    .custom-dropdown-wrapper {
+        position: relative;
+    }
+    
+    .custom-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        min-width: 60px;
+        background: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1050;
+        padding: 4px 0;
+        margin-top: 1px;
+    }
+    
+    .custom-dropdown-menu.show {
+        display: block;
+    }
+    
+    .custom-dropdown-item {
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        transition: background-color 0.2s;
+    }
+    
+    .custom-dropdown-item:hover,
+    .custom-dropdown-item.highlighted {
+        background-color: #e9ecef;
+        color: #0d6efd;
+    }
+
     /* Past Adjustments Modal */
     .past-adjustments-modal-backdrop {
         display: none;
@@ -307,10 +346,10 @@
                     <div class="field-group">
                         <label><strong>Trn No.:</strong></label>
                         <input type="text" class="form-control" id="searchTrnNo" style="width: 80px;" placeholder="Enter...">
-                        <button type="button" class="btn btn-sm btn-primary" onclick="searchTransaction()">
+                        <button type="button" class="btn btn-sm btn-primary" id="searchBtn" onclick="searchTransaction()">
                             <i class="bi bi-search"></i>
                         </button>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="openPastAdjustmentsModal()">
+                        <button type="button" class="btn btn-sm btn-secondary" id="pastBtn" onclick="openPastAdjustmentsModal()">
                             <i class="bi bi-list"></i> Past
                         </button>
                     </div>
@@ -558,6 +597,286 @@ let selectedRowIndex = -1;
 let currentItemData = null;
 let allItems = [];
 let currentAdjustmentId = null;
+let pastModalActiveIndex = -1; // For past adjustments modal navigation
+
+// ============================================================
+// MASTER KEYBOARD EVENT INTERCEPTOR
+// Captures Enter keys for specific workflow paths
+// ============================================================
+window.addEventListener('keydown', function(e) {
+    // Determine modals
+    var itemModal = document.getElementById('stockAdjustmentModItemModal');
+    var batchModal = document.getElementById('stockAdjustmentModBatchModal');
+    var pastModal = document.getElementById('pastAdjustmentsModal');
+
+    // Special case: If Past Adjustments Modal is open, intercept Arrow Keys and Enter
+    if (pastModal && pastModal.classList.contains('show')) {
+        const rows = document.querySelectorAll('#pastAdjustmentsListBody tr');
+        if (rows.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                pastModalActiveIndex++;
+                if (pastModalActiveIndex >= rows.length) pastModalActiveIndex = 0;
+                highlightPastRow(pastModalActiveIndex);
+                return;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                pastModalActiveIndex--;
+                if (pastModalActiveIndex < 0) pastModalActiveIndex = rows.length - 1;
+                highlightPastRow(pastModalActiveIndex);
+                return;
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                if (pastModalActiveIndex >= 0 && pastModalActiveIndex < rows.length) {
+                    const btn = rows[pastModalActiveIndex].querySelector('button');
+                    if (btn) btn.click();
+                }
+                return;
+            }
+        }
+    }
+
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        // Skip if any modal is open
+        if ((itemModal && itemModal.classList.contains('show')) ||
+            (batchModal && batchModal.classList.contains('show')) ||
+            (pastModal && pastModal.classList.contains('show'))) {
+            return; // Let modal handlers deal with it
+        }
+
+        // Determine if backwards navigation (Shift+Enter)
+        if (e.shiftKey) {
+            // Remarks -> Date
+            if (activeEl.id === 'remarks') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                document.getElementById('adjustmentDate')?.focus();
+                return false;
+            }
+            
+            // Sh/Ex Display -> Previous Row Qty OR Remarks
+            if (activeEl.classList.contains('adjustment-type-display')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Close dropdown if open
+                document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                
+                var row = activeEl.closest('tr');
+                var previousRow = row ? row.previousElementSibling : null;
+                
+                if (previousRow && previousRow.tagName === 'TR' && previousRow.querySelector('.qty-input')) {
+                    // Go back to previous row's Qty
+                    var qtyInput = previousRow.querySelector('.qty-input');
+                    if (qtyInput) {
+                        qtyInput.focus();
+                        qtyInput.select();
+                    }
+                } else {
+                    // First row -> go to remarks
+                    if (!document.getElementById('remarks').disabled) {
+                        document.getElementById('remarks')?.focus();
+                    } else {
+                        document.getElementById('searchTrnNo')?.focus();
+                    }
+                }
+                return false;
+            }
+            
+            // Date -> Past Btn
+            if (activeEl.id === 'adjustmentDate') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                document.getElementById('pastBtn')?.focus();
+                return false;
+            }
+            
+            // Qty -> Sh/Ex
+            if (activeEl.classList.contains('qty-input')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                var row = activeEl.closest('tr');
+                if (row) {
+                    var shExDisplay = row.querySelector('.adjustment-type-display');
+                    if (shExDisplay) {
+                        shExDisplay.focus();
+                    }
+                }
+                return false;
+            }
+            
+            // Past Btn -> Search Btn
+            if (activeEl.id === 'pastBtn') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                document.getElementById('searchBtn')?.focus();
+                return false;
+            }
+            
+            // Search Btn -> Trn No
+            if (activeEl.id === 'searchBtn') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                document.getElementById('searchTrnNo')?.focus();
+                return false;
+            }
+
+            if (activeEl.id === 'searchTrnNo') {
+                e.preventDefault();
+                 e.stopPropagation();
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            return; // Exit if shift+enter didn't match anything
+        }
+
+        // --- NORMAL ENTER (Forward Navigation) ---
+        
+        // Search Trn -> Search Button
+        if (activeEl.id === 'searchTrnNo') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            document.getElementById('searchBtn')?.focus();
+            return false;
+        }
+        
+        // Search Button -> Trigger Click
+        if (activeEl.id === 'searchBtn') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            activeEl.click();
+            return false;
+        }
+
+        // Past Button -> Trigger Click
+        if (activeEl.id === 'pastBtn') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            activeEl.click();
+            return false;
+        }
+
+        // Date -> Remarks
+        if (activeEl.id === 'adjustmentDate') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            document.getElementById('remarks')?.focus();
+            return false;
+        }
+
+        // Remarks -> Insert Item (open modal)
+        if (activeEl.id === 'remarks') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            // Don't trigger if disabled
+            if (!document.getElementById('insertBtn').disabled && typeof openItemModal === 'function') openItemModal();
+            return false;
+        }
+
+        // Sh/Ex -> Qty
+        if (activeEl.classList.contains('adjustment-type-display')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Close dropdown if open
+            document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+                
+            var row = activeEl.closest('tr');
+            if (row) {
+                var qtyInput = row.querySelector('.qty-input');
+                if (qtyInput) {
+                    qtyInput.focus();
+                    qtyInput.select();
+                }
+            }
+            return false;
+        }
+
+        // Qty inside row -> Next row Sh/Ex (loop) OR Insert Item if no next row
+        if (activeEl.classList.contains('qty-input')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            var currentRow = activeEl.closest('tr');
+            var nextRow = currentRow ? currentRow.nextElementSibling : null;
+
+            if (nextRow && nextRow.querySelector('.adjustment-type-display')) {
+                // There is a next row — go to its Sh/Ex
+                var nextShEx = nextRow.querySelector('.adjustment-type-display');
+                nextShEx.focus();
+                var nextRowIdx = nextRow.getAttribute('data-row');
+                if (nextRowIdx !== null) selectRow(parseInt(nextRowIdx));
+            } else {
+                // No next row (or next row is empty) — trigger Insert Item
+                if (!document.getElementById('insertBtn').disabled && typeof openItemModal === 'function') openItemModal();
+            }
+            return false;
+        }
+    }
+
+    // Arrow keys for navigating Search <-> Past buttons <-> Date
+    if (e.key === 'ArrowRight') {
+        if (document.activeElement.id === 'searchBtn') {
+            e.preventDefault();
+            document.getElementById('pastBtn')?.focus();
+        } else if (document.activeElement.id === 'pastBtn') {
+            e.preventDefault();
+            if (!document.getElementById('adjustmentDate').disabled) {
+                document.getElementById('adjustmentDate')?.focus();
+            }
+        }
+    }
+    if (e.key === 'ArrowLeft') {
+        if (document.activeElement.id === 'pastBtn') {
+            e.preventDefault();
+            document.getElementById('searchBtn')?.focus();
+        } else if (document.activeElement.id === 'adjustmentDate') {
+            // Only move back if we're at the beginning of the date field
+            const el = document.activeElement;
+            if (el.selectionStart === 0 && el.selectionEnd === 0) {
+                e.preventDefault();
+                document.getElementById('pastBtn')?.focus();
+            }
+        }
+    }
+    
+    // Ctrl+S -> Save/Update
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        if (!document.getElementById('updateBtn').disabled) {
+            updateTransaction();
+        }
+        return false;
+    }
+}, true);
+
+// Close custom dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.custom-dropdown-wrapper')) {
+        document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => m.classList.remove('show'));
+    }
+});
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
@@ -606,6 +925,7 @@ function searchTransaction() {
     const trnNo = document.getElementById('searchTrnNo').value.trim();
     if (!trnNo) {
         alert('Please enter a transaction number');
+        setTimeout(() => document.getElementById('pastBtn')?.focus(), 10);
         return;
     }
     
@@ -616,11 +936,13 @@ function searchTransaction() {
                 loadTransactionData(data.adjustment);
             } else {
                 alert(data.message || 'Transaction not found');
+                setTimeout(() => document.getElementById('pastBtn')?.focus(), 10);
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('Error searching transaction');
+            setTimeout(() => document.getElementById('pastBtn')?.focus(), 10);
         });
 }
 
@@ -657,6 +979,15 @@ function loadTransactionData(adjustment) {
     }
     
     calculateTotals();
+    
+    // Focus first row's Sh/Ex column after loading
+    setTimeout(() => {
+        const firstRow = document.querySelector('#itemsTableBody tr[data-row="0"]');
+        if (firstRow) {
+            const shEx = firstRow.querySelector('.adjustment-type-display');
+            if (shEx) { shEx.focus(); }
+        }
+    }, 200);
 }
 
 // Add existing item row
@@ -688,11 +1019,16 @@ function addExistingItemRow(item) {
             <input type="text" class="form-control form-control-sm readonly-field" value="${expiryDate}" readonly>
             <input type="hidden" name="items[${rowCount}][expiry_date]" value="${item.expiry_date || ''}">
         </td>
-        <td>
-            <select class="form-control form-control-sm adjustment-type" name="items[${rowCount}][adjustment_type]" onchange="updateRowStyle(${rowCount})">
-                <option value="S" ${item.adjustment_type === 'S' ? 'selected' : ''}>S</option>
-                <option value="E" ${item.adjustment_type === 'E' ? 'selected' : ''}>E</option>
-            </select>
+        <td class="custom-dropdown-wrapper">
+            <input type="text" class="form-control form-control-sm cursor-pointer adjustment-type-display text-center" 
+                   value="${item.adjustment_type === 'S' ? 'S' : 'E'}" readonly style="background: white !important; cursor: pointer; height: 26px; padding: 2px 4px;"
+                   onkeydown="handleShExKeydown(event, this, ${rowCount})"
+                   onclick="toggleShExDropdown(${rowCount})">
+            <input type="hidden" class="adjustment-type" name="items[${rowCount}][adjustment_type]" value="${item.adjustment_type === 'S' ? 'S' : 'E'}">
+            <div class="custom-dropdown-menu" id="shExDropdown_${rowCount}">
+                <div class="custom-dropdown-item" onclick="selectShEx('S', ${rowCount})">S (Shortage)</div>
+                <div class="custom-dropdown-item" onclick="selectShEx('E', ${rowCount})">E (Excess)</div>
+            </div>
         </td>
         <td>
             <input type="number" class="form-control form-control-sm qty-input" name="items[${rowCount}][qty]" value="${parseFloat(item.qty || 0).toFixed(2)}" step="0.01" min="0" onchange="calculateRowAmount(${rowCount})" onkeyup="calculateRowAmount(${rowCount})">
@@ -847,11 +1183,16 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
             <input type="text" class="form-control form-control-sm readonly-field" value="${expiryDate}" readonly>
             <input type="hidden" name="items[${rowCount}][expiry_date]" value="${batch?.expiry_date || ''}">
         </td>
-        <td>
-            <select class="form-control form-control-sm adjustment-type" name="items[${rowCount}][adjustment_type]" onchange="updateRowStyle(${rowCount})">
-                <option value="S">S</option>
-                <option value="E">E</option>
-            </select>
+        <td class="custom-dropdown-wrapper">
+            <input type="text" class="form-control form-control-sm cursor-pointer adjustment-type-display text-center" 
+                   value="S" readonly style="background: white !important; cursor: pointer; height: 26px; padding: 2px 4px;"
+                   onkeydown="handleShExKeydown(event, this, ${rowCount})"
+                   onclick="toggleShExDropdown(${rowCount})">
+            <input type="hidden" class="adjustment-type" name="items[${rowCount}][adjustment_type]" value="S">
+            <div class="custom-dropdown-menu" id="shExDropdown_${rowCount}">
+                <div class="custom-dropdown-item" onclick="selectShEx('S', ${rowCount})">S (Shortage)</div>
+                <div class="custom-dropdown-item" onclick="selectShEx('E', ${rowCount})">E (Excess)</div>
+            </div>
         </td>
         <td>
             <input type="number" class="form-control form-control-sm qty-input" name="items[${rowCount}][qty]" value="0.00" step="0.01" min="0" onchange="calculateRowAmount(${rowCount})" onkeyup="calculateRowAmount(${rowCount})">
@@ -1047,11 +1388,16 @@ function addItemRow(item, batch) {
             <input type="text" class="form-control form-control-sm readonly-field" value="${expiryDate}" readonly>
             <input type="hidden" name="items[${rowCount}][expiry_date]" value="${batch.expiry_date || ''}">
         </td>
-        <td>
-            <select class="form-control form-control-sm adjustment-type" name="items[${rowCount}][adjustment_type]" onchange="updateRowStyle(${rowCount})">
-                <option value="S">S</option>
-                <option value="E">E</option>
-            </select>
+        <td class="custom-dropdown-wrapper">
+            <input type="text" class="form-control form-control-sm cursor-pointer adjustment-type-display text-center" 
+                   value="S" readonly style="background: white !important; cursor: pointer; height: 26px; padding: 2px 4px;"
+                   onkeydown="handleShExKeydown(event, this, ${rowCount})"
+                   onclick="toggleShExDropdown(${rowCount})">
+            <input type="hidden" class="adjustment-type" name="items[${rowCount}][adjustment_type]" value="S">
+            <div class="custom-dropdown-menu" id="shExDropdown_${rowCount}">
+                <div class="custom-dropdown-item" onclick="selectShEx('S', ${rowCount})">S (Shortage)</div>
+                <div class="custom-dropdown-item" onclick="selectShEx('E', ${rowCount})">E (Excess)</div>
+            </div>
         </td>
         <td>
             <input type="number" class="form-control form-control-sm qty-input" name="items[${rowCount}][qty]" value="0" step="0.01" min="0" onchange="calculateRowAmount(${rowCount})" onkeyup="calculateRowAmount(${rowCount})">
@@ -1082,8 +1428,10 @@ function addItemRow(item, batch) {
         }
     });
     
-    const shExSelect = row.querySelector('.adjustment-type');
-    shExSelect.focus();
+    const shExDisplay = row.querySelector('.adjustment-type-display');
+    if (shExDisplay) {
+        shExDisplay.focus();
+    }
     
     updateDetailSection(item, batch);
     
@@ -1192,7 +1540,6 @@ function cancelModification() {
     window.location.href = '{{ route("admin.stock-adjustment.invoices") }}';
 }
 
-// Open past adjustments modal
 function openPastAdjustmentsModal() {
     console.log('📋 Opening past adjustments modal...');
     fetch('{{ route("admin.stock-adjustment.past-adjustments") }}')
@@ -1206,6 +1553,8 @@ function openPastAdjustmentsModal() {
                 renderPastAdjustments(data.adjustments);
                 document.getElementById('pastAdjustmentsModalBackdrop').classList.add('show');
                 document.getElementById('pastAdjustmentsModal').classList.add('show');
+                pastModalActiveIndex = 0;
+                highlightPastRow(pastModalActiveIndex);
             } else {
                 console.error('❌ Failed to load past adjustments:', data.message);
                 alert(data.message || 'Error loading past adjustments');
@@ -1227,10 +1576,17 @@ function renderPastAdjustments(adjustments) {
         return;
     }
     
-    adjustments.forEach(adj => {
+    adjustments.forEach((adj, index) => {
         console.log('📋 Processing adjustment:', adj);
         const date = new Date(adj.adjustment_date).toLocaleDateString('en-GB');
         const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.onclick = function(e) {
+            // Prevent double firing if button is clicked
+            if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+                loadAdjustmentFromList(adj.trn_no);
+            }
+        };
         tr.innerHTML = `
             <td>${adj.trn_no}</td>
             <td>${date}</td>
@@ -1247,6 +1603,18 @@ function renderPastAdjustments(adjustments) {
     console.log('✅ Past adjustments rendered successfully');
 }
 
+function highlightPastRow(index) {
+    const rows = document.querySelectorAll('#pastAdjustmentsListBody tr');
+    rows.forEach((row, i) => {
+        if (i === index) {
+            row.classList.add('table-primary');
+            row.scrollIntoView({ block: 'nearest' });
+        } else {
+            row.classList.remove('table-primary');
+        }
+    });
+}
+
 function loadAdjustmentFromList(trnNo) {
     closePastAdjustmentsModal();
     document.getElementById('searchTrnNo').value = trnNo;
@@ -1254,6 +1622,7 @@ function loadAdjustmentFromList(trnNo) {
 }
 
 function closePastAdjustmentsModal() {
+    pastModalActiveIndex = -1;
     document.getElementById('pastAdjustmentsModalBackdrop').classList.remove('show');
     document.getElementById('pastAdjustmentsModal').classList.remove('show');
 }
@@ -1357,6 +1726,96 @@ function updateTransaction() {
         updateBtn.innerHTML = originalText;
         updateBtn.disabled = false;
     });
+}
+
+function toggleShExDropdown(rowIndex) {
+    // Hide all other open dropdowns first
+    document.querySelectorAll('.custom-dropdown-menu.show').forEach(m => {
+        if(m.id !== 'shExDropdown_' + rowIndex) m.classList.remove('show');
+    });
+    
+    const menu = document.getElementById('shExDropdown_' + rowIndex);
+    if (menu) {
+        menu.classList.toggle('show');
+    }
+}
+
+function selectShEx(val, rowIndex) {
+    const row = document.querySelector(`tr[data-row="${rowIndex}"]`);
+    if (!row) return;
+    
+    // Update display input
+    const displayInput = row.querySelector('.adjustment-type-display');
+    if (displayInput) displayInput.value = val;
+    
+    // Update hidden input
+    const hiddenInput = row.querySelector('.adjustment-type');
+    if (hiddenInput) {
+        hiddenInput.value = val;
+        // Trigger style and amount updates
+        updateRowStyle(rowIndex);
+        calculateRowAmount(rowIndex);
+    }
+    
+    // Close dropdown
+    const menu = document.getElementById('shExDropdown_' + rowIndex);
+    if (menu) menu.classList.remove('show');
+}
+
+function handleShExKeydown(e, el, rowIndex) {
+    const menu = document.getElementById('shExDropdown_' + rowIndex);
+    if (!menu) return;
+    
+    // Press 's'
+    if (e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        selectShEx('S', rowIndex);
+        return;
+    }
+    
+    // Press 'e'
+    if (e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        selectShEx('E', rowIndex);
+        return;
+    }
+    
+    // Enter key
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        if (menu.classList.contains('show')) {
+            menu.classList.remove('show');
+        }
+        
+        // Move to Qty input
+        const row = el.closest('tr');
+        if (row) {
+            const qtyInput = row.querySelector('.qty-input');
+            if (qtyInput) {
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }
+    }
+    
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!menu.classList.contains('show')) {
+            menu.classList.add('show');
+        } else {
+            const currentVal = el.value;
+            selectShEx(currentVal === 'S' ? 'E' : 'S', rowIndex);
+            menu.classList.add('show');
+        }
+    }
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        menu.classList.remove('show');
+    }
 }
 
 function escapeHtml(text) {

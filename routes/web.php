@@ -1334,6 +1334,7 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('sale-return-replacement', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'index'])->name('sale-return-replacement.index');
         Route::get('sale-return-replacement/transaction', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'transaction'])->name('sale-return-replacement.transaction');
         Route::get('sale-return-replacement/modification', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'modification'])->name('sale-return-replacement.modification');
+        Route::get('sale-return-replacement/all-transactions', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'allTransactions'])->name('sale-return-replacement.all-transactions');
         Route::get('sale-return-replacement/get/{trnNo}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'getByTrnNo'])->name('sale-return-replacement.get');
         Route::post('sale-return-replacement', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'store'])->name('sale-return-replacement.store');
         Route::get('sale-return-replacement/{id}', [\App\Http\Controllers\Admin\SaleReturnReplacementController::class, 'show'])->name('sale-return-replacement.show');

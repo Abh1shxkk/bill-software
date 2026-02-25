@@ -221,62 +221,86 @@ let loadedQuotationId = null;
 
 // MUST register on document BEFORE transaction-shortcuts.blade.php loads.
 // Our script tag loads before the global shortcuts, so this handler registers first.
-document.addEventListener('keydown', function(e) {
+/* ── GLOBAL WINDOW CAPTURE KEYBOARD HANDLERS ── */
+// Helper: is any modal open?
+function _qtAnyModalOpen() {
+    const ids = ['loadModal','loadBackdrop'];
+    return ids.some(id => {
+        const el = document.getElementById(id);
+        return el && (el.classList.contains('show') || el.style.display === 'block');
+    });
+}
+
+/* Date → Name(CustomerSearch) */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    if (document.activeElement?.id !== 'quotation_date') return;
+    if (_qtAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    document.getElementById('customerSearchInput')?.focus();
+}, true);
+
+/* Name(CustomerSearch) → on Enter with no selection → Remarks  [handled in initCustomerDropdown too] */
+
+/* Remarks → Terms (Enter), → Name (Shift+Enter) */
+window.addEventListener('keydown', function(e) {
     if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'remarks') return;
+    if (_qtAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (e.shiftKey) document.getElementById('customerSearchInput')?.focus();
+    else            document.getElementById('terms')?.focus();
+}, true);
+
+/* Terms → Dis% (Enter), → Remarks (Shift+Enter) */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'terms') return;
+    if (_qtAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (e.shiftKey) document.getElementById('remarks')?.focus();
+    else            document.getElementById('discount_percent')?.focus();
+}, true);
+
+/* Dis% → Load Quotation button (Enter), → Terms (Shift+Enter) */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'discount_percent') return;
+    if (_qtAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (e.shiftKey) document.getElementById('terms')?.focus();
+    else            document.getElementById('loadQuotationBtn')?.focus();
+}, true);
+
+/* Load Quotation button → Enter → open modal */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (document.activeElement?.id !== 'loadQuotationBtn') return;
+    if (_qtAnyModalOpen()) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    showLoadModal();
+}, true);
+
+/* Table qty/rate inputs — delegate to inline handlers */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    if (_qtAnyModalOpen()) return;
     const active = document.activeElement;
-    if (!active) return;
+    if (!active || !active.closest('#itemsTableBody')) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const row = active.closest('tr');
+    if (!row) return;
+    const rowIndex = parseInt(row.dataset.rowIndex);
+    if (active.name?.includes('[qty]'))  handleQtyKeydown(e, rowIndex);
+    else if (active.name?.includes('[rate]')) handleRateKeydown(e, rowIndex);
+}, true);
 
-    // Date field → Load Quotation button
-    if (active.id === 'quotation_date') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        document.getElementById('loadQuotationBtn')?.focus();
-        return;
-    }
-
-    // Table qty/rate inputs — block global handler, let inline onkeydown handle it
-    if (active.closest('#itemsTableBody') && active.tagName === 'INPUT') {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        // Manually call the correct handler
-        const row = active.closest('tr');
-        if (row) {
-            const rowIndex = parseInt(row.dataset.rowIndex);
-            if (active.name && active.name.includes('[qty]')) {
-                handleQtyKeydown(e, rowIndex);
-            } else if (active.name && active.name.includes('[rate]')) {
-                handleRateKeydown(e, rowIndex);
-            }
-        }
-        return;
-    }
-
-    // Remarks field
-    if (active.id === 'remarks') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        if (e.shiftKey) {
-            document.getElementById('customerSearchInput')?.focus();
-        } else {
-            document.getElementById('terms')?.focus();
-        }
-        return;
-    }
-
-    // Discount field
-    if (active.id === 'discount_percent') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        if (e.shiftKey) {
-            document.getElementById('terms')?.focus();
-        } else {
-            focusFirstRowQty();
-        }
-        return;
-    }
+/* Ctrl+S → update quotation */
+window.addEventListener('keydown', function(e) {
+    if (!(e.ctrlKey || e.metaKey) || e.key !== 's') return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if (_qtAnyModalOpen()) return;
+    if (typeof updateQuotation === 'function') updateQuotation();
 }, true);
 
 // ====================================================
@@ -402,80 +426,10 @@ function initCustomerDropdown() {
 }
 
 // ====================================================
-// KEYBOARD NAVIGATION: Date → LoadBtn → Modal → Table → Qty → Rate → loop
-// ====================================================
+// initKeyboardNavigation — now handled by window capture handlers above
 function initKeyboardNavigation() {
-    const dateField = document.getElementById('quotation_date');
-    const loadBtn = document.getElementById('loadQuotationBtn');
-    const customerSearch = document.getElementById('customerSearchInput');
-    const remarksField = document.getElementById('remarks');
-    const termsField = document.getElementById('terms');
-    const discField = document.getElementById('discount_percent');
-
-    // Date → Enter → focus Load Quotation button
-    // Using capture-phase listener because type="date" inputs consume Enter internally
-    if (dateField) {
-        dateField.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                loadBtn?.focus();
-            }
-        }, true);
-    }
-
-    // Load Quotation button → Enter → open modal
-    if (loadBtn) {
-        loadBtn.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                showLoadModal();
-            }
-        });
-    }
-
-    // Remarks → Enter → Terms, Shift+Enter → Name
-    if (remarksField) {
-        remarksField.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    customerSearch?.focus();
-                } else {
-                    termsField?.focus();
-                }
-            }
-        });
-    }
-
-    // Terms → Enter → Dis%, Shift+Enter → Remarks
-    if (termsField) {
-        termsField.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    remarksField?.focus();
-                } else {
-                    discField?.focus();
-                }
-            }
-        });
-    }
-
-    // Dis% → Enter → first row qty or Add Items, Shift+Enter → Terms
-    if (discField) {
-        discField.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (e.shiftKey) {
-                    termsField?.focus();
-                } else {
-                    focusFirstRowQty();
-                }
-            }
-        });
-    }
+    // All navigation is handled by window-capture listeners above.
+    // Keeping this function to avoid breaking the DOMContentLoaded call.
 }
 
 // Helper: focus first item row qty or trigger Add Items
@@ -630,10 +584,11 @@ document.addEventListener('DOMContentLoaded', function() {
     loadItems();
     initCustomerDropdown();
     initKeyboardNavigation();
-    // Focus Load Quotation button on page load
+    // Focus Date field on page load
     setTimeout(function() {
-        document.getElementById('loadQuotationBtn').focus();
-    }, 200);
+        const d = document.getElementById('quotation_date');
+        if (d) d.focus();
+    }, 150);
 });
 
 function loadItems() {
@@ -682,34 +637,11 @@ function showLoadModal() {
         searchQuotations();
     });
     
-    searchInput?.addEventListener('keydown', function(e) {
-        const rows = document.querySelectorAll('#quotationsListBody tr.invoice-row');
-        
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (rows.length > 0) {
-                loadModalHighlightedIndex = Math.min(loadModalHighlightedIndex + 1, rows.length - 1);
-                highlightLoadModalRow(rows);
-            }
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (loadModalHighlightedIndex > 0) {
-                loadModalHighlightedIndex--;
-                highlightLoadModalRow(rows);
-            } else {
-                loadModalHighlightedIndex = -1;
-                clearLoadModalHighlight(rows);
-            }
-        } else if (e.key === 'Enter') {
-            e.preventDefault();
-            if (loadModalHighlightedIndex >= 0 && rows[loadModalHighlightedIndex]) {
-                rows[loadModalHighlightedIndex].click();
-            }
-        } else if (e.key === 'Escape') {
-            e.preventDefault();
-            closeLoadModal();
-        }
-    });
+    // Register window capture handler for modal navigation
+    window.removeEventListener('keydown', _qtLoadModalKey, true);
+    window.addEventListener('keydown', _qtLoadModalKey, true);
+    // Element-level for typing (input only, no nav keys)
+    // Navigation now handled globally by _qtLoadModalKey
     
     loadQuotations();
 }
@@ -746,6 +678,14 @@ function loadQuotations(search = '') {
                 </tr>
             `).join('');
             loadModalHighlightedIndex = -1;
+            // Auto-highlight first row
+            setTimeout(function() {
+                const rows = document.querySelectorAll('#quotationsListBody tr.invoice-row');
+                if (rows.length > 0) {
+                    loadModalHighlightedIndex = 0;
+                    highlightLoadModalRow(Array.from(rows));
+                }
+            }, 50);
         })
         .catch(error => {
             document.getElementById('quotationsListBody').innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading</td></tr>';
@@ -756,7 +696,40 @@ function searchQuotations() {
     loadQuotations(document.getElementById('searchInput').value);
 }
 
+function _qtLoadModalKey(e) {
+    const backdrop = document.getElementById('loadBackdrop');
+    if (!backdrop) return;
+
+    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    const rows = Array.from(document.querySelectorAll('#quotationsListBody tr.invoice-row'));
+
+    if (e.key === 'Escape') { closeLoadModal(); return; }
+
+    if (e.key === 'ArrowDown') {
+        loadModalHighlightedIndex = Math.min(loadModalHighlightedIndex + 1, rows.length - 1);
+        if (loadModalHighlightedIndex < 0) loadModalHighlightedIndex = 0;
+        highlightLoadModalRow(rows); return;
+    }
+    if (e.key === 'ArrowUp') {
+        if (loadModalHighlightedIndex > 0) loadModalHighlightedIndex--;
+        highlightLoadModalRow(rows); return;
+    }
+    if (e.key === 'Enter') {
+        if (loadModalHighlightedIndex >= 0 && rows[loadModalHighlightedIndex]) {
+            rows[loadModalHighlightedIndex].click();
+        } else if (rows.length > 0) {
+            rows[0].click();
+        }
+        return;
+    }
+}
+
 function closeLoadModal() {
+    window.removeEventListener('keydown', _qtLoadModalKey, true);
     document.getElementById('loadModal')?.remove();
     document.getElementById('loadBackdrop')?.remove();
     loadModalHighlightedIndex = -1;

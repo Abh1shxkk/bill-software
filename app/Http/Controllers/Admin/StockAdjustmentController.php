@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Supplier;
 
 class StockAdjustmentController extends Controller
 {
@@ -20,12 +21,13 @@ class StockAdjustmentController extends Controller
     /**
      * Display stock adjustment transaction form
      */
-    public function transaction()
-    {
-        $nextTrnNo = $this->generateTrnNo();
-        
-        return view('admin.stock-adjustment.transaction', compact('nextTrnNo'));
-    }
+   public function transaction()
+{
+    $nextTrnNo = $this->generateTrnNo();
+    $suppliers = Supplier::orderBy('name')->get();  // ← add this
+
+    return view('admin.stock-adjustment.transaction', compact('nextTrnNo', 'suppliers'));  // ← add suppliers
+}
 
     /**
      * Display stock adjustment modification form

@@ -38,6 +38,21 @@ class SaleReturnReplacementTransaction extends Model
         'net_amt' => 'decimal:2',
     ];
 
+    // BelongsToOrganization trait global scope uses 'transaction_date' by default
+    // but this model's date column is 'trn_date' — override here
+    protected static $defaultOrderColumn = 'trn_date';
+
+    protected static function booted()
+    {
+        parent::booted();
+        // Remove any global scope that orders by 'transaction_date'
+        // and re-add with correct column 'trn_date'
+        static::addGlobalScope('order_by_trn_date', function ($builder) {
+            // Clear any default ordering injected by trait, apply correct one
+            $builder->reorder('trn_date', 'desc');
+        });
+    }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);
@@ -55,3 +70,13 @@ class SaleReturnReplacementTransaction extends Model
         return $maxTrnNo ? $maxTrnNo + 1 : 1;
     }
 }
+
+
+
+
+
+
+
+
+
+
