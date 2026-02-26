@@ -27,6 +27,20 @@
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
     .batch-row:hover { background-color: #fff3cd !important; cursor: pointer; }
+
+    /* Custom Br/Ex Dropdown */
+    .brex-dropdown { position: relative; display: inline-block; width: 50px; }
+    .brex-dropdown .brex-display { font-size: 10px; padding: 1px 2px; height: 22px; border: 1px solid #ced4da; width: 50px; background: #fff; cursor: pointer; text-align: center; font-weight: 600; border-radius: 3px; }
+    .brex-dropdown .brex-display:focus { border-color: #86b7fe; outline: 0; box-shadow: 0 0 0 0.15rem rgba(13,110,253,.25); }
+    .brex-dropdown .brex-list { display: none; position: absolute; top: 100%; left: 0; width: 50px; background: white; border: 1px solid #0d6efd; z-index: 9999; box-shadow: 0 2px 8px rgba(0,0,0,0.25); border-radius: 0 0 4px 4px; }
+    .brex-dropdown .brex-list.show { display: block; }
+    .brex-dropdown .brex-option { padding: 3px 4px; cursor: pointer; font-size: 10px; text-align: center; font-weight: 600; border-bottom: 1px solid #eee; background: white; }
+    .brex-dropdown .brex-option:last-child { border-bottom: none; }
+    .brex-dropdown .brex-option:hover, .brex-dropdown .brex-option.active { background-color: #cfe2ff; color: #0d6efd; }
+    .brex-dropdown .brex-option.selected { background-color: #d1e7dd; color: #0f5132; }
+    .brex-td { overflow: visible !important; position: relative; text-align: center; }
+    /* Remove overflow clipping from table container when dropdown is open */
+    .table-responsive.brex-open { overflow: visible !important; }
 </style>
 @endpush
 
@@ -70,7 +84,7 @@
                             <div class="col-md-8">
                                 <div class="field-group">
                                     <label style="width: 70px;">Narration :</label>
-                                    <input type="text" id="narration" name="narration" class="form-control" placeholder="Enter narration/remarks...">
+                                    <input type="text" id="narration" name="narration" class="form-control" placeholder="Enter narration/remarks..." data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -300,14 +314,18 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
             <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemData.name || ''}" readonly></td>
             <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchData?.batch_no || ''}" readonly></td>
             <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batchData?.expiry_display || batchData?.expiry || ''}" readonly></td>
-            <td>
-                <select class="form-select form-select-sm" name="items[${rowIndex}][br_ex_type]">
-                    <option value="BREAKAGE">Brk</option>
-                    <option value="EXPIRY">Exp</option>
-                </select>
+            <td class="brex-td">
+                <div class="brex-dropdown" id="brex-dropdown-${rowIndex}">
+                    <input type="text" class="brex-display" id="brex-display-${rowIndex}" value="Brk" readonly onclick="toggleBrexDropdown(${rowIndex})" onfocus="selectRow(${rowIndex}); openBrexDropdown(${rowIndex})" data-custom-enter>
+                    <input type="hidden" name="items[${rowIndex}][br_ex_type]" id="brex-value-${rowIndex}" value="BREAKAGE">
+                    <div class="brex-list" id="brex-list-${rowIndex}">
+                        <div class="brex-option selected" data-value="BREAKAGE" onclick="selectBrexOption(${rowIndex}, 'BREAKAGE', 'Brk')">Brk</div>
+                        <div class="brex-option" data-value="EXPIRY" onclick="selectBrexOption(${rowIndex}, 'EXPIRY', 'Exp')">Exp</div>
+                    </div>
+                </div>
             </td>
-            <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="${qty}" onchange="calculateRowAmount(${rowIndex})"></td>
-            <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="${cost}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+            <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="${qty}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+            <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="${cost}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeCostKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
             <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="${amount}" step="0.01" readonly></td>
             <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
             <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemData.id || ''}">
@@ -328,8 +346,10 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
         console.log('✅ Godown Breakage Expiry: New row created successfully', rowIndex);
         
         // Focus qty field
+        // Focus on Br/Ex dropdown so user can start the flow (Br/Ex → Qty → Cost → next)
         setTimeout(() => {
-            row.querySelector('input[name*="[qty]"]')?.focus();
+            const brexDisplay = document.getElementById(`brex-display-${rowIndex}`);
+            if (brexDisplay) { brexDisplay.focus(); }
         }, 100);
         
     } else {
@@ -438,14 +458,18 @@ function addNewRow() {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onclick="_legacy_showBatchModal(${rowIndex})" readonly style="cursor: pointer;"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" readonly></td>
-        <td>
-            <select class="form-select form-select-sm" name="items[${rowIndex}][br_ex_type]">
-                <option value="BREAKAGE">Brk</option>
-                <option value="EXPIRY">Exp</option>
-            </select>
+        <td class="brex-td">
+            <div class="brex-dropdown" id="brex-dropdown-${rowIndex}">
+                <input type="text" class="brex-display" id="brex-display-${rowIndex}" value="Brk" readonly onclick="toggleBrexDropdown(${rowIndex})" onfocus="selectRow(${rowIndex}); openBrexDropdown(${rowIndex})" data-custom-enter>
+                <input type="hidden" name="items[${rowIndex}][br_ex_type]" id="brex-value-${rowIndex}" value="BREAKAGE">
+                <div class="brex-list" id="brex-list-${rowIndex}">
+                    <div class="brex-option selected" data-value="BREAKAGE" onclick="selectBrexOption(${rowIndex}, 'BREAKAGE', 'Brk')">Brk</div>
+                    <div class="brex-option" data-value="EXPIRY" onclick="selectBrexOption(${rowIndex}, 'EXPIRY', 'Exp')">Exp</div>
+                </div>
+            </div>
         </td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeCostKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="0" step="0.01" readonly></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="">
@@ -477,14 +501,18 @@ function _legacy_showItemSelectionModal(targetRowIndex = null) {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onclick="showBatchModal(${rowIndex})" readonly style="cursor: pointer;"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" readonly></td>
-        <td>
-            <select class="form-select form-select-sm" name="items[${rowIndex}][br_ex_type]">
-                <option value="BREAKAGE">Brk</option>
-                <option value="EXPIRY">Exp</option>
-            </select>
+        <td class="brex-td">
+            <div class="brex-dropdown" id="brex-dropdown-${rowIndex}">
+                <input type="text" class="brex-display" id="brex-display-${rowIndex}" value="Brk" readonly onclick="toggleBrexDropdown(${rowIndex})" onfocus="selectRow(${rowIndex}); openBrexDropdown(${rowIndex})" data-custom-enter>
+                <input type="hidden" name="items[${rowIndex}][br_ex_type]" id="brex-value-${rowIndex}" value="BREAKAGE">
+                <div class="brex-list" id="brex-list-${rowIndex}">
+                    <div class="brex-option selected" data-value="BREAKAGE" onclick="selectBrexOption(${rowIndex}, 'BREAKAGE', 'Brk')">Brk</div>
+                    <div class="brex-option" data-value="EXPIRY" onclick="selectBrexOption(${rowIndex}, 'EXPIRY', 'Exp')">Exp</div>
+                </div>
+            </div>
         </td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex}); openBrexDropdown(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeCostKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex}); openBrexDropdown(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="0" step="0.01" readonly></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="">
@@ -713,14 +741,18 @@ function _legacy_selectBatchAndCreateRow(batchId, batchNo, expiry, qty, mrp, pRa
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name}" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" readonly></td>
-        <td>
-            <select class="form-select form-select-sm" name="items[${rowIndex}][br_ex_type]">
-                <option value="BREAKAGE">Brk</option>
-                <option value="EXPIRY">Exp</option>
-            </select>
+        <td class="brex-td">
+            <div class="brex-dropdown" id="brex-dropdown-${rowIndex}">
+                <input type="text" class="brex-display" id="brex-display-${rowIndex}" value="Brk" readonly onclick="toggleBrexDropdown(${rowIndex})" onfocus="selectRow(${rowIndex}); openBrexDropdown(${rowIndex})" data-custom-enter>
+                <input type="hidden" name="items[${rowIndex}][br_ex_type]" id="brex-value-${rowIndex}" value="BREAKAGE">
+                <div class="brex-list" id="brex-list-${rowIndex}">
+                    <div class="brex-option selected" data-value="BREAKAGE" onclick="selectBrexOption(${rowIndex}, 'BREAKAGE', 'Brk')">Brk</div>
+                    <div class="brex-option" data-value="EXPIRY" onclick="selectBrexOption(${rowIndex}, 'EXPIRY', 'Exp')">Exp</div>
+                </div>
+            </div>
         </td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="1" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="${pRate || item.p_rate || 0}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][cost]" value="${pRate || item.p_rate || 0}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGbeCostKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="${pRate || item.p_rate || 0}" step="0.01" readonly></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
@@ -755,8 +787,9 @@ function _legacy_selectBatchAndCreateRow(batchId, batchNo, expiry, qty, mrp, pRa
     closeBatchModal();
     window.selectedItemData = null;
     
-    // Focus qty field
-    row.querySelector('input[name*="[qty]"]').focus();
+    // Focus Br/Ex dropdown first
+    const brexDisplay = document.getElementById(`brex-display-${rowIndex}`);
+    if (brexDisplay) { brexDisplay.focus(); }
 }
 
 function _legacy_closeBatchModalAndClear() {
@@ -889,7 +922,9 @@ function _legacy_selectBatch(batchId, batchNo, expiry, qty, mrp, pRate, location
     updateFooterFromRow(row);
     closeBatchModal();
     
-    row.querySelector('input[name*="[qty]"]').focus();
+    // Focus Br/Ex dropdown first
+    const brexDisplay = document.getElementById(`brex-display-${parseInt(document.body.dataset.batchRowIndex)}`);
+    if (brexDisplay) { brexDisplay.focus(); }
 }
 
 function _legacy_closeBatchModal() {
@@ -987,6 +1022,288 @@ function saveTransaction() {
 function cancelTransaction() {
     if (confirm('Are you sure you want to cancel? All entered data will be lost.')) {
         window.location.href = '{{ route("admin.godown-breakage-expiry.index") }}';
+    }
+}
+
+// ============================================================================
+// QTY AND COST KEYBOARD HANDLERS
+// ============================================================================
+
+function handleGbeQtyKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        // Ctrl+Enter → jump to Srlno
+        if (event.ctrlKey) {
+            event.preventDefault();
+            calculateRowAmount(rowIndex);
+            const srlno = document.getElementById('srlno');
+            if (srlno) { srlno.focus(); srlno.select(); }
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        
+        // Shift+Enter → go back to Br/Ex
+        if (event.shiftKey) {
+            const brexDisplay = document.getElementById(`brex-display-${rowIndex}`);
+            if (brexDisplay) { brexDisplay.focus(); }
+            return;
+        }
+        
+        calculateRowAmount(rowIndex);
+        // Move to Cost field
+        const row = document.getElementById(`row-${rowIndex}`);
+        if (row) {
+            const costInput = row.querySelector('input[name*="[cost]"]');
+            if (costInput) { costInput.focus(); costInput.select(); }
+        }
+    }
+}
+
+function handleGbeCostKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        // Ctrl+Enter → jump to Srlno
+        if (event.ctrlKey) {
+            event.preventDefault();
+            calculateRowAmount(rowIndex);
+            calculateTotalAmount();
+            const srlno = document.getElementById('srlno');
+            if (srlno) { srlno.focus(); srlno.select(); }
+            return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        
+        // Shift+Enter → go back to Qty
+        if (event.shiftKey) {
+            const row = document.getElementById(`row-${rowIndex}`);
+            if (row) {
+                const qtyInput = row.querySelector('input[name*="[qty]"]');
+                if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+            }
+            return;
+        }
+        
+        calculateRowAmount(rowIndex);
+        calculateTotalAmount();
+        
+        // Check if next row exists
+        const currentRow = document.getElementById(`row-${rowIndex}`);
+        const nextRow = currentRow ? currentRow.nextElementSibling : null;
+        if (nextRow && nextRow.id && nextRow.id.startsWith('row-')) {
+            // Move to next row's Br/Ex dropdown
+            const nextRowIdx = parseInt(nextRow.id.replace('row-', ''));
+            selectRow(nextRowIdx);
+            const brexDisplay = document.getElementById(`brex-display-${nextRowIdx}`);
+            if (brexDisplay) { brexDisplay.focus(); return; }
+            // Fallback to qty
+            const nextQty = nextRow.querySelector('input[name*="[qty]"]');
+            if (nextQty) { nextQty.focus(); nextQty.select(); return; }
+        }
+        
+        // No next row - open Add Items modal
+        showItemSelectionModal();
+    }
+}
+
+// ============================================================================
+// CUSTOM BR/EX DROPDOWN FUNCTIONS
+// ============================================================================
+
+function openBrexDropdown(rowIndex) {
+    // Close all other open brex dropdowns
+    document.querySelectorAll('.brex-list.show').forEach(l => {
+        if (l.id !== `brex-list-${rowIndex}`) l.classList.remove('show');
+    });
+    const list = document.getElementById(`brex-list-${rowIndex}`);
+    if (list && !list.classList.contains('show')) {
+        list.classList.add('show');
+        // Remove overflow clipping from table container
+        const container = document.getElementById('itemsTableContainer');
+        if (container) container.classList.add('brex-open');
+        const currentVal = document.getElementById(`brex-value-${rowIndex}`).value;
+        list.querySelectorAll('.brex-option').forEach(opt => {
+            opt.classList.remove('active');
+            if (opt.dataset.value === currentVal) {
+                opt.classList.add('active');
+            }
+        });
+    }
+}
+
+function toggleBrexDropdown(rowIndex) {
+    const list = document.getElementById(`brex-list-${rowIndex}`);
+    const isOpen = list.classList.contains('show');
+    
+    // Close all other open brex dropdowns
+    document.querySelectorAll('.brex-list.show').forEach(l => l.classList.remove('show'));
+    
+    if (!isOpen) {
+        list.classList.add('show');
+        // Remove overflow clipping from table container
+        const container = document.getElementById('itemsTableContainer');
+        if (container) container.classList.add('brex-open');
+        // Highlight current selection
+        const currentVal = document.getElementById(`brex-value-${rowIndex}`).value;
+        list.querySelectorAll('.brex-option').forEach(opt => {
+            opt.classList.remove('active');
+            if (opt.dataset.value === currentVal) {
+                opt.classList.add('active');
+            }
+        });
+    }
+}
+
+function selectBrexOption(rowIndex, value, displayText) {
+    document.getElementById(`brex-display-${rowIndex}`).value = displayText;
+    document.getElementById(`brex-value-${rowIndex}`).value = value;
+    const list = document.getElementById(`brex-list-${rowIndex}`);
+    list.querySelectorAll('.brex-option').forEach(opt => {
+        opt.classList.remove('selected', 'active');
+        if (opt.dataset.value === value) {
+            opt.classList.add('selected');
+        }
+    });
+    list.classList.remove('show');
+    // Restore overflow on table container
+    const container = document.getElementById('itemsTableContainer');
+    if (container) container.classList.remove('brex-open');
+    
+    // Move focus to qty field
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+    }
+}
+
+function closeAllBrexDropdowns() {
+    document.querySelectorAll('.brex-list.show').forEach(l => l.classList.remove('show'));
+    // Restore overflow on table container
+    const container = document.getElementById('itemsTableContainer');
+    if (container) container.classList.remove('brex-open');
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.brex-dropdown')) {
+        closeAllBrexDropdowns();
+    }
+});
+
+// Keyboard navigation for Br/Ex dropdown
+document.addEventListener('keydown', function(e) {
+    const activeEl = document.activeElement;
+    if (!activeEl || !activeEl.classList.contains('brex-display')) return;
+    
+    // Get the row index from the element id (brex-display-X)
+    const idParts = activeEl.id.split('-');
+    const rowIndex = parseInt(idParts[idParts.length - 1]);
+    if (isNaN(rowIndex)) return;
+    
+    const list = document.getElementById(`brex-list-${rowIndex}`);
+    
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Toggle between Brk and Exp
+        const currentVal = document.getElementById(`brex-value-${rowIndex}`).value;
+        if (currentVal === 'BREAKAGE') {
+            selectBrexOptionQuiet(rowIndex, 'EXPIRY', 'Exp');
+        } else {
+            selectBrexOptionQuiet(rowIndex, 'BREAKAGE', 'Brk');
+        }
+        
+        // Open dropdown to show current selection if not open
+        if (!list.classList.contains('show')) {
+            toggleBrexDropdown(rowIndex);
+        } else {
+            // Update highlight
+            list.querySelectorAll('.brex-option').forEach(opt => {
+                opt.classList.remove('active');
+                if (opt.dataset.value === document.getElementById(`brex-value-${rowIndex}`).value) {
+                    opt.classList.add('active');
+                }
+            });
+        }
+        return;
+    }
+    
+    if (e.key === 'Enter') {
+        // Ctrl+Enter → jump to Srlno
+        if (e.ctrlKey) {
+            e.preventDefault();
+            closeAllBrexDropdowns();
+            const srlno = document.getElementById('srlno');
+            if (srlno) { srlno.focus(); srlno.select(); }
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        // Shift+Enter → go back to previous row's Cost, or Narration if first row
+        if (e.shiftKey) {
+            closeAllBrexDropdowns();
+            const currentRow = document.getElementById(`row-${rowIndex}`);
+            const prevRow = currentRow ? currentRow.previousElementSibling : null;
+            if (prevRow && prevRow.id && prevRow.id.startsWith('row-')) {
+                const prevRowIdx = parseInt(prevRow.id.replace('row-', ''));
+                selectRow(prevRowIdx);
+                const prevCost = prevRow.querySelector('input[name*="[cost]"]');
+                if (prevCost) { prevCost.focus(); prevCost.select(); }
+            } else {
+                // First row - go back to Narration
+                document.getElementById('narration')?.focus();
+            }
+            return;
+        }
+        
+        // Close dropdown and move to qty
+        closeAllBrexDropdowns();
+        const row = document.getElementById(`row-${rowIndex}`);
+        if (row) {
+            const qtyInput = row.querySelector('input[name*="[qty]"]');
+            if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+        }
+        return;
+    }
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeAllBrexDropdowns();
+        return;
+    }
+    
+    // B/b key = select Breakage, E/e key = select Expiry
+    if (e.key === 'b' || e.key === 'B') {
+        e.preventDefault();
+        selectBrexOptionQuiet(rowIndex, 'BREAKAGE', 'Brk');
+        return;
+    }
+    if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        selectBrexOptionQuiet(rowIndex, 'EXPIRY', 'Exp');
+        return;
+    }
+}, true); // capture phase to intercept before global handlers
+
+// Helper: update value without moving focus
+function selectBrexOptionQuiet(rowIndex, value, displayText) {
+    document.getElementById(`brex-display-${rowIndex}`).value = displayText;
+    document.getElementById(`brex-value-${rowIndex}`).value = value;
+    const list = document.getElementById(`brex-list-${rowIndex}`);
+    if (list) {
+        list.querySelectorAll('.brex-option').forEach(opt => {
+            opt.classList.remove('selected', 'active');
+            if (opt.dataset.value === value) {
+                opt.classList.add('selected', 'active');
+            }
+        });
     }
 }
 

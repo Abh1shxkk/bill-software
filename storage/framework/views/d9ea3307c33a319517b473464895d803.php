@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Godown Breakage/Expiry - Modification'); ?>
 
-@section('title', 'Godown Breakage/Expiry - Modification')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .gbe-form { font-size: 11px; }
     .gbe-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
@@ -40,9 +38,9 @@
     .brex-td { overflow: visible !important; position: relative; text-align: center; }
     .table-responsive.brex-open { overflow: visible !important; }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="gbe-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -54,10 +52,10 @@
                 <button type="button" class="btn btn-warning btn-sm" id="gbem_loadInvoiceBtn" onclick="showLoadInvoiceModal()">
                     <i class="bi bi-folder2-open me-1"></i> Load Invoice
                 </button>
-                <a href="{{ route('admin.godown-breakage-expiry.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.godown-breakage-expiry.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list me-1"></i> View All
                 </a>
-                <a href="{{ route('admin.godown-breakage-expiry.create') }}" class="btn btn-success btn-sm">
+                <a href="<?php echo e(route('admin.godown-breakage-expiry.create')); ?>" class="btn btn-success btn-sm">
                     <i class="bi bi-plus-circle me-1"></i> New Transaction
                 </a>
             </div>
@@ -66,8 +64,8 @@
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
                 <form id="gbeForm" method="POST" autocomplete="off">
-                    @csrf
-                    @method('PUT')
+                    <?php echo csrf_field(); ?>
+                    <?php echo method_field('PUT'); ?>
                     <input type="hidden" id="transaction_id" name="transaction_id" value="">
                     
                     <div class="header-section">
@@ -75,11 +73,11 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required data-custom-enter>
+                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" onchange="updateDayName()" required data-custom-enter>
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 40px;"></label>
-                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width: 100px;">
+                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="<?php echo e(date('l')); ?>" readonly style="width: 100px;">
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 50px;">Trn.No :</label>
@@ -159,10 +157,10 @@
         </div>
     </div>
 </section>
-@endsection
+<?php $__env->stopSection(); ?>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'godownBreakageExpiryModItemModal',
     'module' => 'godown-breakage-expiry-mod',
     'showStock' => true,
@@ -170,17 +168,17 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'godownBreakageExpiryModBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'godownBreakageExpiryModBatchModal',
     'module' => 'godown-breakage-expiry-mod',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
@@ -213,7 +211,7 @@ function updateDayName() {
 }
 
 function loadItems() {
-    fetch('{{ route("admin.godown-breakage-expiry.getItems") }}')
+    fetch('<?php echo e(route("admin.godown-breakage-expiry.getItems")); ?>')
         .then(response => response.json())
         .then(data => { itemsData = data || []; })
         .catch(error => console.error('Error loading items:', error));
@@ -415,7 +413,7 @@ function showLoadInvoiceModal() {
 }
 
 function loadPastInvoices(search = '') {
-    fetch(`{{ route("admin.godown-breakage-expiry.getPastInvoices") }}?search=${encodeURIComponent(search)}`)
+    fetch(`<?php echo e(route("admin.godown-breakage-expiry.getPastInvoices")); ?>?search=${encodeURIComponent(search)}`)
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('invoicesListBody');
@@ -439,7 +437,7 @@ function closeLoadInvoiceModal() { document.getElementById('loadInvoiceModal')?.
 function selectInvoice(id) { closeLoadInvoiceModal(); loadTransactionData(id); }
 
 function loadTransactionData(id) {
-    fetch(`{{ url('admin/godown-breakage-expiry') }}/${id}`, { headers: { 'Accept': 'application/json' } })
+    fetch(`<?php echo e(url('admin/godown-breakage-expiry')); ?>/${id}`, { headers: { 'Accept': 'application/json' } })
     .then(response => response.json())
     .then(data => { if (data && data.id) { populateForm(data); } else { alert('Transaction not found'); } })
     .catch(error => { console.error('Error:', error); alert('Error loading transaction'); });
@@ -655,7 +653,7 @@ function _legacy_showBatchModal(rowIndex) {
     document.body.insertAdjacentHTML('beforeend', html);
     document.body.dataset.batchRowIndex = rowIndex;
     
-    fetch(`{{ url('admin/api/item-batches') }}/${row.dataset.itemId}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${row.dataset.itemId}`)
         .then(response => response.json())
         .then(data => {
             const modalBody = document.querySelector('#batchModal .modal-body-custom');
@@ -736,12 +734,12 @@ function updateTransaction() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/godown-breakage-expiry') }}/${loadedTransactionId}`, {
-        method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+    fetch(`<?php echo e(url('admin/godown-breakage-expiry')); ?>/${loadedTransactionId}`, {
+        method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' }
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) { alert(data.message); window.location.href = '{{ route("admin.godown-breakage-expiry.index") }}'; }
+        if (data.success) { alert(data.message); window.location.href = '<?php echo e(route("admin.godown-breakage-expiry.index")); ?>'; }
         else { 
             alert(data.message || 'Error updating');
             isSubmitting = false;
@@ -758,7 +756,7 @@ function updateTransaction() {
     });
 }
 
-function cancelModification() { if (confirm('Cancel modification?')) { window.location.href = '{{ route("admin.godown-breakage-expiry.index") }}'; } }
+function cancelModification() { if (confirm('Cancel modification?')) { window.location.href = '<?php echo e(route("admin.godown-breakage-expiry.index")); ?>'; } }
 
 // ============================================================================
 // CUSTOM BR/EX DROPDOWN FUNCTIONS
@@ -993,4 +991,6 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); updateTransaction(); return false; }
 }, true);
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/godown-breakage-expiry/modification.blade.php ENDPATH**/ ?>

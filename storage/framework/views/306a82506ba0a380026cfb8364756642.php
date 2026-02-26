@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Voucher'); ?>
 
-@section('title', 'Sale Voucher')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 10px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; color: #c00; }
@@ -66,7 +64,7 @@
         <button type="button" class="btn btn-info btn-sm" id="sv_openHsnBtn" onclick="openHsnModal()">
             <i class="bi bi-plus-circle me-1"></i> Open HSN
         </button>
-        <a href="{{ route('admin.sale-voucher.index') }}" class="btn btn-secondary btn-sm">
+        <a href="<?php echo e(route('admin.sale-voucher.index')); ?>" class="btn btn-secondary btn-sm">
             <i class="bi bi-list"></i> All Vouchers
         </a>
     </div>
@@ -85,16 +83,16 @@
                     </div>
                     <div class="field-group">
                         <label>Date :</label>
-                        <input type="date" class="form-control" id="saleDate" value="{{ date('Y-m-d') }}" style="width: 130px;" data-custom-enter>
-                        <input type="text" class="form-control" id="dayName" value="{{ date('l') }}" readonly style="width: 80px; background: #e9ecef;">
+                        <input type="date" class="form-control" id="saleDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 130px;" data-custom-enter>
+                        <input type="text" class="form-control" id="dayName" value="<?php echo e(date('l')); ?>" readonly style="width: 80px; background: #e9ecef;">
                     </div>
                     <div class="field-group">
                         <label>Inv. No :</label>
-                        <input type="text" class="form-control" id="invoiceNo" value="{{ $nextInvoiceNo }}" style="width: 120px;" readonly>
+                        <input type="text" class="form-control" id="invoiceNo" value="<?php echo e($nextInvoiceNo); ?>" style="width: 120px;" readonly>
                     </div>
                     <div class="field-group">
                         <label>Due Date :</label>
-                        <input type="date" class="form-control" id="dueDate" value="{{ date('Y-m-d') }}" style="width: 130px;" data-custom-enter>
+                        <input type="date" class="form-control" id="dueDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 130px;" data-custom-enter>
                     </div>
                 </div>
                 
@@ -105,9 +103,9 @@
                         <div class="sv-custom-dropdown" id="sv_customerDropdownWrapper">
                             <input type="text" class="sv-dd-input" id="sv_customerDisplay" placeholder="Select Customer..." autocomplete="off" onfocus="openCustomerDropdown()" onkeyup="filterCustomers(event)" data-custom-enter>
                             <div class="sv-dd-list" id="sv_customerList">
-                                @foreach($customers as $customer)
-                                <div class="sv-dd-item" data-value="{{ $customer->id }}" data-name="{{ $customer->name }}" onclick="selectCustomer('{{ $customer->id }}', '{{ addslashes($customer->name) }}')">{{ $customer->name }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="sv-dd-item" data-value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>" onclick="selectCustomer('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>')"><?php echo e($customer->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -117,9 +115,9 @@
                             <input type="text" class="sv-dd-input" id="sv_salesmanDisplay" placeholder="Select Salesman..." autocomplete="off" onfocus="openSalesmanDropdown()" onkeyup="filterSalesmen(event)" data-custom-enter>
                             <input type="hidden" id="salesmanId">
                             <div class="sv-dd-list" id="sv_salesmanList">
-                                @foreach($salesmen as $sm)
-                                <div class="sv-dd-item" data-value="{{ $sm->id }}" data-name="{{ $sm->name }}" onclick="selectSalesman('{{ $sm->id }}', '{{ addslashes($sm->name) }}')">{{ $sm->name }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sm): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="sv-dd-item" data-value="<?php echo e($sm->id); ?>" data-name="<?php echo e($sm->name); ?>" onclick="selectSalesman('<?php echo e($sm->id); ?>', '<?php echo e(addslashes($sm->name)); ?>')"><?php echo e($sm->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -233,7 +231,7 @@
             <button type="button" class="btn-hsn px-4" onclick="saveVoucher()">
                 <i class="bi bi-check-circle me-1"></i> Save
             </button>
-            <button type="button" class="btn-hsn px-4" onclick="window.location.href='{{ route('admin.sale-voucher.index') }}'">
+            <button type="button" class="btn-hsn px-4" onclick="window.location.href='<?php echo e(route('admin.sale-voucher.index')); ?>'">
                 <i class="bi bi-x-circle me-1"></i> Exit
             </button>
         </div>
@@ -250,11 +248,11 @@
     <div class="hsn-modal-body">
         <input type="text" class="form-control mb-2" id="hsnSearch" placeholder="Search HSN Code..." oninput="filterHsn()">
         <div id="hsnList">
-            @foreach($hsnCodes as $hsn)
-            <div class="hsn-list-item" data-hsn="{{ $hsn->hsn_code }}" onclick="selectHsn('{{ $hsn->hsn_code }}', {{ $hsn->cgst_percent }}, {{ $hsn->sgst_percent }}, {{ $hsn->total_gst_percent }})">
-                <strong>{{ $hsn->hsn_code }}</strong> - {{ $hsn->name }} (GST: {{ $hsn->total_gst_percent }}%)
+            <?php $__currentLoopData = $hsnCodes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hsn): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="hsn-list-item" data-hsn="<?php echo e($hsn->hsn_code); ?>" onclick="selectHsn('<?php echo e($hsn->hsn_code); ?>', <?php echo e($hsn->cgst_percent); ?>, <?php echo e($hsn->sgst_percent); ?>, <?php echo e($hsn->total_gst_percent); ?>)">
+                <strong><?php echo e($hsn->hsn_code); ?></strong> - <?php echo e($hsn->name); ?> (GST: <?php echo e($hsn->total_gst_percent); ?>%)
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
     <div class="hsn-modal-footer">
@@ -262,9 +260,9 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('saleDate').addEventListener('change', function() {
@@ -706,9 +704,9 @@ function saveVoucher() {
     
     if (typeof window.markAsSaving === 'function') window.markAsSaving();
     
-    fetch('{{ route("admin.sale-voucher.store") }}', {
+    fetch('<?php echo e(route("admin.sale-voucher.store")); ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>', 'Accept': 'application/json' },
         body: JSON.stringify(data)
     })
     .then(r => r.json())
@@ -854,4 +852,6 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); saveVoucher(); return false; }
 }, true);
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-voucher/transaction.blade.php ENDPATH**/ ?>
