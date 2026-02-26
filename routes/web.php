@@ -1236,6 +1236,9 @@ Route::middleware(['admin', 'module.access', 'license'])->group(function () {
         Route::get('voucher-entry/transaction', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'transaction'])->name('voucher-entry.transaction');
         Route::get('voucher-entry/modification', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'modification'])->name('voucher-entry.modification');
         Route::post('voucher-entry', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'store'])->name('voucher-entry.store');
+        Route::get('voucher-entry/get-by-voucher-no/{voucherNo}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getByVoucherNo'])->name('voucher-entry.get-by-voucher-no');
+        Route::get('voucher-entry/get-next-voucher-no', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getNextVoucherNo'])->name('voucher-entry.get-next-voucher-no');
+        Route::get('voucher-entry/get-accounts', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getAccounts'])->name('voucher-entry.get-accounts');
         Route::get('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'show'])->name('voucher-entry.show');
         Route::get('voucher-entry/{id}/details', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'getDetails'])->name('voucher-entry.details');
         Route::put('voucher-entry/{id}', [\App\Http\Controllers\Admin\VoucherEntryController::class, 'update'])->name('voucher-entry.update');

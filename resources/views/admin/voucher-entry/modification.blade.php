@@ -31,18 +31,65 @@
     .footer-btn { font-size: 11px; padding: 4px 15px; }
     
     .search-section { background: #ffffcc; padding: 10px; border: 1px solid #ccc; margin-bottom: 10px; }
+
+    /* Browse Modal */
+    .custom-modal-backdrop { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1050; }
+    .custom-modal-backdrop.show { display:block; }
+    .custom-modal { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:750px; max-width:95%; max-height:90vh; background:white; border-radius:8px; box-shadow:0 10px 40px rgba(0,0,0,0.3); z-index:1060; overflow:hidden; }
+    .custom-modal.show { display:block; }
+    .custom-modal-header { display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:linear-gradient(135deg,#800080,#6a006a); color:white; }
+    .custom-modal-header h5 { margin:0; font-size:1.1rem; }
+    .custom-modal-close { background:none; border:none; color:white; font-size:28px; cursor:pointer; line-height:1; padding:0; }
+    .custom-modal-close:hover { opacity:0.8; }
+    .custom-modal-body { padding:20px; max-height:calc(90vh - 60px); overflow-y:auto; }
+
+    /* Keyboard-selected rows in browse modal */
+    .kb-row-active, .kb-row-active td { background-color: #e8d8ff !important; font-weight: bold; }
 </style>
+
+<!-- Browse Modal -->
+<div class="custom-modal-backdrop" id="browseModalBackdrop" onclick="closeBrowseModal()"></div>
+<div class="custom-modal" id="browseModal">
+    <div class="custom-modal-header">
+        <h5><i class="bi bi-list-ul me-2"></i> Browse Vouchers</h5>
+        <button type="button" class="custom-modal-close" onclick="closeBrowseModal()">&times;</button>
+    </div>
+    <div class="custom-modal-body">
+        <div class="mb-3">
+            <input type="text" class="form-control" id="browseSearchInput" placeholder="Search by Voucher No, Type, Narration..." oninput="filterBrowseModal()">
+        </div>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-hover table-sm">
+                <thead class="table-light" style="position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th>V.No</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                        <th class="text-end">Debit</th>
+                        <th class="text-end">Credit</th>
+                        <th>Narration</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="browseModalBody">
+                    <tr><td colspan="7" class="text-center">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <div class="card shadow-sm border-0">
     <div class="card-body compact-form p-0">
         <!-- Search Section -->
         <div class="search-section">
             <div class="row g-2 align-items-center">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="field-group">
                         <label style="color: #c00;">Voucher No :</label>
                         <input type="number" class="form-control" id="searchVoucherNo" style="width: 100px;" placeholder="Enter No">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="loadVoucher()">Load</button>
+                        <button type="button" class="btn btn-primary btn-sm" id="btnLoadVoucher" onclick="loadVoucher()"><i class="bi bi-search"></i> Load</button>
+                        <button type="button" class="btn btn-outline-info btn-sm" id="btnBrowse" onclick="openBrowseModal()"><i class="bi bi-list-ul"></i> Browse</button>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -57,10 +104,9 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-6 text-end">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="showVoucherList()">
-                        <i class="bi bi-list"></i> Browse Vouchers
-                    </button>
+                <div class="col-md-5 text-end">
+                    <a href="{{ route('admin.voucher-entry.transaction') }}" class="btn btn-success btn-sm"><i class="bi bi-plus"></i> New</a>
+                    <a href="{{ route('admin.voucher-entry.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> View All</a>
                 </div>
             </div>
         </div>
@@ -398,8 +444,212 @@ function deleteVoucher() {
     }
 }
 
-function showVoucherList() {
-    window.location.href = '{{ route("admin.voucher-entry.index") }}';
+// ──────────────────────────────────────────────────────────────────────
+// BROWSE MODAL
+// ──────────────────────────────────────────────────────────────────────
+let allBrowseData = [];
+let browseSelectedIndex = -1;
+
+function openBrowseModal() {
+    // Register modal keyboard handler (window capture = fires before everything)
+    window.removeEventListener('keydown', _handleBrowseModalKey, true); // remove stale
+    document.getElementById('browseModalBackdrop').classList.add('show');
+    document.getElementById('browseModal').classList.add('show');
+    window.addEventListener('keydown', _handleBrowseModalKey, true);
+    
+    document.getElementById('browseSearchInput').value = '';
+    document.getElementById('browseModalBody').innerHTML = '<tr><td colspan="7" class="text-center"><i class="bi bi-hourglass-split"></i> Loading...</td></tr>';
+    browseSelectedIndex = -1;
+    
+    const voucherType = document.getElementById('searchVoucherType').value;
+    let url = '{{ route("admin.voucher-entry.get-vouchers") }}';
+    if (voucherType) {
+        url += '?voucher_type=' + voucherType;
+    }
+    
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.vouchers) {
+                allBrowseData = data.vouchers;
+            } else {
+                allBrowseData = [];
+            }
+            renderBrowseRows(allBrowseData);
+            setTimeout(function() {
+                var searchInput = document.getElementById('browseSearchInput');
+                if (searchInput) searchInput.focus();
+            }, 150);
+        })
+        .catch(function() {
+            document.getElementById('browseModalBody').innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading vouchers</td></tr>';
+        });
 }
+
+function closeBrowseModal() {
+    // Unregister modal keyboard handler
+    window.removeEventListener('keydown', _handleBrowseModalKey, true);
+    document.getElementById('browseModalBackdrop').classList.remove('show');
+    document.getElementById('browseModal').classList.remove('show');
+    browseSelectedIndex = -1;
+    
+    // Return focus to Browse button
+    setTimeout(function() {
+        var browseBtn = document.getElementById('btnBrowse');
+        if (browseBtn) browseBtn.focus();
+    }, 50);
+}
+
+function renderBrowseRows(data) {
+    var tbody = document.getElementById('browseModalBody');
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No vouchers found</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(function(v) {
+        var dateDisplay = v.voucher_date ? new Date(v.voucher_date).toLocaleDateString('en-IN') : '';
+        var typeLabel = v.voucher_type_label || (v.voucher_type ? v.voucher_type.charAt(0).toUpperCase() + v.voucher_type.slice(1) : '');
+        var typeBadgeClass = 'bg-secondary';
+        if (v.voucher_type === 'receipt') typeBadgeClass = 'bg-success';
+        else if (v.voucher_type === 'payment') typeBadgeClass = 'bg-danger';
+        else if (v.voucher_type === 'contra') typeBadgeClass = 'bg-info';
+        else if (v.voucher_type === 'journal') typeBadgeClass = 'bg-warning text-dark';
+        
+        return '<tr>' +
+            '<td><strong>' + (v.voucher_no || '') + '</strong></td>' +
+            '<td><span class="badge ' + typeBadgeClass + '">' + typeLabel + '</span></td>' +
+            '<td>' + dateDisplay + '</td>' +
+            '<td class="text-end">₹ ' + parseFloat(v.total_debit || 0).toFixed(2) + '</td>' +
+            '<td class="text-end">₹ ' + parseFloat(v.total_credit || 0).toFixed(2) + '</td>' +
+            '<td>' + (v.narration || '').substring(0, 40) + '</td>' +
+            '<td><button type="button" class="btn btn-sm btn-primary" onclick="selectFromBrowse(' + v.voucher_no + ')"><i class="bi bi-check"></i> Select</button></td>' +
+        '</tr>';
+    }).join('');
+}
+
+function filterBrowseModal() {
+    var term = document.getElementById('browseSearchInput').value.toLowerCase().trim();
+    if (!term) { renderBrowseRows(allBrowseData); browseSelectedIndex = -1; return; }
+    var filtered = allBrowseData.filter(function(v) {
+        var vNo = (v.voucher_no || '').toString().toLowerCase();
+        var vType = (v.voucher_type || '').toLowerCase();
+        var vTypeLabel = (v.voucher_type_label || '').toLowerCase();
+        var narration = (v.narration || '').toLowerCase();
+        return vNo.includes(term) || vType.includes(term) || vTypeLabel.includes(term) || narration.includes(term);
+    });
+    renderBrowseRows(filtered);
+    browseSelectedIndex = -1;
+}
+
+function selectFromBrowse(voucherNo) {
+    closeBrowseModal();
+    document.getElementById('searchVoucherNo').value = voucherNo;
+    loadVoucher();
+}
+
+// ──────────────────────────────────────────────────────────────────────
+// BROWSE MODAL - KEYBOARD NAVIGATION
+// Uses window capture-phase pattern.
+// Registered on open, unregistered on close.
+// ──────────────────────────────────────────────────────────────────────
+function _isBrowseModalOpen() {
+    var m = document.getElementById('browseModal');
+    return m && m.classList.contains('show');
+}
+
+function _highlightBrowseRow(rows, index) {
+    rows.forEach(function(row) {
+        row.classList.remove('kb-row-active');
+    });
+    if (index >= 0 && index < rows.length) {
+        rows[index].classList.add('kb-row-active');
+        rows[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+}
+
+function _handleBrowseModalKey(e) {
+    var modal = document.getElementById('browseModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    
+    var MANAGED = ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'];
+    var isTyping = (e.key.length === 1 && !e.ctrlKey && !e.altKey);
+    
+    if (!MANAGED.includes(e.key) && !isTyping) return;
+
+    var tbody = document.getElementById('browseModalBody');
+    var rows  = Array.from(tbody.querySelectorAll('tr')).filter(function(row) {
+        return row.querySelector('button') !== null;
+    });
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        var searchInput = document.getElementById('browseSearchInput');
+        if (document.activeElement === searchInput) searchInput.blur();
+        if (!rows.length) return;
+        if (browseSelectedIndex < rows.length - 1) browseSelectedIndex++;
+        else if (browseSelectedIndex === -1) browseSelectedIndex = 0;
+        _highlightBrowseRow(rows, browseSelectedIndex);
+        return;
+    }
+
+    if (e.key === 'ArrowUp') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        var searchInput = document.getElementById('browseSearchInput');
+        if (document.activeElement === searchInput) searchInput.blur();
+        if (!rows.length) return;
+        if (browseSelectedIndex > 0) browseSelectedIndex--;
+        else if (browseSelectedIndex === -1 && rows.length > 0) browseSelectedIndex = 0;
+        _highlightBrowseRow(rows, browseSelectedIndex);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        var searchInput = document.getElementById('browseSearchInput');
+        if (document.activeElement === searchInput && browseSelectedIndex === -1) {
+            // If typing in search and no row selected, select first row
+            if (rows.length > 0) {
+                browseSelectedIndex = 0;
+                _highlightBrowseRow(rows, browseSelectedIndex);
+            }
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            return;
+        }
+        if (browseSelectedIndex >= 0 && browseSelectedIndex < rows.length) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var btn = rows[browseSelectedIndex].querySelector('button');
+            if (btn) btn.click();
+        }
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        closeBrowseModal();
+        return;
+    }
+
+    // Typing — redirect focus to search input
+    if (isTyping) {
+        var searchInput = document.getElementById('browseSearchInput');
+        if (document.activeElement !== searchInput) {
+            searchInput.focus();
+        }
+        browseSelectedIndex = -1;
+    }
+}
+
+// Enter key on searchVoucherNo field → load voucher
+document.getElementById('searchVoucherNo').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        var val = this.value.trim();
+        if (val) {
+            loadVoucher();
+        } else {
+            // No number entered → open browse modal
+            openBrowseModal();
+        }
+    }
+});
 </script>
 @endsection

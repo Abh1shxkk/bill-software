@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Voucher Entry'); ?>
 
-@section('title', 'Voucher Entry')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 8px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
@@ -114,7 +112,7 @@
 <div class="card shadow-sm border-0">
     <div class="card-body compact-form p-0">
         <form id="voucherForm" method="POST" autocomplete="off">
-            @csrf
+            <?php echo csrf_field(); ?>
 
             <!-- Header Section -->
             <div class="header-section">
@@ -130,10 +128,10 @@
                                 </select>
                             </div>
                             <select class="form-control no-select2" name="voucher_type" id="voucherType" style="width: 140px; background: #800080; color: white; font-weight: bold;" tabindex="2">
-                                <option value="receipt" {{ $voucherType == 'receipt' ? 'selected' : '' }}>Receipt Voucher</option>
-                                <option value="payment" {{ $voucherType == 'payment' ? 'selected' : '' }}>Payment Voucher</option>
-                                <option value="contra" {{ $voucherType == 'contra' ? 'selected' : '' }}>Contra Voucher</option>
-                                <option value="journal" {{ $voucherType == 'journal' ? 'selected' : '' }}>Journal Voucher</option>
+                                <option value="receipt" <?php echo e($voucherType == 'receipt' ? 'selected' : ''); ?>>Receipt Voucher</option>
+                                <option value="payment" <?php echo e($voucherType == 'payment' ? 'selected' : ''); ?>>Payment Voucher</option>
+                                <option value="contra" <?php echo e($voucherType == 'contra' ? 'selected' : ''); ?>>Contra Voucher</option>
+                                <option value="journal" <?php echo e($voucherType == 'journal' ? 'selected' : ''); ?>>Journal Voucher</option>
                             </select>
                         </div>
                     </div>
@@ -142,8 +140,8 @@
                     <div class="col-md-4 text-center">
                         <div class="d-flex align-items-center justify-content-center gap-2">
                             <label class="field-group" style="color: #008000;">Voucher Date :</label>
-                            <input type="date" class="form-control" name="voucher_date" id="voucherDate" value="{{ date('Y-m-d') }}" style="width: 130px;" tabindex="3">
-                            <span id="dayName" style="color: #0000ff; font-weight: bold;">{{ date('l') }}</span>
+                            <input type="date" class="form-control" name="voucher_date" id="voucherDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 130px;" tabindex="3">
+                            <span id="dayName" style="color: #0000ff; font-weight: bold;"><?php echo e(date('l')); ?></span>
                         </div>
                     </div>
                     
@@ -151,8 +149,8 @@
                     <div class="col-md-4 text-end">
                         <div class="d-flex align-items-center justify-content-end gap-2">
                             <label style="color: #800080; font-weight: bold;">Voucher No :</label>
-                            <span id="voucherNoDisplay" style="font-weight: bold; font-size: 14px;">{{ $nextVoucherNo }}</span>
-                            <input type="hidden" name="voucher_no" id="voucherNo" value="{{ $nextVoucherNo }}">
+                            <span id="voucherNoDisplay" style="font-weight: bold; font-size: 14px;"><?php echo e($nextVoucherNo); ?></span>
+                            <input type="hidden" name="voucher_no" id="voucherNo" value="<?php echo e($nextVoucherNo); ?>">
                         </div>
                     </div>
                 </div>
@@ -207,7 +205,7 @@
                     <button type="button" class="btn btn-primary footer-btn" onclick="openAccountModal()">New Account (F9)</button>
                     <button type="button" class="btn btn-warning footer-btn" onclick="cancelVoucher()">Cancel Voucher</button>
                     <button type="button" class="btn btn-success footer-btn" onclick="saveVoucher()">Save (Ctrl+S / End)</button>
-                    <a href="{{ route('admin.voucher-entry.index') }}" class="btn btn-secondary footer-btn">Exit (Esc)</a>
+                    <a href="<?php echo e(route('admin.voucher-entry.index')); ?>" class="btn btn-secondary footer-btn">Exit (Esc)</a>
                 </div>
             </div>
         </form>
@@ -258,10 +256,10 @@ let currentEditRow  = null;
 let allAccounts     = [];
 let kbFocusIndex    = -1;  // keyboard cursor inside account list modal
 
-const generalLedgers = @json($generalLedgers);
-const cashBankBooks  = @json($cashBankBooks);
-const customers      = @json($customers);
-const suppliers      = @json($suppliers);
+const generalLedgers = <?php echo json_encode($generalLedgers, 15, 512) ?>;
+const cashBankBooks  = <?php echo json_encode($cashBankBooks, 15, 512) ?>;
+const customers      = <?php echo json_encode($customers, 15, 512) ?>;
+const suppliers      = <?php echo json_encode($suppliers, 15, 512) ?>;
 
 /* ═══════════════════════════════════════════════════
    BOOT
@@ -813,7 +811,7 @@ function calculateTotals() {
    VOUCHER NO
 ═══════════════════════════════════════════════════ */
 function fetchNextVoucherNo(type) {
-    fetch('{{ route("admin.voucher-entry.get-next-voucher-no") }}?type=' + type)
+    fetch('<?php echo e(route("admin.voucher-entry.get-next-voucher-no")); ?>?type=' + type)
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.success) {
@@ -859,23 +857,23 @@ function saveVoucher() {
 
     if (typeof window.markAsSaving === 'function') window.markAsSaving();
 
-    fetch('{{ route("admin.voucher-entry.store") }}', {
+    fetch('<?php echo e(route("admin.voucher-entry.store")); ?>', {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({
             voucher_date:    document.getElementById('voucherDate').value,
             voucher_type:    document.getElementById('voucherType').value,
             multi_narration: document.getElementById('multiNarration').value,
             narration:       document.getElementById('narration').value,
             items:           items,
-            _token:          '{{ csrf_token() }}'
+            _token:          '<?php echo e(csrf_token()); ?>'
         })
     })
     .then(function (r) { return r.json(); })
     .then(function (data) {
         if (data.success) {
             alert('Voucher #' + data.voucher_no + ' saved successfully!');
-            window.location.href = '{{ route("admin.voucher-entry.index") }}';
+            window.location.href = '<?php echo e(route("admin.voucher-entry.index")); ?>';
         } else {
             alert('Error: ' + data.message);
         }
@@ -891,7 +889,8 @@ function deleteEntry() {
 
 function cancelVoucher() {
     if (confirm('Are you sure you want to cancel this voucher entry?'))
-        window.location.href = '{{ route("admin.voucher-entry.index") }}';
+        window.location.href = '<?php echo e(route("admin.voucher-entry.index")); ?>';
 }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/voucher-entry/transaction.blade.php ENDPATH**/ ?>

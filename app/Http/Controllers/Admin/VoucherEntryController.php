@@ -130,10 +130,16 @@ class VoucherEntryController extends Controller
                 }
                 
                 $sortOrder++;
+                // Sanitize account_id: reject empty strings, 'undefined', or non-numeric values
+                $rawAccountId = $item['account_id'] ?? null;
+                $accountId = ($rawAccountId !== null && $rawAccountId !== '' && $rawAccountId !== 'undefined' && is_numeric($rawAccountId))
+                    ? (int) $rawAccountId
+                    : null;
+
                 VoucherItem::create([
                     'voucher_id' => $voucher->id,
                     'account_type' => $item['account_type'] ?? null,
-                    'account_id' => $item['account_id'] ?? null,
+                    'account_id' => $accountId,
                     'account_code' => $item['account_code'] ?? null,
                     'account_name' => $item['account_name'] ?? null,
                     'debit_amount' => $item['debit_amount'] ?? 0,
@@ -317,10 +323,15 @@ class VoucherEntryController extends Controller
                 }
                 
                 $sortOrder++;
+                $rawAccountId = $item['account_id'] ?? null;
+                $accountId = ($rawAccountId !== null && $rawAccountId !== '' && $rawAccountId !== 'undefined' && is_numeric($rawAccountId))
+                    ? (int) $rawAccountId
+                    : null;
+
                 VoucherItem::create([
                     'voucher_id' => $voucher->id,
                     'account_type' => $item['account_type'] ?? null,
-                    'account_id' => $item['account_id'] ?? null,
+                    'account_id' => $accountId,
                     'account_code' => $item['account_code'] ?? null,
                     'account_name' => $item['account_name'] ?? null,
                     'debit_amount' => $item['debit_amount'] ?? 0,
