@@ -101,7 +101,7 @@
                         <label>Name :</label>
                         <input type="hidden" id="customerId">
                         <div class="sv-custom-dropdown" id="sv_customerDropdownWrapper">
-                            <input type="text" class="sv-dd-input" id="sv_customerDisplay" placeholder="Select Customer..." autocomplete="off" onfocus="openCustomerDropdown()" onkeyup="filterCustomers(event)" data-custom-enter>
+                            <input type="text" class="sv-dd-input" id="sv_customerDisplay" placeholder="Select Customer..." autocomplete="off" onfocus="openCustomerDropdown()" oninput="filterCustomerInput()" data-custom-enter>
                             <div class="sv-dd-list" id="sv_customerList">
                                 <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <div class="sv-dd-item" data-value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>" onclick="selectCustomer('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>')"><?php echo e($customer->name); ?></div>
@@ -112,7 +112,7 @@
                     <div class="field-group">
                         <label>Sales Man :</label>
                         <div class="sv-custom-dropdown" id="sv_salesmanDropdownWrapper">
-                            <input type="text" class="sv-dd-input" id="sv_salesmanDisplay" placeholder="Select Salesman..." autocomplete="off" onfocus="openSalesmanDropdown()" onkeyup="filterSalesmen(event)" data-custom-enter>
+                            <input type="text" class="sv-dd-input" id="sv_salesmanDisplay" placeholder="Select Salesman..." autocomplete="off" onfocus="openSalesmanDropdown()" oninput="filterSalesmanInput()" data-custom-enter>
                             <input type="hidden" id="salesmanId">
                             <div class="sv-dd-list" id="sv_salesmanList">
                                 <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sm): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -303,8 +303,7 @@ function closeCustomerDropdown() {
     }, 200);
 }
 
-function filterCustomers(e) {
-    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+function filterCustomerInput() {
     const existingId = document.getElementById('customerId').value;
     if (existingId) {
         document.getElementById('customerId').value = '';
@@ -315,7 +314,7 @@ function filterCustomers(e) {
         document.querySelectorAll('#sv_customerList .sv-dd-item').forEach(i => { i.style.display = ''; });
         list.classList.add('show');
     }
-    const filter = e.target.value.toLowerCase();
+    const filter = document.getElementById('sv_customerDisplay').value.toLowerCase();
     document.querySelectorAll('#sv_customerList .sv-dd-item').forEach(item => {
         item.style.display = item.textContent.toLowerCase().includes(filter) ? '' : 'none';
     });
@@ -330,6 +329,7 @@ function selectCustomer(id, name) {
     window.selectedCustomerName = name;
     customerActiveIndex = -1;
     document.getElementById('sv_salesmanDisplay')?.focus();
+    setTimeout(() => { openSalesmanDropdown(); }, 50);
 }
 
 function highlightCustomerItem() {
@@ -366,8 +366,7 @@ function closeSalesmanDropdown() {
     }, 200);
 }
 
-function filterSalesmen(e) {
-    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+function filterSalesmanInput() {
     const existingId = document.getElementById('salesmanId').value;
     if (existingId) {
         document.getElementById('salesmanId').value = '';
@@ -378,7 +377,7 @@ function filterSalesmen(e) {
         document.querySelectorAll('#sv_salesmanList .sv-dd-item').forEach(i => { i.style.display = ''; });
         list.classList.add('show');
     }
-    const filter = e.target.value.toLowerCase();
+    const filter = document.getElementById('sv_salesmanDisplay').value.toLowerCase();
     document.querySelectorAll('#sv_salesmanList .sv-dd-item').forEach(item => {
         item.style.display = item.textContent.toLowerCase().includes(filter) ? '' : 'none';
     });
@@ -392,8 +391,8 @@ function selectSalesman(id, name) {
     document.getElementById('sv_salesmanList').classList.remove('show');
     window.selectedSalesmanName = name;
     salesmanActiveIndex = -1;
-    // Move to Cash field
-    document.getElementById('cashFlag')?.focus();
+    // Move to Cash field with delay to ensure focus
+    setTimeout(() => { document.getElementById('cashFlag')?.focus(); }, 50);
 }
 
 function highlightSalesmanItem() {
@@ -748,6 +747,14 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         if (!activeEl) return;
 
+        // Ctrl+Enter → Remarks
+        if (e.ctrlKey && !e.shiftKey) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('remarks')?.focus();
+            document.getElementById('remarks')?.select();
+            return false;
+        }
+
         // Shift+Enter backward navigation for header fields
         if (e.shiftKey && !e.ctrlKey) {
             const backMap = {
@@ -778,13 +785,14 @@ document.addEventListener('keydown', function(e) {
                 list.classList.remove('show');
                 document.getElementById('sv_customerDisplay').value = window.selectedCustomerName || '';
                 document.getElementById('sv_salesmanDisplay')?.focus();
+                setTimeout(() => { openSalesmanDropdown(); }, 50);
                 return false;
             }
             if (list.classList.contains('show')) {
                 const items = Array.from(document.querySelectorAll('#sv_customerList .sv-dd-item')).filter(i => i.style.display !== 'none');
                 if (customerActiveIndex >= 0 && customerActiveIndex < items.length) { items[customerActiveIndex].click(); }
-                else { list.classList.remove('show'); document.getElementById('sv_salesmanDisplay')?.focus(); }
-            } else { document.getElementById('sv_salesmanDisplay')?.focus(); }
+                else { list.classList.remove('show'); document.getElementById('sv_salesmanDisplay')?.focus(); setTimeout(() => { openSalesmanDropdown(); }, 50); }
+            } else { document.getElementById('sv_salesmanDisplay')?.focus(); setTimeout(() => { openSalesmanDropdown(); }, 50); }
             return false;
         }
 
@@ -812,10 +820,12 @@ document.addEventListener('keydown', function(e) {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             document.getElementById('dueDate')?.focus(); return false;
         }
-        // Due Date → Name
+        // Due Date → Customer Name
         if (activeEl.id === 'dueDate') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('sv_customerDisplay')?.focus(); return false;
+            document.getElementById('sv_customerDisplay')?.focus();
+            setTimeout(() => { openCustomerDropdown(); }, 50);
+            return false;
         }
         // Cash → first row HSN
         if (activeEl.id === 'cashFlag') {
@@ -827,6 +837,17 @@ document.addEventListener('keydown', function(e) {
             }
             return false;
         }
+    }
+
+    // Cash field - Arrow keys and Y/N keys to toggle
+    if (activeEl && activeEl.id === 'cashFlag') {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            activeEl.value = activeEl.value === 'N' ? 'Y' : 'N';
+            return false;
+        }
+        if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); activeEl.value = 'Y'; return false; }
+        if (e.key === 'n' || e.key === 'N') { e.preventDefault(); activeEl.value = 'N'; return false; }
     }
 
     // Dropdown arrow navigation - Customer
