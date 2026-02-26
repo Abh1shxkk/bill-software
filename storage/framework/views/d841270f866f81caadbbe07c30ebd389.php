@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sample Received - New Transaction'); ?>
 
-@section('title', 'Sample Received - New Transaction')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .sr-form { font-size: 11px; }
     .sr-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
@@ -27,9 +25,9 @@
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="sr-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -38,7 +36,7 @@
                 <div class="text-muted small">Receive samples from customer/doctor/salesman</div>
             </div>
             <div>
-                <a href="{{ route('admin.sample-received.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.sample-received.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list me-1"></i> View All
                 </a>
             </div>
@@ -47,42 +45,42 @@
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
                 <form id="srForm" method="POST" autocomplete="off" onsubmit="return false;">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <!-- Header Section -->
                     <div class="header-section">
                         <div class="row g-2 mb-2">
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required>
+                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" onchange="updateDayName()" required>
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 40px;"></label>
-                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width: 100px;">
+                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="<?php echo e(date('l')); ?>" readonly style="width: 100px;">
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 50px;">Trn.No :</label>
-                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="{{ $trnNo }}" readonly style="width: 100px;">
+                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="<?php echo e($trnNo); ?>" readonly style="width: 100px;">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 70px;">Party Type :</label>
-                                    <input type="hidden" id="party_type" name="party_type" value="{{ array_key_first($partyTypes) }}">
+                                    <input type="hidden" id="party_type" name="party_type" value="<?php echo e(array_key_first($partyTypes)); ?>">
                                     <div style="position:relative;flex:1;">
                                         <input type="text" id="partyTypeSearchInput" class="form-control"
                                             placeholder="Select type..." autocomplete="off" readonly
-                                            value="{{ collect($partyTypes)->first() }}"
+                                            value="<?php echo e(collect($partyTypes)->first()); ?>"
                                             onfocus="_ptShowDrop()"
                                             onclick="_ptShowDrop()">
                                         <div id="partyTypeDropList" style="display:none;position:absolute;top:100%;left:0;right:0;
                                             max-height:180px;overflow-y:auto;background:#fff;border:1px solid #ccc;
                                             box-shadow:0 4px 8px rgba(0,0,0,.15);z-index:9999;font-size:12px;">
-                                            @foreach($partyTypes as $key => $label)
-                                            <div class="pt-item" data-value="{{ $key }}"
+                                            <?php $__currentLoopData = $partyTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <div class="pt-item" data-value="<?php echo e($key); ?>"
                                                 style="padding:5px 10px;cursor:pointer;border-bottom:1px solid #f0f0f0;"
-                                                onmousedown="_ptSelectByEl(this)">{{ $label }}</div>
-                                            @endforeach
+                                                onmousedown="_ptSelectByEl(this)"><?php echo e($label); ?></div>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -130,7 +128,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date :</label>
-                                    <input type="date" id="gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                    <input type="date" id="gr_date" name="gr_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>">
                                 </div>
                             </div>
                             <div class="col-md-1">
@@ -248,7 +246,7 @@
 </section>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'sampleReceivedItemModal',
     'module' => 'sample-received',
     'showStock' => true,
@@ -256,19 +254,19 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'sampleReceivedBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'sampleReceivedBatchModal',
     'module' => 'sample-received',
     'showOnlyAvailable' => false,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
@@ -291,7 +289,7 @@ function updateDayName() {
 }
 
 function loadItems() {
-    fetch('{{ route("admin.sample-received.getItems") }}')
+    fetch('<?php echo e(route("admin.sample-received.getItems")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data || [];
@@ -339,7 +337,7 @@ function _ptSelectByEl(el) {
     document.getElementById('partySearchInput').value = '';
     // Fetch new list, then focus + open dropdown
     const partyType = el.dataset.value;
-    fetch(`{{ url('admin/sample-received/get-party-list') }}?party_type=${partyType}`)
+    fetch(`<?php echo e(url('admin/sample-received/get-party-list')); ?>?party_type=${partyType}`)
         .then(r => r.json())
         .then(data => {
             _partyAllItems = data || [];
@@ -393,7 +391,7 @@ let _partyHilIdx = -1;
 
 function loadPartyList() {
     const partyType = document.getElementById('party_type').value;
-    fetch(`{{ url('admin/sample-received/get-party-list') }}?party_type=${partyType}`)
+    fetch(`<?php echo e(url('admin/sample-received/get-party-list')); ?>?party_type=${partyType}`)
         .then(r => r.json())
         .then(data => {
             _partyAllItems = data || [];
@@ -669,7 +667,7 @@ function _legacy_selectItemFromModal(item) {
 }
 
 function _legacy_showBatchSelectionForItem(item, rowIndex) {
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${item.id}`)
         .then(response => response.json())
         .then(data => {
             const batches = data.batches || data || [];
@@ -1040,18 +1038,18 @@ function saveTransaction() {
         window.markAsSaving();
     }
     
-    fetch('{{ route("admin.sample-received.store") }}', {
+    fetch('<?php echo e(route("admin.sample-received.store")); ?>', {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             alert(data.message + '\nTRN No: ' + data.trn_no);
-            window.location.href = '{{ route("admin.sample-received.index") }}';
+            window.location.href = '<?php echo e(route("admin.sample-received.index")); ?>';
         } else {
             alert(data.message || 'Error saving transaction');
         }
@@ -1064,7 +1062,7 @@ function saveTransaction() {
 
 function cancelSampleReceive() {
     if (confirm('Are you sure you want to cancel? All entered data will be lost.')) {
-        window.location.href = '{{ route("admin.sample-received.index") }}';
+        window.location.href = '<?php echo e(route("admin.sample-received.index")); ?>';
     }
 }
 
@@ -1210,4 +1208,5 @@ window.addEventListener('keydown', function(e) {
     }
 }, true);
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sample-received/transaction.blade.php ENDPATH**/ ?>

@@ -1,22 +1,8 @@
-{{--
-  Module Shortcuts Partial
-  Include this in any module's index page to add keyboard shortcuts
-  
-  Usage: @include('layouts.partials.module-shortcuts', [
-      'moduleName' => 'Items',
-      'createRoute' => route('admin.items.create'),
-      'tableBodyId' => 'item-table-body',
-      'checkboxClass' => 'item-checkbox',
-      'extraShortcuts' => [
-          ['key' => 'F5', 'label' => 'Batches', 'action' => 'batches'],
-          ['key' => 'F10', 'label' => 'Stock Ledger', 'action' => 'stock-ledger'],
-      ]
-  ])
---}}
 
-@php
+
+<?php
   $hasMultipleRows = isset($extraShortcuts) && count($extraShortcuts) > 4;
-@endphp
+?>
 
 <style>
   .module-shortcuts-wrapper {
@@ -95,59 +81,62 @@
 
 <!-- Inline Shortcut Buttons -->
 <div class="module-shortcuts-wrapper">
-  @if($hasMultipleRows)
-    {{-- 2 Row Layout for modules with many shortcuts --}}
+  <?php if($hasMultipleRows): ?>
+    
     <div class="module-shortcuts-row">
       <span class="shortcut-btn" onclick="moduleShortcut('F9')"><kbd>F9</kbd> New</span>
       <span class="shortcut-btn" onclick="moduleShortcut('F3')"><kbd>F3</kbd> Edit</span>
       <span class="shortcut-btn" onclick="moduleShortcut('Delete')"><kbd>Del</kbd> Delete</span>
       <span class="shortcut-btn" onclick="moduleShortcut('F8')"><kbd>F8</kbd> Del Multi</span>
-      @foreach($extraShortcuts as $index => $shortcut)
-        @if($index < 3)
-          <span class="shortcut-btn" onclick="moduleShortcut('{{ $shortcut['key'] }}')">
-            <kbd>{{ $shortcut['key'] }}</kbd> {{ $shortcut['label'] }}
+      <?php $__currentLoopData = $extraShortcuts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shortcut): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <?php if($index < 3): ?>
+          <span class="shortcut-btn" onclick="moduleShortcut('<?php echo e($shortcut['key']); ?>')">
+            <kbd><?php echo e($shortcut['key']); ?></kbd> <?php echo e($shortcut['label']); ?>
+
           </span>
-        @endif
-      @endforeach
+        <?php endif; ?>
+      <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
     <div class="module-shortcuts-row">
-      @foreach($extraShortcuts as $index => $shortcut)
-        @if($index >= 3)
-          <span class="shortcut-btn" onclick="moduleShortcut('{{ $shortcut['key'] }}')">
-            <kbd>{{ $shortcut['key'] }}</kbd> {{ $shortcut['label'] }}
+      <?php $__currentLoopData = $extraShortcuts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $shortcut): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+        <?php if($index >= 3): ?>
+          <span class="shortcut-btn" onclick="moduleShortcut('<?php echo e($shortcut['key']); ?>')">
+            <kbd><?php echo e($shortcut['key']); ?></kbd> <?php echo e($shortcut['label']); ?>
+
           </span>
-        @endif
-      @endforeach
+        <?php endif; ?>
+      <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
       <span class="shortcut-btn" onclick="window.history.back()"><kbd>ESC</kbd> Exit</span>
     </div>
-  @else
-    {{-- Single Row Layout for modules with few shortcuts --}}
+  <?php else: ?>
+    
     <div class="module-shortcuts-row">
       <span class="shortcut-btn" onclick="moduleShortcut('F9')"><kbd>F9</kbd> New</span>
       <span class="shortcut-btn" onclick="moduleShortcut('F3')"><kbd>F3</kbd> Edit</span>
       <span class="shortcut-btn" onclick="moduleShortcut('Delete')"><kbd>Del</kbd> Delete</span>
       <span class="shortcut-btn" onclick="moduleShortcut('F8')"><kbd>F8</kbd> Del Multi</span>
-      @if(isset($extraShortcuts))
-        @foreach($extraShortcuts as $shortcut)
-          <span class="shortcut-btn" onclick="moduleShortcut('{{ $shortcut['key'] }}')">
-            <kbd>{{ $shortcut['key'] }}</kbd> {{ $shortcut['label'] }}
+      <?php if(isset($extraShortcuts)): ?>
+        <?php $__currentLoopData = $extraShortcuts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $shortcut): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+          <span class="shortcut-btn" onclick="moduleShortcut('<?php echo e($shortcut['key']); ?>')">
+            <kbd><?php echo e($shortcut['key']); ?></kbd> <?php echo e($shortcut['label']); ?>
+
           </span>
-        @endforeach
-      @endif
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+      <?php endif; ?>
       <span class="shortcut-btn" onclick="window.history.back()"><kbd>ESC</kbd> Exit</span>
     </div>
-  @endif
+  <?php endif; ?>
 </div>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 (function() {
   // Module config from Blade
   const moduleConfig = {
-    createRoute: '{{ $createRoute ?? "" }}',
-    tableBodyId: '{{ $tableBodyId ?? "module-table-body" }}',
-    checkboxClass: '{{ $checkboxClass ?? "module-checkbox" }}',
-    extraShortcuts: @json($extraShortcuts ?? [])
+    createRoute: '<?php echo e($createRoute ?? ""); ?>',
+    tableBodyId: '<?php echo e($tableBodyId ?? "module-table-body"); ?>',
+    checkboxClass: '<?php echo e($checkboxClass ?? "module-checkbox"); ?>',
+    extraShortcuts: <?php echo json_encode($extraShortcuts ?? [], 15, 512) ?>
   };
   
   // Select a specific row (only visual selection, no checkbox tick)
@@ -253,10 +242,6 @@
     const activeEl = document.activeElement;
     const isTyping = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
     
-    // Skip on transaction/modification pages (they have their own keyboard nav)
-    const isTransactionPage = document.querySelector('[data-custom-enter]') !== null;
-    if (isTransactionPage) return;
-
     // Arrow Up/Down navigation (not when typing)
     if (!isTyping && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
       // Skip if a modal is open (let modal handle its own navigation)
@@ -486,4 +471,5 @@
   });
 })();
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php /**PATH C:\xampp\htdocs\bill-software\resources\views/layouts/partials/module-shortcuts.blade.php ENDPATH**/ ?>

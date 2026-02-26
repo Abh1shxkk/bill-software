@@ -15,6 +15,11 @@
         return;
     }
 
+    // Skip on transaction/modification pages (they have their own keyboard nav)
+    function isTransactionPage() {
+        return document.querySelector('[data-custom-enter]') !== null;
+    }
+
     const SHORTCUTS = CONFIG.shortcuts || {};
     const IS_DYNAMIC = CONFIG.isDynamic || false;
 
@@ -98,6 +103,7 @@
     function handleArrowNavigation(event) {
         if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return false;
         if (isInputFocused()) return false;
+        if (isTransactionPage()) return false;
 
         const moduleTableBody = document.querySelector('[id$="-table-body"]');
         if (moduleTableBody && moduleTableBody.id !== 'module-table-body') return false;
@@ -193,6 +199,7 @@
         }
         if (event.key === 'F1' || event.key === 'Escape') return;
         if (isInputFocused() && !event.ctrlKey && !event.altKey) return;
+        if (isTransactionPage()) return;
 
         const shortcutKey = getShortcutKey(event);
         const shortcut = SHORTCUTS[shortcutKey];

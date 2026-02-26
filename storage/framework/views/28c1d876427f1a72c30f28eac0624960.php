@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Stock Transfer Outgoing Transaction'); ?>
 
-@section('title', 'Stock Transfer Outgoing Transaction')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments */
     .compact-form { font-size: 11px; padding: 8px; background: #f5f5f5; }
@@ -53,7 +51,7 @@
         <div class="text-muted small">Create new stock transfer outgoing transaction</div>
     </div>
     <div>
-        <a href="{{ route('admin.stock-transfer-outgoing.index') }}" class="btn btn-primary btn-sm">
+        <a href="<?php echo e(route('admin.stock-transfer-outgoing.index')); ?>" class="btn btn-primary btn-sm">
             <i class="bi bi-list-ul me-1"></i> View All
         </a>
     </div>
@@ -62,7 +60,7 @@
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body p-3">
         <form id="stockTransferOutgoingForm" method="POST" autocomplete="off">
-            @csrf
+            <?php echo csrf_field(); ?>
 
             <!-- Header Section -->
             <div class="header-section">
@@ -70,7 +68,7 @@
                     <div class="col-md-2">
                         <div class="field-group">
                             <label>Date:</label>
-                            <input type="date" class="form-control form-control-sm" id="sto_transaction_date" name="transaction_date" style="width: 130px;" value="{{ date('Y-m-d') }}" data-custom-enter>
+                            <input type="date" class="form-control form-control-sm" id="sto_transaction_date" name="transaction_date" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -83,14 +81,15 @@
                                        onfocus="openCustomerDropdown()" onkeyup="filterCustomers(event)" data-custom-enter>
                                 <input type="hidden" name="transfer_to" id="customerSelect">
                                 <div class="custom-dropdown-list" id="customerList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                    @foreach($customers as $customer)
+                                    <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="custom-dropdown-item" 
-                                             data-value="{{ $customer->id }}" 
-                                             data-name="{{ $customer->name }}"
-                                             onclick="selectCustomer('{{ $customer->id }}', '{{ addslashes($customer->name) }}', '{{ $customer->code ?? $customer->id }}')">
-                                            {{ $customer->code ?? $customer->id }} - {{ $customer->name }}
+                                             data-value="<?php echo e($customer->id); ?>" 
+                                             data-name="<?php echo e($customer->name); ?>"
+                                             onclick="selectCustomer('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>', '<?php echo e($customer->code ?? $customer->id); ?>')">
+                                            <?php echo e($customer->code ?? $customer->id); ?> - <?php echo e($customer->name); ?>
+
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
                             </div>
                             <input type="hidden" name="transfer_to_name" id="transfer_to_name">
@@ -105,7 +104,7 @@
                     <div class="col-md-2">
                         <div class="field-group">
                             <label>Trn.No:</label>
-                            <input type="text" class="form-control form-control-sm readonly-field" name="trn_no" value="{{ $nextSrNo ?? '1' }}" readonly style="width: 80px;">
+                            <input type="text" class="form-control form-control-sm readonly-field" name="trn_no" value="<?php echo e($nextSrNo ?? '1'); ?>" readonly style="width: 80px;">
                         </div>
                     </div>
                 </div>
@@ -123,7 +122,7 @@
                     <div class="col-auto">
                         <div class="field-group">
                             <label>GR Date:</label>
-                            <input type="date" class="form-control form-control-sm" id="sto_gr_date" name="gr_date" style="width: 130px;" value="{{ date('Y-m-d') }}" data-custom-enter>
+                            <input type="date" class="form-control form-control-sm" id="sto_gr_date" name="gr_date" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
@@ -242,7 +241,7 @@
 </div>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'stockTransferOutgoingItemModal',
     'module' => 'stock-transfer-outgoing',
     'showStock' => true,
@@ -250,19 +249,19 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'stockTransferOutgoingBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'stockTransferOutgoingBatchModal',
     'module' => 'stock-transfer-outgoing',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let selectedRowIndex = null;
@@ -544,7 +543,7 @@ document.addEventListener('keydown', function(e) {
 
 // Load Items from API (for legacy row-based lookup)
 function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}')
+    fetch('<?php echo e(route("admin.items.get-all")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data.items || [];
@@ -707,7 +706,7 @@ function checkBatchAndCreate(rowIndex) {
     
     if (!itemId || !batchNo) return;
     
-    fetch(`{{ route('admin.batches.check-batch') }}?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(route('admin.batches.check-batch')); ?>?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.exists && data.batches && data.batches.length > 0) {
@@ -749,7 +748,7 @@ function checkBatch(rowIndex) {
 
 // Fetch Batches for Item
 function fetchBatchesForItem(itemId, rowIndex, itemData) {
-    fetch(`{{ url('admin/api/item-batches') }}/${itemId}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${itemId}`)
         .then(response => response.json())
         .then(data => {
             const availableBatches = (data.batches || []).filter(b => (b.qty || 0) > 0);
@@ -922,7 +921,7 @@ function selectInsertItem(item) {
     closeItemModal();
     
     // Fetch batches for this item
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${item.id}`)
         .then(response => response.json())
         .then(data => {
             const availableBatches = (data.batches || []).filter(b => (b.qty || 0) > 0);
@@ -1258,7 +1257,7 @@ function deleteSelectedItem() {
 // Cancel Transfer
 function cancelTransfer() {
     if (confirm('Are you sure you want to cancel this transfer?')) {
-        window.location.href = '{{ route("admin.stock-transfer-outgoing.index") }}';
+        window.location.href = '<?php echo e(route("admin.stock-transfer-outgoing.index")); ?>';
     }
 }
 
@@ -1315,7 +1314,7 @@ function saveTransaction() {
     }
     
     const data = {
-        _token: '{{ csrf_token() }}',
+        _token: '<?php echo e(csrf_token()); ?>',
         transaction_date: form.querySelector('[name="transaction_date"]').value,
         transfer_to: customerId,
         transfer_to_name: document.getElementById('transfer_to_name').value,
@@ -1333,11 +1332,11 @@ function saveTransaction() {
         window.markAsSaving();
     }
     
-    fetch('{{ route("admin.stock-transfer-outgoing.transaction.store") }}', {
+    fetch('<?php echo e(route("admin.stock-transfer-outgoing.transaction.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(data)
     })
@@ -1345,7 +1344,7 @@ function saveTransaction() {
     .then(result => {
         if (result.success) {
             alert('Transaction saved successfully! Sr No: ' + result.sr_no);
-            window.location.href = '{{ route("admin.stock-transfer-outgoing.index") }}';
+            window.location.href = '<?php echo e(route("admin.stock-transfer-outgoing.index")); ?>';
         } else {
             alert('Error: ' + (result.message || 'Failed to save'));
         }
@@ -1356,4 +1355,6 @@ function saveTransaction() {
     });
 }
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/stock-transfer-outgoing/transaction.blade.php ENDPATH**/ ?>

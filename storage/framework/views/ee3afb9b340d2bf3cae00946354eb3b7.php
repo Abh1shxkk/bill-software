@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Stock Transfer Outgoing Return - Modification'); ?>
 
-@section('title', 'Stock Transfer Outgoing Modification')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments */
     .compact-form { font-size: 11px; padding: 8px; background: #f5f5f5; }
@@ -41,7 +39,7 @@
     .item-modal, .batch-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 800px; z-index: 1055; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); }
     .item-modal.show, .batch-modal.show { display: block; }
     .item-modal-content, .batch-modal-content { background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); overflow: hidden; }
-    .item-modal-header { padding: 1rem 1.5rem; background: #0d6efd; color: white; display: flex; justify-content: space-between; align-items: center; }
+    .item-modal-header { padding: 1rem 1.5rem; background: #17a2b8; color: white; display: flex; justify-content: space-between; align-items: center; }
     .batch-modal-header { padding: 1rem 1.5rem; background: #17a2b8; color: white; display: flex; justify-content: space-between; align-items: center; }
     .item-modal-title, .batch-modal-title { margin: 0; font-size: 1.2rem; font-weight: 600; }
     .btn-close-modal { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; padding: 0; width: 30px; height: 30px; }
@@ -60,8 +58,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Stock Transfer Outgoing - Modification</h4>
-        <div class="text-muted small">Edit existing stock transfer outgoing transactions</div>
+        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Stock Transfer Outgoing Return - Modification</h4>
+        <div class="text-muted small">Edit existing stock transfer outgoing return transactions</div>
     </div>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-primary btn-sm" onclick="openDateRangeModal()">
@@ -70,7 +68,7 @@
         <button type="button" class="btn btn-success btn-sm" onclick="openAllInvoicesModal()">
             <i class="bi bi-list-ul me-1"></i> All Invoices
         </button>
-        <a href="{{ route('admin.stock-transfer-outgoing.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="<?php echo e(route('admin.stock-transfer-outgoing-return.index')); ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>
     </div>
@@ -88,12 +86,12 @@
                     </div>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary btn-sm" id="stom_loadBtn" onclick="loadTransaction()">
+                    <button type="button" class="btn btn-primary btn-sm" id="storm_loadBtn" onclick="loadTransaction()">
                         <i class="bi bi-search me-1"></i> Load
                     </button>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-success btn-sm" id="stom_allInvoicesBtn" onclick="openAllInvoicesModal()">
+                    <button type="button" class="btn btn-success btn-sm" id="storm_allInvoicesBtn" onclick="openAllInvoicesModal()">
                         <i class="bi bi-list-ul me-1"></i> All Invoices
                     </button>
                 </div>
@@ -101,7 +99,7 @@
         </div>
 
         <form id="stockTransferOutgoingForm" method="POST" autocomplete="off">
-            @csrf
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="transaction_id" id="transaction_id">
 
             <!-- Header Section -->
@@ -110,36 +108,44 @@
                     <div class="col-md-2">
                         <div class="field-group">
                             <label>Date:</label>
-                            <input type="date" class="form-control form-control-sm" name="transaction_date" id="stom_transaction_date" style="width: 130px;" data-custom-enter>
+                            <input type="date" class="form-control form-control-sm" name="transaction_date" id="storm_transaction_date" style="width: 130px;" data-custom-enter>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-3">
                         <div class="field-group">
                             <label>Name:</label>
-                            <div class="custom-dropdown" id="customerDropdownWrapper" style="flex: 1; position: relative;">
-                                <input type="text" class="form-control form-control-sm" id="stom_customerDisplay" 
+                            <div class="custom-dropdown" id="storm_customerDropdownWrapper" style="flex: 1; position: relative;">
+                                <input type="text" class="form-control form-control-sm" id="storm_customerDisplay" 
                                        placeholder="Select Customer..." autocomplete="off"
                                        style="background: #e8ffe8; border: 2px solid #28a745;"
                                        onfocus="openCustomerDropdown()" onkeyup="filterCustomers(event)" data-custom-enter>
                                 <input type="hidden" name="transfer_to" id="customerSelect">
-                                <div class="custom-dropdown-list" id="customerList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                    @foreach($customers as $customer)
+                                <input type="hidden" name="transfer_to_name" id="transfer_to_name">
+                                <div class="custom-dropdown-list" id="storm_customerList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="custom-dropdown-item" 
-                                             data-value="{{ $customer->id }}" 
-                                             data-name="{{ $customer->name }}"
-                                             onclick="selectCustomer('{{ $customer->id }}', '{{ addslashes($customer->name) }}', '{{ $customer->code ?? $customer->id }}')">
-                                            {{ $customer->code ?? $customer->id }} - {{ $customer->name }}
+                                             data-value="<?php echo e($customer->id); ?>" 
+                                             data-name="<?php echo e($customer->name); ?>"
+                                             style="padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px;"
+                                             onclick="selectCustomer('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>', '<?php echo e($customer->code ?? $customer->id); ?>')">
+                                            <?php echo e($customer->code ?? $customer->id); ?> - <?php echo e($customer->name); ?>
+
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
                             </div>
-                            <input type="hidden" name="transfer_to_name" id="transfer_to_name">
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="field-group">
+                            <label>Trf. Return No.:</label>
+                            <input type="text" class="form-control form-control-sm" name="trf_return_no" id="storm_trf_return_no" style="width: 120px;" data-custom-enter>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="field-group">
                             <label>Remarks:</label>
-                            <input type="text" class="form-control form-control-sm" name="remarks" id="stom_remarks" data-custom-enter>
+                            <input type="text" class="form-control form-control-sm" name="remarks" id="storm_remarks" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -157,25 +163,25 @@
                     <div class="col-auto">
                         <div class="field-group">
                             <label>GR No.:</label>
-                            <input type="text" class="form-control form-control-sm" name="gr_no" id="stom_gr_no" style="width: 100px;" data-custom-enter>
+                            <input type="text" class="form-control form-control-sm" name="gr_no" id="storm_gr_no" style="width: 100px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>GR Date:</label>
-                            <input type="date" class="form-control form-control-sm" name="gr_date" id="stom_gr_date" style="width: 130px;" data-custom-enter>
+                            <input type="date" class="form-control form-control-sm" name="gr_date" id="storm_gr_date" style="width: 130px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>Cases:</label>
-                            <input type="number" class="form-control form-control-sm" name="cases" id="stom_cases" style="width: 70px;" data-custom-enter>
+                            <input type="number" class="form-control form-control-sm" name="cases" id="storm_cases" style="width: 70px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>Transport:</label>
-                            <input type="text" class="form-control form-control-sm" name="transport" id="stom_transport" style="width: 200px;" data-custom-enter>
+                            <input type="text" class="form-control form-control-sm" name="transport" id="storm_transport" style="width: 200px;" data-custom-enter>
                         </div>
                     </div>
                 </div>
@@ -205,7 +211,7 @@
                     <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                         <i class="fas fa-plus-circle"></i> Add Row
                     </button>
-                    <button type="button" class="btn btn-sm btn-info" id="stom_insertItemsBtn" onclick="openInsertItemsModal()">
+                    <button type="button" class="btn btn-sm btn-info" id="storm_insertItemsBtn" onclick="openInsertItemsModal()">
                         <i class="bi bi-list-check"></i> Insert Items
                     </button>
                 </div>
@@ -448,27 +454,27 @@
 </div>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
-    'id' => 'stockTransferOutgoingModItemModal',
-    'module' => 'stock-transfer-outgoing',
+<?php echo $__env->make('components.modals.item-selection', [
+    'id' => 'stockTransferOutgoingReturnModItemModal',
+    'module' => 'stock-transfer-outgoing-return',
     'showStock' => true,
     'rateType' => 's_rate',
     'showCompany' => true,
     'showHsn' => false,
-    'batchModalId' => 'stockTransferOutgoingModBatchModal',
-])
+    'batchModalId' => 'stockTransferOutgoingReturnModBatchModal',
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
-    'id' => 'stockTransferOutgoingModBatchModal',
-    'module' => 'stock-transfer-outgoing',
+<?php echo $__env->make('components.modals.batch-selection', [
+    'id' => 'stockTransferOutgoingReturnModBatchModal',
+    'module' => 'stock-transfer-outgoing-return',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let selectedRowIndex = null;
@@ -482,7 +488,7 @@ function loadTransaction() {
         return;
     }
     
-    fetch(`{{ url('admin/stock-transfer-outgoing/get-by-sr-no') }}/${encodeURIComponent(srNo)}`)
+    fetch(`<?php echo e(url('admin/stock-transfer-outgoing-return/get-by-sr-no')); ?>/${encodeURIComponent(srNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.transaction) {
@@ -502,28 +508,28 @@ function populateForm(transaction) {
     document.getElementById('transaction_id').value = transaction.id;
     
     // Format dates to yyyy-MM-dd for HTML date input
-    document.getElementById('stom_transaction_date').value = formatDateForInput(transaction.transaction_date);
+    document.getElementById('storm_transaction_date').value = formatDateForInput(transaction.transaction_date);
     document.getElementById('transfer_to_name').value = transaction.transfer_to_name || '';
     
     // Set customer custom dropdown
     if (transaction.transfer_to) {
         document.getElementById('customerSelect').value = transaction.transfer_to;
-        // Find the customer display text from dropdown items
-        const customerItem = document.querySelector(`#customerList .custom-dropdown-item[data-value="${transaction.transfer_to}"]`);
+        const customerItem = document.querySelector(`#storm_customerList .custom-dropdown-item[data-value="${transaction.transfer_to}"]`);
         if (customerItem) {
-            document.getElementById('stom_customerDisplay').value = customerItem.innerText.trim();
+            document.getElementById('storm_customerDisplay').value = customerItem.innerText.trim();
         } else {
-            document.getElementById('stom_customerDisplay').value = (transaction.transfer_to_code || transaction.transfer_to) + ' - ' + (transaction.transfer_to_name || '');
+            document.getElementById('storm_customerDisplay').value = (transaction.transfer_to_code || transaction.transfer_to) + ' - ' + (transaction.transfer_to_name || '');
         }
     }
     
     // Set all header fields
-    document.getElementById('stom_remarks').value = transaction.remarks || '';
+    document.getElementById('storm_remarks').value = transaction.remarks || '';
     document.getElementById('trn_no').value = transaction.sr_no || '';
-    document.getElementById('stom_gr_no').value = transaction.challan_no || '';
-    document.getElementById('stom_gr_date').value = formatDateForInput(transaction.challan_date);
-    document.getElementById('stom_cases').value = transaction.cases || 0;
-    document.getElementById('stom_transport').value = transaction.transport || '';
+    document.getElementById('storm_trf_return_no').value = transaction.trf_return_no || '';
+    document.getElementById('storm_gr_no').value = transaction.challan_no || '';
+    document.getElementById('storm_gr_date').value = formatDateForInput(transaction.challan_date);
+    document.getElementById('storm_cases').value = transaction.cases || 0;
+    document.getElementById('storm_transport').value = transaction.transport || '';
     document.getElementById('summary_net').value = parseFloat(transaction.net_amount || 0).toFixed(2);
     
     // Clear existing rows
@@ -541,9 +547,17 @@ function populateForm(transaction) {
     // Calculate totals after loading items
     calculateTotals();
     
-    // Select first row if items exist
+    // Select first row and focus its qty input
     if (transaction.items && transaction.items.length > 0) {
-        setTimeout(() => selectRow(0), 100);
+        setTimeout(function() {
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (firstRow) {
+                const rowIdx = parseInt(firstRow.id.replace('row_', ''));
+                selectRow(rowIdx);
+                const qtyInput = document.getElementById('qty_' + rowIdx);
+                if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+            }
+        }, 150);
     }
 }
 
@@ -634,7 +648,7 @@ function handleCodeKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         if (event.shiftKey) {
-            document.getElementById('stom_transport')?.focus();
+            document.getElementById('storm_transport')?.focus();
             return;
         }
         const code = document.getElementById(`code_${rowIndex}`).value.trim();
@@ -650,7 +664,7 @@ function handleBatchKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         if (event.shiftKey) {
-            document.getElementById('stom_transport')?.focus();
+            document.getElementById('storm_transport')?.focus();
             return;
         }
         const itemCode = document.getElementById(`code_${rowIndex}`).value.trim();
@@ -699,7 +713,7 @@ function handleRateKeydown(event, rowIndex) {
 }
 
 function fetchItemByCode(code, rowIndex) {
-    fetch(`{{ url('admin/items/search') }}?code=${encodeURIComponent(code)}`)
+    fetch(`<?php echo e(url('admin/items/search')); ?>?code=${encodeURIComponent(code)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.items.length > 0) {
@@ -734,18 +748,17 @@ function populateItemRow(rowIndex, item) {
 }
 
 // ====== NEW MODAL COMPONENT BRIDGE ======
-// ====== NEW MODAL COMPONENT BRIDGE ======
 function openInsertItemsModal() {
-    console.log('📦 Opening stock transfer outgoing modification item modal');
-    if (typeof openItemModal_stockTransferOutgoingModItemModal === 'function') {
-        openItemModal_stockTransferOutgoingModItemModal();
+    console.log('📦 Opening stock transfer outgoing return modification item modal');
+    if (typeof openItemModal_stockTransferOutgoingReturnModItemModal === 'function') {
+        openItemModal_stockTransferOutgoingReturnModItemModal();
     } else {
         console.error('❌ Item modal function not found');
     }
 }
 
 window.onItemBatchSelectedFromModal = function(item, batch) {
-    console.log('✅ Stock Transfer Outgoing Modification - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('✅ Stock Transfer Outgoing Return Modification - Item+Batch selected:', item?.name, batch?.batch_no);
     console.log('Item data:', item);
     console.log('Batch data:', batch);
     addNewRow();
@@ -773,24 +786,23 @@ window.onBatchSelectedFromModal = function(item, batch) {
 
 window.onItemSelectedFromModal = function(item) {
     console.log('🔗 Item selected, opening batch modal for:', item?.name);
-    if (typeof openBatchModal_stockTransferOutgoingModBatchModal === 'function') {
-        openBatchModal_stockTransferOutgoingModBatchModal(item);
+    if (typeof openBatchModal_stockTransferOutgoingReturnModBatchModal === 'function') {
+        openBatchModal_stockTransferOutgoingReturnModBatchModal(item);
     } else {
         console.error('❌ Batch modal function not found');
     }
 };
 // ====== END MODAL COMPONENT BRIDGE ======
 
-// Old openItemModal renamed to avoid conflict with button call on line 189
 function openItemModal(rowIndex) {
     console.log('📦 Opening item modal for row:', rowIndex);
-    // For row-based item selection, use new component
-    if (typeof openItemModal_stockTransferOutgoingModItemModal === 'function') {
+    // Use new component if available
+    if (typeof openItemModal_stockTransferOutgoingReturnModItemModal === 'function') {
         selectedRowIndex = rowIndex;
-        openItemModal_stockTransferOutgoingModItemModal();
+        openItemModal_stockTransferOutgoingReturnModItemModal();
         return;
     }
-    // Fallback to legacy modal
+    // Fallback to legacy
     console.warn('⚠️ Falling back to legacy item modal');
     _legacy_openItemModal(rowIndex);
 }
@@ -816,7 +828,7 @@ function searchItems() {
         return;
     }
     
-    fetch(`{{ url('admin/items/search') }}?q=${encodeURIComponent(query)}`)
+    fetch(`<?php echo e(url('admin/items/search')); ?>?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('itemSearchResults');
@@ -843,7 +855,7 @@ function selectItem(item) {
 
 function openBatchModal(rowIndex, itemCode) {
     selectedRowIndex = rowIndex;
-    fetch(`{{ url('admin/batches/by-item') }}/${itemCode}`)
+    fetch(`<?php echo e(url('admin/batches/by-item')); ?>/${itemCode}`)
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('batchSearchResults');
@@ -885,7 +897,7 @@ function selectBatch(batch) {
 }
 
 function fetchBatchDetails(itemCode, batchNo, rowIndex) {
-    fetch(`{{ url('admin/batches/details') }}?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(url('admin/batches/details')); ?>?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.batch) {
@@ -944,7 +956,7 @@ function deleteSelectedItem() {
 
 function cancelModification() {
     if (confirm('Are you sure you want to cancel?')) {
-        window.location.href = '{{ route("admin.stock-transfer-outgoing.index") }}';
+        window.location.href = '<?php echo e(route("admin.stock-transfer-outgoing-return.index")); ?>';
     }
 }
 
@@ -997,15 +1009,16 @@ function updateTransaction() {
     }
     
     const data = {
-        _token: '{{ csrf_token() }}',
-        transaction_date: form.querySelector('[name="transaction_date"]').value,
-        transfer_to: form.querySelector('[name="transfer_to"]').value,
-        transfer_to_name: form.querySelector('[name="transfer_to_name"]').value,
-        remarks: form.querySelector('[name="remarks"]').value,
-        gr_no: form.querySelector('[name="gr_no"]').value,
-        gr_date: form.querySelector('[name="gr_date"]').value,
-        cases: form.querySelector('[name="cases"]').value,
-        transport: form.querySelector('[name="transport"]').value,
+        _token: '<?php echo e(csrf_token()); ?>',
+        transaction_date: document.getElementById('storm_transaction_date').value,
+        transfer_to: document.getElementById('customerSelect').value,
+        transfer_to_name: document.getElementById('transfer_to_name').value,
+        trf_return_no: document.getElementById('storm_trf_return_no').value,
+        remarks: document.getElementById('storm_remarks').value,
+        gr_no: document.getElementById('storm_gr_no').value,
+        gr_date: document.getElementById('storm_gr_date').value,
+        cases: document.getElementById('storm_cases').value,
+        transport: document.getElementById('storm_transport').value,
         summary_net: document.getElementById('summary_net').value,
         items: items
     };
@@ -1015,11 +1028,11 @@ function updateTransaction() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/stock-transfer-outgoing/transaction') }}/${loadedTransactionId}`, {
+    fetch(`<?php echo e(url('admin/stock-transfer-outgoing-return/transaction')); ?>/${loadedTransactionId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(data)
     })
@@ -1027,7 +1040,7 @@ function updateTransaction() {
     .then(result => {
         if (result.success) {
             alert('Transaction updated successfully!');
-            window.location.href = '{{ route("admin.stock-transfer-outgoing.index") }}';
+            window.location.href = '<?php echo e(route("admin.stock-transfer-outgoing-return.index")); ?>';
         } else {
             alert('Error: ' + result.message);
             isSubmitting = false;
@@ -1044,18 +1057,28 @@ function updateTransaction() {
     });
 }
 
+// Update Customer Name from dropdown
+function updateCustomerName() {
+    // No-op - handled by selectCustomer now
+}
+
 // ====== CUSTOM CUSTOMER DROPDOWN ======
 let customerActiveIndex = -1;
 
 function openCustomerDropdown() {
-    document.getElementById('customerList').style.display = 'block';
-    customerActiveIndex = -1;
+    const display = document.getElementById('storm_customerDisplay');
+    display.select();
+    document.querySelectorAll('#storm_customerList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
+    });
+    document.getElementById('storm_customerList').style.display = 'block';
+    customerActiveIndex = 0;
     highlightCustomerItem();
 }
 
 function closeCustomerDropdown() {
     setTimeout(() => {
-        const list = document.getElementById('customerList');
+        const list = document.getElementById('storm_customerList');
         if(list) list.style.display = 'none';
         customerActiveIndex = -1;
     }, 200);
@@ -1063,198 +1086,201 @@ function closeCustomerDropdown() {
 
 function filterCustomers(e) {
     if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
-    
-    const input = e.target;
-    const filter = input.value.toLowerCase();
-    const items = document.querySelectorAll('#customerList .custom-dropdown-item');
-    
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#storm_customerList .custom-dropdown-item');
     items.forEach(item => {
         const text = item.innerText.toLowerCase();
-        if (text.indexOf(filter) > -1) {
-            item.style.display = '';
-        } else {
-            item.style.display = 'none';
-        }
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
     });
-    customerActiveIndex = -1;
+    customerActiveIndex = 0;
     highlightCustomerItem();
 }
 
 function selectCustomer(id, name, code) {
     document.getElementById('customerSelect').value = id;
-    document.getElementById('stom_customerDisplay').value = code + ' - ' + name;
+    document.getElementById('storm_customerDisplay').value = name;
     document.getElementById('transfer_to_name').value = name;
-    document.getElementById('customerList').style.display = 'none';
+    document.getElementById('storm_customerList').style.display = 'none';
     customerActiveIndex = -1;
-    
-    // Jump to remarks
-    document.querySelector('input[name="remarks"]')?.focus();
+    document.getElementById('storm_trf_return_no')?.focus();
 }
 
 function highlightCustomerItem() {
-    const items = Array.from(document.querySelectorAll('#customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    const items = Array.from(document.querySelectorAll('#storm_customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
     items.forEach(i => i.classList.remove('active'));
-    
     if (customerActiveIndex >= items.length) customerActiveIndex = 0;
     if (customerActiveIndex < -1) customerActiveIndex = items.length - 1;
-    
     if (customerActiveIndex >= 0 && items[customerActiveIndex]) {
         items[customerActiveIndex].classList.add('active');
+        items[customerActiveIndex].style.backgroundColor = '#f0f8ff';
         items[customerActiveIndex].scrollIntoView({ block: 'nearest' });
     }
+    items.forEach((item, idx) => {
+        if (idx !== customerActiveIndex) item.style.backgroundColor = '';
+    });
 }
 
-// Update Customer Name (for compatibility)
-function updateCustomerName() {
-    // No-op: selectCustomer handles this now
-}
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#storm_customerDropdownWrapper')) {
+        const list = document.getElementById('storm_customerList');
+        if (list) list.style.display = 'none';
+    }
+});
 
 // Set customer dropdown value when loading transaction
 function setCustomerDropdown(customerId) {
     if (customerId) {
         document.getElementById('customerSelect').value = customerId;
-        const customerItem = document.querySelector(`#customerList .custom-dropdown-item[data-value="${customerId}"]`);
+        const customerItem = document.querySelector(`#storm_customerList .custom-dropdown-item[data-value="${customerId}"]`);
         if (customerItem) {
-            document.getElementById('stom_customerDisplay').value = customerItem.innerText.trim();
-            document.getElementById('transfer_to_name').value = customerItem.getAttribute('data-name') || '';
+            document.getElementById('storm_customerDisplay').value = customerItem.innerText.trim();
         }
     }
 }
 
-// Global Click - close customer dropdown when clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('#customerDropdownWrapper')) {
-        const listContainer = document.getElementById('customerList');
-        if (listContainer) listContainer.style.display = 'none';
+// Open Insert Items Modal
+function openInsertItemsModal() {
+    console.log('📦 Opening stock transfer outgoing return modification item modal');
+    if (typeof openItemModal_stockTransferOutgoingReturnModItemModal === 'function') {
+        openItemModal_stockTransferOutgoingReturnModItemModal();
+    } else {
+        // Fallback: use legacy approach
+        addNewRow();
+        const rowIndex = currentRowIndex - 1;
+        selectedRowIndex = rowIndex;
+        openItemModal(rowIndex);
     }
-});
+}
 
 // ====== KEYBOARD NAVIGATION ======
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;
-        
+
         // Skip if modal is open
-        const hasModalOpen = document.querySelector(
-            '#itemModal.show, #batchModal.show, #createBatchModal.show, #invoicesModal.show, #dateRangeModal.show, ' +
-            '#stockTransferOutgoingModItemModal.show, #stockTransferOutgoingModBatchModal.show'
-        );
+        const hasModalOpen = document.getElementById('createBatchModal')?.classList.contains('show') ||
+            document.getElementById('itemModal')?.classList.contains('show') ||
+            document.getElementById('batchModal')?.classList.contains('show') ||
+            document.querySelector('#stockTransferOutgoingReturnModItemModal.show') ||
+            document.querySelector('#stockTransferOutgoingReturnModBatchModal.show') ||
+            document.getElementById('invoicesModal')?.classList.contains('show') ||
+            document.getElementById('dateRangeModal')?.classList.contains('show');
+        // invoicesModal Enter/Arrow handled by window capture below — skip here
+        if (document.getElementById('invoicesModal')?.classList.contains('show')) return;
         if (hasModalOpen) return;
 
         // Shift+Enter backward navigation
         if (e.shiftKey) {
-            if (activeEl.id === 'stom_customerDisplay') {
+            const backMap = {
+                'storm_customerDisplay': 'storm_transaction_date',
+                'storm_trf_return_no': 'storm_customerDisplay',
+                'storm_remarks': 'storm_trf_return_no',
+                'storm_gr_no': 'storm_remarks',
+                'storm_gr_date': 'storm_gr_no',
+                'storm_cases': 'storm_gr_date',
+                'storm_transport': 'storm_cases'
+            };
+            if (backMap[activeEl.id]) {
                 e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                document.getElementById('stom_transaction_date')?.focus();
-                return false;
-            }
-            if (activeEl.id === 'stom_remarks') {
-                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                document.getElementById('stom_customerDisplay')?.focus();
-                return false;
-            }
-            if (activeEl.id === 'stom_gr_no') {
-                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                document.getElementById('stom_remarks')?.focus();
-                return false;
-            }
-            if (activeEl.id === 'stom_gr_date') {
-                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                document.getElementById('stom_gr_no')?.focus();
-                return false;
-            }
-            if (activeEl.id === 'stom_cases') {
-                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                document.getElementById('stom_gr_date')?.focus();
-                return false;
-            }
-            if (activeEl.id === 'stom_transport') {
-                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                document.getElementById('stom_cases')?.focus();
+                document.getElementById(backMap[activeEl.id])?.focus();
                 return false;
             }
             return;
         }
 
-        // Sr No → Load button
+        // Search Sr No → Load button (click to load, then focus loadBtn)
         if (activeEl.id === 'search_sr_no') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stom_loadBtn')?.focus();
+            const srVal = activeEl.value.trim();
+            if (srVal) {
+                // Has value → load it, then focus allInvoicesBtn
+                const loadBtn = document.getElementById('storm_loadBtn');
+                if (loadBtn) { loadBtn.click(); }
+                setTimeout(() => document.getElementById('storm_allInvoicesBtn')?.focus(), 100);
+            } else {
+                // Empty → go straight to All Invoices button
+                document.getElementById('storm_allInvoicesBtn')?.focus();
+            }
             return false;
         }
-        // Load button → trigger load (same as click), then focus All Invoices
-        if (activeEl.id === 'stom_loadBtn') {
+
+        // Load button → All Invoices button
+        if (activeEl.id === 'storm_loadBtn') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            loadTransaction();
-            // After load, focus All Invoices button
-            setTimeout(() => {
-                document.getElementById('stom_allInvoicesBtn')?.focus();
-            }, 500);
+            document.getElementById('storm_allInvoicesBtn')?.focus();
             return false;
         }
-        // All Invoices button → trigger All Invoices modal
-        if (activeEl.id === 'stom_allInvoicesBtn') {
+
+        // All Invoices button → open modal
+        if (activeEl.id === 'storm_allInvoicesBtn') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             openAllInvoicesModal();
             return false;
         }
 
         // Customer Dropdown Intercept
-        if (activeEl.id === 'stom_customerDisplay') {
+        if (activeEl.id === 'storm_customerDisplay') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            const listContainer = document.getElementById('customerList');
+            const listContainer = document.getElementById('storm_customerList');
             if (listContainer && listContainer.style.display === 'block') {
-                const items = Array.from(document.querySelectorAll('#customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                const items = Array.from(document.querySelectorAll('#storm_customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
                 if (customerActiveIndex >= 0 && customerActiveIndex < items.length) {
                     items[customerActiveIndex].click();
                 } else {
                     listContainer.style.display = 'none';
                     customerActiveIndex = -1;
-                    document.getElementById('stom_remarks')?.focus();
+                    document.getElementById('storm_trf_return_no')?.focus();
                 }
             } else {
-                document.getElementById('stom_remarks')?.focus();
+                document.getElementById('storm_trf_return_no')?.focus();
             }
             return false;
         }
 
-        // Forward navigation: Date → Name
-        if (activeEl.id === 'stom_transaction_date') {
+        // Date → Customer
+        if (activeEl.id === 'storm_transaction_date') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            const customerDisplay = document.getElementById('stom_customerDisplay');
-            if (customerDisplay) {
-                customerDisplay.focus();
+            const display = document.getElementById('storm_customerDisplay');
+            if (display) {
+                display.focus();
                 setTimeout(() => { openCustomerDropdown(); }, 50);
             }
             return false;
         }
-        // Remarks → GR No.
-        if (activeEl.id === 'stom_remarks') {
+        // Trf Return No → Remarks
+        if (activeEl.id === 'storm_trf_return_no') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stom_gr_no')?.focus();
+            document.getElementById('storm_remarks')?.focus();
             return false;
         }
-        // GR No. → GR Date
-        if (activeEl.id === 'stom_gr_no') {
+        // Remarks → GR No
+        if (activeEl.id === 'storm_remarks') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stom_gr_date')?.focus();
+            document.getElementById('storm_gr_no')?.focus();
+            return false;
+        }
+        // GR No → GR Date
+        if (activeEl.id === 'storm_gr_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('storm_gr_date')?.focus();
             return false;
         }
         // GR Date → Cases
-        if (activeEl.id === 'stom_gr_date') {
+        if (activeEl.id === 'storm_gr_date') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stom_cases')?.focus();
+            document.getElementById('storm_cases')?.focus();
             return false;
         }
         // Cases → Transport
-        if (activeEl.id === 'stom_cases') {
+        if (activeEl.id === 'storm_cases') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stom_transport')?.focus();
+            document.getElementById('storm_transport')?.focus();
             return false;
         }
         // Transport → first row Qty (if items exist) OR Insert Items
-        if (activeEl.id === 'stom_transport') {
+        if (activeEl.id === 'storm_transport') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             const firstRow = document.querySelector('#itemsTableBody tr');
             if (firstRow) {
@@ -1267,49 +1293,29 @@ document.addEventListener('keydown', function(e) {
                     return false;
                 }
             }
-            const addBtn = document.getElementById('stom_insertItemsBtn');
+            const addBtn = document.getElementById('storm_insertItemsBtn');
             if (addBtn) { addBtn.focus(); addBtn.click(); }
             return false;
         }
-        // Insert Items button
-        if (activeEl.id === 'stom_insertItemsBtn') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            if (typeof openInsertItemsModal === 'function') openInsertItemsModal();
-            return false;
-        }
     }
-    
+
     // Dropdown arrow navigation
-    if (document.activeElement && document.activeElement.id === 'stom_customerDisplay') {
-        const listContainer = document.getElementById('customerList');
+    if (document.activeElement && document.activeElement.id === 'storm_customerDisplay') {
+        const listContainer = document.getElementById('storm_customerList');
         if (listContainer && listContainer.style.display === 'block') {
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                customerActiveIndex++;
-                highlightCustomerItem();
-                return false;
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                customerActiveIndex--;
-                highlightCustomerItem();
-                return false;
-            } else if (e.key === 'Escape') {
-                e.preventDefault();
-                closeCustomerDropdown();
-                return false;
-            }
+            if (e.key === 'ArrowDown') { e.preventDefault(); customerActiveIndex++; highlightCustomerItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); customerActiveIndex--; highlightCustomerItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closeCustomerDropdown(); return false; }
         }
     }
 
-    // Ctrl+S shortcut to save/update
+    // Ctrl+S save
     if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         updateTransaction();
         return false;
     }
 }, true);
-
-// openInsertItemsModal is defined in the MODAL COMPONENT BRIDGE section above
 
 // Handle batch check when entering manually
 function checkBatchExists(rowIndex) {
@@ -1324,7 +1330,7 @@ function checkBatchExists(rowIndex) {
     if (!batchNo || !itemCode) return;
     
     // Check if batch exists
-    fetch(`{{ url('admin/batches/details') }}?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(url('admin/batches/details')); ?>?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.batch) {
@@ -1448,7 +1454,6 @@ function openAllInvoicesModal() {
 function closeInvoicesModal() {
     document.getElementById('invoicesBackdrop').classList.remove('show');
     document.getElementById('invoicesModal').classList.remove('show');
-    invoiceActiveIndex = -1;
 }
 
 // Load Invoices (with optional date filter)
@@ -1463,7 +1468,7 @@ async function loadInvoices(fromDate = null, toDate = null) {
     modal.classList.add('show');
     
     try {
-        let url = '{{ route("admin.stock-transfer-outgoing.index") }}?ajax=1';
+        let url = '<?php echo e(route("admin.stock-transfer-outgoing-return.index")); ?>?ajax=1';
         if (fromDate && toDate) {
             url += `&date_from=${fromDate}&date_to=${toDate}`;
         }
@@ -1480,7 +1485,7 @@ async function loadInvoices(fromDate = null, toDate = null) {
         
         if (data.transactions && data.transactions.length > 0) {
             tbody.innerHTML = data.transactions.map(txn => `
-                <tr onclick="selectInvoice('${txn.sr_no}')" style="cursor: pointer;" data-sr-no="${txn.sr_no}">
+                <tr onclick="selectInvoice('${txn.sr_no}')" style="cursor: pointer;">
                     <td>${txn.sr_no}</td>
                     <td>${formatDate(txn.transaction_date)}</td>
                     <td>${txn.transfer_to_name || 'N/A'}</td>
@@ -1494,9 +1499,6 @@ async function loadInvoices(fromDate = null, toDate = null) {
                     </td>
                 </tr>
             `).join('');
-            // Auto-highlight first row
-            invoiceActiveIndex = 0;
-            highlightInvoiceRow();
         } else {
             tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No invoices found</td></tr>';
         }
@@ -1511,70 +1513,7 @@ function selectInvoice(srNo) {
     closeInvoicesModal();
     document.getElementById('search_sr_no').value = srNo;
     loadTransaction();
-    // Focus Date field after loading
-    setTimeout(() => {
-        document.getElementById('stom_transaction_date')?.focus();
-    }, 500);
 }
-
-// ====== INVOICE MODAL KEYBOARD NAVIGATION ======
-let invoiceActiveIndex = -1;
-
-function highlightInvoiceRow() {
-    const rows = document.querySelectorAll('#invoicesTableBody tr[data-sr-no]');
-    rows.forEach(r => r.classList.remove('invoice-row-active'));
-    
-    if (invoiceActiveIndex >= rows.length) invoiceActiveIndex = 0;
-    if (invoiceActiveIndex < 0) invoiceActiveIndex = rows.length - 1;
-    
-    if (invoiceActiveIndex >= 0 && rows[invoiceActiveIndex]) {
-        rows[invoiceActiveIndex].classList.add('invoice-row-active');
-        rows[invoiceActiveIndex].scrollIntoView({ block: 'nearest' });
-    }
-}
-
-// Invoice modal keyboard handler
-document.addEventListener('keydown', function(e) {
-    const invoicesModal = document.getElementById('invoicesModal');
-    if (!invoicesModal || !invoicesModal.classList.contains('show')) return;
-    
-    const rows = document.querySelectorAll('#invoicesTableBody tr[data-sr-no]');
-    if (!rows.length) return;
-    
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        invoiceActiveIndex++;
-        highlightInvoiceRow();
-        return false;
-    }
-    if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        invoiceActiveIndex--;
-        highlightInvoiceRow();
-        return false;
-    }
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        if (invoiceActiveIndex >= 0 && rows[invoiceActiveIndex]) {
-            const srNo = rows[invoiceActiveIndex].getAttribute('data-sr-no');
-            if (srNo) selectInvoice(srNo);
-        }
-        return false;
-    }
-    if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        closeInvoicesModal();
-        return false;
-    }
-}, true);
 
 // Format Date Helper for display (dd/mm/yyyy)
 function formatDate(dateStr) {
@@ -1595,5 +1534,101 @@ function formatDateForInput(dateStr) {
     return `${year}-${month}-${day}`;
 }
 
+
+// ═══════════════════════════════════════════════════════
+// INVOICES MODAL — Window Capture Keyboard Navigation
+// ═══════════════════════════════════════════════════════
+let _saInvHighlightIdx = -1;
+
+function _saHighlightInvRow(idx) {
+    const rows = Array.from(document.querySelectorAll('#invoicesTableBody tr[onclick]'));
+    rows.forEach(r => r.classList.remove('invoice-row-active'));
+    if (idx < 0) idx = 0;
+    if (idx >= rows.length) idx = rows.length - 1;
+    _saInvHighlightIdx = idx;
+    if (rows[idx]) {
+        rows[idx].classList.add('invoice-row-active');
+        rows[idx].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+// Auto-highlight first row after loadInvoices populates tbody
+const _saOrigLoadInvoices = loadInvoices;
+
+// Patch loadInvoices to auto-highlight first row after load
+(function() {
+    const _orig = window.loadInvoices || loadInvoices;
+    window._saLoadInvoicesPatch = function() {
+        _saInvHighlightIdx = -1;
+        // Observer to detect when tbody gets rows
+        const tbody = document.getElementById('invoicesTableBody');
+        if (!tbody) return;
+        const obs = new MutationObserver(function() {
+            obs.disconnect();
+            setTimeout(function() {
+                const rows = document.querySelectorAll('#invoicesTableBody tr[onclick]');
+                if (rows.length > 0) { _saHighlightInvRow(0); }
+            }, 50);
+        });
+        obs.observe(tbody, { childList: true });
+    };
+})();
+
+// Patch openAllInvoicesModal to trigger row highlight setup
+const _saOrigOpenAll = openAllInvoicesModal;
+function openAllInvoicesModal() {
+    _saInvHighlightIdx = -1;
+    // Watch tbody for new rows
+    setTimeout(function() {
+        const tbody = document.getElementById('invoicesTableBody');
+        if (!tbody) return;
+        const obs = new MutationObserver(function() {
+            const rows = document.querySelectorAll('#invoicesTableBody tr[onclick]');
+            if (rows.length > 0) { obs.disconnect(); _saHighlightInvRow(0); }
+        });
+        obs.observe(tbody, { childList: true, subtree: true });
+    }, 10);
+    loadInvoices();
+}
+
+window.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('invoicesModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    const rows = Array.from(document.querySelectorAll('#invoicesTableBody tr[onclick]'));
+
+    if (e.key === 'Escape') { closeInvoicesModal(); return; }
+    if (rows.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        _saHighlightInvRow(Math.min(_saInvHighlightIdx + 1, rows.length - 1));
+        return;
+    }
+    if (e.key === 'ArrowUp') {
+        _saHighlightInvRow(Math.max(_saInvHighlightIdx - 1, 0));
+        return;
+    }
+    if (e.key === 'Enter') {
+        const idx = _saInvHighlightIdx >= 0 ? _saInvHighlightIdx : 0;
+        if (rows[idx]) {
+            const srNo = rows[idx].getAttribute('onclick').match(/selectInvoice\('([^']+)'\)/)?.[1];
+            if (srNo) selectInvoice(srNo);
+        }
+        return;
+    }
+}, true);
+
+// ── Initial focus on Sr No field ──
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        document.getElementById('search_sr_no')?.focus();
+    }, 150);
+});
+
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/stock-transfer-outgoing-return/modification.blade.php ENDPATH**/ ?>

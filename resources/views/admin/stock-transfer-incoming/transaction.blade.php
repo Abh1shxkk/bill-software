@@ -30,6 +30,10 @@
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
     .item-row.selected { background-color: #bbdefb !important; }
+
+    /* Custom Dropdown Styles */
+    .custom-dropdown-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
+    .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #f0f8ff; }
 </style>
 @endpush
 
@@ -58,7 +62,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required>
+                                    <input type="date" id="sti_transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
@@ -67,12 +71,23 @@
                             <div class="col-md-4">
                                 <div class="field-group">
                                     <label style="width: 60px;">Supplier :</label>
-                                    <select id="supplier_id" name="supplier_id" class="form-control" required onchange="updateSupplierName()">
-                                        <option value="">-</option>
-                                        @foreach($suppliers as $supplier)
-                                            <option value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown" id="sti_supplierDropdownWrapper" style="flex: 1; position: relative;">
+                                        <input type="text" class="form-control" id="sti_supplierDisplay" 
+                                               placeholder="Select Supplier..." autocomplete="off"
+                                               style="background: #e8ffe8; border: 2px solid #28a745;"
+                                               onfocus="openSupplierDropdown()" onkeyup="filterSuppliers(event)" data-custom-enter>
+                                        <input type="hidden" name="supplier_id" id="supplier_id">
+                                        <div class="custom-dropdown-list" id="sti_supplierList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            @foreach($suppliers as $supplier)
+                                                <div class="custom-dropdown-item" 
+                                                     data-value="{{ $supplier->supplier_id }}" 
+                                                     data-name="{{ $supplier->name }}"
+                                                     onclick="selectSupplier('{{ $supplier->supplier_id }}', '{{ addslashes($supplier->name) }}')">
+                                                    {{ $supplier->name }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -84,7 +99,7 @@
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 60px;">Remarks :</label>
-                                    <input type="text" id="remarks" name="remarks" class="form-control">
+                                    <input type="text" id="sti_remarks" name="remarks" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -92,31 +107,31 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">ST Date:</label>
-                                    <input type="date" id="st_date" name="st_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                    <input type="date" id="sti_st_date" name="st_date" class="form-control" value="{{ date('Y-m-d') }}" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">GR No.:</label>
-                                    <input type="text" id="gr_no" name="gr_no" class="form-control">
+                                    <input type="text" id="sti_gr_no" name="gr_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date:</label>
-                                    <input type="date" id="gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                    <input type="date" id="sti_gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="field-group">
                                     <label style="width: 40px;">Cases:</label>
-                                    <input type="text" id="cases" name="cases" class="form-control">
+                                    <input type="text" id="sti_cases" name="cases" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 70px;">Transport:</label>
-                                    <input type="text" id="transport" name="transport" class="form-control">
+                                    <input type="text" id="sti_transport" name="transport" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -149,7 +164,7 @@
                             <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                                 <i class="bi bi-plus-circle"></i> Add Row
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="showItemSelectionModal()">
+                            <button type="button" class="btn btn-sm btn-primary" id="sti_addItemsBtn" onclick="showItemSelectionModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
                         </div>
@@ -294,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function updateDayName() {
-    const dateInput = document.getElementById('transaction_date');
+    const dateInput = document.getElementById('sti_transaction_date');
     const dayInput = document.getElementById('day_name');
     if (dateInput.value) {
         const date = new Date(dateInput.value);
@@ -303,11 +318,239 @@ function updateDayName() {
     }
 }
 
+// ====== CUSTOM SUPPLIER DROPDOWN ======
+let supplierActiveIndex = -1;
+
 function updateSupplierName() {
-    const select = document.getElementById('supplier_id');
-    const option = select.options[select.selectedIndex];
-    window.selectedSupplierName = option ? option.dataset.name : '';
+    // Compatibility - no-op, selectSupplier handles this now
 }
+
+function openSupplierDropdown() {
+    document.getElementById('sti_supplierList').style.display = 'block';
+    supplierActiveIndex = 0;
+    highlightSupplierItem();
+}
+
+function closeSupplierDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('sti_supplierList');
+        if(list) list.style.display = 'none';
+        supplierActiveIndex = -1;
+    }, 200);
+}
+
+function filterSuppliers(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#sti_supplierList .custom-dropdown-item');
+    
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    supplierActiveIndex = -1;
+    highlightSupplierItem();
+}
+
+function selectSupplier(id, name) {
+    document.getElementById('supplier_id').value = id;
+    document.getElementById('sti_supplierDisplay').value = name;
+    document.getElementById('sti_supplierList').style.display = 'none';
+    window.selectedSupplierName = name;
+    supplierActiveIndex = -1;
+    
+    // Jump to remarks
+    document.getElementById('sti_remarks')?.focus();
+}
+
+function highlightSupplierItem() {
+    const items = Array.from(document.querySelectorAll('#sti_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    
+    if (supplierActiveIndex >= items.length) supplierActiveIndex = 0;
+    if (supplierActiveIndex < -1) supplierActiveIndex = items.length - 1;
+    
+    if (supplierActiveIndex >= 0 && items[supplierActiveIndex]) {
+        items[supplierActiveIndex].classList.add('active');
+        items[supplierActiveIndex].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#sti_supplierDropdownWrapper')) {
+        const list = document.getElementById('sti_supplierList');
+        if (list) list.style.display = 'none';
+    }
+});
+
+// ====== KEYBOARD NAVIGATION ======
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+        
+        // Skip if modal is open
+        const hasModalOpen = document.querySelector(
+            '#itemModal, #batchModal, #stockTransferIncomingItemModal.show, #stockTransferIncomingBatchModal.show'
+        );
+        if (hasModalOpen && (document.getElementById('itemModal') || document.getElementById('batchModal') || 
+            document.querySelector('#stockTransferIncomingItemModal.show') || document.querySelector('#stockTransferIncomingBatchModal.show'))) return;
+
+        // Ctrl+Enter → jump to Inc. field
+        if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('inclusive')?.focus();
+            return false;
+        }
+
+        // Shift+Enter backward navigation
+        if (e.shiftKey) {
+            if (activeEl.id === 'sti_supplierDisplay') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_transaction_date')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_remarks') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_supplierDisplay')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_st_date') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_remarks')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_gr_no') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_st_date')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_gr_date') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_gr_no')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_cases') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_gr_date')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_transport') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_cases')?.focus();
+                return false;
+            }
+            return;
+        }
+
+        // Supplier Dropdown Intercept
+        if (activeEl.id === 'sti_supplierDisplay') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const listContainer = document.getElementById('sti_supplierList');
+            if (listContainer && listContainer.style.display === 'block') {
+                const items = Array.from(document.querySelectorAll('#sti_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                if (supplierActiveIndex >= 0 && supplierActiveIndex < items.length) {
+                    items[supplierActiveIndex].click();
+                } else {
+                    listContainer.style.display = 'none';
+                    supplierActiveIndex = -1;
+                    document.getElementById('sti_remarks')?.focus();
+                }
+            } else {
+                document.getElementById('sti_remarks')?.focus();
+            }
+            return false;
+        }
+
+        // Date → Supplier
+        if (activeEl.id === 'sti_transaction_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const supplierDisplay = document.getElementById('sti_supplierDisplay');
+            if (supplierDisplay) {
+                supplierDisplay.focus();
+                setTimeout(() => { openSupplierDropdown(); }, 50);
+            }
+            return false;
+        }
+        // Remarks → ST Date
+        if (activeEl.id === 'sti_remarks') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sti_st_date')?.focus();
+            return false;
+        }
+        // ST Date → GR No.
+        if (activeEl.id === 'sti_st_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sti_gr_no')?.focus();
+            return false;
+        }
+        // GR No. → GR Date
+        if (activeEl.id === 'sti_gr_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sti_gr_date')?.focus();
+            return false;
+        }
+        // GR Date → Cases
+        if (activeEl.id === 'sti_gr_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sti_cases')?.focus();
+            return false;
+        }
+        // Cases → Transport
+        if (activeEl.id === 'sti_cases') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sti_transport')?.focus();
+            return false;
+        }
+        // Transport → Add Items
+        if (activeEl.id === 'sti_transport') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const addBtn = document.getElementById('sti_addItemsBtn');
+            if (addBtn) {
+                addBtn.focus();
+                addBtn.click();
+            }
+            return false;
+        }
+        // Add Items button
+        if (activeEl.id === 'sti_addItemsBtn') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            showItemSelectionModal();
+            return false;
+        }
+    }
+    
+    // Dropdown arrow navigation
+    if (document.activeElement && document.activeElement.id === 'sti_supplierDisplay') {
+        const listContainer = document.getElementById('sti_supplierList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                supplierActiveIndex++;
+                highlightSupplierItem();
+                return false;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                supplierActiveIndex--;
+                highlightSupplierItem();
+                return false;
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeSupplierDropdown();
+                return false;
+            }
+        }
+    }
+
+    // Ctrl+S shortcut to save
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        saveTransaction();
+        return false;
+    }
+}, true);
 
 function loadItems() {
     fetch('{{ route("admin.items.get-all") }}')
@@ -359,12 +602,12 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     row.innerHTML = `
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || item.item_code || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" value="${pRate}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="${item.gst_percent || 0}" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" value="${pRate}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="${item.gst_percent || 0}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGstKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
@@ -476,12 +719,12 @@ function selectItemFromModal(item) {
     row.innerHTML = `
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || item.item_code || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" value="${parseFloat(item.pur_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="${item.gst_percent || 0}" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" value="${parseFloat(item.pur_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="${item.gst_percent || 0}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGstKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
@@ -669,9 +912,19 @@ function handlePRateKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         calculateRowAmount(rowIndex);
-        // Move to S.Rate field in footer
-        window.currentEditingRowIndex = rowIndex;
-        document.getElementById('s_rate')?.focus();
+        // Move to GST% field
+        const row = document.getElementById(`row-${rowIndex}`);
+        row?.querySelector('input[name*="[gst_percent]"]')?.focus();
+    }
+}
+
+function handleGstKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        calculateRowAmount(rowIndex);
+        // Complete current row and open Add Items for next
+        completeRow(rowIndex);
+        showItemSelectionModal();
     }
 }
 
@@ -713,14 +966,14 @@ function addNewRow() {
     row.onclick = function() { selectRow(rowIndex); };
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="0" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGstKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
@@ -949,21 +1202,20 @@ function saveTransaction() {
         return;
     }
     
-    const supplierSelect = document.getElementById('supplier_id');
-    const supplierName = supplierSelect.options[supplierSelect.selectedIndex]?.dataset.name || '';
+    const supplierName = window.selectedSupplierName || '';
     
     const data = {
         _token: '{{ csrf_token() }}',
-        transaction_date: document.getElementById('transaction_date').value,
+        transaction_date: document.getElementById('sti_transaction_date').value,
         day_name: document.getElementById('day_name').value,
         supplier_id: supplierId,
         supplier_name: supplierName,
-        st_date: document.getElementById('st_date').value,
-        gr_no: document.getElementById('gr_no').value,
-        gr_date: document.getElementById('gr_date').value,
-        cases: document.getElementById('cases').value,
-        transport: document.getElementById('transport').value,
-        remarks: document.getElementById('remarks').value,
+        st_date: document.getElementById('sti_st_date').value,
+        gr_no: document.getElementById('sti_gr_no').value,
+        gr_date: document.getElementById('sti_gr_date').value,
+        cases: document.getElementById('sti_cases').value,
+        transport: document.getElementById('sti_transport').value,
+        remarks: document.getElementById('sti_remarks').value,
         total_amount: document.getElementById('total_amount').value,
         packing: document.getElementById('packing').value,
         unit: document.getElementById('unit').value,

@@ -1,20 +1,18 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sample Issued - New Transaction'); ?>
 
-@section('title', 'Sample Received - New Transaction')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
-    .sr-form { font-size: 11px; }
-    .sr-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
-    .sr-form input, .sr-form select { font-size: 11px; padding: 2px 6px; height: 26px; }
+    .si-form { font-size: 11px; }
+    .si-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
+    .si-form input, .si-form select { font-size: 11px; padding: 2px 6px; height: 26px; }
     .header-section { background: white; border: 1px solid #dee2e6; padding: 10px; margin-bottom: 8px; border-radius: 4px; }
     .field-group { display: flex; align-items: center; gap: 6px; }
     .table-compact { font-size: 10px; margin-bottom: 0; }
     .table-compact th, .table-compact td { padding: 4px; vertical-align: middle; height: 45px; }
-    .table-compact th { background: #90EE90; font-weight: 600; text-align: center; border: 1px solid #dee2e6; height: 40px; }
+    .table-compact th { background: #ffb6c1; font-weight: 600; text-align: center; border: 1px solid #dee2e6; height: 40px; }
     .table-compact input { font-size: 10px; padding: 2px 4px; height: 22px; border: 1px solid #ced4da; width: 100%; }
     .readonly-field { background-color: #e9ecef !important; cursor: not-allowed; }
-    .summary-section { background: #d4edda; padding: 5px 10px; }
+    .summary-section { background: #ffcccc; padding: 5px 10px; }
     .footer-section { background: #ffe4b5; padding: 8px; }
     .row-selected { background-color: #d4edff !important; border: 2px solid #007bff !important; }
     .row-complete { background-color: #d4edda !important; }
@@ -22,23 +20,27 @@
     .batch-modal-backdrop.show { display: block; }
     .batch-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 800px; z-index: 1055; background: white; border-radius: 8px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4); }
     .batch-modal.show { display: block; }
-    .modal-header-custom { padding: 1rem; background: #28a745; color: white; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header-custom { padding: 1rem; background: #0d6efd; color: white; display: flex; justify-content: space-between; align-items: center; }
     .modal-body-custom { padding: 1rem; max-height: 400px; overflow-y: auto; }
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
-</style>
-@endpush
 
-@section('content')
-<section class="sr-form py-3">
+    /* Custom Dropdown Styles */
+    .custom-dropdown-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
+    .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #f0f8ff; }
+</style>
+<?php $__env->stopPush(); ?>
+
+<?php $__env->startSection('content'); ?>
+<section class="si-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h4 class="mb-0"><i class="bi bi-box-arrow-in-down me-2"></i> Sample Received - New Transaction</h4>
-                <div class="text-muted small">Receive samples from customer/doctor/salesman</div>
+                <h4 class="mb-0"><i class="bi bi-box-arrow-up me-2"></i> Sample Issued - New Transaction</h4>
+                <div class="text-muted small">Issue samples to customer/doctor/salesman</div>
             </div>
             <div>
-                <a href="{{ route('admin.sample-received.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.sample-issued.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list me-1"></i> View All
                 </a>
             </div>
@@ -46,43 +48,45 @@
 
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
-                <form id="srForm" method="POST" autocomplete="off" onsubmit="return false;">
-                    @csrf
+                <form id="siForm" method="POST" autocomplete="off">
+                    <?php echo csrf_field(); ?>
                     <!-- Header Section -->
                     <div class="header-section">
                         <div class="row g-2 mb-2">
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required>
+                                    <input type="date" id="sit_transaction_date" name="transaction_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" onchange="updateDayName()" required data-custom-enter>
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 40px;"></label>
-                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width: 100px;">
+                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="<?php echo e(date('l')); ?>" readonly style="width: 100px;">
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 50px;">Trn.No :</label>
-                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="{{ $trnNo }}" readonly style="width: 100px;">
+                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="<?php echo e($trnNo); ?>" readonly style="width: 100px;">
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 70px;">Party Type :</label>
-                                    <input type="hidden" id="party_type" name="party_type" value="{{ array_key_first($partyTypes) }}">
-                                    <div style="position:relative;flex:1;">
-                                        <input type="text" id="partyTypeSearchInput" class="form-control"
-                                            placeholder="Select type..." autocomplete="off" readonly
-                                            value="{{ collect($partyTypes)->first() }}"
-                                            onfocus="_ptShowDrop()"
-                                            onclick="_ptShowDrop()">
-                                        <div id="partyTypeDropList" style="display:none;position:absolute;top:100%;left:0;right:0;
-                                            max-height:180px;overflow-y:auto;background:#fff;border:1px solid #ccc;
-                                            box-shadow:0 4px 8px rgba(0,0,0,.15);z-index:9999;font-size:12px;">
-                                            @foreach($partyTypes as $key => $label)
-                                            <div class="pt-item" data-value="{{ $key }}"
-                                                style="padding:5px 10px;cursor:pointer;border-bottom:1px solid #f0f0f0;"
-                                                onmousedown="_ptSelectByEl(this)">{{ $label }}</div>
-                                            @endforeach
+                                    <div class="custom-dropdown" id="sit_partyTypeDropdownWrapper" style="flex: 1; position: relative;">
+                                        <input type="text" class="form-control" id="sit_partyTypeDisplay" 
+                                               placeholder="Select Type..." autocomplete="off"
+                                               style="background: #fff3e0; border: 2px solid #ff9800;"
+                                               onfocus="openPartyTypeDropdown()" onkeyup="filterPartyTypes(event)" data-custom-enter
+                                               value="<?php echo e(collect($partyTypes)->first()); ?>">
+                                        <input type="hidden" id="sit_party_type" name="party_type" value="<?php echo e(collect($partyTypes)->keys()->first()); ?>">
+                                        <div class="custom-dropdown-list" id="sit_partyTypeList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            <?php $__currentLoopData = $partyTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $label): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <div class="custom-dropdown-item" 
+                                                     data-value="<?php echo e($key); ?>" 
+                                                     data-name="<?php echo e($label); ?>"
+                                                     onclick="selectPartyType('<?php echo e($key); ?>', '<?php echo e(addslashes($label)); ?>')">
+                                                    <?php echo e($label); ?>
+
+                                                </div>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -90,33 +94,41 @@
                             <div class="col-md-4">
                                 <div class="field-group mb-1">
                                     <label style="width: 50px;">Name :</label>
-                                    <input type="hidden" id="party_id" name="party_id" value="">
-                                    <input type="hidden" id="party_name" name="party_name" value="">
-                                    <div style="position:relative;flex:1;">
-                                        <input type="text" id="partySearchInput" class="form-control"
-                                            placeholder="Search party..." autocomplete="off"
-                                            oninput="_partyFilter()"
-                                            onfocus="_partyShowDrop()">
-                                        <div id="partyDropList" style="display:none;position:absolute;top:100%;left:0;right:0;
-                                            max-height:200px;overflow-y:auto;background:#fff;border:1px solid #ccc;
-                                            box-shadow:0 4px 8px rgba(0,0,0,.15);z-index:9999;font-size:12px;"></div>
+                                    <div class="custom-dropdown" id="sit_partyDropdownWrapper" style="flex: 1; position: relative;">
+                                        <input type="text" class="form-control" id="sit_partyDisplay" 
+                                               placeholder="Select Party..." autocomplete="off"
+                                               style="background: #e8ffe8; border: 2px solid #28a745;"
+                                               onfocus="openPartyDropdown()" onkeyup="filterParties(event)" data-custom-enter>
+                                        <input type="hidden" id="party_id" name="party_id">
+                                        <input type="hidden" id="party_name" name="party_name">
+                                        <div class="custom-dropdown-list" id="sit_partyList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <div class="custom-dropdown-item" 
+                                                     data-value="<?php echo e($customer->id); ?>" 
+                                                     data-name="<?php echo e($customer->name); ?>"
+                                                     onclick="selectParty('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>')">
+                                                    <?php echo e($customer->name); ?>
+
+                                                </div>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="field-group">
                                     <label style="width: 60px;">Remarks :</label>
-                                    <input type="text" id="remarks" name="remarks" class="form-control">
+                                    <input type="text" id="sit_remarks" name="remarks" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group mb-1">
                                     <label style="width: 30px;">On :</label>
-                                    <input type="text" id="on_field" name="on_field" class="form-control" style="width: 50px;">
+                                    <input type="text" id="sit_on_field" name="on_field" class="form-control" style="width: 50px;" data-custom-enter>
                                     <label style="width: 35px;">Rate :</label>
-                                    <input type="number" id="rate" name="rate" class="form-control text-end" step="0.01" value="0" style="width: 70px;">
+                                    <input type="number" id="sit_rate" name="rate" class="form-control text-end" step="0.01" value="0" style="width: 70px;" data-custom-enter>
                                 </div>
                                 <div class="field-group">
                                     <label style="width: 30px;">Tag :</label>
-                                    <input type="text" id="tag" name="tag" class="form-control" style="width: 80px;">
+                                    <input type="text" id="sit_tag" name="tag" class="form-control" style="width: 80px;" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -124,37 +136,37 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">GR No. :</label>
-                                    <input type="text" id="gr_no" name="gr_no" class="form-control">
+                                    <input type="text" id="sit_gr_no" name="gr_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date :</label>
-                                    <input type="date" id="gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                    <input type="date" id="sit_gr_date" name="gr_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="field-group">
                                     <label style="width: 40px;">Cases :</label>
-                                    <input type="number" id="cases" name="cases" class="form-control" value="0">
+                                    <input type="number" id="sit_cases" name="cases" class="form-control" value="0" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 80px;">Road Permit :</label>
-                                    <input type="text" id="road_permit_no" name="road_permit_no" class="form-control">
+                                    <input type="text" id="sit_road_permit" name="road_permit_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">Truck No. :</label>
-                                    <input type="text" id="truck_no" name="truck_no" class="form-control">
+                                    <input type="text" id="sit_truck_no" name="truck_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 70px;">Transport :</label>
-                                    <input type="text" id="transport" name="transport" class="form-control" onkeydown="handleTransportKeydown(event)">
+                                    <input type="text" id="sit_transport" name="transport" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -184,7 +196,7 @@
                             <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                                 <i class="bi bi-plus-circle"></i> Add Row
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="showItemSelectionModal()">
+                            <button type="button" class="btn btn-sm btn-primary" id="sit_addItemsBtn" onclick="showItemSelectionModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
                         </div>
@@ -236,8 +248,8 @@
                             </button>
                         </div>
                         <div>
-                            <button type="button" class="btn btn-secondary" onclick="cancelSampleReceive()">
-                                <i class="bi bi-x-circle"></i> Cancel Sample Receive
+                            <button type="button" class="btn btn-secondary" onclick="cancelSampleIssue()">
+                                <i class="bi bi-x-circle"></i> Cancel Sample Issue
                             </button>
                         </div>
                     </div>
@@ -248,27 +260,27 @@
 </section>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
-    'id' => 'sampleReceivedItemModal',
-    'module' => 'sample-received',
+<?php echo $__env->make('components.modals.item-selection', [
+    'id' => 'sampleIssuedItemModal',
+    'module' => 'sample-issued',
     'showStock' => true,
     'rateType' => 's_rate',
     'showCompany' => true,
     'showHsn' => false,
-    'batchModalId' => 'sampleReceivedBatchModal',
-])
+    'batchModalId' => 'sampleIssuedBatchModal',
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
-    'id' => 'sampleReceivedBatchModal',
-    'module' => 'sample-received',
-    'showOnlyAvailable' => false,
+<?php echo $__env->make('components.modals.batch-selection', [
+    'id' => 'sampleIssuedBatchModal',
+    'module' => 'sample-issued',
+    'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
@@ -276,12 +288,10 @@ let selectedRowIndex = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
-    loadPartyList(); // pre-load party list
-    setTimeout(() => document.getElementById('transaction_date')?.focus(), 150);
 });
 
 function updateDayName() {
-    const dateInput = document.getElementById('transaction_date');
+    const dateInput = document.getElementById('sit_transaction_date');
     const dayInput = document.getElementById('day_name');
     if (dateInput.value) {
         const date = new Date(dateInput.value);
@@ -291,7 +301,7 @@ function updateDayName() {
 }
 
 function loadItems() {
-    fetch('{{ route("admin.sample-received.getItems") }}')
+    fetch('<?php echo e(route("admin.sample-issued.getItems")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data || [];
@@ -300,214 +310,180 @@ function loadItems() {
 }
 
 // ============ PARTY DROPDOWN FUNCTIONS ============
-// ── Party Type custom dropdown ──
-let _ptHilIdx = -1;
-
-function _ptShowDrop() {
-    document.getElementById('partyTypeDropList').style.display = 'block';
-    _ptHilIdx = -1;
-    // highlight current
-    const cur = document.getElementById('party_type').value;
-    Array.from(document.querySelectorAll('#partyTypeDropList .pt-item')).forEach((el,i) => {
-        el.style.background = el.dataset.value === cur ? '#0d6efd' : '';
-        el.style.color      = el.dataset.value === cur ? '#fff' : '';
-        if (el.dataset.value === cur) _ptHilIdx = i;
-    });
-}
-
-function _ptHideDrop() {
-    document.getElementById('partyTypeDropList').style.display = 'none';
-}
-
-function _ptHilAt(idx) {
-    const items = Array.from(document.querySelectorAll('#partyTypeDropList .pt-item'));
-    items.forEach(i => { i.style.background=''; i.style.color=''; });
-    if (idx < 0) idx = 0;
-    if (idx >= items.length) idx = items.length - 1;
-    _ptHilIdx = idx;
-    if (items[idx]) { items[idx].style.background='#0d6efd'; items[idx].style.color='#fff'; items[idx].scrollIntoView({block:'nearest'}); }
-}
-
-function _ptSelectByEl(el) {
-    document.getElementById('party_type').value = el.dataset.value;
-    document.getElementById('partyTypeSearchInput').value = el.textContent.trim();
-    _ptHideDrop();
-    // Reset party selection
-    _partyAllItems = [];
+function loadPartyList() {
+    const partyType = document.getElementById('sit_party_type').value;
+    const listContainer = document.getElementById('sit_partyList');
+    
+    // Clear and show loading
+    listContainer.innerHTML = '<div class="custom-dropdown-item" style="color: #999;">Loading...</div>';
     document.getElementById('party_id').value = '';
     document.getElementById('party_name').value = '';
-    document.getElementById('partySearchInput').value = '';
-    // Fetch new list, then focus + open dropdown
-    const partyType = el.dataset.value;
-    fetch(`{{ url('admin/sample-received/get-party-list') }}?party_type=${partyType}`)
-        .then(r => r.json())
+    document.getElementById('sit_partyDisplay').value = '';
+    
+    fetch(`<?php echo e(url('admin/sample-issued/get-party-list')); ?>?party_type=${partyType}`)
+        .then(response => response.json())
         .then(data => {
-            _partyAllItems = data || [];
-            document.getElementById('partySearchInput')?.focus();
-            _partyBuildDrop(_partyAllItems);
+            listContainer.innerHTML = '';
+            data.forEach(party => {
+                const div = document.createElement('div');
+                div.className = 'custom-dropdown-item';
+                div.dataset.value = party.id;
+                div.dataset.name = party.name;
+                div.textContent = party.name;
+                div.onclick = function() { selectParty(party.id, party.name); };
+                listContainer.appendChild(div);
+            });
         })
-        .catch(() => {
-            _partyAllItems = [];
-            document.getElementById('partySearchInput')?.focus();
+        .catch(error => {
+            console.error('Error loading party list:', error);
+            listContainer.innerHTML = '<div class="custom-dropdown-item" style="color: red;">Error loading</div>';
         });
 }
 
-// Party type keyboard
-window.addEventListener('keydown', function(e) {
-    if (document.activeElement?.id !== 'partyTypeSearchInput') return;
-    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
-    if (!MANAGED.includes(e.key)) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    const list = document.getElementById('partyTypeDropList');
-    const isOpen = list.style.display === 'block';
-
-    if (e.key === 'Escape') { _ptHideDrop(); return; }
-    if (e.key === 'ArrowDown') {
-        if (!isOpen) _ptShowDrop();
-        const items = document.querySelectorAll('#partyTypeDropList .pt-item');
-        if (_ptHilIdx < items.length - 1) _ptHilAt(_ptHilIdx + 1);
-        return;
-    }
-    if (e.key === 'ArrowUp') {
-        if (_ptHilIdx > 0) _ptHilAt(_ptHilIdx - 1);
-        return;
-    }
-    if (e.key === 'Enter') {
-        const items = Array.from(document.querySelectorAll('#partyTypeDropList .pt-item'));
-        const el = _ptHilIdx >= 0 ? items[_ptHilIdx] : items[0];
-        if (el) { _ptSelectByEl(el); } // focus handled inside after fetch
-        else _ptHideDrop();
-        return;
-    }
-}, true);
-
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('#partyTypeDropList') && e.target.id !== 'partyTypeSearchInput') _ptHideDrop();
-});
-
-function selectPartyType(val, btn) {} // kept for compatibility
-
-// ── Party list AJAX ──
-let _partyAllItems = [];
-let _partyHilIdx = -1;
-
-function loadPartyList() {
-    const partyType = document.getElementById('party_type').value;
-    fetch(`{{ url('admin/sample-received/get-party-list') }}?party_type=${partyType}`)
-        .then(r => r.json())
-        .then(data => {
-            _partyAllItems = data || [];
-        })
-        .catch(() => { _partyAllItems = []; });
+function updatePartyName() {
+    // No-op - handled by selectParty now
 }
 
-function updatePartyName() {} // kept for compatibility
+// ====== CUSTOM PARTY DROPDOWN ======
+let partyActiveIndex = -1;
 
-function _partyBuildDrop(items) {
-    const list = document.getElementById('partyDropList');
-    list.innerHTML = '';
-    if (!items.length) {
-        list.innerHTML = '<div style="padding:6px 10px;color:#999;">No results</div>';
-        list.style.display = 'block';
-        return;
-    }
-    items.forEach(p => {
-        const d = document.createElement('div');
-        d.style.cssText = 'padding:5px 10px;cursor:pointer;border-bottom:1px solid #f0f0f0;';
-        d.textContent = p.name || p.text || '';
-        d.dataset.id = p.id;
-        d.dataset.name = p.name || p.text || '';
-        d.addEventListener('mousedown', ev => { ev.preventDefault(); _partySelect(d); });
-        list.appendChild(d);
+function openPartyDropdown() {
+    const display = document.getElementById('sit_partyDisplay');
+    display.select();
+    document.querySelectorAll('#sit_partyList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
     });
-    list.style.display = 'block';
-    _partyHilIdx = -1;
+    document.getElementById('sit_partyList').style.display = 'block';
+    partyActiveIndex = 0;
+    highlightPartyItem();
 }
 
-function _partyFilter() {
-    const q = document.getElementById('partySearchInput').value.toLowerCase();
-    const filtered = q ? _partyAllItems.filter(p => (p.name||p.text||'').toLowerCase().includes(q)) : _partyAllItems;
-    _partyBuildDrop(filtered);
+function closePartyDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('sit_partyList');
+        if (list) list.style.display = 'none';
+        partyActiveIndex = -1;
+    }, 200);
 }
 
-function _partyShowDrop() {
-    if (!_partyAllItems.length) loadPartyList();
-    _partyBuildDrop(_partyAllItems);
+function filterParties(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#sit_partyList .custom-dropdown-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    partyActiveIndex = 0;
+    highlightPartyItem();
 }
 
-function _partyHideDrop() {
-    document.getElementById('partyDropList').style.display = 'none';
+function selectParty(id, name) {
+    document.getElementById('party_id').value = id;
+    document.getElementById('sit_partyDisplay').value = name;
+    document.getElementById('party_name').value = name;
+    document.getElementById('sit_partyList').style.display = 'none';
+    window.selectedPartyName = name;
+    partyActiveIndex = -1;
+    document.getElementById('sit_remarks')?.focus();
 }
 
-function _partyHilAt(idx) {
-    const items = Array.from(document.querySelectorAll('#partyDropList div[data-id]'));
-    items.forEach(i => i.style.background = '');
-    if (idx < 0) idx = 0;
-    if (idx >= items.length) idx = items.length - 1;
-    _partyHilIdx = idx;
-    if (items[idx]) { items[idx].style.background = '#0d6efd'; items[idx].style.color = '#fff'; items[idx].scrollIntoView({block:'nearest'}); }
-}
-
-function _partySelect(el) {
-    document.getElementById('party_id').value = el.dataset.id;
-    document.getElementById('party_name').value = el.dataset.name;
-    document.getElementById('partySearchInput').value = el.dataset.name;
-    _partyHideDrop();
-    document.getElementById('remarks')?.focus();
-}
-
-// Keyboard nav for party search
-window.addEventListener('keydown', function(e) {
-    if (document.activeElement?.id !== 'partySearchInput') return;
-    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape','Tab'];
-    if (!MANAGED.includes(e.key)) return;
-    const list = document.getElementById('partyDropList');
-    const isOpen = list.style.display === 'block';
-
-    if (e.key === 'Escape') { e.preventDefault(); _partyHideDrop(); return; }
-    if (e.key === 'Tab')    { _partyHideDrop(); return; }
-
-    if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (!isOpen) _partyShowDrop();
-        const items = document.querySelectorAll('#partyDropList div[data-id]');
-        if (_partyHilIdx < items.length - 1) _partyHilAt(_partyHilIdx + 1);
-        return;
+function highlightPartyItem() {
+    const items = Array.from(document.querySelectorAll('#sit_partyList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    if (partyActiveIndex >= items.length) partyActiveIndex = 0;
+    if (partyActiveIndex < -1) partyActiveIndex = items.length - 1;
+    if (partyActiveIndex >= 0 && items[partyActiveIndex]) {
+        items[partyActiveIndex].classList.add('active');
+        items[partyActiveIndex].style.backgroundColor = '#f0f8ff';
+        items[partyActiveIndex].scrollIntoView({ block: 'nearest' });
     }
-    if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (_partyHilIdx > 0) _partyHilAt(_partyHilIdx - 1);
-        return;
-    }
-    if (e.key === 'Enter') {
-        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        const items = Array.from(document.querySelectorAll('#partyDropList div[data-id]'));
-        if (_partyHilIdx >= 0 && items[_partyHilIdx]) {
-            _partySelect(items[_partyHilIdx]);
-        } else if (items.length > 0) {
-            _partySelect(items[0]);
-        } else {
-            _partyHideDrop();
-            document.getElementById('remarks')?.focus();
-        }
-        return;
-    }
-}, true);
+    items.forEach((item, idx) => {
+        if (idx !== partyActiveIndex) item.style.backgroundColor = '';
+    });
+}
 
-// Close party drop on outside click
+// Close dropdown on outside click
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('#partyDropList') && e.target.id !== 'partySearchInput') _partyHideDrop();
+    if (!e.target.closest('#sit_partyDropdownWrapper')) {
+        const list = document.getElementById('sit_partyList');
+        if (list) list.style.display = 'none';
+    }
+    if (!e.target.closest('#sit_partyTypeDropdownWrapper')) {
+        const list = document.getElementById('sit_partyTypeList');
+        if (list) list.style.display = 'none';
+    }
 });
 
+// ====== CUSTOM PARTY TYPE DROPDOWN ======
+let partyTypeActiveIndex = -1;
 
+function openPartyTypeDropdown() {
+    const display = document.getElementById('sit_partyTypeDisplay');
+    display.select();
+    document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
+    });
+    document.getElementById('sit_partyTypeList').style.display = 'block';
+    partyTypeActiveIndex = 0;
+    highlightPartyTypeItem();
+}
+
+function closePartyTypeDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('sit_partyTypeList');
+        if (list) list.style.display = 'none';
+        partyTypeActiveIndex = -1;
+    }, 200);
+}
+
+function filterPartyTypes(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    partyTypeActiveIndex = 0;
+    highlightPartyTypeItem();
+}
+
+function selectPartyType(id, name) {
+    document.getElementById('sit_party_type').value = id;
+    document.getElementById('sit_partyTypeDisplay').value = name;
+    document.getElementById('sit_partyTypeList').style.display = 'none';
+    window.selectedPartyTypeName = name;
+    partyTypeActiveIndex = -1;
+    // Load matching party list
+    loadPartyList();
+    // Move to party name
+    document.getElementById('sit_partyDisplay')?.focus();
+    setTimeout(() => { openPartyDropdown(); }, 100);
+}
+
+function highlightPartyTypeItem() {
+    const items = Array.from(document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    if (partyTypeActiveIndex >= items.length) partyTypeActiveIndex = 0;
+    if (partyTypeActiveIndex < -1) partyTypeActiveIndex = items.length - 1;
+    if (partyTypeActiveIndex >= 0 && items[partyTypeActiveIndex]) {
+        items[partyTypeActiveIndex].classList.add('active');
+        items[partyTypeActiveIndex].style.backgroundColor = '#f0f8ff';
+        items[partyTypeActiveIndex].scrollIntoView({ block: 'nearest' });
+    }
+    items.forEach((item, idx) => {
+        if (idx !== partyTypeActiveIndex) item.style.backgroundColor = '';
+    });
+}
 
 // ============ REUSABLE MODAL BRIDGE FUNCTION ============
 // This function is called by the reusable modal components
 function onItemBatchSelectedFromModal(itemData, batchData) {
-    console.log('🎯 Sample Received: onItemBatchSelectedFromModal called', {itemData, batchData});
+    console.log('🎯 Sample Issued: onItemBatchSelectedFromModal called', {itemData, batchData});
     
     if (!itemData || !itemData.id) {
-        console.error('❌ Sample Received: Invalid item data received');
+        console.error('❌ Sample Issued: Invalid item data received');
         return;
     }
     
@@ -527,14 +503,14 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
     
     // Complete row HTML with all fields
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${itemData.id || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemData.name || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchData?.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batchData?.expiry_formatted || ''}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(batchData?.s_rate || itemData.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})" tabindex="-1"><i class="bi bi-x"></i></button></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${itemData.id || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemData.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchData?.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batchData?.expiry_formatted || ''}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(batchData?.s_rate || itemData.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemData.id}">
         <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchData?.id || ''}">
         <input type="hidden" name="items[${rowIndex}][packing]" value="${itemData.packing || ''}">
@@ -552,7 +528,7 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
     document.getElementById('unit').value = itemData.unit || '1';
     document.getElementById('cl_qty').value = batchData?.qty || 0;
     
-    console.log('✅ Sample Received: Row created successfully', {rowIndex, itemId: itemData.id, batchId: batchData?.id});
+    console.log('✅ Sample Issued: Row created successfully', {rowIndex, itemId: itemData.id, batchId: batchData?.id});
     
     // Focus on qty field
     row.querySelector('input[name*="[qty]"]')?.focus();
@@ -560,13 +536,13 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
 
 // ============ SHOW ITEM SELECTION MODAL (BRIDGE TO REUSABLE COMPONENT) ============
 function showItemSelectionModal() {
-    console.log('🔗 Sample Received: showItemSelectionModal called - opening reusable modal');
+    console.log('🔗 Sample Issued: showItemSelectionModal called - opening reusable modal');
     
     // Check if modal functions exist
-    if (typeof window.openItemModal_sampleReceivedItemModal === 'function') {
-        window.openItemModal_sampleReceivedItemModal();
+    if (typeof window.openItemModal_sampleIssuedItemModal === 'function') {
+        window.openItemModal_sampleIssuedItemModal();
     } else {
-        console.error('❌ Sample Received: openItemModal_sampleReceivedItemModal function not found. Modal component may not be loaded.');
+        console.error('❌ Sample Issued: openItemModal_sampleIssuedItemModal function not found. Modal component may not be loaded.');
         alert('Error: Modal component not loaded. Please refresh the page.');
     }
 }
@@ -646,14 +622,14 @@ function _legacy_selectItemFromModal(item) {
     row.onclick = function() { selectRow(rowIndex); };
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})" tabindex="-1"><i class="bi bi-x"></i></button></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
         <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
         <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
@@ -669,7 +645,7 @@ function _legacy_selectItemFromModal(item) {
 }
 
 function _legacy_showBatchSelectionForItem(item, rowIndex) {
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${item.id}`)
         .then(response => response.json())
         .then(data => {
             const batches = data.batches || data || [];
@@ -686,7 +662,7 @@ function _legacy_showBatchSelectionModal(batches, rowIndex, itemData) {
         <div class="batch-modal-backdrop show" id="batchBackdrop"></div>
         <div class="batch-modal show" id="batchModal">
             <div class="modal-header-custom" style="background: #17a2b8;">
-                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Select Batch for Sample Receive</h5>
+                <h5 class="mb-0"><i class="bi bi-box-seam me-2"></i>Select Batch for Sample</h5>
                 <button type="button" class="btn-close btn-close-white" onclick="closeBatchModal()"></button>
             </div>
             <div class="modal-body-custom">
@@ -703,7 +679,7 @@ function _legacy_showBatchSelectionModal(batches, rowIndex, itemData) {
         html += `
                 <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                     <table class="table table-bordered table-sm" style="font-size: 10px;">
-                        <thead style="background: #90EE90;">
+                        <thead style="background: #ffb6c1;">
                             <tr>
                                 <th>BATCH</th>
                                 <th>S.RATE</th>
@@ -771,6 +747,7 @@ function _legacy_selectBatchFromModal(rowIndex, batch) {
     row.dataset.batchId = batch.id;
     row.dataset.batchData = JSON.stringify(batch);
     
+    // Update Cl.Qty in footer
     document.getElementById('cl_qty').value = batch.qty || 0;
     
     closeBatchModal();
@@ -782,22 +759,11 @@ function closeBatchModal() {
     document.getElementById('batchBackdrop')?.remove();
 }
 
-// ============ KEYBOARD NAVIGATION ============
-// Transport field handler - Opens Add Items modal on Enter
-function handleTransportKeydown(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        // Open Add Items modal
-        showItemSelectionModal();
-    }
-}
-
 function handleBatchKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         if (event.shiftKey) {
-            // Shift+Enter: Go back to transport field
-            document.getElementById('transport')?.focus();
+            document.getElementById('sit_transport')?.focus();
             return;
         }
         const row = document.getElementById(`row-${rowIndex}`);
@@ -809,7 +775,6 @@ function handleExpiryKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         if (event.shiftKey) {
-            // Shift+Enter: Go back to batch field
             const row = document.getElementById(`row-${rowIndex}`);
             row?.querySelector('input[name*="[batch]"]')?.focus();
             return;
@@ -823,7 +788,6 @@ function handleQtyKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         if (event.shiftKey) {
-            // Shift+Enter: Go back to expiry field
             const row = document.getElementById(`row-${rowIndex}`);
             row?.querySelector('input[name*="[expiry]"]')?.focus();
             return;
@@ -835,38 +799,25 @@ function handleQtyKeydown(event, rowIndex) {
 }
 
 function handleRateKeydown(event, rowIndex) {
-    console.log('🎹 Rate keydown:', event.key, 'Row:', rowIndex);
     if (event.key === 'Enter') {
         event.preventDefault();
-        console.log('✅ Enter pressed on Rate field');
         if (event.shiftKey) {
-            // Shift+Enter: Go back to qty field
-            console.log('⬅️ Shift+Enter: Going back to Qty');
             const row = document.getElementById(`row-${rowIndex}`);
             row?.querySelector('input[name*="[qty]"]')?.focus();
             return;
         }
-        console.log('➡️ Forward navigation from Rate');
         calculateRowAmount(rowIndex);
         completeRow(rowIndex);
         // Check if next row exists
         const currentRow = document.getElementById(`row-${rowIndex}`);
         const nextRow = currentRow ? currentRow.nextElementSibling : null;
-        console.log('🔍 Next row check:', nextRow ? 'Found' : 'Not found');
         if (nextRow && nextRow.id && nextRow.id.startsWith('row-')) {
             const nextRowIdx = parseInt(nextRow.id.replace('row-', ''));
-            console.log('➡️ Moving to next row:', nextRowIdx);
             selectRow(nextRowIdx);
             const nextQty = nextRow.querySelector('input[name*="[qty]"]');
-            if (nextQty) { 
-                console.log('✅ Focusing next row Qty');
-                nextQty.focus(); 
-                nextQty.select(); 
-                return; 
-            }
+            if (nextQty) { nextQty.focus(); nextQty.select(); return; }
         }
         // No next row - trigger Add Items
-        console.log('🎯 No next row - Opening Add Items modal');
         showItemSelectionModal();
     }
 }
@@ -891,14 +842,14 @@ function addNewRow() {
     row.onclick = function() { selectRow(rowIndex); };
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})" tabindex="-1"><i class="bi bi-x"></i></button></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="">
         <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
         <input type="hidden" name="items[${rowIndex}][packing]" value="">
@@ -948,7 +899,7 @@ function fillRowWithItem(rowIndex, item) {
     row.dataset.itemId = item.id;
     
     updateFooterFromRow(row);
-    _legacy_showBatchSelectionForItem(item, rowIndex);
+    showBatchSelectionForItem(item, rowIndex);
 }
 
 function selectRow(rowIndex) {
@@ -1018,15 +969,17 @@ function deleteSelectedItem() {
 }
 
 function saveTransaction() {
-    const form = document.getElementById('srForm');
+    const form = document.getElementById('siForm');
     const formData = new FormData(form);
     
+    // Validate
     const rows = document.querySelectorAll('#itemsTableBody tr');
     if (rows.length === 0) {
         alert('Please add at least one item');
         return;
     }
     
+    // Add total values
     let totalQty = 0;
     rows.forEach(row => {
         const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
@@ -1040,18 +993,19 @@ function saveTransaction() {
         window.markAsSaving();
     }
     
-    fetch('{{ route("admin.sample-received.store") }}', {
+    // Submit
+    fetch('<?php echo e(route("admin.sample-issued.store")); ?>', {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             alert(data.message + '\nTRN No: ' + data.trn_no);
-            window.location.href = '{{ route("admin.sample-received.index") }}';
+            window.location.href = '<?php echo e(route("admin.sample-issued.index")); ?>';
         } else {
             alert(data.message || 'Error saving transaction');
         }
@@ -1062,28 +1016,22 @@ function saveTransaction() {
     });
 }
 
-function cancelSampleReceive() {
+function cancelSampleIssue() {
     if (confirm('Are you sure you want to cancel? All entered data will be lost.')) {
-        window.location.href = '{{ route("admin.sample-received.index") }}';
+        window.location.href = '<?php echo e(route("admin.sample-issued.index")); ?>';
     }
 }
 
-// ====== GLOBAL KEYBOARD NAVIGATION ======
-window.addEventListener('keydown', function(e) {
+// ====== KEYBOARD NAVIGATION ======
+document.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;
 
         // Skip if modal is open
         const hasModalOpen = document.getElementById('itemModal') || document.getElementById('batchModal') ||
-            document.querySelector('#sampleReceivedItemModal.show') || document.querySelector('#sampleReceivedBatchModal.show');
+            document.querySelector('#sampleIssuedItemModal.show') || document.querySelector('#sampleIssuedBatchModal.show');
         if (hasModalOpen) return;
-
-        // Skip if inside items table - let row handlers take care of it
-        if (activeEl.closest('#itemsTableBody')) return;
-
-        // custom dropdowns handled by their own window listeners
-        if (activeEl.id === 'partySearchInput' || activeEl.id === 'partyTypeSearchInput') return;
 
         // Ctrl+Enter → Srlno field
         if (e.ctrlKey && !e.shiftKey && !e.altKey) {
@@ -1096,17 +1044,18 @@ window.addEventListener('keydown', function(e) {
         // Shift+Enter backward navigation
         if (e.shiftKey && !e.ctrlKey) {
             const backMap = {
-                'partyTypeSearchInput': 'transaction_date',
-                'remarks': 'partySearchInput',
-                'on_field': 'remarks',
-                'rate': 'on_field',
-                'tag': 'rate',
-                'gr_no': 'tag',
-                'gr_date': 'gr_no',
-                'cases': 'gr_date',
-                'road_permit_no': 'cases',
-                'truck_no': 'road_permit_no',
-                'transport': 'truck_no'
+                'sit_partyTypeDisplay': 'sit_transaction_date',
+                'sit_partyDisplay': 'sit_partyTypeDisplay',
+                'sit_remarks': 'sit_partyDisplay',
+                'sit_on_field': 'sit_remarks',
+                'sit_rate': 'sit_on_field',
+                'sit_tag': 'sit_rate',
+                'sit_gr_no': 'sit_tag',
+                'sit_gr_date': 'sit_gr_no',
+                'sit_cases': 'sit_gr_date',
+                'sit_road_permit': 'sit_cases',
+                'sit_truck_no': 'sit_road_permit',
+                'sit_transport': 'sit_truck_no'
             };
             if (backMap[activeEl.id]) {
                 e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
@@ -1116,74 +1065,131 @@ window.addEventListener('keydown', function(e) {
             return;
         }
 
-        // Date → Party Type dropdown
-        if (activeEl.id === 'transaction_date') {
+        // Party Dropdown Intercept
+        if (activeEl.id === 'sit_partyDisplay') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('partyTypeSearchInput')?.focus();
+            const existingId = document.getElementById('party_id').value;
+            const listContainer = document.getElementById('sit_partyList');
+            if (existingId) {
+                if (listContainer) listContainer.style.display = 'none';
+                partyActiveIndex = -1;
+                document.getElementById('sit_partyDisplay').value = window.selectedPartyName || '';
+                document.getElementById('sit_remarks')?.focus();
+                return false;
+            }
+            if (listContainer && listContainer.style.display === 'block') {
+                const items = Array.from(document.querySelectorAll('#sit_partyList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                if (partyActiveIndex >= 0 && partyActiveIndex < items.length) {
+                    items[partyActiveIndex].click();
+                } else {
+                    listContainer.style.display = 'none';
+                    partyActiveIndex = -1;
+                    document.getElementById('sit_remarks')?.focus();
+                }
+            } else {
+                document.getElementById('sit_remarks')?.focus();
+            }
             return false;
         }
-        // Party Type button → Party Name search input
-        if (activeEl.classList.contains('party-type-btn')) {
+
+        // Party Type Dropdown Intercept
+        if (activeEl.id === 'sit_partyTypeDisplay') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('partySearchInput')?.focus();
+            const existingVal = document.getElementById('sit_party_type').value;
+            const listContainer = document.getElementById('sit_partyTypeList');
+            if (existingVal) {
+                if (listContainer && listContainer.style.display === 'block') {
+                    const items = Array.from(document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                    if (partyTypeActiveIndex >= 0 && partyTypeActiveIndex < items.length) {
+                        items[partyTypeActiveIndex].click();
+                    } else {
+                        listContainer.style.display = 'none';
+                        partyTypeActiveIndex = -1;
+                        document.getElementById('sit_partyDisplay')?.focus();
+                        setTimeout(() => { openPartyDropdown(); }, 50);
+                    }
+                } else {
+                    // Already selected, skip to party name
+                    document.getElementById('sit_partyDisplay')?.focus();
+                    setTimeout(() => { openPartyDropdown(); }, 50);
+                }
+            } else {
+                if (listContainer && listContainer.style.display === 'block') {
+                    const items = Array.from(document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                    if (partyTypeActiveIndex >= 0 && partyTypeActiveIndex < items.length) {
+                        items[partyTypeActiveIndex].click();
+                    }
+                } else {
+                    document.getElementById('sit_partyDisplay')?.focus();
+                    setTimeout(() => { openPartyDropdown(); }, 50);
+                }
+            }
+            return false;
+        }
+
+        // Date → Party Type
+        if (activeEl.id === 'sit_transaction_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_partyTypeDisplay')?.focus();
+            setTimeout(() => { openPartyTypeDropdown(); }, 50);
             return false;
         }
         // Remarks → On
-        if (activeEl.id === 'remarks') {
+        if (activeEl.id === 'sit_remarks') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('on_field')?.focus();
+            document.getElementById('sit_on_field')?.focus();
             return false;
         }
         // On → Rate
-        if (activeEl.id === 'on_field') {
+        if (activeEl.id === 'sit_on_field') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('rate')?.focus();
+            document.getElementById('sit_rate')?.focus();
             return false;
         }
         // Rate → Tag
-        if (activeEl.id === 'rate') {
+        if (activeEl.id === 'sit_rate') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('tag')?.focus();
+            document.getElementById('sit_tag')?.focus();
             return false;
         }
         // Tag → GR No
-        if (activeEl.id === 'tag') {
+        if (activeEl.id === 'sit_tag') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('gr_no')?.focus();
+            document.getElementById('sit_gr_no')?.focus();
             return false;
         }
         // GR No → GR Date
-        if (activeEl.id === 'gr_no') {
+        if (activeEl.id === 'sit_gr_no') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('gr_date')?.focus();
+            document.getElementById('sit_gr_date')?.focus();
             return false;
         }
         // GR Date → Cases
-        if (activeEl.id === 'gr_date') {
+        if (activeEl.id === 'sit_gr_date') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('cases')?.focus();
+            document.getElementById('sit_cases')?.focus();
             return false;
         }
         // Cases → Road Permit
-        if (activeEl.id === 'cases') {
+        if (activeEl.id === 'sit_cases') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('road_permit_no')?.focus();
+            document.getElementById('sit_road_permit')?.focus();
             return false;
         }
         // Road Permit → Truck No
-        if (activeEl.id === 'road_permit_no') {
+        if (activeEl.id === 'sit_road_permit') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('truck_no')?.focus();
+            document.getElementById('sit_truck_no')?.focus();
             return false;
         }
         // Truck No → Transport
-        if (activeEl.id === 'truck_no') {
+        if (activeEl.id === 'sit_truck_no') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('transport')?.focus();
+            document.getElementById('sit_transport')?.focus();
             return false;
         }
         // Transport → first row Qty (if items exist) OR Add Items
-        if (activeEl.id === 'transport') {
+        if (activeEl.id === 'sit_transport') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             const firstRow = document.querySelector('#itemsTableBody tr');
             if (firstRow) {
@@ -1196,18 +1202,45 @@ window.addEventListener('keydown', function(e) {
                     return false;
                 }
             }
-            // No items - open Add Items modal
+            const addBtn = document.getElementById('sit_addItemsBtn');
+            if (addBtn) { addBtn.focus(); addBtn.click(); }
+            return false;
+        }
+        // Add Items button
+        if (activeEl.id === 'sit_addItemsBtn') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             showItemSelectionModal();
             return false;
         }
     }
 
+    // Dropdown arrow navigation - Party Name
+    if (document.activeElement && document.activeElement.id === 'sit_partyDisplay') {
+        const listContainer = document.getElementById('sit_partyList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); partyActiveIndex++; highlightPartyItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); partyActiveIndex--; highlightPartyItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closePartyDropdown(); return false; }
+        }
+    }
+
+    // Dropdown arrow navigation - Party Type
+    if (document.activeElement && document.activeElement.id === 'sit_partyTypeDisplay') {
+        const listContainer = document.getElementById('sit_partyTypeList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); partyTypeActiveIndex++; highlightPartyTypeItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); partyTypeActiveIndex--; highlightPartyTypeItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closePartyTypeDropdown(); return false; }
+        }
+    }
+
     // Ctrl+S save
-    if ((e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey) && !e.shiftKey) {
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
         e.preventDefault();
         saveTransaction();
         return false;
     }
 }, true);
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sample-issued/transaction.blade.php ENDPATH**/ ?>

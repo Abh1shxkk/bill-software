@@ -56,40 +56,52 @@
 
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body p-3">
-        <form id="stockTransferOutgoingForm" method="POST" autocomplete="off" onkeydown="return event.key !== 'Enter';">
+        <form id="stockTransferOutgoingForm" method="POST" autocomplete="off">
             <?php echo csrf_field(); ?>
 
-            <!-- Header Section -->
             <div class="header-section">
                 <div class="row g-2">
                     <div class="col-md-2">
                         <div class="field-group">
                             <label>Date:</label>
-                            <input type="date" class="form-control form-control-sm" name="transaction_date" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>">
+                            <input type="date" class="form-control form-control-sm" id="stor_transaction_date" name="transaction_date" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="field-group">
                             <label>Name:</label>
-                            <select class="form-control form-control-sm" name="transfer_to" id="customerSelect" style="flex: 1; background: #e8ffe8; border: 2px solid #28a745;" onchange="updateCustomerName()">
-                                <option value="">Select Customer</option>
-                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>"><?php echo e($customer->code ?? $customer->id); ?> - <?php echo e($customer->name); ?></option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
-                            <input type="hidden" name="transfer_to_name" id="transfer_to_name">
+                            <div class="custom-dropdown" id="stor_customerDropdownWrapper" style="flex: 1; position: relative;">
+                                <input type="text" class="form-control form-control-sm" id="stor_customerDisplay" 
+                                       placeholder="Select Customer..." autocomplete="off"
+                                       style="background: #e8ffe8; border: 2px solid #28a745;"
+                                       onfocus="openCustomerDropdown()" onkeyup="filterCustomers(event)" data-custom-enter>
+                                <input type="hidden" name="transfer_to" id="customerSelect">
+                                <input type="hidden" name="transfer_to_name" id="transfer_to_name">
+                                <div class="custom-dropdown-list" id="stor_customerList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <div class="custom-dropdown-item" 
+                                             data-value="<?php echo e($customer->id); ?>" 
+                                             data-name="<?php echo e($customer->name); ?>"
+                                             style="padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px;"
+                                             onclick="selectCustomer('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>', '<?php echo e($customer->code ?? $customer->id); ?>')">
+                                            <?php echo e($customer->code ?? $customer->id); ?> - <?php echo e($customer->name); ?>
+
+                                        </div>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="field-group">
                             <label>Trf. Return No.:</label>
-                            <input type="text" class="form-control form-control-sm" name="trf_return_no" id="trf_return_no" style="width: 120px;">
+                            <input type="text" class="form-control form-control-sm" name="trf_return_no" id="stor_trf_return_no" style="width: 120px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="field-group">
                             <label>Remarks:</label>
-                            <input type="text" class="form-control form-control-sm" name="remarks" placeholder="Remarks">
+                            <input type="text" class="form-control form-control-sm" id="stor_remarks" name="remarks" placeholder="Remarks" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -101,31 +113,30 @@
                 </div>
             </div>
 
-            <!-- GR Section -->
             <div class="gr-section">
                 <div class="row g-2 align-items-center">
                     <div class="col-auto">
                         <div class="field-group">
                             <label>GR No.:</label>
-                            <input type="text" class="form-control form-control-sm" name="gr_no" style="width: 100px;">
+                            <input type="text" class="form-control form-control-sm" id="stor_gr_no" name="gr_no" style="width: 100px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>GR Date:</label>
-                            <input type="date" class="form-control form-control-sm" name="gr_date" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>">
+                            <input type="date" class="form-control form-control-sm" id="stor_gr_date" name="gr_date" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>Cases:</label>
-                            <input type="number" class="form-control form-control-sm" name="cases" style="width: 70px;" value="0">
+                            <input type="number" class="form-control form-control-sm" id="stor_cases" name="cases" style="width: 70px;" value="0" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>Transport:</label>
-                            <input type="text" class="form-control form-control-sm" name="transport" style="width: 200px;">
+                            <input type="text" class="form-control form-control-sm" id="stor_transport" name="transport" style="width: 200px;" data-custom-enter>
                         </div>
                     </div>
                 </div>
@@ -155,7 +166,7 @@
                     <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                         <i class="bi bi-plus-circle"></i> Add Row
                     </button>
-                    <button type="button" class="btn btn-sm btn-info" onclick="openInsertItemsModal()">
+                    <button type="button" class="btn btn-sm btn-info" id="stor_insertItemsBtn" onclick="openInsertItemsModal()">
                         <i class="bi bi-list-check"></i> Insert Items
                     </button>
                 </div>
@@ -309,14 +320,199 @@ window.onItemSelectedFromModal = function(item) {
 // ====== END MODAL COMPONENT BRIDGE ======
 
 function updateCustomerName() {
-    const select = document.getElementById('customerSelect');
-    const selectedOption = select.options[select.selectedIndex];
-    if (selectedOption && selectedOption.value) {
-        document.getElementById('transfer_to_name').value = selectedOption.getAttribute('data-name') || '';
-    } else {
-        document.getElementById('transfer_to_name').value = '';
-    }
+    // No-op - handled by selectCustomer now
 }
+
+// ====== CUSTOM CUSTOMER DROPDOWN ======
+let customerActiveIndex = -1;
+
+function openCustomerDropdown() {
+    const display = document.getElementById('stor_customerDisplay');
+    display.select();
+    document.querySelectorAll('#stor_customerList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
+    });
+    document.getElementById('stor_customerList').style.display = 'block';
+    customerActiveIndex = 0;
+    highlightCustomerItem();
+}
+
+function closeCustomerDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('stor_customerList');
+        if(list) list.style.display = 'none';
+        customerActiveIndex = -1;
+    }, 200);
+}
+
+function filterCustomers(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#stor_customerList .custom-dropdown-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    customerActiveIndex = 0;
+    highlightCustomerItem();
+}
+
+function selectCustomer(id, name, code) {
+    document.getElementById('customerSelect').value = id;
+    document.getElementById('stor_customerDisplay').value = name;
+    document.getElementById('transfer_to_name').value = name;
+    document.getElementById('stor_customerList').style.display = 'none';
+    window.selectedCustomerName = name;
+    customerActiveIndex = -1;
+    document.getElementById('stor_trf_return_no')?.focus();
+}
+
+function highlightCustomerItem() {
+    const items = Array.from(document.querySelectorAll('#stor_customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    if (customerActiveIndex >= items.length) customerActiveIndex = 0;
+    if (customerActiveIndex < -1) customerActiveIndex = items.length - 1;
+    if (customerActiveIndex >= 0 && items[customerActiveIndex]) {
+        items[customerActiveIndex].classList.add('active');
+        items[customerActiveIndex].style.backgroundColor = '#f0f8ff';
+        items[customerActiveIndex].scrollIntoView({ block: 'nearest' });
+    }
+    items.forEach((item, idx) => {
+        if (idx !== customerActiveIndex) item.style.backgroundColor = '';
+    });
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#stor_customerDropdownWrapper')) {
+        const list = document.getElementById('stor_customerList');
+        if (list) list.style.display = 'none';
+    }
+});
+
+// ====== KEYBOARD NAVIGATION ======
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        // Skip if modal is open
+        const hasModalOpen = document.getElementById('itemModal') || document.getElementById('batchModal') ||
+            document.getElementById('createBatchModal') ||
+            document.querySelector('#stockTransferOutgoingReturnItemModal.show') || 
+            document.querySelector('#stockTransferOutgoingReturnBatchModal.show');
+        if (hasModalOpen) return;
+
+        // Shift+Enter backward navigation
+        if (e.shiftKey) {
+            const backMap = {
+                'stor_customerDisplay': 'stor_transaction_date',
+                'stor_trf_return_no': 'stor_customerDisplay',
+                'stor_remarks': 'stor_trf_return_no',
+                'stor_gr_no': 'stor_remarks',
+                'stor_gr_date': 'stor_gr_no',
+                'stor_cases': 'stor_gr_date',
+                'stor_transport': 'stor_cases'
+            };
+            if (backMap[activeEl.id]) {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById(backMap[activeEl.id])?.focus();
+                return false;
+            }
+            return;
+        }
+
+        // Customer Dropdown Intercept
+        if (activeEl.id === 'stor_customerDisplay') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const listContainer = document.getElementById('stor_customerList');
+            if (listContainer && listContainer.style.display === 'block') {
+                const items = Array.from(document.querySelectorAll('#stor_customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                if (customerActiveIndex >= 0 && customerActiveIndex < items.length) {
+                    items[customerActiveIndex].click();
+                } else {
+                    listContainer.style.display = 'none';
+                    customerActiveIndex = -1;
+                    document.getElementById('stor_trf_return_no')?.focus();
+                }
+            } else {
+                document.getElementById('stor_trf_return_no')?.focus();
+            }
+            return false;
+        }
+
+        // Date → Customer
+        if (activeEl.id === 'stor_transaction_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const display = document.getElementById('stor_customerDisplay');
+            if (display) {
+                display.focus();
+                setTimeout(() => { openCustomerDropdown(); }, 50);
+            }
+            return false;
+        }
+        // Trf Return No → Remarks
+        if (activeEl.id === 'stor_trf_return_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stor_remarks')?.focus();
+            return false;
+        }
+        // Remarks → GR No
+        if (activeEl.id === 'stor_remarks') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stor_gr_no')?.focus();
+            return false;
+        }
+        // GR No → GR Date
+        if (activeEl.id === 'stor_gr_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stor_gr_date')?.focus();
+            return false;
+        }
+        // GR Date → Cases
+        if (activeEl.id === 'stor_gr_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stor_cases')?.focus();
+            return false;
+        }
+        // Cases → Transport
+        if (activeEl.id === 'stor_cases') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stor_transport')?.focus();
+            return false;
+        }
+        // Transport → Insert Items
+        if (activeEl.id === 'stor_transport') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const addBtn = document.getElementById('stor_insertItemsBtn');
+            if (addBtn) { addBtn.focus(); addBtn.click(); }
+            return false;
+        }
+        // Insert Items button
+        if (activeEl.id === 'stor_insertItemsBtn') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            openInsertItemsModal();
+            return false;
+        }
+    }
+
+    // Dropdown arrow navigation
+    if (document.activeElement && document.activeElement.id === 'stor_customerDisplay') {
+        const listContainer = document.getElementById('stor_customerList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); customerActiveIndex++; highlightCustomerItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); customerActiveIndex--; highlightCustomerItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closeCustomerDropdown(); return false; }
+        }
+    }
+
+    // Ctrl+S save
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        saveTransaction();
+        return false;
+    }
+}, true);
 
 // Add New Row (manual)
 function addNewRow() {
@@ -329,12 +525,12 @@ function addNewRow() {
     row.onclick = function() { selectRow(rowIndex); };
     
     row.innerHTML = `
-        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][name]" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" readonly></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" value="0" min="0" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" value="0" min="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control text-end readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly></td>
         <td class="text-center"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowIndex})"><i class="bi bi-trash"></i></button></td>
     `;
@@ -407,18 +603,50 @@ function fillRowWithItem(rowIndex, item) {
 function handleBatchKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            document.getElementById('stor_transport')?.focus();
+            return;
+        }
         const row = document.getElementById(`row-${rowIndex}`);
         const batchInput = row?.querySelector('input[name*="[batch]"]');
         const itemId = row?.dataset.itemId;
         
         if (itemId && batchInput && batchInput.value.trim()) {
-            // Check if batch exists, if not show create batch modal
             checkBatchAndCreate(rowIndex);
         } else if (itemId) {
-            // Open batch selection modal
             const itemData = row.dataset.itemData ? JSON.parse(row.dataset.itemData) : {};
             fetchBatchesForItem(itemId, rowIndex, itemData);
         }
+    }
+}
+
+// Handle Qty field keydown
+function handleQtyKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const row = document.getElementById(`row-${rowIndex}`);
+        if (event.shiftKey) {
+            row?.querySelector('input[name*="[batch]"]')?.focus();
+            return;
+        }
+        calculateRowAmount(rowIndex);
+        row?.querySelector('input[name*="[rate]"]')?.focus();
+        row?.querySelector('input[name*="[rate]"]')?.select();
+    }
+}
+
+// Handle Rate field keydown
+function handleRateKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        const row = document.getElementById(`row-${rowIndex}`);
+        if (event.shiftKey) {
+            row?.querySelector('input[name*="[qty]"]')?.focus();
+            return;
+        }
+        calculateRowAmount(rowIndex);
+        // Open Insert Items modal for next item
+        openInsertItemsModal();
     }
 }
 
@@ -751,10 +979,10 @@ function addItemToTableWithoutBatch(item) {
     row.innerHTML = `
         <td><input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" readonly></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" value="0" min="0" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" value="${parseFloat(item.s_rate || item.mrp || 0).toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" value="0" min="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" value="${parseFloat(item.s_rate || item.mrp || 0).toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control text-end readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly></td>
         <td class="text-center"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowIndex})"><i class="bi bi-trash"></i></button></td>
     `;
@@ -922,10 +1150,10 @@ function addItemToTable(item, batch) {
     row.innerHTML = `
         <td><input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiry}" readonly></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" value="0" min="0" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" value="${rate}" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" value="0" min="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" value="${rate}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control text-end readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly></td>
         <td class="text-center"><button type="button" class="btn btn-danger btn-sm" onclick="removeRow(${rowIndex})"><i class="bi bi-trash"></i></button></td>
     `;
