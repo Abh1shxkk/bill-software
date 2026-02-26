@@ -56,15 +56,25 @@
     /* Rate Modal Styles */
     .rate-modal {
         display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.7);
-        width: 400px; background: #f8c0c0; border: 2px solid #999;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); z-index: 99999; opacity: 0; transition: all 0.3s ease;
+        width: 420px; background: #fff; border-radius: 6px;
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 99999; opacity: 0; transition: all 0.25s ease;
     }
     .rate-modal.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    .rate-modal-body { padding: 15px 20px; }
-    .rate-modal .field-row { display: flex; align-items: center; margin-bottom: 10px; gap: 15px; }
-    .rate-modal .field-row label { font-weight: 500; white-space: nowrap; }
-    .rate-modal .field-row input { border: 1px solid #999; padding: 5px 8px; font-size: 12px; width: 120px; }
+    .rate-modal-header {
+        background: #dc3545; color: white; padding: 10px 16px;
+        border-radius: 6px 6px 0 0; font-weight: 600; font-size: 13px;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .rate-modal-body { padding: 18px 20px 14px; background: #fff8f8; border-radius: 0 0 6px 6px; }
+    .rate-modal .field-row { display: flex; align-items: center; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+    .rate-modal .field-row label { font-weight: 600; font-size: 12px; white-space: nowrap; min-width: 100px; }
+    .rate-modal .field-row input { border: 1px solid #aaa; padding: 5px 8px; font-size: 12px; width: 110px; border-radius: 3px; }
     .rate-modal .field-row input.yellow-bg { background: #ffff99; }
+    .rate-modal .rate-ok-btn {
+        background: #0d6efd; color: white; border: none; padding: 5px 24px;
+        font-size: 12px; font-weight: 600; border-radius: 3px; cursor: pointer;
+    }
+    .rate-modal .rate-ok-btn:hover { background: #0b5ed7; }
     
     /* Row Selection Highlight */
     .table-compact tbody tr { cursor: pointer; transition: all 0.2s ease; }
@@ -110,12 +120,28 @@
                                     <div class="col-md-4">
                                         <div class="field-group">
                                             <label style="width: 100px;">Supplier :</label>
-                                            <select id="supplier_id" name="supplier_id" class="form-control" required>
-                                                <option value="">Select Supplier</option>
-                                                @foreach($suppliers as $supplier)
-                                                    <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                                                @endforeach
-                                            </select>
+                                            <input type="hidden" id="supplier_id" name="supplier_id">
+                                            <div style="position:relative; flex:1;" id="supplierWrapper">
+                                                <input type="text" id="supplier_search" class="form-control no-select2"
+                                                       placeholder="Search supplier..."
+                                                       autocomplete="off"
+                                                       oninput="_filterSupplierList()"
+                                                       onclick="_openSupplierDrop()"
+                                                       style="font-size:12px;">
+                                                <div id="supplierDropList"
+                                                     style="display:none; position:absolute; z-index:99999; top:100%; left:0;
+                                                            width:250px; max-height:220px; overflow-y:auto;
+                                                            background:white; border:1px solid #ccc;
+                                                            box-shadow:0 4px 8px rgba(0,0,0,.15);">
+                                                    @foreach($suppliers as $supplier)
+                                                    <div class="supplier-drop-item"
+                                                         data-value="{{ $supplier->supplier_id }}"
+                                                         data-name="{{ $supplier->name }}"
+                                                         style="padding:5px 10px; cursor:pointer; font-size:12px;"
+                                                         onmousedown="_selectSupplierItem(this)">{{ $supplier->name }}</div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-5">
@@ -408,7 +434,8 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
     
     const row = document.createElement('tr');
     row.id = `row-${newRowIndex}`;
-    row.dataset.rowIndex = newRowIndex;
+    // data-row attribute — used by jQuery keyboard handler ($row.data('row'))
+    row.setAttribute('data-row', newRowIndex);
     row.dataset.itemId = itemData.id;
     row.dataset.batchId = batchData?.id || '';
     row.onclick = function() { selectRow(newRowIndex); };
@@ -418,17 +445,18 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
     const qty = 1;
     const amount = (qty * rate).toFixed(2);
     
+    // ⚠️ Class names MUST match keyboard handler: .item-code .item-name .batch-no .expiry .qty .free-qty .rate .dis-percent .amount
     row.innerHTML = `
-        <td><input type="text" class="form-control" value="${itemData.id || ''}" readonly></td>
-        <td><input type="text" class="form-control" value="${itemData.name || ''}" readonly></td>
-        <td><input type="text" class="form-control" value="${batchData?.batch_no || ''}" readonly></td>
-        <td><input type="text" class="form-control" value="${batchData?.expiry_display || batchData?.expiry || ''}" readonly></td>
-        <td><input type="number" class="form-control" value="${qty}" onchange="calculateRowAmount(${newRowIndex})"></td>
-        <td><input type="number" class="form-control" value="0" onchange="calculateRowAmount(${newRowIndex})"></td>
-        <td><input type="number" class="form-control" value="${rate}" step="0.01" onchange="calculateRowAmount(${newRowIndex})"></td>
-        <td><input type="number" class="form-control" value="0" step="0.01" onchange="calculateRowAmount(${newRowIndex})"></td>
-        <td><input type="number" class="form-control readonly-field" value="${amount}" step="0.01" readonly></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${newRowIndex})"><i class="bi bi-x"></i></button></td>
+        <td><input type="text" class="form-control item-code" value="${itemData.id || ''}" readonly tabindex="-1"></td>
+        <td><input type="text" class="form-control item-name" value="${itemData.name || ''}" readonly tabindex="-1"></td>
+        <td><input type="text" class="form-control batch-no" value="${batchData?.batch_no || ''}" readonly tabindex="-1"></td>
+        <td><input type="text" class="form-control expiry" value="${batchData?.expiry_display || batchData?.expiry || ''}" readonly tabindex="-1"></td>
+        <td><input type="number" class="form-control qty" data-row="${newRowIndex}" value="${qty}" step="0.01" min="0"></td>
+        <td><input type="number" class="form-control free-qty" data-row="${newRowIndex}" value="0" min="0"></td>
+        <td><input type="number" class="form-control rate" data-row="${newRowIndex}" value="${rate}" step="0.01"></td>
+        <td><input type="number" class="form-control dis-percent" data-row="${newRowIndex}" value="0" step="0.01"></td>
+        <td><input type="number" class="form-control amount readonly-field" value="${amount}" step="0.01" readonly tabindex="-1"></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${newRowIndex})" tabindex="-1"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${newRowIndex}][item_id]" value="${itemData.id || ''}">
         <input type="hidden" name="items[${newRowIndex}][batch_id]" value="${batchData?.id || ''}">
         <input type="hidden" name="items[${newRowIndex}][hsn_code]" value="${itemData.hsn_code || ''}">
@@ -441,21 +469,40 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
     `;
     
     tbody.appendChild(row);
-    selectRow(newRowIndex);
     
-    // Update calculations
-    if (typeof calculateRowAmount === 'function') {
-        calculateRowAmount(newRowIndex);
-    }
-    if (typeof calculateTotals === 'function') {
-        calculateTotals();
-    }
+    // Store item data on jQuery row for calc functions
+    const $row = $(`tr[data-row="${newRowIndex}"]`);
+    $row.data('item_id', itemData.id);
+    $row.data('rate_charged', 0);
+    $row.data('actual_rate', 0);
+    const itemDataObj = {
+        s_rate:       parseFloat(itemData.s_rate)       || 0,
+        ws_rate:      parseFloat(itemData.ws_rate)      || 0,
+        hsn_code:     itemData.hsn_code                 || '',
+        cgst_percent: parseFloat(itemData.cgst_percent) || 0,
+        sgst_percent: parseFloat(itemData.sgst_percent) || 0,
+        sc_percent:   parseFloat(itemData.sc_percent)   || 0,
+        scm_percent:  parseFloat(itemData.scm_percent)  || 0,
+        packing:      itemData.packing                  || '',
+        unit:         itemData.unit                     || '',
+        company_name: itemData.company_name             || '',
+        location:     itemData.location                 || ''
+    };
+    $row.data('item_data', itemDataObj);
+    
+    // Select row highlight
+    $('#itemsTableBody tr').removeClass('selected-row');
+    $row.addClass('selected-row');
+    updateSelectedRowDetails($row);
+    
+    if (typeof calculateTotals === 'function') calculateTotals();
     
     console.log('✅ Claim to Supplier: Row created successfully', newRowIndex);
     
-    // Focus qty field
+    // Batch + Expiry already filled by batch modal → focus qty directly
     setTimeout(() => {
-        row.querySelector('input[type="number"]')?.focus();
+        const qtyField = row.querySelector('.qty');
+        if (qtyField) { qtyField.focus(); qtyField.select(); }
     }, 100);
 }
 
@@ -572,7 +619,14 @@ function showAdditionalDetailsModal() {
         }
     });
     
-    setTimeout(() => { $('#additionalModalBackdrop, #additionalModal').addClass('show'); }, 10);
+    setTimeout(() => {
+        $('#additionalModalBackdrop, #additionalModal').addClass('show');
+        // Register keyboard handler for this modal
+        window.removeEventListener('keydown', _handleAdditionalModalKey, true);
+        window.addEventListener('keydown', _handleAdditionalModalKey, true);
+        // Focus first field
+        setTimeout(() => { document.getElementById('add_blank_statement')?.focus(); document.getElementById('add_blank_statement')?.select(); }, 80);
+    }, 10);
 }
 
 function toggleAdditionalFields() {
@@ -593,6 +647,7 @@ function toggleAdditionalFields() {
 }
 
 function closeAdditionalDetailsModal() {
+    window.removeEventListener('keydown', _handleAdditionalModalKey, true);
     $('#additionalModalBackdrop, #additionalModal').removeClass('show');
     setTimeout(() => { $('#additionalModal, #additionalModalBackdrop').remove(); }, 300);
 }
@@ -606,6 +661,8 @@ function saveAdditionalDetails() {
     additionalDetails.company_name = $('#add_company_name').val();
     additionalDetails.division = $('#add_division').val();
     closeAdditionalDetailsModal();
+    // Auto-open Add Item modal after additional details saved
+    setTimeout(() => showAddItemModal(), 350);
 }
 
 
@@ -810,36 +867,7 @@ $(document).on('focus', '#itemsTableBody tr input', function() {
     updateSelectedRowDetails($row);
 });
 
-// ==================== FIELD NAVIGATION WITH ENTER KEY ====================
-$(document).on('keydown', '.batch-no, .expiry, .qty, .free-qty, .rate, .dis-percent', function(e) {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        const $row = $(this).closest('tr');
-        const rowIdx = $row.data('row');
-        
-        if ($(this).hasClass('batch-no')) {
-            // Batch → Expiry
-            $row.find('.expiry').focus();
-        } else if ($(this).hasClass('expiry')) {
-            // Expiry → Qty
-            $row.find('.qty').focus();
-        } else if ($(this).hasClass('qty')) {
-            // Qty → F.Qty
-            $row.find('.free-qty').focus();
-        } else if ($(this).hasClass('free-qty')) {
-            // F.Qty → Show Rate Modal
-            currentRowForRate = rowIdx;
-            showRateModal(rowIdx);
-        } else if ($(this).hasClass('rate')) {
-            // Rate → Dis%
-            $row.find('.dis-percent').focus();
-        } else if ($(this).hasClass('dis-percent')) {
-            // Dis% → Calculate and done
-            calculateRowAmount($row);
-            calculateTotals();
-        }
-    }
-});
+// Table row Enter-key navigation handled in master window capture handler below
 
 // ==================== RATE CHARGED / ACTUAL RATE MODAL ====================
 function showRateModal(rowIdx) {
@@ -848,17 +876,21 @@ function showRateModal(rowIdx) {
     const actualRate = $row.data('actual_rate') || 0;
     
     const modalHTML = `
-        <div class="modal-backdrop-custom" id="rateModalBackdrop"></div>
-        <div class="rate-modal" id="rateModal">
+        <div class="modal-backdrop-custom show" id="rateModalBackdrop" onclick="closeRateModal()"></div>
+        <div class="rate-modal show" id="rateModal">
+            <div class="rate-modal-header">
+                <span>&#9998; Rate Details</span>
+                <button type="button" onclick="closeRateModal()" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;line-height:1;">&times;</button>
+            </div>
             <div class="rate-modal-body">
                 <div class="field-row">
                     <label>Rate Charged :</label>
                     <input type="number" id="rate_charged" class="yellow-bg" value="${rateCharged}" step="0.01">
-                    <label style="margin-left: 20px;">Actual Rate :</label>
+                    <label>Actual Rate :</label>
                     <input type="number" id="actual_rate" value="${actualRate}" step="0.01">
                 </div>
-                <div class="field-row" style="justify-content: flex-end; margin-top: 15px;">
-                    <button type="button" class="ok-btn" onclick="saveRateModal()">Ok</button>
+                <div class="field-row" style="justify-content: flex-end; margin-top: 5px;">
+                    <button type="button" class="rate-ok-btn" onclick="saveRateModal()">Ok</button>
                 </div>
             </div>
         </div>
@@ -866,54 +898,45 @@ function showRateModal(rowIdx) {
     
     $('#rateModal, #rateModalBackdrop').remove();
     $('body').append(modalHTML);
-    setTimeout(() => { 
-        $('#rateModalBackdrop, #rateModal').addClass('show'); 
-        $('#rate_charged').focus().select();
-    }, 10);
-    
-    // Enter key navigation in rate modal
-    $('#rate_charged').on('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            $('#actual_rate').focus().select();
-        }
-    });
-    
-    $('#actual_rate').on('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            saveRateModal();
-        }
-    });
+    // Modal already has .show class in HTML, just focus and register handler
+    setTimeout(() => {
+        document.getElementById('rate_charged')?.focus();
+        document.getElementById('rate_charged')?.select();
+        window.removeEventListener('keydown', _handleRateModalKey, true);
+        window.addEventListener('keydown', _handleRateModalKey, true);
+    }, 30);
 }
 
 function saveRateModal() {
     const rateCharged = parseFloat($('#rate_charged').val()) || 0;
-    const actualRate = parseFloat($('#actual_rate').val()) || 0;
+    const actualRate  = parseFloat($('#actual_rate').val())  || 0;
     
     if (currentRowForRate !== null) {
         const $row = $(`tr[data-row="${currentRowForRate}"]`);
         $row.data('rate_charged', rateCharged);
-        $row.data('actual_rate', actualRate);
-        
-        // Set rate field value (use rate_charged as the rate)
+        $row.data('actual_rate',  actualRate);
         $row.find('.rate').val(rateCharged.toFixed(2));
+        // Recalculate
+        calculateRowAmount($row);
+        calculateTotals();
     }
     
+    // closeRateModal will handle focus back to .rate field
     closeRateModal();
-    
-    // Focus on rate field after modal closes
-    if (currentRowForRate !== null) {
-        setTimeout(() => {
-            $(`tr[data-row="${currentRowForRate}"]`).find('.rate').focus();
-        }, 100);
-    }
     currentRowForRate = null;
 }
 
 function closeRateModal() {
-    $('#rateModalBackdrop, #rateModal').removeClass('show');
-    setTimeout(() => { $('#rateModal, #rateModalBackdrop').remove(); }, 300);
+    window.removeEventListener('keydown', _handleRateModalKey, true);
+    $('#rateModal, #rateModalBackdrop').remove();
+    // Capture value NOW before any null-setting
+    const rowToFocus = currentRowForRate;
+    if (rowToFocus !== null) {
+        setTimeout(() => {
+            const $r = $(`tr[data-row="${rowToFocus}"]`);
+            if ($r.length) { $r.find('.rate').focus().select(); }
+        }, 50);
+    }
 }
 
 
@@ -1213,5 +1236,329 @@ function saveTransaction() {
         }
     });
 }
+
+// ============================================================================
+// SUPPLIER CUSTOM DROPDOWN
+// ============================================================================
+let _supplierHil = -1;
+
+function _openSupplierDrop() {
+    const dl = document.getElementById('supplierDropList');
+    if (!dl) return;
+    dl.style.display = 'block';
+    // highlight current selected
+    const cur = document.getElementById('supplier_id').value;
+    const items = [...document.querySelectorAll('.supplier-drop-item')];
+    let activeIdx = -1;
+    items.forEach((el, i) => {
+        const visible = el.style.display !== 'none';
+        const active  = el.dataset.value === cur && visible;
+        el.style.background = active ? '#0d6efd' : '';
+        el.style.color      = active ? '#fff'    : '';
+        if (active) activeIdx = i;
+    });
+    if (activeIdx >= 0) _supplierHil = activeIdx;
+    else if (items.filter(el => el.style.display !== 'none').length) _highlightSupplier(0);
+}
+
+function _closeSupplierDrop() {
+    const dl = document.getElementById('supplierDropList');
+    if (dl) dl.style.display = 'none';
+    _supplierHil = -1;
+}
+
+function _filterSupplierList() {
+    const q = (document.getElementById('supplier_search')?.value || '').toLowerCase();
+    const items = document.querySelectorAll('.supplier-drop-item');
+    let firstVisible = -1;
+    items.forEach((el, i) => {
+        const match = el.dataset.name.toLowerCase().includes(q);
+        el.style.display = match ? '' : 'none';
+        if (match && firstVisible < 0) firstVisible = i;
+    });
+    _supplierHil = -1;
+    const dl = document.getElementById('supplierDropList');
+    if (dl && dl.style.display === 'none') dl.style.display = 'block';
+    if (firstVisible >= 0) _highlightSupplier(firstVisible);
+}
+
+function _highlightSupplier(idx) {
+    const items = [...document.querySelectorAll('.supplier-drop-item')].filter(el => el.style.display !== 'none');
+    items.forEach((el, i) => {
+        el.style.background = i === idx ? '#0d6efd' : '';
+        el.style.color      = i === idx ? '#fff'    : '';
+    });
+    _supplierHil = idx;
+    // Scroll INSIDE dropdown container only — scrollIntoView scrolls the whole page!
+    if (items[idx]) {
+        const container = document.getElementById('supplierDropList');
+        if (container) {
+            const itemTop    = items[idx].offsetTop;
+            const itemBottom = itemTop + items[idx].offsetHeight;
+            if (itemBottom > container.scrollTop + container.clientHeight) {
+                container.scrollTop = itemBottom - container.clientHeight;
+            } else if (itemTop < container.scrollTop) {
+                container.scrollTop = itemTop;
+            }
+        }
+    }
+}
+
+function _selectSupplierItem(el) {
+    document.getElementById('supplier_id').value     = el.dataset.value;
+    document.getElementById('supplier_search').value = el.dataset.name;
+    _closeSupplierDrop();
+    setTimeout(() => {
+        const f = document.getElementById('invoice_date');
+        if (f) f.focus();
+    }, 50);
+}
+
+// Close supplier drop on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#supplierWrapper')) _closeSupplierDrop();
+});
+
+// ============================================================================
+// ADDITIONAL DETAILS MODAL — KEYBOARD HANDLER
+// ============================================================================
+function _handleAdditionalModalKey(e) {
+    const modal = document.getElementById('additionalModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    if (!['Enter', 'Escape', 'Tab'].includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    if (e.key === 'Escape') { closeAdditionalDetailsModal(); return; }
+
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        const el = document.activeElement;
+
+        if (el?.id === 'add_blank_statement') {
+            toggleAdditionalFields();
+            const blank = document.getElementById('add_blank_statement')?.value?.toUpperCase() === 'Y';
+            if (blank) {
+                // Y selected + all fields disabled → directly OK
+                saveAdditionalDetails();
+            } else {
+                const rt = document.getElementById('add_rate_type');
+                if (rt) { rt.focus(); rt.select(); }
+            }
+            return;
+        }
+        if (el?.id === 'add_rate_type') {
+            document.getElementById('add_from_date')?.focus();
+            return;
+        }
+        if (el?.id === 'add_from_date') {
+            document.getElementById('add_to_date')?.focus();
+            return;
+        }
+        if (el?.id === 'add_to_date') {
+            const cc = document.getElementById('add_company_code');
+            if (cc) { cc.focus(); cc.select(); }
+            return;
+        }
+        if (el?.id === 'add_company_code') {
+            const code = el.value;
+            if (code) {
+                $.get("{{ url('admin/companies/by-code') }}/" + code, function(response) {
+                    if (response.success) $('#add_company_name').val(response.company.name);
+                    else $('#add_company_name').val('');
+                }).fail(() => $('#add_company_name').val(''));
+            }
+            const dv = document.getElementById('add_division');
+            if (dv) { dv.focus(); dv.select(); }
+            return;
+        }
+        if (el?.id === 'add_division') {
+            saveAdditionalDetails(); // closes modal + opens Add Item
+            return;
+        }
+        // fallback: ok button
+        saveAdditionalDetails();
+    }
+}
+
+// ============================================================================
+// RATE MODAL — KEYBOARD HANDLER
+// ============================================================================
+function _handleRateModalKey(e) {
+    const modal = document.getElementById('rateModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    if (!['Enter', 'Escape'].includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    if (e.key === 'Escape') { closeRateModal(); return; }
+
+    if (e.key === 'Enter') {
+        const el = document.activeElement;
+        if (el?.id === 'rate_charged') {
+            const ar = document.getElementById('actual_rate');
+            if (ar) { ar.focus(); ar.select(); }
+        } else {
+            saveRateModal();
+        }
+    }
+}
+
+// Rate modal keyboard handlers are registered directly inside showRateModal/closeRateModal above
+
+// ============================================================================
+// HELPERS — modal open checks
+// ============================================================================
+function _anyItemModalOpen() {
+    return !!document.querySelector('#claimToSupplierItemModal.show, #claimToSupplierBatchModal.show');
+}
+function _additionalModalOpen() {
+    const m = document.getElementById('additionalModal');
+    return !!(m && m.classList.contains('show'));
+}
+function _rateModalOpen() {
+    const m = document.getElementById('rateModal');
+    return !!(m && m.classList.contains('show'));
+}
+
+// ============================================================================
+// PAGE LOAD — focus claim_date
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        const cd = document.getElementById('claim_date');
+        if (cd) cd.focus();
+    }, 300);
+});
+
+// ============================================================================
+// MASTER KEYBOARD HANDLER — window capture phase
+// Flow:
+//   Header : claim_date → supplier_search → invoice_date → tax_flag → narration → Additional Details modal
+//   Add. modal: _handleAdditionalModalKey → division Enter → save → showAddItemModal
+//   Table  : batch-no → expiry → qty → free-qty → [Rate modal] → rate → dis% → showAddItemModal (loop)
+//   Ctrl+S : saveTransaction
+// ============================================================================
+window.addEventListener('keydown', function(e) {
+
+    // ── Supplier dropdown open → intercept nav keys ───────────────────────
+    const suppDrop = document.getElementById('supplierDropList');
+    const suppOpen = suppDrop && suppDrop.style.display !== 'none';
+    if (suppOpen && document.activeElement?.id === 'supplier_search') {
+        if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const visibles = [...document.querySelectorAll('.supplier-drop-item')].filter(el => el.style.display !== 'none');
+            if (!visibles.length) return;
+            if (e.key === 'Escape') { _closeSupplierDrop(); return; }
+            if (e.key === 'ArrowDown') { _highlightSupplier((_supplierHil + 1) % visibles.length); return; }
+            if (e.key === 'ArrowUp')   { _highlightSupplier((_supplierHil - 1 + visibles.length) % visibles.length); return; }
+            if (e.key === 'Enter') {
+                if (_supplierHil >= 0 && visibles[_supplierHil]) _selectSupplierItem(visibles[_supplierHil]);
+                else if (visibles.length) _selectSupplierItem(visibles[0]);
+                return;
+            }
+        }
+    }
+
+    // ── Additional details modal — handled by its own handler ─────────────
+    if (_additionalModalOpen()) return;
+
+    // ── Rate modal — handled by its own handler ───────────────────────────
+    if (_rateModalOpen()) return;
+
+    // ── Item / Batch modals open → skip ──────────────────────────────────
+    if (_anyItemModalOpen()) return;
+
+    // ── Ctrl+S → Save Transaction ─────────────────────────────────────────
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        saveTransaction();
+        return;
+    }
+
+    if (e.key !== 'Enter') return;
+
+    const el = document.activeElement;
+    if (!el) return;
+
+    // ── HEADER FIELDS ─────────────────────────────────────────────────────
+
+    // claim_date → supplier_search (open dropdown)
+    if (el.id === 'claim_date') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        const sf = document.getElementById('supplier_search');
+        if (sf) { sf.focus(); sf.select(); }
+        setTimeout(() => _openSupplierDrop(), 30);
+        return;
+    }
+
+    // supplier_search (no dropdown) → open dropdown
+    if (el.id === 'supplier_search' && !suppOpen) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        _openSupplierDrop();
+        return;
+    }
+
+    // invoice_date → tax_flag
+    if (el.id === 'invoice_date') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        const tf = document.getElementById('tax_flag');
+        if (tf) { tf.focus(); tf.select(); }
+        return;
+    }
+
+    // tax_flag → narration
+    if (el.id === 'tax_flag') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        const nf = document.getElementById('narration');
+        if (nf) nf.focus();
+        return;
+    }
+
+    // narration → open Additional Details modal
+    if (el.id === 'narration') {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        showAdditionalDetailsModal();
+        return;
+    }
+
+    // ── TABLE ROW FIELDS ──────────────────────────────────────────────────
+
+    const $el  = $(el);
+    const $row = $el.closest('#itemsTableBody tr');
+    if (!$row.length) return;
+
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    if ($el.hasClass('batch-no')) {
+        $row.find('.expiry').focus().select();
+        return;
+    }
+    if ($el.hasClass('expiry')) {
+        $row.find('.qty').focus().select();
+        return;
+    }
+    if ($el.hasClass('qty')) {
+        $row.find('.free-qty').focus().select();
+        return;
+    }
+    if ($el.hasClass('free-qty')) {
+        const rowIdx = $row.data('row');
+        currentRowForRate = rowIdx;
+        showRateModal(rowIdx);
+        return;
+    }
+    if ($el.hasClass('rate')) {
+        $row.find('.dis-percent').focus().select();
+        return;
+    }
+    if ($el.hasClass('dis-percent')) {
+        // Calculate row → totals → loop back to Add Item
+        calculateRowAmount($row);
+        calculateTotals();
+        setTimeout(() => showAddItemModal(), 50);
+        return;
+    }
+
+}, true); // ← capture phase — fires BEFORE layout's document handlers
 </script>
 @endpush

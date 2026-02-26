@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'New Item Generation in Pending Order'); ?>
 
-@section('title', 'New Item Generation in Pending Order')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .poi-form { font-size: 12px; }
     .poi-form label { font-weight: 600; font-size: 12px; margin-bottom: 0; }
@@ -20,9 +18,9 @@
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; text-align: right; border-radius: 0 0 8px 8px; }
     .item-row:hover { background-color: #fff3cd !important; cursor: pointer; }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="poi-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -31,7 +29,7 @@
                 <div class="text-muted small">Add or remove items from pending orders</div>
             </div>
             <div>
-                <a href="{{ route('admin.pending-order-item.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.pending-order-item.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list me-1"></i> View All
                 </a>
             </div>
@@ -40,7 +38,7 @@
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
                 <form id="poiForm" autocomplete="off">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     
                     <div class="header-section">
                         <div class="row">
@@ -89,10 +87,10 @@
         </div>
     </div>
 </section>
-@endsection
+<?php $__env->stopSection(); ?>
 
 <!-- Item Selection Modal Component -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'pendingOrderItemModal',
     'module' => 'pending-order-item',
     'showStock' => true,
@@ -100,9 +98,9 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => '',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let itemsData = [];
 
@@ -116,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function loadItems() {
-    fetch('{{ route("admin.pending-order-item.getItems") }}')
+    fetch('<?php echo e(route("admin.pending-order-item.getItems")); ?>')
         .then(response => response.json())
         .then(data => { itemsData = data || []; })
         .catch(error => console.error('Error:', error));
@@ -394,12 +392,12 @@ function saveItem() {
 
     if (typeof window.markAsSaving === 'function') window.markAsSaving();
 
-    fetch('{{ route("admin.pending-order-item.store") }}', {
+    fetch('<?php echo e(route("admin.pending-order-item.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify({ item_id: itemId, action_type: actionType, quantity: quantity })
     })
@@ -437,4 +435,5 @@ function resetForm() {
 
 // (legacy and save functions defined above in main script block)
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/pending-order-item/transaction.blade.php ENDPATH**/ ?>

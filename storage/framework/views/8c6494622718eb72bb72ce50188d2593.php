@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Claim to Supplier Transaction'); ?>
 
-@section('title', 'Claim to Supplier Transaction')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     input:focus { box-shadow: none !important; }
@@ -102,9 +100,9 @@
     .invoices-table tr:hover { background: #e3f2fd; cursor: pointer; }
     .invoices-table tr.selected { background: #bbdefb !important; }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="cts py-5">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -116,7 +114,7 @@
                 <button type="button" class="btn btn-primary btn-sm" onclick="showLoadInvoicesModal()">
                     <i class="bi bi-folder2-open me-1"></i> Load Invoices
                 </button>
-                <a href="{{ route('admin.claim-to-supplier.transaction') }}" class="btn btn-success btn-sm">
+                <a href="<?php echo e(route('admin.claim-to-supplier.transaction')); ?>" class="btn btn-success btn-sm">
                     <i class="bi bi-plus-circle me-1"></i> New Transaction
                 </a>
             </div>
@@ -131,11 +129,11 @@
                             <div style="width: 200px;">
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">Date:</label>
-                                    <input type="date" id="claim_date" name="claim_date" class="form-control" style="width: 140px;" value="{{ date('Y-m-d') }}" required>
+                                    <input type="date" id="claim_date" name="claim_date" class="form-control" style="width: 140px;" value="<?php echo e(date('Y-m-d')); ?>" required>
                                 </div>
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">Day:</label>
-                                    <input type="text" id="day_name" class="form-control readonly-field" style="width: 140px;" value="{{ date('l') }}" readonly>
+                                    <input type="text" id="day_name" class="form-control readonly-field" style="width: 140px;" value="<?php echo e(date('l')); ?>" readonly>
                                 </div>
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">T. No.:</label>
@@ -161,13 +159,13 @@
                                                             width:250px; max-height:220px; overflow-y:auto;
                                                             background:white; border:1px solid #ccc;
                                                             box-shadow:0 4px 8px rgba(0,0,0,.15);">
-                                                    @foreach($suppliers as $supplier)
+                                                    <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <div class="supplier-drop-item"
-                                                         data-value="{{ $supplier->supplier_id }}"
-                                                         data-name="{{ $supplier->name }}"
+                                                         data-value="<?php echo e($supplier->supplier_id); ?>"
+                                                         data-name="<?php echo e($supplier->name); ?>"
                                                          style="padding:5px 10px; cursor:pointer; font-size:12px;"
-                                                         onmousedown="_selectSupplierItem(this)">{{ $supplier->name }}</div>
-                                                    @endforeach
+                                                         onmousedown="_selectSupplierItem(this)"><?php echo e($supplier->name); ?></div>
+                                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                                 </div>
                                             </div>
                                         </div>
@@ -281,7 +279,7 @@
                             </div>
                             <div class="d-flex align-items-center gap-1">
                                 <label class="mb-0" style="font-weight: bold;">Inv.Date :</label>
-                                <input type="date" class="form-control form-control-sm" id="ref_inv_date" name="ref_inv_date" style="width: 120px; height: 26px; font-size: 11px;" value="{{ date('Y-m-d') }}">
+                                <input type="date" class="form-control form-control-sm" id="ref_inv_date" name="ref_inv_date" style="width: 120px; height: 26px; font-size: 11px;" value="<?php echo e(date('Y-m-d')); ?>">
                             </div>
                             <div class="d-flex align-items-center gap-1 flex-grow-1">
                                 <label class="mb-0" style="font-weight: bold;">Customer :</label>
@@ -401,10 +399,10 @@
         </div>
     </div>
 </section>
-@endsection
+<?php $__env->stopSection(); ?>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'claimToSupplierModItemModal',
     'module' => 'claim-to-supplier-mod',
     'showStock' => true,
@@ -412,17 +410,17 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'claimToSupplierModBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'claimToSupplierModBatchModal',
     'module' => 'claim-to-supplier-mod',
     'showOnlyAvailable' => true,
     'rateType' => 'pur_rate',
     'showCostDetails' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let rowIndex = 0;
 let allItems = [];
@@ -433,8 +431,8 @@ let currentRowForRate = null; // Track which row needs rate modal
 let additionalDetails = {
     blank_statement: 'Y',
     rate_type: 'R',
-    from_date: '{{ date("Y-m-d") }}',
-    to_date: '{{ date("Y-m-d") }}',
+    from_date: '<?php echo e(date("Y-m-d")); ?>',
+    to_date: '<?php echo e(date("Y-m-d")); ?>',
     company_code: '',
     company_name: '',
     division: '00'
@@ -544,7 +542,7 @@ $(document).ready(function() {
     $('#ref_customer_code').on('change', function() {
         const code = $(this).val();
         if (code) {
-            $.get("{{ url('admin/customers') }}/" + code, function(response) {
+            $.get("<?php echo e(url('admin/customers')); ?>/" + code, function(response) {
                 if (response && response.name) {
                     $('#ref_customer_name').val(response.name);
                 } else {
@@ -562,7 +560,7 @@ $(document).ready(function() {
 });
 
 function loadNextTransactionNumber() {
-    $.get("{{ route('admin.claim-to-supplier.next-trn-no') }}", function(response) {
+    $.get("<?php echo e(route('admin.claim-to-supplier.next-trn-no')); ?>", function(response) {
         $('#trn_no').val(response.next_trn_no);
     });
 }
@@ -614,7 +612,7 @@ function showAdditionalDetailsModal() {
     $('#add_company_code').on('change', function() {
         const code = $(this).val();
         if (code) {
-            $.get("{{ url('admin/companies/by-code') }}/" + code, function(response) {
+            $.get("<?php echo e(url('admin/companies/by-code')); ?>/" + code, function(response) {
                 if (response.success) {
                     $('#add_company_name').val(response.company.name);
                 } else {
@@ -639,8 +637,8 @@ function toggleAdditionalFields() {
     if (isBlankY) {
         $('.additional-field').prop('disabled', true).css({ 'background': '#ccc', 'cursor': 'not-allowed' });
         $('#add_rate_type').val('R');
-        $('#add_from_date').val('{{ date("Y-m-d") }}');
-        $('#add_to_date').val('{{ date("Y-m-d") }}');
+        $('#add_from_date').val('<?php echo e(date("Y-m-d")); ?>');
+        $('#add_to_date').val('<?php echo e(date("Y-m-d")); ?>');
         $('#add_company_code').val('');
         $('#add_company_name').val('');
         $('#add_division').val('00');
@@ -680,7 +678,7 @@ function _legacy_showAddItemModal() {
     if (additionalDetails.company_code) params.company_code = additionalDetails.company_code;
     if (additionalDetails.division && additionalDetails.division !== '00') params.division = additionalDetails.division;
     
-    $.get("{{ route('admin.items.get-all') }}", params, function(data) {
+    $.get("<?php echo e(route('admin.items.get-all')); ?>", params, function(data) {
         allItems = data.items || data;
         _legacy_showItemSelectionModal(allItems);
     }).fail(function() {
@@ -991,7 +989,7 @@ function updateSelectedRowDetails($row) {
     
     // Fetch item data from Items table via API
     $.ajax({
-        url: "{{ url('admin/items/search') }}",
+        url: "<?php echo e(url('admin/items/search')); ?>",
         method: 'GET',
         data: { code: itemId },
         success: function(response) {
@@ -1199,7 +1197,7 @@ function saveTransaction() {
     }
     
     const data = {
-        _token: '{{ csrf_token() }}',
+        _token: '<?php echo e(csrf_token()); ?>',
         claim_date: $('#claim_date').val(),
         supplier_id: supplierId,
         supplier_name: $('#supplier_id option:selected').text(),
@@ -1226,7 +1224,7 @@ function saveTransaction() {
     };
     
     $.ajax({
-        url: "{{ route('admin.claim-to-supplier.store') }}",
+        url: "<?php echo e(route('admin.claim-to-supplier.store')); ?>",
         method: 'POST',
         data: data,
         success: function(response) {
@@ -1264,9 +1262,9 @@ function showLoadInvoicesModal() {
                         <label class="form-label">Filter by Supplier</label>
                         <select class="form-control form-control-sm" id="invoiceFilterSupplier" onchange="loadPastInvoices()">
                             <option value="">All Suppliers</option>
-                            @foreach($suppliers as $supplier)
-                                <option value="{{ $supplier->supplier_id }}">{{ $supplier->name }}</option>
-                            @endforeach
+                            <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($supplier->supplier_id); ?>"><?php echo e($supplier->name); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
@@ -1319,7 +1317,7 @@ function loadPastInvoices() {
         </div>
     `);
     
-    $.get("{{ route('admin.claim-to-supplier.past-claims') }}", { date: date, supplier_id: supplierId }, function(response) {
+    $.get("<?php echo e(route('admin.claim-to-supplier.past-claims')); ?>", { date: date, supplier_id: supplierId }, function(response) {
         if (response.success && response.transactions.length > 0) {
             let tableHTML = `
                 <table class="invoices-table">
@@ -1369,7 +1367,7 @@ function loadSelectedInvoice() {
     
     $('#loadSelectedInvoiceBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Loading...');
     
-    $.get("{{ url('admin/claim-to-supplier/details') }}/" + currentClaimId, function(response) {
+    $.get("<?php echo e(url('admin/claim-to-supplier/details')); ?>/" + currentClaimId, function(response) {
         if (response.success) {
             closeLoadInvoicesModal();
             populateFormWithData(response.header, response.items);
@@ -1552,7 +1550,7 @@ function updateTransaction() {
     }
     
     const data = {
-        _token: '{{ csrf_token() }}',
+        _token: '<?php echo e(csrf_token()); ?>',
         _method: 'PUT',
         claim_date: $('#claim_date').val(),
         supplier_id: supplierId,
@@ -1567,7 +1565,7 @@ function updateTransaction() {
     };
     
     $.ajax({
-        url: "{{ url('admin/claim-to-supplier') }}/" + currentClaimId,
+        url: "<?php echo e(url('admin/claim-to-supplier')); ?>/" + currentClaimId,
         method: 'POST',
         data: data,
         success: function(response) {
@@ -1598,7 +1596,7 @@ $(document).ready(function() {
 });
 
 function loadClaimByNumber(claimNo) {
-    $.get("{{ url('admin/claim-to-supplier/get-by-claim-no') }}/" + claimNo, function(response) {
+    $.get("<?php echo e(url('admin/claim-to-supplier/get-by-claim-no')); ?>/" + claimNo, function(response) {
         if (response.success) {
             populateFormWithData(response.header, response.items);
         } else {
@@ -1737,7 +1735,7 @@ function _handleAdditionalModalKey(e) {
         if (el?.id === 'add_to_date')      { const cc = document.getElementById('add_company_code'); if(cc){cc.focus();cc.select();} return; }
         if (el?.id === 'add_company_code') {
             const code = el.value;
-            if (code) $.get("{{ url('admin/companies/by-code') }}/" + code, r => { $('#add_company_name').val(r.success ? r.company.name : ''); });
+            if (code) $.get("<?php echo e(url('admin/companies/by-code')); ?>/" + code, r => { $('#add_company_name').val(r.success ? r.company.name : ''); });
             const dv = document.getElementById('add_division'); if(dv){dv.focus();dv.select();} return;
         }
         if (el?.id === 'add_division') { saveAdditionalDetails(); return; }
@@ -1890,4 +1888,5 @@ window.addEventListener('keydown', function(e) {
 }, true); // capture phase
 
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/claim-to-supplier/modification.blade.php ENDPATH**/ ?>
