@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Voucher Modification'); ?>
 
-@section('title', 'Sale Voucher Modification')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 10px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; color: #c00; }
@@ -79,7 +77,7 @@
         <button type="button" class="btn btn-info btn-sm" id="svm_openHsnBtn" onclick="openHsnModal()">
             <i class="bi bi-plus-circle me-1"></i> Open HSN
         </button>
-        <a href="{{ route('admin.sale-voucher.index') }}" class="btn btn-secondary btn-sm">
+        <a href="<?php echo e(route('admin.sale-voucher.index')); ?>" class="btn btn-secondary btn-sm">
             <i class="bi bi-list"></i> All Vouchers
         </a>
     </div>
@@ -115,9 +113,9 @@
                         <div class="svm-custom-dropdown" id="svm_customerDropdownWrapper">
                             <input type="text" class="svm-dd-input" id="svm_customerDisplay" placeholder="Select Customer..." autocomplete="off" onfocus="openCustomerDropdown()" oninput="filterCustomerInput()" data-custom-enter>
                             <div class="svm-dd-list" id="svm_customerList">
-                                @foreach($customers as $customer)
-                                <div class="svm-dd-item" data-value="{{ $customer->id }}" data-name="{{ $customer->name }}" onclick="selectCustomer('{{ $customer->id }}', '{{ addslashes($customer->name) }}')">{{ $customer->name }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="svm-dd-item" data-value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>" onclick="selectCustomer('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>')"><?php echo e($customer->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -127,9 +125,9 @@
                             <input type="text" class="svm-dd-input" id="svm_salesmanDisplay" placeholder="Select Salesman..." autocomplete="off" onfocus="openSalesmanDropdown()" oninput="filterSalesmanInput()" data-custom-enter>
                             <input type="hidden" id="salesmanId">
                             <div class="svm-dd-list" id="svm_salesmanList">
-                                @foreach($salesmen as $sm)
-                                <div class="svm-dd-item" data-value="{{ $sm->id }}" data-name="{{ $sm->name }}" onclick="selectSalesman('{{ $sm->id }}', '{{ addslashes($sm->name) }}')">{{ $sm->name }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $sm): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="svm-dd-item" data-value="<?php echo e($sm->id); ?>" data-name="<?php echo e($sm->name); ?>" onclick="selectSalesman('<?php echo e($sm->id); ?>', '<?php echo e(addslashes($sm->name)); ?>')"><?php echo e($sm->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -272,11 +270,11 @@
     <div class="hsn-modal-body">
         <input type="text" class="form-control mb-2" id="hsnSearch" placeholder="Search HSN Code..." oninput="filterHsn()">
         <div id="hsnList">
-            @foreach($hsnCodes as $hsn)
-            <div class="hsn-list-item" onclick="selectHsn('{{ $hsn->hsn_code }}', {{ $hsn->cgst_percent }}, {{ $hsn->sgst_percent }}, {{ $hsn->total_gst_percent }})">
-                <strong>{{ $hsn->hsn_code }}</strong> - {{ $hsn->name }} (GST: {{ $hsn->total_gst_percent }}%)
+            <?php $__currentLoopData = $hsnCodes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hsn): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="hsn-list-item" onclick="selectHsn('<?php echo e($hsn->hsn_code); ?>', <?php echo e($hsn->cgst_percent); ?>, <?php echo e($hsn->sgst_percent); ?>, <?php echo e($hsn->total_gst_percent); ?>)">
+                <strong><?php echo e($hsn->hsn_code); ?></strong> - <?php echo e($hsn->name); ?> (GST: <?php echo e($hsn->total_gst_percent); ?>%)
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
     <div class="hsn-modal-footer">
@@ -284,9 +282,9 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let rowCounter = 0;
 let selectedRowIndex = null;
@@ -504,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // VOUCHER FUNCTIONS
 // ============================================================================
 function loadVouchersForModal() {
-    fetch('{{ route("admin.sale-voucher.get-vouchers") }}')
+    fetch('<?php echo e(route("admin.sale-voucher.get-vouchers")); ?>')
     .then(r => r.json())
     .then(result => {
         if (result.success) {
@@ -556,7 +554,7 @@ function closeInvoiceListModal() {
 function loadVoucher(id) {
     closeInvoiceListModal();
     
-    fetch(`{{ url('admin/sale-voucher') }}/${id}/details`)
+    fetch(`<?php echo e(url('admin/sale-voucher')); ?>/${id}/details`)
     .then(r => r.json())
     .then(result => {
         if (result.success) {
@@ -578,7 +576,7 @@ function searchInvoice() {
         return;
     }
     
-    fetch(`{{ url('admin/sale-voucher/search') }}?invoice_no=${encodeURIComponent(invoiceNo)}`)
+    fetch(`<?php echo e(url('admin/sale-voucher/search')); ?>?invoice_no=${encodeURIComponent(invoiceNo)}`)
     .then(r => r.json())
     .then(result => {
         if (result.success) {
@@ -895,11 +893,11 @@ function updateVoucher() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/sale-voucher') }}/${currentVoucherId}`, {
+    fetch(`<?php echo e(url('admin/sale-voucher')); ?>/${currentVoucherId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
             'Accept': 'application/json'
         },
         body: JSON.stringify(data)
@@ -1113,4 +1111,6 @@ window.addEventListener('keydown', function(e) {
 
 }, true);
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-voucher/modification.blade.php ENDPATH**/ ?>
