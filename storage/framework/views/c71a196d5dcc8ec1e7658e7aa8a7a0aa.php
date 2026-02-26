@@ -1,15 +1,12 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Stock Transfer Incoming Transaction'); ?>
 
-@section('title', 'Stock Transfer Incoming Modification')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .sti-form { font-size: 11px; }
     .sti-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
     .sti-form input, .sti-form select { font-size: 11px; padding: 2px 6px; height: 26px; }
     .header-section { background: white; border: 1px solid #dee2e6; padding: 10px; margin-bottom: 8px; border-radius: 4px; }
     .field-group { display: flex; align-items: center; gap: 6px; }
-    .field-group input, .field-group select { flex: 1; min-width: 0; }
     .inner-card { background: #e8f4f8; border: 1px solid #b8d4e0; padding: 8px; border-radius: 3px; }
     .table-compact { font-size: 10px; margin-bottom: 0; }
     .table-compact th, .table-compact td { padding: 4px; vertical-align: middle; height: 45px; }
@@ -31,35 +28,24 @@
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
     .item-row.selected { background-color: #bbdefb !important; }
-    .invoice-row:hover { background-color: #d1ecf1 !important; }
 
     /* Custom Dropdown Styles */
     .custom-dropdown-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
     .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #f0f8ff; }
-
-    /* Invoice row highlight */
-    #invoiceListBody tr.invoice-row-active { background-color: #cce5ff !important; outline: 2px solid #007bff; }
-    #invoiceListBody tr.invoice-row-active td { background-color: #cce5ff !important; }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="sti-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Stock Transfer Incoming Modification</h4>
-                <div class="text-muted small">Modify existing stock transfer incoming</div>
+                <h4 class="mb-0"><i class="bi bi-box-arrow-in-down me-2"></i> Stock Transfer Incoming Transaction</h4>
+                <div class="text-muted small">Create new stock transfer incoming</div>
             </div>
             <div>
-                <button type="button" class="btn btn-info btn-sm" id="stim_loadInvoiceBtn" onclick="showLoadInvoiceModal()">
-                    <i class="bi bi-folder2-open me-1"></i> Load Invoice
-                </button>
-                <a href="{{ route('admin.stock-transfer-incoming.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.stock-transfer-incoming.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list me-1"></i> View All
-                </a>
-                <a href="{{ route('admin.stock-transfer-incoming.transaction') }}" class="btn btn-primary btn-sm">
-                    <i class="bi bi-plus-circle me-1"></i> New Transaction
                 </a>
             </div>
         </div>
@@ -67,38 +53,38 @@
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
                 <form id="stiForm" method="POST" autocomplete="off">
-                    @csrf
-                    <input type="hidden" id="transaction_id" name="transaction_id">
+                    <?php echo csrf_field(); ?>
                     <!-- Header Section -->
                     <div class="header-section">
                         <div class="row g-2 mb-2">
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="stim_transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required data-custom-enter>
+                                    <input type="date" id="sti_transaction_date" name="transaction_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" onchange="updateDayName()" required data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
-                                <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly>
+                                <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="<?php echo e(date('l')); ?>" readonly>
                             </div>
                             <div class="col-md-4">
                                 <div class="field-group">
                                     <label style="width: 60px;">Supplier :</label>
-                                    <div class="custom-dropdown" id="stim_supplierDropdownWrapper" style="flex: 1; position: relative;">
-                                        <input type="text" class="form-control" id="stim_supplierDisplay" 
+                                    <div class="custom-dropdown" id="sti_supplierDropdownWrapper" style="flex: 1; position: relative;">
+                                        <input type="text" class="form-control" id="sti_supplierDisplay" 
                                                placeholder="Select Supplier..." autocomplete="off"
                                                style="background: #e8ffe8; border: 2px solid #28a745;"
                                                onfocus="openSupplierDropdown()" onkeyup="filterSuppliers(event)" data-custom-enter>
                                         <input type="hidden" name="supplier_id" id="supplier_id">
-                                        <div class="custom-dropdown-list" id="stim_supplierList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                            @foreach($suppliers as $supplier)
+                                        <div class="custom-dropdown-list" id="sti_supplierList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <div class="custom-dropdown-item" 
-                                                     data-value="{{ $supplier->supplier_id }}" 
-                                                     data-name="{{ $supplier->name }}"
-                                                     onclick="selectSupplier('{{ $supplier->supplier_id }}', '{{ addslashes($supplier->name) }}')">
-                                                    {{ $supplier->name }}
+                                                     data-value="<?php echo e($supplier->supplier_id); ?>" 
+                                                     data-name="<?php echo e($supplier->name); ?>"
+                                                     onclick="selectSupplier('<?php echo e($supplier->supplier_id); ?>', '<?php echo e(addslashes($supplier->name)); ?>')">
+                                                    <?php echo e($supplier->name); ?>
+
                                                 </div>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -106,13 +92,13 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">Trf.No. :</label>
-                                    <input type="text" id="trf_no" name="trf_no" class="form-control readonly-field" readonly>
+                                    <input type="text" id="trf_no" name="trf_no" class="form-control readonly-field" value="<?php echo e($nextTrfNo); ?>" readonly>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 60px;">Remarks :</label>
-                                    <input type="text" id="stim_remarks" name="remarks" class="form-control" data-custom-enter>
+                                    <input type="text" id="sti_remarks" name="remarks" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -120,31 +106,31 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">ST Date:</label>
-                                    <input type="date" id="stim_st_date" name="st_date" class="form-control" value="{{ date('Y-m-d') }}" data-custom-enter>
+                                    <input type="date" id="sti_st_date" name="st_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">GR No.:</label>
-                                    <input type="text" id="stim_gr_no" name="gr_no" class="form-control" data-custom-enter>
+                                    <input type="text" id="sti_gr_no" name="gr_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date:</label>
-                                    <input type="date" id="stim_gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}" data-custom-enter>
+                                    <input type="date" id="sti_gr_date" name="gr_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="field-group">
                                     <label style="width: 40px;">Cases:</label>
-                                    <input type="text" id="stim_cases" name="cases" class="form-control" data-custom-enter>
+                                    <input type="text" id="sti_cases" name="cases" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 70px;">Transport:</label>
-                                    <input type="text" id="stim_transport" name="transport" class="form-control" data-custom-enter>
+                                    <input type="text" id="sti_transport" name="transport" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -177,7 +163,7 @@
                             <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                                 <i class="bi bi-plus-circle"></i> Add Row
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" id="stim_addItemsBtn" onclick="showItemSelectionModal()">
+                            <button type="button" class="btn btn-sm btn-primary" id="sti_addItemsBtn" onclick="showItemSelectionModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
                         </div>
@@ -268,7 +254,7 @@
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-between mt-3">
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-success" onclick="updateTransaction()">
+                            <button type="button" class="btn btn-success" onclick="saveTransaction()">
                                 <i class="bi bi-save"></i> Save (End)
                             </button>
                             <button type="button" class="btn btn-danger" onclick="deleteSelectedItem()">
@@ -279,8 +265,8 @@
                             </button>
                         </div>
                         <div>
-                            <button type="button" class="btn btn-secondary" onclick="cancelModification()">
-                                <i class="bi bi-x-circle"></i> Cancel
+                            <button type="button" class="btn btn-secondary" onclick="cancelTransaction()">
+                                <i class="bi bi-x-circle"></i> Cancel Trf.Note
                             </button>
                         </div>
                     </div>
@@ -291,43 +277,38 @@
 </section>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
-    'id' => 'stockTransferIncomingModItemModal',
+<?php echo $__env->make('components.modals.item-selection', [
+    'id' => 'stockTransferIncomingItemModal',
     'module' => 'stock-transfer-incoming',
     'showStock' => true,
     'rateType' => 'pur_rate',
     'showCompany' => true,
     'showHsn' => false,
-    'batchModalId' => 'stockTransferIncomingModBatchModal',
-])
+    'batchModalId' => 'stockTransferIncomingBatchModal',
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
-    'id' => 'stockTransferIncomingModBatchModal',
+<?php echo $__env->make('components.modals.batch-selection', [
+    'id' => 'stockTransferIncomingBatchModal',
     'module' => 'stock-transfer-incoming',
     'showOnlyAvailable' => false,
     'rateType' => 'pur_rate',
     'showCostDetails' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
 let selectedRowIndex = null;
-let currentTransactionId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
-    // Focus Load Invoice button on page load
-    setTimeout(() => {
-        document.getElementById('stim_loadInvoiceBtn')?.focus();
-    }, 300);
 });
 
 function updateDayName() {
-    const dateInput = document.getElementById('stim_transaction_date');
+    const dateInput = document.getElementById('sti_transaction_date');
     const dayInput = document.getElementById('day_name');
     if (dateInput.value) {
         const date = new Date(dateInput.value);
@@ -340,24 +321,18 @@ function updateDayName() {
 let supplierActiveIndex = -1;
 
 function updateSupplierName() {
-    // Compatibility - no-op
+    // Compatibility - no-op, selectSupplier handles this now
 }
 
 function openSupplierDropdown() {
-    const display = document.getElementById('stim_supplierDisplay');
-    display.select(); // Select all text so user can type to replace
-    // Show all items (reset filter)
-    document.querySelectorAll('#stim_supplierList .custom-dropdown-item').forEach(item => {
-        item.style.display = '';
-    });
-    document.getElementById('stim_supplierList').style.display = 'block';
+    document.getElementById('sti_supplierList').style.display = 'block';
     supplierActiveIndex = 0;
     highlightSupplierItem();
 }
 
 function closeSupplierDropdown() {
     setTimeout(() => {
-        const list = document.getElementById('stim_supplierList');
+        const list = document.getElementById('sti_supplierList');
         if(list) list.style.display = 'none';
         supplierActiveIndex = -1;
     }, 200);
@@ -365,8 +340,10 @@ function closeSupplierDropdown() {
 
 function filterSuppliers(e) {
     if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    
     const filter = e.target.value.toLowerCase();
-    const items = document.querySelectorAll('#stim_supplierList .custom-dropdown-item');
+    const items = document.querySelectorAll('#sti_supplierList .custom-dropdown-item');
+    
     items.forEach(item => {
         const text = item.innerText.toLowerCase();
         item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
@@ -377,18 +354,22 @@ function filterSuppliers(e) {
 
 function selectSupplier(id, name) {
     document.getElementById('supplier_id').value = id;
-    document.getElementById('stim_supplierDisplay').value = name;
-    document.getElementById('stim_supplierList').style.display = 'none';
+    document.getElementById('sti_supplierDisplay').value = name;
+    document.getElementById('sti_supplierList').style.display = 'none';
     window.selectedSupplierName = name;
     supplierActiveIndex = -1;
-    document.getElementById('stim_remarks')?.focus();
+    
+    // Jump to remarks
+    document.getElementById('sti_remarks')?.focus();
 }
 
 function highlightSupplierItem() {
-    const items = Array.from(document.querySelectorAll('#stim_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    const items = Array.from(document.querySelectorAll('#sti_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
     items.forEach(i => i.classList.remove('active'));
+    
     if (supplierActiveIndex >= items.length) supplierActiveIndex = 0;
     if (supplierActiveIndex < -1) supplierActiveIndex = items.length - 1;
+    
     if (supplierActiveIndex >= 0 && items[supplierActiveIndex]) {
         items[supplierActiveIndex].classList.add('active');
         items[supplierActiveIndex].scrollIntoView({ block: 'nearest' });
@@ -397,216 +378,181 @@ function highlightSupplierItem() {
 
 // Close dropdown on outside click
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('#stim_supplierDropdownWrapper')) {
-        const list = document.getElementById('stim_supplierList');
+    if (!e.target.closest('#sti_supplierDropdownWrapper')) {
+        const list = document.getElementById('sti_supplierList');
         if (list) list.style.display = 'none';
     }
 });
 
-// ====== INVOICE MODAL KEYBOARD NAVIGATION ======
-let invoiceActiveIndex = -1;
-
-function highlightInvoiceRow() {
-    const rows = document.querySelectorAll('#invoiceListBody tr.invoice-row');
-    rows.forEach(r => r.classList.remove('invoice-row-active'));
-    if (invoiceActiveIndex >= rows.length) invoiceActiveIndex = 0;
-    if (invoiceActiveIndex < 0) invoiceActiveIndex = rows.length - 1;
-    if (invoiceActiveIndex >= 0 && rows[invoiceActiveIndex]) {
-        rows[invoiceActiveIndex].classList.add('invoice-row-active');
-        rows[invoiceActiveIndex].scrollIntoView({ block: 'nearest' });
-    }
-}
-
 // ====== KEYBOARD NAVIGATION ======
 document.addEventListener('keydown', function(e) {
-    // Invoice modal keyboard handler
-    const invoiceModal = document.getElementById('invoiceModal');
-    if (invoiceModal) {
-        if (e.key === 'ArrowDown') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            invoiceActiveIndex++;
-            highlightInvoiceRow();
-            return false;
-        }
-        if (e.key === 'ArrowUp') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            invoiceActiveIndex--;
-            highlightInvoiceRow();
-            return false;
-        }
-        if (e.key === 'Enter') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            const rows = document.querySelectorAll('#invoiceListBody tr.invoice-row');
-            if (invoiceActiveIndex >= 0 && rows[invoiceActiveIndex]) {
-                const loadBtn = rows[invoiceActiveIndex].querySelector('button');
-                if (loadBtn) loadBtn.click();
-            }
-            return false;
-        }
-        if (e.key === 'Escape') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            closeInvoiceModal();
-            return false;
-        }
-        return;
-    }
-
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;
+        
+        // Skip if modal is open
+        const hasModalOpen = document.querySelector(
+            '#itemModal, #batchModal, #stockTransferIncomingItemModal.show, #stockTransferIncomingBatchModal.show'
+        );
+        if (hasModalOpen && (document.getElementById('itemModal') || document.getElementById('batchModal') || 
+            document.querySelector('#stockTransferIncomingItemModal.show') || document.querySelector('#stockTransferIncomingBatchModal.show'))) return;
 
-        // Skip if item/batch modal open
-        const hasModalOpen = document.getElementById('itemModal') || document.getElementById('batchModal') ||
-            document.querySelector('#stockTransferIncomingModItemModal.show') || document.querySelector('#stockTransferIncomingModBatchModal.show');
-        if (hasModalOpen) return;
-
-        // Ctrl+Enter → Inc. field
+        // Ctrl+Enter → jump to Inc. field
         if (e.ctrlKey && !e.shiftKey && !e.altKey) {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             document.getElementById('inclusive')?.focus();
             return false;
         }
 
-        // Shift+Enter backward
+        // Shift+Enter backward navigation
         if (e.shiftKey) {
-            const backMap = {
-                'stim_supplierDisplay': 'stim_transaction_date',
-                'stim_remarks': 'stim_supplierDisplay',
-                'stim_st_date': 'stim_remarks',
-                'stim_gr_no': 'stim_st_date',
-                'stim_gr_date': 'stim_gr_no',
-                'stim_cases': 'stim_gr_date',
-                'stim_transport': 'stim_cases'
-            };
-            if (backMap[activeEl.id]) {
+            if (activeEl.id === 'sti_supplierDisplay') {
                 e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-                document.getElementById(backMap[activeEl.id])?.focus();
+                document.getElementById('sti_transaction_date')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_remarks') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_supplierDisplay')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_st_date') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_remarks')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_gr_no') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_st_date')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_gr_date') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_gr_no')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_cases') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_gr_date')?.focus();
+                return false;
+            }
+            if (activeEl.id === 'sti_transport') {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById('sti_cases')?.focus();
                 return false;
             }
             return;
         }
 
         // Supplier Dropdown Intercept
-        if (activeEl.id === 'stim_supplierDisplay') {
+        if (activeEl.id === 'sti_supplierDisplay') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            const existingId = document.getElementById('supplier_id').value;
-            const listContainer = document.getElementById('stim_supplierList');
-            
-            // If supplier already selected, just close dropdown and move on
-            if (existingId) {
-                if (listContainer) listContainer.style.display = 'none';
-                supplierActiveIndex = -1;
-                // Restore display name
-                document.getElementById('stim_supplierDisplay').value = window.selectedSupplierName || '';
-                document.getElementById('stim_remarks')?.focus();
-                return false;
-            }
-            
-            // No supplier yet - try to select from dropdown
+            const listContainer = document.getElementById('sti_supplierList');
             if (listContainer && listContainer.style.display === 'block') {
-                const items = Array.from(document.querySelectorAll('#stim_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                const items = Array.from(document.querySelectorAll('#sti_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
                 if (supplierActiveIndex >= 0 && supplierActiveIndex < items.length) {
                     items[supplierActiveIndex].click();
                 } else {
                     listContainer.style.display = 'none';
                     supplierActiveIndex = -1;
-                    document.getElementById('stim_remarks')?.focus();
+                    document.getElementById('sti_remarks')?.focus();
                 }
             } else {
-                document.getElementById('stim_remarks')?.focus();
+                document.getElementById('sti_remarks')?.focus();
             }
             return false;
         }
 
         // Date → Supplier
-        if (activeEl.id === 'stim_transaction_date') {
+        if (activeEl.id === 'sti_transaction_date') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stim_supplierDisplay')?.focus();
-            setTimeout(() => { openSupplierDropdown(); }, 50);
+            const supplierDisplay = document.getElementById('sti_supplierDisplay');
+            if (supplierDisplay) {
+                supplierDisplay.focus();
+                setTimeout(() => { openSupplierDropdown(); }, 50);
+            }
             return false;
         }
         // Remarks → ST Date
-        if (activeEl.id === 'stim_remarks') {
+        if (activeEl.id === 'sti_remarks') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stim_st_date')?.focus();
+            document.getElementById('sti_st_date')?.focus();
             return false;
         }
         // ST Date → GR No.
-        if (activeEl.id === 'stim_st_date') {
+        if (activeEl.id === 'sti_st_date') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stim_gr_no')?.focus();
+            document.getElementById('sti_gr_no')?.focus();
             return false;
         }
         // GR No. → GR Date
-        if (activeEl.id === 'stim_gr_no') {
+        if (activeEl.id === 'sti_gr_no') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stim_gr_date')?.focus();
+            document.getElementById('sti_gr_date')?.focus();
             return false;
         }
         // GR Date → Cases
-        if (activeEl.id === 'stim_gr_date') {
+        if (activeEl.id === 'sti_gr_date') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stim_cases')?.focus();
+            document.getElementById('sti_cases')?.focus();
             return false;
         }
         // Cases → Transport
-        if (activeEl.id === 'stim_cases') {
+        if (activeEl.id === 'sti_cases') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            document.getElementById('stim_transport')?.focus();
+            document.getElementById('sti_transport')?.focus();
             return false;
         }
-        // Transport → first row Batch (if items exist) OR Add Items
-        if (activeEl.id === 'stim_transport') {
+        // Transport → Add Items
+        if (activeEl.id === 'sti_transport') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            const firstRow = document.querySelector('#itemsTableBody tr');
-            if (firstRow) {
-                const batchInput = firstRow.querySelector('input[name*="[batch]"]');
-                if (batchInput) {
-                    selectRow(parseInt(firstRow.dataset.rowIndex));
-                    batchInput.focus();
-                    batchInput.select();
-                    return false;
-                }
+            const addBtn = document.getElementById('sti_addItemsBtn');
+            if (addBtn) {
+                addBtn.focus();
+                addBtn.click();
             }
-            const addBtn = document.getElementById('stim_addItemsBtn');
-            if (addBtn) { addBtn.focus(); addBtn.click(); }
             return false;
         }
-        // Load Invoice button → open modal
-        if (activeEl.id === 'stim_loadInvoiceBtn') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            showLoadInvoiceModal();
-            return false;
-        }
-
         // Add Items button
-        if (activeEl.id === 'stim_addItemsBtn') {
+        if (activeEl.id === 'sti_addItemsBtn') {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             showItemSelectionModal();
             return false;
         }
     }
-
+    
     // Dropdown arrow navigation
-    if (document.activeElement && document.activeElement.id === 'stim_supplierDisplay') {
-        const listContainer = document.getElementById('stim_supplierList');
+    if (document.activeElement && document.activeElement.id === 'sti_supplierDisplay') {
+        const listContainer = document.getElementById('sti_supplierList');
         if (listContainer && listContainer.style.display === 'block') {
-            if (e.key === 'ArrowDown') { e.preventDefault(); supplierActiveIndex++; highlightSupplierItem(); return false; }
-            if (e.key === 'ArrowUp') { e.preventDefault(); supplierActiveIndex--; highlightSupplierItem(); return false; }
-            if (e.key === 'Escape') { e.preventDefault(); closeSupplierDropdown(); return false; }
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                supplierActiveIndex++;
+                highlightSupplierItem();
+                return false;
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                supplierActiveIndex--;
+                highlightSupplierItem();
+                return false;
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                closeSupplierDropdown();
+                return false;
+            }
         }
     }
 
-    // Ctrl+S save
+    // Ctrl+S shortcut to save
     if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
         e.preventDefault();
-        updateTransaction();
+        saveTransaction();
         return false;
     }
 }, true);
 
 function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}')
+    fetch('<?php echo e(route("admin.items.get-all")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data.items || [];
@@ -615,22 +561,22 @@ function loadItems() {
 }
 
 // ====== NEW MODAL COMPONENT BRIDGE ======
+// Open Item Selection Modal using new component
 function showItemSelectionModal() {
-    console.log('📦 Opening stock transfer incoming modification item modal');
-    if (typeof openItemModal_stockTransferIncomingModItemModal === 'function') {
-        openItemModal_stockTransferIncomingModItemModal();
-        return;
+    console.log('📦 Opening stock transfer incoming item modal');
+    if (typeof openItemModal_stockTransferIncomingItemModal === 'function') {
+        openItemModal_stockTransferIncomingItemModal();
+    } else {
+        console.error('❌ Item modal function not found');
     }
-    // Fallback to legacy
-    console.warn('⚠️ Falling back to legacy item modal');
-    _legacy_showItemSelectionModal();
 }
 
+// Callback when item and batch are selected from new modal component
 window.onItemBatchSelectedFromModal = function(item, batch) {
-    console.log('✅ Stock Transfer Incoming Modification - Item+Batch selected:', item?.name, batch?.batch_no);
+    console.log('✅ Stock Transfer Incoming - Item+Batch selected:', item?.name, batch?.batch_no);
     console.log('Item data:', item);
     console.log('Batch data:', batch);
-    
+    // Add row with item and batch data
     const tbody = document.getElementById('itemsTableBody');
     const rowIndex = currentRowIndex++;
     
@@ -639,16 +585,27 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     row.dataset.rowIndex = rowIndex;
     row.dataset.itemId = item.id;
     row.dataset.itemData = JSON.stringify(item);
+    if (batch) {
+        row.dataset.batchId = batch.id;
+        row.dataset.batchData = JSON.stringify(batch);
+    }
     row.onclick = function() { selectRow(rowIndex); };
+    
+    const batchNo = batch ? batch.batch_no : '';
+    const expiry = batch && batch.expiry_date ? (() => {
+        const d = new Date(batch.expiry_date);
+        return `${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    })() : '';
+    const pRate = batch ? parseFloat(batch.pur_rate || item.pur_rate || 0).toFixed(2) : parseFloat(item.pur_rate || 0).toFixed(2);
     
     row.innerHTML = `
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || item.item_code || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batch?.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batch?.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB',{month:'2-digit',year:'2-digit'}) : ''}" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" step="1" min="0" value="0" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" value="${parseFloat(batch?.pur_rate || item.pur_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" step="0.01" value="${pRate}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" step="0.01" min="0" value="${item.gst_percent || 0}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGstKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
@@ -658,7 +615,11 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     tbody.appendChild(row);
     selectRow(rowIndex);
     updateFooterFromRow(row);
-    row.querySelector('input[name*="[qty]"]')?.focus();
+    
+    // Focus on qty field
+    setTimeout(() => {
+        row.querySelector('input[name*="[qty]"]')?.focus();
+    }, 100);
 };
 
 window.onBatchSelectedFromModal = function(item, batch) {
@@ -667,251 +628,15 @@ window.onBatchSelectedFromModal = function(item, batch) {
 
 window.onItemSelectedFromModal = function(item) {
     console.log('🔗 Item selected, opening batch modal for:', item?.name);
-    if (typeof openBatchModal_stockTransferIncomingModBatchModal === 'function') {
-        openBatchModal_stockTransferIncomingModBatchModal(item);
+    if (typeof openBatchModal_stockTransferIncomingBatchModal === 'function') {
+        openBatchModal_stockTransferIncomingBatchModal(item);
     } else {
         console.error('❌ Batch modal function not found');
     }
 };
 // ====== END MODAL COMPONENT BRIDGE ======
 
-// ============ LOAD INVOICE MODAL ============
-function showLoadInvoiceModal() {
-    // Show loading modal first
-    let html = `
-        <div class="batch-modal-backdrop show" id="invoiceModalBackdrop"></div>
-        <div class="batch-modal show" id="invoiceModal" style="max-width: 700px;">
-            <div class="modal-header-custom" style="background: #17a2b8;">
-                <h5 class="mb-0"><i class="bi bi-folder2-open me-2"></i>Load Past Invoice</h5>
-                <button type="button" class="btn-close btn-close-white" onclick="closeInvoiceModal()"></button>
-            </div>
-            <div class="modal-body-custom" style="max-height: 450px;">
-                <div class="mb-3">
-                    <input type="text" class="form-control" id="invoiceSearchInput" placeholder="Search by Trf No. or Supplier..." onkeyup="filterInvoices()">
-                </div>
-                <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-                    <table class="table table-bordered table-hover table-sm" style="font-size: 11px;">
-                        <thead class="table-info" style="position: sticky; top: 0;">
-                            <tr>
-                                <th>Trf No.</th>
-                                <th>Date</th>
-                                <th>Supplier</th>
-                                <th class="text-end">Amount</th>
-                                <th class="text-center">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="invoiceListBody">
-                            <tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer-custom">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="closeInvoiceModal()">Close</button>
-            </div>
-        </div>`;
-    
-    document.body.insertAdjacentHTML('beforeend', html);
-    
-    // Fetch invoices
-    fetch('{{ route("admin.stock-transfer-incoming.past-transactions") }}')
-        .then(response => response.json())
-        .then(data => {
-            const tbody = document.getElementById('invoiceListBody');
-            if (data.success && data.transactions.length > 0) {
-                tbody.innerHTML = '';
-                data.transactions.forEach(t => {
-                    const row = document.createElement('tr');
-                    row.className = 'invoice-row';
-                    row.style.cursor = 'pointer';
-                    row.ondblclick = () => selectInvoice(t.id);
-                    row.innerHTML = `
-                        <td><strong>${t.trf_no}</strong></td>
-                        <td>${t.transaction_date}</td>
-                        <td>${t.supplier_name || '-'}</td>
-                        <td class="text-end">₹${parseFloat(t.total_amount || 0).toFixed(2)}</td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-success btn-sm py-0 px-2" onclick="selectInvoice(${t.id})">
-                                <i class="bi bi-check"></i> Load
-                            </button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-                // Auto-highlight first row
-                invoiceActiveIndex = 0;
-                highlightInvoiceRow();
-            } else {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No past invoices found</td></tr>';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('invoiceListBody').innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading invoices</td></tr>';
-        });
-    
-    document.getElementById('invoiceSearchInput')?.focus();
-}
-
-function filterInvoices() {
-    const search = document.getElementById('invoiceSearchInput').value.toLowerCase();
-    const rows = document.querySelectorAll('#invoiceListBody tr.invoice-row');
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(search) ? '' : 'none';
-    });
-}
-
-function closeInvoiceModal() {
-    document.getElementById('invoiceModal')?.remove();
-    document.getElementById('invoiceModalBackdrop')?.remove();
-}
-
-function selectInvoice(id) {
-    closeInvoiceModal();
-    loadTransaction(id);
-}
-
-function loadTransaction(id) {
-    fetch(`{{ url('admin/stock-transfer-incoming') }}/${id}/details`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                populateForm(data.transaction, data.items);
-            } else {
-                alert(data.message || 'Error loading transaction');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error loading transaction');
-        });
-}
-
-function populateForm(transaction, items) {
-    console.log('Loading transaction:', transaction);
-    console.log('Loading items:', items);
-    
-    currentTransactionId = transaction.id;
-    document.getElementById('transaction_id').value = transaction.id;
-    document.getElementById('trf_no').value = transaction.trf_no || '';
-    document.getElementById('stim_transaction_date').value = transaction.transaction_date || '';
-    
-    // Set supplier using custom dropdown
-    if (transaction.supplier_id) {
-        document.getElementById('supplier_id').value = transaction.supplier_id;
-        // Find supplier name from dropdown items
-        const supplierItems = document.querySelectorAll('#stim_supplierList .custom-dropdown-item');
-        let supplierName = transaction.supplier_name || '';
-        supplierItems.forEach(item => {
-            if (item.getAttribute('data-value') === String(transaction.supplier_id)) {
-                supplierName = item.textContent.trim();
-            }
-        });
-        document.getElementById('stim_supplierDisplay').value = supplierName;
-        window.selectedSupplierName = supplierName;
-    }
-    
-    // Set other header fields
-    document.getElementById('stim_st_date').value = transaction.st_date || '';
-    document.getElementById('stim_gr_no').value = transaction.gr_no || '';
-    document.getElementById('stim_gr_date').value = transaction.gr_date || '';
-    document.getElementById('stim_cases').value = transaction.cases || '';
-    document.getElementById('stim_transport').value = transaction.transport || '';
-    document.getElementById('stim_remarks').value = transaction.remarks || '';
-    document.getElementById('total_amount').value = parseFloat(transaction.total_amount || 0).toFixed(2);
-    
-    // Footer fields
-    document.getElementById('packing').value = transaction.packing || '';
-    document.getElementById('unit').value = transaction.unit || '';
-    document.getElementById('cl_qty').value = transaction.cl_qty || 0;
-    document.getElementById('comp').value = transaction.comp || '';
-    document.getElementById('lctn').value = transaction.lctn || '';
-    document.getElementById('srlno').value = transaction.srlno || '';
-    
-    updateDayName();
-    
-    // Clear existing rows and add items
-    document.getElementById('itemsTableBody').innerHTML = '';
-    currentRowIndex = 0;
-    
-    if (items && items.length > 0) {
-        items.forEach((item, idx) => {
-            addRowWithData(item);
-        });
-        
-        // Select first row and show its rates
-        setTimeout(() => {
-            if (items.length > 0) {
-                selectRow(0);
-            }
-        }, 100);
-    }
-    
-    calculateTotalAmount();
-    
-    alert('Invoice loaded successfully!\nTrf No: ' + transaction.trf_no);
-    // Focus Date field after loading
-    setTimeout(() => {
-        document.getElementById('stim_transaction_date')?.focus();
-    }, 300);
-}
-
-function addRowWithData(item) {
-    const tbody = document.getElementById('itemsTableBody');
-    const rowIndex = currentRowIndex++;
-    
-    const row = document.createElement('tr');
-    row.id = `row-${rowIndex}`;
-    row.dataset.rowIndex = rowIndex;
-    row.dataset.itemId = item.item_id;
-    row.dataset.batchId = item.batch_id || '';
-    
-    // Store item data for rates section
-    row.dataset.itemData = JSON.stringify({
-        packing: item.packing || '',
-        unit: item.unit || '',
-        company_short_name: item.company_short_name || item.comp || '',
-        location: item.location || item.lctn || '',
-        total_qty: item.cl_qty || 0,
-        mrp: item.mrp || 0,
-        s_rate: item.s_rate || 0,
-        ws_rate: item.ws_rate || 0,
-        spl_rate: item.spl_rate || 0
-    });
-    
-    // Store batch data
-    row.dataset.batchData = JSON.stringify({
-        batch_no: item.batch_no || '',
-        expiry_date: item.expiry || '',
-        pur_rate: item.p_rate || 0,
-        mrp: item.mrp || 0,
-        s_rate: item.s_rate || 0,
-        ws_rate: item.ws_rate || 0,
-        spl_rate: item.spl_rate || 0,
-        location: item.lctn || ''
-    });
-    
-    row.onclick = function() { selectRow(rowIndex); };
-    
-    row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.item_code || item.item_id || ''}" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.item_name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${item.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${item.expiry || ''}" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="${item.qty || 0}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][free_qty]" value="${item.free_qty || 0}" onkeydown="handleFreeQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][p_rate]" value="${parseFloat(item.p_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handlePRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][gst_percent]" value="${item.gst_percent || 0}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleGstKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_rate]" value="${parseFloat(item.ft_rate || 0).toFixed(2)}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][ft_amount]" value="${parseFloat(item.ft_amount || 0).toFixed(2)}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
-    `;
-    
-    tbody.appendChild(row);
-}
-
-// ============ LEGACY ITEM SELECTION MODAL ============
+// ============ LEGACY ITEM SELECTION MODAL (RENAMED) ============
 function _legacy_showItemSelectionModal() {
     let html = `
         <div class="batch-modal-backdrop show" id="itemModalBackdrop"></div>
@@ -1016,7 +741,7 @@ function selectItemFromModal(item) {
 
 function showBatchSelectionForItem(item, rowIndex) {
     // Fetch ALL batches for this item using item-batches API
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${item.id}`)
         .then(response => response.json())
         .then(data => {
             // Always show batch modal - with batches or empty with "Add Without Batch" option
@@ -1143,18 +868,15 @@ function closeBatchModal() {
 function handleBatchKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
-        if (event.shiftKey) {
-            // Shift+Enter: go back to Transport
-            document.getElementById('stim_transport')?.focus();
-            return;
-        }
         const row = document.getElementById(`row-${rowIndex}`);
         const batchInput = row?.querySelector('input[name*="[batch]"]');
         const batchValue = batchInput?.value.trim();
         
         if (batchValue) {
+            // Check if batch exists
             checkBatch(rowIndex);
         } else {
+            // No batch - move to expiry
             row?.querySelector('input[name*="[expiry]"]')?.focus();
         }
     }
@@ -1164,10 +886,6 @@ function handleExpiryKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         const row = document.getElementById(`row-${rowIndex}`);
-        if (event.shiftKey) {
-            row?.querySelector('input[name*="[batch]"]')?.focus();
-            return;
-        }
         row?.querySelector('input[name*="[qty]"]')?.focus();
     }
 }
@@ -1175,12 +893,8 @@ function handleExpiryKeydown(event, rowIndex) {
 function handleQtyKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
-        const row = document.getElementById(`row-${rowIndex}`);
-        if (event.shiftKey) {
-            row?.querySelector('input[name*="[expiry]"]')?.focus();
-            return;
-        }
         calculateRowAmount(rowIndex);
+        const row = document.getElementById(`row-${rowIndex}`);
         row?.querySelector('input[name*="[free_qty]"]')?.focus();
     }
 }
@@ -1189,10 +903,6 @@ function handleFreeQtyKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
         const row = document.getElementById(`row-${rowIndex}`);
-        if (event.shiftKey) {
-            row?.querySelector('input[name*="[qty]"]')?.focus();
-            return;
-        }
         row?.querySelector('input[name*="[p_rate]"]')?.focus();
     }
 }
@@ -1200,48 +910,21 @@ function handleFreeQtyKeydown(event, rowIndex) {
 function handlePRateKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
-        const row = document.getElementById(`row-${rowIndex}`);
-        if (event.shiftKey) {
-            row?.querySelector('input[name*="[free_qty]"]')?.focus();
-            return;
-        }
         calculateRowAmount(rowIndex);
+        // Move to GST% field
+        const row = document.getElementById(`row-${rowIndex}`);
         row?.querySelector('input[name*="[gst_percent]"]')?.focus();
     }
 }
 
 function handleGstKeydown(event, rowIndex) {
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-
-    if (event.shiftKey) {
-        document.getElementById('row-' + rowIndex)?.querySelector('input[name*="[p_rate]"]')?.focus();
-        return;
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        calculateRowAmount(rowIndex);
+        // Complete current row and open Add Items for next
+        completeRow(rowIndex);
+        showItemSelectionModal();
     }
-
-    calculateRowAmount(rowIndex);
-    completeRow(rowIndex);
-
-    // Find next row with a batch input that has a value
-    const currentRow = document.getElementById('row-' + rowIndex);
-    let sibling = currentRow ? currentRow.nextElementSibling : null;
-    while (sibling) {
-        const batchInput = sibling.querySelector('input[name*="[batch]"]');
-        if (batchInput && batchInput.value.trim() !== '') {
-            // Next filled row found — focus its batch input
-            const nextIdx = parseInt(sibling.id.replace('row-', ''));
-            selectRow(nextIdx);
-            batchInput.focus();
-            batchInput.select();
-            return;
-        }
-        sibling = sibling.nextElementSibling;
-    }
-
-    // No filled next row → open Insert Items modal
-    showItemSelectionModal();
 }
 
 function handleSRateKeydown(event) {
@@ -1391,7 +1074,7 @@ function checkBatch(rowIndex) {
     
     const itemData = row.dataset.itemData ? JSON.parse(row.dataset.itemData) : {};
     
-    fetch(`{{ route('admin.batches.check-batch') }}?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(route('admin.batches.check-batch')); ?>?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.exists && data.batches && data.batches.length > 0) {
@@ -1474,25 +1157,12 @@ function deleteSelectedItem() {
     }
 }
 
-let isSubmitting = false;
-
-function updateTransaction() {
-    if (!currentTransactionId) {
-        alert('Please select a transaction to modify');
+function saveTransaction() {
+    const supplierId = document.getElementById('supplier_id').value;
+    if (!supplierId) {
+        alert('Please select a supplier');
         return;
     }
-    
-    // Prevent double submission
-    if (isSubmitting) {
-        return;
-    }
-    isSubmitting = true;
-    
-    // Disable button and show loading
-    const updateBtn = document.querySelector('button[onclick="updateTransaction()"]');
-    const originalBtnHtml = updateBtn.innerHTML;
-    updateBtn.disabled = true;
-    updateBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
     
     const items = [];
     document.querySelectorAll('#itemsTableBody tr').forEach(row => {
@@ -1500,6 +1170,9 @@ function updateTransaction() {
         const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
         
         if (itemId && qty > 0) {
+            const itemData = row.dataset.itemData ? JSON.parse(row.dataset.itemData) : {};
+            const newBatchData = row.dataset.isNewBatch === 'true' ? JSON.parse(row.dataset.newBatchData || '{}') : {};
+            
             items.push({
                 item_id: itemId,
                 batch_id: row.dataset.batchId || '',
@@ -1513,33 +1186,35 @@ function updateTransaction() {
                 gst_percent: parseFloat(row.querySelector('input[name*="[gst_percent]"]')?.value) || 0,
                 ft_rate: parseFloat(row.querySelector('input[name*="[ft_rate]"]')?.value) || 0,
                 ft_amount: parseFloat(row.querySelector('input[name*="[ft_amount]"]')?.value) || 0,
+                mrp: parseFloat(document.getElementById('batch_mrp')?.value) || parseFloat(itemData.mrp || 0),
+                s_rate: parseFloat(document.getElementById('s_rate')?.value) || parseFloat(itemData.s_rate || 0),
+                ws_rate: parseFloat(document.getElementById('ws_rate')?.value) || parseFloat(itemData.ws_rate || 0),
+                spl_rate: parseFloat(document.getElementById('spl_rate')?.value) || parseFloat(itemData.spl_rate || 0),
+                is_new_batch: row.dataset.isNewBatch === 'true',
+                new_batch_data: newBatchData
             });
         }
     });
     
     if (items.length === 0) {
         alert('Please add at least one item with quantity');
-        isSubmitting = false;
-        updateBtn.disabled = false;
-        updateBtn.innerHTML = originalBtnHtml;
         return;
     }
     
     const supplierName = window.selectedSupplierName || '';
     
     const data = {
-        _token: '{{ csrf_token() }}',
-        _method: 'PUT',
-        transaction_date: document.getElementById('stim_transaction_date').value,
+        _token: '<?php echo e(csrf_token()); ?>',
+        transaction_date: document.getElementById('sti_transaction_date').value,
         day_name: document.getElementById('day_name').value,
-        supplier_id: document.getElementById('supplier_id').value,
+        supplier_id: supplierId,
         supplier_name: supplierName,
-        st_date: document.getElementById('stim_st_date').value,
-        gr_no: document.getElementById('stim_gr_no').value,
-        gr_date: document.getElementById('stim_gr_date').value,
-        cases: document.getElementById('stim_cases').value,
-        transport: document.getElementById('stim_transport').value,
-        remarks: document.getElementById('stim_remarks').value,
+        st_date: document.getElementById('sti_st_date').value,
+        gr_no: document.getElementById('sti_gr_no').value,
+        gr_date: document.getElementById('sti_gr_date').value,
+        cases: document.getElementById('sti_cases').value,
+        transport: document.getElementById('sti_transport').value,
+        remarks: document.getElementById('sti_remarks').value,
         total_amount: document.getElementById('total_amount').value,
         packing: document.getElementById('packing').value,
         unit: document.getElementById('unit').value,
@@ -1555,40 +1230,36 @@ function updateTransaction() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/stock-transfer-incoming') }}/${currentTransactionId}`, {
+    fetch('<?php echo e(route("admin.stock-transfer-incoming.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(data)
     })
     .then(response => response.json())
     .then(result => {
         if (result.success) {
-            alert(result.message || 'Transaction updated successfully!');
-            window.location.reload();
+            alert(result.message + '\nTrf No: ' + result.trf_no);
+            window.location.href = '<?php echo e(route("admin.stock-transfer-incoming.index")); ?>';
         } else {
-            alert(result.message || 'Error updating transaction');
-            isSubmitting = false;
-            updateBtn.disabled = false;
-            updateBtn.innerHTML = originalBtnHtml;
+            alert(result.message || 'Error saving transaction');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error updating transaction');
-        isSubmitting = false;
-        updateBtn.disabled = false;
-        updateBtn.innerHTML = originalBtnHtml;
+        alert('Error saving transaction');
     });
 }
 
-function cancelModification() {
-    if (confirm('Are you sure you want to cancel? All unsaved changes will be lost.')) {
-        window.location.href = '{{ route("admin.stock-transfer-incoming.index") }}';
+function cancelTransaction() {
+    if (confirm('Are you sure you want to cancel? All unsaved data will be lost.')) {
+        window.location.href = '<?php echo e(route("admin.stock-transfer-incoming.index")); ?>';
     }
 }
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/stock-transfer-incoming/transaction.blade.php ENDPATH**/ ?>

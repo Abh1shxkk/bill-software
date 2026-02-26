@@ -48,6 +48,14 @@
     .item-modal-body, .batch-modal-body { padding: 1rem; max-height: 350px; overflow-y: auto; }
     .batch-modal-body { padding: 0; }
     .item-modal-footer, .batch-modal-footer { padding: 1rem 1.5rem; background: #f8f9fa; border-top: 1px solid #dee2e6; display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* Custom Dropdown Styles */
+    .custom-dropdown-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
+    .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #f0f8ff; }
+
+    /* Invoice row highlight */
+    #invoicesTableBody tr.invoice-row-active { background-color: #cce5ff !important; outline: 2px solid #007bff; }
+    #invoicesTableBody tr.invoice-row-active td { background-color: #cce5ff !important; }
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -76,23 +84,23 @@
                 <div class="col-auto">
                     <div class="field-group">
                         <label>Sr No:</label>
-                        <input type="text" class="form-control form-control-sm" id="search_sr_no" style="width: 120px;" placeholder="Enter Sr No">
+                        <input type="text" class="form-control form-control-sm" id="search_sr_no" style="width: 120px;" placeholder="Enter Sr No" data-custom-enter>
                     </div>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary btn-sm" onclick="loadTransaction()">
+                    <button type="button" class="btn btn-primary btn-sm" id="storm_loadBtn" onclick="loadTransaction()">
                         <i class="bi bi-search me-1"></i> Load
                     </button>
                 </div>
                 <div class="col-auto">
-                    <button type="button" class="btn btn-success btn-sm" onclick="openAllInvoicesModal()">
+                    <button type="button" class="btn btn-success btn-sm" id="storm_allInvoicesBtn" onclick="openAllInvoicesModal()">
                         <i class="bi bi-list-ul me-1"></i> All Invoices
                     </button>
                 </div>
             </div>
         </div>
 
-        <form id="stockTransferOutgoingForm" method="POST" autocomplete="off" onkeydown="return event.key !== 'Enter';">
+        <form id="stockTransferOutgoingForm" method="POST" autocomplete="off">
             @csrf
             <input type="hidden" name="transaction_id" id="transaction_id">
 
@@ -102,31 +110,43 @@
                     <div class="col-md-2">
                         <div class="field-group">
                             <label>Date:</label>
-                            <input type="date" class="form-control form-control-sm" name="transaction_date" id="transaction_date" style="width: 130px;">
+                            <input type="date" class="form-control form-control-sm" name="transaction_date" id="storm_transaction_date" style="width: 130px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="field-group">
                             <label>Name:</label>
-                            <select class="form-control form-control-sm" name="transfer_to" id="customerSelect" style="flex: 1; background: #e8ffe8; border: 2px solid #28a745;" onchange="updateCustomerName()">
-                                <option value="">Select Customer</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? $customer->id }} - {{ $customer->name }}</option>
-                                @endforeach
-                            </select>
-                            <input type="hidden" name="transfer_to_name" id="transfer_to_name">
+                            <div class="custom-dropdown" id="storm_customerDropdownWrapper" style="flex: 1; position: relative;">
+                                <input type="text" class="form-control form-control-sm" id="storm_customerDisplay" 
+                                       placeholder="Select Customer..." autocomplete="off"
+                                       style="background: #e8ffe8; border: 2px solid #28a745;"
+                                       onfocus="openCustomerDropdown()" onkeyup="filterCustomers(event)" data-custom-enter>
+                                <input type="hidden" name="transfer_to" id="customerSelect">
+                                <input type="hidden" name="transfer_to_name" id="transfer_to_name">
+                                <div class="custom-dropdown-list" id="storm_customerList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    @foreach($customers as $customer)
+                                        <div class="custom-dropdown-item" 
+                                             data-value="{{ $customer->id }}" 
+                                             data-name="{{ $customer->name }}"
+                                             style="padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px;"
+                                             onclick="selectCustomer('{{ $customer->id }}', '{{ addslashes($customer->name) }}', '{{ $customer->code ?? $customer->id }}')">
+                                            {{ $customer->code ?? $customer->id }} - {{ $customer->name }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-2">
                         <div class="field-group">
                             <label>Trf. Return No.:</label>
-                            <input type="text" class="form-control form-control-sm" name="trf_return_no" id="trf_return_no" style="width: 120px;">
+                            <input type="text" class="form-control form-control-sm" name="trf_return_no" id="storm_trf_return_no" style="width: 120px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="field-group">
                             <label>Remarks:</label>
-                            <input type="text" class="form-control form-control-sm" name="remarks" id="remarks">
+                            <input type="text" class="form-control form-control-sm" name="remarks" id="storm_remarks" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-md-2">
@@ -144,25 +164,25 @@
                     <div class="col-auto">
                         <div class="field-group">
                             <label>GR No.:</label>
-                            <input type="text" class="form-control form-control-sm" name="gr_no" id="gr_no" style="width: 100px;">
+                            <input type="text" class="form-control form-control-sm" name="gr_no" id="storm_gr_no" style="width: 100px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>GR Date:</label>
-                            <input type="date" class="form-control form-control-sm" name="gr_date" id="gr_date" style="width: 130px;">
+                            <input type="date" class="form-control form-control-sm" name="gr_date" id="storm_gr_date" style="width: 130px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>Cases:</label>
-                            <input type="number" class="form-control form-control-sm" name="cases" id="cases" style="width: 70px;">
+                            <input type="number" class="form-control form-control-sm" name="cases" id="storm_cases" style="width: 70px;" data-custom-enter>
                         </div>
                     </div>
                     <div class="col-auto">
                         <div class="field-group">
                             <label>Transport:</label>
-                            <input type="text" class="form-control form-control-sm" name="transport" id="transport" style="width: 200px;">
+                            <input type="text" class="form-control form-control-sm" name="transport" id="storm_transport" style="width: 200px;" data-custom-enter>
                         </div>
                     </div>
                 </div>
@@ -192,7 +212,7 @@
                     <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                         <i class="fas fa-plus-circle"></i> Add Row
                     </button>
-                    <button type="button" class="btn btn-sm btn-info" onclick="openItemModal()">
+                    <button type="button" class="btn btn-sm btn-info" id="storm_insertItemsBtn" onclick="openInsertItemsModal()">
                         <i class="bi bi-list-check"></i> Insert Items
                     </button>
                 </div>
@@ -489,29 +509,28 @@ function populateForm(transaction) {
     document.getElementById('transaction_id').value = transaction.id;
     
     // Format dates to yyyy-MM-dd for HTML date input
-    document.getElementById('transaction_date').value = formatDateForInput(transaction.transaction_date);
+    document.getElementById('storm_transaction_date').value = formatDateForInput(transaction.transaction_date);
     document.getElementById('transfer_to_name').value = transaction.transfer_to_name || '';
     
-    // Set customer dropdown with setTimeout to ensure DOM is ready
-    setTimeout(() => {
-        const customerSelect = document.getElementById('customerSelect');
-        if (customerSelect && transaction.transfer_to) {
-            customerSelect.value = transaction.transfer_to;
-            // Trigger change event
-            const event = new Event('change', { bubbles: true });
-            customerSelect.dispatchEvent(event);
-            console.log('Customer set to:', transaction.transfer_to, transaction.transfer_to_name);
+    // Set customer custom dropdown
+    if (transaction.transfer_to) {
+        document.getElementById('customerSelect').value = transaction.transfer_to;
+        const customerItem = document.querySelector(`#storm_customerList .custom-dropdown-item[data-value="${transaction.transfer_to}"]`);
+        if (customerItem) {
+            document.getElementById('storm_customerDisplay').value = customerItem.innerText.trim();
+        } else {
+            document.getElementById('storm_customerDisplay').value = (transaction.transfer_to_code || transaction.transfer_to) + ' - ' + (transaction.transfer_to_name || '');
         }
-    }, 100);
+    }
     
     // Set all header fields
-    document.getElementById('remarks').value = transaction.remarks || '';
+    document.getElementById('storm_remarks').value = transaction.remarks || '';
     document.getElementById('trn_no').value = transaction.sr_no || '';
-    document.getElementById('trf_return_no').value = transaction.trf_return_no || '';
-    document.getElementById('gr_no').value = transaction.challan_no || '';
-    document.getElementById('gr_date').value = formatDateForInput(transaction.challan_date);
-    document.getElementById('cases').value = transaction.cases || 0;
-    document.getElementById('transport').value = transaction.transport || '';
+    document.getElementById('storm_trf_return_no').value = transaction.trf_return_no || '';
+    document.getElementById('storm_gr_no').value = transaction.challan_no || '';
+    document.getElementById('storm_gr_date').value = formatDateForInput(transaction.challan_date);
+    document.getElementById('storm_cases').value = transaction.cases || 0;
+    document.getElementById('storm_transport').value = transaction.transport || '';
     document.getElementById('summary_net').value = parseFloat(transaction.net_amount || 0).toFixed(2);
     
     // Clear existing rows
@@ -529,9 +548,17 @@ function populateForm(transaction) {
     // Calculate totals after loading items
     calculateTotals();
     
-    // Select first row if items exist
+    // Select first row and focus its qty input
     if (transaction.items && transaction.items.length > 0) {
-        setTimeout(() => selectRow(0), 100);
+        setTimeout(function() {
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (firstRow) {
+                const rowIdx = parseInt(firstRow.id.replace('row_', ''));
+                selectRow(rowIdx);
+                const qtyInput = document.getElementById('qty_' + rowIdx);
+                if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+            }
+        }, 150);
     }
 }
 
@@ -543,12 +570,12 @@ function addNewRowWithData(item) {
     row.id = `row_${rowIndex}`;
     row.onclick = function() { selectRow(rowIndex); };
     row.innerHTML = `
-        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" id="code_${rowIndex}" value="${item.item_code || item.item_id || ''}" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" id="code_${rowIndex}" value="${item.item_code || item.item_id || ''}" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][name]" id="name_${rowIndex}" value="${item.item_name || ''}" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" id="batch_${rowIndex}" value="${item.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" id="batch_${rowIndex}" value="${item.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" id="expiry_${rowIndex}" value="${item.expiry || ''}" readonly></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" id="qty_${rowIndex}" value="${item.qty || 0}" min="0" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" id="rate_${rowIndex}" value="${parseFloat(item.s_rate || item.rate || 0).toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" id="qty_${rowIndex}" value="${item.qty || 0}" min="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" id="rate_${rowIndex}" value="${parseFloat(item.s_rate || item.rate || 0).toFixed(2)}" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control text-end" name="items[${rowIndex}][amount]" id="amount_${rowIndex}" value="${parseFloat(item.amount || 0).toFixed(2)}" step="0.01" readonly></td>
         <td class="text-center">
             <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(${rowIndex})"><i class="bi bi-trash"></i></button>
@@ -575,12 +602,12 @@ function addNewRow() {
     row.id = `row_${rowIndex}`;
     row.onclick = function() { selectRow(rowIndex); };
     row.innerHTML = `
-        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" id="code_${rowIndex}" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][code]" id="code_${rowIndex}" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][name]" id="name_${rowIndex}" readonly></td>
-        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" id="batch_${rowIndex}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control" name="items[${rowIndex}][batch]" id="batch_${rowIndex}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="text" class="form-control" name="items[${rowIndex}][expiry]" id="expiry_${rowIndex}" readonly></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" id="qty_${rowIndex}" value="0" min="0" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" id="rate_${rowIndex}" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][qty]" id="qty_${rowIndex}" value="0" min="0" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control text-end" name="items[${rowIndex}][rate]" id="rate_${rowIndex}" value="0" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control text-end" name="items[${rowIndex}][amount]" id="amount_${rowIndex}" value="0.00" step="0.01" readonly></td>
         <td class="text-center">
             <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(${rowIndex})"><i class="bi bi-trash"></i></button>
@@ -619,8 +646,12 @@ function updateFooterDetails(rowIndex) {
 }
 
 function handleCodeKeydown(event, rowIndex) {
-    if (event.key === 'Enter' || event.key === 'Tab') {
+    if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            document.getElementById('storm_transport')?.focus();
+            return;
+        }
         const code = document.getElementById(`code_${rowIndex}`).value.trim();
         if (code) {
             fetchItemByCode(code, rowIndex);
@@ -631,8 +662,12 @@ function handleCodeKeydown(event, rowIndex) {
 }
 
 function handleBatchKeydown(event, rowIndex) {
-    if (event.key === 'Enter' || event.key === 'Tab') {
+    if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            document.getElementById('storm_transport')?.focus();
+            return;
+        }
         const itemCode = document.getElementById(`code_${rowIndex}`).value.trim();
         const batchNo = document.getElementById(`batch_${rowIndex}`).value.trim();
         if (itemCode && batchNo) {
@@ -640,6 +675,41 @@ function handleBatchKeydown(event, rowIndex) {
         } else if (itemCode) {
             openBatchModal(rowIndex, itemCode);
         }
+    }
+}
+
+function handleQtyKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (event.shiftKey) {
+            document.getElementById(`batch_${rowIndex}`)?.focus();
+            return;
+        }
+        calculateRowAmount(rowIndex);
+        document.getElementById(`rate_${rowIndex}`)?.focus();
+        document.getElementById(`rate_${rowIndex}`)?.select();
+    }
+}
+
+function handleRateKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (event.shiftKey) {
+            document.getElementById(`qty_${rowIndex}`)?.focus();
+            return;
+        }
+        calculateRowAmount(rowIndex);
+        // Check if next row exists
+        const currentRow = document.getElementById(`row_${rowIndex}`);
+        const nextRow = currentRow ? currentRow.nextElementSibling : null;
+        if (nextRow && nextRow.id && nextRow.id.startsWith('row_')) {
+            const nextRowIdx = parseInt(nextRow.id.replace('row_', ''));
+            selectRow(nextRowIdx);
+            const nextQty = document.getElementById(`qty_${nextRowIdx}`);
+            if (nextQty) { nextQty.focus(); nextQty.select(); return; }
+        }
+        // No next row - trigger Insert Items
+        openInsertItemsModal();
     }
 }
 
@@ -941,15 +1011,15 @@ function updateTransaction() {
     
     const data = {
         _token: '{{ csrf_token() }}',
-        transaction_date: form.querySelector('[name="transaction_date"]').value,
-        transfer_to: form.querySelector('[name="transfer_to"]').value,
-        transfer_to_name: form.querySelector('[name="transfer_to_name"]').value,
-        trf_return_no: form.querySelector('[name="trf_return_no"]').value,
-        remarks: form.querySelector('[name="remarks"]').value,
-        gr_no: form.querySelector('[name="gr_no"]').value,
-        gr_date: form.querySelector('[name="gr_date"]').value,
-        cases: form.querySelector('[name="cases"]').value,
-        transport: form.querySelector('[name="transport"]').value,
+        transaction_date: document.getElementById('storm_transaction_date').value,
+        transfer_to: document.getElementById('customerSelect').value,
+        transfer_to_name: document.getElementById('transfer_to_name').value,
+        trf_return_no: document.getElementById('storm_trf_return_no').value,
+        remarks: document.getElementById('storm_remarks').value,
+        gr_no: document.getElementById('storm_gr_no').value,
+        gr_date: document.getElementById('storm_gr_date').value,
+        cases: document.getElementById('storm_cases').value,
+        transport: document.getElementById('storm_transport').value,
         summary_net: document.getElementById('summary_net').value,
         items: items
     };
@@ -990,31 +1060,263 @@ function updateTransaction() {
 
 // Update Customer Name from dropdown
 function updateCustomerName() {
-    const select = document.getElementById('customerSelect');
-    const selectedOption = select.options[select.selectedIndex];
-    if (selectedOption && selectedOption.value) {
-        document.getElementById('transfer_to_name').value = selectedOption.getAttribute('data-name') || '';
-    } else {
-        document.getElementById('transfer_to_name').value = '';
-    }
+    // No-op - handled by selectCustomer now
 }
+
+// ====== CUSTOM CUSTOMER DROPDOWN ======
+let customerActiveIndex = -1;
+
+function openCustomerDropdown() {
+    const display = document.getElementById('storm_customerDisplay');
+    display.select();
+    document.querySelectorAll('#storm_customerList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
+    });
+    document.getElementById('storm_customerList').style.display = 'block';
+    customerActiveIndex = 0;
+    highlightCustomerItem();
+}
+
+function closeCustomerDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('storm_customerList');
+        if(list) list.style.display = 'none';
+        customerActiveIndex = -1;
+    }, 200);
+}
+
+function filterCustomers(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#storm_customerList .custom-dropdown-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    customerActiveIndex = 0;
+    highlightCustomerItem();
+}
+
+function selectCustomer(id, name, code) {
+    document.getElementById('customerSelect').value = id;
+    document.getElementById('storm_customerDisplay').value = name;
+    document.getElementById('transfer_to_name').value = name;
+    document.getElementById('storm_customerList').style.display = 'none';
+    customerActiveIndex = -1;
+    document.getElementById('storm_trf_return_no')?.focus();
+}
+
+function highlightCustomerItem() {
+    const items = Array.from(document.querySelectorAll('#storm_customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    if (customerActiveIndex >= items.length) customerActiveIndex = 0;
+    if (customerActiveIndex < -1) customerActiveIndex = items.length - 1;
+    if (customerActiveIndex >= 0 && items[customerActiveIndex]) {
+        items[customerActiveIndex].classList.add('active');
+        items[customerActiveIndex].style.backgroundColor = '#f0f8ff';
+        items[customerActiveIndex].scrollIntoView({ block: 'nearest' });
+    }
+    items.forEach((item, idx) => {
+        if (idx !== customerActiveIndex) item.style.backgroundColor = '';
+    });
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#storm_customerDropdownWrapper')) {
+        const list = document.getElementById('storm_customerList');
+        if (list) list.style.display = 'none';
+    }
+});
 
 // Set customer dropdown value when loading transaction
 function setCustomerDropdown(customerId) {
-    const select = document.getElementById('customerSelect');
-    if (select && customerId) {
-        select.value = customerId;
-        updateCustomerName();
+    if (customerId) {
+        document.getElementById('customerSelect').value = customerId;
+        const customerItem = document.querySelector(`#storm_customerList .custom-dropdown-item[data-value="${customerId}"]`);
+        if (customerItem) {
+            document.getElementById('storm_customerDisplay').value = customerItem.innerText.trim();
+        }
     }
 }
 
-// Open Insert Items Modal (same as Item Modal)
+// Open Insert Items Modal
 function openInsertItemsModal() {
-    addNewRow();
-    const rowIndex = currentRowIndex - 1;
-    selectedRowIndex = rowIndex;
-    openItemModal(rowIndex);
+    console.log('📦 Opening stock transfer outgoing return modification item modal');
+    if (typeof openItemModal_stockTransferOutgoingReturnModItemModal === 'function') {
+        openItemModal_stockTransferOutgoingReturnModItemModal();
+    } else {
+        // Fallback: use legacy approach
+        addNewRow();
+        const rowIndex = currentRowIndex - 1;
+        selectedRowIndex = rowIndex;
+        openItemModal(rowIndex);
+    }
 }
+
+// ====== KEYBOARD NAVIGATION ======
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        // Skip if modal is open
+        const hasModalOpen = document.getElementById('createBatchModal')?.classList.contains('show') ||
+            document.getElementById('itemModal')?.classList.contains('show') ||
+            document.getElementById('batchModal')?.classList.contains('show') ||
+            document.querySelector('#stockTransferOutgoingReturnModItemModal.show') ||
+            document.querySelector('#stockTransferOutgoingReturnModBatchModal.show') ||
+            document.getElementById('invoicesModal')?.classList.contains('show') ||
+            document.getElementById('dateRangeModal')?.classList.contains('show');
+        // invoicesModal Enter/Arrow handled by window capture below — skip here
+        if (document.getElementById('invoicesModal')?.classList.contains('show')) return;
+        if (hasModalOpen) return;
+
+        // Shift+Enter backward navigation
+        if (e.shiftKey) {
+            const backMap = {
+                'storm_customerDisplay': 'storm_transaction_date',
+                'storm_trf_return_no': 'storm_customerDisplay',
+                'storm_remarks': 'storm_trf_return_no',
+                'storm_gr_no': 'storm_remarks',
+                'storm_gr_date': 'storm_gr_no',
+                'storm_cases': 'storm_gr_date',
+                'storm_transport': 'storm_cases'
+            };
+            if (backMap[activeEl.id]) {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById(backMap[activeEl.id])?.focus();
+                return false;
+            }
+            return;
+        }
+
+        // Search Sr No → Load button (click to load, then focus loadBtn)
+        if (activeEl.id === 'search_sr_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const srVal = activeEl.value.trim();
+            if (srVal) {
+                // Has value → load it, then focus allInvoicesBtn
+                const loadBtn = document.getElementById('storm_loadBtn');
+                if (loadBtn) { loadBtn.click(); }
+                setTimeout(() => document.getElementById('storm_allInvoicesBtn')?.focus(), 100);
+            } else {
+                // Empty → go straight to All Invoices button
+                document.getElementById('storm_allInvoicesBtn')?.focus();
+            }
+            return false;
+        }
+
+        // Load button → All Invoices button
+        if (activeEl.id === 'storm_loadBtn') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('storm_allInvoicesBtn')?.focus();
+            return false;
+        }
+
+        // All Invoices button → open modal
+        if (activeEl.id === 'storm_allInvoicesBtn') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            openAllInvoicesModal();
+            return false;
+        }
+
+        // Customer Dropdown Intercept
+        if (activeEl.id === 'storm_customerDisplay') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const listContainer = document.getElementById('storm_customerList');
+            if (listContainer && listContainer.style.display === 'block') {
+                const items = Array.from(document.querySelectorAll('#storm_customerList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                if (customerActiveIndex >= 0 && customerActiveIndex < items.length) {
+                    items[customerActiveIndex].click();
+                } else {
+                    listContainer.style.display = 'none';
+                    customerActiveIndex = -1;
+                    document.getElementById('storm_trf_return_no')?.focus();
+                }
+            } else {
+                document.getElementById('storm_trf_return_no')?.focus();
+            }
+            return false;
+        }
+
+        // Date → Customer
+        if (activeEl.id === 'storm_transaction_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const display = document.getElementById('storm_customerDisplay');
+            if (display) {
+                display.focus();
+                setTimeout(() => { openCustomerDropdown(); }, 50);
+            }
+            return false;
+        }
+        // Trf Return No → Remarks
+        if (activeEl.id === 'storm_trf_return_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('storm_remarks')?.focus();
+            return false;
+        }
+        // Remarks → GR No
+        if (activeEl.id === 'storm_remarks') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('storm_gr_no')?.focus();
+            return false;
+        }
+        // GR No → GR Date
+        if (activeEl.id === 'storm_gr_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('storm_gr_date')?.focus();
+            return false;
+        }
+        // GR Date → Cases
+        if (activeEl.id === 'storm_gr_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('storm_cases')?.focus();
+            return false;
+        }
+        // Cases → Transport
+        if (activeEl.id === 'storm_cases') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('storm_transport')?.focus();
+            return false;
+        }
+        // Transport → first row Qty (if items exist) OR Insert Items
+        if (activeEl.id === 'storm_transport') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (firstRow) {
+                const qtyInput = firstRow.querySelector('input[name*="[qty]"]');
+                if (qtyInput) {
+                    const rowIdx = parseInt(firstRow.id.replace('row_', ''));
+                    selectRow(rowIdx);
+                    qtyInput.focus();
+                    qtyInput.select();
+                    return false;
+                }
+            }
+            const addBtn = document.getElementById('storm_insertItemsBtn');
+            if (addBtn) { addBtn.focus(); addBtn.click(); }
+            return false;
+        }
+    }
+
+    // Dropdown arrow navigation
+    if (document.activeElement && document.activeElement.id === 'storm_customerDisplay') {
+        const listContainer = document.getElementById('storm_customerList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); customerActiveIndex++; highlightCustomerItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); customerActiveIndex--; highlightCustomerItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closeCustomerDropdown(); return false; }
+        }
+    }
+
+    // Ctrl+S save
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        updateTransaction();
+        return false;
+    }
+}, true);
 
 // Handle batch check when entering manually
 function checkBatchExists(rowIndex) {
@@ -1232,6 +1534,101 @@ function formatDateForInput(dateStr) {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
 }
+
+
+// ═══════════════════════════════════════════════════════
+// INVOICES MODAL — Window Capture Keyboard Navigation
+// ═══════════════════════════════════════════════════════
+let _saInvHighlightIdx = -1;
+
+function _saHighlightInvRow(idx) {
+    const rows = Array.from(document.querySelectorAll('#invoicesTableBody tr[onclick]'));
+    rows.forEach(r => r.classList.remove('invoice-row-active'));
+    if (idx < 0) idx = 0;
+    if (idx >= rows.length) idx = rows.length - 1;
+    _saInvHighlightIdx = idx;
+    if (rows[idx]) {
+        rows[idx].classList.add('invoice-row-active');
+        rows[idx].scrollIntoView({ block: 'nearest' });
+    }
+}
+
+// Auto-highlight first row after loadInvoices populates tbody
+const _saOrigLoadInvoices = loadInvoices;
+
+// Patch loadInvoices to auto-highlight first row after load
+(function() {
+    const _orig = window.loadInvoices || loadInvoices;
+    window._saLoadInvoicesPatch = function() {
+        _saInvHighlightIdx = -1;
+        // Observer to detect when tbody gets rows
+        const tbody = document.getElementById('invoicesTableBody');
+        if (!tbody) return;
+        const obs = new MutationObserver(function() {
+            obs.disconnect();
+            setTimeout(function() {
+                const rows = document.querySelectorAll('#invoicesTableBody tr[onclick]');
+                if (rows.length > 0) { _saHighlightInvRow(0); }
+            }, 50);
+        });
+        obs.observe(tbody, { childList: true });
+    };
+})();
+
+// Patch openAllInvoicesModal to trigger row highlight setup
+const _saOrigOpenAll = openAllInvoicesModal;
+function openAllInvoicesModal() {
+    _saInvHighlightIdx = -1;
+    // Watch tbody for new rows
+    setTimeout(function() {
+        const tbody = document.getElementById('invoicesTableBody');
+        if (!tbody) return;
+        const obs = new MutationObserver(function() {
+            const rows = document.querySelectorAll('#invoicesTableBody tr[onclick]');
+            if (rows.length > 0) { obs.disconnect(); _saHighlightInvRow(0); }
+        });
+        obs.observe(tbody, { childList: true, subtree: true });
+    }, 10);
+    loadInvoices();
+}
+
+window.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('invoicesModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    const MANAGED = ['ArrowDown','ArrowUp','Enter','Escape'];
+    if (!MANAGED.includes(e.key)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    const rows = Array.from(document.querySelectorAll('#invoicesTableBody tr[onclick]'));
+
+    if (e.key === 'Escape') { closeInvoicesModal(); return; }
+    if (rows.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+        _saHighlightInvRow(Math.min(_saInvHighlightIdx + 1, rows.length - 1));
+        return;
+    }
+    if (e.key === 'ArrowUp') {
+        _saHighlightInvRow(Math.max(_saInvHighlightIdx - 1, 0));
+        return;
+    }
+    if (e.key === 'Enter') {
+        const idx = _saInvHighlightIdx >= 0 ? _saInvHighlightIdx : 0;
+        if (rows[idx]) {
+            const srNo = rows[idx].getAttribute('onclick').match(/selectInvoice\('([^']+)'\)/)?.[1];
+            if (srNo) selectInvoice(srNo);
+        }
+        return;
+    }
+}, true);
+
+// ── Initial focus on Sr No field ──
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        document.getElementById('search_sr_no')?.focus();
+    }, 150);
+});
 
 </script>
 @endpush

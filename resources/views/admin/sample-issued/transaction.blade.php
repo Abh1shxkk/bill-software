@@ -26,6 +26,10 @@
     .modal-body-custom { padding: 1rem; max-height: 400px; overflow-y: auto; }
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
+
+    /* Custom Dropdown Styles */
+    .custom-dropdown-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
+    .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #f0f8ff; }
 </style>
 @endpush
 
@@ -54,7 +58,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required>
+                                    <input type="date" id="sit_transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required data-custom-enter>
                                 </div>
                                 <div class="field-group mt-1">
                                     <label style="width: 40px;"></label>
@@ -68,39 +72,63 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 70px;">Party Type :</label>
-                                    <select id="party_type" name="party_type" class="form-select" onchange="loadPartyList()">
-                                        @foreach($partyTypes as $key => $label)
-                                        <option value="{{ $key }}" {{ $loop->first ? 'selected' : '' }}>{{ $label }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="custom-dropdown" id="sit_partyTypeDropdownWrapper" style="flex: 1; position: relative;">
+                                        <input type="text" class="form-control" id="sit_partyTypeDisplay" 
+                                               placeholder="Select Type..." autocomplete="off"
+                                               style="background: #fff3e0; border: 2px solid #ff9800;"
+                                               onfocus="openPartyTypeDropdown()" onkeyup="filterPartyTypes(event)" data-custom-enter
+                                               value="{{ collect($partyTypes)->first() }}">
+                                        <input type="hidden" id="sit_party_type" name="party_type" value="{{ collect($partyTypes)->keys()->first() }}">
+                                        <div class="custom-dropdown-list" id="sit_partyTypeList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            @foreach($partyTypes as $key => $label)
+                                                <div class="custom-dropdown-item" 
+                                                     data-value="{{ $key }}" 
+                                                     data-name="{{ $label }}"
+                                                     onclick="selectPartyType('{{ $key }}', '{{ addslashes($label) }}')">
+                                                    {{ $label }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="field-group mb-1">
                                     <label style="width: 50px;">Name :</label>
-                                    <select id="party_id" name="party_id" class="form-select" onchange="updatePartyName()">
-                                        <option value="">-- Select --</option>
-                                        @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <input type="hidden" id="party_name" name="party_name">
+                                    <div class="custom-dropdown" id="sit_partyDropdownWrapper" style="flex: 1; position: relative;">
+                                        <input type="text" class="form-control" id="sit_partyDisplay" 
+                                               placeholder="Select Party..." autocomplete="off"
+                                               style="background: #e8ffe8; border: 2px solid #28a745;"
+                                               onfocus="openPartyDropdown()" onkeyup="filterParties(event)" data-custom-enter>
+                                        <input type="hidden" id="party_id" name="party_id">
+                                        <input type="hidden" id="party_name" name="party_name">
+                                        <div class="custom-dropdown-list" id="sit_partyList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            @foreach($customers as $customer)
+                                                <div class="custom-dropdown-item" 
+                                                     data-value="{{ $customer->id }}" 
+                                                     data-name="{{ $customer->name }}"
+                                                     onclick="selectParty('{{ $customer->id }}', '{{ addslashes($customer->name) }}')">
+                                                    {{ $customer->name }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="field-group">
                                     <label style="width: 60px;">Remarks :</label>
-                                    <input type="text" id="remarks" name="remarks" class="form-control">
+                                    <input type="text" id="sit_remarks" name="remarks" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group mb-1">
                                     <label style="width: 30px;">On :</label>
-                                    <input type="text" id="on_field" name="on_field" class="form-control" style="width: 50px;">
+                                    <input type="text" id="sit_on_field" name="on_field" class="form-control" style="width: 50px;" data-custom-enter>
                                     <label style="width: 35px;">Rate :</label>
-                                    <input type="number" id="rate" name="rate" class="form-control text-end" step="0.01" value="0" style="width: 70px;">
+                                    <input type="number" id="sit_rate" name="rate" class="form-control text-end" step="0.01" value="0" style="width: 70px;" data-custom-enter>
                                 </div>
                                 <div class="field-group">
                                     <label style="width: 30px;">Tag :</label>
-                                    <input type="text" id="tag" name="tag" class="form-control" style="width: 80px;">
+                                    <input type="text" id="sit_tag" name="tag" class="form-control" style="width: 80px;" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -108,37 +136,37 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">GR No. :</label>
-                                    <input type="text" id="gr_no" name="gr_no" class="form-control">
+                                    <input type="text" id="sit_gr_no" name="gr_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date :</label>
-                                    <input type="date" id="gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                    <input type="date" id="sit_gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="field-group">
                                     <label style="width: 40px;">Cases :</label>
-                                    <input type="number" id="cases" name="cases" class="form-control" value="0">
+                                    <input type="number" id="sit_cases" name="cases" class="form-control" value="0" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 80px;">Road Permit :</label>
-                                    <input type="text" id="road_permit_no" name="road_permit_no" class="form-control">
+                                    <input type="text" id="sit_road_permit" name="road_permit_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">Truck No. :</label>
-                                    <input type="text" id="truck_no" name="truck_no" class="form-control">
+                                    <input type="text" id="sit_truck_no" name="truck_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 70px;">Transport :</label>
-                                    <input type="text" id="transport" name="transport" class="form-control">
+                                    <input type="text" id="sit_transport" name="transport" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -168,7 +196,7 @@
                             <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
                                 <i class="bi bi-plus-circle"></i> Add Row
                             </button>
-                            <button type="button" class="btn btn-sm btn-primary" onclick="showItemSelectionModal()">
+                            <button type="button" class="btn btn-sm btn-primary" id="sit_addItemsBtn" onclick="showItemSelectionModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
                         </div>
@@ -263,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function updateDayName() {
-    const dateInput = document.getElementById('transaction_date');
+    const dateInput = document.getElementById('sit_transaction_date');
     const dayInput = document.getElementById('day_name');
     if (dateInput.value) {
         const date = new Date(dateInput.value);
@@ -283,40 +311,170 @@ function loadItems() {
 
 // ============ PARTY DROPDOWN FUNCTIONS ============
 function loadPartyList() {
-    const partyType = document.getElementById('party_type').value;
-    const partySelect = document.getElementById('party_id');
+    const partyType = document.getElementById('sit_party_type').value;
+    const listContainer = document.getElementById('sit_partyList');
     
-    // Clear current options
-    partySelect.innerHTML = '<option value="">-- Loading... --</option>';
+    // Clear and show loading
+    listContainer.innerHTML = '<div class="custom-dropdown-item" style="color: #999;">Loading...</div>';
+    document.getElementById('party_id').value = '';
+    document.getElementById('party_name').value = '';
+    document.getElementById('sit_partyDisplay').value = '';
     
     fetch(`{{ url('admin/sample-issued/get-party-list') }}?party_type=${partyType}`)
         .then(response => response.json())
         .then(data => {
-            partySelect.innerHTML = '<option value="">-- Select --</option>';
+            listContainer.innerHTML = '';
             data.forEach(party => {
-                const option = document.createElement('option');
-                option.value = party.id;
-                option.textContent = party.name;
-                option.dataset.name = party.name;
-                partySelect.appendChild(option);
+                const div = document.createElement('div');
+                div.className = 'custom-dropdown-item';
+                div.dataset.value = party.id;
+                div.dataset.name = party.name;
+                div.textContent = party.name;
+                div.onclick = function() { selectParty(party.id, party.name); };
+                listContainer.appendChild(div);
             });
         })
         .catch(error => {
             console.error('Error loading party list:', error);
-            partySelect.innerHTML = '<option value="">-- Error loading --</option>';
+            listContainer.innerHTML = '<div class="custom-dropdown-item" style="color: red;">Error loading</div>';
         });
 }
 
 function updatePartyName() {
-    const partySelect = document.getElementById('party_id');
-    const partyNameInput = document.getElementById('party_name');
-    const selectedOption = partySelect.options[partySelect.selectedIndex];
-    
-    if (selectedOption && selectedOption.dataset.name) {
-        partyNameInput.value = selectedOption.dataset.name;
-    } else {
-        partyNameInput.value = '';
+    // No-op - handled by selectParty now
+}
+
+// ====== CUSTOM PARTY DROPDOWN ======
+let partyActiveIndex = -1;
+
+function openPartyDropdown() {
+    const display = document.getElementById('sit_partyDisplay');
+    display.select();
+    document.querySelectorAll('#sit_partyList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
+    });
+    document.getElementById('sit_partyList').style.display = 'block';
+    partyActiveIndex = 0;
+    highlightPartyItem();
+}
+
+function closePartyDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('sit_partyList');
+        if (list) list.style.display = 'none';
+        partyActiveIndex = -1;
+    }, 200);
+}
+
+function filterParties(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#sit_partyList .custom-dropdown-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    partyActiveIndex = 0;
+    highlightPartyItem();
+}
+
+function selectParty(id, name) {
+    document.getElementById('party_id').value = id;
+    document.getElementById('sit_partyDisplay').value = name;
+    document.getElementById('party_name').value = name;
+    document.getElementById('sit_partyList').style.display = 'none';
+    window.selectedPartyName = name;
+    partyActiveIndex = -1;
+    document.getElementById('sit_remarks')?.focus();
+}
+
+function highlightPartyItem() {
+    const items = Array.from(document.querySelectorAll('#sit_partyList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    if (partyActiveIndex >= items.length) partyActiveIndex = 0;
+    if (partyActiveIndex < -1) partyActiveIndex = items.length - 1;
+    if (partyActiveIndex >= 0 && items[partyActiveIndex]) {
+        items[partyActiveIndex].classList.add('active');
+        items[partyActiveIndex].style.backgroundColor = '#f0f8ff';
+        items[partyActiveIndex].scrollIntoView({ block: 'nearest' });
     }
+    items.forEach((item, idx) => {
+        if (idx !== partyActiveIndex) item.style.backgroundColor = '';
+    });
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#sit_partyDropdownWrapper')) {
+        const list = document.getElementById('sit_partyList');
+        if (list) list.style.display = 'none';
+    }
+    if (!e.target.closest('#sit_partyTypeDropdownWrapper')) {
+        const list = document.getElementById('sit_partyTypeList');
+        if (list) list.style.display = 'none';
+    }
+});
+
+// ====== CUSTOM PARTY TYPE DROPDOWN ======
+let partyTypeActiveIndex = -1;
+
+function openPartyTypeDropdown() {
+    const display = document.getElementById('sit_partyTypeDisplay');
+    display.select();
+    document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
+    });
+    document.getElementById('sit_partyTypeList').style.display = 'block';
+    partyTypeActiveIndex = 0;
+    highlightPartyTypeItem();
+}
+
+function closePartyTypeDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('sit_partyTypeList');
+        if (list) list.style.display = 'none';
+        partyTypeActiveIndex = -1;
+    }, 200);
+}
+
+function filterPartyTypes(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    partyTypeActiveIndex = 0;
+    highlightPartyTypeItem();
+}
+
+function selectPartyType(id, name) {
+    document.getElementById('sit_party_type').value = id;
+    document.getElementById('sit_partyTypeDisplay').value = name;
+    document.getElementById('sit_partyTypeList').style.display = 'none';
+    window.selectedPartyTypeName = name;
+    partyTypeActiveIndex = -1;
+    // Load matching party list
+    loadPartyList();
+    // Move to party name
+    document.getElementById('sit_partyDisplay')?.focus();
+    setTimeout(() => { openPartyDropdown(); }, 100);
+}
+
+function highlightPartyTypeItem() {
+    const items = Array.from(document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    if (partyTypeActiveIndex >= items.length) partyTypeActiveIndex = 0;
+    if (partyTypeActiveIndex < -1) partyTypeActiveIndex = items.length - 1;
+    if (partyTypeActiveIndex >= 0 && items[partyTypeActiveIndex]) {
+        items[partyTypeActiveIndex].classList.add('active');
+        items[partyTypeActiveIndex].style.backgroundColor = '#f0f8ff';
+        items[partyTypeActiveIndex].scrollIntoView({ block: 'nearest' });
+    }
+    items.forEach((item, idx) => {
+        if (idx !== partyTypeActiveIndex) item.style.backgroundColor = '';
+    });
 }
 
 // ============ REUSABLE MODAL BRIDGE FUNCTION ============
@@ -345,13 +503,13 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
     
     // Complete row HTML with all fields
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${itemData.id || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemData.name || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchData?.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batchData?.expiry_formatted || ''}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(batchData?.s_rate || itemData.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${itemData.id || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${itemData.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchData?.batch_no || ''}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${batchData?.expiry_formatted || ''}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(batchData?.s_rate || itemData.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="${itemData.id}">
         <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batchData?.id || ''}">
@@ -464,13 +622,13 @@ function _legacy_selectItemFromModal(item) {
     row.onclick = function() { selectRow(rowIndex); };
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
         <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
@@ -601,10 +759,13 @@ function closeBatchModal() {
     document.getElementById('batchBackdrop')?.remove();
 }
 
-// ============ KEYBOARD NAVIGATION ============
 function handleBatchKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            document.getElementById('sit_transport')?.focus();
+            return;
+        }
         const row = document.getElementById(`row-${rowIndex}`);
         row?.querySelector('input[name*="[expiry]"]')?.focus();
     }
@@ -613,6 +774,11 @@ function handleBatchKeydown(event, rowIndex) {
 function handleExpiryKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            const row = document.getElementById(`row-${rowIndex}`);
+            row?.querySelector('input[name*="[batch]"]')?.focus();
+            return;
+        }
         const row = document.getElementById(`row-${rowIndex}`);
         row?.querySelector('input[name*="[qty]"]')?.focus();
     }
@@ -621,8 +787,38 @@ function handleExpiryKeydown(event, rowIndex) {
 function handleQtyKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            const row = document.getElementById(`row-${rowIndex}`);
+            row?.querySelector('input[name*="[expiry]"]')?.focus();
+            return;
+        }
+        calculateRowAmount(rowIndex);
+        const row = document.getElementById(`row-${rowIndex}`);
+        row?.querySelector('input[name*="[rate]"]')?.focus();
+    }
+}
+
+function handleRateKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (event.shiftKey) {
+            const row = document.getElementById(`row-${rowIndex}`);
+            row?.querySelector('input[name*="[qty]"]')?.focus();
+            return;
+        }
         calculateRowAmount(rowIndex);
         completeRow(rowIndex);
+        // Check if next row exists
+        const currentRow = document.getElementById(`row-${rowIndex}`);
+        const nextRow = currentRow ? currentRow.nextElementSibling : null;
+        if (nextRow && nextRow.id && nextRow.id.startsWith('row-')) {
+            const nextRowIdx = parseInt(nextRow.id.replace('row-', ''));
+            selectRow(nextRowIdx);
+            const nextQty = nextRow.querySelector('input[name*="[qty]"]');
+            if (nextQty) { nextQty.focus(); nextQty.select(); return; }
+        }
+        // No next row - trigger Add Items
+        showItemSelectionModal();
     }
 }
 
@@ -646,13 +842,13 @@ function addNewRow() {
     row.onclick = function() { selectRow(rowIndex); };
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" onchange="searchItemByCode(${rowIndex}, this.value)" onkeydown="handleCodeKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" readonly onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
         <input type="hidden" name="items[${rowIndex}][item_id]" value="">
         <input type="hidden" name="items[${rowIndex}][batch_id]" value="">
@@ -825,5 +1021,225 @@ function cancelSampleIssue() {
         window.location.href = '{{ route("admin.sample-issued.index") }}';
     }
 }
+
+// ====== KEYBOARD NAVIGATION ======
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        // Skip if modal is open
+        const hasModalOpen = document.getElementById('itemModal') || document.getElementById('batchModal') ||
+            document.querySelector('#sampleIssuedItemModal.show') || document.querySelector('#sampleIssuedBatchModal.show');
+        if (hasModalOpen) return;
+
+        // Ctrl+Enter → Srlno field
+        if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('srlno')?.focus();
+            document.getElementById('srlno')?.select();
+            return false;
+        }
+
+        // Shift+Enter backward navigation
+        if (e.shiftKey && !e.ctrlKey) {
+            const backMap = {
+                'sit_partyTypeDisplay': 'sit_transaction_date',
+                'sit_partyDisplay': 'sit_partyTypeDisplay',
+                'sit_remarks': 'sit_partyDisplay',
+                'sit_on_field': 'sit_remarks',
+                'sit_rate': 'sit_on_field',
+                'sit_tag': 'sit_rate',
+                'sit_gr_no': 'sit_tag',
+                'sit_gr_date': 'sit_gr_no',
+                'sit_cases': 'sit_gr_date',
+                'sit_road_permit': 'sit_cases',
+                'sit_truck_no': 'sit_road_permit',
+                'sit_transport': 'sit_truck_no'
+            };
+            if (backMap[activeEl.id]) {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById(backMap[activeEl.id])?.focus();
+                return false;
+            }
+            return;
+        }
+
+        // Party Dropdown Intercept
+        if (activeEl.id === 'sit_partyDisplay') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const existingId = document.getElementById('party_id').value;
+            const listContainer = document.getElementById('sit_partyList');
+            if (existingId) {
+                if (listContainer) listContainer.style.display = 'none';
+                partyActiveIndex = -1;
+                document.getElementById('sit_partyDisplay').value = window.selectedPartyName || '';
+                document.getElementById('sit_remarks')?.focus();
+                return false;
+            }
+            if (listContainer && listContainer.style.display === 'block') {
+                const items = Array.from(document.querySelectorAll('#sit_partyList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                if (partyActiveIndex >= 0 && partyActiveIndex < items.length) {
+                    items[partyActiveIndex].click();
+                } else {
+                    listContainer.style.display = 'none';
+                    partyActiveIndex = -1;
+                    document.getElementById('sit_remarks')?.focus();
+                }
+            } else {
+                document.getElementById('sit_remarks')?.focus();
+            }
+            return false;
+        }
+
+        // Party Type Dropdown Intercept
+        if (activeEl.id === 'sit_partyTypeDisplay') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const existingVal = document.getElementById('sit_party_type').value;
+            const listContainer = document.getElementById('sit_partyTypeList');
+            if (existingVal) {
+                if (listContainer && listContainer.style.display === 'block') {
+                    const items = Array.from(document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                    if (partyTypeActiveIndex >= 0 && partyTypeActiveIndex < items.length) {
+                        items[partyTypeActiveIndex].click();
+                    } else {
+                        listContainer.style.display = 'none';
+                        partyTypeActiveIndex = -1;
+                        document.getElementById('sit_partyDisplay')?.focus();
+                        setTimeout(() => { openPartyDropdown(); }, 50);
+                    }
+                } else {
+                    // Already selected, skip to party name
+                    document.getElementById('sit_partyDisplay')?.focus();
+                    setTimeout(() => { openPartyDropdown(); }, 50);
+                }
+            } else {
+                if (listContainer && listContainer.style.display === 'block') {
+                    const items = Array.from(document.querySelectorAll('#sit_partyTypeList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                    if (partyTypeActiveIndex >= 0 && partyTypeActiveIndex < items.length) {
+                        items[partyTypeActiveIndex].click();
+                    }
+                } else {
+                    document.getElementById('sit_partyDisplay')?.focus();
+                    setTimeout(() => { openPartyDropdown(); }, 50);
+                }
+            }
+            return false;
+        }
+
+        // Date → Party Type
+        if (activeEl.id === 'sit_transaction_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_partyTypeDisplay')?.focus();
+            setTimeout(() => { openPartyTypeDropdown(); }, 50);
+            return false;
+        }
+        // Remarks → On
+        if (activeEl.id === 'sit_remarks') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_on_field')?.focus();
+            return false;
+        }
+        // On → Rate
+        if (activeEl.id === 'sit_on_field') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_rate')?.focus();
+            return false;
+        }
+        // Rate → Tag
+        if (activeEl.id === 'sit_rate') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_tag')?.focus();
+            return false;
+        }
+        // Tag → GR No
+        if (activeEl.id === 'sit_tag') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_gr_no')?.focus();
+            return false;
+        }
+        // GR No → GR Date
+        if (activeEl.id === 'sit_gr_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_gr_date')?.focus();
+            return false;
+        }
+        // GR Date → Cases
+        if (activeEl.id === 'sit_gr_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_cases')?.focus();
+            return false;
+        }
+        // Cases → Road Permit
+        if (activeEl.id === 'sit_cases') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_road_permit')?.focus();
+            return false;
+        }
+        // Road Permit → Truck No
+        if (activeEl.id === 'sit_road_permit') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_truck_no')?.focus();
+            return false;
+        }
+        // Truck No → Transport
+        if (activeEl.id === 'sit_truck_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('sit_transport')?.focus();
+            return false;
+        }
+        // Transport → first row Qty (if items exist) OR Add Items
+        if (activeEl.id === 'sit_transport') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (firstRow) {
+                const qtyInput = firstRow.querySelector('input[name*="[qty]"]');
+                if (qtyInput) {
+                    const rowIdx = parseInt(firstRow.dataset.rowIndex || firstRow.id.replace('row-', ''));
+                    selectRow(rowIdx);
+                    qtyInput.focus();
+                    qtyInput.select();
+                    return false;
+                }
+            }
+            const addBtn = document.getElementById('sit_addItemsBtn');
+            if (addBtn) { addBtn.focus(); addBtn.click(); }
+            return false;
+        }
+        // Add Items button
+        if (activeEl.id === 'sit_addItemsBtn') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            showItemSelectionModal();
+            return false;
+        }
+    }
+
+    // Dropdown arrow navigation - Party Name
+    if (document.activeElement && document.activeElement.id === 'sit_partyDisplay') {
+        const listContainer = document.getElementById('sit_partyList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); partyActiveIndex++; highlightPartyItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); partyActiveIndex--; highlightPartyItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closePartyDropdown(); return false; }
+        }
+    }
+
+    // Dropdown arrow navigation - Party Type
+    if (document.activeElement && document.activeElement.id === 'sit_partyTypeDisplay') {
+        const listContainer = document.getElementById('sit_partyTypeList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); partyTypeActiveIndex++; highlightPartyTypeItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); partyTypeActiveIndex--; highlightPartyTypeItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closePartyTypeDropdown(); return false; }
+        }
+    }
+
+    // Ctrl+S save
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        saveTransaction();
+        return false;
+    }
+}, true);
 </script>
 @endpush

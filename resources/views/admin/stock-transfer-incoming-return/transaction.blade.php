@@ -30,6 +30,10 @@
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; }
     .item-row:hover { background-color: #e3f2fd !important; cursor: pointer; }
     .item-row.selected { background-color: #bbdefb !important; }
+
+    /* Custom Dropdown Styles */
+    .custom-dropdown-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
+    .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #f0f8ff; }
 </style>
 @endpush
 
@@ -58,7 +62,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required>
+                                    <input type="date" id="stirt_transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required data-custom-enter>
                                 </div>
                                 <div class="ms-5 mt-1">
                                     <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width: 100px;">
@@ -67,17 +71,28 @@
                             <div class="col-md-4">
                                 <div class="field-group mb-1">
                                     <label style="width: 50px;">Name :</label>
-                                    <select id="supplier_id" name="supplier_id" class="form-control" required onchange="updateNameFromSupplier()">
-                                        <option value="">-</option>
-                                        @foreach($suppliers as $supplier)
-                                            <option value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <input type="hidden" id="name" name="name">
+                                    <div class="custom-dropdown" id="stirt_supplierDropdownWrapper" style="flex: 1; position: relative;">
+                                        <input type="text" class="form-control" id="stirt_supplierDisplay" 
+                                               placeholder="Select Supplier..." autocomplete="off"
+                                               style="background: #e8ffe8; border: 2px solid #28a745;"
+                                               onfocus="openSupplierDropdown()" onkeyup="filterSuppliers(event)" data-custom-enter>
+                                        <input type="hidden" id="supplier_id" name="supplier_id">
+                                        <input type="hidden" id="name" name="name">
+                                        <div class="custom-dropdown-list" id="stirt_supplierList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                            @foreach($suppliers as $supplier)
+                                                <div class="custom-dropdown-item" 
+                                                     data-value="{{ $supplier->supplier_id }}" 
+                                                     data-name="{{ $supplier->name }}"
+                                                     onclick="selectSupplier('{{ $supplier->supplier_id }}', '{{ addslashes($supplier->name) }}')">
+                                                    {{ $supplier->name }}
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="field-group">
                                     <label style="width: 60px;">Remarks :</label>
-                                    <input type="text" id="remarks" name="remarks" class="form-control">
+                                    <input type="text" id="stirt_remarks" name="remarks" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
@@ -91,25 +106,25 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">GR No.:</label>
-                                    <input type="text" id="gr_no" name="gr_no" class="form-control">
+                                    <input type="text" id="stirt_gr_no" name="gr_no" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date:</label>
-                                    <input type="date" id="gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}">
+                                    <input type="date" id="stirt_gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
                                 <div class="field-group">
                                     <label style="width: 40px;">Cases:</label>
-                                    <input type="text" id="cases" name="cases" class="form-control">
+                                    <input type="text" id="stirt_cases" name="cases" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="field-group">
                                     <label style="width: 70px;">Transport:</label>
-                                    <input type="text" id="transport" name="transport" class="form-control">
+                                    <input type="text" id="stirt_transport" name="transport" class="form-control" data-custom-enter>
                                 </div>
                             </div>
                         </div>
@@ -136,7 +151,7 @@
                             </table>
                         </div>
                         <div class="text-center mt-2">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="showItemSelectionModal()">
+                            <button type="button" class="btn btn-sm btn-primary" id="stirt_addItemsBtn" onclick="showItemSelectionModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
                         </div>
@@ -250,14 +265,7 @@ function updateDayName() {
 }
 
 function updateNameFromSupplier() {
-    const select = document.getElementById('supplier_id');
-    const nameInput = document.getElementById('name');
-    const selectedOption = select.options[select.selectedIndex];
-    if (selectedOption && selectedOption.dataset.name) {
-        nameInput.value = selectedOption.dataset.name;
-    } else {
-        nameInput.value = '';
-    }
+    // No-op - handled by selectSupplier now
 }
 
 function loadItems() {
@@ -302,10 +310,10 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
     row.innerHTML = `
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || item.item_code || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${rate}" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batchNo}" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiry}" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${rate}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
     `;
@@ -406,10 +414,10 @@ function selectItemFromModal(item) {
     row.innerHTML = `
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || item.item_code || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || item.mrp || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onfocus="selectRow(${rowIndex})"></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" onkeydown="handleBatchKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" step="1" min="1" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleQtyKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
+        <td><input type="number" class="form-control form-control-sm" name="items[${rowIndex}][rate]" step="0.01" value="${parseFloat(item.s_rate || item.mrp || 0).toFixed(2)}" onchange="calculateRowAmount(${rowIndex})" onkeydown="handleRateKeydown(event, ${rowIndex})" onfocus="selectRow(${rowIndex})" data-custom-enter></td>
         <td><input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" step="0.01" readonly onfocus="selectRow(${rowIndex})"></td>
         <td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})"><i class="bi bi-x"></i></button></td>
     `;
@@ -554,6 +562,10 @@ let batchCheckInProgress = false;
 function handleBatchKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            document.getElementById('stirt_transport')?.focus();
+            return;
+        }
         const row = document.getElementById(`row-${rowIndex}`);
         const batchInput = row?.querySelector('input[name*="[batch]"]');
         const batchNo = batchInput?.value.trim();
@@ -708,6 +720,11 @@ function saveNewBatch(rowIndex, batchNo) {
 function handleExpiryKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            const row = document.getElementById(`row-${rowIndex}`);
+            row?.querySelector('input[name*="[batch]"]')?.focus();
+            return;
+        }
         const row = document.getElementById(`row-${rowIndex}`);
         row?.querySelector('input[name*="[qty]"]')?.focus();
     }
@@ -716,8 +733,38 @@ function handleExpiryKeydown(event, rowIndex) {
 function handleQtyKeydown(event, rowIndex) {
     if (event.key === 'Enter') {
         event.preventDefault();
+        if (event.shiftKey) {
+            const row = document.getElementById(`row-${rowIndex}`);
+            row?.querySelector('input[name*="[expiry]"]')?.focus();
+            return;
+        }
+        calculateRowAmount(rowIndex);
+        const row = document.getElementById(`row-${rowIndex}`);
+        row?.querySelector('input[name*="[rate]"]')?.focus();
+    }
+}
+
+function handleRateKeydown(event, rowIndex) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (event.shiftKey) {
+            const row = document.getElementById(`row-${rowIndex}`);
+            row?.querySelector('input[name*="[qty]"]')?.focus();
+            return;
+        }
         calculateRowAmount(rowIndex);
         completeRow(rowIndex);
+        // Check if next row exists
+        const currentRow = document.getElementById(`row-${rowIndex}`);
+        const nextRow = currentRow ? currentRow.nextElementSibling : null;
+        if (nextRow && nextRow.id && nextRow.id.startsWith('row-')) {
+            const nextRowIdx = parseInt(nextRow.id.replace('row-', ''));
+            selectRow(nextRowIdx);
+            const nextQty = nextRow.querySelector('input[name*="[qty]"]');
+            if (nextQty) { nextQty.focus(); nextQty.select(); return; }
+        }
+        // No next row - trigger Add Items
+        showItemSelectionModal();
     }
 }
 
@@ -827,14 +874,14 @@ function saveTransaction() {
     
     const data = {
         _token: '{{ csrf_token() }}',
-        transaction_date: document.getElementById('transaction_date').value,
+        transaction_date: document.getElementById('stirt_transaction_date').value,
         day_name: document.getElementById('day_name').value,
         name: name,
-        gr_no: document.getElementById('gr_no').value,
-        gr_date: document.getElementById('gr_date').value,
-        cases: document.getElementById('cases').value,
-        transport: document.getElementById('transport').value,
-        remarks: document.getElementById('remarks').value,
+        gr_no: document.getElementById('stirt_gr_no').value,
+        gr_date: document.getElementById('stirt_gr_date').value,
+        cases: document.getElementById('stirt_cases').value,
+        transport: document.getElementById('stirt_transport').value,
+        remarks: document.getElementById('stirt_remarks').value,
         net_amount: document.getElementById('net_amount').value,
         packing: document.getElementById('packing').value,
         unit: document.getElementById('unit').value,
@@ -879,5 +926,203 @@ function cancelTransaction() {
         window.location.href = '{{ route("admin.stock-transfer-incoming-return.index") }}';
     }
 }
+
+// ====== CUSTOM SUPPLIER DROPDOWN ======
+let supplierActiveIndex = -1;
+
+function openSupplierDropdown() {
+    const display = document.getElementById('stirt_supplierDisplay');
+    display.select();
+    document.querySelectorAll('#stirt_supplierList .custom-dropdown-item').forEach(item => {
+        item.style.display = '';
+    });
+    document.getElementById('stirt_supplierList').style.display = 'block';
+    supplierActiveIndex = 0;
+    highlightSupplierItem();
+}
+
+function closeSupplierDropdown() {
+    setTimeout(() => {
+        const list = document.getElementById('stirt_supplierList');
+        if (list) list.style.display = 'none';
+        supplierActiveIndex = -1;
+    }, 200);
+}
+
+function filterSuppliers(e) {
+    if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape'].includes(e.key)) return;
+    const filter = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('#stirt_supplierList .custom-dropdown-item');
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        item.style.display = text.indexOf(filter) > -1 ? '' : 'none';
+    });
+    supplierActiveIndex = 0;
+    highlightSupplierItem();
+}
+
+function selectSupplier(id, name) {
+    document.getElementById('supplier_id').value = id;
+    document.getElementById('stirt_supplierDisplay').value = name;
+    document.getElementById('name').value = name;
+    document.getElementById('stirt_supplierList').style.display = 'none';
+    supplierActiveIndex = -1;
+    document.getElementById('stirt_remarks')?.focus();
+}
+
+function highlightSupplierItem() {
+    const items = Array.from(document.querySelectorAll('#stirt_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+    items.forEach(i => i.classList.remove('active'));
+    if (supplierActiveIndex >= items.length) supplierActiveIndex = 0;
+    if (supplierActiveIndex < -1) supplierActiveIndex = items.length - 1;
+    if (supplierActiveIndex >= 0 && items[supplierActiveIndex]) {
+        items[supplierActiveIndex].classList.add('active');
+        items[supplierActiveIndex].style.backgroundColor = '#f0f8ff';
+        items[supplierActiveIndex].scrollIntoView({ block: 'nearest' });
+    }
+    items.forEach((item, idx) => {
+        if (idx !== supplierActiveIndex) item.style.backgroundColor = '';
+    });
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#stirt_supplierDropdownWrapper')) {
+        const list = document.getElementById('stirt_supplierList');
+        if (list) list.style.display = 'none';
+    }
+});
+
+// ====== KEYBOARD NAVIGATION ======
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const activeEl = document.activeElement;
+        if (!activeEl) return;
+
+        // Skip if modal is open
+        const hasModalOpen = document.getElementById('itemModal')?.classList.contains('show') ||
+            document.getElementById('batchModal')?.classList.contains('show') ||
+            document.getElementById('newBatchModal') ||
+            document.getElementById('batchBackdrop')?.classList.contains('show') ||
+            document.querySelector('#chooseItemsModal.show') ||
+            document.querySelector('#batchSelectionModal.show');
+        if (hasModalOpen) return;
+
+        // Shift+Enter backward navigation
+        if (e.shiftKey && !e.ctrlKey) {
+            const backMap = {
+                'stirt_supplierDisplay': 'stirt_transaction_date',
+                'stirt_remarks': 'stirt_supplierDisplay',
+                'stirt_gr_no': 'stirt_remarks',
+                'stirt_gr_date': 'stirt_gr_no',
+                'stirt_cases': 'stirt_gr_date',
+                'stirt_transport': 'stirt_cases'
+            };
+            if (backMap[activeEl.id]) {
+                e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+                document.getElementById(backMap[activeEl.id])?.focus();
+                return false;
+            }
+            return;
+        }
+
+        // Ctrl+Enter → jump to Srlno field
+        if (e.ctrlKey) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('srlno')?.focus();
+            document.getElementById('srlno')?.select();
+            return false;
+        }
+
+        // Supplier Dropdown Intercept
+        if (activeEl.id === 'stirt_supplierDisplay') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const listContainer = document.getElementById('stirt_supplierList');
+            if (listContainer && listContainer.style.display === 'block') {
+                const items = Array.from(document.querySelectorAll('#stirt_supplierList .custom-dropdown-item')).filter(i => i.style.display !== 'none');
+                if (supplierActiveIndex >= 0 && supplierActiveIndex < items.length) {
+                    items[supplierActiveIndex].click();
+                } else {
+                    listContainer.style.display = 'none';
+                    supplierActiveIndex = -1;
+                    document.getElementById('stirt_remarks')?.focus();
+                }
+            } else {
+                document.getElementById('stirt_remarks')?.focus();
+            }
+            return false;
+        }
+
+        // Date → Supplier
+        if (activeEl.id === 'stirt_transaction_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const display = document.getElementById('stirt_supplierDisplay');
+            if (display) {
+                display.focus();
+                setTimeout(() => { openSupplierDropdown(); }, 50);
+            }
+            return false;
+        }
+        // Remarks → GR No
+        if (activeEl.id === 'stirt_remarks') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stirt_gr_no')?.focus();
+            return false;
+        }
+        // GR No → GR Date
+        if (activeEl.id === 'stirt_gr_no') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stirt_gr_date')?.focus();
+            return false;
+        }
+        // GR Date → Cases
+        if (activeEl.id === 'stirt_gr_date') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stirt_cases')?.focus();
+            return false;
+        }
+        // Cases → Transport
+        if (activeEl.id === 'stirt_cases') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('stirt_transport')?.focus();
+            return false;
+        }
+        // Transport → first row Qty (if items exist) OR Add Items
+        if (activeEl.id === 'stirt_transport') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const firstRow = document.querySelector('#itemsTableBody tr');
+            if (firstRow) {
+                const qtyInput = firstRow.querySelector('input[name*="[qty]"]');
+                if (qtyInput) {
+                    const rowIdx = parseInt(firstRow.id.replace('row-', ''));
+                    selectRow(rowIdx);
+                    qtyInput.focus();
+                    qtyInput.select();
+                    return false;
+                }
+            }
+            const addBtn = document.getElementById('stirt_addItemsBtn');
+            if (addBtn) { addBtn.focus(); addBtn.click(); }
+            return false;
+        }
+    }
+
+    // Dropdown arrow navigation
+    if (document.activeElement && document.activeElement.id === 'stirt_supplierDisplay') {
+        const listContainer = document.getElementById('stirt_supplierList');
+        if (listContainer && listContainer.style.display === 'block') {
+            if (e.key === 'ArrowDown') { e.preventDefault(); supplierActiveIndex++; highlightSupplierItem(); return false; }
+            if (e.key === 'ArrowUp') { e.preventDefault(); supplierActiveIndex--; highlightSupplierItem(); return false; }
+            if (e.key === 'Escape') { e.preventDefault(); closeSupplierDropdown(); return false; }
+        }
+    }
+
+    // Ctrl+S save
+    if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        saveTransaction();
+        return false;
+    }
+}, true);
 </script>
 @endpush
