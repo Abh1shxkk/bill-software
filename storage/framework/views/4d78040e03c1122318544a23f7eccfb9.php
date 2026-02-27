@@ -29,7 +29,26 @@
     
     .btn-action { font-size: 10px; padding: 3px 10px; }
     .footer-section { background: #d0d0d0; padding: 8px; border: 1px solid #999; }
-    
+
+    /* Focus rings on header fields */
+    #voucherDate:focus, #billNo:focus, #billDate:focus,
+    #localInter:focus, #rcm:focus, #description:focus {
+        outline: none !important;
+        border: 2px solid #008000 !important;
+        box-shadow: 0 0 0 3px rgba(0,128,0,.20) !important;
+    }
+    /* Supplier custom dropdown */
+    #supplierDisplay:focus { outline:none !important; border:2px solid #008000 !important; box-shadow:0 0 0 3px rgba(0,128,0,.20) !important; }
+    .sup-opt:hover, .sup-opt.sup-hi { background:#008000 !important; color:#fff !important; }
+    /* Account Type Filter dropdown */
+    #atfDisplay:focus { outline:none !important; border:2px solid #008000 !important; box-shadow:0 0 0 3px rgba(0,128,0,.20) !important; }
+    .atf-opt:hover, .atf-opt.atf-hi { background:#008000 !important; color:#fff !important; }
+    /* Account list keyboard highlight */
+    #accountListBody tr.kb-hi { background:#d4edda !important; }
+    #accountListBody tr.kb-hi td { color:#000 !important; }
+    /* Account row in top table — keyboard highlight */
+    #accountsTableBody tr.kb-row { background:#e8f5e9 !important; outline:2px solid #008000; }
+
     /* Custom Modal Styles */
     .custom-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999999; }
     .custom-modal-overlay.show { display: flex; align-items: center; justify-content: center; }
@@ -49,7 +68,7 @@
                 <div class="row g-2 align-items-center">
                     <div class="col-auto">
                         <span class="field-label">Voucher</span>
-                        <input type="date" class="form-control" name="voucher_date" id="voucherDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 120px;">
+                        <input type="date" class="form-control" name="voucher_date" id="voucherDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 120px;" tabindex="1">
                     </div>
                     <div class="col-auto">
                         <span class="field-label">Voucher No :</span>
@@ -58,25 +77,25 @@
                     </div>
                     <div class="col-auto">
                         <span class="field-label">Bill No. :</span>
-                        <input type="text" class="form-control" name="bill_no" id="billNo" style="width: 100px;">
+                        <input type="text" class="form-control" name="bill_no" id="billNo" style="width: 100px;" tabindex="2">
                     </div>
                     <div class="col-auto">
                         <span class="field-label">Bill Date :</span>
-                        <input type="date" class="form-control" name="bill_date" id="billDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 120px;">
+                        <input type="date" class="form-control" name="bill_date" id="billDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 120px;" tabindex="3">
                     </div>
                     <div class="col-auto">
                         <span class="field-label">L(ocal) / I(nter</span>
-                        <input type="text" class="form-control" name="local_inter" id="localInter" value="L" maxlength="1" style="width: 30px; text-transform: uppercase;">
+                        <input type="text" class="form-control" name="local_inter" id="localInter" value="L" maxlength="1" style="width: 30px; text-transform: uppercase;" tabindex="4">
                     </div>
                     <div class="col-auto">
                         <span class="field-label">RCM (Y/N) :</span>
-                        <input type="text" class="form-control" name="rcm" id="rcm" value="N" maxlength="1" style="width: 30px; text-transform: uppercase;">
+                        <input type="text" class="form-control" name="rcm" id="rcm" value="N" maxlength="1" style="width: 30px; text-transform: uppercase;" tabindex="5">
                     </div>
                 </div>
                 <div class="row g-2 mt-1">
                     <div class="col-12">
                         <span class="field-label">Description :</span>
-                        <input type="text" class="form-control" name="description" id="description" style="width: 100%;">
+                        <input type="text" class="form-control" name="description" id="description" style="width: 100%;" tabindex="6">
                     </div>
                 </div>
             </div>
@@ -90,18 +109,40 @@
                         </table>
                     </div>
                     <div class="row g-1 mb-2 p-1" style="background: #f8f8f8; border: 1px solid #ddd;">
-                        <div class="col-auto">
-                            <span class="field-label-green">Supplier</span>
-                            <select class="form-select" name="supplier_id" id="supplierId" style="width: 200px;">
-                                <option value="">Select Supplier</option>
-                                <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                    <option value="<?php echo e($supplier->supplier_id); ?>" data-gst="<?php echo e($supplier->gst_no); ?>" data-pan="<?php echo e($supplier->pan); ?>" data-city="<?php echo e($supplier->address); ?>" data-pin=""><?php echo e($supplier->name); ?></option>
-                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                            </select>
+                        <div class="col-auto" style="position:relative;">
+                            <span class="field-label-green">Supplier</span><br>
+                            <input type="text" id="supplierDisplay"
+                                   class="form-control"
+                                   placeholder="Select Supplier" tabindex="7"
+                                   style="width:220px;cursor:pointer;caret-color:transparent;background:#fff;"
+                                   autocomplete="off">
+                            <input type="hidden" name="supplier_id" id="supplierId" value="">
+                            <div id="supplierMenu" style="
+                                display:none;position:absolute;top:100%;left:0;width:300px;
+                                background:#fff;border:2px solid #008000;border-radius:4px;
+                                z-index:99999;box-shadow:0 4px 16px rgba(0,0,0,.25);
+                                max-height:200px;overflow-y:auto;">
+                                <input type="text" id="supplierSearch"
+                                       style="width:100%;padding:6px 8px;border:none;border-bottom:1px solid #ccc;font-size:11px;outline:none;"
+                                       placeholder="Type to search...">
+                                <div id="supplierOpts">
+                                    <div class="sup-opt" data-val="" data-gst="" data-pan="" data-city="" data-pin=""
+                                         style="padding:5px 10px;cursor:pointer;font-size:11px;color:#888;">— Select Supplier —</div>
+                                    <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="sup-opt"
+                                         data-val="<?php echo e($supplier->supplier_id); ?>"
+                                         data-gst="<?php echo e($supplier->gst_no); ?>"
+                                         data-pan="<?php echo e($supplier->pan); ?>"
+                                         data-city="<?php echo e($supplier->address); ?>"
+                                         data-pin=""
+                                         style="padding:5px 10px;cursor:pointer;font-size:11px;"><?php echo e($supplier->name); ?></div>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-auto">
                             <span class="field-label-green">Add Account (F9)</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary btn-action" onclick="openAccountModal()">Add</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary btn-action" id="addAccountBtn" onclick="openAccountModal()">Add</button>
                         </div>
                         <div class="col-auto">
                             <button type="button" class="btn btn-sm btn-outline-danger btn-action" onclick="deleteAccount()">Delete Account</button>
@@ -189,11 +230,20 @@
                 <div class="col-md-6">
                     <input type="text" class="form-control form-control-sm" id="accountSearch" placeholder="Search..." onkeyup="filterAccountList()">
                 </div>
-                <div class="col-md-6">
-                    <select class="form-select form-select-sm" id="accountTypeFilter" onchange="loadAccountList()">
-                        <option value="PL">Purchase Ledger</option>
-                        <option value="GL">General Ledger</option>
-                    </select>
+                <div class="col-md-6" style="position:relative;">
+                    <input type="text" id="atfDisplay"
+                           class="form-control form-control-sm"
+                           value="Purchase Ledger" readonly
+                           style="cursor:pointer;background:#fff;caret-color:transparent;"
+                           autocomplete="off">
+                    <input type="hidden" id="accountTypeFilter" value="PL">
+                    <div id="atfMenu" style="
+                        display:none;position:absolute;top:100%;left:0;right:0;
+                        background:#fff;border:2px solid #008000;border-radius:4px;
+                        z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,.2);overflow:hidden;">
+                        <div class="atf-opt" data-val="PL" style="padding:7px 10px;cursor:pointer;font-size:12px;">Purchase Ledger</div>
+                        <div class="atf-opt" data-val="GL" style="padding:7px 10px;cursor:pointer;font-size:12px;">General Ledger</div>
+                    </div>
                 </div>
             </div>
             <div style="max-height: 300px; overflow-y: auto;">
@@ -217,26 +267,350 @@ const cashBankBooks = <?php echo json_encode($cashBankBooks, 15, 512) ?>;
 const hsnCodes = <?php echo json_encode($hsnCodes, 15, 512) ?>;
 
 let accountRowCount = 0, hsnRowCount = 0, selectedAccountRow = null, selectedHsnRow = null;
+let modalKbIdx = -1;
 
 document.addEventListener('DOMContentLoaded', function() {
     for (let i = 0; i < 3; i++) addAccountRow();
     for (let i = 0; i < 5; i++) addHsnRow();
-    
-    document.getElementById('supplierId').addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        document.getElementById('gstNo').value = opt.dataset.gst || '';
-        document.getElementById('panNo').value = opt.dataset.pan || '';
-        document.getElementById('city').value = opt.dataset.city || '';
-        document.getElementById('pin').value = opt.dataset.pin || '';
-    });
-    
+
     document.getElementById('paymentType').addEventListener('change', loadCreditAccounts);
+
+    /* Kill Select2 if it was applied to any of our custom fields */
+    setTimeout(function() {
+        document.querySelectorAll('.select2-container').forEach(el => el.style.display = 'none');
+        if (window.jQuery && $.fn && $.fn.select2) {
+            try { $('#supplierId').select2('destroy'); } catch(e) {}
+            try { $('#accountTypeFilter').select2('destroy'); } catch(e) {}
+        }
+    }, 300);
     loadCreditAccounts();
-    
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F9') { e.preventDefault(); openAccountModal(); }
-        if (e.key === 'Escape') { closeAccountModal(); }
+
+    /* ══════════════════════════════════════════════════════
+       SUPPLIER CUSTOM DROPDOWN
+    ══════════════════════════════════════════════════════ */
+    const supDisp   = document.getElementById('supplierDisplay');
+    const supHid    = document.getElementById('supplierId');
+    const supMenu   = document.getElementById('supplierMenu');
+    const supSearch = document.getElementById('supplierSearch');
+    const supOptsWrap = document.getElementById('supplierOpts');
+    let supIdx = 0, _supSkipFocus = false;
+
+    function supOpts() { return Array.from(supOptsWrap.querySelectorAll('.sup-opt')).filter(o=>o.style.display!=='none'); }
+    function supIsOpen() { return supMenu.style.display !== 'none'; }
+
+    function supOpen() {
+        supMenu.style.display = 'block';
+        supSearch.value = '';
+        filterSupplierOpts('');
+        supIdx = 0;
+        supHilight(supIdx);
+        setTimeout(()=>supSearch.focus(), 0);
+    }
+    function supClose() { supMenu.style.display = 'none'; }
+
+    function filterSupplierOpts(term) {
+        Array.from(supOptsWrap.querySelectorAll('.sup-opt')).forEach(o => {
+            o.style.display = (!term || o.textContent.toLowerCase().includes(term.toLowerCase())) ? '' : 'none';
+        });
+        supIdx = 0; supHilight(0);
+    }
+
+    function supHilight(idx) {
+        const opts = supOpts();
+        opts.forEach((o,i)=>o.classList.toggle('sup-hi', i===idx));
+        if (opts[idx]) opts[idx].scrollIntoView({ block:'nearest' });
+    }
+
+    function supSelectAndNext(val, label, gst, pan, city, pin) {
+        supHid.value  = val;
+        supDisp.value = label;
+        document.getElementById('gstNo').value  = gst  || '';
+        document.getElementById('panNo').value  = pan  || '';
+        document.getElementById('city').value   = city || '';
+        document.getElementById('pin').value    = pin  || '';
+        _supSkipFocus = true;
+        supClose();
+        /* After supplier → move to first HSN code row */
+        setTimeout(()=>{ const hsn = document.querySelector('#hsnTableBody .hsn-code'); if(hsn) { hsn.focus(); hsn.select(); } }, 50);
+    }
+
+    supDisp.addEventListener('focus', function() {
+        if (_supSkipFocus) { _supSkipFocus = false; return; }
+        setTimeout(()=>{ if(!supIsOpen()) supOpen(); }, 0);
     });
+    supDisp.addEventListener('click', function() { supIsOpen() ? supClose() : supOpen(); });
+    supDisp.addEventListener('keydown', function(e) {
+        if (e.key==='Escape') { e.preventDefault(); supClose(); return; }
+        if (!supIsOpen()) { supOpen(); return; }
+    });
+
+    supSearch.addEventListener('input', function() { filterSupplierOpts(this.value); });
+    supSearch.addEventListener('keydown', function(e) {
+        if (e.key==='ArrowDown') {
+            e.preventDefault();
+            const opts=supOpts(); supIdx=Math.min(supIdx+1,opts.length-1); supHilight(supIdx); return;
+        }
+        if (e.key==='ArrowUp') {
+            e.preventDefault();
+            const opts=supOpts(); supIdx=Math.max(supIdx-1,0); supHilight(supIdx); return;
+        }
+        if (e.key==='Enter') {
+            e.preventDefault(); e.stopPropagation();
+            const opts=supOpts(); const opt=opts[supIdx];
+            if (opt) supSelectAndNext(opt.dataset.val, opt.textContent.trim(), opt.dataset.gst, opt.dataset.pan, opt.dataset.city, opt.dataset.pin);
+            return;
+        }
+        if (e.key==='Escape') { e.preventDefault(); supClose(); supDisp.focus(); return; }
+    });
+
+    Array.from(supOptsWrap.querySelectorAll('.sup-opt')).forEach((opt,i)=>{
+        opt.addEventListener('mouseenter', ()=>{ supIdx=supOpts().indexOf(opt); supHilight(supIdx); });
+        opt.addEventListener('click', ()=>{
+            supSelectAndNext(opt.dataset.val, opt.textContent.trim(), opt.dataset.gst, opt.dataset.pan, opt.dataset.city, opt.dataset.pin);
+        });
+    });
+
+    document.addEventListener('click', e=>{
+        if (!e.target.closest('#supplierDisplay') && !e.target.closest('#supplierMenu')) supClose();
+    });
+
+    /* ══════════════════════════════════════════════════════
+       ACCOUNT TYPE FILTER CUSTOM DROPDOWN (in modal)
+    ══════════════════════════════════════════════════════ */
+    const atfDisp = document.getElementById('atfDisplay');
+    const atfHid  = document.getElementById('accountTypeFilter');
+    const atfMenu = document.getElementById('atfMenu');
+    const atfOpts = Array.from(atfMenu.querySelectorAll('.atf-opt'));
+    let atfIdx = 0;
+
+    function atfIsOpen() { return atfMenu.style.display !== 'none'; }
+    function atfOpen()  { atfMenu.style.display='block'; atfHilight(atfOpts.findIndex(o=>o.dataset.val===atfHid.value)||0); }
+    function atfClose() { atfMenu.style.display='none'; }
+    function atfHilight(idx) { atfOpts.forEach((o,i)=>o.classList.toggle('atf-hi',i===idx)); atfIdx=idx; }
+
+    function atfSelect(val, label) {
+        atfHid.value  = val;
+        atfDisp.value = label;
+        atfClose();
+        loadAccountList();
+        /* After filter choose → move to first visible row */
+        const rows = modalVisibleRows();
+        if (rows.length) {
+            modalKbIdx = 0;
+            modalHilight(0);
+            rows[0].focus();
+        } else {
+            document.getElementById('accountSearch').focus();
+        }
+    }
+
+    atfDisp.addEventListener('click', ()=> atfIsOpen() ? atfClose() : atfOpen());
+    atfDisp.addEventListener('keydown', function(e) {
+        if (e.key==='ArrowDown') { e.preventDefault(); if(!atfIsOpen()){atfOpen();return;} atfHilight(Math.min(atfIdx+1,atfOpts.length-1)); return; }
+        if (e.key==='ArrowUp')   { e.preventDefault(); if(!atfIsOpen()){atfOpen();return;} atfHilight(Math.max(atfIdx-1,0)); return; }
+        if (e.key==='Enter'||e.key===' ') {
+            e.preventDefault(); e.stopPropagation();
+            if (atfIsOpen()) { atfSelect(atfOpts[atfIdx].dataset.val, atfOpts[atfIdx].textContent.trim()); }
+            else atfOpen(); return;
+        }
+        if (e.key==='Escape') { e.preventDefault(); atfClose(); return; }
+        if (e.key==='Tab') { e.preventDefault(); atfClose(); document.getElementById('accountSearch').focus(); return; }
+    });
+    atfOpts.forEach((opt,i)=>{
+        opt.addEventListener('mouseenter',()=>atfHilight(i));
+        opt.addEventListener('click',()=>atfSelect(opt.dataset.val, opt.textContent.trim()));
+    });
+    document.addEventListener('click', e=>{
+        if (!e.target.closest('#atfDisplay') && !e.target.closest('#atfMenu')) atfClose();
+    });
+
+    /* ══════════════════════════════════════════════════════
+       HEADER ENTER CHAIN  (capture phase on date inputs)
+    ══════════════════════════════════════════════════════ */
+    function chainTo(nextId) {
+        const el = document.getElementById(nextId);
+        if (el) { el.focus(); if (el.select) el.select(); }
+    }
+
+    document.getElementById('voucherDate').addEventListener('keydown', function(e) {
+        if (e.key!=='Enter') return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        setTimeout(()=>chainTo('billNo'), 30);
+    }, true);
+
+    document.getElementById('billNo').addEventListener('keydown', function(e) {
+        if (e.key!=='Enter') return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        setTimeout(()=>chainTo('billDate'), 30);
+    }, true);
+
+    document.getElementById('billDate').addEventListener('keydown', function(e) {
+        if (e.key!=='Enter') return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        setTimeout(()=>chainTo('localInter'), 30);
+    }, true);
+
+    document.getElementById('localInter').addEventListener('keydown', function(e) {
+        if (e.key!=='Enter') return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        chainTo('rcm');
+    });
+
+    document.getElementById('rcm').addEventListener('keydown', function(e) {
+        if (e.key!=='Enter') return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        chainTo('description');
+    });
+
+    function triggerAddFromDescriptionEnter() {
+        _supSkipFocus = true;
+        supClose();
+        setTimeout(function () {
+            const addBtn = document.getElementById('addAccountBtn');
+            if (addBtn) {
+                addBtn.focus();
+                addBtn.click();
+                return;
+            }
+            openAccountModal();
+        }, 0);
+    }
+
+    document.getElementById('description').addEventListener('keydown', function(e) {
+        if (e.key!=='Enter') return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        triggerAddFromDescriptionEnter();
+    });
+
+    /* Capture fallback: block any global Enter-chain from moving focus to supplier */
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!e.target || e.target.id !== 'description') return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        triggerAddFromDescriptionEnter();
+    }, true);
+
+    /* ══════════════════════════════════════════════════════
+       MODAL KEYBOARD NAVIGATION
+    ══════════════════════════════════════════════════════ */
+    function modalVisibleRows() {
+        return Array.from(document.querySelectorAll('#accountListBody tr'))
+                    .filter(r=>r.style.display!=='none');
+    }
+    function modalHilight(idx) {
+        const rows = modalVisibleRows();
+        rows.forEach((r,i)=>{ r.classList.remove('table-primary','kb-hi'); if(i===idx) r.classList.add('table-primary','kb-hi'); });
+        if (rows[idx]) rows[idx].scrollIntoView({ block:'nearest' });
+        modalKbIdx = idx;
+    }
+
+    /* accountSearch: ↑↓ navigates list, Enter selects — CAPTURE phase
+       so this fires FIRST and prevents any other handler from stealing focus */
+    document.getElementById('accountSearch').addEventListener('keydown', function(e) {
+        if (e.key==='ArrowDown') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const rows = modalVisibleRows();
+            if (rows.length === 0) return;
+            modalKbIdx = modalKbIdx < 0 ? 0 : Math.min(modalKbIdx + 1, rows.length - 1);
+            modalHilight(modalKbIdx);
+            /* Keep focus on search box — do NOT let focus move */
+            this.focus();
+            return;
+        }
+        if (e.key==='ArrowUp') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const rows = modalVisibleRows();
+            if (rows.length === 0) return;
+            modalKbIdx = Math.max(modalKbIdx - 1, 0);
+            modalHilight(modalKbIdx);
+            /* Keep focus on search box */
+            this.focus();
+            return;
+        }
+        if (e.key==='Enter') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            /* If a row is highlighted, select it; otherwise highlight first row */
+            const rows = modalVisibleRows();
+            if (rows.length === 0) return;
+            if (modalKbIdx < 0) {
+                modalKbIdx = 0;
+                modalHilight(0);
+                return;
+            }
+            selectAccount();
+            return;
+        }
+        if (e.key==='Escape') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); closeAccountModal(); return; }
+        /* Tab → jump to filter dropdown */
+        if (e.key==='Tab') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); atfDisp.focus(); return; }
+    }, true);   /* ← capture phase */
+
+    /* Reset highlight when filtering */
+    document.getElementById('accountSearch').addEventListener('input', function() {
+        filterAccountList();
+        modalKbIdx = -1;
+    });
+
+    /* ── MODAL-WIDE keyboard handler (capture phase) ─────────────
+       Ensures Up/Down/Enter work from ANYWHERE inside the modal,
+       EXCEPT search box (handled above) and filter dropdown. */
+    document.getElementById('accountModalOverlay').addEventListener('keydown', function(e) {
+        /* Only handle when modal is visible */
+        if (!this.classList.contains('show')) return;
+        /* Skip — already handled by its own capture listener above */
+        if (e.target.id === 'accountSearch') return;
+        /* Skip if focus is on the account-type-filter dropdown */
+        if (e.target.id === 'atfDisplay' || e.target.closest('#atfMenu')) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const rows = modalVisibleRows();
+            if (rows.length === 0) return;
+            modalKbIdx = modalKbIdx < 0 ? 0 : Math.min(modalKbIdx + 1, rows.length - 1);
+            modalHilight(modalKbIdx);
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const rows = modalVisibleRows();
+            if (rows.length === 0) return;
+            modalKbIdx = Math.max(modalKbIdx - 1, 0);
+            modalHilight(modalKbIdx);
+            return;
+        }
+        if (e.key === 'Enter') {
+            /* Don't intercept Enter on buttons or the filter dropdown */
+            if (e.target.tagName === 'BUTTON' || e.target.id === 'atfDisplay') return;
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const rows = modalVisibleRows();
+            if (rows.length === 0) return;
+            if (modalKbIdx < 0) {
+                modalKbIdx = 0;
+                modalHilight(0);
+                return;
+            }
+            selectAccount();
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            closeAccountModal();
+            return;
+        }
+    }, true);
+
+    /* Global F9 + Escape */
+    document.addEventListener('keydown', function(e) {
+        if (e.key==='F9') { e.preventDefault(); openAccountModal(); }
+        if (e.key==='Escape') {
+            if (supIsOpen()) { supClose(); return; }
+            if (atfIsOpen()) { atfClose(); return; }
+            closeAccountModal();
+        }
+    });
+
+    /* Auto-focus first field */
+    setTimeout(()=>chainTo('voucherDate'), 100);
 });
 
 function addAccountRow(data = null) {
@@ -245,8 +619,11 @@ function addAccountRow(data = null) {
     const row = document.createElement('tr');
     row.setAttribute('data-row', accountRowCount);
     row.innerHTML = `
-        <td><input type="text" class="account-code" name="accounts[${accountRowCount}][account_code]" value="${data?.account_code || ''}" onclick="selectAccountRowEl(this.closest('tr'))"></td>
-        <td><input type="text" class="account-name" name="accounts[${accountRowCount}][account_name]" value="${data?.account_name || ''}" readonly onclick="selectAccountRowEl(this.closest('tr')); openAccountModal();">
+        <td><input type="text" class="account-code" name="accounts[${accountRowCount}][account_code]" value="${data?.account_code || ''}" tabindex="-1"
+                style="cursor:pointer;" readonly
+                onclick="selectAccountRowEl(this.closest('tr')); openAccountModal();"
+                onfocus="selectAccountRowEl(this.closest('tr')); openAccountModal();"></td>
+        <td><input type="text" class="account-name" name="accounts[${accountRowCount}][account_name]" value="${data?.account_name || ''}" readonly onclick="selectAccountRowEl(this.closest('tr')); openAccountModal();" tabindex="-1">
             <input type="hidden" class="account-type" name="accounts[${accountRowCount}][account_type]" value="${data?.account_type || ''}">
             <input type="hidden" class="account-id" name="accounts[${accountRowCount}][account_id]" value="${data?.account_id || ''}"></td>
     `;
@@ -518,7 +895,10 @@ function updateCreditAccount() {
 function openAccountModal() {
     loadAccountList();
     document.getElementById('accountModalOverlay').classList.add('show');
+    document.getElementById('accountSearch').value = '';
     document.getElementById('accountSearch').focus();
+    /* Reset keyboard index */
+    if (typeof modalKbIdx !== 'undefined') modalKbIdx = -1;
 }
 
 function closeAccountModal() {
@@ -533,14 +913,19 @@ function loadAccountList() {
     accounts.forEach(acc => {
         const row = document.createElement('tr');
         row.style.cursor = 'pointer';
+        /* NO tabIndex — focus must stay on search box */
         row.innerHTML = `<td>${acc.alter_code || acc.account_code || ''}</td><td>${acc.ledger_name || acc.name || acc.account_name}</td>`;
         row.dataset.id = acc.id;
         row.dataset.code = acc.alter_code || acc.account_code || '';
         row.dataset.name = acc.ledger_name || acc.name || acc.account_name;
         row.dataset.type = type;
         row.onclick = () => {
-            document.querySelectorAll('#accountListBody tr').forEach(r => r.classList.remove('table-primary'));
-            row.classList.add('table-primary');
+            const visRows = modalVisibleRows();
+            document.querySelectorAll('#accountListBody tr').forEach(r => r.classList.remove('table-primary','kb-hi'));
+            row.classList.add('table-primary','kb-hi');
+            modalKbIdx = visRows.indexOf(row);
+            /* Return focus to search box after click */
+            document.getElementById('accountSearch').focus();
         };
         row.ondblclick = () => selectAccount();
         tbody.appendChild(row);
@@ -552,6 +937,11 @@ function filterAccountList() {
     document.querySelectorAll('#accountListBody tr').forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(search) ? '' : 'none';
     });
+    /* Reset keyboard highlight */
+    if (typeof modalKbIdx !== 'undefined') {
+        modalKbIdx = -1;
+        document.querySelectorAll('#accountListBody tr').forEach(r=>r.classList.remove('table-primary','kb-hi'));
+    }
 }
 
 function selectAccount() {
@@ -583,9 +973,22 @@ function selectAccount() {
     
     // Add new empty row after selection
     addAccountRow();
-    
+
     closeAccountModal();
     selectedAccountRow = null;
+
+    /* Move keyboard focus to the next empty account code */
+    setTimeout(function() {
+        const rows = document.querySelectorAll('#accountsTableBody tr');
+        for (let r of rows) {
+            if (!r.querySelector('.account-name').value) {
+                r.querySelector('.account-code').focus();
+                /* Auto open modal for next account */
+                openAccountModal();
+                break;
+            }
+        }
+    }, 80);
 }
 
 function deleteAccount() {
@@ -625,9 +1028,9 @@ function saveVoucher() {
             });
         }
     });
-    const supplierSelect = document.getElementById('supplierId');
-    const supplierOption = supplierSelect.options[supplierSelect.selectedIndex];
-    
+    const supplierIdVal = document.getElementById('supplierId').value;
+    const supplierNameVal = document.getElementById('supplierDisplay').value;
+
     const formData = {
         voucher_date: document.getElementById('voucherDate').value,
         bill_no: document.getElementById('billNo').value,
@@ -635,8 +1038,8 @@ function saveVoucher() {
         local_inter: document.getElementById('localInter').value,
         rcm: document.getElementById('rcm').value,
         description: document.getElementById('description').value,
-        supplier_id: supplierSelect.value,
-        supplier_name: supplierOption?.text || '',
+        supplier_id: supplierIdVal,
+        supplier_name: supplierNameVal,
         gst_no: document.getElementById('gstNo').value,
         pan_no: document.getElementById('panNo').value,
         city: document.getElementById('city').value,

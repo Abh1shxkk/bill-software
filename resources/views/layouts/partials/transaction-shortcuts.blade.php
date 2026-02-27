@@ -86,8 +86,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Enter key - move to next field
         if (e.key === 'Enter') {
-            // Don't interfere if any modal is open (pending orders, alert/confirm, etc.)
-            const hasModalOpen = document.querySelector('.pending-orders-modal.show, #pendingOrdersModal.show, #alertModal.show');
+            // Don't interfere if any modal/dropdown is open (pending orders, alert/confirm, custom modals, bank dropdown, etc.)
+            const hasModalOpen = document.querySelector('.pending-orders-modal.show, #pendingOrdersModal.show, #alertModal.show, .custom-modal-overlay.show, #bankMenu[style*="block"]');
             if (hasModalOpen) {
                 return; // Let the modal's keyboard handler handle this
             }
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Arrow key navigation (Ctrl+Arrow)
     document.addEventListener('keydown', function(e) {
-        // Don't interfere if any modal is open
-        const hasModalOpen = document.querySelector('.pending-orders-modal.show, #pendingOrdersModal.show, #alertModal.show, .searchable-dropdown-list[style*="display: block"]');
+        // Don't interfere if any modal is open (including custom account modal, bank dropdown)
+        const hasModalOpen = document.querySelector('.pending-orders-modal.show, #pendingOrdersModal.show, #alertModal.show, .searchable-dropdown-list[style*="display: block"], .custom-modal-overlay.show, #bankMenu[style*="block"]');
         if (hasModalOpen && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
             return; // Let the modal/dropdown handle arrow keys
         }
