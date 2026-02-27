@@ -656,8 +656,11 @@ function updateVoucher() {
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body: JSON.stringify({ bill_date: document.getElementById('billDate').value, supplier_id: sid, remarks: document.getElementById('remarks').value, items })
     }).then(r => r.json()).then(res => {
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         if (res.success) { alert('Updated!'); loadVouchersForModal(); }
-        else { alert('Error: ' + res.message); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; }
+        else { alert('Error: ' + res.message); }
     }).catch(e => { console.error(e); alert('Error updating voucher'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; });
 }
 

@@ -761,6 +761,12 @@ function onItemBatchSelectedFromModal(itemData, batchData) {
     // Calculate row amount
     calculateRowAmount(rowIndex);
     
+    // Focus on qty field after creating the row
+    setTimeout(() => {
+        const qtyField = row.querySelector('input[name*="[qty]"]');
+        if (qtyField) { qtyField.focus(); qtyField.select(); }
+    }, 100);
+    
     console.log('✅ Sample Received Mod: Row created successfully', {rowIndex, itemId: itemData.id, batchId: batchData?.id});
 }
 
