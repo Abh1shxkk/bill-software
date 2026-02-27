@@ -1,9 +1,7 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Purchase Return Voucher Modification'); ?>
+<?php $__env->startSection('disable_select2', '1'); ?>
 
-@section('title', 'Purchase Return Voucher Modification')
-@section('disable_select2', '1')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 10px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; color: #c00; }
@@ -60,7 +58,7 @@
     <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Purchase Return Voucher Modification</h5>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-primary btn-sm" id="loadInvoicesBtn" onclick="openInvoiceModal()"><i class="bi bi-list me-1"></i> Load Invoices</button>
-        <a href="{{ route('admin.purchase-return-voucher.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
+        <a href="<?php echo e(route('admin.purchase-return-voucher.index')); ?>" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
     </div>
 </div>
 
@@ -88,9 +86,9 @@
                             <input type="hidden" id="supplierSelect" value="">
                             <div class="searchable-dropdown-list" id="supplierDropdownList" style="display: none;">
                                 <div class="dropdown-item" data-value="" data-name="">Select Supplier</div>
-                                @foreach($suppliers as $supplier)
-                                <div class="dropdown-item" data-value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="dropdown-item" data-value="<?php echo e($supplier->supplier_id); ?>" data-name="<?php echo e($supplier->name); ?>"><?php echo e($supplier->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -175,18 +173,18 @@
     <div class="hsn-modal-body">
         <input type="text" class="form-control mb-2" id="hsnSearch" placeholder="Search HSN..." data-custom-enter="true">
         <div id="hsnList">
-            @foreach($hsnCodes as $hsn)
-            <div class="hsn-list-item" data-hsn-code="{{ $hsn->hsn_code }}" data-cgst="{{ $hsn->cgst_percent }}" data-sgst="{{ $hsn->sgst_percent }}" data-gst="{{ $hsn->total_gst_percent }}" onclick="selectHsn('{{ $hsn->hsn_code }}', {{ $hsn->cgst_percent }}, {{ $hsn->sgst_percent }}, {{ $hsn->total_gst_percent }})">
-                <strong>{{ $hsn->hsn_code }}</strong> - {{ $hsn->name }} ({{ $hsn->total_gst_percent }}%)
+            <?php $__currentLoopData = $hsnCodes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hsn): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="hsn-list-item" data-hsn-code="<?php echo e($hsn->hsn_code); ?>" data-cgst="<?php echo e($hsn->cgst_percent); ?>" data-sgst="<?php echo e($hsn->sgst_percent); ?>" data-gst="<?php echo e($hsn->total_gst_percent); ?>" onclick="selectHsn('<?php echo e($hsn->hsn_code); ?>', <?php echo e($hsn->cgst_percent); ?>, <?php echo e($hsn->sgst_percent); ?>, <?php echo e($hsn->total_gst_percent); ?>)">
+                <strong><?php echo e($hsn->hsn_code); ?></strong> - <?php echo e($hsn->name); ?> (<?php echo e($hsn->total_gst_percent); ?>%)
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let rowCounter = 0, selectedRowIndex = null, currentVoucherId = null, vouchersData = [];
 window.SKIP_AUTO_FOCUS = true;
@@ -322,7 +320,7 @@ function initShortcuts() {
 // DATA FUNCTIONS
 // =============================================
 function loadVouchersForModal() {
-    fetch('{{ route("admin.purchase-return-voucher.get-vouchers") }}')
+    fetch('<?php echo e(route("admin.purchase-return-voucher.get-vouchers")); ?>')
     .then(r => r.json()).then(res => { if (res.success) { vouchersData = res.vouchers; renderInvoiceList(vouchersData); } });
 }
 function renderInvoiceList(vouchers) {
@@ -337,8 +335,8 @@ function filterInvoices() { const s = document.getElementById('invoiceSearch').v
 function openInvoiceModal() { document.getElementById('invoiceModal').classList.add('show'); invHighlightedIndex = -1; setTimeout(() => { const s = document.getElementById('invoiceSearch'); if (s) { s.value = ''; s.focus(); } highlightInvItem(0); }, 100); }
 function closeInvoiceModal() { document.getElementById('invoiceModal').classList.remove('show'); invHighlightedIndex = -1; }
 
-function loadVoucher(id) { closeInvoiceModal(); fetch(`{{ url('admin/purchase-return-voucher') }}/${id}/details`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Error: ' + res.message); }); }
-function searchVoucher() { const inv = document.getElementById('searchInvoice').value.trim(); if (!inv) { alert('Enter invoice number'); return; } fetch(`{{ route('admin.purchase-return-voucher.search') }}?invoice_no=${encodeURIComponent(inv)}`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Not found'); }); }
+function loadVoucher(id) { closeInvoiceModal(); fetch(`<?php echo e(url('admin/purchase-return-voucher')); ?>/${id}/details`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Error: ' + res.message); }); }
+function searchVoucher() { const inv = document.getElementById('searchInvoice').value.trim(); if (!inv) { alert('Enter invoice number'); return; } fetch(`<?php echo e(route('admin.purchase-return-voucher.search')); ?>?invoice_no=${encodeURIComponent(inv)}`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Not found'); }); }
 
 function populateForm(voucher) {
     currentVoucherId = voucher.id;
@@ -445,8 +443,8 @@ function updateVoucher() {
     });
     if (!items.length) { alert('Add at least one item'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; return; }
     if (typeof window.markAsSaving === 'function') window.markAsSaving();
-    fetch(`{{ url('admin/purchase-return-voucher') }}/${currentVoucherId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+    fetch(`<?php echo e(url('admin/purchase-return-voucher')); ?>/${currentVoucherId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({ return_date: document.getElementById('returnDate').value, supplier_id: sid, remarks: document.getElementById('remarks').value, items })
     }).then(r => r.json()).then(res => {
         if (res.success) { alert('Updated!'); loadVouchersForModal(); }
@@ -456,4 +454,6 @@ function updateVoucher() {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeHsnModal(); closeInvoiceModal(); } });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/purchase-return-voucher/modification.blade.php ENDPATH**/ ?>

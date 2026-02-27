@@ -1480,7 +1480,36 @@ window.addEventListener('keydown', function(e) {
     const el = document.activeElement;
     if (!el) return;
 
-    // ── HEADER FIELDS ─────────────────────────────────────────────────────
+    // ── SHIFT+ENTER: BACKWARD NAVIGATION (all fields) ─────────────────────
+    if (e.shiftKey) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+        // Header backward: narration → tax_flag → invoice_date → supplier → claim_date
+        if (el.id === 'narration')      { const tf = document.getElementById('tax_flag'); if (tf) { tf.focus(); tf.select(); } return; }
+        if (el.id === 'tax_flag')       { const id = document.getElementById('invoice_date'); if (id) id.focus(); return; }
+        if (el.id === 'invoice_date')   { const ss = document.getElementById('supplier_search'); if (ss) { ss.focus(); ss.select(); } return; }
+        if (el.id === 'supplier_search'){ const cd = document.getElementById('claim_date'); if (cd) cd.focus(); return; }
+
+        // Table backward
+        const $el  = $(el);
+        const $row = $el.closest('#itemsTableBody tr');
+        if (!$row.length) return;
+
+        if ($el.hasClass('dis-percent')) { $row.find('.rate').focus().select(); return; }
+        if ($el.hasClass('rate'))        { $row.find('.free-qty').focus().select(); return; }
+        if ($el.hasClass('free-qty'))    { $row.find('.qty').focus().select(); return; }
+        if ($el.hasClass('qty'))         { $row.find('.expiry').focus().select(); return; }
+        if ($el.hasClass('expiry'))      { $row.find('.batch-no').focus().select(); return; }
+        if ($el.hasClass('batch-no')) {
+            const $prevRow = $row.prev('tr');
+            if ($prevRow.length) { $prevRow.find('.dis-percent').focus().select(); }
+            else { const nr = document.getElementById('narration'); if (nr) nr.focus(); }
+            return;
+        }
+        return;
+    }
+
+    // ── HEADER FIELDS (forward) ───────────────────────────────────────────
 
     // claim_date → supplier_search (open dropdown)
     if (el.id === 'claim_date') {
@@ -1529,6 +1558,7 @@ window.addEventListener('keydown', function(e) {
 
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
 
+    // ── Enter: forward navigation ─────────────────────────────────────────
     if ($el.hasClass('batch-no')) {
         $row.find('.expiry').focus().select();
         return;
