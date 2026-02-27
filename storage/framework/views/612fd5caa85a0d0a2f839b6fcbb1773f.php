@@ -1,9 +1,7 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Return Voucher'); ?>
+<?php $__env->startSection('disable_select2', '1'); ?>
 
-@section('title', 'Sale Return Voucher')
-@section('disable_select2', '1')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 10px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; color: #c00; }
@@ -54,7 +52,7 @@
     <h5 class="mb-0"><i class="bi bi-arrow-return-left me-2"></i> Sale Return Voucher (HSN Entry)</h5>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-info btn-sm" onclick="openHsnModal()"><i class="bi bi-plus-circle me-1"></i> Open HSN</button>
-        <a href="{{ route('admin.sale-return-voucher.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
+        <a href="<?php echo e(route('admin.sale-return-voucher.index')); ?>" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
     </div>
 </div>
 
@@ -65,11 +63,11 @@
                 <div class="col-md-4">
                     <div class="field-group">
                         <label>Invoice No :</label>
-                        <input type="text" class="form-control" id="invoiceNo" value="{{ $nextInvoiceNo }}" style="width: 120px;" readonly>
+                        <input type="text" class="form-control" id="invoiceNo" value="<?php echo e($nextInvoiceNo); ?>" style="width: 120px;" readonly>
                     </div>
                     <div class="field-group">
                         <label>Date :</label>
-                        <input type="date" class="form-control" id="returnDate" value="{{ date('Y-m-d') }}" style="width: 130px;">
+                        <input type="date" class="form-control" id="returnDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 130px;">
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -85,13 +83,14 @@
                             <input type="hidden" id="customerSelect" value="">
                             <div class="searchable-dropdown-list" id="customerDropdownList" style="display: none;">
                                 <div class="dropdown-item" data-value="" data-name="">Select Customer</div>
-                                @foreach($customers as $customer)
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                 <div class="dropdown-item"
-                                     data-value="{{ $customer->id }}"
-                                     data-name="{{ $customer->name }}">
-                                    {{ $customer->name }}
+                                     data-value="<?php echo e($customer->id); ?>"
+                                     data-name="<?php echo e($customer->name); ?>">
+                                    <?php echo e($customer->name); ?>
+
                                 </div>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -158,7 +157,7 @@
 
         <div class="d-flex justify-content-center gap-3 mt-3">
             <button type="button" class="btn-hsn px-4" onclick="saveVoucher()"><i class="bi bi-check-circle me-1"></i> Save</button>
-            <button type="button" class="btn-hsn px-4" onclick="window.location.href='{{ route('admin.sale-return-voucher.index') }}'"><i class="bi bi-x-circle me-1"></i> Exit</button>
+            <button type="button" class="btn-hsn px-4" onclick="window.location.href='<?php echo e(route('admin.sale-return-voucher.index')); ?>'"><i class="bi bi-x-circle me-1"></i> Exit</button>
         </div>
     </div>
 </div>
@@ -173,23 +172,23 @@
     <div class="hsn-modal-body">
         <input type="text" class="form-control mb-2" id="hsnSearch" placeholder="Search HSN..." data-custom-enter="true">
         <div id="hsnList">
-            @foreach($hsnCodes as $hsn)
+            <?php $__currentLoopData = $hsnCodes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hsn): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <div class="hsn-list-item"
-                 data-hsn-code="{{ $hsn->hsn_code }}"
-                 data-cgst="{{ $hsn->cgst_percent }}"
-                 data-sgst="{{ $hsn->sgst_percent }}"
-                 data-gst="{{ $hsn->total_gst_percent }}"
-                 onclick="selectHsn('{{ $hsn->hsn_code }}', {{ $hsn->cgst_percent }}, {{ $hsn->sgst_percent }}, {{ $hsn->total_gst_percent }})">
-                <strong>{{ $hsn->hsn_code }}</strong> - {{ $hsn->name }} ({{ $hsn->total_gst_percent }}%)
+                 data-hsn-code="<?php echo e($hsn->hsn_code); ?>"
+                 data-cgst="<?php echo e($hsn->cgst_percent); ?>"
+                 data-sgst="<?php echo e($hsn->sgst_percent); ?>"
+                 data-gst="<?php echo e($hsn->total_gst_percent); ?>"
+                 onclick="selectHsn('<?php echo e($hsn->hsn_code); ?>', <?php echo e($hsn->cgst_percent); ?>, <?php echo e($hsn->sgst_percent); ?>, <?php echo e($hsn->total_gst_percent); ?>)">
+                <strong><?php echo e($hsn->hsn_code); ?></strong> - <?php echo e($hsn->name); ?> (<?php echo e($hsn->total_gst_percent); ?>%)
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let rowCounter = 0, selectedRowIndex = null;
 window.SKIP_AUTO_FOCUS = true;
@@ -312,7 +311,7 @@ function initTableKeyboardNav() {
         if (!currentClass) return;
         const currentIdx = editableClasses.indexOf(currentClass);
 
-        if (currentClass === 'hsn-code' && !e.shiftKey) { if (!target.value.trim()) { selectRow(parseInt(rowId)); openHsnModal(); } else { const amt = row.querySelector('.amount'); if (amt) { amt.focus(); amt.select(); } } return; }
+        if (currentClass === 'hsn-code' && !e.shiftKey) { selectRow(parseInt(rowId)); openHsnModal(); return; }
         if (currentClass === 'amount' || currentClass === 'gst-percent') calculateRowTax(parseInt(rowId));
 
         // Shift+Enter: backwards
@@ -464,13 +463,15 @@ function saveVoucher() {
     });
     if (!items.length) { alert('Add at least one item'); return; }
     if (typeof window.markAsSaving === 'function') window.markAsSaving();
-    fetch('{{ route("admin.sale-return-voucher.store") }}', {
+    fetch('<?php echo e(route("admin.sale-return-voucher.store")); ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({ return_date: document.getElementById('returnDate').value, customer_id: cid, remarks: document.getElementById('remarks').value, items })
     }).then(r => r.json()).then(res => { if (res.success) { alert('Saved! Invoice: ' + res.invoice_no); location.reload(); } else alert('Error: ' + res.message); });
 }
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHsnModal(); });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-return-voucher/transaction.blade.php ENDPATH**/ ?>

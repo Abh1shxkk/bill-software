@@ -227,6 +227,8 @@ private function generateInvoiceNo()
                 if (empty($item['hsn_code']) && empty($item['amount'])) continue;
                 SaleReturnTransactionItem::create([
                     'sale_return_transaction_id' => $voucher->id,
+                    'item_code' => $item['hsn_code'] ?? 'HSN',
+                    'item_name' => 'HSN-' . ($item['hsn_code'] ?? 'Item'),
                     'hsn_code' => $item['hsn_code'], 'qty' => $item['qty'] ?? 0, 'amount' => $item['amount'] ?? 0,
                     'gst_percent' => $item['gst_percent'] ?? 0, 'cgst_percent' => $item['cgst_percent'] ?? 0,
                     'cgst_amount' => $item['cgst_amount'] ?? 0, 'sgst_percent' => $item['sgst_percent'] ?? 0,

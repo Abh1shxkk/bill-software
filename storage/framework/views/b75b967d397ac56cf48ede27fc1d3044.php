@@ -1,18 +1,17 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Purchase Return Voucher'); ?>
+<?php $__env->startSection('disable_select2', '1'); ?>
 
-@section('title', 'Purchase Return Voucher Modification')
-@section('disable_select2', '1')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 10px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; color: #c00; }
+    .compact-form input, .compact-form select { font-size: 11px; padding: 2px 6px; height: 26px; }
     .header-section { background: white; border: 1px solid #dee2e6; padding: 10px; margin-bottom: 8px; border-radius: 4px; }
     .field-group { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-    .field-group label { width: 80px; font-weight: 600; font-size: 11px; white-space: nowrap; color: #c00; }
+    .field-group label { width: 80px; font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; color: #c00; }
     .hsn-table-container { background: #d4a5d4; padding: 10px; border: 2px solid #6b1482; }
     .hsn-table { width: 100%; border-collapse: collapse; font-size: 11px; background: white; }
-    .hsn-table th { background: #8b2082; color: white; padding: 6px 8px; text-align: center; border: 1px solid #6b1482; }
+    .hsn-table th { background: #8b2082; color: white; padding: 6px 8px; text-align: center; border: 1px solid #6b1482; font-weight: 600; }
     .hsn-table td { padding: 4px; border: 1px solid #ccc; }
     .hsn-table input { width: 100%; border: 1px solid #ccc; padding: 3px 5px; font-size: 11px; height: 24px; }
     .hsn-table input:focus { outline: 2px solid #ffc107; }
@@ -25,15 +24,6 @@
     .totals-table .value { background: #fff; border: 1px solid #ccc; padding: 3px 8px; min-width: 80px; text-align: right; }
     .btn-hsn { background: #8b2082; color: white; border: 1px solid #6b1482; padding: 4px 12px; font-size: 11px; cursor: pointer; }
     .btn-hsn:hover { background: #6b1482; }
-    .invoice-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; }
-    .invoice-modal.show { display: flex; align-items: center; justify-content: center; }
-    .invoice-modal-content { background: white; width: 600px; max-height: 80vh; border-radius: 8px; overflow: hidden; }
-    .invoice-modal-header { background: #8b2082; color: white; padding: 12px; display: flex; justify-content: space-between; }
-    .invoice-modal-body { max-height: 60vh; overflow-y: auto; padding: 15px; }
-    .invoice-list-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
-    .invoice-list-item:hover { background: #f8e6f8; }
-    .invoice-list-item.inv-highlighted { background: #007bff !important; color: white !important; }
-    .invoice-list-item.inv-highlighted .text-muted { color: #ddd !important; }
     .hsn-modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; }
     .hsn-modal-backdrop.show { display: block; }
     .hsn-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; background: #f0f0f0; border: 2px solid #666; z-index: 9999; }
@@ -57,10 +47,10 @@
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
-    <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Purchase Return Voucher Modification</h5>
+    <h5 class="mb-0"><i class="bi bi-arrow-return-right me-2"></i> Purchase Return Voucher (HSN Entry)</h5>
     <div class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-primary btn-sm" id="loadInvoicesBtn" onclick="openInvoiceModal()"><i class="bi bi-list me-1"></i> Load Invoices</button>
-        <a href="{{ route('admin.purchase-return-voucher.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
+        <button type="button" class="btn btn-info btn-sm" onclick="openHsnModal()"><i class="bi bi-plus-circle me-1"></i> Open HSN</button>
+        <a href="<?php echo e(route('admin.purchase-return-voucher.index')); ?>" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
     </div>
 </div>
 
@@ -71,26 +61,24 @@
                 <div class="col-md-4">
                     <div class="field-group">
                         <label>Invoice No :</label>
-                        <input type="text" class="form-control" id="searchInvoice" placeholder="Enter Invoice No" style="width: 150px;" data-custom-enter="true">
-                        <button type="button" class="btn btn-sm btn-primary" id="loadBtn" onclick="searchVoucher()">Load</button>
+                        <input type="text" class="form-control" id="invoiceNo" value="<?php echo e($nextInvoiceNo); ?>" style="width: 120px;" readonly>
                     </div>
                     <div class="field-group">
                         <label>Date :</label>
-                        <input type="date" class="form-control" id="returnDate" style="width: 130px;">
+                        <input type="date" class="form-control" id="returnDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 130px;">
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="field-group">
                         <label>Supplier :</label>
-                        <input type="hidden" id="voucherId">
                         <div class="searchable-dropdown" id="supplierDropdownWrapper" style="width: 250px;">
                             <input type="text" id="supplierSearchInput" class="form-control searchable-dropdown-input" placeholder="Type to search supplier..." autocomplete="off" data-custom-enter="true">
                             <input type="hidden" id="supplierSelect" value="">
                             <div class="searchable-dropdown-list" id="supplierDropdownList" style="display: none;">
                                 <div class="dropdown-item" data-value="" data-name="">Select Supplier</div>
-                                @foreach($suppliers as $supplier)
-                                <div class="dropdown-item" data-value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</div>
-                                @endforeach
+                                <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="dropdown-item" data-value="<?php echo e($supplier->supplier_id); ?>" data-name="<?php echo e($supplier->name); ?>"><?php echo e($supplier->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -114,9 +102,15 @@
             <table class="hsn-table" id="hsnTable">
                 <thead>
                     <tr>
-                        <th style="width: 100px;">HSN Code</th><th style="width: 80px;">Amount</th><th style="width: 55px;">GST%</th>
-                        <th style="width: 55px;">CGST%</th><th style="width: 75px;">Amount</th><th style="width: 55px;">SGST%</th>
-                        <th style="width: 75px;">Amount</th><th style="width: 50px;">Qty.</th><th style="width: 50px;">Action</th>
+                        <th style="width: 100px;">HSN Code</th>
+                        <th style="width: 80px;">Amount</th>
+                        <th style="width: 55px;">GST%</th>
+                        <th style="width: 55px;">CGST%</th>
+                        <th style="width: 75px;">Amount</th>
+                        <th style="width: 55px;">SGST%</th>
+                        <th style="width: 75px;">Amount</th>
+                        <th style="width: 50px;">Qty.</th>
+                        <th style="width: 50px;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="hsnTableBody" class="hsn-table-scroll"></tbody>
@@ -141,27 +135,18 @@
                     </table>
                 </div>
                 <div class="col-md-4">
-                    <div class="field-group"><label style="width: 60px;">Remarks</label><input type="text" class="form-control" id="remarks" style="flex: 1;"></div>
+                    <div class="field-group">
+                        <label style="width: 60px;">Remarks</label>
+                        <input type="text" class="form-control" id="remarks" style="flex: 1;">
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="d-flex justify-content-center gap-3 mt-3">
-            <button type="button" class="btn-hsn px-4" onclick="updateVoucher()" id="btnUpdate" disabled><i class="bi bi-check-circle me-1"></i> Update</button>
-            <button type="button" class="btn-hsn px-4" onclick="clearForm()"><i class="bi bi-x-circle me-1"></i> Clear</button>
+            <button type="button" class="btn-hsn px-4" onclick="saveVoucher()"><i class="bi bi-check-circle me-1"></i> Save</button>
+            <button type="button" class="btn-hsn px-4" onclick="window.location.href='<?php echo e(route('admin.purchase-return-voucher.index')); ?>'"><i class="bi bi-x-circle me-1"></i> Exit</button>
         </div>
-    </div>
-</div>
-
-<!-- Invoice List Modal -->
-<div class="invoice-modal" id="invoiceModal">
-    <div class="invoice-modal-content">
-        <div class="invoice-modal-header">
-            <h6 class="mb-0"><i class="bi bi-list me-2"></i>Select Voucher</h6>
-            <button type="button" onclick="closeInvoiceModal()" style="background: none; border: none; color: white; font-size: 18px;">&times;</button>
-        </div>
-        <div class="p-2"><input type="text" class="form-control form-control-sm" id="invoiceSearch" placeholder="Search..." data-custom-enter="true"></div>
-        <div class="invoice-modal-body" id="invoiceList"></div>
     </div>
 </div>
 
@@ -175,38 +160,30 @@
     <div class="hsn-modal-body">
         <input type="text" class="form-control mb-2" id="hsnSearch" placeholder="Search HSN..." data-custom-enter="true">
         <div id="hsnList">
-            @foreach($hsnCodes as $hsn)
-            <div class="hsn-list-item" data-hsn-code="{{ $hsn->hsn_code }}" data-cgst="{{ $hsn->cgst_percent }}" data-sgst="{{ $hsn->sgst_percent }}" data-gst="{{ $hsn->total_gst_percent }}" onclick="selectHsn('{{ $hsn->hsn_code }}', {{ $hsn->cgst_percent }}, {{ $hsn->sgst_percent }}, {{ $hsn->total_gst_percent }})">
-                <strong>{{ $hsn->hsn_code }}</strong> - {{ $hsn->name }} ({{ $hsn->total_gst_percent }}%)
+            <?php $__currentLoopData = $hsnCodes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hsn): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="hsn-list-item" data-hsn-code="<?php echo e($hsn->hsn_code); ?>" data-cgst="<?php echo e($hsn->cgst_percent); ?>" data-sgst="<?php echo e($hsn->sgst_percent); ?>" data-gst="<?php echo e($hsn->total_gst_percent); ?>" onclick="selectHsn('<?php echo e($hsn->hsn_code); ?>', <?php echo e($hsn->cgst_percent); ?>, <?php echo e($hsn->sgst_percent); ?>, <?php echo e($hsn->total_gst_percent); ?>)">
+                <strong><?php echo e($hsn->hsn_code); ?></strong> - <?php echo e($hsn->name); ?> (<?php echo e($hsn->total_gst_percent); ?>%)
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
-let rowCounter = 0, selectedRowIndex = null, currentVoucherId = null, vouchersData = [];
+let rowCounter = 0, selectedRowIndex = null;
 window.SKIP_AUTO_FOCUS = true;
 
 document.addEventListener('DOMContentLoaded', function() {
-    loadVouchersForModal();
     for (let i = 0; i < 5; i++) addNewRow();
-    const urlParams = new URLSearchParams(window.location.search);
-    const inv = urlParams.get('invoice_no');
-    if (inv) { document.getElementById('searchInvoice').value = inv; searchVoucher(); }
-
     initSupplierDropdown();
     initHeaderKeyboardNav();
     initTableKeyboardNav();
     initHsnModalKeyboard();
-    initInvoiceModalKeyboard();
     initShortcuts();
-
-    // Focus Load Invoices on page load
-    setTimeout(function() { const btn = document.getElementById('loadInvoicesBtn'); if (btn) btn.focus(); }, 200);
+    setTimeout(function() { document.getElementById('returnDate')?.focus(); }, 150);
 });
 
 // =============================================
@@ -237,18 +214,14 @@ function initSupplierDropdown() {
     });
     dropdownList.addEventListener('click', function(e) { const item = e.target.closest('.dropdown-item'); if (item) selectItem(item); });
     document.addEventListener('click', function(e) { if (!e.target.closest('#supplierDropdownWrapper')) hide(); });
-
-    window.setSupplierById = function(id) { hiddenInput.value = id; const item = dropdownList.querySelector(`.dropdown-item[data-value="${id}"]`); input.value = item ? (item.dataset.name||'') : ''; };
 }
 
 // =============================================
 // HEADER KEYBOARD NAVIGATION
 // =============================================
 function initHeaderKeyboardNav() {
-    const search = document.getElementById('searchInvoice');
-    if (search) search.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); searchVoucher(); } });
-    const date = document.getElementById('returnDate');
-    if (date) date.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); document.getElementById('supplierSearchInput')?.focus(); } });
+    const d = document.getElementById('returnDate');
+    if (d) d.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); document.getElementById('supplierSearchInput')?.focus(); } });
 }
 function focusFirstHsnCode() { const r = document.querySelector('#hsnTableBody tr'); if (r) { const h = r.querySelector('.hsn-code'); if (h) { h.focus(); h.select(); } } }
 
@@ -291,84 +264,19 @@ function initHsnModalKeyboard() {
 }
 
 // =============================================
-// INVOICE MODAL KEYBOARD
-// =============================================
-let invHighlightedIndex = -1;
-function getVisibleInvItems() { return Array.from(document.querySelectorAll('#invoiceList .invoice-list-item')); }
-function highlightInvItem(idx) { const items = getVisibleInvItems(); items.forEach(i => i.classList.remove('inv-highlighted')); if (idx >= 0 && idx < items.length) { invHighlightedIndex = idx; items[idx].classList.add('inv-highlighted'); items[idx].scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } }
-function initInvoiceModalKeyboard() {
-    document.getElementById('invoiceSearch').addEventListener('input', function() { filterInvoices(); setTimeout(() => highlightInvItem(0), 50); });
-    document.addEventListener('keydown', function(e) {
-        const modal = document.getElementById('invoiceModal'); if (!modal || !modal.classList.contains('show')) return;
-        const items = getVisibleInvItems();
-        if (e.key === 'ArrowDown') { e.preventDefault(); highlightInvItem(invHighlightedIndex < items.length - 1 ? invHighlightedIndex + 1 : 0); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); highlightInvItem(invHighlightedIndex > 0 ? invHighlightedIndex - 1 : items.length - 1); }
-        else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (invHighlightedIndex >= 0 && invHighlightedIndex < items.length) items[invHighlightedIndex].click(); }
-    }, true);
-}
-
-// =============================================
 // SHORTCUTS: CTRL+S, CTRL+ENTER
 // =============================================
 function initShortcuts() {
     document.addEventListener('keydown', function(e) {
         if (!e.ctrlKey && !e.metaKey) return;
-        if (e.key === 's') { e.preventDefault(); updateVoucher(); }
+        if (e.key === 's') { e.preventDefault(); saveVoucher(); }
         else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation(); const r = document.getElementById('remarks'); if (r) { r.focus(); r.select(); } }
     }, true);
 }
 
 // =============================================
-// DATA FUNCTIONS
+// CORE FUNCTIONS
 // =============================================
-function loadVouchersForModal() {
-    fetch('{{ route("admin.purchase-return-voucher.get-vouchers") }}')
-    .then(r => r.json()).then(res => { if (res.success) { vouchersData = res.vouchers; renderInvoiceList(vouchersData); } });
-}
-function renderInvoiceList(vouchers) {
-    document.getElementById('invoiceList').innerHTML = vouchers.map(v => `
-        <div class="invoice-list-item" onclick="loadVoucher(${v.id})" data-voucher-id="${v.id}">
-            <div class="d-flex justify-content-between"><strong>${v.invoice_no}</strong><span class="text-muted">${v.return_date}</span></div>
-            <div class="text-muted small">${v.supplier_name} - ₹${parseFloat(v.net_amount).toFixed(2)}</div>
-        </div>
-    `).join('');
-}
-function filterInvoices() { const s = document.getElementById('invoiceSearch').value.toLowerCase(); renderInvoiceList(vouchersData.filter(v => v.invoice_no.toLowerCase().includes(s) || v.supplier_name.toLowerCase().includes(s))); }
-function openInvoiceModal() { document.getElementById('invoiceModal').classList.add('show'); invHighlightedIndex = -1; setTimeout(() => { const s = document.getElementById('invoiceSearch'); if (s) { s.value = ''; s.focus(); } highlightInvItem(0); }, 100); }
-function closeInvoiceModal() { document.getElementById('invoiceModal').classList.remove('show'); invHighlightedIndex = -1; }
-
-function loadVoucher(id) { closeInvoiceModal(); fetch(`{{ url('admin/purchase-return-voucher') }}/${id}/details`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Error: ' + res.message); }); }
-function searchVoucher() { const inv = document.getElementById('searchInvoice').value.trim(); if (!inv) { alert('Enter invoice number'); return; } fetch(`{{ route('admin.purchase-return-voucher.search') }}?invoice_no=${encodeURIComponent(inv)}`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Not found'); }); }
-
-function populateForm(voucher) {
-    currentVoucherId = voucher.id;
-    document.getElementById('voucherId').value = voucher.id;
-    document.getElementById('searchInvoice').value = voucher.invoice_no;
-    document.getElementById('returnDate').value = voucher.return_date;
-    if (typeof window.setSupplierById === 'function') window.setSupplierById(voucher.supplier_id);
-    else document.getElementById('supplierSelect').value = voucher.supplier_id;
-    document.getElementById('remarks').value = voucher.remarks || '';
-    document.getElementById('hsnTableBody').innerHTML = '';
-    rowCounter = 0;
-    if (voucher.items && voucher.items.length > 0) {
-        voucher.items.forEach(item => {
-            addNewRow();
-            const row = document.querySelector('#hsnTableBody tr:last-child');
-            row.querySelector('.hsn-code').value = item.hsn_code || '';
-            row.querySelector('.amount').value = item.amount || 0;
-            row.querySelector('.gst-percent').value = item.gst_percent || 0;
-            row.querySelector('.cgst-percent').value = item.cgst_percent || 0;
-            row.querySelector('.cgst-amount').value = item.cgst_amount || 0;
-            row.querySelector('.sgst-percent').value = item.sgst_percent || 0;
-            row.querySelector('.sgst-amount').value = item.sgst_amount || 0;
-            row.querySelector('.qty').value = item.qty || 0;
-        });
-    }
-    addNewRow(); calculateTotals();
-    document.getElementById('btnUpdate').disabled = false;
-    setTimeout(focusFirstHsnCode, 200);
-}
-
 function addNewRow() {
     rowCounter++;
     const row = document.createElement('tr'); row.setAttribute('data-row', rowCounter);
@@ -423,37 +331,25 @@ function selectHsn(code, cgst, sgst, gst) {
     closeHsnModal(); t.querySelector('.amount').focus();
 }
 
-function clearForm() {
-    currentVoucherId = null; document.getElementById('voucherId').value = ''; document.getElementById('searchInvoice').value = '';
-    document.getElementById('returnDate').value = ''; document.getElementById('supplierSelect').value = ''; document.getElementById('supplierSearchInput').value = '';
-    document.getElementById('remarks').value = ''; document.getElementById('hsnTableBody').innerHTML = ''; document.getElementById('btnUpdate').disabled = true;
-    rowCounter = 0; for (let i = 0; i < 5; i++) addNewRow(); calculateTotals();
-}
-
-let isSubmitting = false;
-function updateVoucher() {
-    if (!currentVoucherId) { alert('Load a voucher first'); return; }
-    if (isSubmitting) return; isSubmitting = true;
-    const updateBtn = document.getElementById('btnUpdate'), originalBtnHtml = updateBtn.innerHTML;
-    updateBtn.disabled = true; updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
+function saveVoucher() {
     const sid = document.getElementById('supplierSelect').value;
-    if (!sid) { alert('Select a supplier'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; return; }
+    if (!sid) { alert('Select a supplier'); return; }
     const items = [];
     document.querySelectorAll('#hsnTableBody tr').forEach(r => {
         const h = r.querySelector('.hsn-code').value, a = parseFloat(r.querySelector('.amount').value)||0;
         if (h && a > 0) items.push({ hsn_code: h, amount: a, gst_percent: parseFloat(r.querySelector('.gst-percent').value)||0, cgst_percent: parseFloat(r.querySelector('.cgst-percent').value)||0, cgst_amount: parseFloat(r.querySelector('.cgst-amount').value)||0, sgst_percent: parseFloat(r.querySelector('.sgst-percent').value)||0, sgst_amount: parseFloat(r.querySelector('.sgst-amount').value)||0, qty: parseInt(r.querySelector('.qty').value)||0 });
     });
-    if (!items.length) { alert('Add at least one item'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; return; }
+    if (!items.length) { alert('Add at least one item'); return; }
     if (typeof window.markAsSaving === 'function') window.markAsSaving();
-    fetch(`{{ url('admin/purchase-return-voucher') }}/${currentVoucherId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+    fetch('<?php echo e(route("admin.purchase-return-voucher.store")); ?>', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({ return_date: document.getElementById('returnDate').value, supplier_id: sid, remarks: document.getElementById('remarks').value, items })
-    }).then(r => r.json()).then(res => {
-        if (res.success) { alert('Updated!'); loadVouchersForModal(); }
-        else { alert('Error: ' + res.message); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; }
-    }).catch(e => { console.error(e); alert('Error updating'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; });
+    }).then(r => r.json()).then(res => { if (res.success) { alert('Saved! Invoice: ' + res.invoice_no); location.reload(); } else alert('Error: ' + res.message); });
 }
 
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeHsnModal(); closeInvoiceModal(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeHsnModal(); });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/purchase-return-voucher/transaction.blade.php ENDPATH**/ ?>

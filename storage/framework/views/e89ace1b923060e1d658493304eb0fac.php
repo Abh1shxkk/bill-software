@@ -1,47 +1,45 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Return Voucher Modification'); ?>
+<?php $__env->startSection('disable_select2', '1'); ?>
 
-@section('title', 'Purchase Return Voucher Modification')
-@section('disable_select2', '1')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .compact-form { font-size: 11px; padding: 10px; background: #f5f5f5; }
     .compact-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; color: #c00; }
     .header-section { background: white; border: 1px solid #dee2e6; padding: 10px; margin-bottom: 8px; border-radius: 4px; }
     .field-group { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
     .field-group label { width: 80px; font-weight: 600; font-size: 11px; white-space: nowrap; color: #c00; }
-    .hsn-table-container { background: #d4a5d4; padding: 10px; border: 2px solid #6b1482; }
+    .hsn-table-container { background: #f5d4a5; padding: 10px; border: 2px solid #8b6914; }
     .hsn-table { width: 100%; border-collapse: collapse; font-size: 11px; background: white; }
-    .hsn-table th { background: #8b2082; color: white; padding: 6px 8px; text-align: center; border: 1px solid #6b1482; }
+    .hsn-table th { background: #c49c1a; color: white; padding: 6px 8px; text-align: center; border: 1px solid #8b6914; }
     .hsn-table td { padding: 4px; border: 1px solid #ccc; }
     .hsn-table input { width: 100%; border: 1px solid #ccc; padding: 3px 5px; font-size: 11px; height: 24px; }
     .hsn-table input:focus { outline: 2px solid #ffc107; }
     .hsn-table .row-selected { background: #fffbcc; }
     .hsn-table-scroll { max-height: 180px; overflow-y: auto; display: block; }
     .hsn-table thead, .hsn-table tbody tr { display: table; width: 100%; table-layout: fixed; }
-    .totals-section { background: #d4a5d4; padding: 10px; margin-top: 10px; border: 2px solid #6b1482; }
+    .totals-section { background: #f5d4a5; padding: 10px; margin-top: 10px; border: 2px solid #8b6914; }
     .totals-table { font-size: 11px; }
     .totals-table .label { font-weight: 600; color: #c00; text-align: right; }
     .totals-table .value { background: #fff; border: 1px solid #ccc; padding: 3px 8px; min-width: 80px; text-align: right; }
-    .btn-hsn { background: #8b2082; color: white; border: 1px solid #6b1482; padding: 4px 12px; font-size: 11px; cursor: pointer; }
-    .btn-hsn:hover { background: #6b1482; }
+    .btn-hsn { background: #c49c1a; color: white; border: 1px solid #8b6914; padding: 4px 12px; font-size: 11px; cursor: pointer; }
+    .btn-hsn:hover { background: #a38316; }
     .invoice-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; }
     .invoice-modal.show { display: flex; align-items: center; justify-content: center; }
     .invoice-modal-content { background: white; width: 600px; max-height: 80vh; border-radius: 8px; overflow: hidden; }
-    .invoice-modal-header { background: #8b2082; color: white; padding: 12px; display: flex; justify-content: space-between; }
+    .invoice-modal-header { background: #c49c1a; color: white; padding: 12px; display: flex; justify-content: space-between; }
     .invoice-modal-body { max-height: 60vh; overflow-y: auto; padding: 15px; }
     .invoice-list-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
-    .invoice-list-item:hover { background: #f8e6f8; }
+    .invoice-list-item:hover { background: #fff8e6; }
     .invoice-list-item.inv-highlighted { background: #007bff !important; color: white !important; }
     .invoice-list-item.inv-highlighted .text-muted { color: #ddd !important; }
     .hsn-modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9998; }
     .hsn-modal-backdrop.show { display: block; }
     .hsn-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 500px; background: #f0f0f0; border: 2px solid #666; z-index: 9999; }
     .hsn-modal.show { display: block; }
-    .hsn-modal-header { background: #8b2082; color: white; padding: 8px 12px; display: flex; justify-content: space-between; }
+    .hsn-modal-header { background: #c49c1a; color: white; padding: 8px 12px; display: flex; justify-content: space-between; }
     .hsn-modal-body { max-height: 350px; overflow-y: auto; padding: 10px; }
     .hsn-list-item { padding: 8px; border-bottom: 1px solid #ddd; cursor: pointer; font-size: 11px; }
-    .hsn-list-item:hover { background: #f8e6f8; }
+    .hsn-list-item:hover { background: #fff8e6; }
     .hsn-list-item.hsn-highlighted { background: #007bff !important; color: white !important; }
     .hsn-list-item.hsn-highlighted strong { color: white !important; }
 
@@ -57,10 +55,10 @@
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">
-    <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Purchase Return Voucher Modification</h5>
+    <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i> Sale Return Voucher Modification</h5>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-primary btn-sm" id="loadInvoicesBtn" onclick="openInvoiceModal()"><i class="bi bi-list me-1"></i> Load Invoices</button>
-        <a href="{{ route('admin.purchase-return-voucher.index') }}" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
+        <a href="<?php echo e(route('admin.sale-return-voucher.index')); ?>" class="btn btn-secondary btn-sm"><i class="bi bi-list"></i> All Vouchers</a>
     </div>
 </div>
 
@@ -81,22 +79,22 @@
                 </div>
                 <div class="col-md-4">
                     <div class="field-group">
-                        <label>Supplier :</label>
+                        <label>Customer :</label>
                         <input type="hidden" id="voucherId">
-                        <div class="searchable-dropdown" id="supplierDropdownWrapper" style="width: 250px;">
-                            <input type="text" id="supplierSearchInput" class="form-control searchable-dropdown-input" placeholder="Type to search supplier..." autocomplete="off" data-custom-enter="true">
-                            <input type="hidden" id="supplierSelect" value="">
-                            <div class="searchable-dropdown-list" id="supplierDropdownList" style="display: none;">
-                                <div class="dropdown-item" data-value="" data-name="">Select Supplier</div>
-                                @foreach($suppliers as $supplier)
-                                <div class="dropdown-item" data-value="{{ $supplier->supplier_id }}" data-name="{{ $supplier->name }}">{{ $supplier->name }}</div>
-                                @endforeach
+                        <div class="searchable-dropdown" id="customerDropdownWrapper" style="width: 250px;">
+                            <input type="text" id="customerSearchInput" class="form-control searchable-dropdown-input" placeholder="Type to search customer..." autocomplete="off" data-custom-enter="true">
+                            <input type="hidden" id="customerSelect" value="">
+                            <div class="searchable-dropdown-list" id="customerDropdownList" style="display: none;">
+                                <div class="dropdown-item" data-value="" data-name="">Select Customer</div>
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <div class="dropdown-item" data-value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>"><?php echo e($customer->name); ?></div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <div class="border p-2" style="background: #f8e6f8;">
+                    <div class="border p-2" style="background: #fff8e6;">
                         <div class="d-flex justify-content-between" style="font-size: 11px;">
                             <span style="color: #c00; font-weight:600;">TOTAL :</span>
                             <span id="totalDisplay">0.00</span>
@@ -175,18 +173,18 @@
     <div class="hsn-modal-body">
         <input type="text" class="form-control mb-2" id="hsnSearch" placeholder="Search HSN..." data-custom-enter="true">
         <div id="hsnList">
-            @foreach($hsnCodes as $hsn)
-            <div class="hsn-list-item" data-hsn-code="{{ $hsn->hsn_code }}" data-cgst="{{ $hsn->cgst_percent }}" data-sgst="{{ $hsn->sgst_percent }}" data-gst="{{ $hsn->total_gst_percent }}" onclick="selectHsn('{{ $hsn->hsn_code }}', {{ $hsn->cgst_percent }}, {{ $hsn->sgst_percent }}, {{ $hsn->total_gst_percent }})">
-                <strong>{{ $hsn->hsn_code }}</strong> - {{ $hsn->name }} ({{ $hsn->total_gst_percent }}%)
+            <?php $__currentLoopData = $hsnCodes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $hsn): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="hsn-list-item" data-hsn-code="<?php echo e($hsn->hsn_code); ?>" data-cgst="<?php echo e($hsn->cgst_percent); ?>" data-sgst="<?php echo e($hsn->sgst_percent); ?>" data-gst="<?php echo e($hsn->total_gst_percent); ?>" onclick="selectHsn('<?php echo e($hsn->hsn_code); ?>', <?php echo e($hsn->cgst_percent); ?>, <?php echo e($hsn->sgst_percent); ?>, <?php echo e($hsn->total_gst_percent); ?>)">
+                <strong><?php echo e($hsn->hsn_code); ?></strong> - <?php echo e($hsn->name); ?> (<?php echo e($hsn->total_gst_percent); ?>%)
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let rowCounter = 0, selectedRowIndex = null, currentVoucherId = null, vouchersData = [];
 window.SKIP_AUTO_FOCUS = true;
@@ -198,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const inv = urlParams.get('invoice_no');
     if (inv) { document.getElementById('searchInvoice').value = inv; searchVoucher(); }
 
-    initSupplierDropdown();
+    initCustomerDropdown();
     initHeaderKeyboardNav();
     initTableKeyboardNav();
     initHsnModalKeyboard();
@@ -210,12 +208,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // =============================================
-// CUSTOM SEARCHABLE SUPPLIER DROPDOWN
+// CUSTOM SEARCHABLE CUSTOMER DROPDOWN
 // =============================================
-function initSupplierDropdown() {
-    const input = document.getElementById('supplierSearchInput'), hiddenInput = document.getElementById('supplierSelect'), dropdownList = document.getElementById('supplierDropdownList');
+function initCustomerDropdown() {
+    const input = document.getElementById('customerSearchInput'), hiddenInput = document.getElementById('customerSelect'), dropdownList = document.getElementById('customerDropdownList');
     if (!input || !hiddenInput || !dropdownList) return;
     let highlightedIndex = -1, isOpen = false;
+
     function getVisible() { return Array.from(dropdownList.querySelectorAll('.dropdown-item:not(.hidden)')); }
     function show() { dropdownList.style.display = 'block'; isOpen = true; highlightedIndex = -1; setTimeout(() => highlight(0), 0); }
     function hide() { dropdownList.style.display = 'none'; isOpen = false; highlightedIndex = -1; dropdownList.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('highlighted')); }
@@ -236,9 +235,9 @@ function initSupplierDropdown() {
         else if (e.key === 'Tab') { if (highlightedIndex >= 0 && highlightedIndex < vis.length) selectItem(vis[highlightedIndex]); hide(); }
     });
     dropdownList.addEventListener('click', function(e) { const item = e.target.closest('.dropdown-item'); if (item) selectItem(item); });
-    document.addEventListener('click', function(e) { if (!e.target.closest('#supplierDropdownWrapper')) hide(); });
+    document.addEventListener('click', function(e) { if (!e.target.closest('#customerDropdownWrapper')) hide(); });
 
-    window.setSupplierById = function(id) { hiddenInput.value = id; const item = dropdownList.querySelector(`.dropdown-item[data-value="${id}"]`); input.value = item ? (item.dataset.name||'') : ''; };
+    window.setCustomerById = function(id) { hiddenInput.value = id; const item = dropdownList.querySelector(`.dropdown-item[data-value="${id}"]`); input.value = item ? (item.dataset.name||'') : ''; };
 }
 
 // =============================================
@@ -248,7 +247,7 @@ function initHeaderKeyboardNav() {
     const search = document.getElementById('searchInvoice');
     if (search) search.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); searchVoucher(); } });
     const date = document.getElementById('returnDate');
-    if (date) date.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); document.getElementById('supplierSearchInput')?.focus(); } });
+    if (date) date.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); document.getElementById('customerSearchInput')?.focus(); } });
 }
 function focusFirstHsnCode() { const r = document.querySelector('#hsnTableBody tr'); if (r) { const h = r.querySelector('.hsn-code'); if (h) { h.focus(); h.select(); } } }
 
@@ -322,31 +321,31 @@ function initShortcuts() {
 // DATA FUNCTIONS
 // =============================================
 function loadVouchersForModal() {
-    fetch('{{ route("admin.purchase-return-voucher.get-vouchers") }}')
+    fetch('<?php echo e(route("admin.sale-return-voucher.get-vouchers")); ?>')
     .then(r => r.json()).then(res => { if (res.success) { vouchersData = res.vouchers; renderInvoiceList(vouchersData); } });
 }
 function renderInvoiceList(vouchers) {
     document.getElementById('invoiceList').innerHTML = vouchers.map(v => `
         <div class="invoice-list-item" onclick="loadVoucher(${v.id})" data-voucher-id="${v.id}">
             <div class="d-flex justify-content-between"><strong>${v.invoice_no}</strong><span class="text-muted">${v.return_date}</span></div>
-            <div class="text-muted small">${v.supplier_name} - ₹${parseFloat(v.net_amount).toFixed(2)}</div>
+            <div class="text-muted small">${v.customer_name} - ₹${parseFloat(v.net_amount).toFixed(2)}</div>
         </div>
     `).join('');
 }
-function filterInvoices() { const s = document.getElementById('invoiceSearch').value.toLowerCase(); renderInvoiceList(vouchersData.filter(v => v.invoice_no.toLowerCase().includes(s) || v.supplier_name.toLowerCase().includes(s))); }
+function filterInvoices() { const s = document.getElementById('invoiceSearch').value.toLowerCase(); renderInvoiceList(vouchersData.filter(v => v.invoice_no.toLowerCase().includes(s) || v.customer_name.toLowerCase().includes(s))); }
 function openInvoiceModal() { document.getElementById('invoiceModal').classList.add('show'); invHighlightedIndex = -1; setTimeout(() => { const s = document.getElementById('invoiceSearch'); if (s) { s.value = ''; s.focus(); } highlightInvItem(0); }, 100); }
 function closeInvoiceModal() { document.getElementById('invoiceModal').classList.remove('show'); invHighlightedIndex = -1; }
 
-function loadVoucher(id) { closeInvoiceModal(); fetch(`{{ url('admin/purchase-return-voucher') }}/${id}/details`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Error: ' + res.message); }); }
-function searchVoucher() { const inv = document.getElementById('searchInvoice').value.trim(); if (!inv) { alert('Enter invoice number'); return; } fetch(`{{ route('admin.purchase-return-voucher.search') }}?invoice_no=${encodeURIComponent(inv)}`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Not found'); }); }
+function loadVoucher(id) { closeInvoiceModal(); fetch(`<?php echo e(url('admin/sale-return-voucher')); ?>/${id}/details`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Error: ' + res.message); }); }
+function searchVoucher() { const inv = document.getElementById('searchInvoice').value.trim(); if (!inv) { alert('Enter invoice number'); return; } fetch(`<?php echo e(route('admin.sale-return-voucher.search')); ?>?invoice_no=${encodeURIComponent(inv)}`).then(r => r.json()).then(res => { if (res.success) populateForm(res.voucher); else alert('Not found'); }); }
 
 function populateForm(voucher) {
     currentVoucherId = voucher.id;
     document.getElementById('voucherId').value = voucher.id;
     document.getElementById('searchInvoice').value = voucher.invoice_no;
     document.getElementById('returnDate').value = voucher.return_date;
-    if (typeof window.setSupplierById === 'function') window.setSupplierById(voucher.supplier_id);
-    else document.getElementById('supplierSelect').value = voucher.supplier_id;
+    if (typeof window.setCustomerById === 'function') window.setCustomerById(voucher.customer_id);
+    else document.getElementById('customerSelect').value = voucher.customer_id;
     document.getElementById('remarks').value = voucher.remarks || '';
     document.getElementById('hsnTableBody').innerHTML = '';
     rowCounter = 0;
@@ -425,7 +424,7 @@ function selectHsn(code, cgst, sgst, gst) {
 
 function clearForm() {
     currentVoucherId = null; document.getElementById('voucherId').value = ''; document.getElementById('searchInvoice').value = '';
-    document.getElementById('returnDate').value = ''; document.getElementById('supplierSelect').value = ''; document.getElementById('supplierSearchInput').value = '';
+    document.getElementById('returnDate').value = ''; document.getElementById('customerSelect').value = ''; document.getElementById('customerSearchInput').value = '';
     document.getElementById('remarks').value = ''; document.getElementById('hsnTableBody').innerHTML = ''; document.getElementById('btnUpdate').disabled = true;
     rowCounter = 0; for (let i = 0; i < 5; i++) addNewRow(); calculateTotals();
 }
@@ -436,8 +435,8 @@ function updateVoucher() {
     if (isSubmitting) return; isSubmitting = true;
     const updateBtn = document.getElementById('btnUpdate'), originalBtnHtml = updateBtn.innerHTML;
     updateBtn.disabled = true; updateBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Updating...';
-    const sid = document.getElementById('supplierSelect').value;
-    if (!sid) { alert('Select a supplier'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; return; }
+    const cid = document.getElementById('customerSelect').value;
+    if (!cid) { alert('Select a customer'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; return; }
     const items = [];
     document.querySelectorAll('#hsnTableBody tr').forEach(r => {
         const h = r.querySelector('.hsn-code').value, a = parseFloat(r.querySelector('.amount').value)||0;
@@ -445,9 +444,9 @@ function updateVoucher() {
     });
     if (!items.length) { alert('Add at least one item'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; return; }
     if (typeof window.markAsSaving === 'function') window.markAsSaving();
-    fetch(`{{ url('admin/purchase-return-voucher') }}/${currentVoucherId}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({ return_date: document.getElementById('returnDate').value, supplier_id: sid, remarks: document.getElementById('remarks').value, items })
+    fetch(`<?php echo e(url('admin/sale-return-voucher')); ?>/${currentVoucherId}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
+        body: JSON.stringify({ return_date: document.getElementById('returnDate').value, customer_id: cid, remarks: document.getElementById('remarks').value, items })
     }).then(r => r.json()).then(res => {
         if (res.success) { alert('Updated!'); loadVouchersForModal(); }
         else { alert('Error: ' + res.message); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; }
@@ -456,4 +455,6 @@ function updateVoucher() {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeHsnModal(); closeInvoiceModal(); } });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-return-voucher/modification.blade.php ENDPATH**/ ?>
