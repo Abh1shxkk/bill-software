@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Deposit Slip'); ?>
 
-@section('title', 'Deposit Slip')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
@@ -18,17 +16,17 @@
             <div class="col-md-2">
                 <label class="form-label small mb-1">Deposit / Clearing Date</label>
                 <input type="date" class="form-control form-control-sm hdr-field" id="deposit_date" name="deposit_date"
-                       value="{{ date('Y-m-d') }}" tabindex="1" autocomplete="off">
+                       value="<?php echo e(date('Y-m-d')); ?>" tabindex="1" autocomplete="off">
             </div>
             <div class="col-md-2">
                 <label class="form-label small mb-1">Cheques Upto</label>
                 <input type="date" class="form-control form-control-sm hdr-field" id="cheques_upto" name="cheques_upto"
-                       value="{{ date('Y-m-d') }}" tabindex="2" autocomplete="off">
+                       value="<?php echo e(date('Y-m-d')); ?>" tabindex="2" autocomplete="off">
             </div>
             <div class="col-md-2">
                 <label class="form-label small mb-1">Payin Slip Date</label>
                 <input type="date" class="form-control form-control-sm hdr-field" id="payin_slip_date" name="payin_slip_date"
-                       value="{{ date('Y-m-d') }}" tabindex="3" autocomplete="off">
+                       value="<?php echo e(date('Y-m-d')); ?>" tabindex="3" autocomplete="off">
             </div>
             <div class="col-md-3" style="position:relative;">
                 <label class="form-label small mb-1">Bank</label>
@@ -44,10 +42,10 @@
                     z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.25);
                     max-height:180px;overflow-y:auto;">
                     <div class="bank-opt" data-val="" style="padding:6px 10px;cursor:pointer;font-size:12px;color:#888;">— Select Bank —</div>
-                    @foreach($banks as $bank)
-                    <div class="bank-opt" data-val="{{ $bank->id }}"
-                         style="padding:6px 10px;cursor:pointer;font-size:12px;">{{ $bank->name }}</div>
-                    @endforeach
+                    <?php $__currentLoopData = $banks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $bank): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <div class="bank-opt" data-val="<?php echo e($bank->id); ?>"
+                         style="padding:6px 10px;cursor:pointer;font-size:12px;"><?php echo e($bank->name); ?></div>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
             </div>
             <!-- D/N Wise — custom keyboard dropdown -->
@@ -73,7 +71,7 @@
             <div class="col-md-2">
                 <label class="form-label small mb-1">Pay In Slip No</label>
                 <input type="number" class="form-control form-control-sm" id="slip_no" name="slip_no"
-                       value="{{ $nextSlipNo }}" readonly tabindex="-1">
+                       value="<?php echo e($nextSlipNo); ?>" readonly tabindex="-1">
             </div>
         </form>
     </div>
@@ -92,28 +90,28 @@
                 </tr>
             </thead>
             <tbody id="cheque-table-body">
-                @forelse($chequeData as $cheque)
-                <tr data-id="{{ $cheque['id'] }}" data-cheque='@json($cheque)'
-                    class="cheque-row {{ $cheque['status'] === 'posted' ? 'table-success' : '' }}"
+                <?php $__empty_1 = true; $__currentLoopData = $chequeData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cheque): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                <tr data-id="<?php echo e($cheque['id']); ?>" data-cheque='<?php echo json_encode($cheque, 15, 512) ?>'
+                    class="cheque-row <?php echo e($cheque['status'] === 'posted' ? 'table-success' : ''); ?>"
                     style="cursor: pointer;">
-                    <td>{{ $cheque['customer_code'] ?? '---' }}</td>
-                    <td class="text-primary fw-bold">{{ $cheque['customer_name'] ?? '-' }}</td>
-                    <td>{{ $cheque['cheque_no'] }}</td>
-                    <td>{{ $cheque['cheque_date'] }}</td>
-                    <td class="text-end">{{ number_format($cheque['amount'], 2) }}</td>
+                    <td><?php echo e($cheque['customer_code'] ?? '---'); ?></td>
+                    <td class="text-primary fw-bold"><?php echo e($cheque['customer_name'] ?? '-'); ?></td>
+                    <td><?php echo e($cheque['cheque_no']); ?></td>
+                    <td><?php echo e($cheque['cheque_date']); ?></td>
+                    <td class="text-end"><?php echo e(number_format($cheque['amount'], 2)); ?></td>
                     <td>
-                        @if($cheque['status'] === 'posted')
+                        <?php if($cheque['status'] === 'posted'): ?>
                             <span class="badge bg-success">POSTED</span>
-                        @else
+                        <?php else: ?>
                             <span class="badge bg-warning text-dark">PENDING</span>
-                        @endif
+                        <?php endif; ?>
                     </td>
                 </tr>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
                     <td colspan="6" class="text-center text-muted py-3">No cheques found</td>
                 </tr>
-                @endforelse
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
@@ -196,9 +194,9 @@
     </div>
 </div>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     /* ── Selected row ── */
     .cheque-row.selected {
@@ -238,9 +236,9 @@
     /* ── Action button keyboard focus ── */
     .action-btn.kb-btn { outline: 3px solid #0d6efd; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(13,110,253,.25); }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -248,7 +246,7 @@ document.addEventListener('DOMContentLoaded', function () {
        STATE
     ══════════════════════════════════════════════ */
     var selectedCheque = null;
-    var chequeData     = @json($chequeData);
+    var chequeData     = <?php echo json_encode($chequeData, 15, 512) ?>;
     var kbRow          = -1;   // keyboard-highlighted row index
     var kbBtn          = -1;   // 0=Post, 1=Unpost
     var ACTION_IDS     = ['btn-post', 'btn-unpost'];
@@ -771,7 +769,7 @@ document.addEventListener('DOMContentLoaded', function () {
             btn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Post Selected';
             return;
         }
-        fetch('{{ route("admin.deposit-slip.store") }}', {
+        fetch('<?php echo e(route("admin.deposit-slip.store")); ?>', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -805,7 +803,7 @@ document.addEventListener('DOMContentLoaded', function () {
         var btn = this;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Unposting...';
-        fetch('{{ route("admin.deposit-slip.unpost") }}', {
+        fetch('<?php echo e(route("admin.deposit-slip.unpost")); ?>', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -866,4 +864,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/deposit-slip/index.blade.php ENDPATH**/ ?>

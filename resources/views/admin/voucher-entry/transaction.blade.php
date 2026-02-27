@@ -380,6 +380,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* 300ms gives Select2 enough time to init, then we destroy it */
     setTimeout(destroySelect2AndFocus, 300);
+
+    /* ── SAFETY NET ─────────────────────────────────────────────────────────
+       If focus EVER lands on a row's delete button (e.g. after credit Enter),
+       immediately jump to the NEXT row's NAME field and open the modal.      */
+    document.getElementById('itemsTableBody').addEventListener('focusin', function (e) {
+        if (!e.target.closest('.btn-outline-danger')) return;
+        var row     = e.target.closest('tr');
+        var rows    = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+        var nextRow = rows[rows.indexOf(row) + 1];
+        if (!nextRow) {
+            addItemRow();
+            nextRow = document.getElementById('itemsTableBody').lastElementChild;
+        }
+        nextRow.scrollIntoView({ block: 'nearest' });
+        var nameEl = nextRow.querySelector('.account-name');
+        nameEl._noModal = true;
+        nameEl.focus();
+        setTimeout(function () { openAccountModal(nextRow); }, 50);
+    });
 });
 
 /* ═══════════════════════════════════════════════════
@@ -512,8 +531,6 @@ function _handleAccountModalKey(e) {
 
     if (e.key === 'Enter') {
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-        /* Ignore Enter for first 200ms — prevents leaked keyup from credit/debit field */
-        if (Date.now() - _modalOpenedAt < 200) return;
         /* If nothing highlighted yet, highlight first item */
         if (!selectedAccount && items.length > 0) {
             kbFocusIndex = 0;
@@ -543,7 +560,6 @@ function _handleAccountModalKey(e) {
    MODAL OPEN / CLOSE / SELECT / CONFIRM
 ═══════════════════════════════════════════════════ */
 var _modalClosingToDebit = false;  // true = after confirm, go to debit; false = go back to name
-var _modalOpenedAt = 0;            // timestamp — block Enter for first 200ms after open
 
 function openAccountModal(row) {
     if (row === undefined) row = null;
@@ -551,7 +567,6 @@ function openAccountModal(row) {
     selectedAccount      = null;
     kbFocusIndex         = -1;
     _modalClosingToDebit = false;
-    _modalOpenedAt       = Date.now();
 
     document.getElementById('accountSearch').value     = '';
     document.getElementById('accountTypeFilter').value = '';
@@ -685,17 +700,21 @@ function wireRowKeys(row) {
     var debitEl  = row.querySelector('.debit-amount');
     var creditEl = row.querySelector('.credit-amount');
 
-    /* ── NAME: focus → open modal ──
-       _noModal flag = true means skip this one focus event (used when focus
-       returns to name after Esc, or during programmatic tabbing between rows)  ── */
+    /* ── NAME: focus → open modal (for mouse clicks)
+       _noModal flag = set before programmatic focus so modal isn't double-opened ── */
     nameEl.addEventListener('focus', function () {
         if (this._noModal) { this._noModal = false; return; }
-        openAccountModal(row);
+        /* Only open if modal not already visible */
+        if (!document.getElementById('accountModal').classList.contains('show')) {
+            openAccountModal(row);
+        }
     });
     nameEl.addEventListener('keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            openAccountModal(row);
+            if (!document.getElementById('accountModal').classList.contains('show')) {
+                openAccountModal(row);
+            }
         }
     });
 
@@ -725,25 +744,7 @@ function wireRowKeys(row) {
         }
         updateRowStatus(row);
         calculateTotals();
-
-        /* ── Immediately find and focus the next row's name field ──
-           This prevents focus from drifting to the delete button.
-           We set _noModal=true so the focus handler doesn't open the
-           modal yet — we open it ourselves after a short delay. */
-        var rows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
-        var idx  = rows.indexOf(row);
-        var next = rows[idx + 1];
-        if (!next) {
-            addItemRow();
-            next = document.getElementById('itemsTableBody').lastElementChild;
-        }
-        next.scrollIntoView({ block: 'nearest' });
-        var nxtName = next.querySelector('.account-name');
-        nxtName._noModal = true;   /* block focus-handler from opening modal */
-        nxtName.focus();           /* IMMEDIATE focus — no gap for delete button! */
-
-        /* Open modal after Enter keyup fully resolves */
-        setTimeout(function () { openAccountModal(next); }, 120);
+        goToNextRow(row);
     });
     creditEl.addEventListener('input', function () { calculateTotals(); updateRowStatus(row); });
 }
@@ -755,6 +756,7 @@ function goToNextRow(currentRow) {
 
     if (!next) {
         addItemRow();
+        /* addItemRow appends to tbody — grab the last child */
         next = document.getElementById('itemsTableBody').lastElementChild;
     }
 
@@ -762,14 +764,23 @@ function goToNextRow(currentRow) {
     var nxtName = next.querySelector('.account-name');
     nxtName._noModal = true;
     nxtName.focus();
-    setTimeout(function () { openAccountModal(next); }, 120);
+    openAccountModal(next);
 }
 
 function focusRow(idx) {
     var rows = document.querySelectorAll('#itemsTableBody tr');
     if (!rows[idx]) return;
-    /* Focus name — wireRowKeys focus-event will open the modal */
-    rows[idx].querySelector('.account-name').focus();
+    var targetRow = rows[idx];
+    var nameEl = targetRow.querySelector('.account-name');
+    
+    /* 1. Prevent focus handler from double-opening modal */
+    nameEl._noModal = true;
+    /* 2. Focus the NAME field first */
+    nameEl.focus();
+    /* 3. Blur any residual focus (date input calendar) */
+    document.getElementById('voucherDate').blur();
+    /* 4. Open the account selection modal for this row */
+    openAccountModal(targetRow);
 }
 
 /* ═══════════════════════════════════════════════════
