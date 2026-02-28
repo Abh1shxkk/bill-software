@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Modification'); ?>
 
-@section('title', 'Sale Modification')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments - preserving original functionality */
     .compact-form {
@@ -588,7 +586,7 @@
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
         <form id="saleTransactionForm" method="POST" autocomplete="off" onsubmit="return false;">
-            @csrf
+            <?php echo csrf_field(); ?>
             
             <!-- Header Section -->
             <div class="header-section">
@@ -605,17 +603,17 @@
                     
                     <div class="field-group">
                         <label>Sale Date</label>
-                        <input type="date" class="form-control" name="date" id="saleDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()" data-kb-order="2">
-                        <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
+                        <input type="date" class="form-control" name="date" id="saleDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 140px;" onchange="updateDayName()" data-kb-order="2">
+                        <input type="text" class="form-control readonly-field" id="dayName" value="<?php echo e(date('l')); ?>" readonly style="width: 90px;">
                     </div>
                     
                     <div class="field-group">
                         <label>Customer:</label>
                         <select class="form-control readonly-field" name="customer_id" id="customerSelect" style="width: 250px;" autocomplete="off" disabled data-kb-order="3">
                             <option value="">-- Select Customer --</option>
-                            @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-code="{{ $customer->code ?? '' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                            @endforeach
+                            <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>" data-code="<?php echo e($customer->code ?? ''); ?>"><?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?></option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </select>
                     </div>
                 </div>
@@ -636,9 +634,9 @@
                             <label style="width: 70px;">Sales Man:</label>
                             <select class="form-control readonly-field" name="salesman_id" id="salesmanSelect" style="width: 170px;" autocomplete="off" disabled data-kb-order="4">
                                 <option value="">-- Select Salesman --</option>
-                                @foreach($salesmen as $salesman)
-                                    <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}" data-code="{{ $salesman->code ?? '' }}">{{ $salesman->code ?? '' }} - {{ $salesman->name }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($salesman->id); ?>" data-name="<?php echo e($salesman->name); ?>" data-code="<?php echo e($salesman->code ?? ''); ?>"><?php echo e($salesman->code ?? ''); ?> - <?php echo e($salesman->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="text-center">
@@ -654,7 +652,7 @@
                             <div class="col-md-6">
                                 <div class="field-group">
                                     <label style="width: 80px;">Due Date</label>
-                                    <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}" data-kb-order="5">
+                                    <input type="date" class="form-control" name="due_date" id="dueDate" value="<?php echo e(date('Y-m-d')); ?>" data-kb-order="5">
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -994,7 +992,7 @@
 </div>
 
 <!-- Reusable Item Selection Modal Component -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'chooseItemsModal',
     'module' => 'sale-modification',
     'showStock' => true,
@@ -1002,10 +1000,10 @@
     'showCompany' => true,
     'showHsn' => true,
     'batchModalId' => 'batchSelectionModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- Reusable Batch Selection Modal Component (shows only available stock) -->
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'batchSelectionModal',
     'module' => 'sale-modification',
     'showOnlyAvailable' => true,
@@ -1013,7 +1011,7 @@
     'showPurchaseRate' => true,
     'showCostDetails' => true,
     'showSupplier' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- Date Range Modal Backdrop -->
 <div id="dateRangeBackdrop" class="pending-orders-backdrop"></div>
@@ -1236,7 +1234,7 @@ function setSelectOption(selectElement, value, displayText) {
 
 // Load items from server
 function loadItems() {
-    fetch('{{ route("admin.sale.getItems") }}')
+    fetch('<?php echo e(route("admin.sale.getItems")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data;
@@ -1306,13 +1304,6 @@ function checkChooseItemsButtonState() {
 // Handle Choose Items button click - opens invoices modal if no transaction, or items modal if transaction loaded
 function handleChooseItemsClick() {
     const transactionId = document.getElementById('transactionId')?.value;
-    
-    /* Customer must be selected before proceeding */
-    const customerSelect = document.getElementById('customerSelect');
-    if (!customerSelect || !customerSelect.value) {
-        alert('⚠️ Please select a Customer first!\n\nCustomer select karo pehle, uske bina aage nahi ja sakte.');
-        return;
-    }
     
     if (transactionId) {
         // Transaction already loaded - open items modal to add more items
@@ -1470,7 +1461,7 @@ function closeBatchSelectionModal() {
 function loadBatchesForItem(itemId) {
     console.log('🔄 Loading batches for item ID:', itemId);
     
-    const url = `{{ url('/admin/api/item-batches') }}/${itemId}`;
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
     fetch(url)
         .then(response => {
             console.log('📡 Response status:', response.status);
@@ -1974,7 +1965,7 @@ function fetchItemByBarcodeAndOpenBatchModal(barcode, rowIndex) {
     window.pendingBarcodeRowIndex = rowIndex;
     
     // Fetch item from API
-    fetch(`{{ url('/admin/api/items/search') }}?search=${encodeURIComponent(barcode)}&exact=1`)
+    fetch(`<?php echo e(url('/admin/api/items/search')); ?>?search=${encodeURIComponent(barcode)}&exact=1`)
         .then(response => response.json())
         .then(data => {
             if (data.items && data.items.length > 0) {
@@ -2518,7 +2509,7 @@ function moveToNextRow(currentRowIndex) {
 
 // Fetch item details when code is entered/changed
 function fetchItemDetailsForRow(itemCode, rowIndex) {
-    const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
+    const url = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -2768,7 +2759,7 @@ function updateDetailedSummary(rowIndex) {
 
 // Fetch total quantity from all batches for an item
 function fetchTotalBatchQuantity(itemId) {
-    const url = `{{ url('/admin/api/item-batches') }}/${itemId}`;
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -3174,7 +3165,7 @@ function saveSale() {
     }
     
     // Send to server
-    fetch('{{ route("admin.sale.store") }}', {
+    fetch('<?php echo e(route("admin.sale.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -3225,7 +3216,7 @@ function saveSale() {
 // Fetch next invoice number from server
 async function fetchNextInvoiceNo() {
     try {
-        const response = await fetch('{{ route("admin.sale.next-invoice-no") }}');
+        const response = await fetch('<?php echo e(route("admin.sale.next-invoice-no")); ?>');
         const data = await response.json();
         if (data.success && data.next_invoice_no) {
             document.getElementById('invoiceNo').value = data.next_invoice_no;
@@ -3407,7 +3398,7 @@ async function loadInvoices(fromDate = null, toDate = null) {
     
     try {
         // Build URL with query parameters
-        let url = '{{ route("admin.sale.modification.invoices") }}';
+        let url = '<?php echo e(route("admin.sale.modification.invoices")); ?>';
         if (fromDate && toDate) {
             url += `?from_date=${fromDate}&to_date=${toDate}`;
         }
@@ -3456,7 +3447,7 @@ function selectInvoice(invoiceId) {
     closeInvoicesModal();
     
     // Fetch the transaction by ID and load it
-    fetch(`{{ url('/admin/sale/modification/get') }}/${invoiceId}`)
+    fetch(`<?php echo e(url('/admin/sale/modification/get')); ?>/${invoiceId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Failed to load invoice');
@@ -3513,7 +3504,7 @@ async function loadTransactionByInvoiceNo(invoiceNo) {
         invoiceNoInput.disabled = true;
         
         // Search for invoice by invoice number
-        const url = `{{ url('/admin/sale/modification/search') }}?invoice_no=${encodeURIComponent(invoiceNumber)}`;
+        const url = `<?php echo e(url('/admin/sale/modification/search')); ?>?invoice_no=${encodeURIComponent(invoiceNumber)}`;
         const response = await fetch(url);
         
         // Check if response is OK
@@ -3564,7 +3555,7 @@ async function selectInvoice(transactionId) {
     invoiceNoInput.value = 'Loading...';
     
     try {
-        const url = `{{ url('/admin/sale/modification') }}/${transactionId}`;
+        const url = `<?php echo e(url('/admin/sale/modification')); ?>/${transactionId}`;
         const response = await fetch(url);
         const data = await response.json();
         
@@ -4144,7 +4135,7 @@ async function updateSale(transactionId) {
     }
     
     try {
-        const url = `{{ url('/admin/sale/modification') }}/${transactionId}`;
+        const url = `<?php echo e(url('/admin/sale/modification')); ?>/${transactionId}`;
         const response = await fetch(url, {
             method: 'POST',
             headers: {
@@ -4202,7 +4193,7 @@ async function updateSale(transactionId) {
 <div id="invoicesModal" class="pending-orders-modal" style="max-width: 800px;">
     <div class="pending-orders-content">
         <div class="pending-orders-header">
-            <h5 class="pending-orders-title" id="invoicesModalTitle">List of Sale Invoices as on: {{ date('d-M-y') }}</h5>
+            <h5 class="pending-orders-title" id="invoicesModalTitle">List of Sale Invoices as on: <?php echo e(date('d-M-y')); ?></h5>
             <button type="button" class="btn-close-modal" onclick="closeInvoicesModal()">
                 <i class="bi bi-x-lg"></i>
             </button>
@@ -4675,9 +4666,9 @@ function applyCompanyDiscountToAllRows(companyId, discountValue) {
 }
 
 function saveDiscountToCompany(companyId, discountValue, callback) {
-    fetch('{{ route("admin.sale.saveCompanyDiscount") }}', {
+    fetch('<?php echo e(route("admin.sale.saveCompanyDiscount")); ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>', 'Accept': 'application/json' },
         body: JSON.stringify({ company_id: companyId, discount_percent: discountValue })
     })
     .then(response => response.json())
@@ -4686,9 +4677,9 @@ function saveDiscountToCompany(companyId, discountValue, callback) {
 }
 
 function saveDiscountToItem(itemId, discountValue, callback) {
-    fetch('{{ route("admin.sale.saveItemDiscount") }}', {
+    fetch('<?php echo e(route("admin.sale.saveItemDiscount")); ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>', 'Accept': 'application/json' },
         body: JSON.stringify({ item_id: itemId, discount_percent: discountValue })
     })
     .then(response => response.json())
@@ -4862,10 +4853,10 @@ function capturePhoto() {
         // Open OCR preview immediately
         if (typeof openReceiptOCRPreview === 'function') {
             openReceiptOCRPreview(capturedFile, {
-                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-                batchApiUrl: '{{ url("admin/api/item-batches") }}',
-                csrfToken: '{{ csrf_token() }}'
+                ocrApiUrl: '<?php echo e(route("admin.api.ocr.extract")); ?>',
+                itemSearchUrl: '<?php echo e(route("admin.api.ocr.search-items")); ?>',
+                batchApiUrl: '<?php echo e(url("admin/api/item-batches")); ?>',
+                csrfToken: '<?php echo e(csrf_token()); ?>'
             });
         } else {
             showAlert('Receipt captured! Click on it to extract items.', 'success', 'Photo Captured');
@@ -4979,10 +4970,10 @@ async function triggerScan() {
                 // Open OCR preview immediately
                 if (typeof openReceiptOCRPreview === 'function') {
                     openReceiptOCRPreview(scannedFile, {
-                        ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-                        itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-                        batchApiUrl: '{{ url("admin/api/item-batches") }}',
-                        csrfToken: '{{ csrf_token() }}'
+                        ocrApiUrl: '<?php echo e(route("admin.api.ocr.extract")); ?>',
+                        itemSearchUrl: '<?php echo e(route("admin.api.ocr.search-items")); ?>',
+                        batchApiUrl: '<?php echo e(url("admin/api/item-batches")); ?>',
+                        csrfToken: '<?php echo e(csrf_token()); ?>'
                     });
                 } else {
                     showAlert('Receipt scanned! Click on it to extract items.', 'success', 'Scan Complete');
@@ -5016,10 +5007,10 @@ function handleScanFolderSelect(event) {
         // Open OCR preview immediately
         if (typeof openReceiptOCRPreview === 'function') {
             openReceiptOCRPreview(file, {
-                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-                batchApiUrl: '{{ url("admin/api/item-batches") }}',
-                csrfToken: '{{ csrf_token() }}'
+                ocrApiUrl: '<?php echo e(route("admin.api.ocr.extract")); ?>',
+                itemSearchUrl: '<?php echo e(route("admin.api.ocr.search-items")); ?>',
+                batchApiUrl: '<?php echo e(url("admin/api/item-batches")); ?>',
+                csrfToken: '<?php echo e(csrf_token()); ?>'
             });
         } else {
             showAlert('Receipt imported! Click on it to extract items.', 'success', 'Import Complete');
@@ -5118,10 +5109,10 @@ function submitReceiptAndContinue() {
     // Open OCR preview immediately for item extraction
     if (typeof openReceiptOCRPreview === 'function') {
         openReceiptOCRPreview(selectedReceiptFile, {
-            ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-            itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-            batchApiUrl: '{{ url("admin/api/item-batches") }}',
-            csrfToken: '{{ csrf_token() }}'
+            ocrApiUrl: '<?php echo e(route("admin.api.ocr.extract")); ?>',
+            itemSearchUrl: '<?php echo e(route("admin.api.ocr.search-items")); ?>',
+            batchApiUrl: '<?php echo e(url("admin/api/item-batches")); ?>',
+            csrfToken: '<?php echo e(csrf_token()); ?>'
         });
     } else {
         showAlert('Receipt uploaded! Click on it to extract items.', 'success', 'Receipt Added');
@@ -5191,10 +5182,10 @@ function viewReceiptFull(index) {
     if (receipt.file.type.startsWith('image/')) {
         if (typeof openReceiptOCRPreview === 'function') {
             openReceiptOCRPreview(receipt.file, {
-                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-                batchApiUrl: '{{ url("admin/api/item-batches") }}',
-                csrfToken: '{{ csrf_token() }}'
+                ocrApiUrl: '<?php echo e(route("admin.api.ocr.extract")); ?>',
+                itemSearchUrl: '<?php echo e(route("admin.api.ocr.search-items")); ?>',
+                batchApiUrl: '<?php echo e(url("admin/api/item-batches")); ?>',
+                csrfToken: '<?php echo e(csrf_token()); ?>'
             });
         } else {
             const reader = new FileReader();
@@ -5256,7 +5247,7 @@ function displayTempReceiptImages(receiptPath) {
     
     // Build image gallery
     // Get base path for the application (handles subdirectory installations)
-    const basePath = '{{ url('/') }}';
+    const basePath = '<?php echo e(url('/')); ?>';
     
     let html = '<div class="d-flex flex-wrap gap-2">';
     paths.forEach((path, index) => {
@@ -5300,10 +5291,10 @@ function openReceiptForOCR(imageSrc) {
             .then(blob => {
                 const file = new File([blob], 'receipt.jpg', { type: blob.type });
                 openReceiptOCRPreview(file, {
-                    ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-                    itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-                    batchApiUrl: '{{ url("admin/api/item-batches") }}',
-                    csrfToken: '{{ csrf_token() }}',
+                    ocrApiUrl: '<?php echo e(route("admin.api.ocr.extract")); ?>',
+                    itemSearchUrl: '<?php echo e(route("admin.api.ocr.search-items")); ?>',
+                    batchApiUrl: '<?php echo e(url("admin/api/item-batches")); ?>',
+                    csrfToken: '<?php echo e(csrf_token()); ?>',
                     onItemsSelected: function(selectedItems) {
                         console.log('📷 Items selected via callback:', selectedItems);
                     }
@@ -5575,7 +5566,7 @@ window.addEventListener('ocrItemsSelected', function(event) {
 </div>
 
 <!-- Include OCR Preview Module with Batch Selection -->
-@include('admin.sale.partials.receipt-ocr-preview')
+<?php echo $__env->make('admin.sale.partials.receipt-ocr-preview', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- Bridge Script for New Modal Components -->
 <script>
@@ -6845,4 +6836,6 @@ console.log('🔗 Modal Component Bridge Loaded - Sale Modification');
 })();
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale/modification.blade.php ENDPATH**/ ?>

@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Transaction'); ?>
 
-@section('title', 'Sale Transaction')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments - preserving original functionality */
     .compact-form {
@@ -824,7 +822,7 @@
         <div class="text-muted small">Create new sale transaction</div>
     </div>
     <div>
-        <a href="{{ route('admin.sale.invoices') }}" class="btn btn-primary">
+        <a href="<?php echo e(route('admin.sale.invoices')); ?>" class="btn btn-primary">
             <i class="bi bi-receipt-cutoff me-1"></i> Sale Invoices
         </a>
     </div>
@@ -833,7 +831,7 @@
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
         <form id="saleTransactionForm" method="POST" autocomplete="off" onsubmit="return false;">
-            @csrf
+            <?php echo csrf_field(); ?>
             
             <!-- Header Section -->
             <div class="header-section">
@@ -850,8 +848,8 @@
                     
                     <div class="field-group">
                         <label>Sale Date</label>
-                        <input type="date" class="form-control no-flatpickr" name="date" id="saleDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()">
-                        <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
+                        <input type="date" class="form-control no-flatpickr" name="date" id="saleDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 140px;" onchange="updateDayName()">
+                        <input type="text" class="form-control readonly-field" id="dayName" value="<?php echo e(date('l')); ?>" readonly style="width: 90px;">
                     </div>
                     
                     <div class="field-group">
@@ -867,15 +865,16 @@
                             <input type="hidden" name="customer_id" id="customerSelect" value="">
                             <div class="searchable-dropdown-list" id="customerDropdownList" style="display: none;">
                                 <div class="dropdown-item" data-value="" data-name="" data-receipt-mode="0">Select Customer</div>
-                                @foreach($customers as $customer)
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="dropdown-item" 
-                                         data-value="{{ $customer->id }}" 
-                                         data-name="{{ $customer->name }}"
-                                         data-code="{{ $customer->code ?? '' }}"
-                                         data-receipt-mode="{{ $customer->deals_with_item_desc_receipt ? '1' : '0' }}">
-                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                         data-value="<?php echo e($customer->id); ?>" 
+                                         data-name="<?php echo e($customer->name); ?>"
+                                         data-code="<?php echo e($customer->code ?? ''); ?>"
+                                         data-receipt-mode="<?php echo e($customer->deals_with_item_desc_receipt ? '1' : '0'); ?>">
+                                        <?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?>
+
                                     </div>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
                         </div>
                     </div>
@@ -887,15 +886,15 @@
                     <div style="width: 250px;">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Inv.No.:</label>
-                            <input type="text" class="form-control readonly-field" name="invoice_no" id="invoiceNo" value="{{ $nextInvoiceNo }}" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
+                            <input type="text" class="form-control readonly-field" name="invoice_no" id="invoiceNo" value="<?php echo e($nextInvoiceNo); ?>" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man:</label>
                             <select class="form-control no-select2" name="salesman_id" id="salesmanSelect" autocomplete="off" onchange="updateSalesmanName()">
                                 <option value="">Select</option>
-                                @foreach($salesmen as $salesman)
-                                    <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->code ?? '' }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($salesman->id); ?>" data-name="<?php echo e($salesman->name); ?>"><?php echo e($salesman->code ?? ''); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
                         <div class="text-center">
@@ -911,7 +910,7 @@
                             <div class="col-md-6">
                                 <div class="field-group">
                                     <label style="width: 80px;">Due Date</label>
-                                    <input type="date" class="form-control no-flatpickr" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}">
+                                    <input type="date" class="form-control no-flatpickr" name="due_date" id="dueDate" value="<?php echo e(date('Y-m-d')); ?>">
                                 </div>
                             </div>
                             <div class="col-md-3">
@@ -1256,7 +1255,7 @@
 </div>
 
 <!-- Reusable Item Selection Modal Component -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'chooseItemsModal',
     'module' => 'sale',
     'showStock' => true,
@@ -1264,10 +1263,10 @@
     'showCompany' => true,
     'showHsn' => true,
     'batchModalId' => 'batchSelectionModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- Reusable Batch Selection Modal Component (shows only available stock) -->
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'batchSelectionModal',
     'module' => 'sale',
     'showOnlyAvailable' => true,
@@ -1275,7 +1274,7 @@
     'showPurchaseRate' => true,
     'showCostDetails' => true,
     'showSupplier' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 
 <!-- Pending Challan Modal Backdrop -->
@@ -1562,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load items from server
 function loadItems() {
-    fetch('{{ route("admin.sale.getItems") }}')
+    fetch('<?php echo e(route("admin.sale.getItems")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data;
@@ -1600,12 +1599,12 @@ function fetchCustomerDue() {
     }
     
     // Fetch customer's outstanding due
-    fetch(`{{ url('admin/sale/customer') }}/${customerId}/due`, {
+    fetch(`<?php echo e(url('admin/sale/customer')); ?>/${customerId}/due`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         }
     })
     .then(response => response.json())
@@ -1745,7 +1744,7 @@ function generateTempInvoiceNo() {
     const invoiceNoInput = document.getElementById('invoiceNo');
     
     // Fetch next TEMP invoice number from server
-    fetch('{{ route("admin.sale.transaction.get-next-temp-invoice-no") }}', {
+    fetch('<?php echo e(route("admin.sale.transaction.get-next-temp-invoice-no")); ?>', {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -1817,7 +1816,7 @@ function openChooseItemsModal() {
 
 // Check if customer has pending challans
 function checkPendingChallans(customerId) {
-    fetch(`{{ url('admin/sale-challan/pending') }}?customer_id=${customerId}`, {
+    fetch(`<?php echo e(url('admin/sale-challan/pending')); ?>?customer_id=${customerId}`, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Accept': 'application/json'
@@ -2493,10 +2492,10 @@ function viewReceiptFull(index) {
         // Open advanced OCR preview modal
         if (typeof openReceiptOCRPreview === 'function') {
             openReceiptOCRPreview(receipt.file, {
-                ocrApiUrl: '{{ route("admin.api.ocr.extract") }}',
-                itemSearchUrl: '{{ route("admin.api.ocr.search-items") }}',
-                batchApiUrl: '{{ url("admin/api/item-batches") }}',
-                csrfToken: '{{ csrf_token() }}',
+                ocrApiUrl: '<?php echo e(route("admin.api.ocr.extract")); ?>',
+                itemSearchUrl: '<?php echo e(route("admin.api.ocr.search-items")); ?>',
+                batchApiUrl: '<?php echo e(url("admin/api/item-batches")); ?>',
+                csrfToken: '<?php echo e(csrf_token()); ?>',
                 onItemsSelected: function(selectedItems) {
                     // The event listener handles items, but this callback is also available
                     console.log('📷 Items selected via callback:', selectedItems);
@@ -2630,7 +2629,7 @@ function loadSelectedChallan() {
     }
     
     // Fetch challan details
-    fetch(`{{ url('admin/sale-challan/modification') }}/${selectedChallanId}`, {
+    fetch(`<?php echo e(url('admin/sale-challan/modification')); ?>/${selectedChallanId}`, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
             'Accept': 'application/json'
@@ -2929,7 +2928,7 @@ function closeBatchSelectionModal() {
 function loadBatchesForItem(itemId) {
     console.log('🔄 Loading batches for item ID:', itemId);
     
-    const url = `{{ url('/admin/api/item-batches') }}/${itemId}`;
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
     fetch(url)
         .then(response => {
             console.log('📡 Response status:', response.status);
@@ -3498,7 +3497,7 @@ function fetchItemByBarcodeAndOpenBatchModal(barcode, rowIndex) {
     window.pendingBarcodeRowIndex = rowIndex;
     
     // Fetch item from API
-    fetch(`{{ url('/admin/api/items/search') }}?search=${encodeURIComponent(barcode)}&exact=1`)
+    fetch(`<?php echo e(url('/admin/api/items/search')); ?>?search=${encodeURIComponent(barcode)}&exact=1`)
         .then(response => response.json())
         .then(data => {
             if (data.items && data.items.length > 0) {
@@ -4048,7 +4047,7 @@ function moveToNextRow(currentRowIndex) {
 // Fetch item details when code is entered/changed
 // 🔥 MODIFIED: Now opens batch selection modal first, then populates row after batch selection
 function fetchItemDetailsForRow(itemCode, rowIndex) {
-    const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
+    const url = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -4292,7 +4291,7 @@ function updateDetailedSummary(rowIndex) {
 
 // Fetch total quantity from all batches for an item
 function fetchTotalBatchQuantity(itemId) {
-    const url = `{{ url('/admin/api/item-batches') }}/${itemId}`;
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -4689,11 +4688,11 @@ function applyCompanyDiscountToAllRows(companyId, discountValue) {
 function saveDiscountToCompany(companyId, discountValue, callback) {
     console.log('🔵 Saving company discount:', { companyId, discountValue });
     
-    fetch('{{ route("admin.sale.saveCompanyDiscount") }}', {
+    fetch('<?php echo e(route("admin.sale.saveCompanyDiscount")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
             'Accept': 'application/json'
         },
         body: JSON.stringify({
@@ -4727,11 +4726,11 @@ function saveDiscountToCompany(companyId, discountValue, callback) {
 function saveDiscountToItem(itemId, discountValue, callback) {
     console.log('🔵 Saving item discount:', { itemId, discountValue });
     
-    fetch('{{ route("admin.sale.saveItemDiscount") }}', {
+    fetch('<?php echo e(route("admin.sale.saveItemDiscount")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
             'Accept': 'application/json'
         },
         body: JSON.stringify({
@@ -5104,7 +5103,7 @@ function saveSale() {
     }
     
     // Send to server
-    fetch('{{ route("admin.sale.store") }}', fetchOptions)
+    fetch('<?php echo e(route("admin.sale.store")); ?>', fetchOptions)
     .then(async response => {
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
@@ -5152,7 +5151,7 @@ function saveSale() {
 // Fetch next invoice number from server
 async function fetchNextInvoiceNo() {
     try {
-        const response = await fetch('{{ route("admin.sale.next-invoice-no") }}');
+        const response = await fetch('<?php echo e(route("admin.sale.next-invoice-no")); ?>');
         const data = await response.json();
         if (data.success && data.next_invoice_no) {
             document.getElementById('invoiceNo').value = data.next_invoice_no;
@@ -5620,7 +5619,7 @@ function handleSaveAndPrint() {
     
     const selectedFormat = document.querySelector('input[name="printFormat"]:checked').value;
     // Use Laravel's route helper with placeholder, then replace with actual ID
-    let printUrl = "{{ route('admin.sale.print', ['id' => '__ID__']) }}";
+    let printUrl = "<?php echo e(route('admin.sale.print', ['id' => '__ID__'])); ?>";
     printUrl = printUrl.replace('__ID__', savedTransactionId);
     printUrl = printUrl + '?format=' + selectedFormat + '&auto_print=true';
     
@@ -5985,7 +5984,7 @@ document.addEventListener('keydown', function(e) {
 
 
 <!-- Receipt OCR Preview Module with Batch Selection -->
-@include('admin.sale.partials.receipt-ocr-preview')
+<?php echo $__env->make('admin.sale.partials.receipt-ocr-preview', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- ============================================ -->
 <!-- KEYBOARD NAVIGATION SYSTEM -->
@@ -7154,4 +7153,5 @@ window.onItemSelectedFromModal = function(item) {
 })();
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale/transaction.blade.php ENDPATH**/ ?>

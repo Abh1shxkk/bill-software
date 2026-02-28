@@ -659,18 +659,36 @@
 
     function modalKeyCaptureHandler_{{ str_replace('-', '_', $id) }}(e) {
         if (!isBatchModalOpen_{{ str_replace('-', '_', $id) }}()) return;
-        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') return;
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter' && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+        /* Left/Right = switch between sort tabs (Expiry / Last Purchase / Purchase History) */
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+            var sortOrder = ['expiry', 'last_purchase', 'purchase_history'];
+            var curIdx = sortOrder.indexOf(currentSortOption_{{ str_replace('-', '_', $id) }});
+            if (curIdx < 0) curIdx = 0;
+            if (e.key === 'ArrowRight') curIdx = (curIdx + 1) % sortOrder.length;
+            else curIdx = (curIdx - 1 + sortOrder.length) % sortOrder.length;
+            var newSort = sortOrder[curIdx];
+            currentSortOption_{{ str_replace('-', '_', $id) }} = newSort;
+            /* Click the corresponding radio button to update UI */
+            var radioIds = { 'expiry': '{{ $id }}SortExpiry', 'last_purchase': '{{ $id }}SortLastPurchase', 'purchase_history': '{{ $id }}SortPurchaseHistory' };
+            var radio = document.getElementById(radioIds[newSort]);
+            if (radio) { radio.checked = true; }
+            sortBatches_{{ str_replace('-', '_', $id) }}(newSort);
+            selectedRowIndex_{{ str_replace('-', '_', $id) }} = -1;
+            /* Keep focus on search input */
+            setTimeout(function() { var s = document.getElementById('{{ $id }}Search'); if (s) s.focus(); }, 0);
+            return;
+        }
 
         e.preventDefault();
         e.stopPropagation();
         if (typeof e.stopImmediatePropagation === 'function') {
             e.stopImmediatePropagation();
         }
-
-        console.log('[KB-BatchModal][Capture] key', {
-            key: e.key,
-            activeId: document.activeElement ? document.activeElement.id : null
-        });
 
         handleBatchKeyDown_{{ str_replace('-', '_', $id) }}(e);
     }
