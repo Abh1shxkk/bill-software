@@ -1,0 +1,4677 @@
+<?php $__env->startSection('title', 'Sale Return Transaction'); ?>
+
+<?php $__env->startSection('content'); ?>
+<style>
+    /* Compact form adjustments */
+    .compact-form {
+        font-size: 11px;
+        padding: 8px;
+        background: #f5f5f5;
+    }
+    
+    .compact-form label {
+        font-weight: 600;
+        font-size: 11px;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+    
+    .compact-form input,
+    .compact-form select {
+        font-size: 11px;
+        padding: 2px 6px;
+        height: 26px;
+    }
+    
+    .header-section {
+        background: white;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+    }
+    
+    .header-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 6px;
+    }
+    
+    .field-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .field-group label {
+        font-weight: 600;
+        font-size: 11px;
+        margin-bottom: 0;
+        white-space: nowrap;
+    }
+    
+    .field-group input,
+    .field-group select {
+        font-size: 11px;
+        padding: 2px 6px;
+        height: 26px;
+    }
+    
+    .inner-card-sr {
+        background: #e8f4f8;
+        border: 1px solid #b8d4e0;
+        padding: 8px;
+        border-radius: 3px;
+    }
+    
+    .table-compact {
+        font-size: 10px;
+        margin-bottom: 0;
+    }
+    
+    .table-compact th,
+    .table-compact td {
+        padding: 4px;
+        vertical-align: middle;
+        height: 45px;
+    }
+    
+    .table-compact th {
+        background: #e9ecef;
+        font-weight: 600;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        height: 40px;
+    }
+    
+    .table-compact input {
+        font-size: 10px;
+        padding: 2px 4px;
+        height: 22px;
+        border: 1px solid #ced4da;
+        width: 100%;
+    }
+    
+    .readonly-field {
+        background-color: #e9ecef !important;
+        cursor: not-allowed;
+    }
+
+    /* Custom searchable dropdown (customer) */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #f1f5ff;
+    }
+    
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #e3ebff;
+    }
+
+    .custom-dropdown-menu .dropdown-item.active {
+        background-color: #e3ebff;
+    }
+
+    /* Keyboard-selected rows in modals */
+    .kb-row-active {
+        background-color: #cfe2ff !important;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-plus me-2"></i> Sale Return Transaction</h4>
+        <div class="text-muted small">Create new sale return transaction</div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded">
+    <div class="card-body">
+        <form id="saleReturnTransactionForm" method="POST" autocomplete="off" onsubmit="return false;">
+            <?php echo csrf_field(); ?>
+            
+            <!-- Header Section -->
+            <div class="header-section">
+                <!-- Row 1: SR No, Date -->
+                <div class="header-row">
+                    <div class="field-group">
+                        <label>SR.:</label>
+                        <select class="form-control no-select2" name="series" id="seriesSelect" data-kb-order="1" style="width: 60px;" onchange="updateSeriesLabel()">
+                            <option value="SR" selected>SR</option>
+                        </select>
+                        <span id="seriesLabel" style="font-weight: bold; color: #0d6efd; margin-left: 10px;">SALES RETURN - CREDIT</span>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label>Date:</label>
+                        <input type="date" class="form-control" name="return_date" id="returnDate" data-kb-order="2" value="<?php echo e(date('Y-m-d')); ?>" style="width: 140px;" onchange="updateDayName()">
+                        <input type="text" class="form-control readonly-field" id="dayName" value="<?php echo e(date('l')); ?>" readonly style="width: 90px;">
+                    </div>
+                </div>
+                
+                <!-- Row 2: Inner Card and Right Side -->
+                <div class="d-flex gap-3">
+                    <!-- Left Side - Inner Card -->
+                    <div class="inner-card-sr flex-grow-1">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <div class="field-group" style="position: relative;">
+                                    <label style="width: 100px;">Name:</label>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text" 
+                                               class="form-control no-select2" 
+                                               id="customerSearchInput" 
+                                               data-kb-order="3"
+                                               placeholder="Type to search customer..."
+                                               autocomplete="off"
+                                               style="width: 100%;">
+                                        <input type="hidden" name="customer_id" id="customerSelect">
+                                        
+                                        <div id="customerDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Customer
+                                            </div>
+                                            <div id="customerList" class="dropdown-list">
+                                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <div class="dropdown-item" 
+                                                         data-id="<?php echo e($customer->id); ?>" 
+                                                         data-name="<?php echo e($customer->name); ?>"
+                                                         data-code="<?php echo e($customer->code ?? ''); ?>"
+                                                         style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                                        <?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?>
+
+                                                    </div>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label>Rate Diff.:</label>
+                                    <input type="text" class="form-control" name="rate_diff_flag" id="rateDiff" data-kb-order="4" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label>Cash:</label>
+                                    <input type="text" class="form-control" name="cash_flag" id="cash" data-kb-order="5" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label>Tax:</label>
+                                    <input type="text" class="form-control" name="tax_flag" id="tax" data-kb-order="6" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-6">
+                                <div class="field-group">
+                                    <label style="width: 100px;">Sales Man:</label>
+                                    <select class="form-control no-select2" name="salesman_id" id="salesmanSelect" data-kb-order="7" autocomplete="off" onchange="updateSalesmanName()">
+                                        <option value="">Select</option>
+                                        <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($salesman->id); ?>" data-name="<?php echo e($salesman->name); ?>"><?php echo e($salesman->code ?? ''); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label style="width: 80px;">Inv.No.:</label>
+                                    <input type="text" class="form-control" name="original_invoice_no" id="originalInvoiceNo" data-kb-order="8" onkeypress="handleInvoiceSearch(event)">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label style="width: 80px;">Date:</label>
+                                    <input type="date" class="form-control readonly-field" name="original_invoice_date" id="originalInvoiceDate" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-6">
+                                <div class="field-group">
+                                    <label style="width: 100px;">Remarks:</label>
+                                    <input type="text" class="form-control" name="remarks" id="remarks" data-kb-order="9">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label style="width: 80px;">Series:</label>
+                                    <input type="text" class="form-control readonly-field" id="originalSeries" name="original_series" value="" readonly style="width: 50px;">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3" id="originalAmountContainer" style="display: none;">
+                                <div class="field-group">
+                                    <label style="width: 80px;">Amount:</label>
+                                    <input type="text" class="form-control readonly-field" id="originalAmount" name="original_amount" value="" readonly style="width: 120px; text-align: right; font-weight: bold;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side -->
+                    <div style="width: 200px;">
+                        <div class="field-group mb-2">
+                            <label style="width: 150px;">S.R. No.:</label>
+                            <input type="text" class="form-control readonly-field" name="sr_no" id="srNo" value="<?php echo e($nextSRNo); ?>" readonly>
+                        </div>
+                        <div class="field-group mb-2">
+                            <label style="width: 150px;">Fixed Dis.:</label>
+                            <input type="number" class="form-control" name="fixed_discount" id="fixedDiscount" data-kb-order="10" value="0" step="0.01">
+                        </div>
+                        <div class="text-center">
+                            <button type="button" class="btn btn-sm btn-info" id="insertOrdersBtn" style="width: 100%;" onclick="openInsertOrdersModal()">
+                                <i class="bi bi-list-check"></i> Insert Orders
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
+            <!-- Items Table -->
+            <div class="bg-white border rounded p-2 mb-2">
+                <div class="table-responsive" style="overflow-y: auto; max-height: 310px;" id="itemsTableContainer">
+                    <table class="table table-bordered table-compact">
+                        <thead style="position: sticky; top: 0; background: #e9ecef; z-index: 10;">
+                            <tr>
+                                <th style="width: 60px;">Code</th>
+                                <th style="width: 250px;">Item Name</th>
+                                <th style="width: 80px;">Batch</th>
+                                <th style="width: 70px;">Exp.</th>
+                                <th style="width: 60px;">Qty.</th>
+                                <th style="width: 60px;">F.Qty</th>
+                                <th style="width: 80px;">Sale Rate</th>
+                                <th style="width: 60px;">Dis.%</th>
+                                <th style="width: 80px;">MRP</th>
+                                <th style="width: 90px;">Amount</th>
+                                <th style="width: 60px; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody">
+                            <!-- Items will be added dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Add Row Button -->
+                <div class="text-center mt-2">
+                    <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
+                        <i class="fas fa-plus-circle"></i> Add Row
+                    </button>
+                </div>
+            </div>
+
+            
+            <!-- Calculation Section -->
+            <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
+                    <!-- Left Section: HSN Code, CGST -->
+                    <div class="d-flex flex-column gap-2">
+                        <!-- HSN Code -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 75px;"><strong>HSN Code:</strong></label>
+                            <input type="text" class="form-control readonly-field text-center" id="calc_hsn_code" readonly style="width: 100px; height: 28px;" value="---">
+                        </div>
+                        
+                        <!-- CGST(%) -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 75px;"><strong>CGST(%):</strong></label>
+                            <input type="text" class="form-control readonly-field text-center" id="calc_cgst_percent" readonly style="width: 50px; height: 28px;" value="0">
+                            <input type="text" class="form-control readonly-field text-end" id="calc_cgst_amount" readonly style="width: 70px; height: 28px;" value="0.00">
+                        </div>
+                    </div>
+                    
+                    <!-- Middle Section: SGST, Cess -->
+                    <div class="d-flex flex-column gap-2">
+                        <!-- SGST(%) -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 75px;"><strong>SGST(%):</strong></label>
+                            <input type="text" class="form-control readonly-field text-center" id="calc_sgst_percent" readonly style="width: 50px; height: 28px;" value="0">
+                            <input type="text" class="form-control readonly-field text-end" id="calc_sgst_amount" readonly style="width: 70px; height: 28px;" value="0.00">
+                        </div>
+                        
+                        <!-- Cess (%) -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 75px;"><strong>Cess(%):</strong></label>
+                            <input type="text" class="form-control readonly-field text-center" id="calc_cess_percent" readonly style="width: 50px; height: 28px;" value="0">
+                            <input type="text" class="form-control readonly-field text-end" id="calc_cess_amount" readonly style="width: 70px; height: 28px;" value="0.00">
+                        </div>
+                    </div>
+                    
+                    <!-- Right Side: SC%, TAX%, Excise, TSR -->
+                    <div class="d-flex gap-3">
+                        <!-- Column 1: SC % -->
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 65px;"><strong>SC %</strong></label>
+                                <input type="number" class="form-control readonly-field" id="calc_sc_percent" readonly style="width: 80px; height: 28px;" value="0.000">
+                            </div>
+                        </div>
+                        
+                        <!-- Column 2: TAX % -->
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 50px;"><strong>TAX %</strong></label>
+                                <input type="number" class="form-control readonly-field" id="calc_tax_percent" readonly style="width: 70px; height: 28px;" value="0.000">
+                            </div>
+                        </div>
+                        
+                        <!-- Column 3: Excise -->
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 50px;"><strong>Excise</strong></label>
+                                <input type="text" class="form-control text-center readonly-field" id="calc_excise" readonly style="width: 60px; height: 28px;" value="0.00">
+                            </div>
+                        </div>
+                        
+                        <!-- Column 4: TSR -->
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 50px;"><strong>TSR</strong></label>
+                                <input type="text" class="form-control text-center readonly-field" id="calc_tsr" readonly style="width: 60px; height: 28px;" value="0.00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Summary Section -->
+            <div class="bg-white border rounded p-2 mb-2">
+                <!-- Row 1: 6 fields -->
+                <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold; white-space: nowrap;">N.T AMT</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="nt_amount" id="ntAmount" readonly step="0.01" style="width: 80px; height: 26px; background: #fff3cd;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">SC</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="sc_amount" id="scAmount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">F.T. Amt.</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="ft_amount" id="ftAmount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Dis.</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="dis_amount" id="disAmount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Scm.</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="scm_amount" id="scmAmount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Tax</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="tax_amount" id="taxAmount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+                </div>
+
+                <!-- Row 2: 3 fields -->
+                <div class="d-flex align-items-center mt-2" style="font-size: 11px; gap: 10px;">
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold; white-space: nowrap;">Net</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="net_amount" id="netAmount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Scm.%</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="scm_percent" id="scmPercent" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">TCS</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" name="tcs_amount" id="tcsAmount" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Fields Section -->
+            <div class="col-12 mb-4 bg-white border rounded p-2 mb-2">
+                <div class="row gx-3" style="font-size: 11px;">
+                    <!-- col 1 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 70px;">Packing</label>
+                                    <input type="text" class="form-control form-control-sm readonly-field text-start" name="packing" id="packing" readonly style="width: 80px; height: 26px;" value="">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 70px;">Unit</label>
+                                    <input type="text" class="form-control form-control-sm readonly-field text-start" name="unit" id="unit" readonly style="width: 80px; height: 26px;" value="">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 70px;">Cl. Qty</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" name="cl_qty" id="clQty" readonly step="0.01" style="width: 80px; height: 26px;" value="0">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 70px;">Lctn :</label>
+                                    <input type="text" class="form-control form-control-sm readonly-field text-start" name="location" id="location" readonly style="width: 80px; height: 26px;" value="">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col 2 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">N.T.Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_nt_amount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">SC Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_sc_amount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">Dis.Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_dis_amount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">HS.Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" name="hs_amount" id="hsAmount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col 3 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">Scm. %</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_scm_percent" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">Scm.Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_scm_amount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">Tax Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_tax_amount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">Net Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_net_amount" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col 4 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">Sub.Tot.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_sub_total" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 80px;">Vol.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="addl_volume" readonly step="0.01" style="width: 80px; height: 26px;" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col 5 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 60px;">Comp :</label>
+                                    <input type="text" class="form-control form-control-sm readonly-field text-start" id="addl_company" readonly style="width: 100px; height: 26px;" value="">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 60px;">SCM.</label>
+                                    <input type="text" class="form-control form-control-sm readonly-field text-center" id="addl_scm_flag" readonly style="width: 40px; height: 26px;" value="0">
+                                    <span style="margin: 0 5px;">+</span>
+                                    <input type="text" class="form-control form-control-sm readonly-field text-center" id="addl_scm_value" readonly style="width: 40px; height: 26px;" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col 6 -->
+                    <div class="col-lg-1">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0" style="font-weight: bold; width: 50px;">Srino</label>
+                                    <input type="text" class="form-control form-control-sm readonly-field text-center" id="addl_srino" readonly style="width: 40px; height: 26px;" value="1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='<?php echo e(route('admin.dashboard')); ?>'">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="submitBtn" onclick="saveTransaction()">
+                    <i class="bi bi-check-circle me-1"></i> Save Sale Return
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Credit Note Modal -->
+<div id="creditNoteModal" class="credit-note-modal">
+    <div class="credit-note-modal-content">
+        <div class="credit-note-modal-header">
+            <h5>Save Transaction</h5>
+            <button type="button" class="credit-note-close-btn" onclick="closeCreditNoteModal()">&times;</button>
+        </div>
+        <div class="credit-note-modal-body">
+            <p>How would you like to save this transaction?</p>
+            <div class="credit-note-options">
+                <button type="button" class="btn btn-secondary" onclick="saveWithoutCreditNote()">
+                    Save Without Credit Note
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveWithCreditNote()">
+                    Save With Credit Note
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Update day name when date changes
+function updateDayName() {
+    const dateInput = document.getElementById('returnDate');
+    const dayNameInput = document.getElementById('dayName');
+    
+    if (dateInput.value) {
+        const date = new Date(dateInput.value);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        dayNameInput.value = days[date.getDay()];
+    }
+}
+
+// Update customer name
+function updateCustomerName() {
+    const customerSelect = document.getElementById('customerSelect');
+    const customerSearchInput = document.getElementById('customerSearchInput');
+    const customerList = document.getElementById('customerList');
+    if (!customerSelect || !customerList) return;
+
+    const item = customerList.querySelector(`.dropdown-item[data-id="${customerSelect.value}"]`);
+    if (item) {
+        const name = item.getAttribute('data-name') || '';
+        const code = item.getAttribute('data-code') || '';
+        customerSelect.setAttribute('data-customer-name', name);
+        if (customerSearchInput) {
+            customerSearchInput.value = code ? `${code} - ${name}` : name;
+        }
+    }
+}
+
+// Update salesman name
+function updateSalesmanName() {
+    const select = document.getElementById('salesmanSelect');
+    const selectedOption = select.options[select.selectedIndex];
+    // Store salesman name for later use
+    if (selectedOption) {
+        select.setAttribute('data-salesman-name', selectedOption.getAttribute('data-name') || '');
+    }
+}
+
+// Customer dropdown functionality (searchable)
+function initCustomerDropdown() {
+    const customerSearchInput = document.getElementById('customerSearchInput');
+    const customerDropdown = document.getElementById('customerDropdown');
+    const customerSelect = document.getElementById('customerSelect');
+    const customerList = document.getElementById('customerList');
+    if (!customerSearchInput || !customerDropdown || !customerSelect || !customerList) return;
+
+    let customerActiveIndex = -1;
+
+    function isSelectableCustomerItem(item) {
+        return !!(item && item.getAttribute('data-id'));
+    }
+
+    function getVisibleCustomerItems() {
+        return Array.from(customerList.querySelectorAll('.dropdown-item:not([style*="display: none"])'))
+            .filter(isSelectableCustomerItem);
+    }
+
+    function setActiveCustomerItem(index) {
+        const items = getVisibleCustomerItems();
+        items.forEach(item => item.classList.remove('active'));
+        if (index < 0 || index >= items.length) {
+            customerActiveIndex = -1;
+            return;
+        }
+        customerActiveIndex = index;
+        const activeItem = items[index];
+        activeItem.classList.add('active');
+        activeItem.scrollIntoView({ block: 'nearest' });
+    }
+
+    function filterCustomers(searchTerm) {
+        const items = customerList.querySelectorAll('.dropdown-item');
+        let visibleCount = 0;
+        const normalized = (searchTerm || '').toLowerCase();
+        items.forEach(item => {
+            const name = (item.getAttribute('data-name') || '').toLowerCase();
+            const code = (item.getAttribute('data-code') || '').toLowerCase();
+            if (name.includes(normalized) || code.includes(normalized)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        setActiveCustomerItem(-1);
+
+        if (visibleCount === 0 && !document.getElementById('customerNoResults')) {
+            const noResults = document.createElement('div');
+            noResults.id = 'customerNoResults';
+            noResults.style.padding = '12px';
+            noResults.style.textAlign = 'center';
+            noResults.style.color = '#999';
+            noResults.textContent = 'No customers found';
+            customerList.appendChild(noResults);
+        } else if (visibleCount > 0) {
+            const noResults = document.getElementById('customerNoResults');
+            if (noResults) noResults.remove();
+        }
+    }
+
+    function moveToRateDiff() {
+        const rateDiffField = document.getElementById('rateDiff');
+        if (rateDiffField) {
+            rateDiffField.focus();
+            if (rateDiffField.select) rateDiffField.select();
+        }
+    }
+
+    function selectCustomerItem(item, shouldMoveNext = false) {
+        if (!item || !isSelectableCustomerItem(item)) return false;
+        const customerId = item.getAttribute('data-id');
+        const name = item.getAttribute('data-name') || '';
+        const code = item.getAttribute('data-code') || '';
+        customerSearchInput.value = code ? `${code} - ${name}` : name;
+        customerSelect.value = customerId || '';
+        customerDropdown.style.display = 'none';
+        updateCustomerName();
+        if (shouldMoveNext) {
+            moveToRateDiff();
+        }
+        return true;
+    }
+
+    customerSearchInput.addEventListener('focus', function() {
+        customerDropdown.style.display = 'block';
+        filterCustomers(this.value || '');
+    });
+
+    customerSearchInput.addEventListener('input', function() {
+        filterCustomers(this.value);
+        customerDropdown.style.display = 'block';
+    });
+
+    customerList.addEventListener('click', function(e) {
+        const item = e.target.closest('.dropdown-item');
+        if (!item) return;
+        selectCustomerItem(item, false);
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!customerSearchInput.contains(e.target) && !customerDropdown.contains(e.target)) {
+            customerDropdown.style.display = 'none';
+        }
+    });
+
+    customerSearchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const visibleItems = getVisibleCustomerItems();
+            let selected = false;
+            if (customerActiveIndex >= 0 && visibleItems[customerActiveIndex]) {
+                selected = selectCustomerItem(visibleItems[customerActiveIndex], true);
+            } else if (visibleItems.length >= 1) {
+                // Default to first visible item if none selected
+                selected = selectCustomerItem(visibleItems[0], true);
+            }
+            if (!selected) {
+                customerDropdown.style.display = 'block';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            if (customerDropdown.style.display !== 'block') {
+                customerDropdown.style.display = 'block';
+            }
+            const nextIndex = customerActiveIndex < 0 ? 0 : Math.min(customerActiveIndex + 1, items.length - 1);
+            setActiveCustomerItem(nextIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            if (customerDropdown.style.display !== 'block') {
+                customerDropdown.style.display = 'block';
+            }
+            const prevIndex = customerActiveIndex <= 0 ? 0 : customerActiveIndex - 1;
+            setActiveCustomerItem(prevIndex);
+        } else if (e.key === 'Escape') {
+            customerDropdown.style.display = 'none';
+        }
+    }, true);
+
+    // Global capture to ensure dropdown selection works even if focus shifts
+window.addEventListener('keydown', function(e) {
+        const activeEl = document.activeElement;
+        const isCustomerFocus = activeEl === customerSearchInput || customerDropdown.contains(activeEl);
+        const isDropdownOpen = customerDropdown.style.display === 'block';
+        if (!isCustomerFocus || !isDropdownOpen) return;
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const visibleItems = getVisibleCustomerItems();
+            let selected = false;
+            if (customerActiveIndex >= 0 && visibleItems[customerActiveIndex]) {
+                selected = selectCustomerItem(visibleItems[customerActiveIndex], true);
+            } else if (visibleItems.length >= 1) {
+                selected = selectCustomerItem(visibleItems[0], true);
+            }
+            if (!selected) {
+                customerDropdown.style.display = 'block';
+            }
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            const nextIndex = customerActiveIndex < 0 ? 0 : Math.min(customerActiveIndex + 1, items.length - 1);
+            setActiveCustomerItem(nextIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const items = getVisibleCustomerItems();
+            if (!items.length) return;
+            const prevIndex = customerActiveIndex <= 0 ? 0 : customerActiveIndex - 1;
+            setActiveCustomerItem(prevIndex);
+        } else if (e.key === 'Escape') {
+            customerDropdown.style.display = 'none';
+        }
+    }, true);
+}
+
+// Bridge: Allow keyboard selection inside reusable Choose Items / Batch Selection modals
+(function initComponentModalKeyboardBridge() {
+    function isModalOpen(id) {
+        const el = document.getElementById(id);
+        return !!(el && el.classList.contains('show'));
+    }
+
+    window.addEventListener('keydown', function(e) {
+        if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown' && e.key !== 'Enter' && e.key !== 'Escape') {
+            return;
+        }
+
+        // Choose Items modal (reusable component)
+        if (isModalOpen('chooseItemsModal') && typeof window.handleItemKeyDown_chooseItemsModal === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            window.handleItemKeyDown_chooseItemsModal(e);
+            return;
+        }
+
+        // Batch Selection modal (reusable component)
+        if (isModalOpen('batchSelectionModal') && typeof window.handleBatchKeyDown_batchSelectionModal === 'function') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            window.handleBatchKeyDown_batchSelectionModal(e);
+            return;
+        }
+    }, true);
+})();
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomerDropdown);
+} else {
+    initCustomerDropdown();
+}
+
+// Track pending row for item selection
+if (typeof window.pendingReturnRowIndex === 'undefined') {
+    window.pendingReturnRowIndex = null;
+}
+
+// Open item modal for a specific row (code field Enter)
+function openItemModalForRow(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    if (!codeInput) return;
+
+    const isEditableRow = row.dataset.editable === 'true' || !codeInput.hasAttribute('readonly');
+    if (!isEditableRow) {
+        console.log('[KB] Code Enter ignored (row not editable)', { rowIndex });
+        return;
+    }
+
+    const modalOpen = !!document.querySelector('#chooseItemsModal.show, #batchSelectionModal.show, .insert-orders-modal.show, .batch-modal.show, .create-batch-modal.show');
+    if (modalOpen) {
+        console.log('[KB] Code Enter ignored (modal already open)', { rowIndex });
+        return;
+    }
+
+    window.pendingReturnRowIndex = rowIndex;
+    console.log('[KB] Code Enter -> open item modal', { rowIndex });
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        console.error('Item selection modal not initialized');
+        showAlert('error', 'Could not open item selection modal');
+    }
+}
+
+// Capture Enter on Code field to always open item modal
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.keyCode !== 13) return;
+    const target = e.target;
+    if (!target || target.tagName !== 'INPUT') return;
+    const name = target.getAttribute('name') || '';
+    if (!name.includes('[code]')) return;
+    const row = target.closest('tr');
+    const rowId = row?.id || '';
+    const rowIndex = rowId.startsWith('row-') ? parseInt(rowId.replace('row-', '')) : NaN;
+    console.log('[KB] Code Enter (capture)', { name, rowId, rowIndex });
+    if (Number.isNaN(rowIndex)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    openItemModalForRow(rowIndex);
+}, true);
+
+// Add new row to items table
+function addNewRow() {
+    console.log('[KB] addNewRow -> create empty row', {
+        kbForceCodeFocus: window.kbForceCodeFocus,
+        kbSkipInitialQtyFocus: window.kbSkipInitialQtyFocus,
+        kbAddRowSource: window.kbAddRowSource
+    });
+
+    // Create a blank editable row (no modal)
+    const emptyItem = {
+        item_id: '',
+        item_code: '',
+        item_name: '',
+        batch_id: '',
+        batch_no: '',
+        expiry_date: '',
+        packing: '',
+        unit: '',
+        company_name: '',
+        hsn_code: '',
+        sale_rate: 0,
+        mrp: 0,
+        discount_percent: 0,
+        cgst_percent: 0,
+        sgst_percent: 0,
+        cess_percent: 0,
+        return_qty: 0,
+        return_fqty: 0,
+        _editable: true
+    };
+
+    // Prevent qty auto-focus and force code focus
+    window.kbForceCodeFocus = true;
+    window.kbSkipInitialQtyFocus = true;
+    window.kbNextRowFocus = 'code';
+
+    const newRowIndex = currentRowIndex;
+    addItemRow(emptyItem, newRowIndex);
+
+    // Focus code field on the newly created row
+    setTimeout(() => {
+        const row = document.getElementById(`row-${newRowIndex}`) || document.querySelector('#itemsTableBody tr:last-child');
+        if (!row) return;
+        const codeInput = row.querySelector('input[name*="[code]"]');
+        if (codeInput) {
+            codeInput.focus();
+            if (codeInput.select) codeInput.select();
+            console.log('[KB] Focus set on new empty row code input', codeInput);
+        }
+    }, 100);
+}
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from modal:', item);
+    console.log('Batch selected from modal:', batch);
+
+    // If we are populating an existing row (code field flow)
+    if (window.pendingReturnRowIndex !== null && window.pendingReturnRowIndex !== undefined) {
+        const rowIndex = window.pendingReturnRowIndex;
+        window.pendingReturnRowIndex = null;
+        populateExistingRowWithItemBatch(rowIndex, item, batch);
+        return;
+    }
+
+    // If this came from discount->add-row flow, force next focus to code
+    if (window.kbAddRowSource === 'discount' || window.kbForceCodeFocus) {
+        window.kbFocusNewRowCode = true;
+        window.kbNextRowFocus = 'code';
+        window.kbSkipInitialQtyFocus = true;
+        window.kbForceCodeFocus = true;
+        console.log('[KB] onItemBatchSelectedFromModal -> reassert focus flags', {
+            kbFocusNewRowCode: window.kbFocusNewRowCode,
+            kbNextRowFocus: window.kbNextRowFocus,
+            kbAddRowSource: window.kbAddRowSource,
+            kbForceCodeFocus: window.kbForceCodeFocus,
+            kbSkipInitialQtyFocus: window.kbSkipInitialQtyFocus
+        });
+    }
+    
+    // Create item object for the table
+    const newItem = {
+        item_id: item.id,
+        item_code: item.bar_code || item.id,
+        item_name: item.name,
+        batch_id: batch.id,
+        batch_no: batch.batch_no,
+        expiry_date: batch.expiry_display || batch.expiry_date || '',
+        packing: item.packing || '',
+        unit: item.unit || 'PCS',
+        company_name: item.company_name || '',
+        hsn_code: item.hsn_code || '',
+        sale_rate: parseFloat(batch.s_rate || batch.avg_s_rate || 0),
+        mrp: parseFloat(batch.mrp || batch.avg_mrp || 0),
+        discount_percent: 0,
+        cgst_percent: parseFloat(item.cgst_percent || 6),
+        sgst_percent: parseFloat(item.sgst_percent || 6),
+        cess_percent: parseFloat(item.cess_percent || 0),
+        return_qty: 0,
+        return_fqty: 0
+    };
+    
+    // Add to table using existing function
+    populateItemsTable([newItem]);
+    showAlert('success', 'Item added successfully! Enter return quantity.');
+};
+
+// Populate an existing row with item + batch (code field flow)
+function populateExistingRowWithItemBatch(rowIndex, item, batch) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+
+    const newItem = {
+        item_id: item.id,
+        item_code: item.bar_code || item.id,
+        item_name: item.name,
+        batch_id: batch.id,
+        batch_no: batch.batch_no,
+        expiry_date: batch.expiry_display || batch.expiry_date || '',
+        packing: item.packing || '',
+        unit: item.unit || 'PCS',
+        company_name: item.company_name || '',
+        hsn_code: item.hsn_code || '',
+        sale_rate: parseFloat(batch.s_rate || batch.avg_s_rate || 0),
+        mrp: parseFloat(batch.mrp || batch.avg_mrp || 0),
+        discount_percent: 0,
+        cgst_percent: parseFloat(item.cgst_percent || 6),
+        sgst_percent: parseFloat(item.sgst_percent || 6),
+        cess_percent: parseFloat(item.cess_percent || 0),
+        return_qty: 0,
+        return_fqty: 0
+    };
+
+    row.querySelector('input[name*="[code]"]').value = newItem.item_code || '';
+    row.querySelector('input[name*="[name]"]').value = newItem.item_name || '';
+    row.querySelector('input[name*="[batch]"]').value = newItem.batch_no || '';
+    row.querySelector('input[name*="[expiry]"]').value = newItem.expiry_date || '';
+    row.querySelector('input[name*="[sale_rate]"]').value = newItem.sale_rate || 0;
+    row.querySelector('input[name*="[mrp]"]').value = newItem.mrp || 0;
+
+    row.querySelector('input[name*="[item_id]"]').value = newItem.item_id || '';
+    row.querySelector('input[name*="[batch_id]"]').value = newItem.batch_id || '';
+    row.querySelector('input[name*="[hsn_code]"]').value = newItem.hsn_code || '';
+    row.querySelector('input[name*="[company_name]"]').value = newItem.company_name || '';
+    row.querySelector('input[name*="[packing]"]').value = newItem.packing || '';
+    row.querySelector('input[name*="[unit]"]').value = newItem.unit || '';
+    row.querySelector('input[name*="[cgst_percent]"]').value = newItem.cgst_percent || 0;
+    row.querySelector('input[name*="[sgst_percent]"]').value = newItem.sgst_percent || 0;
+    row.querySelector('input[name*="[cess_percent]"]').value = newItem.cess_percent || 0;
+
+    row.dataset.itemData = JSON.stringify(newItem);
+    row.dataset.completed = 'false';
+    row.dataset.editable = isEditable ? 'true' : 'false';
+
+    calculateRowAmount(rowIndex);
+    selectRowForCalculation(rowIndex);
+
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
+    }
+}
+
+// Populate items table with items (ADD new items, don't clear existing)
+function populateItemsTable(items) {
+    console.log('populateItemsTable called with items:', items);
+    if (!items || items.length === 0) {
+        console.log('No items to populate');
+        return;
+    }
+    
+    console.log(`Adding ${items.length} items to table. Current row index: ${currentRowIndex}`, {
+        kbFocusNewRowCode: window.kbFocusNewRowCode,
+        kbNextRowFocus: window.kbNextRowFocus,
+        kbAddRowSource: window.kbAddRowSource,
+        kbForceCodeFocus: window.kbForceCodeFocus,
+        kbSkipInitialQtyFocus: window.kbSkipInitialQtyFocus
+    });
+
+    const shouldForceCode = !!window.kbForceCodeFocus || !!window.kbFocusNewRowCode || window.kbNextRowFocus === 'code';
+    if (shouldForceCode) {
+        window.kbSkipInitialQtyFocus = true;
+    }
+    
+    // Add new items to existing table (don't clear existing rows)
+    // Note: currentRowIndex will continue from existing rows
+    items.forEach((item, index) => {
+        console.log(`Adding item ${index}:`, item);
+        addItemRow(item, index);
+    });
+    
+    // Calculate summary after populating
+    recalculateTotals();
+    
+    // Focus on the newly added row's code field (or qty by default)
+    setTimeout(() => {
+        const allRows = document.querySelectorAll('#itemsTableBody tr');
+        const lastRow = allRows[allRows.length - 1]; // Get the last (newly added) row
+        
+        if (lastRow) {
+            const codeInput = lastRow.querySelector('input[name*="[code]"]');
+            const qtyInput = lastRow.querySelector('input[name*="[qty]"]');
+            const shouldFocusCode = !!window.kbForceCodeFocus || !!window.kbFocusNewRowCode || window.kbNextRowFocus === 'code' || !!window.kbSkipInitialQtyFocus;
+
+            if (shouldFocusCode && codeInput) {
+                codeInput.focus();
+                if (codeInput.select) codeInput.select();
+                console.log('Focus set on newly added row code input:', codeInput);
+                window.kbFocusNewRowCode = false;
+                window.kbNextRowFocus = null;
+                window.kbAddRowSource = null;
+                window.kbForceCodeFocus = false;
+                window.kbSkipInitialQtyFocus = false;
+
+                // Select the newly added row for calculation (optional highlight)
+                const rowId = lastRow.id;
+                const rowIndex = parseInt(rowId.replace('row-', ''));
+                if (!Number.isNaN(rowIndex)) {
+                    selectRowForCalculation(rowIndex);
+                }
+            } else if (qtyInput && !qtyInput.readOnly && !qtyInput.disabled) {
+                qtyInput.focus();
+                qtyInput.select();
+                console.log('Focus set on newly added row qty input:', qtyInput);
+                
+                // Get the row index from the row ID
+                const rowId = lastRow.id;
+                const rowIndex = parseInt(rowId.replace('row-', ''));
+                
+                // Select the newly added row for calculation
+                selectRowForCalculation(rowIndex);
+            } else {
+                console.log('No focusable input found on new row');
+            }
+        } else {
+            console.log('Newly added row not found');
+        }
+    }, 500);
+}
+
+// Global variables for table management
+let currentRowIndex = 0;
+let selectedRowIndex = null;
+
+// Add a single item row to the table
+function addItemRow(item, index) {
+    console.log(`addItemRow called for item ${index}, will create row-${currentRowIndex}`);
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    const isEditable = !!item._editable;
+    const readonlyAttr = isEditable ? '' : 'readonly';
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    console.log(`Creating row with ID: ${row.id}`);
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.item_code || ''}" ${readonlyAttr}
+                   onkeydown="if(event.key === 'Enter' || event.keyCode === 13) { event.preventDefault(); openItemModalForRow(${rowIndex}); return false; }">
+        </td>
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.item_name || ''}" ${readonlyAttr}>
+        </td>
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${item.batch_no || ''}" ${readonlyAttr}>
+        </td>
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${item.expiry_date || ''}" ${readonlyAttr}>
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="${item.return_qty || 0}" step="1" 
+                   onchange="calculateRowAmount(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter' || event.keyCode === 13) { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }" 
+                   onfocus="selectRowForCalculation(${rowIndex})">
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="${item.return_fqty || 0}" step="1"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter' || event.keyCode === 13) { event.preventDefault(); moveToNextField(${rowIndex}, 'sale_rate'); return false; }"
+                   onfocus="selectRowForCalculation(${rowIndex})">
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][sale_rate]" value="${item.sale_rate || 0}" step="0.01" 
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter' || event.keyCode === 13) { event.preventDefault(); moveToNextField(${rowIndex}, 'dis_percent'); return false; }"
+                   onfocus="selectRowForCalculation(${rowIndex})">
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][dis_percent]" value="${item.discount_percent || 0}" step="0.01" 
+                   onchange="handleDiscountChange(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter' || event.keyCode === 13) { event.preventDefault(); handleDiscountAndCompleteRow(${rowIndex}); return false; }" 
+                   onfocus="selectRowForCalculation(${rowIndex})">
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][mrp]" value="${item.mrp || 0}" step="0.01" readonly>
+        </td>
+        <td>
+            <input type="number" class="form-control readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.item_id}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${item.batch_id}">
+        <input type="hidden" name="items[${rowIndex}][hsn_code]" value="${item.hsn_code || ''}">
+        <input type="hidden" name="items[${rowIndex}][company_name]" value="${item.company_name || ''}">
+        <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
+        <input type="hidden" name="items[${rowIndex}][unit]" value="${item.unit || ''}">
+        <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="${item.cgst_percent || 0}">
+        <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="${item.sgst_percent || 0}">
+        <input type="hidden" name="items[${rowIndex}][cess_percent]" value="${item.cess_percent || 0}">
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Store item data for calculations
+    row.dataset.itemData = JSON.stringify(item);
+    row.dataset.completed = 'false';
+    
+    // Add click event to row for selection
+    row.addEventListener('click', function() {
+        selectRowForCalculation(rowIndex);
+    });
+    
+    // Calculate initial amount
+    calculateRowAmount(rowIndex);
+    
+    // Focus and select first row for calculation
+    if (index === 0 && !window.kbFocusNewRowCode && window.kbNextRowFocus !== 'code' && window.kbAddRowSource !== 'discount' && !window.kbSkipInitialQtyFocus && !window.kbForceCodeFocus) {
+        setTimeout(() => {
+            const qtyInput = row.querySelector('input[name*="[qty]"]');
+            if (qtyInput && !qtyInput.readOnly && !qtyInput.disabled) {
+                // Scroll into view first
+                qtyInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                setTimeout(() => {
+                    qtyInput.focus();
+                    qtyInput.select();
+                    console.log('Focus set on qty input for row:', rowIndex, qtyInput);
+                    
+                    // Highlight the row and update calculation sections
+                    selectRowForCalculation(rowIndex);
+                }, 100);
+            } else {
+                console.log('Qty input not focusable for row:', rowIndex, qtyInput);
+                // Still select the row for calculation even if can't focus
+                selectRowForCalculation(rowIndex);
+            }
+        }, 300);
+    }
+}
+
+// Update series label
+function updateSeriesLabel() {
+    const seriesSelect = document.getElementById('seriesSelect');
+    const seriesLabel = document.getElementById('seriesLabel');
+    
+    if (seriesSelect.value === 'SR') {
+        seriesLabel.textContent = 'SALES RETURN - CREDIT';
+    } else {
+        seriesLabel.textContent = 'SALES RETURN';
+    }
+}
+
+// ============================================
+// HEADER KEYBOARD NAVIGATION (SALE RETURN)
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove Select2 if it was initialized on header dropdowns
+    if (window.$ && $.fn.select2) {
+        ['#seriesSelect', '#customerSelect', '#salesmanSelect'].forEach(selector => {
+            const $el = $(selector);
+            if ($el.length && $el.data('select2')) {
+                $el.select2('destroy');
+                $el.removeClass('select2-hidden-accessible');
+                $el.next('.select2-container').remove();
+            }
+        });
+    }
+
+    const headerSection = document.querySelector('.header-section');
+    if (!headerSection) return;
+
+    function isFocusable(el) {
+        if (!el) return false;
+        if (el.disabled || el.readOnly) return false;
+        if (el.offsetParent === null) return false;
+        return true;
+    }
+
+    function getHeaderFields() {
+        return Array.from(headerSection.querySelectorAll('[data-kb-order]'))
+            .filter(isFocusable)
+            .sort((a, b) => {
+                const aOrder = parseInt(a.getAttribute('data-kb-order'), 10);
+                const bOrder = parseInt(b.getAttribute('data-kb-order'), 10);
+                return (aOrder || 0) - (bOrder || 0);
+            });
+    }
+
+    function isBlockingModalOpen() {
+        return !!document.querySelector(
+            '.invoice-modal.show, .insert-orders-modal.show, .batch-modal.show, .create-batch-modal.show, .adjustment-modal.show, .credit-note-modal.show, #alertModal.show, .alert-modal.show'
+        );
+    }
+
+    function triggerInsertOrders(source = 'fixed-discount') {
+        if (isBlockingModalOpen()) {
+            console.log('[KB] Insert Orders skipped (modal open)', { source });
+            return;
+        }
+        const insertBtn = document.getElementById('insertOrdersBtn');
+        console.log('[KB] triggerInsertOrders', { source, hasInsertBtn: !!insertBtn });
+        if (insertBtn) {
+            insertBtn.click();
+        } else if (typeof openInsertOrdersModal === 'function') {
+            openInsertOrdersModal();
+        }
+    }
+
+    // Capture-level handler to ensure Enter on Fixed Dis triggers Insert Orders
+    window.addEventListener('keydown', function(e) {
+        const target = e.target;
+        const isFixedTarget = target && target.id === 'fixedDiscount';
+        const isFixedActive = document.activeElement && document.activeElement.id === 'fixedDiscount';
+        if (!isFixedTarget && !isFixedActive) return;
+        if (e.key !== 'Enter' && e.keyCode !== 13) return;
+        console.log('[KB] Fixed Discount Enter (window capture)', {
+            targetId: target?.id,
+            activeId: document.activeElement?.id,
+            value: target?.value
+        });
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        triggerInsertOrders('fixedDiscount-window');
+    }, true);
+
+    function focusHeaderByIndex(index) {
+        const headerFields = getHeaderFields();
+        if (index < 0 || index >= headerFields.length) return;
+        const el = headerFields[index];
+        if (el) {
+            el.focus();
+            if (el.select) el.select();
+        }
+    }
+
+    function getHeaderIndex(el) {
+        return getHeaderFields().indexOf(el);
+    }
+
+    getHeaderFields().forEach(field => {
+        if (field.tagName.toLowerCase() === 'select') {
+            field.addEventListener('change', function() {
+                const idx = getHeaderIndex(this);
+                if (idx >= 0) focusHeaderByIndex(idx + 1);
+            });
+        }
+    });
+
+    headerSection.addEventListener('keydown', function(e) {
+        const activeEl = document.activeElement;
+        if (!activeEl || !headerSection.contains(activeEl)) return;
+        if (e.defaultPrevented) return;
+        if (activeEl.id === 'originalInvoiceNo' || activeEl.id === 'customerSearchInput') return;
+
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const idx = getHeaderIndex(activeEl);
+            if (idx > 0) focusHeaderByIndex(idx - 1);
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            const idx = getHeaderIndex(activeEl);
+            if (activeEl.id === 'fixedDiscount') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                triggerInsertOrders('fixedDiscount');
+                return;
+            }
+
+            if (activeEl.tagName.toLowerCase() === 'select') {
+                // Let native select handle Enter; change event will move focus
+                return;
+            }
+
+            if (idx >= 0) {
+                e.preventDefault();
+                focusHeaderByIndex(idx + 1);
+            }
+        }
+    });
+});
+
+// Ctrl+S -> Save Sale Return Transaction
+window.addEventListener('keydown', function(e) {
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (!isCtrlS || e.repeat) return;
+    const modalOpen = !!document.querySelector(
+        '.credit-note-modal.show, .adjustment-modal.show, #chooseItemsModal.show, #batchSelectionModal.show, .insert-orders-modal.show, .batch-modal.show, .create-batch-modal.show, .invoice-modal.show, #alertModal.show, .alert-modal.show'
+    );
+    if (modalOpen) {
+        console.log('[KB] Ctrl+S ignored (modal open)');
+        return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    console.log('[KB] Ctrl+S -> saveTransaction');
+    if (typeof saveTransaction === 'function') {
+        saveTransaction();
+    }
+}, true);
+
+// Ensure Enter key triggers invoice search (keydown is more reliable than keypress)
+document.addEventListener('DOMContentLoaded', function() {
+    const invoiceInput = document.getElementById('originalInvoiceNo');
+    if (invoiceInput) {
+        invoiceInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchInvoice();
+            }
+        });
+    }
+});
+
+// Handle invoice search on Enter key
+function handleInvoiceSearch(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        searchInvoice();
+    }
+}
+
+// Search for invoice
+function searchInvoice() {
+    const invoiceNo = document.getElementById('originalInvoiceNo').value.trim();
+    const customerId = document.getElementById('customerSelect').value;
+    
+    if (!customerId) {
+        showAlert('error', 'Please select a customer first.');
+        return;
+    }
+    
+    if (!invoiceNo) {
+        showAlert('error', 'Please enter an invoice number.');
+        return;
+    }
+    
+    // Show loading
+    showAlert('info', 'Searching for invoice...');
+    
+    // Make AJAX request
+    fetch('<?php echo e(route("admin.sale-return.search-invoice")); ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
+        },
+        body: JSON.stringify({
+            invoice_no: invoiceNo,
+            customer_id: customerId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Normalize transactions list from any backend shape
+            const txs = Array.isArray(data.transactions)
+                ? data.transactions
+                : (data.transaction ? [data.transaction] : (Array.isArray(data.data) ? data.data : []));
+
+            if (!txs.length) {
+                showAlert('warning', 'No invoices found for this number.');
+                return;
+            }
+            // Always show modal with transactions (even if only one)
+            showInvoiceModal(txs);
+        } else {
+            showAlert('error', data.message || 'No invoices found.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while searching for the invoice.');
+    });
+}
+
+// Show invoice selection modal
+function showInvoiceModal(transactions) {
+    const txs = Array.isArray(transactions) ? transactions : [];
+    if (!txs.length) {
+        showAlert('warning', 'No invoices found for this number.');
+        return;
+    }
+    // Store all transactions globally for pagination
+    window.allTransactions = txs;
+    window.currentPage = 1;
+    window.recordsPerPage = 10;
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="invoice-modal-backdrop" id="invoiceModalBackdrop" onclick="closeInvoiceModal()"></div>
+        <div class="invoice-modal" id="invoiceModal">
+            <div class="invoice-modal-content">
+                <div class="invoice-modal-header">
+                    <h5 class="invoice-modal-title">Select Invoice (${txs.length} records)</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeInvoiceModal()">&times;</button>
+                </div>
+                <div class="invoice-modal-body" id="invoiceModalBody">
+                    <table class="table table-bordered table-hover" style="font-size: 12px; margin-bottom: 0;">
+                        <thead style="background: #e9ecef; position: sticky; top: 0; z-index: 1;">
+                            <tr>
+                                <th style="width: 30%;">Date</th>
+                                <th style="width: 40%;">Bill No.</th>
+                                <th style="width: 30%; text-align: right;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoiceTableBody">
+                            <!-- Records will be loaded here -->
+                        </tbody>
+                    </table>
+                    <div id="loadingIndicator" style="display: none; text-align: center; padding: 20px;">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Loading more records...</span>
+                    </div>
+                </div>
+                <div class="invoice-modal-footer">
+                    <small class="text-muted me-auto" id="recordsInfo">Showing 0 of ${txs.length} records</small>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeInvoiceModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('invoiceModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    const existingBackdrop = document.getElementById('invoiceModalBackdrop');
+    if (existingBackdrop) {
+        existingBackdrop.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        document.getElementById('invoiceModalBackdrop').classList.add('show');
+        document.getElementById('invoiceModal').classList.add('show');
+        
+        // Load initial records
+        loadInvoiceRecords();
+        
+        // Setup infinite scroll
+        setupInvoiceInfiniteScroll();
+    }, 10);
+}
+
+// Load invoice records with pagination
+function loadInvoiceRecords() {
+    const tbody = document.getElementById('invoiceTableBody');
+    const recordsInfo = document.getElementById('recordsInfo');
+    
+    if (!window.allTransactions || !tbody) return;
+    
+    const startIndex = (window.currentPage - 1) * window.recordsPerPage;
+    const endIndex = startIndex + window.recordsPerPage;
+    const pageRecords = window.allTransactions.slice(startIndex, endIndex);
+    
+    // Append new records
+    pageRecords.forEach(t => {
+        const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        row.onclick = () => selectInvoice(t.id);
+        row.innerHTML = `
+            <td>${t.date}</td>
+            <td>${t.invoice_no}</td>
+            <td style="text-align: right;">${t.amount}</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    // Update records info
+    const totalLoaded = tbody.children.length;
+    recordsInfo.textContent = `Showing ${totalLoaded} of ${window.allTransactions.length} records`;
+    
+    window.currentPage++;
+}
+
+// Setup infinite scroll for invoice modal
+function setupInvoiceInfiniteScroll() {
+    const modalBody = document.getElementById('invoiceModalBody');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    
+    if (!modalBody) return;
+    
+    modalBody.addEventListener('scroll', function() {
+        if (modalBody.scrollTop + modalBody.clientHeight >= modalBody.scrollHeight - 5) {
+            // Near bottom, load more records
+            const totalLoaded = document.getElementById('invoiceTableBody').children.length;
+            
+            if (totalLoaded < window.allTransactions.length && !loadingIndicator.style.display === 'block') {
+                loadingIndicator.style.display = 'block';
+                
+                setTimeout(() => {
+                    loadInvoiceRecords();
+                    loadingIndicator.style.display = 'none';
+                }, 300);
+            }
+        }
+    });
+}
+
+// Close invoice modal
+function closeInvoiceModal() {
+    const modal = document.getElementById('invoiceModal');
+    const backdrop = document.getElementById('invoiceModalBackdrop');
+    
+    if (modal) {
+        modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    }
+    if (backdrop) {
+        backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+        backdrop.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.remove('show');
+            modal.remove();
+        }
+        if (backdrop) backdrop.remove();
+    }, 300);
+}
+
+// Select invoice from modal
+function selectInvoice(transactionId) {
+    closeInvoiceModal();
+    loadTransactionDetails(transactionId);
+}
+
+// Load transaction details
+function loadTransactionDetails(transactionId) {
+    showAlert('info', 'Loading transaction details...');
+    
+    const url = "<?php echo e(route('admin.sale-return.transaction-details', ':id')); ?>".replace(':id', transactionId);
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const transaction = data.transaction;
+                
+                // Populate header fields
+                document.getElementById('originalInvoiceNo').value = transaction.invoice_no;
+                document.getElementById('originalInvoiceDate').value = transaction.sale_date;
+                
+                // Populate the original series field (shows the original sale transaction series like SB, S2, etc.)
+                document.getElementById('originalSeries').value = transaction.series;
+                
+                // Show and populate the amount field
+                const amountContainer = document.getElementById('originalAmountContainer');
+                const amountField = document.getElementById('originalAmount');
+                if (amountContainer && amountField) {
+                    amountContainer.style.display = 'block';
+                    amountField.value = transaction.net_amount || '0.00';
+                }
+                
+                // Keep the SR series select at top unchanged (sale return series stays SR)
+                
+                // Store transaction data in memory
+                window.currentSaleTransaction = transaction;
+                
+                console.log('Transaction loaded:', transaction);
+                showAlert('success', 'Transaction loaded successfully!');
+                
+                // You can now populate items table here if needed
+                // populateItemsTable(transaction.items);
+            } else {
+                showAlert('error', data.message || 'Failed to load transaction details.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'An error occurred: ' + error.message);
+        });
+}
+
+// Show alert function
+function showAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.custom-alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertTypes = {
+        'success': { bg: '#28a745', icon: '✓' },
+        'error': { bg: '#dc3545', icon: '✕' },
+        'info': { bg: '#17a2b8', icon: 'ℹ' },
+        'warning': { bg: '#ffc107', icon: '⚠' }
+    };
+    
+    const alertConfig = alertTypes[type] || alertTypes['info'];
+    
+    const alertHTML = `
+        <div class="custom-alert" style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${alertConfig.bg};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10001;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold;">${alertConfig.icon}</span>
+                <span>${message}</span>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHTML);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.custom-alert');
+        if (alert) {
+            alert.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => alert.remove(), 300);
+        }
+    }, 3000);
+}
+
+// Open Insert Orders Modal
+function openInsertOrdersModal() {
+    // Check if transaction is loaded from invoice search
+    if (window.currentSaleTransaction && window.currentSaleTransaction.items) {
+        // Show items from the loaded transaction
+        openInvoiceItemsModal();
+        return;
+    }
+    
+    // If no transaction loaded, open the reusable item selection modal
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        console.error('Item selection modal not initialized');
+        showAlert('error', 'Could not open item selection modal');
+    }
+}
+
+// Open modal with items from loaded invoice (original functionality)
+function openInvoiceItemsModal() {
+    const items = window.currentSaleTransaction.items;
+    
+    if (items.length === 0) {
+        showAlert('warning', 'No items found in the selected invoice.');
+        return;
+    }
+    
+    // Get first batch number for header
+    const firstBatchNo = items.length > 0 ? (items[0].batch_no || '') : '';
+    
+    // Create modal HTML with items table
+    const modalHTML = `
+        <div class="insert-orders-modal-backdrop" id="insertOrdersModalBackdrop" onclick="closeInsertOrdersModal()"></div>
+        <div class="insert-orders-modal" id="insertOrdersModal">
+            <div class="insert-orders-modal-content">
+                <div class="insert-orders-modal-header">
+                    <h5 class="insert-orders-modal-title">Batch: ${firstBatchNo}</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeInsertOrdersModal()">&times;</button>
+                </div>
+                <div class="insert-orders-modal-body">
+                    <div style="background: #28a745; color: white; padding: 8px; text-align: center; margin-bottom: 10px; border-radius: 4px;">
+                        <strong>Return All Items (F11)</strong>
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered" style="font-size: 10px; margin-bottom: 0;">
+                            <thead style="position: sticky; top: 0; background: #28a745; color: white; z-index: 10;">
+                                <tr>
+                                    <th style="width: 40px; text-align: center;">S.N</th>
+                                    <th style="width: 200px;">Name</th>
+                                    <th style="width: 80px; text-align: center;">Pack</th>
+                                    <th style="width: 70px; text-align: right;">Rate</th>
+                                    <th style="width: 60px; text-align: right;">Dis%</th>
+                                    <th style="width: 70px; text-align: right;">Tot.Qty</th>
+                                    <th style="width: 70px; text-align: right;">Tot.FQty</th>
+                                    <th style="width: 70px; text-align: right;">Bal.Qty</th>
+                                    <th style="width: 70px; text-align: right;">Bal.FQty</th>
+                                    <th style="width: 70px; text-align: center;">R.Qty</th>
+                                    <th style="width: 70px; text-align: center;">R.FQty</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoiceItemsTableBody">
+                                ${items.map((item, index) => {
+                                    // Calculate balance quantities (available to return)
+                                    const balQty = parseFloat(item.balance_qty || item.quantity || 0);
+                                    const balFQty = parseFloat(item.balance_free_qty || item.free_quantity || 0);
+                                    
+                                    return `
+                                    <tr class="invoice-item-row" data-index="${index}" ${index === 0 ? 'style="background: #cfe2ff;"' : ''}>
+                                        <td style="text-align: center;">${index + 1}</td>
+                                        <td>${item.item_name || ''}</td>
+                                        <td style="text-align: center;">${item.packing || ''}</td>
+                                        <td style="text-align: right;">${parseFloat(item.sale_rate || 0).toFixed(2)}</td>
+                                        <td style="text-align: right;">${parseFloat(item.discount_percent || 0).toFixed(1)}</td>
+                                        <td style="text-align: right;">${parseFloat(item.quantity || 0).toFixed(0)}</td>
+                                        <td style="text-align: right;">${parseFloat(item.free_quantity || 0).toFixed(0)}</td>
+                                        <td style="text-align: right; ${balQty < item.quantity ? 'font-weight: bold; color: #dc3545;' : ''}">${balQty.toFixed(0)}</td>
+                                        <td style="text-align: right; ${balFQty < item.free_quantity ? 'font-weight: bold; color: #dc3545;' : ''}">${balFQty.toFixed(0)}</td>
+                                        <td style="text-align: center;">
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="rqty_${index}" 
+                                                   value="0" 
+                                                   min="0" 
+                                                   max="${balQty}"
+                                                   style="width: 60px; height: 24px; padding: 2px 4px; font-size: 10px; text-align: right;">
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <input type="number" class="form-control form-control-sm" 
+                                                   id="rfqty_${index}" 
+                                                   value="0" 
+                                                   min="0" 
+                                                   max="${balFQty}"
+                                                   style="width: 60px; height: 24px; padding: 2px 4px; font-size: 10px; text-align: right;">
+                                        </td>
+                                    </tr>
+                                `}).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="insert-orders-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeInsertOrdersModal()">Close</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="generateReturn()">
+                        <i class="bi bi-check-circle"></i> Generate Return
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('insertOrdersModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    const existingBackdrop = document.getElementById('insertOrdersModalBackdrop');
+    if (existingBackdrop) {
+        existingBackdrop.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        document.getElementById('insertOrdersModalBackdrop').classList.add('show');
+        document.getElementById('insertOrdersModal').classList.add('show');
+        initInsertOrdersKeyboard();
+    }, 10);
+}
+
+// Close Insert Orders Modal
+function closeInsertOrdersModal() {
+    const modal = document.getElementById('insertOrdersModal');
+    const backdrop = document.getElementById('insertOrdersModalBackdrop');
+    
+    if (modal) {
+        modal.style.animation = 'slideDown 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    }
+    if (backdrop) {
+        backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+        backdrop.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.remove('show');
+            modal.remove();
+        }
+        if (backdrop) backdrop.remove();
+        if (insertOrdersKeyHandler) {
+            window.removeEventListener('keydown', insertOrdersKeyHandler, true);
+            insertOrdersKeyHandler = null;
+        }
+    }, 300);
+}
+
+// Keyboard navigation for Insert Orders modal (items list / invoice items)
+let insertOrdersKeyHandler = null;
+function initInsertOrdersKeyboard() {
+    const modal = document.getElementById('insertOrdersModal');
+    if (!modal) return;
+
+    const itemsBody = modal.querySelector('#itemsSelectionTableBody');
+    const invoiceBody = modal.querySelector('#invoiceItemsTableBody');
+    const isItemSelection = !!itemsBody;
+    let activeIndex = 0;
+
+    function getRows() {
+        if (isItemSelection) {
+            return Array.from(itemsBody.querySelectorAll('.item-row'));
+        }
+        if (invoiceBody) {
+            return Array.from(invoiceBody.querySelectorAll('tr'));
+        }
+        return [];
+    }
+
+    function setActiveRow(index) {
+        const rows = getRows();
+        rows.forEach(r => r.classList.remove('kb-row-active'));
+        if (!rows.length) return;
+        if (index < 0) index = 0;
+        if (index >= rows.length) index = rows.length - 1;
+        activeIndex = index;
+        const row = rows[activeIndex];
+        row.classList.add('kb-row-active');
+        row.scrollIntoView({ block: 'nearest' });
+    }
+
+    setActiveRow(0);
+
+    if (insertOrdersKeyHandler) {
+        window.removeEventListener('keydown', insertOrdersKeyHandler, true);
+    }
+
+    insertOrdersKeyHandler = function(e) {
+        const modalEl = document.getElementById('insertOrdersModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+        if (!modalEl.contains(document.activeElement)) return;
+
+        const target = document.activeElement;
+        const isInputTarget = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+        if (!isItemSelection && isInputTarget && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') {
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(activeIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(activeIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rows = getRows();
+            if (!rows.length) return;
+            const row = rows[activeIndex];
+            if (isItemSelection) {
+                const btn = row.querySelector('button');
+                if (btn) btn.click();
+            } else {
+                const idx = row.getAttribute('data-index');
+                const rqty = document.getElementById(`rqty_${idx}`);
+                if (rqty) {
+                    rqty.focus();
+                    rqty.select();
+                }
+            }
+        } else if (e.key === 'Escape') {
+            closeInsertOrdersModal();
+        }
+    };
+
+    window.addEventListener('keydown', insertOrdersKeyHandler, true);
+}
+
+// Open modal with all items from items module (OPTIMIZED with pagination)
+// Global state for item pagination
+let itemsCurrentPage = 1;
+let itemsPerPage = 50;
+let itemsHasMore = true;
+let itemsLoading = false;
+let allLoadedItems = [];
+
+function openAllItemsModal() {
+    // LEGACY REDIRECT: Use new reusable modal component
+    console.log('openAllItemsModal called - redirecting to new modal component');
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+    } else {
+        showAlert('error', 'Item selection modal not initialized. Please reload the page.');
+    }
+}
+
+// Fetch paginated items from server
+function fetchPaginatedItems(page, isInitial = false) {
+    if (itemsLoading || (!itemsHasMore && !isInitial)) return;
+    
+    itemsLoading = true;
+    
+    // Show loading indicator
+    if (!isInitial) {
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+    }
+    
+    // Use existing items/all route with pagination params
+    const url = `<?php echo e(route("admin.items.all")); ?>?page=${page}&per_page=${itemsPerPage}`;
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        itemsLoading = false;
+        
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        if (data.success && data.items) {
+            const items = data.items;
+            
+            // Check if we have pagination info
+            if (data.pagination) {
+                itemsHasMore = data.pagination.has_more || (page < data.pagination.last_page);
+            } else {
+                // If no pagination info, assume all items are returned (legacy)
+                itemsHasMore = false;
+            }
+            
+            // Store loaded items
+            allLoadedItems = allLoadedItems.concat(items);
+            
+            if (isInitial) {
+                // Create and show the modal with initial items
+                showPaginatedItemSelectionModal(items);
+            } else {
+                // Append items to existing table
+                appendItemsToTable(items);
+            }
+            
+            // Update records info
+            updateItemsRecordsInfo();
+            
+            itemsCurrentPage++;
+        } else {
+            if (isInitial) {
+                showAlert('error', 'Failed to load items.');
+            }
+        }
+    })
+    .catch(error => {
+        itemsLoading = false;
+        console.error('Error:', error);
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        if (isInitial) {
+            showAlert('error', 'An error occurred while loading items.');
+        }
+    });
+}
+
+// Show item selection modal with pagination support
+function showPaginatedItemSelectionModal(items) {
+    const totalInfo = itemsHasMore ? `Showing first ${items.length} items (scroll for more)` : `Showing all ${items.length} items`;
+    
+    const modalHTML = `
+        <div class="insert-orders-modal-backdrop" id="insertOrdersModalBackdrop" onclick="closeInsertOrdersModal()"></div>
+        <div class="insert-orders-modal item-selection-modal" id="insertOrdersModal">
+            <div class="insert-orders-modal-content">
+                <div class="insert-orders-modal-header">
+                    <h5 class="insert-orders-modal-title">Select Items for Sale Return</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeInsertOrdersModal()">&times;</button>
+                </div>
+                <div class="insert-orders-modal-body">
+                    <!-- Search Box -->
+                    <div style="margin-bottom: 10px;">
+                        <input type="text" id="itemSearchInput" class="form-control form-control-sm" 
+                               placeholder="Search by item name or code..." 
+                               onkeyup="filterItems()"
+                               style="font-size: 11px;">
+                    </div>
+                    
+                    <div style="max-height: 400px; overflow-y: auto;" id="itemsScrollContainer">
+                        <table class="table table-bordered" style="font-size: 10px; margin-bottom: 0; width: 100%;" id="itemsSelectionTable">
+                            <thead style="position: sticky; top: 0; background: #0d6efd; color: white; z-index: 10;">
+                                <tr>
+                                    <th style="width: 35px; text-align: center;">S.N</th>
+                                    <th style="width: 60px;">Code</th>
+                                    <th style="width: 180px;">Item Name</th>
+                                    <th style="width: 70px; text-align: right;">MRP</th>
+                                    <th style="width: 70px; text-align: right;">Rate</th>
+                                    <th style="width: 100px; text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsSelectionTableBody">
+                            </tbody>
+                        </table>
+                        <!-- Loading indicator -->
+                        <div id="itemsLoadingIndicator" style="display: none; text-align: center; padding: 15px; color: #6c757d;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2">Loading more items...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="insert-orders-modal-footer">
+                    <small class="text-muted me-auto" id="itemsRecordsInfo">${totalInfo}</small>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeInsertOrdersModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('insertOrdersModal');
+    if (existingModal) existingModal.remove();
+    const existingBackdrop = document.getElementById('insertOrdersModalBackdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add initial items to table
+    appendItemsToTable(items);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        document.getElementById('insertOrdersModalBackdrop').classList.add('show');
+        document.getElementById('insertOrdersModal').classList.add('show');
+        
+        // Setup infinite scroll after modal is visible
+        setupItemsInfiniteScroll();
+        initInsertOrdersKeyboard();
+    }, 10);
+}
+
+// Append items to the selection table
+function appendItemsToTable(items) {
+    const tbody = document.getElementById('itemsSelectionTableBody');
+    if (!tbody) return;
+    
+    const startIndex = tbody.children.length;
+    
+    items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.className = 'item-row';
+        row.setAttribute('data-item-name', (item.name || '').toLowerCase());
+        row.innerHTML = `
+            <td style="text-align: center;">${startIndex + index + 1}</td>
+            <td>${item.code || ''}</td>
+            <td>${item.name || ''}</td>
+            <td style="text-align: right;">${parseFloat(item.mrp || 0).toFixed(2)}</td>
+            <td style="text-align: right;">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
+            <td style="text-align: center;">
+                <button type="button" class="btn btn-sm btn-primary" 
+                        onclick='selectItemBatch(${JSON.stringify(item).replace(/'/g, "\\'")})'
+                        style="font-size: 9px; padding: 2px 6px; white-space: nowrap;">
+                    <i class="bi bi-box-seam"></i> Batch
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Update items records info
+function updateItemsRecordsInfo() {
+    const infoEl = document.getElementById('itemsRecordsInfo');
+    if (!infoEl) return;
+    
+    const loadedCount = allLoadedItems.length;
+    if (itemsHasMore) {
+        infoEl.textContent = `Showing ${loadedCount} items (scroll for more)`;
+    } else {
+        infoEl.textContent = `Showing all ${loadedCount} items`;
+    }
+}
+
+// Setup infinite scroll for items
+function setupItemsInfiniteScroll() {
+    const scrollContainer = document.getElementById('itemsScrollContainer');
+    if (!scrollContainer) return;
+    
+    scrollContainer.addEventListener('scroll', function() {
+        // Check if scrolled near bottom
+        if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50) {
+            // Load more items if available
+            if (itemsHasMore && !itemsLoading) {
+                fetchPaginatedItems(itemsCurrentPage, false);
+            }
+        }
+    });
+}
+
+// Show item selection modal (legacy - kept for backward compatibility)
+function showItemSelectionModal(items) {
+    // Use the new paginated modal
+    allLoadedItems = items;
+    itemsHasMore = false; // All items loaded
+    showPaginatedItemSelectionModal(items);
+}
+
+// Filter items in the selection table
+function filterItems() {
+    const searchValue = document.getElementById('itemSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('.item-row');
+    
+    rows.forEach(row => {
+        const itemName = row.getAttribute('data-item-name');
+        const code = row.children[1].textContent.toLowerCase();
+        
+        if (itemName.includes(searchValue) || code.includes(searchValue)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Select batch for an item
+function selectItemBatch(item) {
+    // Parse item if it's a string
+    if (typeof item === 'string') {
+        item = JSON.parse(item);
+    }
+    
+    // Store complete item details including HSN and tax data
+    window.selectedItem = {
+        item_id: item.id || item.code,
+        item_code: item.code,
+        item_name: item.name,
+        mrp: parseFloat(item.mrp || 0),
+        sale_rate: parseFloat(item.s_rate || item.srate || 0),
+        hsn_code: item.hsn_code || '',
+        cgst_percent: parseFloat(item.cgst || 6),
+        sgst_percent: parseFloat(item.sgst || 6),
+        cess_percent: parseFloat(item.gst_cess || 0),
+        packing: item.packing || '',
+        company_name: item.company_name || '',
+        unit: item.unit || 'PCS'
+    };
+    
+    console.log('Selected Item Data:', window.selectedItem);
+    
+    // Fetch batches for this item
+    showAlert('info', 'Loading batches...');
+    
+    fetch(`<?php echo e(url('/admin/api/item-batches')); ?>/${window.selectedItem.item_id}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.batches && data.batches.length > 0) {
+            showBatchSelectionModal(data.batches);
+        } else {
+            // No batches found, directly show create batch modal
+            showAlert('info', 'No batches found. Please create a new batch.');
+            setTimeout(() => {
+                openCreateBatchModal();
+            }, 1000);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while loading batches.');
+    });
+}
+
+// Show batch selection modal
+function showBatchSelectionModal(batches) {
+    const modalHTML = `
+        <div class="batch-modal-backdrop" id="batchModalBackdrop" onclick="closeBatchModal()"></div>
+        <div class="batch-modal" id="batchModal">
+            <div class="batch-modal-content">
+                <div class="batch-modal-header">
+                    <h5 class="batch-modal-title">Select Batch for ${window.selectedItem.item_name}</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeBatchModal()">&times;</button>
+                </div>
+                <div class="batch-modal-body">
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered" style="font-size: 10px; margin-bottom: 0;">
+                            <thead style="position: sticky; top: 0; background: #28a745; color: white; z-index: 10;">
+                                <tr>
+                                    <th style="width: 40px;">S.N</th>
+                                    <th style="width: 100px;">Batch No</th>
+                                    <th style="width: 100px;">Expiry</th>
+                                    <th style="width: 80px; text-align: right;">Qty</th>
+                                    <th style="width: 80px; text-align: right;">MRP</th>
+                                    <th style="width: 80px; text-align: right;">Rate</th>
+                                    <th style="width: 100px; text-align: center;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="batchSelectionTableBody">
+                                ${batches.map((batch, index) => `
+                                    <tr class="batch-row" data-index="${index}">
+                                        <td>${index + 1}</td>
+                                        <td>${batch.batch_no || ''}</td>
+                                        <td>${batch.expiry_date || ''}</td>
+                                        <td style="text-align: right;">${parseFloat(batch.qty || 0).toFixed(0)}</td>
+                                        <td style="text-align: right;">${parseFloat(batch.mrp || 0).toFixed(2)}</td>
+                                        <td style="text-align: right;">${parseFloat(batch.s_rate || 0).toFixed(2)}</td>
+                                        <td style="text-align: center;">
+                                            <button type="button" class="btn btn-sm btn-success" 
+                                                    onclick='addItemToReturn(${JSON.stringify(batch).replace(/'/g, "\\'")})'
+                                                    style="font-size: 9px; padding: 2px 8px;">
+                                                <i class="bi bi-plus-circle"></i> Add
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="batch-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openCreateBatchModal()">
+                        <i class="bi bi-plus-circle"></i> Create New Batch
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing batch modal if any
+    const existingModal = document.getElementById('batchModal');
+    if (existingModal) existingModal.remove();
+    const existingBackdrop = document.getElementById('batchModalBackdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        document.getElementById('batchModalBackdrop').classList.add('show');
+        document.getElementById('batchModal').classList.add('show');
+        initBatchModalKeyboard();
+    }, 10);
+}
+
+// Close batch modal
+function closeBatchModal() {
+    const modal = document.getElementById('batchModal');
+    const backdrop = document.getElementById('batchModalBackdrop');
+    
+    if (modal) {
+        modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    }
+    if (backdrop) {
+        backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+        backdrop.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.remove('show');
+            modal.remove();
+        }
+        if (backdrop) backdrop.remove();
+        if (batchModalKeyHandler) {
+            window.removeEventListener('keydown', batchModalKeyHandler, true);
+            batchModalKeyHandler = null;
+        }
+    }, 300);
+}
+
+// Keyboard navigation for Batch Selection modal
+let batchModalKeyHandler = null;
+function initBatchModalKeyboard() {
+    const modal = document.getElementById('batchModal');
+    if (!modal) return;
+    const body = modal.querySelector('#batchSelectionTableBody');
+    if (!body) return;
+
+    let activeIndex = 0;
+    function getRows() {
+        return Array.from(body.querySelectorAll('.batch-row'));
+    }
+    function setActiveRow(index) {
+        const rows = getRows();
+        rows.forEach(r => r.classList.remove('kb-row-active'));
+        if (!rows.length) return;
+        if (index < 0) index = 0;
+        if (index >= rows.length) index = rows.length - 1;
+        activeIndex = index;
+        const row = rows[activeIndex];
+        row.classList.add('kb-row-active');
+        row.scrollIntoView({ block: 'nearest' });
+    }
+
+    setActiveRow(0);
+
+    if (batchModalKeyHandler) {
+        window.removeEventListener('keydown', batchModalKeyHandler, true);
+    }
+
+    batchModalKeyHandler = function(e) {
+        const modalEl = document.getElementById('batchModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+        if (!modalEl.contains(document.activeElement)) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(activeIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(activeIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rows = getRows();
+            if (!rows.length) return;
+            const row = rows[activeIndex];
+            const btn = row.querySelector('button');
+            if (btn) btn.click();
+        } else if (e.key === 'Escape') {
+            closeBatchModal();
+        }
+    };
+
+    window.addEventListener('keydown', batchModalKeyHandler, true);
+}
+
+// Open Create Batch Modal
+function openCreateBatchModal() {
+    const selectedItem = window.selectedItem;
+    
+    const modalHTML = `
+        <div class="create-batch-modal-backdrop" id="createBatchModalBackdrop" onclick="closeCreateBatchModal()"></div>
+        <div class="create-batch-modal" id="createBatchModal">
+            <div class="create-batch-modal-content">
+                <div class="create-batch-modal-header">
+                    <h5 class="create-batch-modal-title">Opening New Batch</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeCreateBatchModal()">&times;</button>
+                </div>
+                <div class="create-batch-modal-body">
+                    <form id="createBatchForm">
+                        <div style="margin-bottom: 10px;">
+                            <label style="font-weight: bold; font-size: 11px; color: #0066cc;">Item Name:</label>
+                            <span style="font-weight: bold; font-size: 14px; color: #0066cc; margin-left: 10px;">${selectedItem.item_name}</span>
+                        </div>
+                        
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label style="font-weight: bold; font-size: 11px;">Batch Number:</label>
+                                <input type="text" class="form-control form-control-sm" id="newBatchNo" required style="font-size: 11px;">
+                            </div>
+                            <div class="col-md-6">
+                                <label style="font-weight: bold; font-size: 11px;">Pack:</label>
+                                <input type="text" class="form-control form-control-sm" id="newBatchPack" value="1*10" style="font-size: 11px;">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-4">
+                                <label style="font-weight: bold; font-size: 11px;">S.Rate:</label>
+                                <input type="number" class="form-control form-control-sm" id="newBatchSRate" value="${selectedItem.sale_rate || 0}" required step="0.01" style="font-size: 11px; background: #ffffcc;">
+                            </div>
+                            <div class="col-md-4">
+                                <label style="font-weight: bold; font-size: 11px;">Expiry:</label>
+                                <input type="text" class="form-control form-control-sm" id="newBatchExpiry" placeholder="MM/YY" style="font-size: 11px;" maxlength="5">
+                            </div>
+                            <div class="col-md-4">
+                                <label style="font-weight: bold; font-size: 11px;">MRP:</label>
+                                <input type="number" class="form-control form-control-sm" id="newBatchMRP" value="${selectedItem.mrp || 0}" required step="0.01" style="font-size: 11px;">
+                            </div>
+                        </div>
+                        
+                        <div class="row g-2 mt-2">
+                            <div class="col-md-6">
+                                <label style="font-weight: bold; font-size: 11px;">Location:</label>
+                                <input type="text" class="form-control form-control-sm" id="newBatchLocation" value="MAIN" style="font-size: 11px;">
+                            </div>
+                            <div class="col-md-6">
+                                <label style="font-weight: bold; font-size: 11px;">Inclusive:</label>
+                                <select class="form-control form-control-sm no-select2" id="newBatchInclusive" style="font-size: 11px;">
+                                    <option value="Y">Y</option>
+                                    <option value="N">N</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2">
+                            <small class="text-muted" style="font-size: 10px;">*Expiry format: MM/YY (example: 11/25)</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="create-batch-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeCreateBatchModal()">Cancel</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="createNewBatch()">
+                        <i class="bi bi-check-circle"></i> OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing create batch modal if any
+    const existingModal = document.getElementById('createBatchModal');
+    if (existingModal) existingModal.remove();
+    const existingBackdrop = document.getElementById('createBatchModalBackdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    
+    // Close batch selection modal if open
+    const batchModal = document.getElementById('batchModal');
+    if (batchModal) closeBatchModal();
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal with animation
+    setTimeout(() => {
+        document.getElementById('createBatchModalBackdrop').classList.add('show');
+        document.getElementById('createBatchModal').classList.add('show');
+        // Focus on batch number input
+        document.getElementById('newBatchNo').focus();
+    }, 10);
+}
+
+// Close Create Batch Modal
+function closeCreateBatchModal() {
+    const modal = document.getElementById('createBatchModal');
+    const backdrop = document.getElementById('createBatchModalBackdrop');
+    
+    if (modal) {
+        modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    }
+    if (backdrop) {
+        backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+        backdrop.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.remove('show');
+            modal.remove();
+        }
+        if (backdrop) backdrop.remove();
+    }, 300);
+}
+
+// Create New Batch
+function createNewBatch() {
+    const selectedItem = window.selectedItem;
+    const batchNo = document.getElementById('newBatchNo').value.trim();
+    const sRate = parseFloat(document.getElementById('newBatchSRate').value);
+    const mrp = parseFloat(document.getElementById('newBatchMRP').value);
+    const expiry = document.getElementById('newBatchExpiry').value.trim();
+    const pack = document.getElementById('newBatchPack').value.trim();
+    const location = document.getElementById('newBatchLocation').value.trim();
+    const inclusive = document.getElementById('newBatchInclusive').value;
+    
+    // Validation
+    if (!batchNo) {
+        showAlert('error', 'Please enter a batch number.');
+        return;
+    }
+    
+    if (!sRate || sRate <= 0) {
+        showAlert('error', 'Please enter a valid sale rate.');
+        return;
+    }
+    
+    if (!mrp || mrp <= 0) {
+        showAlert('error', 'Please enter a valid MRP.');
+        return;
+    }
+    
+    // Validate expiry format if provided
+    if (expiry && !/^\d{2}\/\d{2}$/.test(expiry)) {
+        showAlert('error', 'Please enter expiry in MM/YY format.');
+        return;
+    }
+    
+    showAlert('info', 'Creating batch...');
+    
+    // Prepare batch data
+    const batchData = {
+        item_id: selectedItem.item_id,
+        batch_no: batchNo,
+        s_rate: sRate,
+        mrp: mrp,
+        pur_rate: sRate, // Use sale rate as purchase rate for now
+        expiry_date: expiry,
+        total_qty: 0 // Will be set during return
+    };
+    
+    // Send AJAX request to create batch
+    fetch('<?php echo e(route("admin.batches.store")); ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
+        },
+        body: JSON.stringify(batchData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', 'Batch created successfully!');
+            
+            // Close create batch modal
+            closeCreateBatchModal();
+            
+            // Add the newly created batch to the return transaction
+            const newBatch = data.batch;
+            addItemToReturn(newBatch);
+        } else {
+            showAlert('error', data.message || 'Failed to create batch.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while creating the batch.');
+    });
+}
+
+// Add item with selected batch to return transaction
+function addItemToReturn(batch) {
+    console.log('addItemToReturn called with batch:', batch);
+    const selectedItem = window.selectedItem;
+    console.log('Selected item:', selectedItem);
+    
+    // Create item object similar to transaction items
+    const newItem = {
+        item_id: selectedItem.item_id,
+        item_code: selectedItem.item_code || selectedItem.item_id,
+        item_name: selectedItem.item_name,
+        batch_id: batch.id,
+        batch_no: batch.batch_no,
+        expiry_date: batch.expiry_date,
+        packing: selectedItem.packing || batch.packing || '',
+        unit: selectedItem.unit || batch.unit || 'PCS',
+        company_name: selectedItem.company_name || batch.company_name || '',
+        hsn_code: selectedItem.hsn_code || batch.hsn_code || '',
+        sale_rate: parseFloat(batch.s_rate || selectedItem.sale_rate || 0),
+        mrp: parseFloat(batch.mrp || selectedItem.mrp || 0),
+        discount_percent: 0,
+        cgst_percent: parseFloat(selectedItem.cgst_percent || batch.cgst_percent || 6),
+        sgst_percent: parseFloat(selectedItem.sgst_percent || batch.sgst_percent || 6),
+        cess_percent: parseFloat(selectedItem.cess_percent || batch.cess_percent || 0),
+        return_qty: 0, // Default quantity
+        return_fqty: 0
+    };
+    
+    // Initialize items array if not exists
+    if (!window.returnItems) {
+        window.returnItems = [];
+    }
+    
+    // Check if item already exists to prevent duplicates
+    const existingItem = window.returnItems.find(item => 
+        item.item_id === newItem.item_id && item.batch_id === newItem.batch_id
+    );
+    
+    if (existingItem) {
+        console.log('Item already exists in return list');
+        showAlert('warning', 'This item with same batch is already added to return list.');
+        return;
+    }
+    
+    // Add to items array
+    window.returnItems.push(newItem);
+    console.log('Item added to return array. Total items:', window.returnItems.length);
+    
+    // Close both modals
+    closeBatchModal();
+    closeInsertOrdersModal();
+    
+    // Add only the new item to table (not all items)
+    populateItemsTable([newItem]);
+    
+    showAlert('success', 'Item added successfully! You can modify quantities and rates.');
+}
+
+// Generate Return from Modal
+function generateReturn() {
+    const items = window.currentSaleTransaction.items;
+    const returnItems = [];
+    
+    // Collect items with return quantities
+    items.forEach((item, index) => {
+        const rQty = parseFloat(document.getElementById(`rqty_${index}`).value || 0);
+        const rFQty = parseFloat(document.getElementById(`rfqty_${index}`).value || 0);
+        
+        if (rQty > 0 || rFQty > 0) {
+            returnItems.push({
+                ...item,
+                return_qty: rQty,
+                return_fqty: rFQty
+            });
+        }
+    });
+    
+    if (returnItems.length === 0) {
+        showAlert('warning', 'Please enter return quantities for at least one item.');
+        return;
+    }
+    
+    // Populate the items table with return items
+    populateItemsTable(returnItems);
+    
+    closeInsertOrdersModal();
+    showAlert('success', `${returnItems.length} item(s) added to return transaction.`);
+}
+
+
+// Move to Next Field - Enhanced cursor navigation
+function moveToNextField(rowIndex, nextFieldName) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    const nextField = row.querySelector(`[name*="[${nextFieldName}]"]`);
+    if (nextField) {
+        setTimeout(() => {
+            nextField.focus();
+            if (nextField.tagName === 'INPUT' && nextField.type === 'number') {
+                nextField.select();
+            }
+        }, 100);
+    }
+}
+
+// Handle Discount Change - Highlights row and triggers calculations
+function handleDiscountChange(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    // Calculate the row amount
+    calculateRowAmount(rowIndex);
+    
+    // Update calculations for selected row
+    if (selectedRowIndex === rowIndex) {
+        updateCalculationSection(rowIndex);
+    }
+}
+
+// Handle Discount and Complete Row - Called when Enter is pressed on Dis% field
+function handleDiscountAndCompleteRow(rowIndex) {
+    console.log('handleDiscountAndCompleteRow called for row:', rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) {
+        console.log('Row not found:', rowIndex);
+        return;
+    }
+    
+    console.log('Marking row as completed');
+    // Mark row as completed (permanent green)
+    markRowAsCompleted(rowIndex);
+    
+    // Calculate the row amount
+    calculateRowAmount(rowIndex);
+    
+    // Update summary totals (add this row's data to summary)
+    recalculateTotals();
+    
+    // Clear calculation section (reset for next row)
+    clearCalculationSection();
+    
+    // Clear additional details section (reset for next row)
+    clearAdditionalDetails();
+    
+    // Remove focus from current field
+    document.activeElement.blur();
+    
+    // Clear selection (no row selected now)
+    selectedRowIndex = null;
+    
+    console.log('Row completed and sections cleared for next row');
+
+    // After completing row, trigger Add Row flow and focus new row code field
+    window.kbFocusNewRowCode = true;
+    window.kbNextRowFocus = 'code';
+    window.kbAddRowSource = 'discount';
+    window.kbForceCodeFocus = true;
+    window.kbSkipInitialQtyFocus = true;
+    console.log('[KB] Discount Enter -> addNewRow', {
+        rowIndex,
+        kbFocusNewRowCode: window.kbFocusNewRowCode,
+        kbNextRowFocus: window.kbNextRowFocus,
+        kbAddRowSource: window.kbAddRowSource,
+        kbForceCodeFocus: window.kbForceCodeFocus,
+        kbSkipInitialQtyFocus: window.kbSkipInitialQtyFocus
+    });
+    addNewRow();
+}
+
+// Capture Enter on Dis% field to ensure add row triggers
+window.addEventListener('keydown', function(e) {
+    const target = e.target;
+    if (!target || e.key !== 'Enter') return;
+    const name = target.getAttribute('name') || '';
+    if (!name.includes('[dis_percent]')) return;
+    const row = target.closest('tr');
+    const rowId = row?.id || '';
+    const rowIndex = rowId.startsWith('row-') ? parseInt(rowId.replace('row-', '')) : NaN;
+    console.log('[KB] Dis% Enter (capture)', { name, rowId, rowIndex });
+    if (Number.isNaN(rowIndex)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    handleDiscountAndCompleteRow(rowIndex);
+}, true);
+
+// Mark row as completed (green background)
+function markRowAsCompleted(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    // Set green background
+    row.style.backgroundColor = '#d4edda';
+    row.dataset.completed = 'true';
+    
+    // Apply to all cells
+    const cells = row.querySelectorAll('td');
+    cells.forEach(cell => {
+        cell.style.backgroundColor = '#d4edda';
+    });
+}
+
+// Select Row for Calculation - Updates calculation section with selected row's data
+function selectRowForCalculation(rowIndex) {
+    console.log('selectRowForCalculation called for row:', rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) {
+        console.log('Row not found:', rowIndex);
+        return;
+    }
+    
+    // Check if row is completed (green)
+    const isCompleted = row.dataset.completed === 'true';
+    console.log('Row completed status:', isCompleted);
+    
+    // Allow selection of any row (completed or not) for viewing data
+    // Store selected row
+    selectedRowIndex = rowIndex;
+    
+    // Clear all row highlights except completed ones
+    clearRowHighlights();
+    
+    // Highlight selected row (light blue) if not completed, keep green if completed
+    if (!isCompleted) {
+        row.style.backgroundColor = '#e7f3ff';
+        console.log('Row highlighted blue (editing mode)');
+    } else {
+        row.style.backgroundColor = '#d4edda';
+        console.log('Row kept green (completed)');
+    }
+    
+    // Update calculation section with this row's data
+    updateCalculationSection(rowIndex);
+    
+    // Update additional details section
+    updateAdditionalDetails(rowIndex);
+    
+    console.log('Calculation and additional details updated for row:', rowIndex);
+}
+
+// Clear row highlights except completed ones
+function clearRowHighlights() {
+    const allRows = document.querySelectorAll('#itemsTableBody tr');
+    allRows.forEach(r => {
+        if (r.dataset.completed !== 'true') {
+            r.style.backgroundColor = '';
+        } else {
+            // Keep completed rows green
+            r.style.backgroundColor = '#d4edda';
+        }
+    });
+}
+
+// Update Calculation Section with selected row's data
+function updateCalculationSection(rowIndex) {
+    console.log('updateCalculationSection called for row:', rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) {
+        console.log('Row not found in updateCalculationSection:', rowIndex);
+        return;
+    }
+    
+    const itemData = JSON.parse(row.dataset.itemData || '{}');
+    console.log('Item data for calculation:', itemData);
+    
+    // Update HSN and tax information
+    document.getElementById('calc_hsn_code').value = itemData.hsn_code || '---';
+    document.getElementById('calc_cgst_percent').value = parseFloat(itemData.cgst_percent || 0).toFixed(2);
+    document.getElementById('calc_sgst_percent').value = parseFloat(itemData.sgst_percent || 0).toFixed(2);
+    document.getElementById('calc_cess_percent').value = parseFloat(itemData.cess_percent || 0).toFixed(2);
+    
+    console.log('HSN Code set to:', itemData.hsn_code || '---');
+    
+    // Calculate and show tax amounts for this row
+    const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value || 0);
+    const rate = parseFloat(row.querySelector('input[name*="[sale_rate]"]')?.value || 0);
+    const discountPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value || 0);
+    
+    const amount = qty * rate;
+    const discountAmount = (amount * discountPercent) / 100;
+    const amountAfterDiscount = amount - discountAmount;
+    
+    const cgstAmount = (amountAfterDiscount * parseFloat(itemData.cgst_percent || 0)) / 100;
+    const sgstAmount = (amountAfterDiscount * parseFloat(itemData.sgst_percent || 0)) / 100;
+    const cessAmount = (amountAfterDiscount * parseFloat(itemData.cess_percent || 0)) / 100;
+    
+    document.getElementById('calc_cgst_amount').value = cgstAmount.toFixed(2);
+    document.getElementById('calc_sgst_amount').value = sgstAmount.toFixed(2);
+    document.getElementById('calc_cess_amount').value = cessAmount.toFixed(2);
+    
+    // Update other calculation fields
+    const totalTaxPercent = parseFloat(itemData.cgst_percent || 0) + parseFloat(itemData.sgst_percent || 0) + parseFloat(itemData.cess_percent || 0);
+    document.getElementById('calc_sc_percent').value = '0.000';
+    document.getElementById('calc_tax_percent').value = totalTaxPercent.toFixed(3);
+    document.getElementById('calc_excise').value = '0.00';
+    document.getElementById('calc_tsr').value = '0.00';
+}
+
+// Update Additional Details Section with selected row's data
+function updateAdditionalDetails(rowIndex) {
+    console.log('updateAdditionalDetails called for row:', rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) {
+        console.log('Row not found in updateAdditionalDetails:', rowIndex);
+        return;
+    }
+    
+    const itemData = JSON.parse(row.dataset.itemData || '{}');
+    console.log('Item data for additional details:', itemData);
+    const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value || 0);
+    const rate = parseFloat(row.querySelector('input[name*="[sale_rate]"]')?.value || 0);
+    const discountPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value || 0);
+    
+    // Calculate individual row values
+    const amount = qty * rate;
+    const discountAmount = (amount * discountPercent) / 100;
+    const amountAfterDiscount = amount - discountAmount;
+    
+    // Calculate tax amounts
+    const cgstPercent = parseFloat(itemData.cgst_percent || 0);
+    const sgstPercent = parseFloat(itemData.sgst_percent || 0);
+    const cessPercent = parseFloat(itemData.cess_percent || 0);
+    
+    const cgstAmount = (amountAfterDiscount * cgstPercent) / 100;
+    const sgstAmount = (amountAfterDiscount * sgstPercent) / 100;
+    const cessAmount = (amountAfterDiscount * cessPercent) / 100;
+    const totalTaxAmount = cgstAmount + sgstAmount + cessAmount;
+    const netAmount = amountAfterDiscount + totalTaxAmount;
+    
+    // Update additional fields with this row's data
+    document.getElementById('packing').value = itemData.packing || '';
+    document.getElementById('unit').value = itemData.unit || '';
+    document.getElementById('location').value = itemData.location || '';
+    
+    // Fetch total quantity from all batches for this item
+    const itemId = itemData.item_id || row.getAttribute('data-item-id');
+    if (itemId) {
+        fetchTotalBatchQuantity(itemId);
+    } else {
+        // If no item ID, just show current row quantity
+        document.getElementById('clQty').value = qty.toFixed(0);
+    }
+    
+    // Update detailed calculation fields
+    document.getElementById('addl_nt_amount').value = amount.toFixed(2);
+    document.getElementById('addl_sc_amount').value = '0.00';
+    document.getElementById('addl_dis_amount').value = discountAmount.toFixed(2);
+    document.getElementById('addl_scm_percent').value = '0.00';
+    document.getElementById('addl_scm_amount').value = '0.00';
+    document.getElementById('addl_tax_amount').value = totalTaxAmount.toFixed(2);
+    document.getElementById('addl_net_amount').value = netAmount.toFixed(2);
+    document.getElementById('addl_sub_total').value = amountAfterDiscount.toFixed(2);
+    document.getElementById('addl_volume').value = '0';
+    document.getElementById('addl_company').value = itemData.company_name || '';
+    document.getElementById('addl_scm_flag').value = '0';
+    document.getElementById('addl_scm_value').value = '0';
+    document.getElementById('addl_srino').value = '1';
+}
+
+// Fetch total quantity from all batches for an item
+function fetchTotalBatchQuantity(itemId) {
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Handle different response formats
+            let batches = [];
+            if (Array.isArray(data)) {
+                batches = data;
+            } else if (data.success && Array.isArray(data.batches)) {
+                batches = data.batches;
+            } else if (data.batches && Array.isArray(data.batches)) {
+                batches = data.batches;
+            }
+            
+            // Sum up total quantity from all batches
+            let totalQty = 0;
+            batches.forEach(batch => {
+                const batchQty = parseFloat(batch.total_qty || batch.qty || 0);
+                totalQty += batchQty;
+            });
+            
+            // Update CL QTY field with total from all batches
+            document.getElementById('clQty').value = totalQty > 0 ? totalQty.toFixed(0) : '0';
+        })
+        .catch(error => {
+            console.error('Error fetching batch quantities:', error);
+            // On error, show 0
+            document.getElementById('clQty').value = '0';
+        });
+}
+
+// Calculate Row Amount - Enhanced version
+function calculateRowAmount(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value || 0);
+    const rate = parseFloat(row.querySelector('input[name*="[sale_rate]"]')?.value || 0);
+    const discountPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value || 0);
+    
+    // Calculate amount
+    const amount = qty * rate;
+    
+    // Update amount field
+    const amountInput = row.querySelector('input[name*="[amount]"]');
+    if (amountInput) {
+        amountInput.value = amount.toFixed(2);
+    }
+    
+    // Update calculations if this row is selected
+    if (selectedRowIndex === rowIndex) {
+        updateCalculationSection(rowIndex);
+        updateAdditionalDetails(rowIndex);
+    }
+    
+    // Recalculate summary totals
+    recalculateTotals();
+}
+
+// Remove Row - Enhanced version
+function removeRow(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (row) {
+        row.remove();
+        
+        // Clear selection if this row was selected
+        if (selectedRowIndex === rowIndex) {
+            selectedRowIndex = null;
+            clearCalculationSection();
+        }
+        
+        recalculateTotals();
+    }
+}
+
+// Clear calculation section
+function clearCalculationSection() {
+    document.getElementById('calc_hsn_code').value = '---';
+    document.getElementById('calc_cgst_percent').value = '0';
+    document.getElementById('calc_sgst_percent').value = '0';
+    document.getElementById('calc_cess_percent').value = '0';
+    document.getElementById('calc_cgst_amount').value = '0.00';
+    document.getElementById('calc_sgst_amount').value = '0.00';
+    document.getElementById('calc_cess_amount').value = '0.00';
+    document.getElementById('calc_sc_percent').value = '0.000';
+    document.getElementById('calc_tax_percent').value = '0.000';
+    document.getElementById('calc_excise').value = '0.00';
+    document.getElementById('calc_tsr').value = '0.00';
+}
+
+// Clear additional details section
+function clearAdditionalDetails() {
+    document.getElementById('packing').value = '';
+    document.getElementById('unit').value = '';
+    document.getElementById('clQty').value = '0';
+    document.getElementById('location').value = '';
+    document.getElementById('hsAmount').value = '0.00';
+    
+    // Clear detailed calculation fields
+    document.getElementById('addl_nt_amount').value = '0.00';
+    document.getElementById('addl_sc_amount').value = '0.00';
+    document.getElementById('addl_dis_amount').value = '0.00';
+    document.getElementById('addl_scm_percent').value = '0.00';
+    document.getElementById('addl_scm_amount').value = '0.00';
+    document.getElementById('addl_tax_amount').value = '0.00';
+    document.getElementById('addl_net_amount').value = '0.00';
+    document.getElementById('addl_sub_total').value = '0.00';
+    document.getElementById('addl_volume').value = '0';
+    document.getElementById('addl_company').value = '';
+    document.getElementById('addl_scm_flag').value = '0';
+    document.getElementById('addl_scm_value').value = '0';
+    document.getElementById('addl_srino').value = '1';
+}
+
+// Recalculate row when values change - Updated version
+function recalculateRow(input, index) {
+    calculateRowAmount(index);
+}
+
+// Recalculate all totals
+function recalculateTotals() {
+    console.log('recalculateTotals called');
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    console.log('Total rows found:', rows.length);
+    
+    let totalAmount = 0;
+    let totalDiscount = 0;
+    let totalCgst = 0;
+    let totalSgst = 0;
+    let totalCess = 0;
+    let totalPacking = 0;
+    let totalUnit = 0;
+    let totalClQty = 0;
+    
+    // Calculate totals from all rows
+    rows.forEach((row, idx) => {
+        // Use more flexible selectors to find inputs
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const rateInput = row.querySelector('input[name*="[sale_rate]"]');
+        const discountInput = row.querySelector('input[name*="[dis_percent]"]');
+        const amountInput = row.querySelector('input[name*="[amount]"]');
+        
+        // Get tax percentages from hidden fields or dataset
+        let itemData = {};
+        try {
+            itemData = JSON.parse(row.dataset.itemData || '{}');
+        } catch (e) {
+            console.error('Error parsing item data for row:', idx, e);
+            itemData = {};
+        }
+        const cgstPercent = parseFloat(itemData.cgst_percent || 0);
+        const sgstPercent = parseFloat(itemData.sgst_percent || 0);
+        const cessPercent = parseFloat(itemData.cess_percent || 0);
+        
+        console.log(`Row ${idx}: qty=${qtyInput?.value}, rate=${rateInput?.value}, discount=${discountInput?.value}`);
+        
+        if (qtyInput && rateInput) {
+            const qty = parseFloat(qtyInput.value || 0);
+            const rate = parseFloat(rateInput.value || 0);
+            const discountPercent = parseFloat(discountInput?.value || 0);
+            
+            // Amount = Qty * Rate
+            const amount = qty * rate;
+            totalAmount += amount;
+            
+            // Discount = Amount * Discount% / 100
+            const discountAmount = (amount * discountPercent) / 100;
+            totalDiscount += discountAmount;
+            
+            // Calculate GST on amount after discount
+            const amountAfterDiscount = amount - discountAmount;
+            totalCgst += (amountAfterDiscount * cgstPercent) / 100;
+            totalSgst += (amountAfterDiscount * sgstPercent) / 100;
+            totalCess += (amountAfterDiscount * cessPercent) / 100;
+            
+            // Accumulate packing, unit, qty from item data
+            totalPacking += parseFloat(itemData.packing || 0);
+            totalUnit += parseFloat(itemData.unit || 0);
+            totalClQty += qty;
+            
+            console.log(`Row ${idx} calculated: amount=${amount}, discount=${discountAmount}, cgst=${(amountAfterDiscount * cgstPercent) / 100}`);
+        }
+    });
+    
+    // Update GST amounts in calculation section
+    document.getElementById('calc_cgst_amount').value = totalCgst.toFixed(2);
+    document.getElementById('calc_sgst_amount').value = totalSgst.toFixed(2);
+    document.getElementById('calc_cess_amount').value = totalCess.toFixed(2);
+    
+    // Calculate summary
+    const ntAmount = totalAmount; // NT Amount = sum of amounts
+    const ftAmount = ntAmount; // FT Amount = NT Amount
+    const disAmount = totalDiscount; // Discount from items
+    const taxAmount = totalCgst + totalSgst + totalCess; // Total tax
+    const netAmount = ntAmount - disAmount + taxAmount; // Net = NT - Discount + Tax
+    
+    // Update summary fields
+    document.getElementById('ntAmount').value = ntAmount.toFixed(2);
+    document.getElementById('scAmount').value = '0.00'; // SC Amount
+    document.getElementById('ftAmount').value = ftAmount.toFixed(2);
+    document.getElementById('disAmount').value = disAmount.toFixed(2);
+    document.getElementById('scmAmount').value = '0.00'; // Scheme Amount
+    document.getElementById('taxAmount').value = taxAmount.toFixed(2);
+    document.getElementById('netAmount').value = netAmount.toFixed(2);
+    document.getElementById('scmPercent').value = '0.00'; // Scheme Percent
+    document.getElementById('tcsAmount').value = '0.00'; // TCS Amount
+    
+    // Update additional fields
+    document.getElementById('clQty').value = totalClQty.toFixed(0);
+    
+    // Update additional detail fields
+    document.getElementById('addl_nt_amount').value = ntAmount.toFixed(2);
+    document.getElementById('addl_sc_amount').value = '0.00';
+    document.getElementById('addl_dis_amount').value = disAmount.toFixed(2);
+    document.getElementById('addl_scm_percent').value = '0.00';
+    document.getElementById('addl_scm_amount').value = '0.00';
+    document.getElementById('addl_tax_amount').value = taxAmount.toFixed(2);
+    document.getElementById('addl_net_amount').value = netAmount.toFixed(2);
+    document.getElementById('addl_sub_total').value = (ntAmount - disAmount).toFixed(2);
+    document.getElementById('addl_volume').value = '0';
+    document.getElementById('addl_scm_flag').value = '0';
+    document.getElementById('addl_scm_value').value = '0';
+    document.getElementById('addl_srino').value = '1';
+    
+    console.log('Summary updated:', {
+        ntAmount: ntAmount.toFixed(2),
+        disAmount: disAmount.toFixed(2),
+        taxAmount: taxAmount.toFixed(2),
+        netAmount: netAmount.toFixed(2)
+    });
+}
+
+// Save Transaction - Entry point for Save button
+function saveTransaction() {
+    // Validate that we have items
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (rows.length === 0) {
+        showAlert('error', 'Please add items to return before saving.');
+        return;
+    }
+    
+    // Get customer ID
+    const customerId = document.getElementById('customerSelect').value;
+    if (!customerId) {
+        showAlert('error', 'Please select a customer.');
+        return;
+    }
+    
+    // Store net amount globally for adjustment modal
+    window.netAmount = parseFloat(document.getElementById('netAmount').value || 0);
+    
+    // Show credit note modal
+    showCreditNoteModal();
+}
+
+// Credit Note Modal keyboard helper
+function initCreditNoteKeyboard() {
+    const modal = document.getElementById('creditNoteModal');
+    if (!modal) return;
+    const buttons = Array.from(modal.querySelectorAll('.credit-note-options button'));
+    if (!buttons.length) return;
+
+    let activeIndex = 0;
+    const setActive = (index) => {
+        activeIndex = index;
+        buttons.forEach((btn, i) => {
+            btn.classList.toggle('kb-active', i === activeIndex);
+        });
+        const activeBtn = buttons[activeIndex];
+        if (activeBtn) {
+            activeBtn.focus();
+        }
+    };
+
+    // Ensure buttons update highlight when focused via mouse/tab
+    buttons.forEach((btn, idx) => {
+        btn.addEventListener('focus', () => setActive(idx));
+        btn.addEventListener('mouseenter', () => setActive(idx));
+    });
+
+    setTimeout(() => setActive(0), 50);
+
+    if (window.creditNoteKeyHandler) {
+        document.removeEventListener('keydown', window.creditNoteKeyHandler, true);
+    }
+
+    window.creditNoteKeyHandler = function(e) {
+        if (!modal.classList.contains('show')) return;
+
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActive((activeIndex + 1) % buttons.length);
+            return;
+        }
+
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActive((activeIndex - 1 + buttons.length) % buttons.length);
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const activeBtn = buttons[activeIndex];
+            if (activeBtn) activeBtn.click();
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            closeCreditNoteModal();
+        }
+    };
+
+    document.addEventListener('keydown', window.creditNoteKeyHandler, true);
+}
+
+// Show Credit Note Modal
+function showCreditNoteModal() {
+    const modal = document.getElementById('creditNoteModal');
+    if (!modal) return;
+    modal.classList.add('show');
+    modal.style.display = 'block';
+    initCreditNoteKeyboard();
+}
+
+// Close Credit Note Modal
+function closeCreditNoteModal() {
+    const modal = document.getElementById('creditNoteModal');
+    modal.classList.remove('show');
+    if (window.creditNoteKeyHandler) {
+        document.removeEventListener('keydown', window.creditNoteKeyHandler, true);
+    }
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
+// Save Without Credit Note
+function saveWithoutCreditNote() {
+    closeCreditNoteModal();
+    submitTransaction(false);
+}
+
+// Save With Credit Note
+function saveWithCreditNote() {
+    closeCreditNoteModal();
+    
+    const customerId = document.getElementById('customerSelect').value;
+    if (!customerId) {
+        showAlert('error', 'Please select a customer first');
+        return;
+    }
+    
+    fetchCustomerSales(customerId);
+}
+
+// Fetch Customer Sales for Adjustment
+function fetchCustomerSales(customerId) {
+    showAlert('info', 'Loading customer invoices...');
+    
+    fetch('<?php echo e(route("admin.sale-return.customer-invoices")); ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
+        },
+        body: JSON.stringify({
+            customer_id: customerId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAdjustmentModal(data.invoices, window.netAmount);
+        } else {
+            showAlert('error', data.message || 'Failed to load invoices.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while loading invoices.');
+    });
+}
+
+// Submit Transaction (Original Logic)
+function submitTransaction(withCreditNote = false, adjustments = []) {
+    const form = document.getElementById('saleReturnTransactionForm');
+    const formData = new FormData(form);
+    
+    // Add credit note data
+    formData.append('with_credit_note', withCreditNote);
+    formData.append('adjustments', JSON.stringify(adjustments));
+    
+    // Show loading
+    showAlert('info', 'Saving sale return transaction...');
+    
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
+    // Submit via AJAX
+    fetch('<?php echo e(route("admin.sale-return.store")); ?>', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message || 'Sale return saved successfully!');
+            // Reload page after 1.5 seconds to get fresh form with new SR number
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showAlert('error', data.message || 'Failed to save sale return.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while saving the sale return.');
+    });
+}
+
+// Open Adjustment Modal
+function openAdjustmentModal() {
+    // Validate that we have items
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    if (rows.length === 0) {
+        showAlert('error', 'Please add items to return before saving.');
+        return;
+    }
+    
+    // Get customer ID
+    const customerId = document.getElementById('customerSelect').value;
+    if (!customerId) {
+        showAlert('error', 'Please select a customer.');
+        return;
+    }
+    
+    // Get net amount to adjust
+    const netAmount = parseFloat(document.getElementById('netAmount').value || 0);
+    
+    // Fetch customer's past invoices
+    showAlert('info', 'Loading customer invoices...');
+    
+    fetch('<?php echo e(route("admin.sale-return.customer-invoices")); ?>', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
+        },
+        body: JSON.stringify({
+            customer_id: customerId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAdjustmentModal(data.invoices, netAmount);
+        } else {
+            showAlert('error', data.message || 'Failed to load invoices.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while loading invoices.');
+    });
+}
+
+// Show Adjustment Modal
+function showAdjustmentModal(invoices, returnAmount) {
+    const modalHTML = `
+        <div class="adjustment-modal-backdrop" id="adjustmentModalBackdrop"></div>
+        <div class="adjustment-modal" id="adjustmentModal">
+            <div class="adjustment-modal-content">
+                <div class="adjustment-modal-header">
+                    <h5 class="adjustment-modal-title">Sale Return Credit Note Adjustment</h5>
+                </div>
+                <div class="adjustment-modal-body">
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-bordered" style="font-size: 11px; margin-bottom: 0;">
+                            <thead style="position: sticky; top: 0; background: #e9ecef; z-index: 10;">
+                                <tr>
+                                    <th style="width: 60px; text-align: center;">SR.NO.</th>
+                                    <th style="width: 150px; text-align: center;">TRANS NO.</th>
+                                    <th style="width: 120px; text-align: center;">DATE</th>
+                                    <th style="width: 120px; text-align: right;">BILL AMT.</th>
+                                    <th style="width: 120px; text-align: center;">ADJUSTED</th>
+                                    <th style="width: 120px; text-align: right;">BALANCE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${invoices.map((invoice, index) => {
+                                    const billAmount = parseFloat(invoice.bill_amount || 0);
+                                    const currentBalance = parseFloat(invoice.balance || invoice.bill_amount || 0);
+                                    return `
+                                    <tr>
+                                        <td style="text-align: center;">${index + 1}</td>
+                                        <td style="text-align: center;">${invoice.trans_no}</td>
+                                        <td style="text-align: center;">${invoice.date}</td>
+                                        <td style="text-align: right; font-weight: bold; color: #0d6efd;">₹ ${currentBalance.toFixed(2)}</td>
+                                        <td style="text-align: center;">
+                                            <input type="number" class="form-control form-control-sm adjustment-input" 
+                                                   id="adj_${invoice.id}" 
+                                                   data-invoice-id="${invoice.id}"
+                                                   data-adj-balance="${currentBalance}"
+                                                   data-balance="${currentBalance}"
+                                                   value="0.00" 
+                                                   min="0" 
+                                                   max="${currentBalance}"
+                                                   step="0.01"
+                                                   onchange="updateAdjustmentBalance()"
+                                                   style="width: 100px; height: 24px; padding: 2px 4px; font-size: 11px; text-align: right;">
+                                        </td>
+                                        <td style="text-align: right;" id="balance_${invoice.id}"><span style="color: #28a745;">₹ ${currentBalance.toFixed(2)}</span></td>
+                                    </tr>
+                                `}).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span style="font-weight: bold; color: #dc3545;">EXIT : &lt;ESC &gt;</span>
+                            <span style="font-weight: bold; font-size: 16px; color: #0d6efd;">
+                                NET AMOUNT TO ADJUST (Rs) : <span id="adjustmentBalance">₹ ${returnAmount.toFixed(2)}</span>
+                            </span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <label style="font-weight: bold; color: #495057;">Auto Adjust Amount:</label>
+                            <input type="number" id="autoAdjustAmount" class="form-control form-control-sm" 
+                                   style="width: 120px;" step="0.01" placeholder="Enter amount"
+                                   value="${returnAmount.toFixed(2)}"
+                                   onchange="autoDistributeAmount()">
+                            <button type="button" class="btn btn-info btn-sm" onclick="autoDistributeAmount()">
+                                <i class="bi bi-magic me-1"></i>Auto Distribute
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="adjustment-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeAdjustmentModal()">Cancel</button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="saveAdjustment()">
+                        <i class="bi bi-check-circle"></i> Save & Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('adjustmentModal');
+    if (existingModal) existingModal.remove();
+    const existingBackdrop = document.getElementById('adjustmentModalBackdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Store return amount
+    window.returnAmount = returnAmount;
+    
+    // Show modal with animation
+    setTimeout(() => {
+        document.getElementById('adjustmentModalBackdrop').classList.add('show');
+        document.getElementById('adjustmentModal').classList.add('show');
+        prefillAdjustmentFirstRow();
+        initAdjustmentModalKeyboard();
+    }, 10);
+    
+    // Add ESC key listener
+    document.addEventListener('keydown', handleAdjustmentEsc);
+}
+
+function prefillAdjustmentFirstRow() {
+    const firstInput = document.querySelector('.adjustment-input');
+    if (!firstInput) return;
+    const balance = parseFloat(firstInput.getAttribute('data-adj-balance') || firstInput.getAttribute('data-balance') || 0);
+    const desired = parseFloat(window.returnAmount || 0);
+    const prefill = Math.min(desired, balance);
+    firstInput.value = prefill.toFixed(2);
+    firstInput.placeholder = desired.toFixed(2);
+    updateAdjustmentBalance();
+}
+
+function getRemainingAdjustment() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    inputs.forEach(input => {
+        totalAdjusted += parseFloat(input.value || 0);
+    });
+    return Math.max(0, (parseFloat(window.returnAmount || 0) - totalAdjusted));
+}
+
+function initAdjustmentModalKeyboard() {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+
+    const setActive = (input) => {
+        inputs.forEach(i => i.classList.remove('kb-active'));
+        if (input) {
+            input.classList.add('kb-active');
+            input.focus();
+            input.select();
+        }
+    };
+
+    inputs.forEach((input, idx) => {
+        input.addEventListener('focus', () => setActive(input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = inputs[idx + 1];
+                if (next) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const remaining = getRemainingAdjustment();
+                    const nextBalance = parseFloat(next.getAttribute('data-adj-balance') || next.getAttribute('data-balance') || 0);
+
+                    if (remaining <= 0 && currentValue > 0) {
+                        // Move current amount to next row if nothing remains
+                        const moveValue = Math.min(currentValue, nextBalance);
+                        next.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                    } else {
+                        // Otherwise, push remaining balance to next row
+                        const nextValue = Math.min(remaining, nextBalance);
+                        next.value = nextValue.toFixed(2);
+                    }
+
+                    updateAdjustmentBalance();
+                    setActive(next);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = inputs[idx - 1];
+                if (prev) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const prevBalance = parseFloat(prev.getAttribute('data-adj-balance') || prev.getAttribute('data-balance') || 0);
+
+                    if (currentValue > 0) {
+                        const moveValue = Math.min(currentValue, prevBalance);
+                        prev.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                        updateAdjustmentBalance();
+                    }
+
+                    setActive(prev);
+                }
+            }
+        });
+    });
+
+    setActive(inputs[0]);
+}
+
+// Handle ESC key for adjustment modal
+function handleAdjustmentEsc(e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeAdjustmentModal();
+        return;
+    }
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (isCtrlS) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveAdjustment();
+    }
+}
+
+// Update adjustment balance
+function updateAdjustmentBalance() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    
+    inputs.forEach(input => {
+        let adjusted = parseFloat(input.value || 0);
+        const invoiceId = input.getAttribute('data-invoice-id');
+        const adjBalance = parseFloat(input.getAttribute('data-adj-balance'));
+        
+        // Prevent adjusting more than adjusted balance
+        if (adjusted > adjBalance) {
+            input.value = adjBalance.toFixed(2);
+            adjusted = adjBalance;
+        }
+        
+        totalAdjusted += adjusted;
+        
+        // Calculate new balance: Balance = Adjusted Balance - Adjusted Amount
+        const newBalance = adjBalance - adjusted;
+        const balanceCell = document.getElementById(`balance_${invoiceId}`);
+        if (balanceCell) {
+            // Color code the balance based on value
+            if (newBalance < 0) {
+                balanceCell.innerHTML = `<span style="color: #dc3545; font-weight: bold;">₹ ${newBalance.toFixed(2)}</span>`;
+            } else if (newBalance === 0) {
+                balanceCell.innerHTML = `<span style="color: #28a745; font-weight: bold;">₹ ${newBalance.toFixed(2)}</span>`;
+            } else {
+                balanceCell.innerHTML = `<span style="color: #28a745;">₹ ${newBalance.toFixed(2)}</span>`;
+            }
+        }
+    });
+    
+    // Update remaining balance
+    const remainingBalance = window.returnAmount - totalAdjusted;
+    const adjustmentBalanceEl = document.getElementById('adjustmentBalance');
+    adjustmentBalanceEl.textContent = `₹ ${remainingBalance.toFixed(2)}`;
+    
+    // Change color if over-adjusted
+    const balanceSpan = adjustmentBalanceEl.parentElement;
+    if (remainingBalance < 0) {
+        balanceSpan.style.color = '#dc3545';
+    } else if (remainingBalance === 0) {
+        balanceSpan.style.color = '#28a745';
+    } else {
+        balanceSpan.style.color = '#0d6efd';
+    }
+}
+
+// Auto Distribute Amount Across Transactions
+function autoDistributeAmount() {
+    const totalAmount = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
+    
+    if (totalAmount <= 0) {
+        showAlert('warning', 'Please enter a valid amount to distribute');
+        return;
+    }
+    
+    // Clear all existing adjustments first
+    document.querySelectorAll('.adjustment-input').forEach(input => {
+        input.value = '';
+    });
+    
+    // Get all transactions sorted by adjusted balance (highest first for better distribution)
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    const transactions = inputs.map(input => ({
+        input: input,
+        invoiceId: input.getAttribute('data-invoice-id'),
+        balance: parseFloat(input.getAttribute('data-adj-balance'))
+    })).filter(t => t.balance > 0).sort((a, b) => b.balance - a.balance);
+    
+    let remainingAmount = totalAmount;
+    
+    // Distribute amount across transactions
+    transactions.forEach(transaction => {
+        if (remainingAmount <= 0) return;
+        
+        const adjustAmount = Math.min(remainingAmount, transaction.balance);
+        transaction.input.value = adjustAmount.toFixed(2);
+        remainingAmount -= adjustAmount;
+    });
+    
+    // If still amount remaining, show warning
+    if (remainingAmount > 0) {
+        showAlert('warning', `₹${remainingAmount.toFixed(2)} could not be distributed. Insufficient outstanding balance.`);
+    } else {
+        showAlert('success', `₹${totalAmount.toFixed(2)} distributed successfully across ${transactions.length} transaction(s)`);
+    }
+    
+    // Update the balance display
+    updateAdjustmentBalance();
+}
+
+// Close Adjustment Modal
+function closeAdjustmentModal() {
+    const modal = document.getElementById('adjustmentModal');
+    const backdrop = document.getElementById('adjustmentModalBackdrop');
+    
+    if (modal) {
+        modal.style.animation = 'bounceOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    }
+    if (backdrop) {
+        backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+        backdrop.classList.remove('show');
+    }
+    
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.remove('show');
+            modal.remove();
+        }
+        if (backdrop) backdrop.remove();
+    }, 300);
+    
+    document.removeEventListener('keydown', handleAdjustmentEsc);
+}
+
+// Save Adjustment and Submit Form
+function saveAdjustment() {
+    // Collect adjustment data
+    const inputs = document.querySelectorAll('.adjustment-input');
+    const adjustments = [];
+    
+    inputs.forEach(input => {
+        const adjusted = parseFloat(input.value || 0);
+        if (adjusted > 0) {
+            adjustments.push({
+                invoice_id: input.getAttribute('data-invoice-id'),
+                adjusted_amount: adjusted
+            });
+        }
+    });
+    
+    // Check if fully adjusted - parse the remaining balance text (remove ₹ symbol)
+    const remainingBalanceText = document.getElementById('adjustmentBalance').textContent.replace('₹', '').trim();
+    const remainingBalance = parseFloat(remainingBalanceText);
+    if (remainingBalance != 0) {
+        if (!confirm(`Balance remaining is Rs ${remainingBalance.toFixed(2)}. Do you want to continue?`)) {
+            return;
+        }
+    }
+    
+    // Close modal
+    closeAdjustmentModal();
+    
+    // Submit with credit note adjustments
+    submitTransaction(true, adjustments);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateDayName();
+    updateSeriesLabel();
+});
+
+</script>
+
+<style>
+/* Animation Keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes zoomIn {
+    from {
+        transform: translate(-50%, -50%) scale(0.7);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes zoomOut {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(0.7);
+        opacity: 0;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, -30%) scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, -30%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: translate(-50%, -50%) scale(0.3);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(0.9);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes bounceOut {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.3);
+        opacity: 0;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Credit Note Modal Styles */
+.credit-note-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1060;
+    opacity: 0;
+    animation: fadeIn 0.3s ease forwards;
+}
+
+.credit-note-modal.show {
+    display: block;
+    opacity: 1;
+}
+
+.credit-note-modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    width: 400px;
+    opacity: 0;
+    animation: zoomIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.credit-note-modal.show .credit-note-modal-content {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.credit-note-modal-header {
+    padding: 1rem 1.5rem;
+    background: #007bff;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #0056b3;
+    border-radius: 8px 8px 0 0;
+}
+
+.credit-note-modal-header h5 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.credit-note-modal-body {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.credit-note-modal-body p {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.credit-note-options {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.credit-note-options button.kb-active,
+.credit-note-options button:focus,
+.credit-note-options button:focus-visible {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.credit-note-close-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+}
+
+.credit-note-close-btn:hover {
+    opacity: 0.8;
+}
+
+/* Invoice Modal Styles */
+.invoice-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.invoice-modal-backdrop.show {
+    display: block;
+    opacity: 1;
+}
+
+.invoice-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 70%;
+    max-width: 500px;
+    z-index: 9999;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: zoomIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.invoice-modal.show {
+    display: block;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.invoice-modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.invoice-modal-header {
+    padding: 1rem 1.5rem;
+    background: #0d6efd;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #0b5ed7;
+}
+
+.invoice-modal-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.btn-close-modal {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background 0.2s;
+}
+
+.btn-close-modal:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.invoice-modal-body {
+    padding: 0;
+    background: #fff;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.invoice-modal-footer {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Insert Orders Modal Styles */
+.insert-orders-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.insert-orders-modal-backdrop.show {
+    display: block;
+    opacity: 1;
+}
+
+.insert-orders-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 75%;
+    max-width: 750px;
+    z-index: 10001;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.insert-orders-modal.show {
+    display: block;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+/* Item Selection Modal - Smaller and constrained to content area */
+.item-selection-modal {
+    width: 55% !important;
+    max-width: 550px !important;
+    max-height: 80vh;
+    overflow-y: auto;
+    /* Center in viewport but ensure it doesn't go beyond content area */
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) scale(0.7);
+    /* Ensure modal doesn't go beyond viewport edges */
+    margin-left: 0;
+    margin-top: 0;
+}
+
+.item-selection-modal.show {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* Ensure modal body content is scrollable if needed */
+.item-selection-modal .insert-orders-modal-body {
+    max-height: calc(80vh - 150px);
+    overflow-y: auto;
+    padding: 0.75rem !important;
+}
+
+/* Make modal header more compact */
+.item-selection-modal .insert-orders-modal-header {
+    padding: 0.75rem 1rem !important;
+}
+
+.item-selection-modal .insert-orders-modal-title {
+    font-size: 1rem !important;
+}
+
+/* Make modal footer more compact */
+.item-selection-modal .insert-orders-modal-footer {
+    padding: 0.75rem 1rem !important;
+}
+
+/* Ensure table fits properly */
+.item-selection-modal table {
+    font-size: 9px !important;
+}
+
+.item-selection-modal td, .item-selection-modal th {
+    padding: 4px 6px !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1400px) {
+    .item-selection-modal {
+        width: 50% !important;
+        max-width: 500px !important;
+    }
+}
+
+@media (max-width: 1200px) {
+    .item-selection-modal {
+        width: 60% !important;
+        max-width: 550px !important;
+    }
+}
+
+@media (max-width: 992px) {
+    .item-selection-modal {
+        width: 70% !important;
+        max-width: 600px !important;
+    }
+}
+
+.insert-orders-modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.insert-orders-modal-header {
+    padding: 1rem 1.5rem;
+    background: #28a745;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #218838;
+}
+
+.insert-orders-modal-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.insert-orders-modal-body {
+    padding: 1rem;
+    background: #fff;
+}
+
+.insert-orders-modal-footer {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Adjustment Modal Styles */
+.adjustment-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10002;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.adjustment-modal-backdrop.show {
+    display: block;
+    opacity: 1;
+}
+
+.adjustment-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 75%;
+    max-width: 700px;
+    z-index: 10003;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.adjustment-modal.show {
+    display: block;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.adjustment-modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.adjustment-modal-header {
+    padding: 1rem 1.5rem;
+    background: #0d6efd;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #0b5ed7;
+}
+
+.adjustment-modal-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.adjustment-modal-body {
+    padding: 1rem;
+    background: #fff;
+}
+
+.adjustment-modal-footer {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.adjustment-input.kb-active,
+.adjustment-input:focus,
+.adjustment-input:focus-visible {
+    outline: 2px solid #0d6efd !important;
+    outline-offset: 1px !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Batch Modal Styles */
+.batch-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10004;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.batch-modal-backdrop.show {
+    display: block;
+    opacity: 1;
+}
+
+.batch-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 70%;
+    max-width: 650px;
+    z-index: 10005;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: zoomIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.batch-modal.show {
+    display: block;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.batch-modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.batch-modal-header {
+    padding: 1rem 1.5rem;
+    background: #28a745;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #218838;
+}
+
+.batch-modal-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.batch-modal-body {
+    padding: 1rem;
+    background: #fff;
+}
+
+.batch-modal-footer {
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Create Batch Modal Styles */
+.create-batch-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10006;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.create-batch-modal-backdrop.show {
+    display: block;
+    opacity: 1;
+}
+
+.create-batch-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.7);
+    width: 50%;
+    max-width: 500px;
+    z-index: 10007;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    animation: zoomIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+.create-batch-modal.show {
+    display: block;
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+}
+
+.create-batch-modal-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.create-batch-modal-header {
+    padding: 0.75rem 1rem;
+    background: #f0f0f0;
+    color: #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.create-batch-modal-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.create-batch-modal-body {
+    padding: 1rem;
+    background: #fff;
+}
+
+.create-batch-modal-footer {
+    padding: 0.75rem 1rem;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+</style>
+
+<!-- ============================================ -->
+<!-- Focus Highlight (Blue Border) -->
+<script>
+(function() {
+    const focusStyle = document.createElement('style');
+    focusStyle.textContent = `
+        .form-control:focus,
+        select:focus,
+        input:focus {
+            outline: 2px solid #0d6efd !important;
+            outline-offset: 1px;
+            box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        }
+
+        .form-control:focus:not(:focus-visible),
+        select:focus:not(:focus-visible),
+        input:focus:not(:focus-visible) {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        #itemsTableBody tr:focus-within {
+            background-color: #e7f3ff !important;
+        }
+
+        #itemsTableBody tr:focus-within td {
+            background-color: #e7f3ff !important;
+        }
+    `;
+    document.head.appendChild(focusStyle);
+})();
+</script>
+
+<!-- Item and Batch Selection Modal Components -->
+<?php echo $__env->make('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'sale-return',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'batchSelectionModal',
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<?php echo $__env->make('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'sale-return',
+    'showOnlyAvailable' => false,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-return/transaction.blade.php ENDPATH**/ ?>
