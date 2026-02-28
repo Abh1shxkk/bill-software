@@ -1071,6 +1071,9 @@ function populateExistingRowWithItemBatch(rowIndex, item, batch) {
     const row = document.getElementById(`row-${rowIndex}`);
     if (!row) return;
 
+    // Define isEditable to prevent ReferenceError
+    const isEditable = false;
+
     const newItem = {
         item_id: item.id,
         item_code: item.bar_code || item.id,

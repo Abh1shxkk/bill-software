@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Return Modification'); ?>
 
-@section('title', 'Sale Return Modification')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments */
     .compact-form {
@@ -146,7 +144,7 @@
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
         <form id="saleReturnTransactionForm" method="POST" autocomplete="off" onsubmit="return false;">
-            @csrf
+            <?php echo csrf_field(); ?>
             
             <!-- Header Section -->
             <div class="header-section">
@@ -162,8 +160,8 @@
                     
                     <div class="field-group">
                         <label>Date:</label>
-                        <input type="date" class="form-control" name="return_date" id="returnDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()">
-                        <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
+                        <input type="date" class="form-control" name="return_date" id="returnDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 140px;" onchange="updateDayName()">
+                        <input type="text" class="form-control readonly-field" id="dayName" value="<?php echo e(date('l')); ?>" readonly style="width: 90px;">
                     </div>
                 </div>
                 
@@ -184,9 +182,9 @@
                                                style="width: 100%;">
                                         <select class="form-control no-select2" name="customer_id" id="customerSelect" autocomplete="off" style="display: none;">
                                             <option value="">Select Customer</option>
-                                            @foreach($customers as $customer)
-                                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                                            @endforeach
+                                            <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>"><?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                         
                                         <div id="customerDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
@@ -194,15 +192,16 @@
                                                 Select Customer
                                             </div>
                                             <div id="customerList" class="dropdown-list">
-                                                @foreach($customers as $customer)
+                                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <div class="dropdown-item" 
-                                                         data-id="{{ $customer->id }}" 
-                                                         data-name="{{ $customer->name }}"
-                                                         data-code="{{ $customer->code ?? '' }}"
+                                                         data-id="<?php echo e($customer->id); ?>" 
+                                                         data-name="<?php echo e($customer->name); ?>"
+                                                         data-code="<?php echo e($customer->code ?? ''); ?>"
                                                          style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
-                                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                                        <?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?>
+
                                                     </div>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </div>
                                         </div>
                                     </div>
@@ -234,9 +233,9 @@
                                     <label style="width: 100px;">Sales Man:</label>
                                     <select class="form-control no-select2" name="salesman_id" id="salesmanSelect" autocomplete="off" onchange="updateSalesmanName()">
                                         <option value="">Select</option>
-                                        @foreach($salesmen as $salesman)
-                                            <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->code ?? '' }}</option>
-                                        @endforeach
+                                        <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($salesman->id); ?>" data-name="<?php echo e($salesman->name); ?>"><?php echo e($salesman->code ?? ''); ?></option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                     </select>
                                 </div>
                             </div>
@@ -607,7 +606,7 @@
 
             <!-- Action Buttons -->
             <div class="d-flex justify-content-end gap-2 mt-3">
-                <button type="button" class="btn btn-secondary" onclick="window.location.href='{{ route('admin.dashboard') }}'">
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='<?php echo e(route('admin.dashboard')); ?>'">
                     <i class="bi bi-x-circle me-1"></i> Cancel
                 </button>
                 <button type="button" class="btn btn-primary" id="submitBtn" onclick="saveTransaction()">
@@ -714,7 +713,7 @@ function initCustomerDropdown() {
     function loadCustomersFromApi() {
         if (window.kbCustomersLoaded) return;
         window.kbCustomersLoaded = true;
-        fetch('{{ route("admin.customers.all") }}', {
+        fetch('<?php echo e(route("admin.customers.all")); ?>', {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
@@ -1381,11 +1380,11 @@ function searchInvoice() {
     showAlert('info', 'Searching for invoice...');
     
     // Make AJAX request
-    fetch('{{ route("admin.sale-return.search-invoice") }}', {
+    fetch('<?php echo e(route("admin.sale-return.search-invoice")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify({
             invoice_no: invoiceNo,
@@ -1564,7 +1563,7 @@ function selectInvoice(transactionId) {
 function loadTransactionDetails(transactionId) {
     showAlert('info', 'Loading transaction details...');
     
-    const url = "{{ route('admin.sale-return.transaction-details', ':id') }}".replace(':id', transactionId);
+    const url = "<?php echo e(route('admin.sale-return.transaction-details', ':id')); ?>".replace(':id', transactionId);
     fetch(url)
         .then(response => {
             if (!response.ok) {
@@ -1838,7 +1837,7 @@ function fetchPaginatedItems(page, isInitial = false) {
     }
     
     // Use existing items/all route with pagination params
-    const url = `{{ route("admin.items.all") }}?page=${page}&per_page=${itemsPerPage}`;
+    const url = `<?php echo e(route("admin.items.all")); ?>?page=${page}&per_page=${itemsPerPage}`;
     
     fetch(url, {
         method: 'GET',
@@ -2083,7 +2082,7 @@ function selectItemBatch(item) {
     // Fetch batches for this item
     showAlert('info', 'Loading batches...');
     
-    fetch(`{{ url('/admin/api/item-batches') }}/${window.selectedItem.item_id}`, {
+    fetch(`<?php echo e(url('/admin/api/item-batches')); ?>/${window.selectedItem.item_id}`, {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -2367,11 +2366,11 @@ function createNewBatch() {
     };
     
     // Send AJAX request to create batch
-    fetch('{{ route("admin.batches.store") }}', {
+    fetch('<?php echo e(route("admin.batches.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(batchData)
     })
@@ -2458,11 +2457,11 @@ function addItemToReturn(batch) {
 function searchSaleReturnBySRNo(srNo) {
     showAlert('info', 'Searching for sale return...');
     
-    fetch('{{ route("admin.sale-return.search-by-sr") }}', {
+    fetch('<?php echo e(route("admin.sale-return.search-by-sr")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify({ sr_no: srNo })
     })
@@ -2484,7 +2483,7 @@ function searchSaleReturnBySRNo(srNo) {
 function showPastSaleReturnsModal() {
     showAlert('info', 'Loading sale returns...');
     
-    fetch('{{ route("admin.sale-return.past-returns") }}', {
+    fetch('<?php echo e(route("admin.sale-return.past-returns")); ?>', {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -2675,7 +2674,7 @@ function selectSaleReturnForModification(saleReturnId) {
     
     showAlert('info', 'Loading sale return details...');
     
-    fetch(`{{ url('/admin/sale-return/details') }}/${saleReturnId}`, {
+    fetch(`<?php echo e(url('/admin/sale-return/details')); ?>/${saleReturnId}`, {
         method: 'GET',
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
@@ -3171,7 +3170,7 @@ function updateAdditionalDetails(rowIndex) {
 
 // Fetch total quantity from all batches for an item
 function fetchTotalBatchQuantity(itemId) {
-    const url = `{{ url('/admin/api/item-batches') }}/${itemId}`;
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -3545,11 +3544,11 @@ function saveWithCreditNote() {
 function fetchCustomerSales(customerId) {
     showAlert('info', 'Loading customer invoices...');
     
-    fetch('{{ route("admin.sale-return.customer-invoices") }}', {
+    fetch('<?php echo e(route("admin.sale-return.customer-invoices")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify({
             customer_id: customerId
@@ -3581,8 +3580,8 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     // Check if this is an update or new entry
     const isUpdate = window.currentSaleReturnId ? true : false;
     const url = isUpdate 
-        ? `{{ url('/admin/sale-return/update') }}/${window.currentSaleReturnId}`
-        : '{{ route("admin.sale-return.store") }}';
+        ? `<?php echo e(url('/admin/sale-return/update')); ?>/${window.currentSaleReturnId}`
+        : '<?php echo e(route("admin.sale-return.store")); ?>';
     
     // Show loading
     showAlert('info', isUpdate ? 'Updating sale return...' : 'Saving sale return transaction...');
@@ -3596,7 +3595,7 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     fetch(url, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
         },
         body: formData
     })
@@ -3642,11 +3641,11 @@ function openAdjustmentModal() {
     // Fetch customer's past invoices
     showAlert('info', 'Loading customer invoices...');
     
-    fetch('{{ route("admin.sale-return.customer-invoices") }}', {
+    fetch('<?php echo e(route("admin.sale-return.customer-invoices")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify({
             customer_id: customerId
@@ -3786,12 +3785,12 @@ function showAdjustmentModal(invoices, returnAmount) {
     
     // If editing existing sale return, fetch existing adjustments
     if (saleReturnId) {
-        fetch(`{{ url('/admin/sale-return') }}/${saleReturnId}/adjustments`, {
+        fetch(`<?php echo e(url('/admin/sale-return')); ?>/${saleReturnId}/adjustments`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
             }
         })
         .then(response => response.json())
@@ -4890,7 +4889,7 @@ input:focus:not(:focus-visible) {
 </style>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'chooseItemsModal',
     'module' => 'sale-return',
     'showStock' => true,
@@ -4898,14 +4897,16 @@ input:focus:not(:focus-visible) {
     'showCompany' => true,
     'showHsn' => true,
     'batchModalId' => 'batchSelectionModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'batchSelectionModal',
     'module' => 'sale-return',
     'showOnlyAvailable' => false,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-return/modification.blade.php ENDPATH**/ ?>
