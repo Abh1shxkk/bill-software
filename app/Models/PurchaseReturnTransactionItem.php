@@ -28,6 +28,8 @@ class PurchaseReturnTransactionItem extends Model
         'ws_rate',
         's_rate',
         'spl_rate',
+        'amount',
+        'gst_percent',
         'cgst_percent',
         'sgst_percent',
         'cess_percent',

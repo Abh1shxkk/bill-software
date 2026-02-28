@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Multi Voucher Entry'); ?>
 
-@section('title', 'Multi Voucher Entry')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .voucher-form { font-size: 11px; background: #e8e0f0; }
     .voucher-form input, .voucher-form select { font-size: 11px; padding: 2px 5px; height: 24px; }
@@ -57,7 +55,7 @@
 <div class="card shadow-sm border-0">
     <div class="card-body voucher-form p-2">
         <form id="voucherForm" method="POST" autocomplete="off">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="header-section mb-2">
                 <div class="row g-2 align-items-center">
                     <div class="col-auto">
@@ -111,7 +109,7 @@
                 <button type="button" class="btn btn-success btn-action" onclick="saveVoucher()">Save (End)</button>
                 <button type="button" class="btn btn-info btn-action" onclick="saveAndExport()">Save & Export (F9)</button>
                 <button type="button" class="btn btn-warning btn-action" onclick="importData()">Import (F5)</button>
-                <a href="{{ route('admin.multi-voucher.index') }}" class="btn btn-secondary btn-action">Close</a>
+                <a href="<?php echo e(route('admin.multi-voucher.index')); ?>" class="btn btn-secondary btn-action">Close</a>
             </div>
         </form>
     </div>
@@ -146,10 +144,10 @@
 </div>
 
 <script>
-const customers = @json($customers);
-const suppliers = @json($suppliers);
-const generalLedgers = @json($generalLedgers);
-const defaultDate = '{{ date("Y-m-d") }}';
+const customers = <?php echo json_encode($customers, 15, 512) ?>;
+const suppliers = <?php echo json_encode($suppliers, 15, 512) ?>;
+const generalLedgers = <?php echo json_encode($generalLedgers, 15, 512) ?>;
+const defaultDate = '<?php echo e(date("Y-m-d")); ?>';
 
 let rowCount = 0;
 let selectedRow = null;
@@ -454,7 +452,7 @@ function selectAccount() {
 function insertRow() { addRow(); }
 function removeRow(btn) { btn.closest('tr').remove(); calculateTotal(); }
 function deleteRow() { if (selectedRow) { selectedRow.remove(); selectedRow = null; calculateTotal(); } else alert('Select a row first'); }
-function changeMode() { window.location.href = '{{ route("admin.multi-voucher.modification") }}'; }
+function changeMode() { window.location.href = '<?php echo e(route("admin.multi-voucher.modification")); ?>'; }
 
 function saveVoucher() {
     const entries = [];
@@ -478,11 +476,11 @@ function saveVoucher() {
     if (entries.length === 0) { alert('Add at least one entry'); return; }
     
     const formData = {
-        voucher_date: entries[0]?.entry_date || '{{ date("Y-m-d") }}',
+        voucher_date: entries[0]?.entry_date || '<?php echo e(date("Y-m-d")); ?>',
         narration: document.getElementById('narration').value,
         total_amount: parseFloat(document.getElementById('totalAmount').textContent) || 0,
         entries: entries,
-        _token: '{{ csrf_token() }}'
+        _token: '<?php echo e(csrf_token()); ?>'
     };
     
     // 🔥 Mark as saving to prevent exit confirmation dialog
@@ -490,9 +488,9 @@ function saveVoucher() {
         window.markAsSaving();
     }
     
-    fetch('{{ route("admin.multi-voucher.store") }}', {
+    fetch('<?php echo e(route("admin.multi-voucher.store")); ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify(formData)
     })
     .then(r => r.json())
@@ -506,4 +504,6 @@ function saveVoucher() {
 function saveAndExport() { saveVoucher(); }
 function importData() { alert('Import feature coming soon'); }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/multi-voucher/transaction.blade.php ENDPATH**/ ?>

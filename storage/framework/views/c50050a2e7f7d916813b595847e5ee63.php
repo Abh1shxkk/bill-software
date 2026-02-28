@@ -906,7 +906,7 @@ function updateVoucher() {
     .then(result => {
         if (result.success) {
             alert('Voucher updated successfully!');
-            loadVouchersForModal();
+            location.reload();
         } else {
             alert('Error: ' + result.message);
             isSubmitting = false;
@@ -1112,5 +1112,4 @@ window.addEventListener('keydown', function(e) {
 }, true);
 </script>
 <?php $__env->stopPush(); ?>
-
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-voucher/modification.blade.php ENDPATH**/ ?>

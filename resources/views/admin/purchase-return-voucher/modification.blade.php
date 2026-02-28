@@ -449,7 +449,7 @@ function updateVoucher() {
         method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
         body: JSON.stringify({ return_date: document.getElementById('returnDate').value, supplier_id: sid, remarks: document.getElementById('remarks').value, items })
     }).then(r => r.json()).then(res => {
-        if (res.success) { alert('Updated!'); loadVouchersForModal(); }
+        if (res.success) { alert('Updated!'); window.location.reload(); }
         else { alert('Error: ' + res.message); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; }
     }).catch(e => { console.error(e); alert('Error updating'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; });
 }

@@ -26,6 +26,7 @@ class SaleReturnTransactionItem extends Model
         'discount_amount',
         'amount',
         'net_amount',
+        'gst_percent',
         'cgst_percent',
         'sgst_percent',
         'cess_percent',

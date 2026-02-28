@@ -51,6 +51,34 @@
     /* Account row in top table — keyboard highlight */
     #accountsTableBody tr.kb-row { background:#e8f5e9 !important; outline:2px solid #008000; }
 
+    /* Custom HSN Dropdown */
+    .hsn-dropdown-list { display: none; position: fixed; width: 320px; max-height: 220px; overflow-y: auto; background: #fff; border: 1px solid #800000; border-radius: 0 0 6px 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); z-index: 99999; }
+    .hsn-dropdown-list.show { display: block; }
+    .hsn-dropdown-item { padding: 4px 8px; cursor: pointer; font-size: 10px; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+    .hsn-dropdown-item:hover { background: #ffffcc; }
+    .hsn-dropdown-item.kb-active { background: #800000 !important; color: #fff !important; }
+    .hsn-dropdown-item .hsn-code-label { font-weight: bold; }
+    .hsn-dropdown-item .hsn-name-label { color: #666; margin-left: 6px; }
+    .hsn-dropdown-item .hsn-gst-label { color: #008000; font-weight: bold; margin-left: auto; white-space: nowrap; }
+    .hsn-dropdown-item.kb-active .hsn-name-label { color: #ffc; }
+    .hsn-dropdown-item.kb-active .hsn-gst-label { color: #afa; }
+    /* GST Rate Selector */
+    .gst-rate-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 999999; }
+    .gst-rate-overlay.show { display: flex; align-items: center; justify-content: center; }
+    .gst-rate-box { background: #fff; border-radius: 8px; box-shadow: 0 8px 30px rgba(0,0,0,0.3); padding: 15px; min-width: 250px; }
+    .gst-rate-box h6 { margin: 0 0 10px; font-size: 12px; color: #800000; font-weight: bold; }
+    .gst-rate-item { padding: 6px 10px; cursor: pointer; font-size: 11px; border: 1px solid #eee; margin-bottom: 4px; border-radius: 4px; }
+    .gst-rate-item:hover { background: #ffffcc; }
+    .gst-rate-item.kb-active { background: #800000 !important; color: #fff !important; border-color: #800000; }
+    /* Credit Account Dropdown */
+    .credit-acct-wrap { position: relative; width: 100%; }
+    .credit-acct-wrap input { width: 100%; }
+    .credit-acct-list { display: none; position: absolute; bottom: 100%; left: 0; width: 100%; max-height: 180px; overflow-y: auto; background: #fff; border: 1px solid #008000; border-radius: 6px 6px 0 0; box-shadow: 0 -4px 12px rgba(0,0,0,0.2); z-index: 99999; }
+    .credit-acct-list.show { display: block; }
+    .credit-acct-item { padding: 4px 8px; cursor: pointer; font-size: 11px; border-bottom: 1px solid #eee; }
+    .credit-acct-item:hover { background: #e0ffe0; }
+    .credit-acct-item.kb-active { background: #008000 !important; color: #fff !important; }
+
     /* Custom Modal Styles */
     .custom-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999999; }
     .custom-modal-overlay.show { display: flex; align-items: center; justify-content: center; }
@@ -196,7 +224,15 @@
                             <div class="col-auto"><span class="field-label">TDS</span></div>
                         </div>
                         <div class="row g-1 mb-1"><div class="col-12"><span class="field-label">1. Cash & Bank / 2. General</span><input type="text" class="form-control" name="payment_type" id="paymentType" value="1" maxlength="1" style="width: 30px;"></div></div>
-                        <div class="row g-1 mb-1"><div class="col-12"><span class="field-label">Account</span><select class="form-select" name="credit_account_id" id="creditAccountId" style="width: 100%;" onchange="updateCreditAccount()"><option value="">Select Account</option></select><input type="hidden" name="credit_account_type" id="creditAccountType"><input type="hidden" name="credit_account_name" id="creditAccountName"></div></div>
+                        <div class="row g-1 mb-1"><div class="col-12"><span class="field-label">Account</span>
+                            <div class="credit-acct-wrap">
+                                <input type="text" class="form-control" id="creditAccountInput" placeholder="Search account..." autocomplete="off">
+                                <input type="hidden" name="credit_account_id" id="creditAccountId">
+                                <input type="hidden" name="credit_account_type" id="creditAccountType">
+                                <input type="hidden" name="credit_account_name" id="creditAccountName">
+                                <div class="credit-acct-list" id="creditAcctList"></div>
+                            </div>
+                        </div></div>
                         <div class="row g-1 mb-1"><div class="col-12"><span class="field-label">Cheque No.</span><input type="text" class="form-control" name="cheque_no" id="chequeNo" style="width: 100%;"></div></div>
                         <div class="summary-row" style="border-top: 1px solid #008000; margin-top: 5px; padding-top: 5px;"><span class="summary-label"><strong>Total Cr</strong></span><span class="summary-value" id="totalCreditAmt" style="color: #008000;">0.00</span></div>
                     </div>
@@ -220,6 +256,14 @@
     @endforeach
 </datalist>
 
+<div class="hsn-dropdown-list" id="hsnDropdownList"></div>
+<div class="gst-rate-overlay" id="gstRateOverlay">
+    <div class="gst-rate-box">
+        <h6 id="gstRateTitle">Select GST Rate</h6>
+        <div id="gstRateList"></div>
+    </div>
+</div>
+
 <!-- Custom Account Selection Modal -->
 <div class="custom-modal-overlay" id="accountModalOverlay">
     <div class="custom-modal">
@@ -230,7 +274,7 @@
         <div class="custom-modal-body">
             <div class="row mb-2">
                 <div class="col-md-6">
-                    <input type="text" class="form-control form-control-sm" id="accountSearch" placeholder="Search..." onkeyup="filterAccountList()">
+                    <input type="text" class="form-control form-control-sm" id="accountSearch" placeholder="Search..." oninput="filterAccountList()">
                 </div>
                 <div class="col-md-6" style="position:relative;">
                     <input type="text" id="atfDisplay"
@@ -286,6 +330,57 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 300);
     loadCreditAccounts();
+
+    /* ══════════════════════════════════════════════════════
+       TOP-PRIORITY: Supplier dropdown keyboard (window capture)
+       Must be registered FIRST so it fires before all other handlers
+    ══════════════════════════════════════════════════════ */
+    window.addEventListener('keydown', function(e) {
+        var supMenu = document.getElementById('supplierMenu');
+        if (!supMenu || supMenu.style.display === 'none') return;
+        // Supplier dropdown is OPEN — handle all keys here
+        if (e.key === 'ArrowDown') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var opts = Array.from(document.querySelectorAll('#supplierOpts .sup-opt')).filter(function(o) { return o.style.display !== 'none'; });
+            supIdx = Math.min(supIdx + 1, opts.length - 1);
+            opts.forEach(function(o, i) { o.classList.toggle('sup-hi', i === supIdx); });
+            if (opts[supIdx]) opts[supIdx].scrollIntoView({ block: 'nearest' });
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var opts = Array.from(document.querySelectorAll('#supplierOpts .sup-opt')).filter(function(o) { return o.style.display !== 'none'; });
+            supIdx = Math.max(supIdx - 1, 0);
+            opts.forEach(function(o, i) { o.classList.toggle('sup-hi', i === supIdx); });
+            if (opts[supIdx]) opts[supIdx].scrollIntoView({ block: 'nearest' });
+            return;
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var opts = Array.from(document.querySelectorAll('#supplierOpts .sup-opt')).filter(function(o) { return o.style.display !== 'none'; });
+            var opt = opts[supIdx];
+            if (opt) {
+                document.getElementById('supplierId').value = opt.dataset.val;
+                document.getElementById('supplierDisplay').value = opt.textContent.trim();
+                document.getElementById('gstNo').value = opt.dataset.gst || '';
+                document.getElementById('panNo').value = opt.dataset.pan || '';
+                document.getElementById('city').value = opt.dataset.city || '';
+                document.getElementById('pin').value = opt.dataset.pin || '';
+                supMenu.style.display = 'none';
+                setTimeout(function() {
+                    var hsn = document.querySelector('#hsnTableBody .hsn-code');
+                    if (hsn) { hsn.focus(); hsn.select(); }
+                }, 50);
+            }
+            return;
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            supMenu.style.display = 'none';
+            document.getElementById('supplierDisplay').focus();
+            return;
+        }
+    }, true);
 
     /* ══════════════════════════════════════════════════════
        SUPPLIER CUSTOM DROPDOWN
@@ -347,23 +442,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     supSearch.addEventListener('input', function() { filterSupplierOpts(this.value); });
+    /* Capture-phase so it fires before global Enter handlers */
     supSearch.addEventListener('keydown', function(e) {
         if (e.key==='ArrowDown') {
-            e.preventDefault();
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             const opts=supOpts(); supIdx=Math.min(supIdx+1,opts.length-1); supHilight(supIdx); return;
         }
         if (e.key==='ArrowUp') {
-            e.preventDefault();
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             const opts=supOpts(); supIdx=Math.max(supIdx-1,0); supHilight(supIdx); return;
         }
         if (e.key==='Enter') {
-            e.preventDefault(); e.stopPropagation();
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
             const opts=supOpts(); const opt=opts[supIdx];
             if (opt) supSelectAndNext(opt.dataset.val, opt.textContent.trim(), opt.dataset.gst, opt.dataset.pan, opt.dataset.city, opt.dataset.pin);
             return;
         }
-        if (e.key==='Escape') { e.preventDefault(); supClose(); supDisp.focus(); return; }
-    });
+        if (e.key==='Escape') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); supClose(); supDisp.focus(); return; }
+    }, true);
 
     Array.from(supOptsWrap.querySelectorAll('.sup-opt')).forEach((opt,i)=>{
         opt.addEventListener('mouseenter', ()=>{ supIdx=supOpts().indexOf(opt); supHilight(supIdx); });
@@ -467,15 +563,33 @@ document.addEventListener('DOMContentLoaded', function() {
     function triggerAddFromDescriptionEnter() {
         _supSkipFocus = true;
         supClose();
-        setTimeout(function () {
-            const addBtn = document.getElementById('addAccountBtn');
-            if (addBtn) {
-                addBtn.focus();
-                addBtn.click();
-                return;
+        
+        // Find or create first empty row for the account entry
+        let targetRow = null;
+        const rows = document.querySelectorAll('#accountsTableBody tr');
+        
+        // Look for first empty row
+        for (let row of rows) {
+            if (!row.querySelector('.account-name').value) {
+                targetRow = row;
+                break;
             }
-            openAccountModal();
-        }, 0);
+        }
+        
+        // If no empty row, add a new one
+        if (!targetRow) {
+            addAccountRow();
+            const newRows = document.querySelectorAll('#accountsTableBody tr');
+            targetRow = newRows[newRows.length - 1];
+        }
+        
+        // Select this row and open modal
+        if (targetRow) {
+            selectAccountRowEl(targetRow);
+            setTimeout(function () {
+                openAccountModal();
+            }, 50);
+        }
     }
 
     document.getElementById('description').addEventListener('keydown', function(e) {
@@ -492,6 +606,43 @@ document.addEventListener('DOMContentLoaded', function() {
         triggerAddFromDescriptionEnter();
     }, true);
 
+    /* ── Capture-phase Enter on account-code / account-name ──
+       Opens the account modal for the next empty row */
+    window.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' || e.ctrlKey) return;
+        if (isAccountModalOpen()) return;
+        if (_isHsnDropdownOpen() || _isGstRateOpen() || _isCreditAcctOpen()) return;
+        if (supIsOpen()) return;
+
+        var el = document.activeElement;
+        if (!el) return;
+        var isCode = el.classList.contains('account-code');
+        var isName = el.classList.contains('account-name');
+        if (!isCode && !isName) return;
+        var row = el.closest('tr');
+        if (!row || !row.closest('#accountsTableBody')) return;
+
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+        // Find next empty row or create one
+        var targetRow = null;
+        var allRows = document.querySelectorAll('#accountsTableBody tr');
+        var foundCurrent = false;
+        for (var r of allRows) {
+            if (r === row) { foundCurrent = true; continue; }
+            if (foundCurrent && !r.querySelector('.account-name').value) {
+                targetRow = r;
+                break;
+            }
+        }
+        if (!targetRow) {
+            addAccountRow();
+            targetRow = document.querySelector('#accountsTableBody tr:last-child');
+        }
+        selectAccountRowEl(targetRow);
+        setTimeout(function() { openAccountModal(); }, 50);
+    }, true);
+
     /* ══════════════════════════════════════════════════════
        MODAL KEYBOARD NAVIGATION
     ══════════════════════════════════════════════════════ */
@@ -506,84 +657,41 @@ document.addEventListener('DOMContentLoaded', function() {
         modalKbIdx = idx;
     }
 
-    /* accountSearch: ↑↓ navigates list, Enter selects — CAPTURE phase
-       so this fires FIRST and prevents any other handler from stealing focus */
-    document.getElementById('accountSearch').addEventListener('keydown', function(e) {
-        if (e.key==='ArrowDown') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            const rows = modalVisibleRows();
-            if (rows.length === 0) return;
-            modalKbIdx = modalKbIdx < 0 ? 0 : Math.min(modalKbIdx + 1, rows.length - 1);
-            modalHilight(modalKbIdx);
-            /* Keep focus on search box — do NOT let focus move */
-            this.focus();
-            return;
-        }
-        if (e.key==='ArrowUp') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            const rows = modalVisibleRows();
-            if (rows.length === 0) return;
-            modalKbIdx = Math.max(modalKbIdx - 1, 0);
-            modalHilight(modalKbIdx);
-            /* Keep focus on search box */
-            this.focus();
-            return;
-        }
-        if (e.key==='Enter') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-            /* If a row is highlighted, select it; otherwise highlight first row */
-            const rows = modalVisibleRows();
-            if (rows.length === 0) return;
-            if (modalKbIdx < 0) {
-                modalKbIdx = 0;
-                modalHilight(0);
-                return;
-            }
-            selectAccount();
-            return;
-        }
-        if (e.key==='Escape') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); closeAccountModal(); return; }
-        /* Tab → jump to filter dropdown */
-        if (e.key==='Tab') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); atfDisp.focus(); return; }
-    }, true);   /* ← capture phase */
-
-    /* Reset highlight when filtering */
-    document.getElementById('accountSearch').addEventListener('input', function() {
-        filterAccountList();
-        modalKbIdx = -1;
-    });
-
-    /* ── MODAL-WIDE keyboard handler (capture phase) ─────────────
-       Ensures Up/Down/Enter work from ANYWHERE inside the modal,
-       EXCEPT search box (handled above) and filter dropdown. */
-    document.getElementById('accountModalOverlay').addEventListener('keydown', function(e) {
-        /* Only handle when modal is visible */
-        if (!this.classList.contains('show')) return;
-        /* Skip — already handled by its own capture listener above */
-        if (e.target.id === 'accountSearch') return;
-        /* Skip if focus is on the account-type-filter dropdown */
-        if (e.target.id === 'atfDisplay' || e.target.closest('#atfMenu')) return;
-
+    /* ══════════════════════════════════════════════════════
+       MODAL KEYBOARD NAVIGATION - FIXED IMPLEMENTATION
+    ══════════════════════════════════════════════════════ */
+    
+    function isAccountModalOpen() {
+        const modal = document.getElementById('accountModalOverlay');
+        return modal && modal.classList.contains('show');
+    }
+    
+    /* accountSearch: ↑↓ navigates list, Enter selects */
+    const accountSearch = document.getElementById('accountSearch');
+    
+    accountSearch.addEventListener('keydown', function(e) {
         if (e.key === 'ArrowDown') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            e.preventDefault();
             const rows = modalVisibleRows();
             if (rows.length === 0) return;
             modalKbIdx = modalKbIdx < 0 ? 0 : Math.min(modalKbIdx + 1, rows.length - 1);
             modalHilight(modalKbIdx);
+            // Ensure focus stays on search box
+            setTimeout(() => this.focus(), 0);
             return;
         }
         if (e.key === 'ArrowUp') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            e.preventDefault();
             const rows = modalVisibleRows();
             if (rows.length === 0) return;
             modalKbIdx = Math.max(modalKbIdx - 1, 0);
             modalHilight(modalKbIdx);
+            // Ensure focus stays on search box
+            setTimeout(() => this.focus(), 0);
             return;
         }
         if (e.key === 'Enter') {
-            /* Don't intercept Enter on buttons or the filter dropdown */
-            if (e.target.tagName === 'BUTTON' || e.target.id === 'atfDisplay') return;
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            e.preventDefault();
             const rows = modalVisibleRows();
             if (rows.length === 0) return;
             if (modalKbIdx < 0) {
@@ -595,21 +703,235 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         if (e.key === 'Escape') {
-            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            e.preventDefault();
+            closeAccountModal();
+            return;
+        }
+        if (e.key === 'Tab') {
+            e.preventDefault();
+            atfDisp.focus();
+            return;
+        }
+    });
+
+    /* Reset highlight when filtering */
+    accountSearch.addEventListener('input', function() {
+        filterAccountList();
+        modalKbIdx = -1;
+        // Clear all highlights
+        document.querySelectorAll('#accountListBody tr').forEach(r => {
+            r.classList.remove('table-primary', 'kb-hi');
+        });
+    });
+
+    /* ── WINDOW CAPTURE-PHASE HANDLER for modal ─────────────
+       This ensures modal navigation works even if focus is lost */
+    window.addEventListener('keydown', function(e) {
+        if (!isAccountModalOpen()) return;
+        
+        const managedKeys = ['ArrowDown', 'ArrowUp', 'Enter', 'Escape'];
+        if (managedKeys.indexOf(e.key) === -1) return;
+        
+        // Don't interfere if typing in search (already handled above)
+        if (e.target.id === 'accountSearch') return;
+        // Don't interfere with filter dropdown
+        if (e.target.id === 'atfDisplay' || e.target.closest('#atfMenu')) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const rows = modalVisibleRows();
+        if (rows.length === 0) return;
+        
+        if (e.key === 'ArrowDown') {
+            modalKbIdx = modalKbIdx < 0 ? 0 : Math.min(modalKbIdx + 1, rows.length - 1);
+            modalHilight(modalKbIdx);
+            // Return focus to search box
+            setTimeout(() => accountSearch.focus(), 0);
+            return;
+        }
+        if (e.key === 'ArrowUp') {
+            modalKbIdx = Math.max(modalKbIdx - 1, 0);
+            modalHilight(modalKbIdx);
+            // Return focus to search box
+            setTimeout(() => accountSearch.focus(), 0);
+            return;
+        }
+        if (e.key === 'Enter') {
+            if (modalKbIdx < 0) {
+                modalKbIdx = 0;
+                modalHilight(0);
+                return;
+            }
+            selectAccount();
+            return;
+        }
+        if (e.key === 'Escape') {
             closeAccountModal();
             return;
         }
     }, true);
 
-    /* Global F9 + Escape */
+    /* Global F9 + Escape handler */
     document.addEventListener('keydown', function(e) {
-        if (e.key==='F9') { e.preventDefault(); openAccountModal(); }
-        if (e.key==='Escape') {
+        if (e.key === 'F9') { e.preventDefault(); openAccountModal(); return; }
+        if (e.key === 'Escape' && !isAccountModalOpen()) {
+            if (_isCreditAcctOpen()) { closeCreditAcctDropdown(); return; }
+            if (_isHsnDropdownOpen()) { closeHsnDropdown(); return; }
             if (supIsOpen()) { supClose(); return; }
             if (atfIsOpen()) { atfClose(); return; }
-            closeAccountModal();
         }
     });
+
+    /* ── Ctrl+Enter → smart navigation ──
+       If Supplier not selected → open Supplier dropdown
+       If Supplier selected → focus TDS @ */
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.ctrlKey) {
+            if (isAccountModalOpen() || _isGstRateOpen()) return;
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var suppId = document.getElementById('supplierId').value;
+            if (!suppId) {
+                supOpen();
+            } else {
+                var tdsEl = document.getElementById('tdsPercent');
+                tdsEl.focus(); tdsEl.select();
+            }
+        }
+    }, true);
+
+    /* ── Enter navigation: TDS@ → %TDS → Payment Type → Credit Account → Cheque ── */
+    window.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter' || e.ctrlKey) return;
+        if (isAccountModalOpen() || _isHsnDropdownOpen() || _isGstRateOpen() || _isCreditAcctOpen()) return;
+        var el = document.activeElement;
+        if (!el) return;
+        if (el.id === 'tdsPercent') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            calculateTds();
+            document.getElementById('tdsAmount').focus();
+            return;
+        }
+        if (el.id === 'tdsAmount') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            document.getElementById('paymentType').focus();
+            return;
+        }
+        if (el.id === 'paymentType') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            loadCreditAccounts();
+            var inp = document.getElementById('creditAccountInput');
+            inp.value = '';
+            inp.focus();
+            openCreditAcctDropdown();
+            return;
+        }
+        if (el.id === 'chequeNo') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            return;
+        }
+    }, true);
+
+    /* ── Credit Account dropdown keyboard handler ── */
+    window.addEventListener('keydown', function(e) {
+        if (!_isCreditAcctOpen()) return;
+        var el = document.activeElement;
+        if (!el || el.id !== 'creditAccountInput') return;
+        var items = _getVisibleCreditAcctItems();
+        if (e.key === 'ArrowDown') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            if (!items.length) return;
+            _creditAcctKbIdx = Math.min(_creditAcctKbIdx + 1, items.length - 1);
+            _setCreditAcctHighlight(_creditAcctKbIdx); return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            if (!items.length) return;
+            _creditAcctKbIdx = Math.max(_creditAcctKbIdx - 1, 0);
+            _setCreditAcctHighlight(_creditAcctKbIdx); return;
+        }
+        if (e.key === 'Enter') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            if (_creditAcctKbIdx < 0 && items.length > 0) { _creditAcctKbIdx = 0; _setCreditAcctHighlight(0); }
+            if (_creditAcctKbIdx >= 0 && _creditAcctKbIdx < items.length) selectCreditAcctItem(items[_creditAcctKbIdx]);
+            return;
+        }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); closeCreditAcctDropdown(); return; }
+        _creditAcctKbIdx = -1;
+    }, true);
+
+    /* Credit Account input filter */
+    document.getElementById('creditAccountInput').addEventListener('input', function() {
+        filterCreditAcctDropdown(this.value);
+        if (!_isCreditAcctOpen()) openCreditAcctDropdown();
+    });
+    document.getElementById('creditAccountInput').addEventListener('focus', function() {
+        filterCreditAcctDropdown(this.value);
+        openCreditAcctDropdown();
+    });
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.credit-acct-wrap')) closeCreditAcctDropdown();
+    });
+
+    /* ── HSN Code Enter → open HSN dropdown ── */
+    window.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (isAccountModalOpen() || _isGstRateOpen() || _isCreditAcctOpen()) return;
+        if (supIsOpen()) return;
+        if (_isHsnDropdownOpen()) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var items = _getVisibleHsnItems();
+            if (_hsnKbIdx < 0 && items.length > 0) { _hsnKbIdx = 0; _setHsnKbHighlight(0); }
+            if (_hsnKbIdx >= 0 && _hsnKbIdx < items.length) selectHsnItem(items[_hsnKbIdx]);
+            return;
+        }
+        var el = document.activeElement;
+        if (!el || !el.classList.contains('hsn-code')) return;
+        var row = el.closest('tr');
+        if (!row || !row.closest('#hsnTableBody')) return;
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        openHsnDropdown(el);
+    }, true);
+
+    /* ── HSN dropdown keyboard navigation ── */
+    window.addEventListener('keydown', function(e) {
+        if (!_isHsnDropdownOpen()) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var items = _getVisibleHsnItems();
+            if (!items.length) return;
+            _hsnKbIdx = Math.min(_hsnKbIdx + 1, items.length - 1);
+            _setHsnKbHighlight(_hsnKbIdx); return;
+        }
+        if (e.key === 'ArrowUp') {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            var items = _getVisibleHsnItems();
+            if (!items.length) return;
+            _hsnKbIdx = Math.max(_hsnKbIdx - 1, 0);
+            _setHsnKbHighlight(_hsnKbIdx); return;
+        }
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); closeHsnDropdown(); return; }
+        if (e.key === 'Tab') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); closeHsnDropdown(); return; }
+    }, true);
+
+    /* HSN code input → filter dropdown */
+    document.getElementById('hsnTableBody').addEventListener('input', function(e) {
+        if (!e.target.classList.contains('hsn-code')) return;
+        if (!_isHsnDropdownOpen()) openHsnDropdown(e.target);
+        else filterHsnDropdown(e.target.value);
+    });
+    document.addEventListener('click', function(e) {
+        if (_isHsnDropdownOpen() && !e.target.classList.contains('hsn-code') && !e.target.closest('#hsnDropdownList')) closeHsnDropdown();
+    });
+
+    /* ── Ctrl+S → Save ── */
+    window.addEventListener('keydown', function(e) {
+        if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) {
+            e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            saveVoucher();
+        }
+    }, true);
 
     /* Auto-focus first field */
     setTimeout(()=>chainTo('voucherDate'), 100);
@@ -624,8 +946,12 @@ function addAccountRow(data = null) {
         <td><input type="text" class="account-code" name="accounts[${accountRowCount}][account_code]" value="${data?.account_code || ''}" tabindex="-1"
                 style="cursor:pointer;" readonly
                 onclick="selectAccountRowEl(this.closest('tr')); openAccountModal();"
-                onfocus="selectAccountRowEl(this.closest('tr')); openAccountModal();"></td>
-        <td><input type="text" class="account-name" name="accounts[${accountRowCount}][account_name]" value="${data?.account_name || ''}" readonly onclick="selectAccountRowEl(this.closest('tr')); openAccountModal();" tabindex="-1">
+                onfocus="selectAccountRowEl(this.closest('tr'));"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();selectAccountRowEl(this.closest('tr'));openAccountModal();}"></td>
+        <td><input type="text" class="account-name" name="accounts[${accountRowCount}][account_name]" value="${data?.account_name || ''}" readonly
+                onclick="selectAccountRowEl(this.closest('tr')); openAccountModal();"
+                onkeydown="if(event.key==='Enter'){event.preventDefault();selectAccountRowEl(this.closest('tr'));openAccountModal();}"
+                tabindex="-1">
             <input type="hidden" class="account-type" name="accounts[${accountRowCount}][account_type]" value="${data?.account_type || ''}">
             <input type="hidden" class="account-id" name="accounts[${accountRowCount}][account_id]" value="${data?.account_id || ''}"></td>
     `;
@@ -645,7 +971,7 @@ function addHsnRow(data = null) {
     const row = document.createElement('tr');
     row.setAttribute('data-row', hsnRowCount);
     row.innerHTML = `
-        <td><input type="text" class="hsn-code" name="items[${hsnRowCount}][hsn_code]" value="${data?.hsn_code || ''}" oninput="autoCompleteHsn(this)" onchange="fetchHsnDetails(this)" onclick="selectHsnRowEl(this.closest('tr'))" list="hsnDatalist"></td>
+        <td><input type="text" class="hsn-code" name="items[${hsnRowCount}][hsn_code]" value="${data?.hsn_code || ''}" onclick="selectHsnRowEl(this.closest('tr'))" autocomplete="off"></td>
         <td><input type="number" class="hsn-amount text-end" name="items[${hsnRowCount}][amount]" value="${data?.amount || ''}" step="0.01" onchange="calculateHsnRow(this.closest('tr')); checkAddHsnRow();" onclick="selectHsnRowEl(this.closest('tr'))"></td>
         <td><input type="number" class="hsn-gst text-end" name="items[${hsnRowCount}][gst_percent]" value="${data?.gst_percent || ''}" step="0.01" onchange="calculateHsnRow(this.closest('tr'))" onclick="selectHsnRowEl(this.closest('tr'))"></td>
         <td><input type="number" class="hsn-cgst-pct text-end bg-light" name="items[${hsnRowCount}][cgst_percent]" value="${data?.cgst_percent || ''}" readonly></td>
@@ -729,57 +1055,56 @@ function fetchHsnDetails(input) {
 }
 
 function showGstRateSelector(row, hsnOptions, hsnCode) {
-    // Create options string for selection
-    let optionsHtml = hsnOptions.map((hsn, idx) => {
-        const gst = parseFloat(hsn.total_gst_percent) || 0;
-        return `<option value="${idx}">${gst}% GST (CGST: ${gst/2}%, SGST: ${gst/2}%)</option>`;
-    }).join('');
-    
-    // Show a simple prompt with available rates
-    const ratesList = hsnOptions.map((hsn, idx) => {
-        const gst = parseFloat(hsn.total_gst_percent) || 0;
-        return `${idx + 1}. ${gst}% GST`;
-    }).join('\n');
-    
-    const selection = prompt(`HSN ${hsnCode} has multiple GST rates:\n${ratesList}\n\nEnter number (1-${hsnOptions.length}):`, '1');
-    
-    if (selection) {
-        const idx = parseInt(selection) - 1;
-        if (idx >= 0 && idx < hsnOptions.length) {
-            applyHsnToRow(row, hsnOptions[idx]);
-        }
-    }
+    _gstRateRow = row;
+    _gstRateOptions = hsnOptions;
+    _gstRateKbIdx = -1;
+    var list = document.getElementById('gstRateList');
+    document.getElementById('gstRateTitle').textContent = 'HSN ' + hsnCode + ' - Select GST Rate';
+    list.innerHTML = '';
+    hsnOptions.forEach(function(hsn, idx) {
+        var item = document.createElement('div');
+        item.className = 'gst-rate-item';
+        item.textContent = (idx + 1) + '. ' + (parseFloat(hsn.total_gst_percent) || 0) + '% GST';
+        item.dataset.idx = idx;
+        item.onclick = function() { _selectGstRate(idx); };
+        list.appendChild(item);
+    });
+    document.getElementById('gstRateOverlay').classList.add('show');
+    window.removeEventListener('keydown', _handleGstRateKey, true);
+    window.addEventListener('keydown', _handleGstRateKey, true);
 }
+var _gstRateRow = null, _gstRateOptions = [], _gstRateKbIdx = -1;
+function _isGstRateOpen() { return document.getElementById('gstRateOverlay').classList.contains('show'); }
+function _handleGstRateKey(e) {
+    if (!_isGstRateOpen()) return;
+    var items = document.querySelectorAll('#gstRateList .gst-rate-item');
+    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); _gstRateKbIdx = Math.min(_gstRateKbIdx + 1, items.length - 1); _highlightGstRate(_gstRateKbIdx); return; }
+    if (e.key === 'ArrowUp') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); _gstRateKbIdx = Math.max(_gstRateKbIdx - 1, 0); _highlightGstRate(_gstRateKbIdx); return; }
+    if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); if (_gstRateKbIdx < 0 && items.length > 0) { _gstRateKbIdx = 0; _highlightGstRate(0); } _selectGstRate(_gstRateKbIdx); return; }
+    if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); _closeGstRate(); return; }
+    if (e.key >= '1' && e.key <= '9') { var idx = parseInt(e.key) - 1; if (idx < _gstRateOptions.length) { e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); _selectGstRate(idx); } return; }
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+}
+function _highlightGstRate(idx) { document.querySelectorAll('#gstRateList .gst-rate-item').forEach(function(el) { el.classList.remove('kb-active'); }); var items = document.querySelectorAll('#gstRateList .gst-rate-item'); if (idx >= 0 && idx < items.length) items[idx].classList.add('kb-active'); }
+function _selectGstRate(idx) { if (idx >= 0 && idx < _gstRateOptions.length) applyHsnToRow(_gstRateRow, _gstRateOptions[idx]); _closeGstRate(); }
+function _closeGstRate() { window.removeEventListener('keydown', _handleGstRateKey, true); document.getElementById('gstRateOverlay').classList.remove('show'); }
 
 function applyHsnToRow(row, hsn) {
-    // Parse values - handle both string and number types
     let cgstPct = parseFloat(hsn.cgst_percent) || 0;
     let sgstPct = parseFloat(hsn.sgst_percent) || 0;
     let totalGst = parseFloat(hsn.total_gst_percent) || 0;
-    
-    // If total_gst_percent is set but cgst/sgst are 0, calculate them
-    if (totalGst > 0 && cgstPct === 0 && sgstPct === 0) {
-        cgstPct = totalGst / 2;
-        sgstPct = totalGst / 2;
-    }
-    
-    // If cgst/sgst are set but total is 0, calculate total
-    if (totalGst === 0 && (cgstPct > 0 || sgstPct > 0)) {
-        totalGst = cgstPct + sgstPct;
-    }
-    
+    if (totalGst > 0 && cgstPct === 0 && sgstPct === 0) { cgstPct = totalGst / 2; sgstPct = totalGst / 2; }
+    if (totalGst === 0 && (cgstPct > 0 || sgstPct > 0)) totalGst = cgstPct + sgstPct;
     row.querySelector('.hsn-gst').value = totalGst.toFixed(2);
     row.querySelector('.hsn-cgst-pct').value = cgstPct.toFixed(2);
     row.querySelector('.hsn-sgst-pct').value = sgstPct.toFixed(2);
-    
-    // Calculate amounts if amount is already entered
     const amount = parseFloat(row.querySelector('.hsn-amount').value) || 0;
     if (amount > 0) {
         row.querySelector('.hsn-cgst-amt').value = (amount * cgstPct / 100).toFixed(2);
         row.querySelector('.hsn-sgst-amt').value = (amount * sgstPct / 100).toFixed(2);
     }
-    
     calculateTotals();
+    setTimeout(function() { var amtEl = row.querySelector('.hsn-amount'); if (amtEl) { amtEl.focus(); amtEl.select(); } }, 80);
 }
 
 function calculateHsnRow(row) {
@@ -872,26 +1197,124 @@ function updateGstSummary() {
 }
 
 function loadCreditAccounts() {
-    const type = document.getElementById('paymentType').value;
-    const select = document.getElementById('creditAccountId');
-    select.innerHTML = '<option value="">Select Account</option>';
-    const accounts = type === '1' ? cashBankBooks : generalLedgers;
-    const accountType = type === '1' ? 'CB' : 'GL';
-    accounts.forEach(acc => {
-        const option = document.createElement('option');
-        option.value = acc.id;
-        option.textContent = acc.name || acc.account_name;
-        option.dataset.type = accountType;
-        option.dataset.name = acc.name || acc.account_name;
-        select.appendChild(option);
-    });
+    buildCreditAcctDropdown();
 }
 
-function updateCreditAccount() {
-    const select = document.getElementById('creditAccountId');
-    const option = select.options[select.selectedIndex];
-    document.getElementById('creditAccountType').value = option.dataset.type || '';
-    document.getElementById('creditAccountName').value = option.dataset.name || '';
+function updateCreditAccount() {}
+
+/* ══════════════════════════════════════════════════════════
+   HSN CODE CUSTOM DROPDOWN
+══════════════════════════════════════════════════════════ */
+let _hsnKbIdx = -1;
+let _hsnActiveInput = null;
+function _isHsnDropdownOpen() { return document.getElementById('hsnDropdownList').classList.contains('show'); }
+function _getVisibleHsnItems() { return Array.from(document.querySelectorAll('#hsnDropdownList .hsn-dropdown-item')).filter(function(el) { return el.style.display !== 'none'; }); }
+function _setHsnKbHighlight(idx) {
+    var items = _getVisibleHsnItems();
+    document.querySelectorAll('#hsnDropdownList .hsn-dropdown-item').forEach(function(el) { el.classList.remove('kb-active'); });
+    if (idx < 0 || idx >= items.length) return;
+    _hsnKbIdx = idx; items[idx].classList.add('kb-active'); items[idx].scrollIntoView({ block: 'nearest' });
+}
+function buildHsnDropdown() {
+    var list = document.getElementById('hsnDropdownList');
+    list.innerHTML = '';
+    hsnCodes.forEach(function(h, idx) {
+        if (!h.hsn_code) return;
+        var code = h.hsn_code.toString();
+        var gst = parseFloat(h.total_gst_percent) || (parseFloat(h.cgst_percent || 0) + parseFloat(h.sgst_percent || 0));
+        var item = document.createElement('div');
+        item.className = 'hsn-dropdown-item';
+        item.dataset.code = code;
+        item.dataset.name = h.name || '';
+        item.dataset.idx = idx;
+        item.innerHTML = '<span class="hsn-code-label">' + code + '</span><span class="hsn-name-label">' + (h.name || '') + '</span><span class="hsn-gst-label">' + gst + '%</span>';
+        item.onclick = function() { selectHsnItem(item); };
+        list.appendChild(item);
+    });
+}
+function openHsnDropdown(inputEl) {
+    _hsnActiveInput = inputEl;
+    var list = document.getElementById('hsnDropdownList');
+    buildHsnDropdown(); filterHsnDropdown(inputEl.value);
+    var rect = inputEl.getBoundingClientRect();
+    list.style.left = rect.left + 'px'; list.style.top = (rect.bottom) + 'px';
+    list.classList.add('show'); _hsnKbIdx = -1;
+}
+function closeHsnDropdown() { document.getElementById('hsnDropdownList').classList.remove('show'); _hsnKbIdx = -1; _hsnActiveInput = null; }
+function filterHsnDropdown(search) {
+    search = (search || '').toLowerCase();
+    document.querySelectorAll('#hsnDropdownList .hsn-dropdown-item').forEach(function(el) {
+        var code = el.dataset.code.toLowerCase(); var name = el.dataset.name.toLowerCase();
+        el.style.display = (code.includes(search) || name.includes(search)) ? '' : 'none';
+    });
+    _hsnKbIdx = -1;
+    document.querySelectorAll('#hsnDropdownList .hsn-dropdown-item').forEach(function(el) { el.classList.remove('kb-active'); });
+}
+function selectHsnItem(item) {
+    if (_hsnActiveInput) {
+        _hsnActiveInput.value = item.dataset.code;
+        var row = _hsnActiveInput.closest('tr');
+        var hsnIdx = parseInt(item.dataset.idx);
+        var hsn = hsnCodes[hsnIdx];
+        closeHsnDropdown();
+        applyHsnToRow(row, hsn);
+    } else { closeHsnDropdown(); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   CREDIT ACCOUNT CUSTOM DROPDOWN
+══════════════════════════════════════════════════════════ */
+let _creditAcctKbIdx = -1;
+function _isCreditAcctOpen() { return document.getElementById('creditAcctList').classList.contains('show'); }
+function _getVisibleCreditAcctItems() { return Array.from(document.querySelectorAll('#creditAcctList .credit-acct-item')).filter(function(el) { return el.style.display !== 'none'; }); }
+function _setCreditAcctHighlight(idx) {
+    var items = _getVisibleCreditAcctItems();
+    document.querySelectorAll('#creditAcctList .credit-acct-item').forEach(function(el) { el.classList.remove('kb-active'); });
+    if (idx < 0 || idx >= items.length) return;
+    _creditAcctKbIdx = idx; items[idx].classList.add('kb-active'); items[idx].scrollIntoView({ block: 'nearest' });
+}
+function buildCreditAcctDropdown() {
+    var type = document.getElementById('paymentType').value;
+    var accounts = type === '1' ? cashBankBooks : generalLedgers;
+    var accountType = type === '1' ? 'CB' : 'GL';
+    var list = document.getElementById('creditAcctList');
+    list.innerHTML = '';
+    accounts.forEach(function(acc) {
+        var item = document.createElement('div');
+        item.className = 'credit-acct-item';
+        item.dataset.id = acc.id;
+        item.dataset.name = acc.name || acc.account_name;
+        item.dataset.type = accountType;
+        item.textContent = acc.name || acc.account_name;
+        item.onclick = function() { selectCreditAcctItem(item); };
+        list.appendChild(item);
+    });
+}
+function openCreditAcctDropdown() {
+    var list = document.getElementById('creditAcctList');
+    if (!list.classList.contains('show')) {
+        buildCreditAcctDropdown();
+        filterCreditAcctDropdown(document.getElementById('creditAccountInput').value);
+        list.classList.add('show');
+    }
+    _creditAcctKbIdx = -1;
+}
+function closeCreditAcctDropdown() { document.getElementById('creditAcctList').classList.remove('show'); _creditAcctKbIdx = -1; }
+function filterCreditAcctDropdown(search) {
+    search = (search || '').toLowerCase();
+    document.querySelectorAll('#creditAcctList .credit-acct-item').forEach(function(el) {
+        el.style.display = el.dataset.name.toLowerCase().includes(search) ? '' : 'none';
+    });
+    _creditAcctKbIdx = -1;
+    document.querySelectorAll('#creditAcctList .credit-acct-item').forEach(function(el) { el.classList.remove('kb-active'); });
+}
+function selectCreditAcctItem(item) {
+    document.getElementById('creditAccountInput').value = item.dataset.name;
+    document.getElementById('creditAccountId').value = item.dataset.id;
+    document.getElementById('creditAccountType').value = item.dataset.type;
+    document.getElementById('creditAccountName').value = item.dataset.name;
+    closeCreditAcctDropdown();
+    setTimeout(function() { document.getElementById('chequeNo').focus(); }, 80);
 }
 
 function openAccountModal() {
@@ -950,7 +1373,7 @@ function selectAccount() {
     const selected = document.querySelector('#accountListBody tr.table-primary');
     if (!selected) { alert('Please select an account'); return; }
     
-    // Find first empty row or use selected row
+    // Use the pre-selected target row
     let targetRow = selectedAccountRow;
     if (!targetRow || targetRow.querySelector('.account-name').value) {
         // Find first empty row
@@ -972,25 +1395,36 @@ function selectAccount() {
     targetRow.querySelector('.account-name').value = selected.dataset.name;
     targetRow.querySelector('.account-type').value = selected.dataset.type;
     targetRow.querySelector('.account-id').value = selected.dataset.id;
-    
-    // Add new empty row after selection
-    addAccountRow();
 
     closeAccountModal();
     selectedAccountRow = null;
 
-    /* Move keyboard focus to the next empty account code */
+    /* Focus the next empty row's code field */
     setTimeout(function() {
-        const rows = document.querySelectorAll('#accountsTableBody tr');
-        for (let r of rows) {
-            if (!r.querySelector('.account-name').value) {
-                r.querySelector('.account-code').focus();
-                /* Auto open modal for next account */
-                openAccountModal();
+        var nextEmpty = null;
+        var allRows = document.querySelectorAll('#accountsTableBody tr');
+        var passedTarget = false;
+        for (var r of allRows) {
+            if (r === targetRow) { passedTarget = true; continue; }
+            if (passedTarget && !r.querySelector('.account-name').value) {
+                nextEmpty = r;
                 break;
             }
         }
-    }, 80);
+        // If no next empty row exists, check from beginning (unlikely) or use existing empty row
+        if (!nextEmpty) {
+            for (var r of allRows) {
+                if (!r.querySelector('.account-name').value) {
+                    nextEmpty = r;
+                    break;
+                }
+            }
+        }
+        if (nextEmpty) {
+            var codeInput = nextEmpty.querySelector('.account-code');
+            if (codeInput) { codeInput.focus(); selectAccountRowEl(nextEmpty); }
+        }
+    }, 50);
 }
 
 function deleteAccount() {

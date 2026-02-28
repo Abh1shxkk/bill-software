@@ -26,6 +26,8 @@ class PurchaseTransactionItem extends Model
         'spl_rate',
         'dis_percent',
         'amount',
+        'hsn_code',
+        'gst_percent',
         'cgst_percent',
         'sgst_percent',
         'cess_percent',

@@ -370,7 +370,7 @@ function initTableKeyboardNav() {
         const currentIdx = editableClasses.indexOf(currentClass);
 
         // HSN Code + Enter = open HSN modal
-        if (currentClass === 'hsn-code' && !e.shiftKey) { selectRow(parseInt(rowId)); openHsnModal(); return; }
+        if (currentClass === 'hsn-code' && !e.shiftKey) { if (!target.value.trim()) { selectRow(parseInt(rowId)); openHsnModal(); } else { const amt = row.querySelector('.amount'); if (amt) { amt.focus(); amt.select(); } } return; }
 
         if (currentClass === 'amount' || currentClass === 'gst-percent') calculateRowTax(parseInt(rowId));
 
@@ -655,7 +655,10 @@ function updateVoucher() {
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({ bill_date: document.getElementById('billDate').value, supplier_id: sid, remarks: document.getElementById('remarks').value, items })
     }).then(r => r.json()).then(res => {
-        if (res.success) { alert('Updated!'); loadVouchersForModal(); }
+        if (res.success) {
+            alert('Updated!');
+            window.location.reload();
+        }
         else { alert('Error: ' + res.message); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; }
     }).catch(e => { console.error(e); alert('Error updating voucher'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; });
 }

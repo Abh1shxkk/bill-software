@@ -908,7 +908,7 @@ function updateVoucher() {
     .then(result => {
         if (result.success) {
             alert('Voucher updated successfully!');
-            loadVouchersForModal();
+            location.reload();
         } else {
             alert('Error: ' + result.message);
             isSubmitting = false;

@@ -311,7 +311,7 @@ function initTableKeyboardNav() {
         if (!currentClass) return;
         const currentIdx = editableClasses.indexOf(currentClass);
 
-        if (currentClass === 'hsn-code' && !e.shiftKey) { selectRow(parseInt(rowId)); openHsnModal(); return; }
+        if (currentClass === 'hsn-code' && !e.shiftKey) { if (!target.value.trim()) { selectRow(parseInt(rowId)); openHsnModal(); } else { const amt = row.querySelector('.amount'); if (amt) { amt.focus(); amt.select(); } } return; }
         if (currentClass === 'amount' || currentClass === 'gst-percent') calculateRowTax(parseInt(rowId));
 
         // Shift+Enter: backwards
