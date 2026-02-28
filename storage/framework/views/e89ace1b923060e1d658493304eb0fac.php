@@ -448,8 +448,9 @@ function updateVoucher() {
         method: 'PUT', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify({ return_date: document.getElementById('returnDate').value, customer_id: cid, remarks: document.getElementById('remarks').value, items })
     }).then(r => r.json()).then(res => {
-        if (res.success) { alert('Updated!'); window.location.reload(); }
-        else { alert('Error: ' + res.message); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; }
+        isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml;
+        if (res.success) { alert('Updated!'); loadVouchersForModal(); }
+        else { alert('Error: ' + res.message); }
     }).catch(e => { console.error(e); alert('Error updating'); isSubmitting = false; updateBtn.disabled = false; updateBtn.innerHTML = originalBtnHtml; });
 }
 

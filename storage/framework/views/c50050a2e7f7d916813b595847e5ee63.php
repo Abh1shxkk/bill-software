@@ -904,14 +904,14 @@ function updateVoucher() {
     })
     .then(r => r.json())
     .then(result => {
+        isSubmitting = false;
+        updateBtn.disabled = false;
+        updateBtn.innerHTML = originalBtnHtml;
         if (result.success) {
             alert('Voucher updated successfully!');
             location.reload();
         } else {
             alert('Error: ' + result.message);
-            isSubmitting = false;
-            updateBtn.disabled = false;
-            updateBtn.innerHTML = originalBtnHtml;
         }
     })
     .catch(e => {
