@@ -1307,13 +1307,6 @@ function checkChooseItemsButtonState() {
 function handleChooseItemsClick() {
     const transactionId = document.getElementById('transactionId')?.value;
     
-    /* Customer must be selected before proceeding */
-    const customerSelect = document.getElementById('customerSelect');
-    if (!customerSelect || !customerSelect.value) {
-        alert('⚠️ Please select a Customer first!\n\nCustomer select karo pehle, uske bina aage nahi ja sakte.');
-        return;
-    }
-    
     if (transactionId) {
         // Transaction already loaded - open items modal to add more items
         openChooseItemsModal();
