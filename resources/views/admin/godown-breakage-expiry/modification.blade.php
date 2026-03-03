@@ -115,7 +115,6 @@
                             </table>
                         </div>
                         <div class="text-center mt-2 d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()"><i class="bi bi-plus-circle"></i> Add Row</button>
                             <button type="button" class="btn btn-sm btn-primary" id="gbem_addItemsBtn" onclick="showItemSelectionModal()"><i class="bi bi-search"></i> Add Items</button>
                         </div>
                     </div>

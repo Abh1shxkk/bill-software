@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -l \"Table.*items\\\\|items.*table\" \"c:\\\\xampp\\\\htdocs\\\\bill-software\\\\database\\\\migrations\"/*.php)"
+    ]
+  }
+}

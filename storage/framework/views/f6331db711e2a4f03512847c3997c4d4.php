@@ -319,12 +319,6 @@
                         </tbody>
                     </table>
                 </div>
-                <!-- Add Row Button -->
-                <div class="text-center mt-2">
-                    <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
-                        <i class="fas fa-plus-circle"></i> Add Row
-                    </button>
-                </div>
             </div>
 
             

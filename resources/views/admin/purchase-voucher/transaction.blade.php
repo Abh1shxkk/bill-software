@@ -125,9 +125,6 @@
 
         <div class="hsn-table-container">
             <div class="d-flex justify-content-end mb-2 gap-2">
-                <button type="button" class="btn-hsn" onclick="addNewRow()">
-                    <i class="bi bi-plus-circle me-1"></i> Add Row
-                </button>
             </div>
             
             <table class="hsn-table" id="hsnTable">

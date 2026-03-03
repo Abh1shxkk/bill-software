@@ -113,9 +113,6 @@
                     </div>
                     
                     <div class="text-center mb-2">
-                        <button type="button" class="btn btn-success btn-sm" onclick="addNewRow()">
-                            <i class="bi bi-plus"></i> Add Row
-                        </button>
                         <button type="button" class="btn btn-info btn-sm" onclick="openInsertItemsModal()">
                             <i class="bi bi-list-check"></i> Insert Item
                         </button>

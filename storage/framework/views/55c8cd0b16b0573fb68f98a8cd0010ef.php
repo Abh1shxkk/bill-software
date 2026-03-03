@@ -1,0 +1,5064 @@
+<?php $__env->startSection('title', 'Breakage/Expiry Modification'); ?>
+<?php $__env->startSection('disable_select2', '1'); ?>
+
+<?php $__env->startSection('content'); ?>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    input:focus {
+        box-shadow: none !important;
+    }
+
+    .header-sectionSR {
+        background: white;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+    }
+
+    .header-row {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 6px;
+    }
+
+    .field-group {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .inner-card-sr {
+        background: #e8f4f8;
+        border: 1px solid #b8d4e0;
+        padding: 8px;
+        border-radius: 3px;
+    }
+
+    .readonly-field {
+        background-color: #e9ecef !important;
+        cursor: not-allowed;
+    }
+
+    .table-compact {
+        font-size: 10px;
+        margin-bottom: 0;
+    }
+    
+    .table-compact th,
+    .table-compact td {
+        padding: 4px;
+        vertical-align: middle;
+        height: 45px;
+    }
+    
+    .table-compact th {
+        background: #e9ecef;
+        font-weight: 600;
+        text-align: center;
+        border: 1px solid #dee2e6;
+        height: 40px;
+    }
+    
+    .table-compact input {
+        font-size: 10px;
+        padding: 2px 4px;
+        height: 22px;
+        border: 1px solid #ced4da;
+        width: 100%;
+    }
+
+    /* Focus ring (blue border) */
+    input:focus,
+    select:focus,
+    .kb-focus {
+        border: 2px solid #0d6efd !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        background-color: inherit !important;
+        outline: none !important;
+    }
+
+    input:focus-visible,
+    select:focus-visible {
+        border: 2px solid #0d6efd !important;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+        background-color: inherit !important;
+        outline: none !important;
+    }
+
+    /* Custom searchable dropdown styles */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #f1f5ff;
+    }
+    
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #e3ebff;
+    }
+
+    .custom-dropdown-menu .dropdown-item.active {
+        background-color: #cfe2ff;
+    }
+
+    /* Invoice modal keyboard highlight */
+    .kb-row-active {
+        background-color: #cfe2ff !important;
+    }
+    .kb-row-active td {
+        background-color: #cfe2ff !important;
+    }
+
+    .adjustment-input.kb-active,
+    .adjustment-input:focus,
+    .adjustment-input:focus-visible {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 2px !important;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+    }
+
+    .item-modal-backdrop, .batch-modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+        opacity: 0;
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    .item-modal-backdrop.show, .batch-modal-backdrop.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .item-modal, .batch-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 57%;
+        transform: translate(-50%, -50%) scale(0.7);
+        width: calc(100% - 200px);
+        max-width: 800px;
+        z-index: 1055;
+        opacity: 0;
+        animation: zoomIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        margin-left: 0;
+    }
+
+    .item-modal.show, .batch-modal.show {
+        display: block;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    .item-modal-content, .batch-modal-content {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
+
+    .item-modal-header {
+        padding: 1rem 1.5rem;
+        background: #0d6efd;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .batch-modal-header {
+        padding: 1rem 1.5rem;
+        background: #17a2b8;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .item-modal-title, .batch-modal-title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .btn-close-modal {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+    }
+
+    .item-modal-body, .batch-modal-body {
+        padding: 1rem;
+        max-height: 350px;
+        overflow-y: auto;
+    }
+
+    .batch-modal-body {
+        padding: 0;
+    }
+
+    .item-modal-footer, .batch-modal-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+
+    @keyframes zoomIn {
+        from {
+            transform: translate(-50%, -50%) scale(0.7);
+            opacity: 0;
+        }
+        to {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+    }
+
+    @keyframes zoomOut {
+        from {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8);
+        }
+    }
+
+    /* Batch Not Exist Modal Styles */
+    .batch-not-exist-modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1055;
+        opacity: 0;
+        animation: fadeIn 0.4s ease forwards;
+    }
+
+    .batch-not-exist-modal-backdrop.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .batch-not-exist-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.8);
+        z-index: 1060;
+        width: 90%;
+        max-width: 400px;
+        opacity: 0;
+        animation: zoomIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    }
+
+    .batch-not-exist-modal.show {
+        display: block;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    .batch-not-exist-modal-content {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
+
+    .batch-not-exist-modal-header {
+        padding: 1rem 1.5rem;
+        background: #ffc107;
+        color: #212529;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #e0a800;
+    }
+
+    .batch-not-exist-modal-title {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .batch-not-exist-modal-body {
+        padding: 1.5rem;
+        background: #fff;
+        text-align: center;
+    }
+
+    .batch-not-exist-modal-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        text-align: center;
+    }
+
+    /* Create Batch Modal Styles */
+    .create-batch-modal-backdrop {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1060;
+        opacity: 0;
+        animation: fadeIn 0.4s ease forwards;
+    }
+
+    .create-batch-modal-backdrop.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .create-batch-modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.8);
+        z-index: 1065;
+        width: 90%;
+        max-width: 600px;
+        opacity: 0;
+        animation: zoomIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    }
+
+    .create-batch-modal.show {
+        display: block;
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    .create-batch-modal-content {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        overflow: hidden;
+    }
+
+    .create-batch-modal-header {
+        padding: 1rem 1.5rem;
+        background: #007bff;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #0056b3;
+    }
+
+    .create-batch-modal-title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+    }
+
+    .create-batch-modal-body {
+        padding: 1.5rem;
+        background: #fff;
+    }
+
+    .create-batch-modal-footer {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+        text-align: right;
+    }
+
+    /* Alert Animations */
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+
+    /* Credit Note Modal Styles */
+    .credit-note-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1060;
+        opacity: 0;
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    .credit-note-modal.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .credit-note-modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.7);
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        width: 400px;
+        opacity: 0;
+        animation: zoomIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    }
+
+    .credit-note-modal.show .credit-note-modal-content {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    .credit-note-modal-header {
+        padding: 1rem 1.5rem;
+        background: #007bff;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #0056b3;
+    }
+
+    .credit-note-modal-body {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .credit-note-options {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .credit-note-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+    }
+
+    /* Adjustment Modal Styles */
+    .adjustment-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1065;
+        opacity: 0;
+        animation: fadeIn 0.3s ease forwards;
+    }
+
+    .adjustment-modal.show {
+        display: block;
+        opacity: 1;
+    }
+
+    .adjustment-modal-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.7);
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.4);
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        opacity: 0;
+        animation: zoomIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    }
+
+    .adjustment-modal.show .adjustment-modal-content {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+
+    .adjustment-modal-header {
+        padding: 1rem 1.5rem;
+        background: #28a745;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 2px solid #1e7e34;
+    }
+
+    .adjustment-modal-body {
+        padding: 1rem;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .adjustment-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+    }
+
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Breakage/Expiry Modification</h4>
+        <div class="text-muted small">Modify existing breakage/expiry invoices</div>
+    </div>
+    <div>
+        <a href="<?php echo e(route('admin.dashboard')); ?>" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 rounded">
+    <div class="card-body">
+        <form id="breakageExpiryTransactionForm" method="POST" autocomplete="off">
+            <?php echo csrf_field(); ?>
+
+            <!-- Header Section -->
+            <div class="header-sectionSR">
+                <!-- Row 1 -->
+                <div class="header-row">
+                    <div class="field-group">
+                        <label>Series:</label>
+                        <input type="text" class="form-control" id="seriesInput" name="series" style="width: 60px;" value="BE">
+                    </div>
+
+                    <div class="field-group">
+                        <label>Date:</label>
+                        <input type="date" class="form-control" id="transactionDate" name="transaction_date" style="width: 140px;" value="<?php echo e(date('Y-m-d')); ?>">
+                    </div>
+                    <div class="field-group">
+                        <label>End Date:</label>
+                        <input type="date" class="form-control" id="endDate" name="end_date" style="width: 140px;">
+                    </div>
+                </div>
+
+                <!-- Row 2 -->
+                <div class="d-flex gap-3">
+
+                    <!-- Right Side - Inner Card SR -->
+                    <div class="inner-card-sr flex-grow-1">
+                        <div class="row g-2">
+                            <div class="col-md-5">
+                                <div class="field-group">
+                                    <label style="width: 100px;">Name</label>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text" class="form-control"
+                                               id="customerSearchInput"
+                                               placeholder="Type to search customer..."
+                                               autocomplete="off">
+                                        <select class="form-control" name="customer_id" id="customerSelect" autocomplete="off" style="display: none;">
+                                            <option value="">Select Customer</option>
+                                            <?php $__currentLoopData = $customers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>"><?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </select>
+                                        <div id="customerDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Customer
+                                            </div>
+                                            <div id="customerList" class="dropdown-list">
+                                                <?php $__currentLoopData = $customers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <div class="dropdown-item"
+                                                         data-id="<?php echo e($customer->id); ?>"
+                                                         data-name="<?php echo e($customer->name); ?>"
+                                                         data-code="<?php echo e($customer->code ?? ''); ?>"
+                                                         style="padding: 6px 10px; cursor: pointer;">
+                                                        <?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?>
+
+                                                    </div>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label>GST Vno:</label>
+                                    <input type="text" class="form-control" id="gstVno" name="gst_vno" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label>R(epl.) / C(redit) Note:</label>
+                                    <input type="text" class="form-control" id="noteType" name="note_type" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label>With GST[Y/N]:</label>
+                                    <input type="text" class="form-control" id="withGst" name="with_gst" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-5">
+                                <div class="field-group">
+                                    <label style="width: 100px;">Sales Man</label>
+                                    <div class="custom-dropdown-wrapper" style="width: 100%; position: relative;">
+                                        <input type="text" class="form-control"
+                                               id="salesmanSearchInput"
+                                               placeholder="Type to search salesman..."
+                                               autocomplete="off">
+                                        <select class="form-control" name="salesman_id" id="salesmanSelect" autocomplete="off" style="display: none;">
+                                            <option value="">Select Salesman</option>
+                                            <?php $__currentLoopData = $salesmen ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($salesman->id); ?>" data-name="<?php echo e($salesman->name); ?>"><?php echo e($salesman->code ?? ''); ?> - <?php echo e($salesman->name); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                        </select>
+                                        <div id="salesmanDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                                Select Salesman
+                                            </div>
+                                            <div id="salesmanList" class="dropdown-list">
+                                                <?php $__currentLoopData = $salesmen ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                    <div class="dropdown-item"
+                                                         data-id="<?php echo e($salesman->id); ?>"
+                                                         data-name="<?php echo e($salesman->name); ?>"
+                                                         data-code="<?php echo e($salesman->code ?? ''); ?>"
+                                                         style="padding: 6px 10px; cursor: pointer;">
+                                                        <?php echo e($salesman->code ?? ''); ?> - <?php echo e($salesman->name); ?>
+
+                                                    </div>
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label>Inc.</label>
+                                    <input type="text" class="form-control" id="incField" name="inc" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label>Rev.Charge</label>
+                                    <input type="text" class="form-control" id="revCharge" name="rev_charge" value="Y" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+
+                            
+
+                        </div>
+                        <div class="row g-2 mt-1">
+                            <div class="col-md-5">
+                                <div class="field-group">
+                                    <label>To be Adjusted?[Y/N],&lt;X&gt; for Imm. Posting</label>
+                                    <input type="text" class="form-control" id="adjustedFlag" name="adjusted" value="X" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label style="width: 80px;">Dis. Rpl:</label>
+                                    <input type="text" class="form-control" id="disRpl" name="dis_rpl">
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label style="width: 100px;">Brk. :</label>
+                                    <input type="text" class="form-control" id="brkField" name="brk">
+                                </div>
+                            </div>
+
+                            <div class="col-md-2">
+                                <div class="field-group">
+                                    <label style="width: 80px;">Exp. :</label>
+                                    <input type="text" class="form-control" id="expField" name="exp">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div style="width: 220px;">
+                        <div class="field-group mb-2">
+                            <label style="width: 80px;">Sr. No.:</label>
+                            <input type="text" id="sr_no_input" class="form-control" name="sr_no" placeholder="Enter SR No" style="width: 130px;">
+                        </div>
+                        
+                        <div class="field-group mb-2">
+                            <label style="width: 80px;">Or Date:</label>
+                            <input type="date" id="invoice_date_filter" class="form-control" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>">
+                        </div>
+                        
+                        <div class="text-center mt-2">
+                            <button type="button" class="btn btn-sm btn-info" style="width: 100%;" onclick="loadInvoice()">
+                                <i class="bi bi-list-check"></i> Insert Orders
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="bg-white border rounded p-2 mb-2">
+                <div class="table-responsive" style="overflow-y: auto; max-height: 310px;" id="itemsTableContainer">
+                    <table class="table table-bordered table-compact">
+                        <thead style="position: sticky; top: 0; background: #e9ecef; z-index: 10;">
+                            <tr>
+                                <th style="width: 60px;">Code</th>
+                                <th style="width: 250px;">Item Name</th>
+                                <th style="width: 80px;">Batch</th>
+                                <th style="width: 70px;">Exp.</th>
+                                <th style="width: 60px;">Br/Ex.</th>
+                                <th style="width: 60px;">Qty</th>
+                                <th style="width: 80px;">F.Qty.</th>
+                                <th style="width: 80px;">MRP</th>
+                                <th style="width: 80px;">Scm.%</th>   
+                                <th style="width: 80px;">Dis.%</th>
+                                <th style="width: 90px;">Amount</th>
+                                <th style="width: 120px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemsTableBody">
+                            <!-- Rows will be added dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Add Row Button -->
+                <div class="text-center mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary ms-2"
+                            id="selectItemBtn"
+                            data-target-row-index=""
+                            onclick="const idx = this.dataset.targetRowIndex; openItemPickerModalExplicitly(idx !== '' ? parseInt(idx, 10) : null); this.dataset.targetRowIndex='';">
+                        <i class="bi bi-search"></i> Select Item
+                    </button>
+                </div>
+            </div>
+
+
+            <!-- Calculation Section -->
+            <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
+                    <!--  -->
+                    <div class="d-flex flex-column gap-2">
+                        <!-- HSN Code -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 75px;"><strong>HSN Code:</strong></label>
+                            <input type="text" id="calc_hsn_code" class="form-control readonly-field text-center" style="width: 100px; height: 28px;" value="---" readonly>
+                        </div>
+
+                        <!-- CGST(%) -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 75px;"><strong>CGST(%):</strong></label>
+                            <input type="text" id="calc_cgst_percent" class="form-control readonly-field text-center" style="width: 100px; height: 28px;" value="0" readonly>
+                        </div>
+
+                        <!-- CGST Amount -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 75px;"><strong>CGST Amt:</strong></label>
+                            <input type="text" id="calc_cgst_amount" class="form-control readonly-field text-center" style="width: 100px; height: 28px;" value="0.00" readonly>
+                        </div>
+
+
+                    </div>
+
+                    <!-- Right Side Fields (2 Columns) -->
+                    <div class="d-flex gap-3">
+                        <!-- Column 1 -->
+                        <div class="d-flex flex-column gap-2">
+                            <!-- SC -->
+                            <!-- SGST(%) -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 75px;"><strong>SGST(%):</strong></label>
+                                <input type="text" id="calc_sgst_percent" class="form-control readonly-field text-center" style="width: 100px; height: 28px;" value="0" readonly>
+                            </div>
+
+                            <!-- SGST Amount -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 75px;"><strong>SGST Amt:</strong></label>
+                                <input type="text" id="calc_sgst_amount" class="form-control readonly-field text-center" style="width: 100px; height: 28px;" value="0.00" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Column 2 -->
+                        <div class="d-flex flex-column gap-2">
+                            <!--  -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 65px;"><strong>TAX %</strong></label>
+                                <input type="number" id="calc_tax_percent" class="form-control readonly-field" readonly style="width: 80px; height: 28px;" value="0">
+                            </div> 
+
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 65px;"><strong>P.Rate</strong></label>
+                                <input type="number" id="calc_prate" class="form-control readonly-field" readonly style="width: 80px; height: 28px;" value="0.00">
+                            </div>
+
+                        </div>
+
+                        <!-- Column 3 -->
+                        <div class="d-flex flex-column gap-2">
+                            <!--  -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 50px;"><strong>S.Rate</strong></label>
+                                <input type="number" id="calc_srate" class="form-control readonly-field" readonly style="width: 70px; height: 28px;" value="0.00">
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 50px;"><strong>MRP</strong></label>
+                                <input type="text" id="calc_mrp" class="form-control text-center readonly-field" readonly style="width: 60px; height: 28px;" value="0.00">
+                            </div>
+
+                        </div>
+
+                        <!-- Column 4 -->
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Excise -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 50px;"><strong>Pack</strong></label>
+                                <input type="text" id="calc_pack" class="form-control text-center readonly-field" readonly style="width: 60px; height: 28px;" value="">
+                            </div>
+
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 50px;"><strong>Disallow</strong></label>
+                                <input type="text" class="form-control text-center readonly-field" readonly style="width: 60px; height: 28px;" value="N">
+                            </div>
+
+                        </div>
+                        <!-- Column 4 -->
+                        <div class="d-flex flex-column gap-2">
+                            <!-- TSR. -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="mb-0" style="min-width: 80px;"><strong>Payable Amt</strong></label>
+                                <input type="text" id="calc_payable_amount" class="form-control text-center readonly-field" readonly style="width: 80px; height: 28px;" value="0.00">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Summary Section -->
+            <div class="bg-white border rounded p-2 mb-2">
+                <!-- Row 1: 6 fields -->
+                <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold; white-space: nowrap;">MRP Value</label>
+                        <input type="number" id="summary_mrp_value" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #fff3cd;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Gross</label>
+                        <input type="number" id="summary_gross" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Dis.</label>
+                        <input type="number" id="summary_discount" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Scm.</label>
+                        <input type="number" id="summary_scheme" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Tax</label>
+                        <input type="number" id="summary_tax" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+
+                    <div class="d-flex align-items-center" style="gap: 5px;">
+                        <label class="mb-0" style="font-weight: bold;">Net</label>
+                        <input type="number" id="summary_net" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Additional Fields (same as original) -->
+            <div class="col-12 mb-4 bg-white border rounded p-2 mb-2">
+                <div class="row gx-3" style="font-size: 11px; gap: 10px;">
+                    <!-- col 1 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Packing</label>
+                                    <input type="number" id="detail_packing" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Unit</label>
+                                    <input type="number" id="detail_unit" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Cl. Qty.</label>
+                                    <input type="number" id="detail_cl_qty" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col 2 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Gross</label>
+                                    <input type="number" id="detail_gross" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Scm. Amt.</label>
+                                    <input type="number" id="detail_scm_amt" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Dis.Amt.</label>
+                                    <input type="number" id="detail_dis_amt" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col 3 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Sub Tot.</label>
+                                    <input type="number" id="detail_subtotal" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Tax Amt.</label>
+                                    <input type="number" id="detail_tax_amt" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Net Amt.</label>
+                                    <input type="number" id="detail_net_amt" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col-4 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Less Pcnt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- col-5 -->
+                    <div class="col-lg-2">
+                        <div class="row flex-column">
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Inv.Amt.</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">Srino</label>
+                                    <input type="number" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
+                                </div>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="d-flex align-items-center mb-2">
+                                    <label class="mb-0 w-50" style="font-weight: bold;">SCM.</label>
+                                    <div class="d-flex align-items-center">
+                                        <input type="number" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="height: 26px; background: #ffcccc;" value="0.00">
+                                        <label class="form-label mx-1 mb-0 fs-4 fw-bold">+</label>
+                                        <input type="number" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="height: 26px; background: #ffcccc;" value="0.00">
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm" id="saveTransactionBtn" onclick="saveTransaction()">
+                    <i class="bi bi-save"></i> Save
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='<?php echo e(route('admin.dashboard')); ?>'">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- Modals will be dynamically created by JavaScript -->
+
+<script>
+let currentRowIndex = 0;
+let itemsData = [];
+let currentItemForBatch = null;
+let kbBeModItemModalTargetRowIndex = null;
+let kbBeModItemModalOpenLock = false;
+let kbBeModLastSaveShortcutAt = 0;
+let currentCreditNoteButtonIndex = 0;
+const creditNoteButtonIds = ['creditSaveWithoutBtn', 'creditSaveWithBtn'];
+
+// Show alert function
+function showAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.custom-alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertTypes = {
+        'success': { bg: '#28a745', icon: '✓' },
+        'error': { bg: '#dc3545', icon: '✕' },
+        'info': { bg: '#17a2b8', icon: 'ℹ' },
+        'warning': { bg: '#ffc107', icon: '⚠' }
+    };
+    
+    const alertConfig = alertTypes[type] || alertTypes['info'];
+    
+    const alertHTML = `
+        <div class="custom-alert" style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${alertConfig.bg};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10001;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold;">${alertConfig.icon}</span>
+                <span>${message}</span>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHTML);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.custom-alert');
+        if (alert) {
+            alert.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => alert.remove(), 300);
+        }
+    }, 3000);
+}
+
+// Legacy helper: opens reusable item picker explicitly (kept for manual trigger paths)
+function openItemPickerModalExplicitly(rowIndex = null) {
+    if (kbBeModItemModalOpenLock) return;
+    const modalEl = document.getElementById('chooseItemsModal');
+    if (modalEl && modalEl.classList.contains('show')) return;
+
+    kbBeModItemModalTargetRowIndex = Number.isInteger(rowIndex) ? rowIndex : null;
+    kbBeModItemModalOpenLock = true;
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
+        setTimeout(() => {
+            kbBeModItemModalOpenLock = false;
+        }, 300);
+    } else {
+        kbBeModItemModalOpenLock = false;
+        showAlert('error', 'Item selection modal not initialized. Please reload the page.');
+    }
+}
+
+function triggerSelectItemButtonForRow(rowIndex) {
+    const selectItemBtn = document.getElementById('selectItemBtn');
+    if (selectItemBtn) {
+        selectItemBtn.dataset.targetRowIndex = Number.isInteger(rowIndex) ? String(rowIndex) : '';
+        selectItemBtn.focus();
+        selectItemBtn.click();
+        return;
+    }
+    openItemPickerModalExplicitly(rowIndex);
+}
+
+function handleCodeFieldEnter(event, rowIndex) {
+    if (event.key !== 'Enter' && event.keyCode !== 13) return true;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    triggerSelectItemButtonForRow(rowIndex);
+    return false;
+}
+
+function applyItemBatchToExistingRow(rowIndex, item, batch) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return false;
+
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    const nameInput = row.querySelector('input[name*="[name]"]');
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expiryInput = row.querySelector('input[name*="[expiry]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    const brExSelect = row.querySelector('select[name*="[br_ex]"]');
+
+    if (codeInput) codeInput.value = item.bar_code || item.item_code || item.id || '';
+    if (nameInput) nameInput.value = item.name || item.item_name || '';
+    if (batchInput) batchInput.value = batch.batch_no || '';
+    if (mrpInput) mrpInput.value = parseFloat(batch.mrp || item.mrp || 0).toFixed(2);
+    if (brExSelect && !brExSelect.value) brExSelect.value = 'B';
+
+    if (expiryInput) {
+        let expiryDisplay = '';
+        if (batch.expiry_date) {
+            const expiryDate = new Date(batch.expiry_date);
+            expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+        }
+        expiryInput.value = expiryDisplay;
+    }
+
+    // Keep data model in sync for tax/calculation sections.
+    const gstPercent = parseFloat(item.gst_percent || ((parseFloat(item.cgst_percent || 0) + parseFloat(item.sgst_percent || 0)) || 0));
+    const itemData = {
+        id: item.id || item.item_id || item.bar_code || '',
+        name: item.name || item.item_name || '',
+        packing: item.packing || '',
+        mrp: parseFloat(batch.mrp || item.mrp || 0),
+        hsn_code: item.hsn_code || '',
+        gst_percent: gstPercent,
+        total_qty: parseFloat(item.total_qty || 0)
+    };
+    const batchData = {
+        batch_no: batch.batch_no || '',
+        s_rate: parseFloat(batch.s_rate || batch.sale_rate || 0),
+        pur_rate: parseFloat(batch.pur_rate || batch.p_rate || 0),
+        mrp: parseFloat(batch.mrp || item.mrp || 0),
+        expiry_date: batch.expiry_date || ''
+    };
+
+    row.dataset.itemId = itemData.id;
+    row.dataset.itemData = JSON.stringify(itemData);
+    row.dataset.batchData = JSON.stringify(batchData);
+    row.dataset.sRate = batchData.s_rate;
+    row.dataset.pRate = batchData.pur_rate;
+    row.dataset.mrp = batchData.mrp;
+    row.dataset.completed = 'false';
+
+    calculateRowAmount(rowIndex);
+    updateAllCalculations();
+
+    setTimeout(() => {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        } else {
+            focusFirstEditableFieldInRow(row);
+        }
+    }, 80);
+
+    return true;
+}
+
+// Callback function when item and batch are selected from reusable modal
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('Item selected from modal:', item);
+    console.log('Batch selected from modal:', batch);
+    kbBeModItemModalOpenLock = false;
+
+    // If item picker was opened from a specific row's first field, fill that row instead of adding another row.
+    if (Number.isInteger(kbBeModItemModalTargetRowIndex)) {
+        const targetRowIndex = kbBeModItemModalTargetRowIndex;
+        kbBeModItemModalTargetRowIndex = null;
+        if (applyItemBatchToExistingRow(targetRowIndex, item, batch)) {
+            return;
+        }
+    }
+    
+    // Create a new row for the item
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    // Format expiry date
+    let expiryDisplay = '';
+    if (batch.expiry_date) {
+        const expiryDate = new Date(batch.expiry_date);
+        expiryDisplay = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+    }
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][code]" value="${item.bar_code || item.id || ''}" readonly
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});">
+        </td>
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly>
+        </td>
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly>
+        </td>
+        <td>
+            <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly>
+        </td>
+        <td>
+            <select class="form-control no-select2" name="items[${rowIndex}][br_ex]" style="width: 60px;"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
+                <option value="B">B</option>
+                <option value="E">E</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1" 
+                   onchange="calculateRowTotal(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
+                   onchange="calculateRowTotal(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'mrp'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][mrp]" value="${parseFloat(batch.mrp || 0).toFixed(2)}" step="0.01" 
+                   onchange="calculateRowTotal(${rowIndex})" readonly>
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][scheme_percent]" value="0" step="0.01" 
+                   onchange="calculateRowTotal(${rowIndex})">
+        </td>
+        <td>
+            <input type="number" class="form-control" name="items[${rowIndex}][dis_percent]" value="0" step="0.01" 
+                   onchange="calculateRowTotal(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+        <input type="hidden" name="items[${rowIndex}][item_id]" value="${item.id}">
+        <input type="hidden" name="items[${rowIndex}][batch_id]" value="${batch.id}">
+        <input type="hidden" name="items[${rowIndex}][s_rate]" value="${batch.s_rate || 0}">
+        <input type="hidden" name="items[${rowIndex}][p_rate]" value="${batch.p_rate || batch.pur_rate || 0}">
+        <input type="hidden" name="items[${rowIndex}][packing]" value="${item.packing || ''}">
+        <input type="hidden" name="items[${rowIndex}][cgst_percent]" value="${item.cgst_percent || 0}">
+        <input type="hidden" name="items[${rowIndex}][sgst_percent]" value="${item.sgst_percent || 0}">
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Store batch data
+    row.dataset.batchData = JSON.stringify(batch);
+    row.dataset.sRate = batch.s_rate || 0;
+    row.dataset.pRate = batch.p_rate || batch.pur_rate || 0;
+    row.dataset.mrp = batch.mrp || 0;
+    
+    // Focus first editable field of the new row
+    setTimeout(() => {
+        focusFirstEditableFieldInRow(row);
+    }, 100);
+    
+    showAlert('success', 'Item added! Enter quantity.');
+    if (typeof calculateRowTotal === 'function') calculateRowTotal(rowIndex);
+    if (typeof recalculateTotals === 'function') recalculateTotals();
+};
+
+// Main function to load invoice - handles both SR No and Date-based loading
+function loadInvoice() {
+    const srNo = document.getElementById('sr_no_input').value.trim();
+    const invoiceDate = document.getElementById('invoice_date_filter').value;
+    
+    // Priority 1: If SR No is entered, load that specific invoice
+    if (srNo) {
+        loadInvoiceBySrNo(srNo);
+        return;
+    }
+    
+    // Priority 2: If no SR No but date is selected, show invoice selection modal
+    if (invoiceDate) {
+        loadInvoicesByDate(invoiceDate);
+        return;
+    }
+    
+    // If neither SR No nor date is provided
+    showAlert('error', 'Please enter SR No or select a date to load invoices.');
+}
+
+// Load Invoice by SR No
+function loadInvoiceBySrNo(srNo) {
+    showAlert('info', 'Loading invoice...');
+    
+    fetch(`<?php echo e(url('/admin/breakage-expiry')); ?>/get-by-sr-no/${encodeURIComponent(srNo)}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.transaction) {
+            // Load the invoice with its items
+            selectInvoice(data.transaction.id);
+        } else {
+            showAlert('error', data.message || 'Invoice not found with SR No: ' + srNo);
+        }
+    })
+    .catch(error => {
+        console.error('Error loading invoice by SR No:', error);
+        showAlert('error', 'Error loading invoice. Please try again.');
+    });
+}
+
+// Open Invoice Selection Modal (for Date-based selection)
+function openInvoiceSelectionModal() {
+    const invoiceDate = document.getElementById('invoice_date_filter').value;
+    
+    if (!invoiceDate) {
+        showAlert('error', 'Please select an invoice date first.');
+        return;
+    }
+    
+    // Load invoices for the selected date
+    loadInvoicesByDate(invoiceDate);
+}
+
+// Load Invoices by Date
+function loadInvoicesByDate(date) {
+    showAlert('info', 'Loading invoices...');
+    
+    fetch(`<?php echo e(route("admin.breakage-expiry.index")); ?>?ajax=1&date_from=${date}&date_to=${date}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.transactions) {
+            showInvoiceModal(data.transactions);
+        } else {
+            showAlert('error', 'No invoices found for the selected date.');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading invoices:', error);
+        showAlert('error', 'Error loading invoices. Please try again.');
+    });
+}
+
+// Show Invoice Selection Modal
+function showInvoiceModal(invoices) {
+    let tableRows = '';
+    
+    if (invoices.length === 0) {
+        tableRows = '<tr><td colspan="6" class="text-center text-muted">No invoices found for this date</td></tr>';
+    } else {
+        invoices.forEach(invoice => {
+            const invoiceDate = new Date(invoice.transaction_date).toLocaleDateString('en-GB');
+            tableRows += `
+                <tr style="cursor: pointer;" onclick='selectInvoice(${invoice.id})'>
+                    <td style="padding: 4px;">${invoice.sr_no || ''}</td>
+                    <td style="padding: 4px;">${invoiceDate}</td>
+                    <td style="padding: 4px;">${invoice.customer_name || ''}</td>
+                    <td style="padding: 4px;">${invoice.salesman_name || '-'}</td>
+                    <td class="text-end" style="padding: 4px;">₹${parseFloat(invoice.net_amount || 0).toFixed(2)}</td>
+                    <td class="text-center" style="padding: 4px;">
+                        <button type="button" class="btn btn-sm btn-primary" style="padding: 2px 6px; font-size: 10px;" onclick='event.stopPropagation(); selectInvoice(${invoice.id})'>
+                            <i class="bi bi-check-circle"></i> Select
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+    
+    const modalHTML = `
+        <div class="item-modal-backdrop" id="invoiceModalBackdrop" onclick="closeInvoiceModal()"></div>
+        <div class="item-modal" id="invoiceModal">
+            <div class="item-modal-content">
+                <div class="item-modal-header">
+                    <h5 class="item-modal-title"><i class="bi bi-receipt"></i> Select Invoice</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeInvoiceModal()">&times;</button>
+                </div>
+                <div class="item-modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="invoiceSearchInput" placeholder="Search by SR No, Customer, or Salesman..." onkeyup="filterInvoices()">
+                    </div>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-bordered table-hover table-sm" style="font-size: 11px; margin-bottom: 0;">
+                            <thead class="table-light" style="position: sticky; top: 0; z-index: 10; background: #e9ecef;">
+                                <tr>
+                                    <th style="width: 80px; padding: 4px;">SR No</th>
+                                    <th style="width: 80px; padding: 4px;">Date</th>
+                                    <th style="width: 150px; padding: 4px;">Customer</th>
+                                    <th style="width: 100px; padding: 4px;">Salesman</th>
+                                    <th style="width: 80px; padding: 4px;">Amount</th>
+                                    <th style="width: 80px; padding: 4px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoicesListBody">${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="item-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeInvoiceModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('invoiceModal');
+    if (existingModal) existingModal.remove();
+    const existingBackdrop = document.getElementById('invoiceModalBackdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    setTimeout(() => {
+        document.getElementById('invoiceModalBackdrop').classList.add('show');
+        document.getElementById('invoiceModal').classList.add('show');
+        initInvoiceModalListKeyboard();
+    }, 10);
+}
+
+// Close Invoice Modal
+function closeInvoiceModal() {
+    const modal = document.getElementById('invoiceModal');
+    const backdrop = document.getElementById('invoiceModalBackdrop');
+    
+    if (modal) modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    if (backdrop) backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+    
+    setTimeout(() => {
+        if (modal) modal.remove();
+        if (backdrop) backdrop.remove();
+    }, 300);
+}
+
+// Filter Invoices
+function filterInvoices() {
+    const searchTerm = document.getElementById('invoiceSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#invoicesListBody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+    // Reset keyboard selection to first visible row after filtering
+    if (typeof initInvoiceModalListKeyboard === 'function') {
+        initInvoiceModalListKeyboard(true);
+    }
+}
+
+let invoiceModalKeyHandler = null;
+let invoiceModalActiveIndex = 0;
+let batchModalKeyHandler = null;
+let batchModalActiveIndex = 0;
+
+function initInvoiceModalListKeyboard(reset = false) {
+    const modal = document.getElementById('invoiceModal');
+    const body = document.getElementById('invoicesListBody');
+    if (!modal || !body) return;
+
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
+
+    function getRows() {
+        return Array.from(body.querySelectorAll('tr')).filter(r => r.style.display !== 'none');
+    }
+
+    function setActiveRow(index) {
+        const rows = getRows();
+        rows.forEach(r => r.classList.remove('kb-row-active'));
+        if (!rows.length) return;
+        if (index < 0) index = 0;
+        if (index >= rows.length) index = rows.length - 1;
+        invoiceModalActiveIndex = index;
+        const row = rows[invoiceModalActiveIndex];
+        row.classList.add('kb-row-active');
+        row.scrollIntoView({ block: 'nearest' });
+    }
+
+    if (reset) {
+        invoiceModalActiveIndex = 0;
+    }
+    setActiveRow(invoiceModalActiveIndex);
+
+    if (invoiceModalKeyHandler) {
+        window.removeEventListener('keydown', invoiceModalKeyHandler, true);
+    }
+
+    invoiceModalKeyHandler = function(e) {
+        const modalEl = document.getElementById('invoiceModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(invoiceModalActiveIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(invoiceModalActiveIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rows = getRows();
+            if (!rows.length) return;
+            const row = rows[invoiceModalActiveIndex];
+            const selectBtn = row.querySelector('button');
+            if (selectBtn) {
+                selectBtn.click();
+            } else {
+                row.click();
+            }
+        } else if (e.key === 'Escape') {
+            closeInvoiceModal();
+            setTimeout(() => {
+                const dateField = document.getElementById('invoice_date_filter');
+                if (dateField) dateField.focus();
+            }, 120);
+        }
+    };
+
+    window.addEventListener('keydown', invoiceModalKeyHandler, true);
+}
+
+function initBatchModalKeyboard(reset = false) {
+    const modal = document.getElementById('batchModal');
+    const body = modal ? modal.querySelector('tbody') : null;
+    if (!modal || !body) return;
+
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
+
+    function getRows() {
+        return Array.from(body.querySelectorAll('tr'));
+    }
+
+    function setActiveRow(index) {
+        const rows = getRows();
+        rows.forEach(r => r.classList.remove('kb-row-active'));
+        if (!rows.length) return;
+        if (index < 0) index = 0;
+        if (index >= rows.length) index = rows.length - 1;
+        batchModalActiveIndex = index;
+        const row = rows[batchModalActiveIndex];
+        row.classList.add('kb-row-active');
+        row.scrollIntoView({ block: 'nearest' });
+    }
+
+    if (reset) {
+        batchModalActiveIndex = 0;
+    }
+    setActiveRow(batchModalActiveIndex);
+
+    if (batchModalKeyHandler) {
+        window.removeEventListener('keydown', batchModalKeyHandler, true);
+    }
+
+    batchModalKeyHandler = function(e) {
+        const modalEl = document.getElementById('batchModal');
+        if (!modalEl || !modalEl.classList.contains('show')) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(batchModalActiveIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setActiveRow(batchModalActiveIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            const rows = getRows();
+            if (!rows.length) return;
+            const row = rows[batchModalActiveIndex];
+            const selectBtn = row.querySelector('button');
+            if (selectBtn) {
+                selectBtn.click();
+            } else {
+                row.click();
+            }
+        } else if (e.key === 'Escape') {
+            closeBatchModal();
+            setTimeout(() => {
+                if (currentItemForBatch) {
+                    const row = document.getElementById(`row-${currentItemForBatch.rowIndex}`);
+                    const batchInput = row ? row.querySelector('input[name*="[batch]"]') : null;
+                    if (batchInput) batchInput.focus();
+                }
+            }, 120);
+        }
+    };
+
+    window.addEventListener('keydown', batchModalKeyHandler, true);
+}
+
+// Select Invoice and Load Its Items
+function selectInvoice(invoiceId) {
+    showAlert('info', 'Loading invoice details...');
+    
+    fetch(`<?php echo e(url('/admin/breakage-expiry')); ?>/${invoiceId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.transaction) {
+            closeInvoiceModal();
+            populateInvoiceData(data.transaction);
+            showAlert('success', 'Invoice loaded successfully');
+            setTimeout(() => {
+                focusFirstTableField();
+            }, 150);
+        } else {
+            showAlert('error', 'Error loading invoice details');
+        }
+    })
+    .catch(error => {
+        console.error('Error loading invoice:', error);
+        showAlert('error', 'Error loading invoice details');
+    });
+}
+
+function focusFirstTableField() {
+    const firstRow = document.querySelector('#itemsTableBody tr');
+    if (!firstRow) return;
+    const focusEl = firstRow.querySelector('input[name*=\"[batch]\"]') 
+        || firstRow.querySelector('input[name*=\"[qty]\"]') 
+        || firstRow.querySelector('input, select');
+    if (focusEl) {
+        focusEl.focus();
+    }
+}
+
+// Populate Invoice Data into Form
+function populateInvoiceData(transaction) {
+    console.log('Populating invoice data:', transaction);
+    
+    // Store transaction ID for update operations
+    window.currentTransactionId = transaction.id;
+    console.log('✅ Transaction ID stored for editing:', transaction.id);
+    
+    // Store for debugging
+    window.lastLoadedTransaction = transaction;
+    
+    // Clear existing rows
+    document.getElementById('itemsTableBody').innerHTML = '';
+    currentRowIndex = 0;
+    
+    // Populate SR No
+    if (transaction.sr_no) {
+        document.getElementById('sr_no_input').value = transaction.sr_no;
+        console.log('✅ SR No set to:', transaction.sr_no);
+    }
+    
+    // Populate Series
+    if (transaction.series) {
+        const seriesInput = document.querySelector('input[name="series"]');
+        if (seriesInput) {
+            seriesInput.value = transaction.series;
+            console.log('✅ Series set to:', transaction.series);
+        }
+    }
+    
+    // Populate dates
+    if (transaction.transaction_date) {
+        const dateInput = document.querySelector('input[name="transaction_date"]');
+        if (dateInput) {
+            // Convert ISO date to YYYY-MM-DD format
+            const date = new Date(transaction.transaction_date);
+            const formattedDate = date.toISOString().split('T')[0];
+            dateInput.value = formattedDate;
+            console.log('✅ Transaction Date set to:', formattedDate);
+        }
+    }
+    if (transaction.end_date) {
+        const endDateInput = document.querySelector('input[name="end_date"]');
+        if (endDateInput) {
+            // Convert ISO date to YYYY-MM-DD format
+            const date = new Date(transaction.end_date);
+            const formattedDate = date.toISOString().split('T')[0];
+            endDateInput.value = formattedDate;
+            console.log('✅ End Date set to:', formattedDate);
+        }
+    } else {
+        console.log('ℹ️ No End Date in transaction');
+    }
+    
+    // Populate customer dropdown
+    if (transaction.customer_id) {
+        const customerSelect = document.querySelector('select[name="customer_id"]');
+        if (customerSelect) {
+            // Convert to string to match option values
+            const customerId = String(transaction.customer_id);
+            console.log('Setting customer_id to:', customerId);
+            console.log('Available customer options:', Array.from(customerSelect.options).map(o => ({value: o.value, text: o.text})));
+            
+            // Set the value
+            customerSelect.value = customerId;
+            
+            // Trigger change event
+            customerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            const customerInput = document.getElementById('customerSearchInput');
+            if (customerInput && customerSelect.selectedIndex >= 0) {
+                customerInput.value = customerSelect.options[customerSelect.selectedIndex].text;
+            }
+            
+            // Verify it was set
+            setTimeout(() => {
+                if (customerSelect.value != customerId) {
+                    console.error('❌ Customer ID not found in dropdown:', customerId);
+                    console.log('Dropdown current value:', customerSelect.value);
+                    
+                    // Try to find by text match as fallback
+                    if (transaction.customer_name) {
+                        const matchingOption = Array.from(customerSelect.options).find(
+                            opt => opt.text.toLowerCase() === transaction.customer_name.toLowerCase()
+                        );
+                        if (matchingOption) {
+                            console.log('Found customer by name, setting to:', matchingOption.value);
+                            customerSelect.value = matchingOption.value;
+                            customerSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                } else {
+                    console.log('✅ Customer set successfully:', customerSelect.options[customerSelect.selectedIndex].text);
+                }
+                const customerInput = document.getElementById('customerSearchInput');
+                if (customerInput && customerSelect.selectedIndex >= 0) {
+                    customerInput.value = customerSelect.options[customerSelect.selectedIndex].text;
+                }
+            }, 100);
+        }
+    }
+    
+    // Populate salesman dropdown
+    if (transaction.salesman_id) {
+        const salesmanSelect = document.querySelector('select[name="salesman_id"]');
+        if (salesmanSelect) {
+            // Convert to string to match option values
+            const salesmanId = String(transaction.salesman_id);
+            console.log('Setting salesman_id to:', salesmanId);
+            console.log('Available salesman options:', Array.from(salesmanSelect.options).map(o => ({value: o.value, text: o.text})));
+            
+            // Set the value
+            salesmanSelect.value = salesmanId;
+            
+            // Trigger change event
+            salesmanSelect.dispatchEvent(new Event('change', { bubbles: true }));
+            const salesmanInput = document.getElementById('salesmanSearchInput');
+            if (salesmanInput && salesmanSelect.selectedIndex >= 0) {
+                salesmanInput.value = salesmanSelect.options[salesmanSelect.selectedIndex].text;
+            }
+            
+            // Verify it was set
+            setTimeout(() => {
+                if (salesmanSelect.value != salesmanId) {
+                    console.error('❌ Salesman ID not found in dropdown:', salesmanId);
+                    console.log('Dropdown current value:', salesmanSelect.value);
+                    
+                    // Try to find by text match as fallback
+                    if (transaction.salesman_name) {
+                        const matchingOption = Array.from(salesmanSelect.options).find(
+                            opt => opt.text.toLowerCase() === transaction.salesman_name.toLowerCase()
+                        );
+                        if (matchingOption) {
+                            console.log('Found salesman by name, setting to:', matchingOption.value);
+                            salesmanSelect.value = matchingOption.value;
+                            salesmanSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }
+                } else {
+                    console.log('✅ Salesman set successfully:', salesmanSelect.options[salesmanSelect.selectedIndex].text);
+                }
+                const salesmanInput = document.getElementById('salesmanSearchInput');
+                if (salesmanInput && salesmanSelect.selectedIndex >= 0) {
+                    salesmanInput.value = salesmanSelect.options[salesmanSelect.selectedIndex].text;
+                }
+            }, 100);
+        }
+    }
+    
+    // Populate other fields
+    console.log('📝 Populating other fields...');
+    const fieldsToPopulate = {
+        'gst_vno': transaction.gst_vno || 'N',
+        'note_type': transaction.note_type || 'N',
+        'with_gst': transaction.with_gst || 'N',
+        'inc': transaction.inc || 'N',
+        'rev_charge': transaction.rev_charge || 'Y',
+        'adjusted': transaction.adjusted || 'X',
+        'dis_rpl': transaction.dis_rpl || '',
+        'brk': transaction.brk || '',
+        'exp': transaction.exp || ''
+    };
+    
+    Object.keys(fieldsToPopulate).forEach(fieldName => {
+        const input = document.querySelector(`input[name="${fieldName}"]`);
+        if (input) {
+            input.value = fieldsToPopulate[fieldName];
+            console.log(`  ✅ ${fieldName} = ${fieldsToPopulate[fieldName]}`);
+        } else {
+            console.warn(`  ⚠️ Field not found: ${fieldName}`);
+        }
+    });
+    
+    // Populate items
+    if (transaction.items && transaction.items.length > 0) {
+        transaction.items.forEach((item, index) => {
+            addInvoiceItemToTable(item, index);
+        });
+    }
+    
+    // Recalculate all totals
+    updateAllCalculations();
+    
+    console.log('Invoice data populated successfully');
+}
+
+// Add Invoice Item to Table
+function addInvoiceItemToTable(item, index) {
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.item_code || ''}" readonly
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.item_name || ''}" readonly>
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" 
+                   value="${item.batch_no || ''}"
+                   onblur="checkBatchExists(${rowIndex}, ${item.item_id}, this.value)"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); checkBatchExists(${rowIndex}, ${item.item_id}, this.value); return false; }"
+                   placeholder="Enter batch no.">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" 
+                   value="${item.expiry || ''}"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'br_ex'); return false; }" 
+                   placeholder="MM/YY">
+        </td>
+        <td>
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
+                <option value="">Select</option>
+                <option value="B" ${item.br_ex === 'B' ? 'selected' : ''}>Breakage</option>
+                <option value="E" ${item.br_ex === 'E' ? 'selected' : ''}>Expiry</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" 
+                   value="${item.qty || 0}"
+                   step="0.01" onchange="calculateRowAmount(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'f_qty'); return false; }" 
+                   placeholder="0.00">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][f_qty]" 
+                   value="${item.f_qty || 0}"
+                   step="0.01" 
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'mrp'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" 
+                   value="${item.mrp || 0}"
+                   step="0.01" 
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'scm_percent'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][scm_percent]" 
+                   value="${item.scm_percent || 0}"
+                   step="0.01" onchange="calculateRowAmount(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'dis_percent'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm TEST-DIS-PERCENT" name="items[${rowIndex}][dis_percent]" 
+                   value="${item.dis_percent || 0}"
+                   step="0.01" 
+                   onchange="handleDiscountChange(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" 
+                   value="${item.amount || 0}"
+                   step="0.01" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Create item data object from the invoice item
+    const itemData = {
+        id: item.item_id || item.item_code,
+        name: item.item_name,
+        packing: item.packing,
+        mrp: item.mrp,
+        hsn_code: item.hsn_code,
+        gst_percent: item.tax_percent || (parseFloat(item.cgst_percent || 0) + parseFloat(item.sgst_percent || 0)),
+        total_qty: 0 // Will be fetched if needed
+    };
+    
+    // Store item data for later use
+    row.dataset.itemId = item.item_id || item.item_code;
+    row.dataset.itemData = JSON.stringify(itemData);
+    
+    // If batch data exists, store it
+    if (item.batch_no) {
+        const batchData = {
+            batch_no: item.batch_no,
+            s_rate: item.s_rate || 0,
+            pur_rate: item.p_rate || 0,
+            mrp: item.mrp || 0,
+            expiry_date: item.expiry || null
+        };
+        row.dataset.batchData = JSON.stringify(batchData);
+    }
+    
+    // Add click event to row to update calculation section
+    row.addEventListener('click', function() {
+        selectRowForCalculation(rowIndex);
+    });
+    
+    // Calculate row amount
+    calculateRowAmount(rowIndex);
+}
+
+// Pagination state for items
+let itemsCurrentPage = 1;
+let itemsPerPage = 50;
+let itemsHasMore = true;
+let itemsLoading = false;
+
+// Open Item Selection Modal (kept for backward compatibility if needed)
+function openItemSelectionModal() {
+    // Check if customer is selected
+    const customerId = document.querySelector('select[name="customer_id"]').value;
+    
+    if (!customerId) {
+        showAlert('error', 'Please select a customer first.');
+        return;
+    }
+    
+    // Reset pagination state and load first page
+    itemsCurrentPage = 1;
+    itemsHasMore = true;
+    itemsLoading = false;
+    itemsData = [];
+    
+    loadPaginatedItems(itemsCurrentPage, true);
+}
+
+// Load Items from Database with Pagination
+function loadPaginatedItems(page, isInitial = false) {
+    if (itemsLoading || (!itemsHasMore && !isInitial)) return;
+    
+    itemsLoading = true;
+    
+    // Show loading indicator if not initial
+    if (!isInitial) {
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+    }
+    
+    const url = `<?php echo e(route("admin.items.all")); ?>?page=${page}&per_page=${itemsPerPage}`;
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        itemsLoading = false;
+        
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        const items = data.items || [];
+        
+        // Check if we have pagination info
+        if (data.pagination) {
+            itemsHasMore = data.pagination.has_more || (page < data.pagination.last_page);
+        } else {
+            // Legacy: no pagination, all items returned
+            itemsHasMore = false;
+        }
+        
+        // Store loaded items
+        itemsData = itemsData.concat(items);
+        
+        if (isInitial) {
+            // Show modal with initial items
+            showPaginatedItemModal(items);
+        } else {
+            // Append items to existing table
+            appendItemsToTable(items);
+        }
+        
+        // Update records info
+        updateItemsRecordsInfo();
+        
+        itemsCurrentPage++;
+    })
+    .catch(error => {
+        itemsLoading = false;
+        console.error('Error loading items:', error);
+        const loadingIndicator = document.getElementById('itemsLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        
+        if (isInitial) {
+            showAlert('error', 'Error loading items. Please try again.');
+        }
+    });
+}
+
+// Load Items (legacy - kept for backward compatibility)
+function loadItems() {
+    // Reset and load paginated
+    itemsCurrentPage = 1;
+    itemsHasMore = true;
+    itemsLoading = false;
+    itemsData = [];
+    loadPaginatedItems(itemsCurrentPage, true);
+}
+
+// Display Items in Modal (legacy - still used for search filtering)
+function displayItems(items) {
+    const tbody = document.getElementById('itemsListBody');
+    if (!tbody) return;
+    
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No items found</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    items.forEach((item, index) => {
+        html += `
+            <tr style="padding: 2px;">
+                <td style="padding: 4px;">${item.id || ''}</td>
+                <td style="padding: 4px;">${item.name || ''}</td>
+                <td style="padding: 4px;">${item.packing || ''}</td>
+                <td class="text-end" style="padding: 4px;">₹${parseFloat(item.mrp || 0).toFixed(2)}</td>
+                <td class="text-end" style="padding: 4px;">${parseFloat(item.total_qty || 0).toFixed(2)}</td>
+                <td class="text-center" style="padding: 4px;">
+                    <button type="button" class="btn btn-sm btn-primary" style="padding: 2px 6px; font-size: 10px;" onclick='selectItem(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                        <i class="bi bi-check-circle"></i> Select
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// Append items to the modal table (for infinite scroll)
+function appendItemsToTable(items) {
+    const tbody = document.getElementById('itemsListBody');
+    if (!tbody) return;
+    
+    items.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.style.padding = '2px';
+        row.innerHTML = `
+            <td style="padding: 4px;">${item.id || ''}</td>
+            <td style="padding: 4px;">${item.name || ''}</td>
+            <td style="padding: 4px;">${item.packing || ''}</td>
+            <td class="text-end" style="padding: 4px;">₹${parseFloat(item.mrp || 0).toFixed(2)}</td>
+            <td class="text-end" style="padding: 4px;">${parseFloat(item.total_qty || 0).toFixed(2)}</td>
+            <td class="text-center" style="padding: 4px;">
+                <button type="button" class="btn btn-sm btn-primary" style="padding: 2px 6px; font-size: 10px;" onclick='selectItem(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                    <i class="bi bi-check-circle"></i> Select
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+// Update items records info
+function updateItemsRecordsInfo() {
+    const infoEl = document.getElementById('itemsRecordsInfo');
+    if (!infoEl) return;
+    
+    const loadedCount = itemsData.length;
+    if (itemsHasMore) {
+        infoEl.textContent = `Showing ${loadedCount} items (scroll for more)`;
+    } else {
+        infoEl.textContent = `Showing all ${loadedCount} items`;
+    }
+}
+
+// Setup infinite scroll for items modal
+function setupItemsInfiniteScroll() {
+    const scrollContainer = document.getElementById('itemsScrollContainer');
+    if (!scrollContainer) return;
+    
+    scrollContainer.addEventListener('scroll', function() {
+        // Check if scrolled near bottom
+        if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50) {
+            // Load more items if available
+            if (itemsHasMore && !itemsLoading) {
+                loadPaginatedItems(itemsCurrentPage, false);
+            }
+        }
+    });
+}
+
+// Show Item Selection Modal with Pagination
+function showPaginatedItemModal(items) {
+    const totalInfo = itemsHasMore ? `Showing first ${items.length} items (scroll for more)` : `Showing all ${items.length} items`;
+    
+    const modalHTML = `
+        <div class="item-modal-backdrop" id="itemModalBackdrop" onclick="closeItemModal()"></div>
+        <div class="item-modal" id="itemModal">
+            <div class="item-modal-content">
+                <div class="item-modal-header">
+                    <h5 class="item-modal-title"><i class="bi bi-box-seam"></i> Select Item</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeItemModal()">&times;</button>
+                </div>
+                <div class="item-modal-body">
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="itemSearchInput" placeholder="Search by item name or code..." onkeyup="filterItems()">
+                    </div>
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;" id="itemsScrollContainer">
+                        <table class="table table-bordered table-hover table-sm" style="font-size: 11px; margin-bottom: 0;">
+                            <thead class="table-light" style="position: sticky; top: 0; z-index: 10; background: #e9ecef;">
+                                <tr>
+                                    <th style="width: 50px; padding: 4px;">Code</th>
+                                    <th style="width: 100px; padding: 4px;">Item Name</th>
+                                    <th style="width: 40px; padding: 4px;">Packing</th>
+                                    <th style="width: 40px; padding: 4px;">MRP</th>
+                                    <th style="width: 40px; padding: 4px;">Stock</th>
+                                    <th style="width: 80px; padding: 4px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsListBody"></tbody>
+                        </table>
+                        <!-- Loading indicator -->
+                        <div id="itemsLoadingIndicator" style="display: none; text-align: center; padding: 15px; color: #6c757d;">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                            <span class="ms-2">Loading more items...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="item-modal-footer">
+                    <small class="text-muted me-auto" id="itemsRecordsInfo">${totalInfo}</small>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeItemModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('itemModal');
+    if (existingModal) existingModal.remove();
+    const existingBackdrop = document.getElementById('itemModalBackdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    setTimeout(() => {
+        document.getElementById('itemModalBackdrop').classList.add('show');
+        document.getElementById('itemModal').classList.add('show');
+        
+        // Setup infinite scroll
+        setupItemsInfiniteScroll();
+    }, 10);
+    
+    displayItems(items);
+}
+
+// Show Item Selection Modal (legacy - kept for backward compatibility)
+function showItemModal() {
+    // Use paginated modal with current data
+    showPaginatedItemModal(itemsData);
+}
+
+// Close Item Modal
+function closeItemModal() {
+    const modal = document.getElementById('itemModal');
+    const backdrop = document.getElementById('itemModalBackdrop');
+    
+    if (modal) modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    if (backdrop) backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+    
+    setTimeout(() => {
+        if (modal) modal.remove();
+        if (backdrop) backdrop.remove();
+    }, 300);
+}
+
+// Filter Items
+function filterItems() {
+    const searchTerm = document.getElementById('itemSearchInput').value.toLowerCase();
+    const filteredItems = itemsData.filter(item => {
+        const name = (item.name || '').toLowerCase();
+        const code = (item.id || '').toString().toLowerCase();
+        return name.includes(searchTerm) || code.includes(searchTerm);
+    });
+    displayItems(filteredItems);
+}
+
+// Select Item and Add to Table
+function selectItem(item) {
+    closeItemModal();
+    addNewRowWithItem(item);
+}
+
+// Add New Row with Item
+function addNewRowWithItem(item) {
+    const tbody = document.getElementById('itemsTableBody');
+    const rowIndex = currentRowIndex++;
+    
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value="${item.id || ''}" readonly
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value="${item.name || ''}" readonly>
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" 
+                   onblur="checkBatchExists(${rowIndex}, ${item.id}, this.value)"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); checkBatchExists(${rowIndex}, ${item.id}, this.value); return false; }"
+                   placeholder="Enter batch no.">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'br_ex'); return false; }" 
+                   placeholder="MM/YY">
+        </td>
+        <td>
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
+                <option value="">Select</option>
+                <option value="B">Breakage</option>
+                <option value="E">Expiry</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" 
+                   step="0.01" onchange="calculateRowAmount(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'f_qty'); return false; }" 
+                   placeholder="0.00">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][f_qty]" 
+                   step="0.01" 
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'mrp'); return false; }" 
+                   value="0.00">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" 
+                   step="0.01" 
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'scm_percent'); return false; }" 
+                   value="">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][scm_percent]" 
+                   step="0.01" onchange="calculateRowAmount(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'dis_percent'); return false; }" 
+                   value="0.00">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][dis_percent]" 
+                   step="0.01" 
+                   onchange="handleDiscountChange(${rowIndex})" 
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }" 
+                   value="0.00">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" 
+                   step="0.01" readonly value="0.00">
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Store item data for later use
+    row.dataset.itemId = item.id;
+    row.dataset.itemData = JSON.stringify(item);
+    
+    // Add click event to row to update calculation section
+    row.addEventListener('click', function() {
+        selectRowForCalculation(rowIndex);
+    });
+    
+    // Focus first editable field of the new row
+    setTimeout(() => {
+        focusFirstEditableFieldInRow(row);
+    }, 100);
+}
+
+// Check if Batch Exists
+function checkBatchExists(rowIndex, itemId, batchNo) {
+    if (!batchNo || batchNo.trim() === '') {
+        return;
+    }
+    
+    // Show loading indicator
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    fetch(`<?php echo e(route('admin.batches.check-batch')); ?>?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Batch check response:', data);
+        if (data.exists && data.batches && data.batches.length > 0) {
+            // Show batch details modal
+            currentItemForBatch = {
+                rowIndex: rowIndex,
+                itemId: itemId,
+                batchNo: batchNo,
+                itemName: row.querySelector('input[name*="[name]"]').value,
+                packing: data.item_packing || ''
+            };
+            console.log('Showing batch modal with batches:', data.batches);
+            showBatchDetailsModal(data.batches, data.item_name, data.item_packing);
+        } else {
+            // Batch doesn't exist, show confirmation modal
+            console.log('Batch not found or no batches returned');
+            currentItemForBatch = {
+                rowIndex: rowIndex,
+                itemId: itemId,
+                batchNo: batchNo,
+                itemName: row.querySelector('input[name*="[name]"]').value,
+                packing: data.item_packing || ''
+            };
+            showBatchNotExistModal();
+        }
+    })
+    .catch(error => {
+        console.error('Error checking batch:', error);
+        if (window.crudNotification) {
+            crudNotification.showToast('error', 'Error', 'Error checking batch: ' + error.message);
+        }
+    });
+}
+
+// Show Batch Details Modal
+function showBatchDetailsModal(batches, itemName, packing) {
+    let tableRows = '';
+    
+    batches.forEach(batch => {
+        const expiryDate = batch.expiry_date ? new Date(batch.expiry_date).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: '2-digit'}).replace(/ /g, '-') : '';
+        const mfgDate = batch.manufacturing_date ? new Date(batch.manufacturing_date).toLocaleDateString('en-GB', {day: '2-digit', month: 'short', year: '2-digit'}).replace(/ /g, '-') : '';
+        
+        tableRows += `
+            <tr style="background-color: ${batch.total_qty > 0 ? '#ffcccc' : '#ffffff'}; padding: 2px;">
+                <td style="padding: 3px;"><strong>${batch.batch_no || ''}</strong></td>
+                <td style="padding: 3px;">${mfgDate}</td>
+                <td class="text-end" style="padding: 3px;">${parseFloat(batch.s_rate || 0).toFixed(2)}</td>
+                <td class="text-end" style="padding: 3px;">${parseFloat(batch.pur_rate || 0).toFixed(2)}</td>
+                <td class="text-end" style="padding: 3px;"><strong>${parseFloat(batch.mrp || 0).toFixed(2)}</strong></td>
+                <td class="text-end" style="padding: 3px;"><strong>${parseFloat(batch.total_qty || 0).toFixed(0)}</strong></td>
+                <td style="padding: 3px;"><strong>${expiryDate}</strong></td>
+                <td style="padding: 3px;">${batch.item_code || ''}</td>
+                <td class="text-end" style="padding: 3px;">${parseFloat(batch.cost_gst || 0).toFixed(2)}</td>
+                <td class="text-end" style="padding: 3px;">${parseFloat(batch.sale_scheme || 0).toFixed(2)}</td>
+                <td class="text-center" style="padding: 3px;">
+                    <button type="button" class="btn btn-sm btn-success" style="padding: 2px 6px; font-size: 10px;" onclick='selectBatch(${JSON.stringify(batch).replace(/'/g, "&apos;")})'>
+                        <i class="bi bi-check-circle"></i> Select
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    const modalHTML = `
+        <div class="batch-modal-backdrop" id="batchModalBackdrop" onclick="closeBatchModal()"></div>
+        <div class="batch-modal" id="batchModal">
+            <div class="batch-modal-content">
+                <div class="batch-modal-header">
+                    <h5 class="batch-modal-title">Batch Details - ${itemName || ''} | Packing: ${packing || ''}</h5>
+                    <button type="button" class="btn-close-modal" onclick="closeBatchModal()">&times;</button>
+                </div>
+                <div class="batch-modal-body">
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-bordered table-hover table-sm" style="font-size: 10px; margin-bottom: 0;">
+                            <thead class="table-light" style="position: sticky; top: 0; z-index: 10; background: #e9ecef;">
+                                <tr>
+                                    <th style="width: 60px; padding: 3px;">BATCH</th>
+                                    <th style="width: 70px; padding: 3px;">DATE</th>
+                                    <th style="width: 50px; padding: 3px;">RATE</th>
+                                    <th style="width: 50px; padding: 3px;">P.RATE</th>
+                                    <th style="width: 50px; padding: 3px;">MRP</th>
+                                    <th style="width: 45px; padding: 3px;">QTY.</th>
+                                    <th style="width: 60px; padding: 3px;">EXP.</th>
+                                    <th style="width: 50px; padding: 3px;">CODE</th>
+                                    <th style="width: 70px; padding: 3px;">Cost+GST</th>
+                                    <th style="width: 50px; padding: 3px;">SCM</th>
+                                    <th style="width: 60px; padding: 3px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="batch-modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    const existingModal = document.getElementById('batchModal');
+    if (existingModal) existingModal.remove();
+    const existingBackdrop = document.getElementById('batchModalBackdrop');
+    if (existingBackdrop) existingBackdrop.remove();
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Ensure modal elements exist before adding show class
+    setTimeout(() => {
+        const backdrop = document.getElementById('batchModalBackdrop');
+        const modal = document.getElementById('batchModal');
+        if (backdrop) backdrop.classList.add('show');
+        if (modal) {
+            modal.classList.add('show');
+            initBatchModalKeyboard(true);
+        }
+    }, 50);
+}
+
+// Close Batch Modal
+function closeBatchModal() {
+    const modal = document.getElementById('batchModal');
+    const backdrop = document.getElementById('batchModalBackdrop');
+    
+    if (modal) modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    if (backdrop) backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+    
+    setTimeout(() => {
+        if (modal) modal.remove();
+        if (backdrop) backdrop.remove();
+    }, 300);
+
+    if (batchModalKeyHandler) {
+        window.removeEventListener('keydown', batchModalKeyHandler, true);
+        batchModalKeyHandler = null;
+    }
+}
+
+// Select Batch and Fill Row
+function selectBatch(batch) {
+    if (!currentItemForBatch) return;
+    
+    const rowIndex = currentItemForBatch.rowIndex;
+    const row = document.getElementById(`row-${rowIndex}`);
+    
+    if (row) {
+        // Fill expiry date
+        const expiryInput = row.querySelector('input[name*="[expiry]"]');
+        if (expiryInput && batch.expiry_date) {
+            const expiryDate = new Date(batch.expiry_date);
+            const formattedExpiry = `${String(expiryDate.getMonth() + 1).padStart(2, '0')}/${String(expiryDate.getFullYear()).slice(-2)}`;
+            expiryInput.value = formattedExpiry;
+        }
+        
+        // Fill MRP
+        const mrpInput = row.querySelector('input[name*="[mrp]"]');
+        if (mrpInput) {
+            mrpInput.value = parseFloat(batch.mrp || 0).toFixed(2);
+        }
+        
+        // Store batch data including rates
+        row.dataset.batchData = JSON.stringify(batch);
+        row.dataset.sRate = batch.s_rate || 0;
+        row.dataset.pRate = batch.pur_rate || 0;
+        row.dataset.mrp = batch.mrp || 0;
+        
+        // Get item data from row
+        const itemData = JSON.parse(row.dataset.itemData || '{}');
+        
+        // Don't show HSN details yet - will show when row is completed
+        // Just highlight the row as active
+        row.style.backgroundColor = '#e7f3ff';
+    }
+    
+    // Close modal
+    closeBatchModal();
+    
+    // Recalculate all amounts
+    calculateRowAmount(rowIndex);
+    updateAllCalculations();
+    
+    // Move cursor to expiry field and select it
+    setTimeout(() => {
+        const expiryInput = row.querySelector('input[name*="[expiry]"]');
+        if (expiryInput) {
+            expiryInput.focus();
+            expiryInput.select();
+        }
+    }, 150);
+    
+    currentItemForBatch = null;
+}
+
+// Handle form-level Enter key - Allow field-specific handlers to execute first
+function handleFormEnterKey(event) {
+    if (event.key !== 'Enter') {
+        return true; // Allow all non-Enter keys
+    }
+    
+    // Allow Enter for SELECT elements (dropdowns)
+    if (event.target.tagName === 'SELECT') {
+        return true;
+    }
+    
+    // Check if the input field has its own onkeydown handler
+    // If yes, let it handle the Enter key (don't block it)
+    if (event.target.hasAttribute('onkeydown')) {
+        return true; // Let field's own handler execute
+    }
+    
+    // Block Enter for all other cases (prevent form submission)
+    return false;
+}
+
+// Handle Br/Ex dropdown keyboard navigation
+function openBrExDropdown(dropdown) {
+    if (!dropdown) return;
+
+    dropdown.focus();
+    dropdown.dataset.kbExpanded = '1';
+
+    if (typeof dropdown.showPicker === 'function') {
+        try {
+            dropdown.showPicker();
+            return;
+        } catch (error) {
+            // Fallback to size-based expansion below.
+        }
+    }
+
+    const optionsCount = Math.max(dropdown.options.length, 2);
+    dropdown.size = optionsCount;
+    dropdown.style.position = 'absolute';
+    dropdown.style.zIndex = '1000';
+    dropdown.style.backgroundColor = 'white';
+    dropdown.style.border = '1px solid #ced4da';
+    dropdown.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+}
+
+function closeBrExDropdown(dropdown) {
+    if (!dropdown) return;
+
+    dropdown.size = 1;
+    dropdown.style.position = '';
+    dropdown.style.zIndex = '';
+    dropdown.style.backgroundColor = '';
+    dropdown.style.border = '';
+    dropdown.style.boxShadow = '';
+    delete dropdown.dataset.kbExpanded;
+}
+
+function handleBrExChange(rowIndex, dropdown) {
+    closeBrExDropdown(dropdown);
+    moveToNextField(rowIndex, 'qty');
+}
+
+function handleBrExKeydown(event, rowIndex) {
+    const dropdown = event.target;
+    
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isExpanded = dropdown.size > 1 || dropdown.dataset.kbExpanded === '1';
+        if (isExpanded) {
+            closeBrExDropdown(dropdown);
+            setTimeout(() => {
+                moveToNextField(rowIndex, 'qty');
+            }, 50);
+        } else {
+            openBrExDropdown(dropdown);
+        }
+        
+        return false;
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeBrExDropdown(dropdown);
+        return false;
+    }
+
+    return true;
+}
+
+// Move to Next Field
+function moveToNextField(rowIndex, nextFieldName) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    const nextField = row.querySelector(`[name*="[${nextFieldName}]"]`);
+    if (nextField) {
+        setTimeout(() => {
+            nextField.focus();
+            // Select text for input fields
+            if (nextField.tagName === 'INPUT' && nextField.type !== 'number') {
+                nextField.select();
+            } else if (nextField.tagName === 'INPUT' && nextField.type === 'number') {
+                // For number inputs, select all
+                nextField.select();
+            } else if (nextField.tagName === 'SELECT') {
+                nextField.focus();
+                if (nextFieldName === 'br_ex') {
+                    openBrExDropdown(nextField);
+                }
+            }
+        }, 100);
+    }
+}
+
+function focusFirstEditableFieldInRow(row) {
+    if (!row) return false;
+    const firstEditable = row.querySelector('input:not([readonly]):not([disabled]), select:not([disabled]), textarea:not([readonly]):not([disabled])');
+    if (!firstEditable) return false;
+
+    firstEditable.focus();
+    if (firstEditable.tagName === 'INPUT') {
+        firstEditable.select();
+    }
+    return true;
+}
+
+// Handle Discount and Add New Row - Called when Enter is pressed on Dis% field
+function handleDiscountAndAddRow(rowIndex) {
+    const active = document.activeElement;
+    if (active && active.name && !active.name.includes('[dis_percent]')) {
+        return;
+    }
+
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    const tbody = document.getElementById('itemsTableBody');
+    if (!tbody) return;
+    const previousRowCount = tbody.querySelectorAll('tr').length;
+
+    // Mark row as completed
+    markRowAsCompleted(rowIndex);
+    
+    // Keep both calculators compatible with old/new row templates.
+    if (typeof calculateRowAmount === 'function') {
+        calculateRowAmount(rowIndex);
+    }
+    if (typeof calculateRowTotal === 'function') {
+        calculateRowTotal(rowIndex);
+    }
+    
+    // Clear HSN section (will show next row's data when selected)
+    clearCalculationSection();
+    
+    // Remove focus from current field
+    if (document.activeElement) {
+        document.activeElement.blur();
+    }
+    
+    // Trigger "Add Row" and auto-focus first editable field of newly created row.
+    const focusObserver = new MutationObserver(() => {
+        const rows = tbody.querySelectorAll('tr');
+        if (rows.length <= previousRowCount) return;
+        focusObserver.disconnect();
+        const newRow = rows[rows.length - 1];
+        setTimeout(() => {
+            focusFirstEditableFieldInRow(newRow);
+        }, 50);
+    });
+    focusObserver.observe(tbody, { childList: true });
+    setTimeout(() => focusObserver.disconnect(), 6000);
+
+    setTimeout(() => {
+        const addRowBtn = document.getElementById('addRowBtn') || document.querySelector('.btn-success[onclick*="addNewRow"]');
+        if (addRowBtn) {
+            addRowBtn.focus();
+            addRowBtn.click();
+        }
+    }, 100);
+}
+
+// Handle Discount Change - Highlights row and triggers calculations
+function handleDiscountChange(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    // Calculate the row amount
+    calculateRowAmount(rowIndex);
+}
+
+// Mark row as completed (green background)
+function markRowAsCompleted(rowIndex) {
+    console.log('markRowAsCompleted called for row:', rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) {
+        console.log('Row not found in markRowAsCompleted:', rowIndex);
+        return;
+    }
+    
+    console.log('Setting green background');
+    // Set green background
+    row.style.backgroundColor = '#d4edda';
+    row.dataset.completed = 'true';
+    
+    // Apply to all cells
+    const cells = row.querySelectorAll('td');
+    cells.forEach(cell => {
+        cell.style.backgroundColor = '#d4edda';
+    });
+    
+    console.log('Row marked as completed, background:', row.style.backgroundColor);
+}
+
+// Clear calculation section
+function clearCalculationSection() {
+    document.getElementById('calc_hsn_code').value = '---';
+    document.getElementById('calc_cgst_percent').value = '0';
+    document.getElementById('calc_sgst_percent').value = '0';
+    document.getElementById('calc_cgst_amount').value = '0.00';
+    document.getElementById('calc_sgst_amount').value = '0.00';
+    document.getElementById('calc_tax_percent').value = '0';
+    document.getElementById('calc_srate').value = '0.00';
+    document.getElementById('calc_prate').value = '0.00';
+    document.getElementById('calc_mrp').value = '0.00';
+    document.getElementById('calc_pack').value = '';
+    
+    // Clear additional details
+    document.getElementById('detail_packing').value = '0.00';
+    document.getElementById('detail_unit').value = '0.00';
+    document.getElementById('detail_cl_qty').value = '0.00';
+    document.getElementById('detail_gross').value = '0.00';
+    document.getElementById('detail_scm_amt').value = '0.00';
+    document.getElementById('detail_dis_amt').value = '0.00';
+    document.getElementById('detail_subtotal').value = '0.00';
+    document.getElementById('detail_tax_amt').value = '0.00';
+    document.getElementById('detail_net_amt').value = '0.00';
+}
+
+// Calculate Row Amount
+function calculateRowAmount(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    const qty = parseFloat(row.querySelector('input[name*="[qty]"]').value) || 0;
+    const mrp = parseFloat(row.querySelector('input[name*="[mrp]"]').value) || 0;
+    const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]').value) || 0;
+    const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]').value) || 0;
+    
+    // Calculate amount
+    const grossAmount = qty * mrp;
+    const schemeAmount = grossAmount * (scmPercent / 100);
+    const afterScheme = grossAmount - schemeAmount;
+    const discountAmount = afterScheme * (disPercent / 100);
+    const amount = afterScheme - discountAmount;
+    
+    // Update amount field
+    const amountInput = row.querySelector('input[name*="[amount]"]');
+    if (amountInput) {
+        amountInput.value = amount.toFixed(2);
+    }
+    
+    // Update calculation section and additional details if this row is selected
+    const itemData = JSON.parse(row.dataset.itemData || '{}');
+    const batchData = JSON.parse(row.dataset.batchData || '{}');
+    
+    // Check if this row is currently selected (has light blue background)
+    if (row.style.backgroundColor === 'rgb(231, 243, 255)' || row.style.backgroundColor === '#e7f3ff') {
+        updateAdditionalDetails(row, itemData);
+    }
+    
+    // Recalculate summary totals
+    updateAllCalculations();
+}
+
+// Select Row for Calculation - Updates calculation section with selected row's data
+function selectRowForCalculation(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (!row) return;
+    
+    // Check if row is completed (green)
+    const isCompleted = row.dataset.completed === 'true';
+    
+    // Remove highlight from all rows except completed ones
+    const allRows = document.querySelectorAll('#itemsTableBody tr');
+    allRows.forEach(r => {
+        if (r.dataset.completed !== 'true') {
+            r.style.backgroundColor = '';
+        }
+    });
+    
+    // Highlight selected row (light blue) if not completed
+    if (!isCompleted) {
+        row.style.backgroundColor = '#e7f3ff';
+    }
+    
+    // Only show HSN details if row is completed
+    if (isCompleted) {
+        // Get item and batch data from row
+        const itemData = JSON.parse(row.dataset.itemData || '{}');
+        const batchData = JSON.parse(row.dataset.batchData || '{}');
+        
+        // Update calculation section
+        updateCalculationSection(batchData, itemData);
+        
+        // Update additional details section with this row's data
+        updateAdditionalDetails(row, itemData);
+    } else {
+        // Clear calculation section for incomplete rows
+        clearCalculationSection();
+    }
+}
+
+// Update Calculation Section with Batch and Item Data
+function updateCalculationSection(batch, item) {
+    console.log('Updating calculation section with:', { batch, item });
+    
+    // Fill from batch
+    document.getElementById('calc_srate').value = parseFloat(batch.s_rate || 0).toFixed(2);
+    document.getElementById('calc_prate').value = parseFloat(batch.pur_rate || 0).toFixed(2);
+    document.getElementById('calc_mrp').value = parseFloat(batch.mrp || 0).toFixed(2);
+    
+    // Fill from item
+    document.getElementById('calc_hsn_code').value = item.hsn_code || '---';
+    document.getElementById('calc_pack').value = item.packing || '';
+    
+    // Calculate tax percentages (assuming GST is split equally between CGST and SGST)
+    const gstPercent = parseFloat(item.gst_percent || 0);
+    const cgstPercent = gstPercent / 2;
+    const sgstPercent = gstPercent / 2;
+    
+    console.log('Tax calculations:', { gstPercent, cgstPercent, sgstPercent });
+    
+    document.getElementById('calc_cgst_percent').value = cgstPercent.toFixed(2);
+    document.getElementById('calc_sgst_percent').value = sgstPercent.toFixed(2);
+    document.getElementById('calc_tax_percent').value = gstPercent.toFixed(2);
+}
+
+// Update Additional Details Section with selected row's data
+function updateAdditionalDetails(row, itemData) {
+    const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+    const mrp = parseFloat(row.querySelector('input[name*="[mrp]"]')?.value) || 0;
+    const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
+    const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
+    const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
+    
+    // Calculate individual row values
+    const grossAmount = qty * mrp;
+    const schemeAmount = grossAmount * (scmPercent / 100);
+    const discountAmount = (grossAmount - schemeAmount) * (disPercent / 100);
+    const subtotal = grossAmount - schemeAmount - discountAmount;
+    
+    // Get tax from calculation section
+    const cgstPercent = parseFloat(document.getElementById('calc_cgst_percent').value) || 0;
+    const sgstPercent = parseFloat(document.getElementById('calc_sgst_percent').value) || 0;
+    const taxPercent = cgstPercent + sgstPercent;
+    
+    // Calculate CGST and SGST amounts separately
+    const cgstAmount = subtotal * (cgstPercent / 100);
+    const sgstAmount = subtotal * (sgstPercent / 100);
+    const taxAmount = cgstAmount + sgstAmount;
+    const netAmount = subtotal + taxAmount;
+    
+    // Update CGST and SGST amounts in calculation section
+    document.getElementById('calc_cgst_amount').value = cgstAmount.toFixed(2);
+    document.getElementById('calc_sgst_amount').value = sgstAmount.toFixed(2);
+    
+    // Get closing quantity from item data (total of all batches)
+    const closingQty = parseFloat(itemData.total_qty || 0);
+    
+    // Update additional details section
+    document.getElementById('detail_packing').value = parseFloat(itemData.packing || 0).toFixed(2);
+    document.getElementById('detail_unit').value = parseFloat(itemData.unit || 0).toFixed(2);
+    document.getElementById('detail_cl_qty').value = closingQty.toFixed(2);
+    document.getElementById('detail_gross').value = grossAmount.toFixed(2);
+    document.getElementById('detail_scm_amt').value = schemeAmount.toFixed(2);
+    document.getElementById('detail_dis_amt').value = discountAmount.toFixed(2);
+    document.getElementById('detail_subtotal').value = subtotal.toFixed(2);
+    document.getElementById('detail_tax_amt').value = taxAmount.toFixed(2);
+    document.getElementById('detail_net_amt').value = netAmount.toFixed(2);
+}
+
+// Update All Calculations - Updates SUMMARY section with totals from all rows
+function updateAllCalculations() {
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    let totalMrpValue = 0;
+    let totalGross = 0;
+    let totalDiscount = 0;
+    let totalScheme = 0;
+    let totalQty = 0;
+    let totalTaxAmount = 0;
+    
+    // Calculate totals from all rows
+    rows.forEach(row => {
+        const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+        const mrp = parseFloat(row.querySelector('input[name*="[mrp]"]')?.value) || 0;
+        const scmPercent = parseFloat(row.querySelector('input[name*="[scm_percent]"]')?.value) || 0;
+        const disPercent = parseFloat(row.querySelector('input[name*="[dis_percent]"]')?.value) || 0;
+        
+        totalQty += qty;
+        
+        // Calculate for this row
+        const grossAmount = qty * mrp;
+        const schemeAmount = grossAmount * (scmPercent / 100);
+        const discountAmount = (grossAmount - schemeAmount) * (disPercent / 100);
+        const subtotal = grossAmount - schemeAmount - discountAmount;
+        
+        // Get tax percentage from item data
+        const itemData = JSON.parse(row.dataset.itemData || '{}');
+        const gstPercent = parseFloat(itemData.gst_percent || 0);
+        const taxAmount = subtotal * (gstPercent / 100);
+        
+        totalMrpValue += grossAmount;
+        totalGross += subtotal;
+        totalScheme += schemeAmount;
+        totalDiscount += discountAmount;
+        totalTaxAmount += taxAmount;
+    });
+    
+    const totalNet = totalGross + totalTaxAmount;
+    
+    // Update SUMMARY section only (cumulative totals)
+    document.getElementById('summary_mrp_value').value = totalMrpValue.toFixed(2);
+    document.getElementById('summary_gross').value = totalGross.toFixed(2);
+    document.getElementById('summary_discount').value = totalDiscount.toFixed(2);
+    document.getElementById('summary_scheme').value = totalScheme.toFixed(2);
+    document.getElementById('summary_tax').value = totalTaxAmount.toFixed(2);
+    document.getElementById('summary_net').value = totalNet.toFixed(2);
+    
+    // Update payable amount in calculation section
+    document.getElementById('calc_payable_amount').value = totalNet.toFixed(2);
+}
+
+// Remove Row
+function removeRow(rowIndex) {
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (row) {
+        row.remove();
+        updateAllCalculations();
+    }
+}
+
+// Add New Row - creates blank row only (no modal)
+function addNewRow() {
+    // Check if customer is selected
+    const customerId = document.querySelector('select[name="customer_id"]')?.value;
+    
+    if (!customerId) {
+        showAlert('error', 'Please select a customer first.');
+        return;
+    }
+
+    const tbody = document.getElementById('itemsTableBody');
+    if (!tbody) return;
+
+    const rowIndex = currentRowIndex++;
+    const row = document.createElement('tr');
+    row.id = `row-${rowIndex}`;
+    row.innerHTML = `
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][code]" value=""
+                   onkeydown="return handleCodeFieldEnter(event, ${rowIndex});"
+                   placeholder="">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][name]" value=""
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'batch'); return false; }">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value=""
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'expiry'); return false; }">
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value=""
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'br_ex'); return false; }"
+                   placeholder="MM/YY">
+        </td>
+        <td>
+            <select class="form-control form-control-sm no-select2" name="items[${rowIndex}][br_ex]"
+                    onchange="handleBrExChange(${rowIndex}, this)"
+                    onkeydown="handleBrExKeydown(event, ${rowIndex})">
+                <option value="">Select</option>
+                <option value="B">Breakage</option>
+                <option value="E">Expiry</option>
+            </select>
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'f_qty'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][f_qty]" value="0" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'mrp'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][mrp]" value="0.00" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'scm_percent'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][scm_percent]" value="0.00" step="0.01"
+                   onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'dis_percent'); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][dis_percent]" value="0.00" step="0.01"
+                   onchange="handleDiscountChange(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); handleDiscountAndAddRow(${rowIndex}); return false; }">
+        </td>
+        <td>
+            <input type="number" class="form-control form-control-sm readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeRow(${rowIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+
+    tbody.appendChild(row);
+
+    // Initialize blank row datasets to keep calculators stable
+    row.dataset.itemId = '';
+    row.dataset.itemData = JSON.stringify({});
+    row.dataset.batchData = JSON.stringify({});
+
+    row.addEventListener('click', function() {
+        selectRowForCalculation(rowIndex);
+    });
+
+    setTimeout(() => {
+        focusFirstEditableFieldInRow(row);
+    }, 80);
+
+    updateAllCalculations();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Breakage/Expiry Transaction page loaded');
+
+    // Keep this page Select2-free (same pattern used in sales return screens).
+    if (window.$ && $.fn.select2) {
+        document.querySelectorAll('select').forEach(function(selectElement) {
+            selectElement.classList.add('no-select2');
+            const $el = $(selectElement);
+            if ($el.data('select2')) {
+                $el.select2('destroy');
+                $el.removeClass('select2-hidden-accessible');
+                $el.next('.select2-container').remove();
+            }
+        });
+    }
+    
+    // Handle form submission
+    document.getElementById('breakageExpiryTransactionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveTransaction();
+    });
+
+    initCustomerDropdown();
+    initSalesmanDropdown();
+    initDropdownEnterCapture();
+    initHeaderKeyboardNavigation();
+    initInvoiceModalKeyboard();
+
+    // Capture-level fallback: Enter on any Dis% field always triggers Add Row flow.
+    if (!window.__kbBeModDisEnterBound) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+            const target = e.target;
+            if (!target || !target.name || !target.name.includes('[dis_percent]')) return;
+
+            const rowMatch = target.name.match(/items\[(\d+)\]\[dis_percent\]/);
+            if (!rowMatch) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            handleDiscountAndAddRow(parseInt(rowMatch[1], 10));
+        }, true);
+        window.__kbBeModDisEnterBound = true;
+    }
+
+    // Delegated keyboard binding: Enter on any grid Code field opens Select Item modal.
+    // Works for both existing and dynamically added rows.
+    if (!window.__kbBeModCodeEnterBound) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+
+            const target = e.target;
+            if (!target || target.tagName !== 'INPUT') return;
+            if (!target.name || !target.name.includes('[code]')) return;
+
+            const rowEl = target.closest('#itemsTableBody tr');
+            if (!rowEl) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            // Avoid duplicate opens when modal is already visible or opening.
+            if (kbBeModItemModalOpenLock) return;
+            const modalEl = document.getElementById('chooseItemsModal');
+            if (modalEl && modalEl.classList.contains('show')) return;
+
+            let rowIndex = null;
+            const nameMatch = target.name.match(/items\[(\d+)\]\[code\]/);
+            if (nameMatch) {
+                rowIndex = parseInt(nameMatch[1], 10);
+            } else if (rowEl.id && rowEl.id.startsWith('row-')) {
+                rowIndex = parseInt(rowEl.id.replace('row-', ''), 10);
+            }
+
+            triggerSelectItemButtonForRow(Number.isInteger(rowIndex) ? rowIndex : null);
+        }, true);
+        window.__kbBeModCodeEnterBound = true;
+    }
+
+    // Global Ctrl+S / Cmd+S -> trigger same Save button flow as manual click.
+    if (!window.__kbBeModCtrlSBound) {
+        document.addEventListener('keydown', function(e) {
+            const isSaveShortcut = (e.ctrlKey || e.metaKey) && ((e.key || '').toLowerCase() === 's');
+            if (!isSaveShortcut) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            if (e.repeat) return;
+
+            const blockingModalOpen = !!document.querySelector(
+                '#chooseItemsModal.show, #batchSelectionModal.show, #creditNoteModal.show, #adjustmentModal.show, #invoiceModal.show, #itemModal.show, #batchModal.show, #createBatchModal.show'
+            );
+            if (blockingModalOpen) {
+                const adjustmentModalOpen = !!document.querySelector('#adjustmentModal.show');
+                if (adjustmentModalOpen && typeof saveAdjustment === 'function') {
+                    saveAdjustment();
+                }
+                return;
+            }
+
+            const saveBtn = document.getElementById('saveTransactionBtn');
+            if (saveBtn && (saveBtn.disabled || saveBtn.getAttribute('aria-disabled') === 'true')) return;
+
+            const now = Date.now();
+            if (now - kbBeModLastSaveShortcutAt < 500) return;
+            kbBeModLastSaveShortcutAt = now;
+
+            if (saveBtn && typeof saveBtn.click === 'function') {
+                saveBtn.click();
+            } else if (typeof saveTransaction === 'function') {
+                saveTransaction();
+            }
+        }, true);
+
+        window.__kbBeModCtrlSBound = true;
+    }
+
+    // Initial focus - Set to Date field as per form flow
+    setTimeout(() => {
+        const transactionDate = document.getElementById('transactionDate');
+        if (transactionDate) {
+            transactionDate.focus();
+            transactionDate.select();
+        }
+    }, 100);
+});
+
+// ==========================================
+// CUSTOM DROPDOWN AND HEADER KEYBOARD NAV
+// ==========================================
+let customerDropdownIndex = -1;
+let salesmanDropdownIndex = -1;
+let kbBeModDropdownSelecting = false;
+
+function setKbBeModDropdownSelecting(value) {
+    kbBeModDropdownSelecting = value;
+    if (value) {
+        setTimeout(() => {
+            kbBeModDropdownSelecting = false;
+        }, 180);
+    }
+}
+
+function isKbBeModDropdownOpen(dropdownEl) {
+    if (!dropdownEl) return false;
+    const computed = window.getComputedStyle(dropdownEl);
+    return computed.display !== 'none' && computed.visibility !== 'hidden';
+}
+
+function getKbBeModPreferredDropdownItem(listContainer, index) {
+    if (!listContainer) return null;
+    const allItems = Array.from(listContainer.querySelectorAll('.dropdown-item'));
+    const visibleItems = allItems.filter(item => item.style.display !== 'none');
+    if (visibleItems.length === 0) return null;
+    const activeItem = visibleItems.find(item => item.classList.contains('active'));
+    if (activeItem) return activeItem;
+    if (index >= 0 && visibleItems[index]) return visibleItems[index];
+    const firstValid = visibleItems.find(item => (item.dataset.id || '').trim() !== '');
+    return firstValid || visibleItems[0];
+}
+
+function selectKbBeModDropdownItem(kind) {
+    const isCustomer = kind === 'customer';
+    const searchInput = document.getElementById(isCustomer ? 'customerSearchInput' : 'salesmanSearchInput');
+    const dropdown = document.getElementById(isCustomer ? 'customerDropdown' : 'salesmanDropdown');
+    const listContainer = document.getElementById(isCustomer ? 'customerList' : 'salesmanList');
+    if (!searchInput || !dropdown || !listContainer) return false;
+
+    const selectedItem = getKbBeModPreferredDropdownItem(listContainer, isCustomer ? customerDropdownIndex : salesmanDropdownIndex);
+    if (!selectedItem) return false;
+
+    setKbBeModDropdownSelecting(true);
+    const selected = isCustomer ? selectCustomer(selectedItem) : selectSalesman(selectedItem);
+    if (selected) {
+        const nextField = document.getElementById(isCustomer ? 'gstVno' : 'incField');
+        if (nextField) nextField.focus();
+        return true;
+    }
+    return false;
+}
+
+function initCustomerDropdown() {
+    const searchInput = document.getElementById('customerSearchInput');
+    const selectElement = document.getElementById('customerSelect');
+    const dropdown = document.getElementById('customerDropdown');
+    const listContainer = document.getElementById('customerList');
+    if (!searchInput || !selectElement || !dropdown || !listContainer) return;
+
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+
+    searchInput.addEventListener('focus', function() {
+        showCustomerDropdown();
+    });
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        allItems.forEach(item => {
+            const name = (item.dataset.name || '').toLowerCase();
+            const code = (item.dataset.code || '').toLowerCase();
+            const text = item.textContent.toLowerCase();
+            item.style.display = (name.includes(searchTerm) || code.includes(searchTerm) || text.includes(searchTerm)) ? 'block' : 'none';
+        });
+        customerDropdownIndex = -1;
+        updateCustomerDropdownHighlight();
+        showCustomerDropdown();
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+        const dropdownVisible = isKbBeModDropdownOpen(dropdown);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            customerDropdownIndex = customerDropdownIndex < visibleItems.length - 1 ? customerDropdownIndex + 1 : 0;
+            updateCustomerDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[customerDropdownIndex], listContainer);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            customerDropdownIndex = customerDropdownIndex > 0 ? customerDropdownIndex - 1 : visibleItems.length - 1;
+            updateCustomerDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[customerDropdownIndex], listContainer);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (!dropdownVisible) {
+                showCustomerDropdown();
+                if (visibleItems.length > 0) {
+                    customerDropdownIndex = customerDropdownIndex >= 0 ? customerDropdownIndex : 0;
+                    updateCustomerDropdownHighlight();
+                }
+                return;
+            }
+            selectKbBeModDropdownItem('customer');
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            hideCustomerDropdown();
+        } else if (e.key === 'Tab') {
+            hideCustomerDropdown();
+        }
+    });
+
+    allItems.forEach(item => {
+        item.addEventListener('click', function() {
+            selectCustomer(this);
+            const nextField = document.getElementById('gstVno');
+            if (nextField) nextField.focus();
+        });
+        item.addEventListener('mouseenter', function() {
+            const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+            customerDropdownIndex = visibleItems.indexOf(this);
+            updateCustomerDropdownHighlight();
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown-wrapper')) {
+            hideCustomerDropdown();
+        }
+    });
+}
+
+function showCustomerDropdown() {
+    const dropdown = document.getElementById('customerDropdown');
+    if (dropdown) dropdown.style.display = 'block';
+}
+
+function hideCustomerDropdown() {
+    const dropdown = document.getElementById('customerDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+    customerDropdownIndex = -1;
+}
+
+function updateCustomerDropdownHighlight() {
+    const listContainer = document.getElementById('customerList');
+    if (!listContainer) return;
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+    const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+    allItems.forEach(item => item.classList.remove('active'));
+    if (customerDropdownIndex >= 0 && visibleItems[customerDropdownIndex]) {
+        visibleItems[customerDropdownIndex].classList.add('active');
+    }
+}
+
+function selectCustomer(item) {
+    const searchInput = document.getElementById('customerSearchInput');
+    const selectElement = document.getElementById('customerSelect');
+    if (!item || !searchInput || !selectElement) return false;
+    const id = (item.dataset.id || '').trim();
+    const name = item.dataset.name;
+    const code = item.dataset.code || '';
+    if (!id) return false;
+    searchInput.value = code ? `${code} - ${name}` : name;
+    selectElement.value = id;
+    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    hideCustomerDropdown();
+    return true;
+}
+
+function initSalesmanDropdown() {
+    const searchInput = document.getElementById('salesmanSearchInput');
+    const selectElement = document.getElementById('salesmanSelect');
+    const dropdown = document.getElementById('salesmanDropdown');
+    const listContainer = document.getElementById('salesmanList');
+    if (!searchInput || !selectElement || !dropdown || !listContainer) return;
+
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+
+    searchInput.addEventListener('focus', function() {
+        showSalesmanDropdown();
+    });
+
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        allItems.forEach(item => {
+            const name = (item.dataset.name || '').toLowerCase();
+            const code = (item.dataset.code || '').toLowerCase();
+            const text = item.textContent.toLowerCase();
+            item.style.display = (name.includes(searchTerm) || code.includes(searchTerm) || text.includes(searchTerm)) ? 'block' : 'none';
+        });
+        salesmanDropdownIndex = -1;
+        updateSalesmanDropdownHighlight();
+        showSalesmanDropdown();
+    });
+
+    searchInput.addEventListener('keydown', function(e) {
+        const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+        const dropdownVisible = isKbBeModDropdownOpen(dropdown);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            salesmanDropdownIndex = salesmanDropdownIndex < visibleItems.length - 1 ? salesmanDropdownIndex + 1 : 0;
+            updateSalesmanDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[salesmanDropdownIndex], listContainer);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            salesmanDropdownIndex = salesmanDropdownIndex > 0 ? salesmanDropdownIndex - 1 : visibleItems.length - 1;
+            updateSalesmanDropdownHighlight();
+            scrollIntoViewIfNeeded(visibleItems[salesmanDropdownIndex], listContainer);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            if (!dropdownVisible) {
+                showSalesmanDropdown();
+                if (visibleItems.length > 0) {
+                    salesmanDropdownIndex = salesmanDropdownIndex >= 0 ? salesmanDropdownIndex : 0;
+                    updateSalesmanDropdownHighlight();
+                }
+                return;
+            }
+            selectKbBeModDropdownItem('salesman');
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            hideSalesmanDropdown();
+        } else if (e.key === 'Tab') {
+            hideSalesmanDropdown();
+        }
+    });
+
+    allItems.forEach(item => {
+        item.addEventListener('click', function() {
+            selectSalesman(this);
+            const nextField = document.getElementById('incField');
+            if (nextField) nextField.focus();
+        });
+        item.addEventListener('mouseenter', function() {
+            const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+            salesmanDropdownIndex = visibleItems.indexOf(this);
+            updateSalesmanDropdownHighlight();
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.custom-dropdown-wrapper')) {
+            hideSalesmanDropdown();
+        }
+    });
+}
+
+function showSalesmanDropdown() {
+    const dropdown = document.getElementById('salesmanDropdown');
+    if (dropdown) dropdown.style.display = 'block';
+}
+
+function hideSalesmanDropdown() {
+    const dropdown = document.getElementById('salesmanDropdown');
+    if (dropdown) dropdown.style.display = 'none';
+    salesmanDropdownIndex = -1;
+}
+
+function updateSalesmanDropdownHighlight() {
+    const listContainer = document.getElementById('salesmanList');
+    if (!listContainer) return;
+    const allItems = listContainer.querySelectorAll('.dropdown-item');
+    const visibleItems = Array.from(allItems).filter(item => item.style.display !== 'none');
+    allItems.forEach(item => item.classList.remove('active'));
+    if (salesmanDropdownIndex >= 0 && visibleItems[salesmanDropdownIndex]) {
+        visibleItems[salesmanDropdownIndex].classList.add('active');
+    }
+}
+
+function scrollIntoViewIfNeeded(element, container) {
+    if (!element || !container) return;
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    if (elementRect.bottom > containerRect.bottom) {
+        element.scrollIntoView({ block: 'end', behavior: 'smooth' });
+    } else if (elementRect.top < containerRect.top) {
+        element.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+}
+
+function selectSalesman(item) {
+    const searchInput = document.getElementById('salesmanSearchInput');
+    const selectElement = document.getElementById('salesmanSelect');
+    if (!item || !searchInput || !selectElement) return false;
+    const id = (item.dataset.id || '').trim();
+    const name = item.dataset.name;
+    const code = item.dataset.code || '';
+    if (!id) return false;
+    searchInput.value = code ? `${code} - ${name}` : name;
+    selectElement.value = id;
+    selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+    hideSalesmanDropdown();
+    return true;
+}
+
+function initDropdownEnterCapture() {
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        const active = document.activeElement;
+        if (!active) return;
+
+        const customerInput = document.getElementById('customerSearchInput');
+        const customerDropdown = document.getElementById('customerDropdown');
+        const customerList = document.getElementById('customerList');
+        const salesmanInput = document.getElementById('salesmanSearchInput');
+        const salesmanDropdown = document.getElementById('salesmanDropdown');
+        const salesmanList = document.getElementById('salesmanList');
+
+        const customerOpen = isKbBeModDropdownOpen(customerDropdown);
+        const salesmanOpen = isKbBeModDropdownOpen(salesmanDropdown);
+        const customerFocus = !!(customerInput && (active === customerInput || customerDropdown?.contains(active)));
+        const salesmanFocus = !!(salesmanInput && (active === salesmanInput || salesmanDropdown?.contains(active)));
+
+        if (customerInput && customerDropdown && customerList && (customerOpen || customerFocus)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setKbBeModDropdownSelecting(true);
+            selectKbBeModDropdownItem('customer');
+            return;
+        }
+
+        if (salesmanInput && salesmanDropdown && salesmanList && (salesmanOpen || salesmanFocus)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            setKbBeModDropdownSelecting(true);
+            selectKbBeModDropdownItem('salesman');
+        }
+    }, true);
+}
+
+function initHeaderKeyboardNavigation() {
+    const headerFields = [
+        { id: 'seriesInput', next: 'transactionDate' },
+        { id: 'transactionDate', next: 'endDate' },
+        { id: 'endDate', next: 'customerSearchInput' },
+        { id: 'gstVno', next: 'noteType' },
+        { id: 'noteType', next: 'withGst' },
+        { id: 'withGst', next: 'salesmanSearchInput' },
+        { id: 'incField', next: 'revCharge' },
+        { id: 'revCharge', next: 'adjustedFlag' },
+        { id: 'adjustedFlag', next: 'disRpl' },
+        { id: 'disRpl', next: 'brkField' },
+        { id: 'brkField', next: 'expField' },
+        { id: 'expField', next: 'sr_no_input' }
+    ];
+
+    headerFields.forEach(field => {
+        const element = document.getElementById(field.id);
+        if (!element) return;
+        element.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+
+            const customerDropdown = document.getElementById('customerDropdown');
+            const salesmanDropdown = document.getElementById('salesmanDropdown');
+            const customerOpen = isKbBeModDropdownOpen(customerDropdown);
+            const salesmanOpen = isKbBeModDropdownOpen(salesmanDropdown);
+            if (customerOpen || salesmanOpen || kbBeModDropdownSelecting) {
+                e.preventDefault();
+                return;
+            }
+
+            e.preventDefault();
+            if (field.next) {
+                const nextElement = document.getElementById(field.next);
+                if (nextElement) nextElement.focus();
+            }
+        });
+    });
+
+    const srInput = document.getElementById('sr_no_input');
+    if (srInput) {
+        srInput.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            const srNo = srInput.value.trim();
+            if (srNo) {
+                loadInvoiceBySrNo(srNo);
+            } else {
+                const dateField = document.getElementById('invoice_date_filter');
+                if (dateField) dateField.focus();
+            }
+        });
+    }
+
+    const dateField = document.getElementById('invoice_date_filter');
+    if (dateField) {
+        dateField.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            loadInvoice();
+        });
+    }
+
+    // Capture Enter on Or Date at document level (date inputs can swallow keydown).
+    if (!window.__kbBeModOrDateCaptureBound) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+            const active = document.activeElement;
+            if (!active || active.id !== 'invoice_date_filter') return;
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            console.log('[KB-BE-MOD] Or Date Enter (document capture)');
+            loadInvoice();
+        }, true);
+        window.__kbBeModOrDateCaptureBound = true;
+    }
+}
+
+// Close invoice modal on ESC and return focus to Or Date field.
+function initInvoiceModalKeyboard() {
+    if (window.__kbBeModInvoiceEscBound) return;
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        const modal = document.getElementById('invoiceModal');
+        if (!modal || !modal.classList.contains('show')) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeInvoiceModal();
+        setTimeout(() => {
+            const dateField = document.getElementById('invoice_date_filter');
+            if (dateField) dateField.focus();
+        }, 120);
+    }, true);
+    window.__kbBeModInvoiceEscBound = true;
+}
+
+// Save Transaction - Show Credit Note Modal First
+function saveTransaction() {
+    // Validate first
+    const form = document.getElementById('breakageExpiryTransactionForm');
+    const formData = new FormData(form);
+    
+    if (!formData.get('customer_id')) {
+        showAlert('error', 'Please select a customer');
+        return;
+    }
+    
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    let hasItems = false;
+    rows.forEach((row) => {
+        const code = row.querySelector('input[name*="[code]"]')?.value || '';
+        const name = row.querySelector('input[name*="[name]"]')?.value || '';
+        if (code && name) {
+            hasItems = true;
+        }
+    });
+    
+    if (!hasItems) {
+        showAlert('error', 'Please add at least one item');
+        return;
+    }
+    
+    // Store Payable Amount globally for adjustment modal
+    window.netAmount = parseFloat(document.getElementById('calc_payable_amount').value || 0);
+    
+    // Show credit note modal
+    showCreditNoteModal();
+}
+
+function getCreditNoteOptionButtons() {
+    return creditNoteButtonIds
+        .map(id => document.getElementById(id))
+        .filter(Boolean);
+}
+
+function focusCreditNoteOptionButton(index) {
+    const buttons = getCreditNoteOptionButtons();
+    if (buttons.length === 0) return;
+
+    const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+    currentCreditNoteButtonIndex = safeIndex;
+
+    buttons.forEach((btn, idx) => {
+        if (idx === safeIndex) {
+            btn.classList.add('active');
+            btn.focus();
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function handleCreditNoteModalKeyboard(e) {
+    const modal = document.getElementById('creditNoteModal');
+    if (!modal || !modal.classList.contains('show')) return;
+    if (modal.style.display === 'none') return;
+
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        focusCreditNoteOptionButton(currentCreditNoteButtonIndex - 1);
+        return;
+    }
+
+    if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        focusCreditNoteOptionButton(currentCreditNoteButtonIndex + 1);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        const focusedIndex = creditNoteButtonIds.findIndex(id => document.getElementById(id) === document.activeElement);
+        if (focusedIndex >= 0) {
+            currentCreditNoteButtonIndex = focusedIndex;
+        }
+
+        const activeButtonId = creditNoteButtonIds[currentCreditNoteButtonIndex];
+        const activeButton = activeButtonId ? document.getElementById(activeButtonId) : null;
+        if (activeButton && !activeButton.disabled) {
+            activeButton.click();
+        }
+        return;
+    }
+
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeCreditNoteModal();
+    }
+}
+
+// Show Credit Note Modal
+function showCreditNoteModal() {
+    const modal = document.getElementById('creditNoteModal');
+    if (!modal) return;
+
+    modal.style.display = 'block';
+    modal.classList.add('show');
+
+    currentCreditNoteButtonIndex = 0;
+    setTimeout(() => {
+        focusCreditNoteOptionButton(0);
+    }, 80);
+
+    // Remove and re-bind to avoid duplicate handlers.
+    document.removeEventListener('keydown', handleCreditNoteModalKeyboard, true);
+    document.addEventListener('keydown', handleCreditNoteModalKeyboard, true);
+}
+
+// Close Credit Note Modal
+function closeCreditNoteModal() {
+    const modal = document.getElementById('creditNoteModal');
+    if (!modal) return;
+
+    modal.classList.remove('show');
+
+    // Remove modal keyboard listener.
+    document.removeEventListener('keydown', handleCreditNoteModalKeyboard, true);
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
+// Save Without Credit Note
+function saveWithoutCreditNote() {
+    closeCreditNoteModal();
+    submitTransaction(false);
+}
+
+// Save With Credit Note
+function saveWithCreditNote() {
+    closeCreditNoteModal();
+    
+    const customerId = document.querySelector('select[name="customer_id"]').value;
+    if (!customerId) {
+        showAlert('error', 'Please select a customer first');
+        return;
+    }
+    
+    fetchCustomerSales(customerId);
+}
+
+// Submit Transaction (Original Logic)
+function submitTransaction(withCreditNote = false, adjustments = []) {
+    if (window.__kbBeModSubmitInProgress) {
+        return;
+    }
+    window.__kbBeModSubmitInProgress = true;
+
+    const form = document.getElementById('breakageExpiryTransactionForm');
+    const formData = new FormData(form);
+    
+    // Get all form data
+    const data = {
+        _token: formData.get('_token'),
+        series: formData.get('series'),
+        transaction_date: formData.get('transaction_date'),
+        end_date: formData.get('end_date'),
+        customer_id: formData.get('customer_id'),
+        salesman_id: formData.get('salesman_id'),
+        gst_vno: formData.get('gst_vno'),
+        note_type: formData.get('note_type'),
+        with_gst: formData.get('with_gst'),
+        inc: formData.get('inc'),
+        rev_charge: formData.get('rev_charge'),
+        adjusted: formData.get('adjusted'),
+        dis_rpl: formData.get('dis_rpl'),
+        brk: formData.get('brk'),
+        exp: formData.get('exp'),
+        
+        // Summary values
+        summary_mrp_value: document.getElementById('summary_mrp_value').value,
+        summary_gross: document.getElementById('summary_gross').value,
+        summary_discount: document.getElementById('summary_discount').value,
+        summary_scheme: document.getElementById('summary_scheme').value,
+        summary_tax: document.getElementById('summary_tax').value,
+        summary_net: document.getElementById('summary_net').value,
+        
+        // Detail values
+        detail_packing: document.getElementById('detail_packing').value,
+        detail_unit: document.getElementById('detail_unit').value,
+        detail_cl_qty: document.getElementById('detail_cl_qty').value,
+        detail_scm_amt: document.getElementById('detail_scm_amt').value,
+        detail_dis_amt: document.getElementById('detail_dis_amt').value,
+        detail_subtotal: document.getElementById('detail_subtotal').value,
+        detail_tax_amt: document.getElementById('detail_tax_amt').value,
+        detail_net_amt: document.getElementById('detail_net_amt').value,
+        
+        // Credit note data
+        with_credit_note: withCreditNote,
+        adjustments: adjustments,
+        
+        // Items
+        items: []
+    };
+    
+    // Get all items from table
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    rows.forEach((row, index) => {
+        const item = {
+            code: row.querySelector('input[name*="[code]"]')?.value || '',
+            name: row.querySelector('input[name*="[name]"]')?.value || '',
+            batch: row.querySelector('input[name*="[batch]"]')?.value || '',
+            expiry: row.querySelector('input[name*="[expiry]"]')?.value || '',
+            br_ex: row.querySelector('select[name*="[br_ex]"]')?.value || '',
+            qty: row.querySelector('input[name*="[qty]"]')?.value || 0,
+            f_qty: row.querySelector('input[name*="[f_qty]"]')?.value || 0,
+            mrp: row.querySelector('input[name*="[mrp]"]')?.value || 0,
+            scm_percent: row.querySelector('input[name*="[scm_percent]"]')?.value || 0,
+            dis_percent: row.querySelector('input[name*="[dis_percent]"]')?.value || 0,
+            amount: row.querySelector('input[name*="[amount]"]')?.value || 0
+        };
+        
+        // Only add if item has code and name
+        if (item.code && item.name) {
+            data.items.push(item);
+        }
+    });
+    
+    // Show loading
+    showAlert('info', 'Saving transaction...');
+    
+    // Determine if this is an update or create
+    const transactionId = window.currentTransactionId || null;
+    
+    // DEBUG: Check transaction ID
+    console.log('🔍 DEBUG - Transaction ID Check:', {
+        'window.currentTransactionId': window.currentTransactionId,
+        'transactionId': transactionId,
+        'mode': transactionId ? 'UPDATE' : 'CREATE'
+    });
+    
+    const url = transactionId 
+        ? `<?php echo e(url('/admin/breakage-expiry/transaction')); ?>/${transactionId}`
+        : '<?php echo e(route("admin.breakage-expiry.transaction.store")); ?>';
+    const method = transactionId ? 'PUT' : 'POST';
+    
+    console.log('Transaction mode:', transactionId ? 'UPDATE' : 'CREATE');
+    console.log('Transaction ID:', transactionId);
+    console.log('URL:', url);
+    console.log('Method:', method);
+    
+    // Log the data being sent for debugging
+    console.log('Submitting transaction data:', data);
+    
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
+    // Submit
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': data._token
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json().then(data => ({
+            status: response.status,
+            data: data
+        }));
+    })
+    .then(({status, data}) => {
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            showAlert('success', 'Transaction saved successfully');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            // Show validation errors if present
+            if (data.errors) {
+                console.error('Validation errors:', data.errors);
+                let errorMessage = 'Validation errors:\n';
+                Object.keys(data.errors).forEach(key => {
+                    errorMessage += `- ${key}: ${data.errors[key].join(', ')}\n`;
+                });
+                showAlert('error', errorMessage);
+            } else {
+                showAlert('error', data.message || 'Error saving transaction');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'Error saving transaction: ' + error.message);
+    })
+    .finally(() => {
+        window.__kbBeModSubmitInProgress = false;
+    });
+}
+
+// Fetch Customer Sales for Adjustment
+function fetchCustomerSales(customerId) {
+    showAlert('info', 'Loading customer sales...');
+    
+    // Use the existing customers/{customer}/sales route
+    const url = `<?php echo e(url('/admin/customers')); ?>/${customerId}/sales`;
+    
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.sales && data.sales.length > 0) {
+            showAdjustmentModal(data.sales, data.customer);
+        } else {
+            showAlert('warning', 'No sales transactions found for this customer');
+            // Still allow saving without credit note
+            submitTransaction(false);
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching customer sales:', error);
+        showAlert('error', 'Error loading customer sales. Saving without credit note.');
+        submitTransaction(false);
+    });
+}
+
+// Show Adjustment Modal
+// Show Adjustment Modal
+function showAdjustmentModal(sales, customer) {
+    if (!sales || sales.length === 0) {
+        showAlert('warning', 'No outstanding sales found for this customer');
+        submitTransaction(false);
+        return;
+    }
+    
+    const netAmount = window.netAmount || 0;
+    
+    // Check if we're editing an existing transaction
+    const transactionId = window.currentTransactionId || null;
+    
+    // Function to render modal content with optional pre-filled adjustments
+    const renderModalContent = (existingAdjustments = {}) => {
+        const modalContent = `
+            <div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #dee2e6;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h6 style="margin: 0; color: #495057;">Customer: ${customer.name} (${customer.code})</h6>
+                        <small style="color: #6c757d;">Outstanding Sales: ${sales.length} invoice(s)</small>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: #495057;">Payable Amount</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #28a745;">₹ ${netAmount.toFixed(2)}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 15px;">
+                <div style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
+                    <table class="table table-sm table-bordered mb-0" style="font-size: 11px;">
+                        <thead style="background: #e9ecef; position: sticky; top: 0;">
+                            <tr>
+                                <th style="width: 50px; text-align: center;">SR.NO.</th>
+                                <th style="width: 120px; text-align: center;">Invoice No</th>
+                                <th style="width: 80px; text-align: center;">Date</th>
+                                <th style="width: 90px; text-align: right;">BILL AMT.</th>
+                                <th style="width: 90px; text-align: center;">ADJUST AMT.</th>
+                                <th style="width: 90px; text-align: right;">REMAINING BAL.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${sales.map((sale, index) => {
+                                const billAmount = parseFloat(sale.bill_amount || 0);
+                                const currentBalance = parseFloat(sale.balance || sale.bill_amount || 0);
+                                const preFilledAmount = parseFloat(existingAdjustments[sale.id] || 0);
+                                
+                                // Calculate original bill amount: current balance + previous adjustment
+                                const originalBillAmount = currentBalance + preFilledAmount;
+                                
+                                return `
+                                <tr>
+                                    <td style="text-align: center;">${index + 1}</td>
+                                    <td style="text-align: center;">${sale.trans_no}</td>
+                                    <td style="text-align: center;">${sale.date}</td>
+                                    <td style="text-align: right; font-weight: bold; color: #0d6efd;">${originalBillAmount.toFixed(2)}</td>
+                                    <td style="text-align: center;">
+                                        <input type="number" class="form-control form-control-sm adjustment-input" 
+                                               id="adj_${sale.id}" 
+                                               data-sale-id="${sale.id}"
+                                               data-balance="${originalBillAmount}"
+                                               data-bill-amount="${originalBillAmount}"
+                                               max="${originalBillAmount}"
+                                               step="0.01" 
+                                               style="width: 90px; font-size: 10px;"
+                                               value="${preFilledAmount > 0 ? preFilledAmount.toFixed(2) : ''}"
+                                               placeholder="0.00">
+                                    </td>
+                                    <td style="text-align: right; font-weight: bold;" id="remaining_${sale.id}">
+                                        <span style="color: #28a745;">${currentBalance.toFixed(2)}</span>
+                                    </td>
+                                </tr>
+                            `}).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-3" style="background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="font-weight: bold; color: #dc3545;">EXIT : &lt;ESC &gt;</span>
+                        <span style="font-weight: bold; font-size: 16px; color: #0d6efd;">
+                            ADJUST AMOUNT (Rs) : <span id="adjustmentBalance">${netAmount.toFixed(2)}</span>
+                        </span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <label style="font-weight: bold; color: #495057;">Auto Adjust Amount:</label>
+                        <input type="number" id="autoAdjustAmount" class="form-control form-control-sm" 
+                               style="width: 120px;" step="0.01" placeholder="Enter amount"
+                               onchange="autoDistributeAmount()">
+                        <button type="button" class="btn btn-info btn-sm" onclick="autoDistributeAmount()">
+                            <i class="bi bi-magic me-1"></i>Auto Distribute
+                        </button>
+                    </div>
+                    <div class="mt-2" style="text-align: right;">
+                        <button type="button" class="btn btn-success btn-sm me-2" onclick="saveAdjustment()">
+                            <i class="bi bi-check-circle me-1"></i>Save & Submit
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="closeAdjustmentModal()">
+                            <i class="bi bi-x-circle me-1"></i>Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('adjustmentContent').innerHTML = modalContent;
+        
+        const modal = document.getElementById('adjustmentModal');
+        modal.classList.add('show');
+        
+        // Add event listeners using event delegation
+        const adjustmentContent = document.getElementById('adjustmentContent');
+        if (adjustmentContent) {
+            adjustmentContent.addEventListener('input', function(e) {
+                if (e.target.classList.contains('adjustment-input')) {
+                    const saleId = e.target.getAttribute('data-sale-id');
+                    updateRemainingBalance(saleId);
+                }
+            });
+            
+            adjustmentContent.addEventListener('change', function(e) {
+                if (e.target.classList.contains('adjustment-input')) {
+                    const saleId = e.target.getAttribute('data-sale-id');
+                    updateRemainingBalance(saleId);
+                }
+            });
+        }
+        
+        // Update balance display after pre-filling
+        if (Object.keys(existingAdjustments).length > 0) {
+            Object.keys(existingAdjustments).forEach(saleId => {
+                updateRemainingBalance(saleId);
+            });
+        }
+        
+        // Initialize keyboard navigation for adjustment modal
+        initAdjustmentModalKeyboard();
+        
+        // Add keyboard event listener for ESC and Ctrl+S
+        if (!window.__kbBeAdjustmentEscBound) {
+            document.addEventListener('keydown', handleAdjustmentEsc, true);
+            window.__kbBeAdjustmentEscBound = true;
+        }
+    };
+    
+    // If editing existing transaction, fetch existing adjustments
+    if (transactionId) {
+        fetch(`<?php echo e(url('/admin/breakage-expiry/transaction')); ?>/${transactionId}/adjustments`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.adjustments) {
+                // Create a map of sale_transaction_id => adjusted_amount
+                const adjustmentsMap = {};
+                data.adjustments.forEach(adj => {
+                    adjustmentsMap[adj.sale_transaction_id] = adj.adjusted_amount;
+                });
+                renderModalContent(adjustmentsMap);
+            } else {
+                renderModalContent();
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching existing adjustments:', error);
+            renderModalContent(); // Show modal anyway without pre-filled data
+        });
+    } else {
+        // New transaction, no pre-filled data
+        renderModalContent();
+    }
+}
+
+// Update Remaining Balance for Individual Row
+function updateRemainingBalance(saleId) {
+    const id = String(saleId);
+    const input = document.getElementById(`adj_${id}`);
+    const remainingCell = document.getElementById(`remaining_${id}`);
+    
+    if (!input || !remainingCell) return;
+    
+    const currentBalance = parseFloat(input.getAttribute('data-balance') || 0);
+    const adjustedAmount = parseFloat(input.value || 0);
+    
+    // Validate adjustment amount
+    if (adjustedAmount > currentBalance) {
+        input.value = currentBalance.toFixed(2);
+        showAlert('warning', 'Adjustment amount cannot exceed current balance');
+        return;
+    }
+    
+    const remainingBalance = currentBalance - adjustedAmount;
+    
+    // Update remaining balance with color coding
+    let color = '#28a745'; // Green for positive
+    if (remainingBalance === 0) {
+        color = '#6c757d'; // Gray for zero
+    } else if (remainingBalance < currentBalance * 0.3) {
+        color = '#ffc107'; // Yellow for low balance
+    }
+    
+    remainingCell.innerHTML = `<span style="color: ${color};">${remainingBalance.toFixed(2)}</span>`;
+    
+    // Also update total adjustment balance
+    updateAdjustmentBalance();
+}
+
+// Auto Distribute Amount Across Transactions
+function autoDistributeAmount() {
+    const totalAmount = parseFloat(document.getElementById('autoAdjustAmount').value || 0);
+    
+    if (totalAmount <= 0) {
+        showAlert('warning', 'Please enter a valid amount to distribute');
+        return;
+    }
+    
+    // Clear all existing adjustments first
+    document.querySelectorAll('.adjustment-input').forEach(input => {
+        input.value = '';
+        const saleId = input.getAttribute('data-sale-id');
+        updateRemainingBalance(saleId);
+    });
+    
+    // Get all transactions sorted by balance
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    const transactions = inputs.map(input => ({
+        input: input,
+        saleId: input.getAttribute('data-sale-id'),
+        balance: parseFloat(input.getAttribute('data-balance'))
+    })).filter(t => t.balance > 0).sort((a, b) => b.balance - a.balance);
+    
+    let remainingAmount = totalAmount;
+    
+    // Distribute amount across transactions
+    transactions.forEach(transaction => {
+        if (remainingAmount <= 0) return;
+        
+        const adjustAmount = Math.min(remainingAmount, transaction.balance);
+        transaction.input.value = adjustAmount.toFixed(2);
+        remainingAmount -= adjustAmount;
+        
+        updateRemainingBalance(transaction.saleId);
+    });
+    
+    // If still amount remaining, show warning
+    if (remainingAmount > 0) {
+        showAlert('warning', `₹${remainingAmount.toFixed(2)} could not be distributed. Insufficient outstanding balance.`);
+    } else {
+        showAlert('success', `₹${totalAmount.toFixed(2)} distributed successfully across ${transactions.length} transaction(s)`);
+    }
+}
+
+// Update Adjustment Balance
+function updateAdjustmentBalance() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    
+    inputs.forEach(input => {
+        totalAdjusted += parseFloat(input.value || 0);
+    });
+    
+    // Update remaining adjustment balance at the bottom
+    const remainingBalance = (window.netAmount || 0) - totalAdjusted;
+    const adjustmentBalanceEl = document.getElementById('adjustmentBalance');
+    
+    if (adjustmentBalanceEl) {
+        adjustmentBalanceEl.textContent = `${remainingBalance.toFixed(2)}`;
+        
+        // Change color based on remaining balance
+        const balanceSpan = adjustmentBalanceEl.parentElement;
+        if (balanceSpan) {
+            if (remainingBalance < 0) {
+                balanceSpan.style.color = '#dc3545'; // Red for over-adjusted
+            } else if (remainingBalance === 0) {
+                balanceSpan.style.color = '#28a745'; // Green for fully adjusted
+            } else {
+                balanceSpan.style.color = '#0d6efd'; // Blue for partial
+            }
+        }
+    }
+}
+
+// Get Remaining Adjustment Amount
+function getRemainingAdjustment() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    let totalAdjusted = 0;
+    inputs.forEach(input => {
+        totalAdjusted += parseFloat(input.value || 0);
+    });
+    return Math.max(0, (parseFloat(window.netAmount || 0) - totalAdjusted));
+}
+
+// Initialize Adjustment Modal Keyboard Navigation
+function initAdjustmentModalKeyboard() {
+    const inputs = Array.from(document.querySelectorAll('.adjustment-input'));
+    if (!inputs.length) return;
+
+    const setActive = (input) => {
+        inputs.forEach(i => i.classList.remove('kb-active'));
+        if (input) {
+            input.classList.add('kb-active');
+            input.focus();
+        }
+    };
+
+    inputs.forEach((input, idx) => {
+        input.addEventListener('focus', () => setActive(input));
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const next = inputs[idx + 1];
+                if (next) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const remaining = getRemainingAdjustment();
+                    const nextBalance = parseFloat(next.getAttribute('data-balance') || 0);
+
+                    if (remaining <= 0 && currentValue > 0) {
+                        const moveValue = Math.min(currentValue, nextBalance);
+                        next.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                    } else {
+                        const nextValue = Math.min(remaining, nextBalance);
+                        next.value = nextValue.toFixed(2);
+                    }
+
+                    updateAdjustmentBalance();
+                    setActive(next);
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const prev = inputs[idx - 1];
+                if (prev) {
+                    const currentValue = parseFloat(input.value || 0);
+                    const prevBalance = parseFloat(prev.getAttribute('data-balance') || 0);
+
+                    if (currentValue > 0) {
+                        const moveValue = Math.min(currentValue, prevBalance);
+                        prev.value = moveValue.toFixed(2);
+                        input.value = '0.00';
+                        updateAdjustmentBalance();
+                    }
+
+                    setActive(prev);
+                }
+            }
+        });
+    });
+
+    setActive(inputs[0]);
+}
+
+// Handle Adjustment Modal Keyboard Events (ESC and Ctrl+S)
+function handleAdjustmentEsc(e) {
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        closeAdjustmentModal();
+        return;
+    }
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (isCtrlS) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        saveAdjustment();
+    }
+}
+
+// Close Adjustment Modal
+function closeAdjustmentModal() {
+    const modal = document.getElementById('adjustmentModal');
+    modal.classList.remove('show');
+    
+    // Remove keyboard event listeners
+    if (window.__kbBeAdjustmentEscBound) {
+        document.removeEventListener('keydown', handleAdjustmentEsc, true);
+        window.__kbBeAdjustmentEscBound = false;
+    }
+    
+    // Also remove old ESC listener if exists
+    if (window.adjustmentEscHandler) {
+        document.removeEventListener('keydown', window.adjustmentEscHandler);
+    }
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
+// Save Adjustment
+function saveAdjustment() {
+    const inputs = document.querySelectorAll('.adjustment-input');
+    const adjustments = [];
+    
+    inputs.forEach(input => {
+        const adjustedAmount = parseFloat(input.value || 0);
+        if (adjustedAmount > 0) {
+            adjustments.push({
+                sale_id: input.getAttribute('data-sale-id'),
+                adjusted_amount: adjustedAmount
+            });
+        }
+    });
+    
+    closeAdjustmentModal();
+    submitTransaction(true, adjustments);
+}
+
+// Open Create Batch Modal
+function openCreateBatchModal() {
+    // Close the batch not exist modal first
+    closeBatchNotExistModal();
+    
+    if (!currentItemForBatch) return;
+    
+    const { itemId, batchNo, rowIndex, itemName, packing } = currentItemForBatch;
+    const row = document.getElementById(`row-${rowIndex}`);
+    
+    if (!row) return;
+    
+    // Get item data from the row
+    const itemData = JSON.parse(row.dataset.itemData || '{}');
+    
+    // Fetch item details to pre-populate the form
+    fetch(`<?php echo e(url('/admin/items')); ?>/${itemId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                const item = data.item;
+                
+                // Pre-populate the form
+                document.getElementById('batchItemName').value = item.name || itemName || '';
+                document.getElementById('batchPack').value = item.packing || packing || '';
+                document.getElementById('batchMrp').value = parseFloat(item.mrp || 0).toFixed(2);
+                document.getElementById('batchSRate').value = parseFloat(item.s_rate || 0).toFixed(2);
+                document.getElementById('batchPRate').value = parseFloat(item.pur_rate || 0).toFixed(2);
+                document.getElementById('batchExpiry').value = '';
+                
+                // Store hidden values
+                document.getElementById('batchItemId').value = itemId;
+                document.getElementById('batchNumber').value = batchNo;
+                document.getElementById('batchRowIndex').value = rowIndex;
+                
+                // Show the create batch modal
+                setTimeout(() => {
+                    const backdrop = document.getElementById('createBatchModalBackdrop');
+                    const modal = document.getElementById('createBatchModal');
+                    
+                    if (backdrop && modal) {
+                        backdrop.style.display = 'block';
+                        modal.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            backdrop.classList.add('show');
+                            modal.classList.add('show');
+                        }, 10);
+                    }
+                }, 10);
+            } else {
+                showAlert('error', 'Error loading item details');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading item details:', error);
+            showAlert('error', 'Error loading item details: ' + error.message);
+        });
+}
+
+// Save Batch
+function saveBatch() {
+    const form = document.getElementById('createBatchForm');
+    
+    const batchData = {
+        item_id: document.getElementById('batchItemId').value,
+        batch_no: document.getElementById('batchNumber').value,
+        mrp: parseFloat(document.getElementById('batchMrp').value) || 0,
+        s_rate: parseFloat(document.getElementById('batchSRate').value) || 0,
+        pur_rate: parseFloat(document.getElementById('batchPRate').value) || 0,
+        expiry_date: document.getElementById('batchExpiry').value || null,
+        total_qty: 0 // Default quantity for new batch
+    };
+    
+    // Validate required fields
+    if (!batchData.mrp || !batchData.s_rate || !batchData.pur_rate) {
+        showAlert('error', 'Please fill all required fields (MRP, S.Rate, P.Rate)');
+        return;
+    }
+    
+    // Validate item_id and batch_no
+    if (!batchData.item_id || !batchData.batch_no) {
+        showAlert('error', 'Missing item or batch information');
+        return;
+    }
+    
+    // Save batch to database
+    fetch(`<?php echo e(route('admin.batches.store')); ?>`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+        },
+        body: JSON.stringify(batchData)
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Batch data sent:', batchData);
+        if (!response.ok) {
+            // Clone the response to read it as text for error logging
+            return response.text().then(text => {
+                console.error('=== BATCH CREATION ERROR ===');
+                console.error('Status:', response.status);
+                console.error('Status Text:', response.statusText);
+                console.error('Response Body:', text);
+                try {
+                    const jsonError = JSON.parse(text);
+                    console.error('Parsed Error:', jsonError);
+                    throw new Error(jsonError.message || `HTTP error! status: ${response.status}`);
+                } catch (e) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Batch creation response:', data);
+        if (data.success) {
+            // Close the modal
+            closeCreateBatchModal();
+            
+            // Reopen the batch selection modal for the newly created batch
+            const rowIndex = document.getElementById('batchRowIndex').value;
+            const itemId = document.getElementById('batchItemId').value;
+            const batchNo = batchData.batch_no;
+            
+            // Use checkBatchExists to fetch the batch list (which will now include the new batch)
+            // and open the "Batch Details" modal
+            checkBatchExists(rowIndex, itemId, batchNo);
+            
+            showAlert('success', 'Batch created successfully');
+            // currentItemForBatch is NOT cleared here, so it persists for the selectBatch call
+        } else {
+            console.error('Batch creation failed:', data);
+            showAlert('error', data.message || 'Error creating batch');
+        }
+    })
+    .catch(error => {
+        console.error('=== CATCH BLOCK ERROR ===');
+        console.error('Error creating batch:', error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        showAlert('error', 'Error creating batch: ' + error.message);
+    });
+}
+
+// Show Batch Not Exist Modal
+function showBatchNotExistModal() {
+    setTimeout(() => {
+        const backdrop = document.getElementById('batchNotExistModalBackdrop');
+        const modal = document.getElementById('batchNotExistModal');
+        
+        if (backdrop && modal) {
+            backdrop.style.display = 'block';
+            modal.style.display = 'block';
+            
+            // Add backdrop click handler
+            backdrop.onclick = function(e) {
+                if (e.target === backdrop) {
+                    closeBatchNotExistModal();
+                }
+            };
+            
+            // Prevent modal content clicks from closing
+            const modalContent = modal.querySelector('.batch-not-exist-modal-content');
+            if (modalContent) {
+                modalContent.onclick = function(e) {
+                    e.stopPropagation();
+                };
+            }
+            
+            setTimeout(() => {
+                backdrop.classList.add('show');
+                modal.classList.add('show');
+                
+                // Initialize keyboard navigation after a delay to prevent immediate closure
+                setTimeout(() => {
+                    initBatchModalKeyboardNav();
+                }, 100);
+            }, 10);
+        }
+    }, 10);
+}
+
+// Keyboard navigation for Batch Not Exist Modal
+let currentBatchModalButtonIndex = 0;
+const batchModalButtonIds = ['batchModalYesBtn', 'batchModalNoBtn', 'batchModalCancelBtn'];
+
+function initBatchModalKeyboardNav() {
+    currentBatchModalButtonIndex = 0;
+    
+    // Highlight first button (Yes)
+    highlightBatchModalButton(0);
+    
+    // Remove any existing listener first
+    document.removeEventListener('keydown', handleBatchModalKeyboard, true);
+    
+    // Add keyboard event listener with capture phase (higher priority)
+    document.addEventListener('keydown', handleBatchModalKeyboard, true);
+}
+
+function handleBatchModalKeyboard(e) {
+    const modal = document.getElementById('batchNotExistModal');
+    const backdrop = document.getElementById('batchNotExistModalBackdrop');
+    
+    // Only handle if modal is fully shown
+    if (!modal || !modal.classList.contains('show') || !backdrop || !backdrop.classList.contains('show')) {
+        return;
+    }
+    
+    // Check if modal is actually visible
+    if (modal.style.display === 'none' || backdrop.style.display === 'none') {
+        return;
+    }
+    
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        e.stopPropagation();
+        currentBatchModalButtonIndex = (currentBatchModalButtonIndex - 1 + batchModalButtonIds.length) % batchModalButtonIds.length;
+        highlightBatchModalButton(currentBatchModalButtonIndex);
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        e.stopPropagation();
+        currentBatchModalButtonIndex = (currentBatchModalButtonIndex + 1) % batchModalButtonIds.length;
+        highlightBatchModalButton(currentBatchModalButtonIndex);
+    } else if (e.key === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const currentButtonId = batchModalButtonIds[currentBatchModalButtonIndex];
+        const currentButton = document.getElementById(currentButtonId);
+        if (currentButton) {
+            // Directly call the onclick function instead of click()
+            if (currentButtonId === 'batchModalYesBtn') {
+                openCreateBatchModal();
+            } else if (currentButtonId === 'batchModalNoBtn') {
+                closeBatchNotExistModal();
+                // Move focus to next field (expiry) after closing modal
+                setTimeout(() => {
+                    if (currentItemForBatch && currentItemForBatch.rowIndex !== undefined) {
+                        const expiryInput = document.querySelector(`input[name="items[${currentItemForBatch.rowIndex}][expiry]"]`);
+                        if (expiryInput) {
+                            expiryInput.focus();
+                            expiryInput.select();
+                        }
+                    }
+                }, 350);
+            } else if (currentButtonId === 'batchModalCancelBtn') {
+                closeBatchNotExistModal();
+            }
+        }
+        return false;
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeBatchNotExistModal();
+    }
+}
+
+function highlightBatchModalButton(index) {
+    // Remove highlight from all buttons
+    batchModalButtonIds.forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.style.outline = '';
+            btn.style.boxShadow = '';
+            btn.style.transform = '';
+        }
+    });
+    
+    // Highlight current button
+    const currentButtonId = batchModalButtonIds[index];
+    const currentButton = document.getElementById(currentButtonId);
+    if (currentButton) {
+        currentButton.style.outline = '3px solid #0d6efd';
+        currentButton.style.boxShadow = '0 0 0 0.25rem rgba(13, 110, 253, 0.5)';
+        currentButton.style.transform = 'scale(1.05)';
+        currentButton.focus();
+    }
+}
+
+// Close Batch Not Exist Modal
+function closeBatchNotExistModal() {
+    const modal = document.getElementById('batchNotExistModal');
+    const backdrop = document.getElementById('batchNotExistModalBackdrop');
+    
+    // Remove keyboard event listener with capture phase
+    document.removeEventListener('keydown', handleBatchModalKeyboard, true);
+    
+    // Remove backdrop click handler
+    if (backdrop) {
+        backdrop.onclick = null;
+    }
+    
+    if (modal) {
+        modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    }
+    if (backdrop) {
+        backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+    }
+    
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+        }
+        if (backdrop) {
+            backdrop.classList.remove('show');
+            backdrop.style.display = 'none';
+        }
+    }, 300);
+}
+
+// Close Create Batch Modal
+function closeCreateBatchModal() {
+    const modal = document.getElementById('createBatchModal');
+    const backdrop = document.getElementById('createBatchModalBackdrop');
+    
+    if (modal) {
+        modal.style.animation = 'zoomOut 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards';
+    }
+    if (backdrop) {
+        backdrop.style.animation = 'fadeOut 0.3s ease forwards';
+    }
+    
+    setTimeout(() => {
+        if (modal) {
+            modal.classList.remove('show');
+            modal.style.display = 'none';
+        }
+        if (backdrop) {
+            backdrop.classList.remove('show');
+            backdrop.style.display = 'none';
+        }
+    }, 300);
+}
+
+// Show alert function (like sale return)
+function showAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.custom-alert');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    const alertTypes = {
+        'success': { bg: '#28a745', icon: '✓' },
+        'error': { bg: '#dc3545', icon: '✕' },
+        'info': { bg: '#17a2b8', icon: 'ℹ' },
+        'warning': { bg: '#ffc107', icon: '⚠' }
+    };
+    
+    const alertConfig = alertTypes[type] || alertTypes['info'];
+    
+    const alertHTML = `
+        <div class="custom-alert" style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${alertConfig.bg};
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10001;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        ">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 20px; font-weight: bold;">${alertConfig.icon}</span>
+                <span>${message}</span>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHTML);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        const alert = document.querySelector('.custom-alert');
+        if (alert) {
+            alert.style.animation = 'slideOut 0.3s ease-out';
+            setTimeout(() => alert.remove(), 300);
+        }
+    }, 3000);
+}
+</script>
+
+<!-- Batch Does Not Exist Confirmation Modal -->
+<div class="batch-not-exist-modal-backdrop" id="batchNotExistModalBackdrop" style="display: none;"></div>
+<div class="batch-not-exist-modal" id="batchNotExistModal" style="display: none;">
+    <div class="batch-not-exist-modal-content" onclick="event.stopPropagation()">
+        <div class="batch-not-exist-modal-header">
+            <h5 class="batch-not-exist-modal-title">
+                <i class="bi bi-question-circle me-2"></i>Batch Does not Exists Create New Batch
+            </h5>
+            <button type="button" class="btn-close-modal" onclick="closeBatchNotExistModal()">&times;</button>
+        </div>
+        <div class="batch-not-exist-modal-body">
+            <p class="mb-3">The batch number you entered does not exist. Would you like to create a new batch?</p>
+        </div>
+        <div class="batch-not-exist-modal-footer">
+            <button type="button" id="batchModalYesBtn" class="btn btn-success btn-sm" onclick="openCreateBatchModal()">Yes</button>
+            <button type="button" id="batchModalNoBtn" class="btn btn-secondary btn-sm" onclick="closeBatchNotExistModal()">No</button>
+            <button type="button" id="batchModalCancelBtn" class="btn btn-outline-secondary btn-sm" onclick="closeBatchNotExistModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Create New Batch Modal -->
+<div class="create-batch-modal-backdrop" id="createBatchModalBackdrop" onclick="closeCreateBatchModal()" style="display: none;"></div>
+<div class="create-batch-modal" id="createBatchModal" style="display: none;">
+    <div class="create-batch-modal-content">
+        <div class="create-batch-modal-header">
+            <h5 class="create-batch-modal-title">
+                <i class="bi bi-plus-circle me-2"></i>Create New Batch
+            </h5>
+            <button type="button" class="btn-close-modal" onclick="closeCreateBatchModal()">&times;</button>
+        </div>
+        <div class="create-batch-modal-body">
+            <form id="createBatchForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Item Name:</label>
+                            <input type="text" class="form-control form-control-sm" id="batchItemName" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Pack:</label>
+                            <input type="text" class="form-control form-control-sm" id="batchPack" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">MRP:</label>
+                            <input type="number" class="form-control form-control-sm" id="batchMrp" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">S.Rate:</label>
+                            <input type="number" class="form-control form-control-sm" id="batchSRate" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">P.Rate:</label>
+                            <input type="number" class="form-control form-control-sm" id="batchPRate" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Expiry:</label>
+                            <input type="text" class="form-control form-control-sm" id="batchExpiry" placeholder="MM/YY">
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="batchItemId">
+                <input type="hidden" id="batchNumber">
+                <input type="hidden" id="batchRowIndex">
+            </form>
+        </div>
+        <div class="create-batch-modal-footer">
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveBatch()">
+                <i class="bi bi-check-circle me-1"></i>OK
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeCreateBatchModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Credit Note Modal -->
+<div id="creditNoteModal" class="credit-note-modal">
+    <div class="credit-note-modal-content">
+        <div class="credit-note-modal-header">
+            <h5>Save Transaction</h5>
+            <button type="button" class="credit-note-close-btn" onclick="closeCreditNoteModal()">&times;</button>
+        </div>
+        <div class="credit-note-modal-body">
+            <p>How would you like to save this transaction?</p>
+            <div class="credit-note-options">
+                <button type="button" class="btn btn-secondary" id="creditSaveWithoutBtn" onclick="saveWithoutCreditNote()">
+                    Save Without Credit Note
+                </button>
+                <button type="button" class="btn btn-primary" id="creditSaveWithBtn" onclick="saveWithCreditNote()">
+                    Save With Credit Note
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Adjustment Modal -->
+<div id="adjustmentModal" class="adjustment-modal">
+    <div class="adjustment-modal-content">
+        <div class="adjustment-modal-header">
+            <h5>Credit Note Adjustment</h5>
+            <button type="button" class="adjustment-close-btn" onclick="closeAdjustmentModal()">&times;</button>
+        </div>
+        <div class="adjustment-modal-body">
+            <div id="adjustmentContent">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Item and Batch Selection Modal Components -->
+<?php echo $__env->make('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'breakage-expiry',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => false,
+    'batchModalId' => 'batchSelectionModal',
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<?php echo $__env->make('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'breakage-expiry',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => false,
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/breakage-expiry/modification.blade.php ENDPATH**/ ?>

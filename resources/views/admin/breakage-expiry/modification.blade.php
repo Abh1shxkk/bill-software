@@ -796,12 +796,6 @@
                 </div>
                 <!-- Add Row Button -->
                 <div class="text-center mt-2">
-                    <button type="button" class="btn btn-sm btn-success" 
-                            id="addRowBtn"
-                            onclick="addNewRow()" 
-                            onkeydown="if(event.key === 'Enter') { event.preventDefault(); addNewRow(); }">
-                        <i class="fas fa-plus-circle"></i> Add Row
-                    </button>
                     <button type="button" class="btn btn-sm btn-outline-primary ms-2"
                             id="selectItemBtn"
                             data-target-row-index=""
@@ -1078,9 +1072,6 @@
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='{{ route('admin.dashboard') }}'">
                     <i class="bi bi-x-circle"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-info btn-sm" onclick="addNewRow()">
-                    <i class="bi bi-plus-circle"></i> Add Row
                 </button>
             </div>
 

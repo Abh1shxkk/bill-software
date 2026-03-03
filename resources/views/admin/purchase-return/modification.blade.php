@@ -298,12 +298,6 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <!-- Add Row Button -->
-                            <div class="text-center mt-2">
-                                <button type="button" class="btn btn-sm btn-success" id="addRowBtn" onclick="addNewRow()">
-                                    <i class="fas fa-plus-circle"></i> Add Row
-                                </button>
-                            </div>
                         </div>
 
 
@@ -2094,8 +2088,35 @@ Do you still want to add this batch to the return?`;
         // Clear selection
         selectedRowIndex = null;
 
-        // Continue loop: trigger Add Row and move cursor to new row code field
+        // Check if there's a next row with an item
         setTimeout(() => {
+            const tbody = document.getElementById('itemsTableBody');
+            if (!tbody) return;
+            
+            const allRows = Array.from(tbody.querySelectorAll('tr[id^="row-"]'));
+            const currentRowIndex = allRows.findIndex(r => r.id === `row-${rowIndex}`);
+            const nextRow = allRows[currentRowIndex + 1];
+            
+            if (nextRow) {
+                // Check if next row has an item (by checking if item_id or name is populated)
+                const itemIdInput = nextRow.querySelector('input[name*="[item_id]"]');
+                const itemNameInput = nextRow.querySelector('input[name*="[name]"]');
+                const hasItem = (itemIdInput && itemIdInput.value) || (itemNameInput && itemNameInput.value);
+                
+                if (hasItem) {
+                    // Move focus to next row's qty field
+                    const nextRowIndex = nextRow.id.replace('row-', '');
+                    const qtyInput = nextRow.querySelector('input[name*="[qty]"]');
+                    if (qtyInput) {
+                        qtyInput.focus();
+                        qtyInput.select();
+                        selectRowForCalculation(parseInt(nextRowIndex));
+                        return;
+                    }
+                }
+            }
+            
+            // No next row with item - create a new row
             const addRowBtn = document.getElementById('addRowBtn');
             if (addRowBtn) {
                 addRowBtn.click();

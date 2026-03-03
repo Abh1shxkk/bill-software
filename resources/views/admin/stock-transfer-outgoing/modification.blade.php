@@ -202,9 +202,6 @@
                     </table>
                 </div>
                 <div class="text-center mt-2">
-                    <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
-                        <i class="fas fa-plus-circle"></i> Add Row
-                    </button>
                     <button type="button" class="btn btn-sm btn-info" id="stom_insertItemsBtn" onclick="openInsertItemsModal()">
                         <i class="bi bi-list-check"></i> Insert Items
                     </button>

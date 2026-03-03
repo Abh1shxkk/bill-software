@@ -198,10 +198,10 @@
                         </tbody>
                     </table>
                 </div>
-                <!-- Add Row Button -->
+                <!-- Add Item Button -->
                 <div class="text-center mt-2">
                     <button type="button" class="btn btn-sm btn-success" id="addRowBtn2">
-                        <i class="bi bi-plus-circle"></i> Add Row
+                        <i class="bi bi-plus-circle"></i> Add Item
                     </button>
                 </div>
             </div>

@@ -145,9 +145,6 @@
                             </table>
                         </div>
                         <div class="text-center mt-2 d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-sm btn-success" id="addRowBtn" onclick="addNewRow()">
-                                <i class="bi bi-plus-circle"></i> Add Row
-                            </button>
                             <button type="button" class="btn btn-sm btn-primary" id="addItemsBtn" onclick="showAddItemsModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
@@ -177,7 +174,6 @@
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-success" onclick="updateQuotation()"><i class="bi bi-save"></i> Update (End)</button>
                             <button type="button" class="btn btn-danger" onclick="deleteSelectedItem()"><i class="bi bi-trash"></i> Delete Item</button>
-                            <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="bi bi-plus-circle"></i> Insert Item</button>
                             <button type="button" class="btn btn-info" onclick="showAddItemsModal()"><i class="bi bi-search"></i> Add Items</button>
                         </div>
                         <button type="button" class="btn btn-secondary" onclick="cancelQuotation()"><i class="bi bi-x-circle"></i> Cancel Quotation</button>

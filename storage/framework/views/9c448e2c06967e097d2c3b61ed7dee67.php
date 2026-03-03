@@ -702,12 +702,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <!-- Add Row Button -->
-                        <div class="text-center mt-2">
-                            <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
-                                <i class="fas fa-plus-circle"></i> Add Row
-                            </button>
-                        </div>
                     </div>
                     
                     <!-- Calculation Section -->
@@ -982,9 +976,6 @@
                         </button>
                         <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.reload()">
                             <i class="bi bi-x-circle"></i> Cancel
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm">
-                            <i class="bi bi-plus-circle"></i> Add Row
                         </button>
                     </div>
                 </form>
