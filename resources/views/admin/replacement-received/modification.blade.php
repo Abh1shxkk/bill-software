@@ -794,12 +794,28 @@ function handleExpiryKeydown(event, rowIndex) {
 
 // Handle Qty field keydown
 function handleQtyKeydown(event, rowIndex) {
-    if (event.key === 'Enter') {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+
+    const qtyInput = event.target;
+    const qty = parseFloat(qtyInput?.value) || 0;
+    if (qty <= 0) {
         event.preventDefault();
-        calculateRowAmount(rowIndex);
-        const row = document.getElementById(`row-${rowIndex}`);
-        row?.querySelector('input[name*="[free_qty]"]')?.focus();
+        event.stopPropagation();
+        if (typeof event.stopImmediatePropagation === 'function') {
+            event.stopImmediatePropagation();
+        }
+        qtyInput?.focus();
+        qtyInput?.select();
+        return;
     }
+
+    // Keep native tab order when qty is valid.
+    if (event.key === 'Tab') return;
+
+    event.preventDefault();
+    calculateRowAmount(rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    row?.querySelector('input[name*="[free_qty]"]')?.focus();
 }
 
 // Handle Free Qty field keydown
@@ -1758,6 +1774,24 @@ function _rrAnyModalOpen() {
         '.modal.show, [id$="Modal"].show, [id$="Backdrop"].show, #modalContainer .batch-modal'
     ));
 }
+
+/* ── Qty guard: block leaving qty when qty <= 0 ── */
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== 'Tab') return;
+    const active = document.activeElement;
+    if (!active) return;
+    if (!active.matches('#itemsTableBody input[name*="[qty]"]')) return;
+    if (_rrAnyModalOpen()) return;
+
+    const qty = parseFloat(active.value) || 0;
+    if (qty > 0) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    active.focus();
+    active.select();
+}, true);
 
 /* ── Ctrl+S → save/update transaction ── */
 window.addEventListener('keydown', function(e) {

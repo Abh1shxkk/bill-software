@@ -342,6 +342,29 @@ document.addEventListener('click', function(e) {
 
 // Master Keyboard Event Interceptor
 document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        const activeQty = document.activeElement;
+        if (activeQty && activeQty.name && activeQty.name.includes('[qty]')) {
+            const itemModalForQty = document.getElementById('stockTransferOutgoingItemModal');
+            const batchModalForQty = document.getElementById('stockTransferOutgoingBatchModal');
+            const hasOpenModalForQty =
+                (itemModalForQty && itemModalForQty.classList.contains('show')) ||
+                (batchModalForQty && batchModalForQty.classList.contains('show'));
+
+            if (!hasOpenModalForQty) {
+                const qtyVal = parseFloat(activeQty.value);
+                if (!(activeQty.value || '').trim() || !Number.isFinite(qtyVal) || qtyVal <= 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    activeQty.focus();
+                    activeQty.select();
+                    return false;
+                }
+            }
+        }
+    }
+
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;

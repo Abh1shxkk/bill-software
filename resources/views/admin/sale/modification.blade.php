@@ -1744,7 +1744,7 @@ function addItemToTable(item, batch) {
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px; background: transparent;" autocomplete="off" readonly></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px;" autocomplete="off"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
@@ -1935,7 +1935,7 @@ function addEmptyRow() {
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="" style="font-size: 10px;" autocomplete="off"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0.00" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
@@ -2209,13 +2209,23 @@ function addRowEventListeners(row, rowIndex) {
     const discountInput = row.querySelector('input[name*="[discount]"]');
     const debug = window.KEYBOARD_DEBUG;
     
-    // Qty field - Enter moves to Free Qty
+    // Qty field - Enter moves to Free Qty (only if qty > 0)
     if (qtyInput) {
         qtyInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
-                e.preventDefault();
-                calculateRowAmount(rowIndex);
-                if (freeQtyInput) freeQtyInput.focus();
+                const qty = parseFloat(this.value) || 0;
+                // Only move forward if qty > 0
+                if (qty > 0) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    calculateRowAmount(rowIndex);
+                    if (freeQtyInput) freeQtyInput.focus();
+                } else {
+                    // Stay in qty field if qty is 0
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    this.focus();
+                }
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 navigateToRow(rowIndex - 1);
@@ -2990,7 +3000,7 @@ function addNewRow() {
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" style="font-size: 10px;" autocomplete="off"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
@@ -3849,7 +3859,7 @@ async function populateFormWithTransaction(transaction) {
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.item_name || ''}" style="font-size: 10px;" autocomplete="off"></td>
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${item.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${item.expiry_date || ''}" style="font-size: 10px;" autocomplete="off"></td>
-                <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="${item.qty || 0}" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="${item.qty || 0}" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})"></td>
                 <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="${item.free_qty || 0}" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
                 <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${item.sale_rate || 0}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
                 <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="${item.discount_percent > 0 ? item.discount_percent : ''}" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
@@ -6434,6 +6444,17 @@ console.log('🔗 Modal Component Bridge Loaded - Sale Modification');
             });
         }
 
+        // Check if QTY field has 0 value - prevent moving forward
+        if (fieldId && fieldId.startsWith('qty_')) {
+            const qtyValue = parseFloat(activeEl.value) || 0;
+            if (qtyValue === 0) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                activeEl.focus();
+                return;
+            }
+        }
+
         if (isTableField) {
             return;
         }
@@ -7069,14 +7090,33 @@ function handleSchemeInputKeydown(event) {
 }
 
 /**
- * Handle Ctrl+L keyboard shortcut in qty fields
- * This should be added to the qty input onkeydown event
+ * Handle keyboard shortcuts in qty fields
+ * - Ctrl+L: Open scheme modal
+ * - Enter: Move to next field only if qty > 0
  */
 function handleQtyKeydown(event, rowIndex) {
     // Check for Ctrl+L
     if (event.ctrlKey && (event.key === 'l' || event.key === 'L')) {
         event.preventDefault();
         openSchemeModal(rowIndex);
+        return;
+    }
+    
+    // Check for Enter key
+    if (event.key === 'Enter') {
+        const qtyInput = document.getElementById(`qty_${rowIndex}`);
+        const qty = parseFloat(qtyInput?.value) || 0;
+        
+        // If qty is 0, prevent moving forward and stay in qty field
+        if (qty === 0) {
+            event.preventDefault();
+            event.stopPropagation();
+            // Keep focus on qty field
+            if (qtyInput) {
+                qtyInput.focus();
+            }
+            return;
+        }
     }
 }
 

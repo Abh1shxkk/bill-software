@@ -834,6 +834,22 @@ document.addEventListener('click', function(e) {
 // ============================================================================
 
 function handleGbeModQtyKeydown(event, rowIndex) {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+
+    const qtyInput = event.target;
+    const qty = parseFloat(qtyInput?.value) || 0;
+    if (qty <= 0) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        qtyInput?.focus();
+        qtyInput?.select();
+        return;
+    }
+
+    // Keep native Tab behavior when qty is valid.
+    if (event.key === 'Tab') return;
+
     if (event.key === 'Enter') {
         if (event.ctrlKey) return; // let global handler handle Ctrl+Enter
         event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
@@ -895,6 +911,29 @@ function highlightInvoiceRow() {
 // GLOBAL KEYBOARD NAVIGATION
 // ============================================================================
 document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        const activeQty = document.activeElement;
+        if (activeQty && activeQty.name && activeQty.name.includes('[qty]')) {
+            const hasModalOpenForQty = document.getElementById('loadInvoiceModal') ||
+                document.querySelector('#godownBreakageExpiryModItemModal.show') ||
+                document.querySelector('#godownBreakageExpiryModBatchModal.show') ||
+                document.getElementById('itemModal') ||
+                document.getElementById('batchModal');
+
+            if (!hasModalOpenForQty) {
+                const qtyVal = parseFloat(activeQty.value);
+                if (!(activeQty.value || '').trim() || !Number.isFinite(qtyVal) || qtyVal <= 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    activeQty.focus();
+                    activeQty.select();
+                    return false;
+                }
+            }
+        }
+    }
+
     // Invoice modal handler
     const invoiceModal = document.getElementById('loadInvoiceModal');
     if (invoiceModal) {

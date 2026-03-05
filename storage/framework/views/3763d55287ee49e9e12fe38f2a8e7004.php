@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Stock Adjustment Modification'); ?>
 
-@section('title', 'Stock Adjustment Modification')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments - matching sale module */
     .compact-form {
@@ -326,10 +324,10 @@
         <div class="text-muted small">Modify existing stock adjustment</div>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.stock-adjustment.transaction') }}" class="btn btn-success">
+        <a href="<?php echo e(route('admin.stock-adjustment.transaction')); ?>" class="btn btn-success">
             <i class="bi bi-plus-circle me-1"></i> New Adjustment
         </a>
-        <a href="{{ route('admin.stock-adjustment.invoices') }}" class="btn btn-primary">
+        <a href="<?php echo e(route('admin.stock-adjustment.invoices')); ?>" class="btn btn-primary">
             <i class="bi bi-receipt-cutoff me-1"></i> Stock Adjustment Invoices
         </a>
     </div>
@@ -338,7 +336,7 @@
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
         <form id="stockAdjustmentForm" method="POST" autocomplete="off" onkeydown="return event.key !== 'Enter';">
-            @csrf
+            <?php echo csrf_field(); ?>
 
             <!-- Header Section -->
             <div class="header-section">
@@ -570,7 +568,7 @@
 </div>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'stockAdjustmentModItemModal',
     'module' => 'stock-adjustment',
     'showStock' => true,
@@ -578,19 +576,19 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'stockAdjustmentModBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'stockAdjustmentModBatchModal',
     'module' => 'stock-adjustment',
     'showOnlyAvailable' => false,
     'rateType' => 'cost',
     'showCostDetails' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let rowCount = 0;
 let selectedRowIndex = -1;
@@ -906,10 +904,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('itemSearchInput').addEventListener('input', debounce(filterItems, 300));
     
     // Check for preload
-    @if(isset($preloadTrnNo) && $preloadTrnNo)
-        document.getElementById('searchTrnNo').value = '{{ $preloadTrnNo }}';
+    <?php if(isset($preloadTrnNo) && $preloadTrnNo): ?>
+        document.getElementById('searchTrnNo').value = '<?php echo e($preloadTrnNo); ?>';
         searchTransaction();
-    @endif
+    <?php endif; ?>
     
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
@@ -950,7 +948,7 @@ function searchTransaction() {
         return;
     }
     
-    fetch(`{{ url('admin/stock-adjustment/fetch') }}/${trnNo}`)
+    fetch(`<?php echo e(url('admin/stock-adjustment/fetch')); ?>/${trnNo}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -1087,7 +1085,7 @@ function addExistingItemRow(item) {
 
 // Load all items
 function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}')
+    fetch('<?php echo e(route("admin.items.get-all")); ?>')
         .then(response => response.json())
         .then(data => {
             // API returns {success: true, items: [...]}
@@ -1279,7 +1277,7 @@ function openBatchModal(itemId, itemName, packing) {
 }
 
 function loadBatches(itemId) {
-    fetch(`{{ url('admin/api/item-batches') }}/${itemId}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${itemId}`)
         .then(response => response.json())
         .then(data => {
             // API returns {success: true, batches: [...]}
@@ -1558,12 +1556,12 @@ function deleteSelectedItem() {
 }
 
 function cancelModification() {
-    window.location.href = '{{ route("admin.stock-adjustment.invoices") }}';
+    window.location.href = '<?php echo e(route("admin.stock-adjustment.invoices")); ?>';
 }
 
 function openPastAdjustmentsModal() {
     console.log('📋 Opening past adjustments modal...');
-    fetch('{{ route("admin.stock-adjustment.past-adjustments") }}')
+    fetch('<?php echo e(route("admin.stock-adjustment.past-adjustments")); ?>')
         .then(response => {
             console.log('📋 Response status:', response.status);
             return response.json();
@@ -1712,7 +1710,7 @@ function updateTransaction() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/stock-adjustment') }}/${currentAdjustmentId}`, {
+    fetch(`<?php echo e(url('admin/stock-adjustment')); ?>/${currentAdjustmentId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -1729,7 +1727,7 @@ function updateTransaction() {
                 alert(data.message);
             }
             setTimeout(() => {
-                window.location.href = '{{ route("admin.stock-adjustment.invoices") }}';
+                window.location.href = '<?php echo e(route("admin.stock-adjustment.invoices")); ?>';
             }, 1000);
         } else {
             throw new Error(data.message || 'Error updating transaction');
@@ -1845,4 +1843,6 @@ function escapeHtml(text) {
     return div.innerHTML.replace(/'/g, "\\'");
 }
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/stock-adjustment/modification.blade.php ENDPATH**/ ?>

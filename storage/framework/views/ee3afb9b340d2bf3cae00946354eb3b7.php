@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Stock Transfer Outgoing Return - Modification'); ?>
 
-@section('title', 'Stock Transfer Outgoing Return - Modification')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments */
     .compact-form { font-size: 11px; padding: 8px; background: #f5f5f5; }
@@ -70,7 +68,7 @@
         <button type="button" class="btn btn-success btn-sm" onclick="openAllInvoicesModal()">
             <i class="bi bi-list-ul me-1"></i> All Invoices
         </button>
-        <a href="{{ route('admin.stock-transfer-outgoing-return.index') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="<?php echo e(route('admin.stock-transfer-outgoing-return.index')); ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>
     </div>
@@ -101,7 +99,7 @@
         </div>
 
         <form id="stockTransferOutgoingForm" method="POST" autocomplete="off">
-            @csrf
+            <?php echo csrf_field(); ?>
             <input type="hidden" name="transaction_id" id="transaction_id">
 
             <!-- Header Section -->
@@ -124,15 +122,16 @@
                                 <input type="hidden" name="transfer_to" id="customerSelect">
                                 <input type="hidden" name="transfer_to_name" id="transfer_to_name">
                                 <div class="custom-dropdown-list" id="storm_customerList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                    @foreach($customers as $customer)
+                                    <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="custom-dropdown-item" 
-                                             data-value="{{ $customer->id }}" 
-                                             data-name="{{ $customer->name }}"
+                                             data-value="<?php echo e($customer->id); ?>" 
+                                             data-name="<?php echo e($customer->name); ?>"
                                              style="padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px;"
-                                             onclick="selectCustomer('{{ $customer->id }}', '{{ addslashes($customer->name) }}', '{{ $customer->code ?? $customer->id }}')">
-                                            {{ $customer->code ?? $customer->id }} - {{ $customer->name }}
+                                             onclick="selectCustomer('<?php echo e($customer->id); ?>', '<?php echo e(addslashes($customer->name)); ?>', '<?php echo e($customer->code ?? $customer->id); ?>')">
+                                            <?php echo e($customer->code ?? $customer->id); ?> - <?php echo e($customer->name); ?>
+
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
                             </div>
                         </div>
@@ -452,7 +451,7 @@
 </div>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'stockTransferOutgoingReturnModItemModal',
     'module' => 'stock-transfer-outgoing-return',
     'showStock' => true,
@@ -460,19 +459,19 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'stockTransferOutgoingReturnModBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'stockTransferOutgoingReturnModBatchModal',
     'module' => 'stock-transfer-outgoing-return',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let selectedRowIndex = null;
@@ -486,7 +485,7 @@ function loadTransaction() {
         return;
     }
     
-    fetch(`{{ url('admin/stock-transfer-outgoing-return/get-by-sr-no') }}/${encodeURIComponent(srNo)}`)
+    fetch(`<?php echo e(url('admin/stock-transfer-outgoing-return/get-by-sr-no')); ?>/${encodeURIComponent(srNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.transaction) {
@@ -725,7 +724,7 @@ function handleRateKeydown(event, rowIndex) {
 }
 
 function fetchItemByCode(code, rowIndex) {
-    fetch(`{{ url('admin/items/search') }}?code=${encodeURIComponent(code)}`)
+    fetch(`<?php echo e(url('admin/items/search')); ?>?code=${encodeURIComponent(code)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.items.length > 0) {
@@ -840,7 +839,7 @@ function searchItems() {
         return;
     }
     
-    fetch(`{{ url('admin/items/search') }}?q=${encodeURIComponent(query)}`)
+    fetch(`<?php echo e(url('admin/items/search')); ?>?q=${encodeURIComponent(query)}`)
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('itemSearchResults');
@@ -867,7 +866,7 @@ function selectItem(item) {
 
 function openBatchModal(rowIndex, itemCode) {
     selectedRowIndex = rowIndex;
-    fetch(`{{ url('admin/batches/by-item') }}/${itemCode}`)
+    fetch(`<?php echo e(url('admin/batches/by-item')); ?>/${itemCode}`)
         .then(response => response.json())
         .then(data => {
             const tbody = document.getElementById('batchSearchResults');
@@ -909,7 +908,7 @@ function selectBatch(batch) {
 }
 
 function fetchBatchDetails(itemCode, batchNo, rowIndex) {
-    fetch(`{{ url('admin/batches/details') }}?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(url('admin/batches/details')); ?>?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.batch) {
@@ -968,7 +967,7 @@ function deleteSelectedItem() {
 
 function cancelModification() {
     if (confirm('Are you sure you want to cancel?')) {
-        window.location.href = '{{ route("admin.stock-transfer-outgoing-return.index") }}';
+        window.location.href = '<?php echo e(route("admin.stock-transfer-outgoing-return.index")); ?>';
     }
 }
 
@@ -1021,7 +1020,7 @@ function updateTransaction() {
     }
     
     const data = {
-        _token: '{{ csrf_token() }}',
+        _token: '<?php echo e(csrf_token()); ?>',
         transaction_date: document.getElementById('storm_transaction_date').value,
         transfer_to: document.getElementById('customerSelect').value,
         transfer_to_name: document.getElementById('transfer_to_name').value,
@@ -1040,11 +1039,11 @@ function updateTransaction() {
         window.markAsSaving();
     }
     
-    fetch(`{{ url('admin/stock-transfer-outgoing-return/transaction') }}/${loadedTransactionId}`, {
+    fetch(`<?php echo e(url('admin/stock-transfer-outgoing-return/transaction')); ?>/${loadedTransactionId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(data)
     })
@@ -1052,7 +1051,7 @@ function updateTransaction() {
     .then(result => {
         if (result.success) {
             alert('Transaction updated successfully!');
-            window.location.href = '{{ route("admin.stock-transfer-outgoing-return.index") }}';
+            window.location.href = '<?php echo e(route("admin.stock-transfer-outgoing-return.index")); ?>';
         } else {
             alert('Error: ' + result.message);
             isSubmitting = false;
@@ -1368,7 +1367,7 @@ function checkBatchExists(rowIndex) {
     if (!batchNo || !itemCode) return;
     
     // Check if batch exists
-    fetch(`{{ url('admin/batches/details') }}?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(url('admin/batches/details')); ?>?item_id=${itemCode}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.batch) {
@@ -1506,7 +1505,7 @@ async function loadInvoices(fromDate = null, toDate = null) {
     modal.classList.add('show');
     
     try {
-        let url = '{{ route("admin.stock-transfer-outgoing-return.index") }}?ajax=1';
+        let url = '<?php echo e(route("admin.stock-transfer-outgoing-return.index")); ?>?ajax=1';
         if (fromDate && toDate) {
             url += `&date_from=${fromDate}&date_to=${toDate}`;
         }
@@ -1668,4 +1667,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-@endpush
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/stock-transfer-outgoing-return/modification.blade.php ENDPATH**/ ?>

@@ -1298,9 +1298,9 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
             </select>
         </td>
         <td>
-            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1" 
-                   onchange="calculateRowTotal(${rowIndex})" 
-                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }">
+            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1"
+                   onchange="calculateRowTotal(${rowIndex})"
+                   onkeydown="if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowTotal(${rowIndex}); moveToNextField(${rowIndex}, 'free_qty'); } else { event.preventDefault(); event.stopImmediatePropagation(); this.focus(); } return false; }">
         </td>
         <td>
             <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
@@ -1962,10 +1962,10 @@ function addInvoiceItemToTable(item, index) {
             </select>
         </td>
         <td>
-            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" 
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]"
                    value="${Math.round(parseFloat(item.qty) || 0)}"
-                   step="any" onchange="calculateRowAmount(${rowIndex})" 
-                   onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); return false; }" 
+                   step="any" onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } else { event.preventDefault(); event.stopImmediatePropagation(); this.focus(); } return false; }"
                    placeholder="0">
         </td>
         <td>
@@ -2367,9 +2367,9 @@ function addNewRowWithItem(item) {
             </select>
         </td>
         <td>
-            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" 
-                   step="any" onchange="calculateRowAmount(${rowIndex})" 
-                   onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); return false; }" 
+            <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]"
+                   step="any" onchange="calculateRowAmount(${rowIndex})"
+                   onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } else { event.preventDefault(); event.stopImmediatePropagation(); this.focus(); } return false; }"
                    placeholder="0">
         </td>
         <td>
@@ -3109,7 +3109,7 @@ function addNewRow() {
         <td>
             <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" step="0.01"
                    onchange="calculateRowAmount(${rowIndex})"
-                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'f_qty'); return false; }">
+                   onkeydown="if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } else { event.preventDefault(); event.stopImmediatePropagation(); this.focus(); } return false; }">
         </td>
         <td>
             <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][f_qty]" value="0" step="0.01"
@@ -3239,6 +3239,25 @@ document.addEventListener('DOMContentLoaded', function() {
             triggerSelectItemButtonForRow(Number.isInteger(rowIndex) ? rowIndex : null);
         }, true);
         window.__kbBeModCodeEnterBound = true;
+    }
+
+    // Capture-level fallback: Enter on Qty field should not navigate to F.Qty when qty is 0.
+    if (!window.__kbBeModQtyEnterBound) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter' && e.keyCode !== 13) return;
+            const target = e.target;
+            if (!target || !target.name || !target.name.includes('[qty]')) return;
+
+            const qty = parseFloat(target.value) || 0;
+            if (qty <= 0) {
+                console.log('[KB-BE][Mod][Capture][Qty] Enter blocked (qty <= 0)', { qty });
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                target.focus();
+            }
+        }, true);
+        window.__kbBeModQtyEnterBound = true;
     }
 
     // Global Ctrl+S / Cmd+S -> trigger same Save button flow as manual click.

@@ -281,8 +281,8 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][item_name]" value="${item.name || ''}" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" value="${batch.batch_no || ''}" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="1" step="0.001" onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="${saleRate.toFixed(2)}" step="0.01" onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="0" step="0.001" data-custom-enter onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="${saleRate.toFixed(2)}" step="0.01" data-custom-enter onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="${mrp.toFixed(2)}" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items[${rowIndex}][amount]" value="${saleRate.toFixed(2)}" readonly></td>
         <td>
@@ -647,8 +647,8 @@ function addNewRow() {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][item_name]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" readonly></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="0" step="0.001" onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="0" step="0.001" data-custom-enter onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" data-custom-enter onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="0" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly></td>
         <td>
@@ -737,19 +737,36 @@ function handleCodeKeydown(event, rowIndex) {
 }
 
 function handleQtyKeydown(event, rowIndex) {
-    if (event.key === 'Enter') {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+
+    const qtyInput = event.target;
+    const qty = parseFloat(qtyInput?.value) || 0;
+
+    if (qty <= 0) {
         event.preventDefault();
-        if (event.shiftKey) {
-            // Optionally could navigate backwards if required, but staying normal for now
-        } else {
-            const row = document.getElementById(`row-${rowIndex}`);
-            if (row) {
-                const rateInput = row.querySelector('input[name*="[rate]"]');
-                if (rateInput) {
-                    rateInput.focus();
-                    rateInput.select();
-                }
-            }
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (qtyInput) {
+            qtyInput.focus();
+            qtyInput.select();
+        }
+        return;
+    }
+
+    // Keep normal Tab behavior when qty is valid.
+    if (event.key === 'Tab') return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    if (event.shiftKey) return;
+
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (row) {
+        const rateInput = row.querySelector('input[name*="[rate]"]');
+        if (rateInput) {
+            rateInput.focus();
+            rateInput.select();
         }
     }
 }
@@ -1099,7 +1116,7 @@ function searchAddItemsAjax(search = '', page = 1) {
                     <td>${item.company_name || ''}</td>
                     <td class="text-end">${parseFloat(item.s_rate || 0).toFixed(2)}</td>
                     <td class="text-end">${parseFloat(item.mrp || 0).toFixed(2)}</td>
-                    <td><input type="number" class="form-control form-control-sm text-end item-qty" data-item-id="${item.id}" value="1" min="1" step="0.001" style="width: 70px;"></td>
+                    <td><input type="number" class="form-control form-control-sm text-end item-qty" data-item-id="${item.id}" value="0" min="0" step="0.001" style="width: 70px;"></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -1171,7 +1188,7 @@ function addSelectedItems() {
         const item = addItemsData.find(i => i.id === itemId);
         if (item) {
             const qtyInput = document.querySelector(`.item-qty[data-item-id="${itemId}"]`);
-            const qty = parseFloat(qtyInput?.value) || 1;
+            const qty = parseFloat(qtyInput?.value) || 0;
             window.pendingItems.push({ item, qty });
         }
     });
@@ -1206,8 +1223,8 @@ function processNextPendingItem() {
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][item_name]" value="" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][batch]" readonly></td>
         <td><input type="text" class="form-control form-control-sm" name="items[${rowIndex}][expiry]" readonly></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="${qty}" step="0.001" onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
-        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][qty]" value="${qty}" step="0.001" data-custom-enter onkeydown="handleQtyKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
+        <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][rate]" value="0" step="0.01" data-custom-enter onkeydown="handleRateKeydown(event, ${rowIndex})" onchange="calculateRowAmount(${rowIndex})"></td>
         <td><input type="number" class="form-control form-control-sm text-end" name="items[${rowIndex}][mrp]" value="0" step="0.01" readonly></td>
         <td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items[${rowIndex}][amount]" value="0.00" readonly></td>
         <td>
@@ -1287,7 +1304,7 @@ function showBatchModalForMultiple(item) {
 
 function selectBatchForMultiple(batchId, batchNo, expiry, mrp, rate, qty) {
     const item = window.selectedItem;
-    const pendingQty = window.pendingItemQty || 1;
+    const pendingQty = window.pendingItemQty || 0;
     
     if (!item || selectedRowIndex === null) {
         closeBatchModal();
@@ -1319,7 +1336,7 @@ function selectBatchForMultiple(batchId, batchNo, expiry, mrp, rate, qty) {
 
 function skipBatchForMultiple() {
     const item = window.selectedItem;
-    const pendingQty = window.pendingItemQty || 1;
+    const pendingQty = window.pendingItemQty || 0;
     
     if (!item || selectedRowIndex === null) {
         closeBatchModal();
@@ -1422,6 +1439,26 @@ function cancelQuotation() {
         window.location.href = '{{ route("admin.quotation.index") }}';
     }
 }
+
+// ── QTY FIELD: keep focus on qty when qty <= 0 ────────────────────
+// Capture phase ensures this runs before global transaction shortcuts.
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== 'Tab') return;
+    const active = document.activeElement;
+    if (!active) return;
+    const isQtyInput = active.matches('input[name*="[qty]"]') &&
+                       active.closest('#itemsTableBody');
+    if (!isQtyInput) return;
+
+    const qty = parseFloat(active.value) || 0;
+    if (qty > 0) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    active.focus();
+    active.select();
+}, true);
 
 // ── RATE FIELD: Enter → open Add Items modal ──────────────────────
 // Window capture phase fires ABSOLUTELY FIRST — before browser default,

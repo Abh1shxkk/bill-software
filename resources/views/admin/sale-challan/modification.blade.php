@@ -1411,6 +1411,12 @@ async function openChooseItemsModal() {
         return;
     }
     
+    // Try to use the new reusable item selection modal
+    if (typeof openItemModal_reusableItemsModal === 'function') {
+        openItemModal_reusableItemsModal();
+        return;
+    }
+    
     // Now open the modal to add more items
     const modal = document.getElementById('chooseItemsModal');
     const backdrop = document.getElementById('chooseItemsBackdrop');
@@ -2309,7 +2315,7 @@ function addRowEventListeners(row, rowIndex) {
     const rateInput = row.querySelector('input[name*="[rate]"]');
     const discountInput = row.querySelector('input[name*="[discount]"]');
     
-    // Qty field - Enter moves to Free Qty
+    // Qty field - Enter moves to Free Qty (only if qty > 0)
     if (qtyInput) {
         qtyInput.addEventListener('keydown', function(e) {
             if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
@@ -2318,6 +2324,13 @@ function addRowEventListeners(row, rowIndex) {
                 return;
             }
             if (e.key === 'Enter') {
+                const qty = parseFloat(this.value) || 0;
+                if (qty <= 0) {
+                    // Stay on qty field if value is 0 or empty
+                    e.preventDefault();
+                    this.focus();
+                    return;
+                }
                 e.preventDefault();
                 calculateRowAmount(rowIndex);
                 if (freeQtyInput) freeQtyInput.focus();
@@ -2380,7 +2393,7 @@ function addRowEventListeners(row, rowIndex) {
                 // Finalize current row, then trigger Add Row flow and move cursor to new row code
                 updateRowColor(rowIndex);
                 calculateSummary();
-                triggerAddRowAndFocusCode();
+                triggerAddRowAndFocusCode(rowIndex);
             } else if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 navigateToRow(rowIndex - 1);
@@ -2510,8 +2523,44 @@ function focusFirstTableBatchField() {
     return focusRowBatchField(firstIndex, true);
 }
 
-function triggerAddRowAndFocusCode() {
-    const oldIndex = itemIndex;
+function triggerAddRowAndFocusCode(currentRowIndex) {
+    // Use passed current row index, or fall back to itemIndex for backward compatibility
+    const oldIndex = (typeof currentRowIndex === 'number') ? currentRowIndex : itemIndex;
+    
+    // Check if next row already exists and has data
+    const allRows = document.querySelectorAll('#itemsTableBody tr');
+    let nextRow = null;
+    let currentRowFound = false;
+    
+    for (const row of allRows) {
+        const rowIdx = parseInt(row.getAttribute('data-row-index'));
+        if (currentRowFound && nextRow === null) {
+            nextRow = row;
+            break;
+        }
+        if (rowIdx === oldIndex) {
+            currentRowFound = true;
+        }
+    }
+    
+    // If next row exists, check if it has data (item code or qty)
+    if (nextRow) {
+        const nextCode = nextRow.querySelector('input[name*="[code]"]')?.value?.trim();
+        const nextQty = parseFloat(nextRow.querySelector('input[name*="[qty]"]')?.value) || 0;
+        
+        if (nextCode || nextQty > 0) {
+            // Next row is already filled, move to its qty field
+            console.log('[KB-SCMOD] Next row already filled, moving to its qty field', { nextRowIndex: nextRow.getAttribute('data-row-index') });
+            const nextQtyField = nextRow.querySelector('input[name*="[qty]"]');
+            if (nextQtyField) {
+                nextQtyField.focus();
+                nextQtyField.select();
+                return;
+            }
+        }
+    }
+    
+    // No filled next row found, create a new row
     const addRowBtn = document.querySelector('button[onclick="addNewRow()"]');
     if (addRowBtn) {
         addRowBtn.click();
@@ -4903,6 +4952,21 @@ document.addEventListener('keydown', function(e) {
             const fieldName = String(target.name || '');
             if (!fieldName) return;
 
+            // Qty Enter -> validate qty > 0 before allowing navigation
+            if (fieldName.includes('[qty]')) {
+                const qty = parseFloat(target.value) || 0;
+                if (qty <= 0) {
+                    console.log('[KB-SCMOD][TableCapture] Qty Enter blocked (qty <= 0)', { rowIndex, qty });
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === 'function') {
+                        e.stopImmediatePropagation();
+                    }
+                    target.focus();
+                    return;
+                }
+            }
+
             // Dis% Enter -> finalize row + trigger Add Row + focus new row code
             if (fieldName.includes('[discount]')) {
                 console.log('[KB-SCMOD][TableCapture] Dis% Enter', { rowIndex, fieldName });
@@ -4916,7 +4980,7 @@ document.addEventListener('keydown', function(e) {
                 calculateTotal();
                 updateRowColor(rowIndex);
                 calculateSummary();
-                triggerAddRowAndFocusCode();
+                triggerAddRowAndFocusCode(rowIndex);
                 return;
             }
 
@@ -5227,5 +5291,70 @@ function handleSchemeInputKeydown(event) {
         </div>
     </div>
 </div>
+
+<!-- Callback handlers for reusable modal components -->
+<script>
+// Handle item selection from reusable item modal
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Reusable Modal: Item selected, opening batch modal for:', item?.name);
+    // Store the selected item for batch selection
+    window.selectedItemFromReusableModal = item;
+    // Open the reusable batch modal
+    if (typeof window.openBatchModal_reusableBatchModal === 'function') {
+        window.openBatchModal_reusableBatchModal(item);
+    } else {
+        // Fallback to legacy batch modal
+        openBatchSelectionModal(item);
+    }
+};
+
+// Handle batch selection from reusable batch modal
+// Note: Component passes (item, batch) but we receive as (batch, item) - check both orders
+window.onBatchSelectedFromModal = function(item, batch) {
+    // The component calls onBatchSelectedFromModal(item, batch)
+    // where item is the selected item object and batch is the selected batch object
+    console.log('🔗 Reusable Modal: Batch selected:', batch?.batch_no, 'Item:', item?.name);
+    
+    // If arguments are swapped (defensive check)
+    if (!item?.name && batch?.name) {
+        // Arguments are in wrong order, swap them
+        const temp = item;
+        item = batch;
+        batch = temp;
+    }
+    
+    if (!item) {
+        console.error('No item available for batch selection');
+        return;
+    }
+    // Close the batch modal
+    if (typeof window.closeBatchModal_reusableBatchModal === 'function') {
+        window.closeBatchModal_reusableBatchModal();
+    }
+    // Add item to table
+    setTimeout(() => {
+        addItemToTable(item, batch);
+    }, 150);
+};
+</script>
+
+<!-- Item and Batch Selection Modal Components -->
+@include('components.modals.item-selection', [
+    'id' => 'reusableItemsModal',
+    'module' => 'sale-challan',
+    'showStock' => true,
+    'rateType' => 's_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'reusableBatchModal',
+])
+
+@include('components.modals.batch-selection', [
+    'id' => 'reusableBatchModal',
+    'module' => 'sale-challan',
+    'showOnlyAvailable' => true,
+    'rateType' => 's_rate',
+    'showCostDetails' => true,
+])
 
 @endsection

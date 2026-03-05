@@ -343,6 +343,30 @@ let allItems = [];
 // Captures Enter keys for specific workflow paths
 // ============================================================
 window.addEventListener('keydown', function(e) {
+    // Hard guard: qty must be > 0 before leaving qty field.
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        var activeQty = document.activeElement;
+        if (activeQty && activeQty.classList && activeQty.classList.contains('qty-input')) {
+            var itemModalForQty = document.getElementById('stockAdjustmentItemModal');
+            var batchModalForQty = document.getElementById('stockAdjustmentBatchModal');
+            var hasOpenModalForQty =
+                (itemModalForQty && itemModalForQty.classList.contains('show')) ||
+                (batchModalForQty && batchModalForQty.classList.contains('show'));
+
+            if (!hasOpenModalForQty) {
+                var qtyVal = parseFloat(activeQty.value);
+                if (!(activeQty.value || '').trim() || !Number.isFinite(qtyVal) || qtyVal <= 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    activeQty.focus();
+                    activeQty.select();
+                    return false;
+                }
+            }
+        }
+    }
+
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;

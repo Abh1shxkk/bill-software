@@ -1566,10 +1566,27 @@ window.addEventListener('keydown', function(e) {
         return;
     }
     if ($el.hasClass('qty')) {
+        const qtyVal = parseFloat($el.val()) || 0;
+        if (qtyVal === 0) {
+            alert('Qty cannot be 0');
+            $el.focus().select();
+            return;
+        }
         $row.find('.free-qty').focus().select();
         return;
     }
     if ($el.hasClass('free-qty')) {
+        // Validate Qty + F.Qty sum must be a whole number
+        const qtyVal = parseFloat($row.find('.qty').val()) || 0;
+        const fQtyVal = parseFloat($el.val()) || 0;
+        const sum = qtyVal + fQtyVal;
+        const rounded = Math.round(sum * 10000) / 10000;
+        if (rounded % 1 !== 0) {
+            window._fqtyValidating = true;
+            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            setTimeout(function() { window._fqtyValidating = false; $el.focus().select(); }, 50);
+            return;
+        }
         const rowIdx = $row.data('row');
         currentRowForRate = rowIdx;
         showRateModal(rowIdx);
@@ -1588,6 +1605,8 @@ window.addEventListener('keydown', function(e) {
     }
 
 }, true); // ← capture phase — fires BEFORE layout's document handlers
+
+// focusout validation removed — Enter key validation in master handler is sufficient
 </script>
 <?php $__env->stopPush(); ?>
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/claim-to-supplier/transaction.blade.php ENDPATH**/ ?>

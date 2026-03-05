@@ -384,6 +384,29 @@ document.addEventListener('click', function(e) {
 
 // ====== KEYBOARD NAVIGATION ======
 document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        const activeQty = document.activeElement;
+        if (activeQty && activeQty.name && activeQty.name.includes('[qty]')) {
+            const hasModalOpenForQty =
+                document.getElementById('itemModal') ||
+                document.getElementById('batchModal') ||
+                document.querySelector('#stockTransferIncomingItemModal.show') ||
+                document.querySelector('#stockTransferIncomingBatchModal.show');
+
+            if (!hasModalOpenForQty) {
+                const qtyVal = parseFloat(activeQty.value);
+                if (!(activeQty.value || '').trim() || !Number.isFinite(qtyVal) || qtyVal <= 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    activeQty.focus();
+                    activeQty.select();
+                    return false;
+                }
+            }
+        }
+    }
+
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;
@@ -889,12 +912,26 @@ function handleExpiryKeydown(event, rowIndex) {
 }
 
 function handleQtyKeydown(event, rowIndex) {
-    if (event.key === 'Enter') {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+
+    const qtyInput = event.target;
+    const qty = parseFloat(qtyInput?.value) || 0;
+    if (qty <= 0) {
         event.preventDefault();
-        calculateRowAmount(rowIndex);
-        const row = document.getElementById(`row-${rowIndex}`);
-        row?.querySelector('input[name*="[free_qty]"]')?.focus();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        qtyInput?.focus();
+        qtyInput?.select();
+        return;
     }
+
+    // Keep native Tab behavior when qty is valid.
+    if (event.key === 'Tab') return;
+
+    event.preventDefault();
+    calculateRowAmount(rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    row?.querySelector('input[name*="[free_qty]"]')?.focus();
 }
 
 function handleFreeQtyKeydown(event, rowIndex) {

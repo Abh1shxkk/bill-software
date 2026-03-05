@@ -1252,9 +1252,8 @@ function addItemRow(item, index) {
             <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${item.expiry_date || ''}" ${readonlyAttr}>
         </td>
         <td>
-            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="${item.return_qty || 0}" step="1" 
-                   onchange="calculateRowAmount(${rowIndex})" 
-                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }" 
+            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="${item.return_qty || 0}" step="1"
+                   onchange="calculateRowAmount(${rowIndex})"
                    onfocus="selectRowForCalculation(${rowIndex})">
         </td>
         <td>
@@ -1298,15 +1297,18 @@ function addItemRow(item, index) {
     `;
     
     tbody.appendChild(row);
-    
+
     // Store item data for calculations
     row.dataset.itemData = JSON.stringify(item);
     row.dataset.completed = 'false';
-    
+
     // Add click event to row for selection
     row.addEventListener('click', function() {
         selectRowForCalculation(rowIndex);
     });
+
+    // Add row-specific event listeners
+    addRowEventListeners(row, rowIndex);
     
     // Calculate initial amount
     calculateRowAmount(rowIndex);
@@ -1333,6 +1335,31 @@ function addItemRow(item, index) {
                 selectRowForCalculation(rowIndex);
             }
         }, 300);
+    }
+}
+
+// Add row-specific event listeners for keyboard navigation
+function addRowEventListeners(row, rowIndex) {
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    const freeQtyInput = row.querySelector('input[name*="[free_qty]"]');
+
+    // QTY field - Enter key handling with zero check
+    if (qtyInput) {
+        qtyInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const qty = parseFloat(this.value) || 0;
+                if (qty > 0) {
+                    e.preventDefault();
+                    calculateRowAmount(rowIndex);
+                    if (freeQtyInput) freeQtyInput.focus();
+                } else {
+                    // Stay in qty field if qty is 0
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    this.focus();
+                }
+            }
+        });
     }
 }
 
@@ -2988,6 +3015,27 @@ window.addEventListener('keydown', function(e) {
     e.stopPropagation();
     e.stopImmediatePropagation();
     handleDiscountAndCompleteRow(rowIndex);
+}, true);
+
+// Global Enter key handler for QTY field with zero check
+window.addEventListener('keydown', function(e) {
+    const target = e.target;
+    if (!target || e.key !== 'Enter') return;
+    const name = target.getAttribute('name') || '';
+    if (!name.includes('[qty]')) return;
+    const row = target.closest('tr');
+    const rowId = row?.id || '';
+    const rowIndex = rowId.startsWith('row-') ? parseInt(rowId.replace('row-', '')) : NaN;
+    if (Number.isNaN(rowIndex)) return;
+
+    const qty = parseFloat(target.value) || 0;
+    if (qty <= 0) {
+        // Stay in qty field if qty is 0
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        target.focus();
+    }
 }, true);
 
 // Mark row as completed (green background)

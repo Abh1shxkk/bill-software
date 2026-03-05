@@ -748,15 +748,31 @@ function handleExpiryKeydown(event, rowIndex) {
 }
 
 function handleQtyKeydown(event, rowIndex) {
-    if (event.key === 'Enter') {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+
+    const qtyInput = event.target;
+    const qty = parseFloat(qtyInput?.value) || 0;
+    if (qty <= 0) {
         event.preventDefault();
-        calculateRowAmount(rowIndex);
-        const row = document.getElementById(`row-${rowIndex}`);
-        if (event.shiftKey) {
-            row?.querySelector('input[name*="[expiry]"]')?.focus();
-        } else {
-            row?.querySelector('input[name*="[mrp]"]')?.focus();
-        }
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        qtyInput?.focus();
+        qtyInput?.select();
+        return;
+    }
+
+    // Keep native tab order when qty is valid.
+    if (event.key === 'Tab') return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    calculateRowAmount(rowIndex);
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (event.shiftKey) {
+        row?.querySelector('input[name*="[expiry]"]')?.focus();
+    } else {
+        row?.querySelector('input[name*="[mrp]"]')?.focus();
     }
 }
 
@@ -792,6 +808,24 @@ function triggerSelectItemFromMrp(rowIndex, isShiftKey = false) {
 
 // Capture fallback:
 // If any global handler is stealing Enter from MRP field, force this flow here.
+window.addEventListener('keydown', function(event) {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+    const activeEl = document.activeElement;
+    if (!activeEl || activeEl.tagName !== 'INPUT') return;
+    if (!activeEl.closest('#itemsTableBody')) return;
+    const nameAttr = activeEl.getAttribute('name') || '';
+    if (!nameAttr.includes('[qty]')) return;
+
+    const qty = parseFloat(activeEl.value) || 0;
+    if (qty > 0) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    activeEl.focus();
+    activeEl.select();
+}, true);
+
 document.addEventListener('keydown', function(event) {
     if (event.key !== 'Enter') return;
     const activeEl = document.activeElement;

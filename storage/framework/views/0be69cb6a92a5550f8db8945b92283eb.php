@@ -389,6 +389,30 @@ document.addEventListener('click', function(e) {
 
 // ====== KEYBOARD NAVIGATION ======
 document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        const activeQty = document.activeElement;
+        if (activeQty && activeQty.name && activeQty.name.includes('[qty]')) {
+            const hasModalOpenForQty =
+                document.getElementById('itemModal') ||
+                document.getElementById('batchModal') ||
+                document.getElementById('createBatchModal') ||
+                document.querySelector('#stockTransferOutgoingReturnItemModal.show') ||
+                document.querySelector('#stockTransferOutgoingReturnBatchModal.show');
+
+            if (!hasModalOpenForQty) {
+                const qtyVal = parseFloat(activeQty.value);
+                if (!(activeQty.value || '').trim() || !Number.isFinite(qtyVal) || qtyVal <= 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    activeQty.focus();
+                    activeQty.select();
+                    return false;
+                }
+            }
+        }
+    }
+
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;
@@ -619,17 +643,31 @@ function handleBatchKeydown(event, rowIndex) {
 
 // Handle Qty field keydown
 function handleQtyKeydown(event, rowIndex) {
-    if (event.key === 'Enter') {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+
+    const qtyInput = event.target;
+    const qty = parseFloat(qtyInput?.value) || 0;
+    if (qty <= 0) {
         event.preventDefault();
-        const row = document.getElementById(`row-${rowIndex}`);
-        if (event.shiftKey) {
-            row?.querySelector('input[name*="[batch]"]')?.focus();
-            return;
-        }
-        calculateRowAmount(rowIndex);
-        row?.querySelector('input[name*="[rate]"]')?.focus();
-        row?.querySelector('input[name*="[rate]"]')?.select();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        qtyInput?.focus();
+        qtyInput?.select();
+        return;
     }
+
+    // Keep native Tab behavior when qty is valid.
+    if (event.key === 'Tab') return;
+
+    event.preventDefault();
+    const row = document.getElementById(`row-${rowIndex}`);
+    if (event.shiftKey) {
+        row?.querySelector('input[name*="[batch]"]')?.focus();
+        return;
+    }
+    calculateRowAmount(rowIndex);
+    row?.querySelector('input[name*="[rate]"]')?.focus();
+    row?.querySelector('input[name*="[rate]"]')?.select();
 }
 
 // Handle Rate field keydown

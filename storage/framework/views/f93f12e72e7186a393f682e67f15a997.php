@@ -2224,6 +2224,13 @@ function addRowEventListeners(row, rowIndex) {
             
             // Determine which field and move to next
             if (fieldName.includes('[qty]')) {
+                const qty = parseFloat(target.value) || 0;
+                if (qty <= 0) {
+                    // Stay on qty field if value is 0 or empty
+                    console.log('⏎ Enter on Qty blocked (qty <= 0)');
+                    target.focus();
+                    return;
+                }
                 console.log('⏎ Enter on Qty → F.Qty');
                 calculateRowAmount(rowIndex);
                 const freeQty = row.querySelector('input[name*="[free_qty]"]');
@@ -4160,6 +4167,42 @@ function handleSchemeInputKeydown(event) {
         </div>
     </div>
 </div>
+
+<!-- Callback handlers for reusable modal components -->
+<script>
+// Handle item selection from reusable item modal
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Reusable Modal: Item selected, opening batch modal for:', item?.name);
+    // Store the selected item for batch selection
+    window.selectedItemFromReusableModal = item;
+    // Open the reusable batch modal
+    if (typeof window.openBatchModal_reusableBatchModal === 'function') {
+        window.openBatchModal_reusableBatchModal(item);
+    } else {
+        // Fallback to legacy batch modal
+        openBatchSelectionModal(item);
+    }
+};
+
+// Handle batch selection from reusable batch modal
+window.onBatchSelectedFromModal = function(batch, item) {
+    console.log('🔗 Reusable Modal: Batch selected:', batch?.batch_no);
+    // Use the item passed or fall back to stored item
+    const selectedItem = item || window.selectedItemFromReusableModal;
+    if (!selectedItem) {
+        console.error('No item available for batch selection');
+        return;
+    }
+    // Close the batch modal
+    if (typeof window.closeBatchModal_reusableBatchModal === 'function') {
+        window.closeBatchModal_reusableBatchModal();
+    }
+    // Add item to table
+    setTimeout(() => {
+        addItemToTable(selectedItem, batch);
+    }, 150);
+};
+</script>
 
 <!-- Item and Batch Selection Modal Components -->
 <?php echo $__env->make('components.modals.item-selection', [

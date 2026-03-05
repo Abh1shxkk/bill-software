@@ -661,16 +661,30 @@ function handleBatchKeydown(event, rowIndex) {
 }
 
 function handleQtyKeydown(event, rowIndex) {
-    if (event.key === 'Enter') {
+    if (event.key !== 'Enter' && event.key !== 'Tab') return;
+
+    const qtyInput = event.target;
+    const qty = parseFloat(qtyInput?.value) || 0;
+    if (qty <= 0) {
         event.preventDefault();
-        if (event.shiftKey) {
-            document.getElementById(`batch_${rowIndex}`)?.focus();
-            return;
-        }
-        calculateRowAmount(rowIndex);
-        document.getElementById(`rate_${rowIndex}`)?.focus();
-        document.getElementById(`rate_${rowIndex}`)?.select();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        qtyInput?.focus();
+        qtyInput?.select();
+        return;
     }
+
+    // Keep native tab order when qty is valid.
+    if (event.key === 'Tab') return;
+
+    event.preventDefault();
+    if (event.shiftKey) {
+        document.getElementById(`batch_${rowIndex}`)?.focus();
+        return;
+    }
+    calculateRowAmount(rowIndex);
+    document.getElementById(`rate_${rowIndex}`)?.focus();
+    document.getElementById(`rate_${rowIndex}`)?.select();
 }
 
 function handleRateKeydown(event, rowIndex) {
@@ -1128,6 +1142,27 @@ document.addEventListener('click', function(e) {
 
 // ====== KEYBOARD NAVIGATION ======
 document.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === 'Tab') {
+        const activeQty = document.activeElement;
+        if (activeQty && activeQty.name && activeQty.name.includes('[qty]')) {
+            const hasModalOpenForQty = document.querySelector(
+                '#itemModal.show, #batchModal.show, #createBatchModal.show, #invoicesModal.show, #dateRangeModal.show, ' +
+                '#stockTransferOutgoingModItemModal.show, #stockTransferOutgoingModBatchModal.show'
+            );
+            if (!hasModalOpenForQty) {
+                const qtyVal = parseFloat(activeQty.value);
+                if (!(activeQty.value || '').trim() || !Number.isFinite(qtyVal) || qtyVal <= 0) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    activeQty.focus();
+                    activeQty.select();
+                    return false;
+                }
+            }
+        }
+    }
+
     if (e.key === 'Enter') {
         const activeEl = document.activeElement;
         if (!activeEl) return;

@@ -2224,6 +2224,13 @@ function addRowEventListeners(row, rowIndex) {
             
             // Determine which field and move to next
             if (fieldName.includes('[qty]')) {
+                const qty = parseFloat(target.value) || 0;
+                if (qty <= 0) {
+                    // Stay on qty field if value is 0 or empty
+                    console.log('⏎ Enter on Qty blocked (qty <= 0)');
+                    target.focus();
+                    return;
+                }
                 console.log('⏎ Enter on Qty → F.Qty');
                 calculateRowAmount(rowIndex);
                 const freeQty = row.querySelector('input[name*="[free_qty]"]');
@@ -4160,6 +4167,52 @@ function handleSchemeInputKeydown(event) {
         </div>
     </div>
 </div>
+
+<!-- Callback handlers for reusable modal components -->
+<script>
+// Handle item selection from reusable item modal
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Reusable Modal: Item selected, opening batch modal for:', item?.name);
+    // Store the selected item for batch selection
+    window.selectedItemFromReusableModal = item;
+    // Open the reusable batch modal
+    if (typeof window.openBatchModal_reusableBatchModal === 'function') {
+        window.openBatchModal_reusableBatchModal(item);
+    } else {
+        // Fallback to legacy batch modal
+        openBatchSelectionModal(item);
+    }
+};
+
+// Handle batch selection from reusable batch modal
+// Note: Component passes (item, batch) but we receive as (batch, item) - check both orders
+window.onBatchSelectedFromModal = function(item, batch) {
+    // The component calls onBatchSelectedFromModal(item, batch)
+    // where item is the selected item object and batch is the selected batch object
+    console.log('🔗 Reusable Modal: Batch selected:', batch?.batch_no, 'Item:', item?.name);
+    
+    // If arguments are swapped (defensive check)
+    if (!item?.name && batch?.name) {
+        // Arguments are in wrong order, swap them
+        const temp = item;
+        item = batch;
+        batch = temp;
+    }
+    
+    if (!item) {
+        console.error('No item available for batch selection');
+        return;
+    }
+    // Close the batch modal
+    if (typeof window.closeBatchModal_reusableBatchModal === 'function') {
+        window.closeBatchModal_reusableBatchModal();
+    }
+    // Add item to table
+    setTimeout(() => {
+        addItemToTable(item, batch);
+    }, 150);
+};
+</script>
 
 <!-- Item and Batch Selection Modal Components -->
 @include('components.modals.item-selection', [

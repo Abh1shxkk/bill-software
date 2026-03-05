@@ -867,6 +867,23 @@ function _isBrowseModalOpen() {
     return m && m.classList.contains('show');
 }
 
+// Block leaving Qty field when Qty is empty/zero.
+window.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter' && e.key !== 'Tab') return;
+    const active = document.activeElement;
+    if (!active || !active.matches('#itemsTableBody input.qty')) return;
+    if (_isBrowseModalOpen() || _anyModalOpen()) return;
+
+    const qty = parseFloat(active.value);
+    if ((active.value || '').trim() && Number.isFinite(qty) && qty > 0) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    active.focus();
+    active.select();
+}, true);
+
 function _highlightBrowseRow(rows, index) {
     rows.forEach(function(row) {
         row.classList.remove('kb-row-active');
@@ -1081,6 +1098,12 @@ window.addEventListener('keydown', function(e) {
         // Table qty → next field in row
         if (el.classList.contains('qty')) {
             e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+            const qtyVal = parseFloat(el.value) || 0;
+            if (!el.value.trim() || qtyVal === 0) {
+                alert('Qty cannot be empty or zero');
+                el.focus(); el.select();
+                return;
+            }
             const row = el.closest('tr');
             const nextInput = row.querySelector('.f-qty');
             if (nextInput) { nextInput.focus(); nextInput.select(); }
@@ -1178,25 +1201,7 @@ window.addEventListener('keydown', function(e) {
         }
     }, true);
 
-    document.addEventListener('focusout', function(e) {
-        if (_fqtyValidating) return;
-        if (!isFQtyField(e.target)) return;
-
-        const row = e.target.closest('tr');
-        if (!row) return;
-
-        const sum = getRowSum(row);
-        if (isSumDecimal(sum)) {
-            _fqtyValidating = true;
-            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
-            const field = e.target;
-            setTimeout(function() {
-                _fqtyValidating = false;
-                field.focus();
-                field.select();
-            }, 50);
-        }
-    }, true);
+    // focusout validation removed — Enter key validation is sufficient
 })();
 
 // Auto-focus loadTrnNo on page load
