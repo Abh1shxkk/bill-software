@@ -403,14 +403,17 @@ class SaleTransactionController extends Controller
                             $batch = Batch::find($batchId);
                             
                             if ($batch) {
-                                $soldQty = floatval($qty); // Only qty, not free_qty
+                                $freeQty = floatval($itemData['free_qty'] ?? 0);
+                                $soldQty = floatval($qty) + $freeQty; // Total qty including free_qty
                                 
                                 Log::info('Attempting to reduce batch quantity', [
                                     'batch_id' => $batchId,
                                     'batch_no' => $batch->batch_no,
                                     'current_total_qty' => $batch->total_qty,
                                     'current_qty' => $batch->qty,
-                                    'sold_qty' => $soldQty
+                                    'qty' => $qty,
+                                    'free_qty' => $freeQty,
+                                    'total_sold_qty' => $soldQty
                                 ]);
                                 
                                 // ALWAYS reduce batch quantity - ALLOW NEGATIVE QUANTITIES
@@ -430,7 +433,9 @@ class SaleTransactionController extends Controller
                                         'item_name' => $batch->item_name,
                                         'old_total_qty' => $oldTotalQty,
                                         'old_qty' => $oldQty,
-                                        'sold_qty' => $soldQty,
+                                        'qty' => $qty,
+                                        'free_qty' => $freeQty,
+                                        'total_deducted' => $soldQty,
                                         'new_total_qty' => $batch->total_qty,
                                         'new_qty' => $batch->qty,
                                         'is_negative' => $batch->total_qty < 0
@@ -991,7 +996,8 @@ class SaleTransactionController extends Controller
                     if (!isset($oldItemsByBatchId[$oldItem->batch_id])) {
                         $oldItemsByBatchId[$oldItem->batch_id] = 0;
                     }
-                    $oldItemsByBatchId[$oldItem->batch_id] += floatval($oldItem->qty);
+                    // Include both qty and free_qty for total stock deduction
+                    $oldItemsByBatchId[$oldItem->batch_id] += floatval($oldItem->qty) + floatval($oldItem->free_qty ?? 0);
                 }
             }
             
@@ -1000,11 +1006,13 @@ class SaleTransactionController extends Controller
             foreach ($request->input('items') as $itemData) {
                 $batchId = $itemData['batch_id'] ?? null;
                 $qty = floatval($itemData['qty'] ?? 0);
-                if ($batchId && $qty > 0) {
+                $freeQty = floatval($itemData['free_qty'] ?? 0);
+                $totalQty = $qty + $freeQty; // Total including free_qty
+                if ($batchId && $totalQty > 0) {
                     if (!isset($newItemsByBatchId[$batchId])) {
                         $newItemsByBatchId[$batchId] = 0;
                     }
-                    $newItemsByBatchId[$batchId] += $qty;
+                    $newItemsByBatchId[$batchId] += $totalQty;
                 }
             }
             

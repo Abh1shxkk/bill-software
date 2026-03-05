@@ -652,12 +652,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <!-- Add Row Button -->
-                        <div class="text-center mt-2">
-                            <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
-                                <i class="fas fa-plus-circle"></i> Add Row
-                            </button>
-                        </div>
                     </div>
                     
                     <!-- Calculation Section -->
@@ -3416,8 +3410,8 @@ function addChallanItemRow(item, index) {
         <td><input type="text" class="form-control" name="items[${index}][name]" value="${itemName}" autocomplete="off"></td>
         <td><input type="text" class="form-control" name="items[${index}][batch]" value="${batchNo}" autocomplete="off"></td>
         <td><input type="text" class="form-control" name="items[${index}][exp]" value="${expiryDate ? formatExpiryDate(expiryDate) : ''}" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-qty" name="items[${index}][qty]" value="${qty}" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-fqty" name="items[${index}][free_qty]" value="${freeQty}" autocomplete="off"></td>
+        <td><input type="number" class="form-control item-qty" name="items[${index}][qty]" value="${qty}" step="any" autocomplete="off"></td>
+        <td><input type="number" class="form-control item-fqty" name="items[${index}][free_qty]" value="${freeQty}" step="any" autocomplete="off"></td>
         <td><input type="number" class="form-control item-pur-rate" name="items[${index}][pur_rate]" value="${parseFloat(purRate).toFixed(2)}" step="0.01" autocomplete="off"></td>
         <td><input type="number" class="form-control item-dis-percent" name="items[${index}][dis_percent]" value="${parseFloat(disPercent).toFixed(2)}" step="0.01" autocomplete="off"></td>
         <td><input type="number" class="form-control item-ft-rate" name="items[${index}][ft_rate]" value="${parseFloat(ftRate).toFixed(2)}" step="0.01" autocomplete="off"><input type="hidden" name="items[${index}][mrp]" value="${parseFloat(mrp).toFixed(2)}"></td>
@@ -3782,8 +3776,8 @@ function addNewRow() {
         <td><input type="text" class="form-control" name="items[${newIndex}][name]" autocomplete="off"></td>
         <td><input type="text" class="form-control" name="items[${newIndex}][batch]" autocomplete="off"></td>
         <td><input type="text" class="form-control" name="items[${newIndex}][exp]" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-qty" name="items[${newIndex}][qty]" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-fqty" name="items[${newIndex}][free_qty]" autocomplete="off"></td>
+        <td><input type="number" class="form-control item-qty" name="items[${newIndex}][qty]" step="any" autocomplete="off"></td>
+        <td><input type="number" class="form-control item-fqty" name="items[${newIndex}][free_qty]" step="any" autocomplete="off"></td>
         <td><input type="number" class="form-control item-pur-rate" name="items[${newIndex}][pur_rate]" step="0.01" autocomplete="off"></td>
         <td><input type="number" class="form-control item-dis-percent" name="items[${newIndex}][dis_percent]" step="0.01" autocomplete="off"></td>
         <td><input type="number" class="form-control item-ft-rate" name="items[${newIndex}][ft_rate]" step="0.01" autocomplete="off"><input type="hidden" name="items[${newIndex}][mrp]" value="0.00"></td>
@@ -5498,6 +5492,78 @@ function loadChallanIntoPurchase(challanId, challanNo) {
     } else {
         initPurchaseChallanModificationKeyboard();
     }
+})();
+
+// ========== QTY + FREE_QTY SUM VALIDATION ==========
+(function() {
+    const FQTY_SELECTOR = '#itemsTableBody input[name*="[free_qty]"]';
+    let _validationLock = false;
+
+    function isFQtyField(el) {
+        return el && el.matches && el.matches(FQTY_SELECTOR);
+    }
+
+    function getRowSum(row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const fQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const fQty = parseFloat(fQtyInput ? fQtyInput.value : 0) || 0;
+        return qty + fQty;
+    }
+
+    function isSumDecimal(sum) {
+        const rounded = Math.round(sum * 10000) / 10000;
+        return rounded % 1 !== 0;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!isFQtyField(e.target)) return;
+        if (_validationLock) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            _validationLock = true;
+            if (typeof showToast === 'function') {
+                showToast('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')', 'warning', 'Invalid Sum');
+            } else {
+                alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            }
+            e.target.focus();
+            e.target.select();
+            setTimeout(function() { _validationLock = false; }, 200);
+        }
+    }, true);
+
+    document.addEventListener('focusout', function(e) {
+        if (!isFQtyField(e.target)) return;
+        if (_validationLock) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            _validationLock = true;
+            if (typeof showToast === 'function') {
+                showToast('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')', 'warning', 'Invalid Sum');
+            } else {
+                alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            }
+            const field = e.target;
+            setTimeout(function() {
+                field.focus();
+                field.select();
+                setTimeout(function() { _validationLock = false; }, 200);
+            }, 50);
+        }
+    }, true);
 })();
 </script>
 

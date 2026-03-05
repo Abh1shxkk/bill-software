@@ -92,6 +92,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return; // Let the modal's keyboard handler handle this
             }
             
+            // Don't interfere if the scheme modal is open (it uses display:block/none, not .show class)
+            const schemeModal = document.getElementById('schemeModal');
+            if (schemeModal && schemeModal.style.display !== 'none' && schemeModal.style.display !== '') {
+                return; // Let the scheme modal's own keyboard handler handle this
+            }
+            
             // Don't interfere with buttons - let them click
             if (tagName === 'button') {
                 return;

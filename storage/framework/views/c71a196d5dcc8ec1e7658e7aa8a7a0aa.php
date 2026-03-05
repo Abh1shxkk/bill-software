@@ -160,9 +160,6 @@
                             </table>
                         </div>
                         <div class="text-center mt-2 d-flex justify-content-center gap-2">
-                            <button type="button" class="btn btn-sm btn-success" onclick="addNewRow()">
-                                <i class="bi bi-plus-circle"></i> Add Row
-                            </button>
                             <button type="button" class="btn btn-sm btn-primary" id="sti_addItemsBtn" onclick="showItemSelectionModal()">
                                 <i class="bi bi-search"></i> Add Items
                             </button>
@@ -1259,6 +1256,68 @@ function cancelTransaction() {
         window.location.href = '<?php echo e(route("admin.stock-transfer-incoming.index")); ?>';
     }
 }
+
+// Validate Qty + F.Qty sum must be a whole number
+(function() {
+    const FQTY_SELECTOR = '#itemsTableBody input[name*="[free_qty]"]';
+    let _fqtyValidating = false;
+
+    function isFQtyField(el) {
+        return el && el.matches && el.matches(FQTY_SELECTOR);
+    }
+
+    function getRowSum(row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const fQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const fQty = parseFloat(fQtyInput ? fQtyInput.value : 0) || 0;
+        return qty + fQty;
+    }
+
+    function isSumDecimal(sum) {
+        const rounded = Math.round(sum * 10000) / 10000;
+        return rounded % 1 !== 0;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!isFQtyField(e.target)) return;
+        const row = e.target.closest('tr');
+        if (!row) return;
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            _fqtyValidating = true;
+            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            const field = e.target;
+            setTimeout(function() {
+                _fqtyValidating = false;
+                field.focus();
+                field.select();
+            }, 50);
+        }
+    }, true);
+
+    document.addEventListener('focusout', function(e) {
+        if (_fqtyValidating) return;
+        if (!isFQtyField(e.target)) return;
+        const row = e.target.closest('tr');
+        if (!row) return;
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            _fqtyValidating = true;
+            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            const field = e.target;
+            setTimeout(function() {
+                _fqtyValidating = false;
+                field.focus();
+                field.select();
+            }, 50);
+        }
+    }, true);
+})();
 </script>
 <?php $__env->stopPush(); ?>
 

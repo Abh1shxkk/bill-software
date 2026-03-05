@@ -174,6 +174,7 @@
     /* Pending Orders Modal Styles (matching purchase transaction) */
     .pending-orders-modal {
         display: none;
+        
         position: fixed;
         top: 50%;
         left: calc(240px + 45%); /* Sidebar width + 45% of remaining width */
@@ -1743,8 +1744,8 @@ function addItemToTable(item, batch) {
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px; background: transparent;" autocomplete="off" readonly></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px;" autocomplete="off"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="${parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2)}" step="0.01" style="font-size: 10px;" readonly></td>
@@ -1934,8 +1935,8 @@ function addEmptyRow() {
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="" style="font-size: 10px;" autocomplete="off"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0.00" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="0.00" step="0.01" style="font-size: 10px;" readonly></td>
@@ -2225,10 +2226,13 @@ function addRowEventListeners(row, rowIndex) {
         });
     }
     
-    // Free Qty field - Enter moves to Rate
+    // Free Qty field - Enter moves to Rate, Ctrl+L opens scheme modal
     if (freeQtyInput) {
         freeQtyInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
+            if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+                e.preventDefault();
+                openSchemeModal(rowIndex);
+            } else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (rateInput) rateInput.focus();
             } else if (e.key === 'ArrowUp') {
@@ -2813,7 +2817,23 @@ function clearDetailedSummary() {
 // Calculate row amount
 function calculateRowAmount(rowIndex) {
     const qty = parseFloat(document.getElementById(`qty_${rowIndex}`)?.value) || 0;
+    const freeQty = parseFloat(document.getElementById(`free_qty_${rowIndex}`)?.value) || 0;
     const rate = parseFloat(document.getElementById(`rate_${rowIndex}`)?.value) || 0;
+    
+    // 🔥 Validate: Total quantity (qty + free_qty) must be a whole number
+    const totalQty = qty + freeQty;
+    if (totalQty > 0 && !Number.isInteger(totalQty)) {
+        showToast(`Invalid quantity: Total (${qty} + ${freeQty} = ${totalQty}) must be a whole number. Please adjust quantities.`, 'error', 'Invalid Quantity');
+        // Focus on free_qty field for correction
+        setTimeout(() => {
+            const freeQtyInput = document.getElementById(`free_qty_${rowIndex}`);
+            if (freeQtyInput) {
+                freeQtyInput.focus();
+                freeQtyInput.select();
+            }
+        }, 100);
+        return; // Stop further calculation
+    }
     
     // Amount = Qty × Rate ONLY (discount NOT applied here)
     const amount = qty * rate;
@@ -2970,8 +2990,8 @@ function addNewRow() {
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" style="font-size: 10px;" autocomplete="off"></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" style="font-size: 10px;" autocomplete="off"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" readonly></td>
@@ -3829,8 +3849,8 @@ async function populateFormWithTransaction(transaction) {
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.item_name || ''}" style="font-size: 10px;" autocomplete="off"></td>
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${item.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
                 <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${item.expiry_date || ''}" style="font-size: 10px;" autocomplete="off"></td>
-                <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="${item.qty || 0}" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
-                <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="${item.free_qty || 0}" style="font-size: 10px;"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="${item.qty || 0}" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" onkeydown="handleQtyKeydown(event, ${itemIndex})"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="${item.free_qty || 0}" style="font-size: 10px;" onchange="calculateRowAmount(${itemIndex})"></td>
                 <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${item.sale_rate || 0}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
                 <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="${item.discount_percent > 0 ? item.discount_percent : ''}" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
                 <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="${item.mrp || 0}" step="0.01" style="font-size: 10px;" readonly></td>
@@ -6710,6 +6730,12 @@ console.log('🔗 Modal Component Bridge Loaded - Sale Modification');
             return;
         }
 
+        // Let scheme modal handle its own keyboard events
+        const schemeModal = document.getElementById('schemeModal');
+        if (schemeModal && schemeModal.style.display !== 'none') {
+            return;
+        }
+
         switch (e.key) {
             case 'Enter':
                 handleEnterKey(e);
@@ -6736,6 +6762,22 @@ console.log('🔗 Modal Component Bridge Loaded - Sale Modification');
             case 'I':
                 if (e.ctrlKey) {
                     handleCtrlI(e);
+                }
+                break;
+                
+            case 'l':
+            case 'L':
+                if (e.ctrlKey) {
+                    // Check if currently focused element is a qty input
+                    const activeElement = document.activeElement;
+                    if (activeElement && activeElement.id && activeElement.id.startsWith('qty_')) {
+                        const rowIndex = parseInt(activeElement.id.replace('qty_', ''));
+                        if (!isNaN(rowIndex)) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openSchemeModal(rowIndex);
+                        }
+                    }
                 }
                 break;
         }
@@ -6830,6 +6872,221 @@ console.log('🔗 Modal Component Bridge Loaded - Sale Modification');
 
     console.log('Keyboard navigation loaded for Sale Modification');
 })();
+</script>
+
+<!-- ============================================ -->
+<!-- SCHEME MODAL FUNCTIONALITY -->
+<!-- ============================================ -->
+
+<!-- Scheme Modal Backdrop -->
+<div id="schemeModalBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 99998;"></div>
+
+<!-- Scheme Modal -->
+<div id="schemeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #007bff; border-radius: 8px; padding: 20px; z-index: 99999; min-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <h5 style="margin: 0; color: #007bff; font-weight: bold;">Scheme</h5>
+        <div id="schemeOriginalRateDisplay" style="font-size: 11px; color: #666; margin-top: 4px;"></div>
+    </div>
+    <div style="display: flex; gap: 20px; justify-content: center; align-items: center;">
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeQty" value="10" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="text-align: center; font-size: 18px; font-weight: bold; color: #007bff; padding-top: 18px;">+</div>
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeFree" value="1" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 15px; font-size: 11px; color: #666;">
+        Press Enter to apply | Esc to cancel
+    </div>
+</div>
+
+<script>
+// Global variable to track current row index for scheme
+let currentSchemeRowIndex = null;
+
+/**
+ * Open Scheme Modal for the given row
+ * Called when Ctrl+L is pressed in qty or free_qty field
+ */
+function openSchemeModal(rowIndex) {
+    currentSchemeRowIndex = rowIndex;
+
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const modal = document.getElementById('schemeModal');
+
+    // Get the row to read stored values
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    const rateInput = document.getElementById(`rate_${rowIndex}`);
+    const currentRate = parseFloat(rateInput?.value) || 0;
+
+    // Store original rate on first open (before any scheme adjusts it)
+    if (row && !row.dataset.originalRate && currentRate > 0) {
+        row.dataset.originalRate = currentRate;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentRate);
+
+    // Pre-fill with previously applied scheme values (if any)
+    const schemeQtyInput = document.getElementById('schemeQty');
+    const schemeFreeInput = document.getElementById('schemeFree');
+    if (row && row.dataset.scmOn) {
+        schemeQtyInput.value = row.dataset.scmOn;
+    }
+    if (row && row.dataset.scmFree) {
+        schemeFreeInput.value = row.dataset.scmFree;
+    }
+
+    // Show original rate in modal for reference
+    const rateDisplay = document.getElementById('schemeOriginalRateDisplay');
+    if (rateDisplay) {
+        rateDisplay.textContent = originalRate > 0 ? `Original Rate: ₹${originalRate.toFixed(2)}` : '';
+    }
+
+    // Show modal
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+
+    // Focus on first input
+    schemeQtyInput.focus();
+    schemeQtyInput.select();
+}
+
+/**
+ * Close Scheme Modal
+ */
+function closeSchemeModal() {
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const modal = document.getElementById('schemeModal');
+    
+    backdrop.style.display = 'none';
+    modal.style.display = 'none';
+    
+    currentSchemeRowIndex = null;
+}
+
+/**
+ * Apply Scheme Calculation
+ * Formula: New Rate = (Scm Qty × Original Rate) / (Scm Qty + Scm Free)
+ * Example: 10+1 scheme, rate=100 → newRate = (10×100)/(10+1) = 90.91
+ */
+function applyScheme() {
+    if (currentSchemeRowIndex === null) return;
+
+    const schemeQty = parseFloat(document.getElementById('schemeQty').value) || 0;
+    const schemeFree = parseFloat(document.getElementById('schemeFree').value) || 0;
+
+    if (schemeQty <= 0) {
+        showToast('Scheme quantity must be greater than 0', 'warning', 'Invalid Scheme');
+        return;
+    }
+
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${currentSchemeRowIndex}"]`);
+    const qtyInput = document.getElementById(`qty_${currentSchemeRowIndex}`);
+    const rateInput = document.getElementById(`rate_${currentSchemeRowIndex}`);
+    const freeQtyInput = document.getElementById(`free_qty_${currentSchemeRowIndex}`);
+
+    // Use original rate (before any scheme was applied) for correct calculation
+    const currentRate = parseFloat(rateInput?.value) || 0;
+    if (currentRate <= 0) {
+        showToast('Please set rate before applying scheme', 'warning', 'Missing Rate');
+        return;
+    }
+
+    // Store original rate on first apply (so re-applying uses correct base)
+    if (row && !row.dataset.originalRate) {
+        row.dataset.originalRate = currentRate;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentRate);
+
+    // Correct formula: newRate = (schemeQty × originalRate) / (schemeQty + schemeFree)
+    const totalSchemeUnits = schemeQty + schemeFree;
+    const newRate = (schemeQty * originalRate) / totalSchemeUnits;
+
+    // Calculate free quantity from item qty: for every schemeQty purchased, get schemeFree free
+    const itemQty = parseFloat(qtyInput?.value) || 0;
+    const schemeSets = itemQty > 0 ? Math.floor(itemQty / schemeQty) : 0;
+    const calculatedFreeQty = schemeSets * schemeFree;
+
+    // Update rate field
+    if (rateInput) {
+        rateInput.value = newRate.toFixed(2);
+    }
+
+    // Update free qty if item qty was entered
+    if (freeQtyInput && calculatedFreeQty > 0) {
+        freeQtyInput.value = calculatedFreeQty;
+    }
+
+    // Store applied scheme values on row for re-opening modal
+    if (row) {
+        row.dataset.scmOn = schemeQty;
+        row.dataset.scmFree = schemeFree;
+    }
+
+    // Recalculate row amount
+    calculateRowAmount(currentSchemeRowIndex);
+
+    showToast(`Scheme ${schemeQty}+${schemeFree} applied. Rate: ₹${originalRate.toFixed(2)} → ₹${newRate.toFixed(2)}`, 'success', 'Scheme Applied');
+
+    // Save row index before closeSchemeModal resets it to null
+    const appliedRowIndex = currentSchemeRowIndex;
+    closeSchemeModal();
+
+    // Return cursor to F.Qty after scheme applied
+    setTimeout(() => {
+        const freeQtyField = document.getElementById(`free_qty_${appliedRowIndex}`);
+        if (freeQtyField) {
+            freeQtyField.focus();
+            freeQtyField.select();
+        }
+    }, 150);
+}
+
+/**
+ * Handle keyboard events in scheme modal inputs
+ * Enter in Scm(On) → moves to Scm(Free)
+ * Enter in Scm(Free) → applies scheme
+ */
+function handleSchemeInputKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (event.target.id === 'schemeQty') {
+            const freeInput = document.getElementById('schemeFree');
+            if (freeInput) { freeInput.focus(); freeInput.select(); }
+        } else {
+            applyScheme();
+        }
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        closeSchemeModal();
+    }
+}
+
+/**
+ * Handle Ctrl+L keyboard shortcut in qty fields
+ * This should be added to the qty input onkeydown event
+ */
+function handleQtyKeydown(event, rowIndex) {
+    // Check for Ctrl+L
+    if (event.ctrlKey && (event.key === 'l' || event.key === 'L')) {
+        event.preventDefault();
+        openSchemeModal(rowIndex);
+    }
+}
+
+// Close modal when clicking backdrop
+document.addEventListener('DOMContentLoaded', function() {
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSchemeModal);
+    }
+});
 </script>
 
 @endsection

@@ -1236,7 +1236,7 @@ function addItemRow(item, index) {
         <td>
             <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="${item.return_fqty || 0}" step="1"
                    onchange="calculateRowAmount(${rowIndex})"
-                   onkeydown="if(event.key === 'Enter' || event.keyCode === 13) { event.preventDefault(); moveToNextField(${rowIndex}, 'sale_rate'); return false; }"
+                   onkeydown="if(event.ctrlKey && (event.key === 'l' || event.key === 'L')) { event.preventDefault(); openSchemeModal(${rowIndex}); return false; } if(event.key === 'Enter' || event.keyCode === 13) { event.preventDefault(); moveToNextField(${rowIndex}, 'sale_rate'); return false; }"
                    onfocus="selectRowForCalculation(${rowIndex})">
         </td>
         <td>
@@ -4669,5 +4669,140 @@ document.addEventListener('DOMContentLoaded', function() {
     'rateType' => 's_rate',
     'showCostDetails' => false,
 ])
+
+<!-- Scheme Modal Backdrop -->
+<div id="schemeModalBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 99998;"></div>
+
+<!-- Scheme Modal -->
+<div id="schemeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #007bff; border-radius: 8px; padding: 20px; z-index: 99999; min-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <h5 style="margin: 0; color: #007bff; font-weight: bold;">Scheme</h5>
+        <div id="schemeOriginalRateDisplay" style="font-size: 11px; color: #666; margin-top: 4px;"></div>
+    </div>
+    <div style="display: flex; gap: 20px; justify-content: center; align-items: center;">
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeQty" value="10" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="text-align: center; font-size: 18px; font-weight: bold; color: #007bff; padding-top: 18px;">+</div>
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeFree" value="1" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 15px; font-size: 11px; color: #666;">
+        Press Enter to apply | Esc to cancel
+    </div>
+</div>
+
+<script>
+let currentSchemeRowIndex = null;
+
+function openSchemeModal(rowIndex) {
+    currentSchemeRowIndex = rowIndex;
+
+    const row = document.getElementById(`row-${rowIndex}`);
+    const rateInput = row?.querySelector('input[name*="[sale_rate]"]');
+    const currentRate = parseFloat(rateInput?.value) || 0;
+
+    if (row && !row.dataset.originalRate && currentRate > 0) {
+        row.dataset.originalRate = currentRate;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentRate);
+
+    const schemeQtyInput = document.getElementById('schemeQty');
+    const schemeFreeInput = document.getElementById('schemeFree');
+    if (row && row.dataset.scmOn) schemeQtyInput.value = row.dataset.scmOn;
+    if (row && row.dataset.scmFree) schemeFreeInput.value = row.dataset.scmFree;
+
+    const rateDisplay = document.getElementById('schemeOriginalRateDisplay');
+    if (rateDisplay) {
+        rateDisplay.textContent = originalRate > 0 ? `Original Rate: ₹${originalRate.toFixed(2)}` : '';
+    }
+
+    document.getElementById('schemeModalBackdrop').style.display = 'block';
+    document.getElementById('schemeModal').style.display = 'block';
+    schemeQtyInput.focus();
+    schemeQtyInput.select();
+}
+
+function closeSchemeModal() {
+    document.getElementById('schemeModalBackdrop').style.display = 'none';
+    document.getElementById('schemeModal').style.display = 'none';
+    currentSchemeRowIndex = null;
+}
+
+function applyScheme() {
+    if (currentSchemeRowIndex === null) return;
+
+    const schemeQty = parseFloat(document.getElementById('schemeQty').value) || 0;
+    const schemeFree = parseFloat(document.getElementById('schemeFree').value) || 0;
+
+    if (schemeQty <= 0) {
+        alert('Scheme quantity must be greater than 0');
+        return;
+    }
+
+    const row = document.getElementById(`row-${currentSchemeRowIndex}`);
+    const rateInput = row?.querySelector('input[name*="[sale_rate]"]');
+    const freeQtyInput = row?.querySelector('input[name*="[free_qty]"]');
+    const qtyInput = row?.querySelector('input[name*="[qty]"]');
+
+    const currentRate = parseFloat(rateInput?.value) || 0;
+    if (currentRate <= 0) {
+        alert('Please set sale rate before applying scheme');
+        return;
+    }
+
+    if (row && !row.dataset.originalRate) {
+        row.dataset.originalRate = currentRate;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentRate);
+
+    // Formula: newRate = (schemeQty × originalRate) / (schemeQty + schemeFree)
+    const newRate = (schemeQty * originalRate) / (schemeQty + schemeFree);
+
+    const itemQty = parseFloat(qtyInput?.value) || 0;
+    const schemeSets = itemQty > 0 ? Math.floor(itemQty / schemeQty) : 0;
+    const calculatedFreeQty = schemeSets * schemeFree;
+
+    if (rateInput) rateInput.value = newRate.toFixed(2);
+    if (freeQtyInput && calculatedFreeQty > 0) freeQtyInput.value = calculatedFreeQty;
+
+    if (row) {
+        row.dataset.scmOn = schemeQty;
+        row.dataset.scmFree = schemeFree;
+    }
+
+    calculateRowAmount(currentSchemeRowIndex);
+    closeSchemeModal();
+
+    // Return cursor to F.Qty
+    setTimeout(() => {
+        const freeQtyField = row?.querySelector('input[name*="[free_qty]"]');
+        if (freeQtyField) { freeQtyField.focus(); freeQtyField.select(); }
+    }, 50);
+}
+
+function handleSchemeInputKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        if (event.target.id === 'schemeQty') {
+            const freeInput = document.getElementById('schemeFree');
+            if (freeInput) { freeInput.focus(); freeInput.select(); }
+        } else {
+            applyScheme();
+        }
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSchemeModal();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    if (backdrop) backdrop.addEventListener('click', closeSchemeModal);
+});
+</script>
 
 @endsection

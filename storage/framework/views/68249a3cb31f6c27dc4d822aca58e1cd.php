@@ -1806,6 +1806,74 @@ window.addEventListener('keydown', function(e) {
     openInsertItemsModal();
 }, true);
 
+// Validate Qty + F.Qty sum must be a whole number — show error and keep cursor on F.Qty
+(function() {
+    const FQTY_SELECTOR = '#itemsTableBody input[name*="[free_qty]"]';
+    let _fqtyValidating = false;
+
+    function isFQtyField(el) {
+        return el && el.matches && el.matches(FQTY_SELECTOR);
+    }
+
+    function getRowSum(row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const fQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const fQty = parseFloat(fQtyInput ? fQtyInput.value : 0) || 0;
+        return qty + fQty;
+    }
+
+    function isSumDecimal(sum) {
+        const rounded = Math.round(sum * 10000) / 10000;
+        return rounded % 1 !== 0;
+    }
+
+    // On Enter on F.Qty: validate sum before allowing navigation to MRP
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!isFQtyField(e.target)) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            _fqtyValidating = true;
+            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            const field = e.target;
+            setTimeout(function() {
+                _fqtyValidating = false;
+                field.focus();
+                field.select();
+            }, 50);
+        }
+    }, true);
+
+    // On blur of F.Qty: validate sum and refocus if decimal (guarded to prevent loop)
+    document.addEventListener('focusout', function(e) {
+        if (_fqtyValidating) return;
+        if (!isFQtyField(e.target)) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            _fqtyValidating = true;
+            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            const field = e.target;
+            setTimeout(function() {
+                _fqtyValidating = false;
+                field.focus();
+                field.select();
+            }, 50);
+        }
+    }, true);
+})();
+
 </script>
 <?php $__env->stopPush(); ?>
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/replacement-received/modification.blade.php ENDPATH**/ ?>

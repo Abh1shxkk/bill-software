@@ -1294,14 +1294,14 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
             </select>
         </td>
         <td>
-            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1" 
+            <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="any" 
                    onchange="calculateRowAmount(${rowIndex})" 
-                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'f_qty'); return false; }">
+                   onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); return false; }">
         </td>
         <td>
-            <input type="number" class="form-control" name="items[${rowIndex}][f_qty]" value="0" step="1"
+            <input type="number" class="form-control" name="items[${rowIndex}][f_qty]" value="0" step="any"
                    onchange="calculateRowAmount(${rowIndex})"
-                   onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'mrp'); return false; }">
+                   onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'mrp'); return false; }">
         </td>
         <td>
             <input type="number" class="form-control" name="items[${rowIndex}][mrp]" value="${parseFloat(batch.mrp || 0).toFixed(2)}" step="0.01" 
@@ -4847,5 +4847,282 @@ function initHeaderKeyboardNavigation() {
     'rateType' => 's_rate',
     'showCostDetails' => false,
 ])
+
+<!-- ============================================ -->
+<!-- SCHEME MODAL FUNCTIONALITY -->
+<!-- ============================================ -->
+
+<!-- Scheme Modal Backdrop -->
+<div id="schemeModalBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 99998;"></div>
+
+<!-- Scheme Modal -->
+<div id="schemeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #007bff; border-radius: 8px; padding: 20px; z-index: 99999; min-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <h5 style="margin: 0; color: #007bff; font-weight: bold;">Scheme</h5>
+        <div id="schemeOriginalRateDisplay" style="font-size: 11px; color: #666; margin-top: 4px;"></div>
+    </div>
+    <div style="display: flex; gap: 20px; justify-content: center; align-items: center;">
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeQty" value="10" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="text-align: center; font-size: 18px; font-weight: bold; color: #007bff; padding-top: 18px;">+</div>
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeFree" value="1" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 15px; font-size: 11px; color: #666;">
+        Press Enter to apply | Esc to cancel
+    </div>
+</div>
+
+<script>
+// Global variable to track current row index for scheme
+let currentSchemeRowIndex = null;
+
+/**
+ * Open Scheme Modal for the given row
+ * Called when Ctrl+L is pressed in qty or f_qty field
+ */
+function openSchemeModal(rowIndex) {
+    currentSchemeRowIndex = rowIndex;
+
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const modal = document.getElementById('schemeModal');
+
+    // Get the row to read stored values
+    const row = document.getElementById(`row-${rowIndex}`);
+    const mrpInput = row ? row.querySelector('input[name*="[mrp]"]') : null;
+    const currentMrp = parseFloat(mrpInput?.value) || 0;
+
+    // Store original MRP on first open (before any scheme adjusts it)
+    if (row && !row.dataset.originalRate && currentMrp > 0) {
+        row.dataset.originalRate = currentMrp;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentMrp);
+
+    // Pre-fill with previously applied scheme values (if any)
+    const schemeQtyInput = document.getElementById('schemeQty');
+    const schemeFreeInput = document.getElementById('schemeFree');
+    if (row && row.dataset.scmOn) {
+        schemeQtyInput.value = row.dataset.scmOn;
+    }
+    if (row && row.dataset.scmFree) {
+        schemeFreeInput.value = row.dataset.scmFree;
+    }
+
+    // Show original MRP in modal for reference
+    const rateDisplay = document.getElementById('schemeOriginalRateDisplay');
+    if (rateDisplay) {
+        rateDisplay.textContent = originalRate > 0 ? `Original MRP: ₹${originalRate.toFixed(2)}` : '';
+    }
+
+    // Show modal
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+
+    // Focus on first input
+    schemeQtyInput.focus();
+    schemeQtyInput.select();
+}
+
+/**
+ * Close Scheme Modal
+ */
+function closeSchemeModal() {
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const modal = document.getElementById('schemeModal');
+    
+    backdrop.style.display = 'none';
+    modal.style.display = 'none';
+    
+    currentSchemeRowIndex = null;
+}
+
+/**
+ * Apply Scheme Calculation
+ * Formula: New MRP = (Scm Qty × Original MRP) / (Scm Qty + Scm Free)
+ * Example: 10+1 scheme, mrp=100 → newMrp = (10×100)/(10+1) = 90.91
+ */
+function applyScheme() {
+    if (currentSchemeRowIndex === null) return;
+
+    const schemeQty = parseFloat(document.getElementById('schemeQty').value) || 0;
+    const schemeFree = parseFloat(document.getElementById('schemeFree').value) || 0;
+
+    if (schemeQty <= 0) {
+        showAlert('warning', 'Scheme quantity must be greater than 0');
+        return;
+    }
+
+    const row = document.getElementById(`row-${currentSchemeRowIndex}`);
+    if (!row) return;
+
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    const fQtyInput = row.querySelector('input[name*="[f_qty]"]');
+
+    // Use original MRP (before any scheme was applied) for correct calculation
+    const currentMrp = parseFloat(mrpInput?.value) || 0;
+    if (currentMrp <= 0) {
+        showAlert('warning', 'Please set MRP before applying scheme');
+        return;
+    }
+
+    // Store original MRP on first apply (so re-applying uses correct base)
+    if (row && !row.dataset.originalRate) {
+        row.dataset.originalRate = currentMrp;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentMrp);
+
+    // Correct formula: newMrp = (schemeQty × originalMrp) / (schemeQty + schemeFree)
+    const totalSchemeUnits = schemeQty + schemeFree;
+    const newMrp = (schemeQty * originalRate) / totalSchemeUnits;
+
+    // Calculate free quantity from item qty: for every schemeQty purchased, get schemeFree free
+    const itemQty = parseFloat(qtyInput?.value) || 0;
+    const schemeSets = itemQty > 0 ? Math.floor(itemQty / schemeQty) : 0;
+    const calculatedFreeQty = schemeSets * schemeFree;
+
+    // Update MRP field
+    if (mrpInput) {
+        mrpInput.value = newMrp.toFixed(2);
+        mrpInput.removeAttribute('readonly'); // Allow editing after scheme
+    }
+
+    // Update free qty if item qty was entered
+    if (fQtyInput && calculatedFreeQty > 0) {
+        fQtyInput.value = calculatedFreeQty;
+    }
+
+    // Store applied scheme values on row for re-opening modal
+    if (row) {
+        row.dataset.scmOn = schemeQty;
+        row.dataset.scmFree = schemeFree;
+    }
+
+    // Recalculate row amount
+    calculateRowAmount(currentSchemeRowIndex);
+
+    showAlert('success', `Scheme ${schemeQty}+${schemeFree} applied. MRP: ₹${originalRate.toFixed(2)} → ₹${newMrp.toFixed(2)}`);
+
+    // Save row index before closeSchemeModal resets it to null
+    const appliedRowIndex = currentSchemeRowIndex;
+    closeSchemeModal();
+
+    // Return cursor to F.Qty after scheme applied
+    setTimeout(() => {
+        const appliedRow = document.getElementById(`row-${appliedRowIndex}`);
+        if (appliedRow) {
+            const fQtyField = appliedRow.querySelector('input[name*="[f_qty]"]');
+            if (fQtyField) {
+                fQtyField.focus();
+                fQtyField.select();
+            }
+        }
+    }, 150);
+}
+
+/**
+ * Handle keyboard events in scheme modal inputs
+ * Enter in Scm(On) → moves to Scm(Free)
+ * Enter in Scm(Free) → applies scheme
+ */
+function handleSchemeInputKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (event.target.id === 'schemeQty') {
+            const freeInput = document.getElementById('schemeFree');
+            if (freeInput) { freeInput.focus(); freeInput.select(); }
+        } else {
+            applyScheme();
+        }
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        closeSchemeModal();
+    }
+}
+
+// Close modal when clicking backdrop
+document.addEventListener('DOMContentLoaded', function() {
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSchemeModal);
+    }
+});
+
+// Validate Qty + F.Qty sum must be a whole number — show error and keep cursor on F.Qty
+(function() {
+    const FQTY_SELECTOR = '#itemsTableBody input[name*="[f_qty]"]';
+    let _validationLock = false;
+
+    function isFQtyField(el) {
+        return el && el.matches && el.matches(FQTY_SELECTOR);
+    }
+
+    function getRowSum(row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const fQtyInput = row.querySelector('input[name*="[f_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const fQty = parseFloat(fQtyInput ? fQtyInput.value : 0) || 0;
+        return qty + fQty;
+    }
+
+    function isSumDecimal(sum) {
+        // Handle floating point precision (e.g. 2.5 + 1.5 = 3.9999999...)
+        const rounded = Math.round(sum * 10000) / 10000;
+        return rounded % 1 !== 0;
+    }
+
+    // 1. On Enter on F.Qty: validate sum before allowing navigation to MRP
+    //    Capture phase fires BEFORE inline onkeydown, so stopImmediatePropagation blocks moveToNextField
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!isFQtyField(e.target)) return;
+        if (_validationLock) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            _validationLock = true;
+            showAlert('warning', 'Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            e.target.focus();
+            e.target.select();
+            setTimeout(function() { _validationLock = false; }, 200);
+        }
+    }, true);
+
+    // 2. On blur of F.Qty: validate sum and refocus if decimal (avoid infinite loop)
+    document.addEventListener('focusout', function(e) {
+        if (!isFQtyField(e.target)) return;
+        if (_validationLock) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            _validationLock = true;
+            showAlert('warning', 'Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            const field = e.target;
+            setTimeout(function() {
+                field.focus();
+                field.select();
+                setTimeout(function() { _validationLock = false; }, 200);
+            }, 50);
+        }
+    }, true);
+})();
+</script>
 
 @endsection

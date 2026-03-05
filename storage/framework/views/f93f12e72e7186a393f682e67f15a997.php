@@ -2106,8 +2106,8 @@ function addItemToTable(item, batch) {
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" data-custom-enter="true"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" step="any" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" step="any" style="font-size: 10px;" data-custom-enter="true"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="${parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2)}" step="0.01" style="font-size: 10px;" readonly></td>
@@ -2203,6 +2203,16 @@ function addRowEventListeners(row, rowIndex) {
     // Use event delegation on the row itself for better reliability
     row.addEventListener('keydown', function(e) {
         if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) return;
+        // Ctrl+L → open scheme modal from qty or free_qty
+        if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+            const fn = (e.target.name || '');
+            if (fn.includes('[qty]') || fn.includes('[free_qty]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                openSchemeModal(rowIndex);
+                return;
+            }
+        }
         if (e.key !== 'Enter' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
         
         const target = e.target;
@@ -2877,8 +2887,8 @@ function addNewRow() {
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
         <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" style="font-size: 10px;" data-custom-enter="true"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" step="any" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" step="any" style="font-size: 10px;" data-custom-enter="true"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" readonly></td>
@@ -3918,7 +3928,216 @@ document.addEventListener('DOMContentLoaded', function() {
         initSaleChallanTransactionKeyboard();
     }
 })();
+
+// ========== SCHEME MODAL (Ctrl+L) ==========
+let schemeModalRowIndex = null;
+
+function openSchemeModal(rowIndex) {
+    schemeModalRowIndex = rowIndex;
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (!row) return;
+
+    const rateInput = row.querySelector('input[name*="[rate]"]');
+    const originalRate = parseFloat(row.dataset.originalRate || (rateInput ? rateInput.value : 0)) || 0;
+
+    if (!row.dataset.originalRate) {
+        row.dataset.originalRate = originalRate;
+    }
+
+    const modal = document.getElementById('schemeModal');
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const scmOnInput = document.getElementById('schemeOnInput');
+    const scmFreeInput = document.getElementById('schemeFreeInput');
+    const origRateDisplay = document.getElementById('schemeOriginalRate');
+
+    if (origRateDisplay) origRateDisplay.textContent = originalRate.toFixed(2);
+    if (scmOnInput) scmOnInput.value = row.dataset.scmOn || '';
+    if (scmFreeInput) scmFreeInput.value = row.dataset.scmFree || '';
+
+    if (modal) modal.style.display = 'block';
+    if (backdrop) backdrop.style.display = 'block';
+
+    setTimeout(function() {
+        if (scmOnInput) { scmOnInput.focus(); scmOnInput.select(); }
+    }, 50);
+}
+
+function closeSchemeModal() {
+    const modal = document.getElementById('schemeModal');
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    if (modal) modal.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+    schemeModalRowIndex = null;
+}
+
+function applyScheme() {
+    if (schemeModalRowIndex === null) return;
+    const row = document.querySelector(`tr[data-row-index="${schemeModalRowIndex}"]`);
+    if (!row) return;
+
+    const scmOn = parseFloat(document.getElementById('schemeOnInput')?.value) || 0;
+    const scmFree = parseFloat(document.getElementById('schemeFreeInput')?.value) || 0;
+    const originalRate = parseFloat(row.dataset.originalRate) || 0;
+
+    row.dataset.scmOn = scmOn;
+    row.dataset.scmFree = scmFree;
+
+    if (scmOn > 0 && scmFree > 0) {
+        const newRate = (scmOn * originalRate) / (scmOn + scmFree);
+        const rateInput = row.querySelector('input[name*="[rate]"]');
+        if (rateInput) rateInput.value = newRate.toFixed(2);
+
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const freeQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        if (qty > 0 && freeQtyInput) {
+            const freeQty = Math.round((qty / scmOn) * scmFree);
+            freeQtyInput.value = freeQty;
+        }
+
+        if (typeof calculateRowAmount === 'function') calculateRowAmount(schemeModalRowIndex);
+        if (typeof showToast === 'function') {
+            showToast('Scheme ' + scmOn + '+' + scmFree + ' applied. Rate: ₹' + originalRate.toFixed(2) + ' → ₹' + newRate.toFixed(2), 'success', 'Scheme Applied');
+        }
+    }
+
+    const savedIdx = schemeModalRowIndex;
+    closeSchemeModal();
+
+    setTimeout(function() {
+        const r = document.querySelector(`tr[data-row-index="${savedIdx}"]`);
+        if (r) {
+            const fq = r.querySelector('input[name*="[free_qty]"]');
+            if (fq) { fq.focus(); fq.select(); }
+        }
+    }, 100);
+}
+
+function handleSchemeInputKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        const activeId = document.activeElement?.id;
+        if (activeId === 'schemeOnInput') {
+            document.getElementById('schemeFreeInput')?.focus();
+        } else {
+            applyScheme();
+        }
+        return false;
+    }
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSchemeModal();
+        if (schemeModalRowIndex !== null) {
+            const r = document.querySelector(`tr[data-row-index="${schemeModalRowIndex}"]`);
+            if (r) {
+                const fq = r.querySelector('input[name*="[free_qty]"]');
+                if (fq) fq.focus();
+            }
+        }
+        return false;
+    }
+}
+
+// ========== QTY + FREE_QTY SUM VALIDATION ==========
+(function() {
+    const FQTY_SELECTOR = '#itemsTableBody input[name*="[free_qty]"]';
+    let _validationLock = false;
+
+    function isFQtyField(el) {
+        return el && el.matches && el.matches(FQTY_SELECTOR);
+    }
+
+    function getRowSum(row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const fQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const fQty = parseFloat(fQtyInput ? fQtyInput.value : 0) || 0;
+        return qty + fQty;
+    }
+
+    function isSumDecimal(sum) {
+        const rounded = Math.round(sum * 10000) / 10000;
+        return rounded % 1 !== 0;
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!isFQtyField(e.target)) return;
+        if (_validationLock) return;
+        const schemeModal = document.getElementById('schemeModal');
+        if (schemeModal && schemeModal.style.display === 'block') return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            _validationLock = true;
+            if (typeof showToast === 'function') {
+                showToast('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')', 'warning', 'Invalid Sum');
+            } else {
+                alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            }
+            e.target.focus();
+            e.target.select();
+            setTimeout(function() { _validationLock = false; }, 200);
+        }
+    }, true);
+
+    document.addEventListener('focusout', function(e) {
+        if (!isFQtyField(e.target)) return;
+        if (_validationLock) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            _validationLock = true;
+            if (typeof showToast === 'function') {
+                showToast('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')', 'warning', 'Invalid Sum');
+            } else {
+                alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            }
+            const field = e.target;
+            setTimeout(function() {
+                field.focus();
+                field.select();
+                setTimeout(function() { _validationLock = false; }, 200);
+            }, 50);
+        }
+    }, true);
+})();
 </script>
+
+<!-- Scheme Modal HTML -->
+<div id="schemeModalBackdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999998;"></div>
+<div id="schemeModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 5px 20px rgba(0,0,0,0.3); z-index:99999999; width:340px; padding:0; overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <strong>Scheme (Scm.)</strong>
+        <button onclick="closeSchemeModal()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:16px;">
+        <div style="margin-bottom:6px; font-size:12px; color:#666;">Original Rate: <strong id="schemeOriginalRate">0.00</strong></div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <label style="width:60px; font-size:12px; font-weight:600;">Scm. :</label>
+            <input type="number" id="schemeOnInput" style="flex:1; padding:4px 8px; border:1px solid #ccc; border-radius:4px; font-size:13px;" placeholder="e.g. 10" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <label style="width:60px; font-size:12px; font-weight:600;">Scm. :</label>
+            <input type="number" id="schemeFreeInput" style="flex:1; padding:4px 8px; border:1px solid #ccc; border-radius:4px; font-size:13px;" placeholder="e.g. 1" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button onclick="closeSchemeModal()" style="padding:5px 14px; border:1px solid #ccc; border-radius:4px; background:#f8f9fa; cursor:pointer; font-size:12px;">Cancel</button>
+            <button onclick="applyScheme()" style="padding:5px 14px; border:none; border-radius:4px; background:#667eea; color:#fff; cursor:pointer; font-size:12px;">Apply</button>
+        </div>
+    </div>
+</div>
 
 <!-- Toast Container -->
 <div id="toastContainer" class="toast-container"></div>

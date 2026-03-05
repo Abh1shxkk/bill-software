@@ -1,0 +1,602 @@
+# Scheme Modal — Implementation Guide
+
+> **Purpose:** This document explains how the **Scheme Modal** (10+1 type scheme) works in the Sale Transaction & Modification modules, and provides a **copy-paste ready blueprint** to add it to any other module (Purchase, Challan, Credit Note, etc.).
+
+---
+
+## Overview
+
+The Scheme Modal lets users apply a **"buy X get Y free"** scheme to an item row. For example, a **10+1 scheme** on a ₹100 rate item recalculates the effective rate as:
+
+```
+New Rate = (SchemeQty × OriginalRate) / (SchemeQty + SchemeFree)
+         = (10 × 100) / (10 + 1)
+         = ₹90.91
+```
+
+It also auto-calculates the **free quantity** based on the item's qty.
+
+### Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+L` | Open scheme modal (from Qty or F.Qty field) |
+| `Enter` on Scm(Qty) | Move to Scm(Free) input |
+| `Enter` on Scm(Free) | Apply scheme & close modal |
+| `Escape` | Cancel & close modal |
+
+---
+
+## Architecture — 4 Parts
+
+The implementation consists of **4 independent parts** that must all be present:
+
+```mermaid
+graph TD
+    A["1. HTML Modal Markup"] --> D["Working Scheme"]
+    B["2. JavaScript Functions"] --> D
+    C["3. Keyboard Handler Integration"] --> D
+    E["4. Row Event Listeners"] --> D
+```
+
+### Currently Implemented In
+| Module | File |
+|--------|------|
+| Sale Transaction | [transaction.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/transaction.blade.php) |
+| Sale Modification | [modification.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/modification.blade.php) |
+| Breakage/Expiry Transaction | [transaction.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/breakage-expiry/transaction.blade.php) |
+| Breakage/Expiry Modification | [modification.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/breakage-expiry/modification.blade.php) |
+| Purchase Return Transaction | [transaction.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/purchase-return/transaction.blade.php) |
+| Purchase Return Modification | [modification.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/purchase-return/modification.blade.php) |
+| Sale Challan Transaction | [transaction.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale-challan/transaction.blade.php) |
+| Sale Challan Modification | [modification.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale-challan/modification.blade.php) |
+
+### Global Handler (already fixed)
+| File | Purpose |
+|------|---------|
+| [transaction-shortcuts.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/layouts/partials/transaction-shortcuts.blade.php) | Contains scheme modal bypass check (lines 95-99) |
+
+---
+
+## Part 1: HTML Modal Markup
+
+> [!IMPORTANT]
+> Place this HTML **outside** the `<form>` tag but **inside** `@section('content')`, just before the scheme `<script>` block.
+
+```html
+<!-- ============================================ -->
+<!-- SCHEME MODAL FUNCTIONALITY -->
+<!-- ============================================ -->
+
+<!-- Scheme Modal Backdrop -->
+<div id="schemeModalBackdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 99998;"></div>
+
+<!-- Scheme Modal -->
+<div id="schemeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 2px solid #007bff; border-radius: 8px; padding: 20px; z-index: 99999; min-width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="text-align: center; margin-bottom: 10px;">
+        <h5 style="margin: 0; color: #007bff; font-weight: bold;">Scheme</h5>
+        <div id="schemeOriginalRateDisplay" style="font-size: 11px; color: #666; margin-top: 4px;"></div>
+    </div>
+    <div style="display: flex; gap: 20px; justify-content: center; align-items: center;">
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeQty" value="10" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="text-align: center; font-size: 18px; font-weight: bold; color: #007bff; padding-top: 18px;">+</div>
+        <div style="text-align: center;">
+            <label style="display: block; font-size: 12px; margin-bottom: 5px; font-weight: 600;">Scm :</label>
+            <input type="number" id="schemeFree" value="1" min="1" step="1" style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; text-align: center;" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+    </div>
+    <div style="text-align: center; margin-top: 15px; font-size: 11px; color: #666;">
+        Press Enter to apply | Esc to cancel
+    </div>
+</div>
+```
+
+> [!NOTE]
+> The modal uses **`display: block/none`** (NOT CSS class `.show`). This is important for the keyboard handler bypass logic.
+
+---
+
+## Part 2: JavaScript Functions
+
+> [!IMPORTANT]
+> Place this `<script>` block **immediately after** the HTML modal markup, still inside `@section('content')`.
+
+```javascript
+<script>
+// Global variable to track current row index for scheme
+let currentSchemeRowIndex = null;
+
+/**
+ * Open Scheme Modal for the given row
+ * Called when Ctrl+L is pressed in qty or free_qty field
+ */
+function openSchemeModal(rowIndex) {
+    currentSchemeRowIndex = rowIndex;
+
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const modal = document.getElementById('schemeModal');
+
+    // Get the row to read stored values
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${rowIndex}"]`);
+    const rateInput = document.getElementById(`rate_${rowIndex}`);
+    const currentRate = parseFloat(rateInput?.value) || 0;
+
+    // Store original rate on first open (before any scheme adjusts it)
+    if (row && !row.dataset.originalRate && currentRate > 0) {
+        row.dataset.originalRate = currentRate;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentRate);
+
+    // Pre-fill with previously applied scheme values (if any)
+    const schemeQtyInput = document.getElementById('schemeQty');
+    const schemeFreeInput = document.getElementById('schemeFree');
+    if (row && row.dataset.scmOn) {
+        schemeQtyInput.value = row.dataset.scmOn;
+    }
+    if (row && row.dataset.scmFree) {
+        schemeFreeInput.value = row.dataset.scmFree;
+    }
+
+    // Show original rate in modal for reference
+    const rateDisplay = document.getElementById('schemeOriginalRateDisplay');
+    if (rateDisplay) {
+        rateDisplay.textContent = originalRate > 0 ? `Original Rate: ₹${originalRate.toFixed(2)}` : '';
+    }
+
+    // Show modal
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+
+    // Focus on first input
+    schemeQtyInput.focus();
+    schemeQtyInput.select();
+}
+
+/**
+ * Close Scheme Modal
+ */
+function closeSchemeModal() {
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const modal = document.getElementById('schemeModal');
+    
+    backdrop.style.display = 'none';
+    modal.style.display = 'none';
+    
+    currentSchemeRowIndex = null;
+}
+
+/**
+ * Apply Scheme Calculation
+ * Formula: New Rate = (Scm Qty × Original Rate) / (Scm Qty + Scm Free)
+ * Example: 10+1 scheme, rate=100 → newRate = (10×100)/(10+1) = 90.91
+ */
+function applyScheme() {
+    if (currentSchemeRowIndex === null) return;
+
+    const schemeQty = parseFloat(document.getElementById('schemeQty').value) || 0;
+    const schemeFree = parseFloat(document.getElementById('schemeFree').value) || 0;
+
+    if (schemeQty <= 0) {
+        showToast('Scheme quantity must be greater than 0', 'warning', 'Invalid Scheme');
+        return;
+    }
+
+    const row = document.querySelector(`#itemsTableBody tr[data-row-index="${currentSchemeRowIndex}"]`);
+    const qtyInput = document.getElementById(`qty_${currentSchemeRowIndex}`);
+    const rateInput = document.getElementById(`rate_${currentSchemeRowIndex}`);
+    const freeQtyInput = document.getElementById(`free_qty_${currentSchemeRowIndex}`);
+
+    // Use original rate (before any scheme was applied) for correct calculation
+    const currentRate = parseFloat(rateInput?.value) || 0;
+    if (currentRate <= 0) {
+        showToast('Please set rate before applying scheme', 'warning', 'Missing Rate');
+        return;
+    }
+
+    // Store original rate on first apply (so re-applying uses correct base)
+    if (row && !row.dataset.originalRate) {
+        row.dataset.originalRate = currentRate;
+    }
+    const originalRate = parseFloat(row?.dataset.originalRate || currentRate);
+
+    // Correct formula: newRate = (schemeQty × originalRate) / (schemeQty + schemeFree)
+    const totalSchemeUnits = schemeQty + schemeFree;
+    const newRate = (schemeQty * originalRate) / totalSchemeUnits;
+
+    // Calculate free quantity from item qty: for every schemeQty purchased, get schemeFree free
+    const itemQty = parseFloat(qtyInput?.value) || 0;
+    const schemeSets = itemQty > 0 ? Math.floor(itemQty / schemeQty) : 0;
+    const calculatedFreeQty = schemeSets * schemeFree;
+
+    // Update rate field
+    if (rateInput) {
+        rateInput.value = newRate.toFixed(2);
+    }
+
+    // Update free qty if item qty was entered
+    if (freeQtyInput && calculatedFreeQty > 0) {
+        freeQtyInput.value = calculatedFreeQty;
+    }
+
+    // Store applied scheme values on row for re-opening modal
+    if (row) {
+        row.dataset.scmOn = schemeQty;
+        row.dataset.scmFree = schemeFree;
+    }
+
+    // Recalculate row amount (this function must exist in the module)
+    calculateRowAmount(currentSchemeRowIndex);
+
+    showToast(`Scheme ${schemeQty}+${schemeFree} applied. Rate: ₹${originalRate.toFixed(2)} → ₹${newRate.toFixed(2)}`, 'success', 'Scheme Applied');
+
+    // Save row index before closeSchemeModal resets it to null
+    const appliedRowIndex = currentSchemeRowIndex;
+    closeSchemeModal();
+
+    // Return cursor to F.Qty after scheme applied
+    setTimeout(() => {
+        const freeQtyField = document.getElementById(`free_qty_${appliedRowIndex}`);
+        if (freeQtyField) {
+            freeQtyField.focus();
+            freeQtyField.select();
+        }
+    }, 150);
+}
+
+/**
+ * Handle keyboard events in scheme modal inputs
+ * Enter in Scm(On) → moves to Scm(Free)
+ * Enter in Scm(Free) → applies scheme
+ */
+function handleSchemeInputKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        if (event.target.id === 'schemeQty') {
+            const freeInput = document.getElementById('schemeFree');
+            if (freeInput) { freeInput.focus(); freeInput.select(); }
+        } else {
+            applyScheme();
+        }
+    } else if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        closeSchemeModal();
+    }
+}
+
+/**
+ * Handle Ctrl+L keyboard shortcut in qty fields
+ * This should be added to the qty input onkeydown event
+ */
+function handleQtyKeydown(event, rowIndex) {
+    if (event.ctrlKey && (event.key === 'l' || event.key === 'L')) {
+        event.preventDefault();
+        openSchemeModal(rowIndex);
+    }
+}
+
+// Close modal when clicking backdrop
+document.addEventListener('DOMContentLoaded', function() {
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    if (backdrop) {
+        backdrop.addEventListener('click', closeSchemeModal);
+    }
+});
+</script>
+```
+
+---
+
+## Part 3: Keyboard Handler Integration
+
+There are **two places** where keyboard handlers must be aware of the scheme modal:
+
+### 3A. Global Handler — [transaction-shortcuts.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/layouts/partials/transaction-shortcuts.blade.php) (ALREADY DONE ✅)
+
+The global Enter key handler in [transaction-shortcuts.blade.php](file:///c:/xampp/htdocs/bill-software/resources/views/layouts/partials/transaction-shortcuts.blade.php#L95-L99) already has the bypass check:
+
+```javascript
+// Don't interfere if the scheme modal is open (it uses display:block/none, not .show class)
+const schemeModal = document.getElementById('schemeModal');
+if (schemeModal && schemeModal.style.display !== 'none' && schemeModal.style.display !== '') {
+    return; // Let the scheme modal's own keyboard handler handle this
+}
+```
+
+> [!CAUTION]
+> This was a **critical bug** that was fixed. Without this check, the global handler intercepts Enter key presses inside the scheme modal, calls `stopPropagation()`, and prevents the inline `onkeydown` handler from firing. The modal would close but focus wouldn't return to F.Qty.
+
+### 3B. Module's Own Keyboard Handler (REQUIRED IN EACH MODULE)
+
+Inside your module's **main `document.addEventListener('keydown', ..., true)`** handler (capture phase), add these two things:
+
+**① Scheme modal bypass** — Add this check BEFORE the main `switch(e.key)` block:
+
+```javascript
+// Let scheme modal handle its own keyboard events
+const schemeModal = document.getElementById('schemeModal');
+if (schemeModal && schemeModal.style.display !== 'none') {
+    return;
+}
+```
+
+**② Ctrl+L trigger** — Add this inside the `switch(e.key)` block:
+
+```javascript
+case 'l':
+case 'L':
+    if (e.ctrlKey) {
+        // Check if currently focused element is a qty or free_qty input
+        const activeElement = document.activeElement;
+        if (activeElement && activeElement.id) {
+            let rowIndex = null;
+            if (activeElement.id.startsWith('qty_')) {
+                rowIndex = parseInt(activeElement.id.replace('qty_', ''));
+            } else if (activeElement.id.startsWith('free_qty_')) {
+                rowIndex = parseInt(activeElement.id.replace('free_qty_', ''));
+            }
+            if (rowIndex !== null && !isNaN(rowIndex)) {
+                e.preventDefault();
+                e.stopPropagation();
+                openSchemeModal(rowIndex);
+            }
+        }
+    }
+    break;
+```
+
+---
+
+## Part 4: Row Event Listeners
+
+In your module's `addRowEventListeners(row, rowIndex)` function, the **Free Qty field** must have the `Ctrl+L` handler:
+
+```javascript
+// Free Qty field - Enter moves to Rate, Ctrl+L opens scheme modal
+if (freeQtyInput) {
+    freeQtyInput.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+            e.preventDefault();
+            openSchemeModal(rowIndex);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (rateInput) rateInput.focus();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            navigateToRow(rowIndex - 1);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            navigateToRow(rowIndex + 1);
+        }
+    });
+}
+```
+
+---
+
+## Prerequisites / Dependencies
+
+The scheme modal code depends on these functions that **must already exist** in the target module:
+
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| `calculateRowAmount(rowIndex)` | Recalculates row total after rate changes | `applyScheme()` |
+| `showToast(message, type, title)` | Shows toast notification | `applyScheme()` |
+| `navigateToRow(rowIndex)` | Focuses qty field of target row | Row event listeners |
+
+### Required HTML IDs per Row
+
+Each item table row **must** have these element IDs:
+
+| Element | ID Pattern | Example |
+|---------|------------|---------|
+| Table row | `data-row-index="${i}"` on `<tr>` | `data-row-index="0"` |
+| Qty input | `qty_${rowIndex}` | `qty_0` |
+| Free Qty input | `free_qty_${rowIndex}` | `free_qty_0` |
+| Rate input | `rate_${rowIndex}` | `rate_0` |
+
+### Data Attributes Stored on Row
+
+The scheme modal stores these `data-*` attributes on the `<tr>` element:
+
+| Attribute | Purpose | Example |
+|-----------|---------|---------|
+| `data-original-rate` | Remembers rate before scheme was applied | `190.00` |
+| `data-scm-on` | Previously applied scheme qty | `10` |
+| `data-scm-free` | Previously applied scheme free qty | `1` |
+
+---
+
+## Event Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant TS as transaction-shortcuts<br/>(capture phase)
+    participant MH as Module Handler<br/>(capture phase)
+    participant SM as Scheme Modal<br/>(inline onkeydown)
+
+    Note over U: User presses Ctrl+L on qty field
+    U->>TS: keydown event (capture)
+    TS-->>TS: Not Enter key, skip
+    U->>MH: keydown event (capture)
+    MH->>MH: Ctrl+L detected on qty_X
+    MH->>SM: openSchemeModal(rowIndex)
+    SM->>SM: Show modal, focus schemeQty
+
+    Note over U: User fills schemeQty, presses Enter
+    U->>TS: keydown event (capture)
+    TS-->>TS: schemeModal visible → return
+    U->>MH: keydown event (capture)
+    MH-->>MH: schemeModal visible → return
+    U->>SM: handleSchemeInputKeydown
+    SM->>SM: Focus schemeFree
+
+    Note over U: User fills schemeFree, presses Enter
+    U->>TS: keydown event (capture)
+    TS-->>TS: schemeModal visible → return
+    U->>MH: keydown event (capture)
+    MH-->>MH: schemeModal visible → return
+    U->>SM: handleSchemeInputKeydown
+    SM->>SM: applyScheme()
+    SM->>SM: closeSchemeModal()
+    SM->>SM: setTimeout → focus free_qty
+```
+
+---
+
+## Quick Checklist for New Module
+
+- [ ] **HTML**: Paste the Scheme Modal HTML markup (Part 1)
+- [ ] **JS Functions**: Paste the `<script>` block with all 6 functions (Part 2)
+- [ ] **Module Keyboard Handler**: Add scheme modal bypass check (Part 3B - ①)
+- [ ] **Module Keyboard Handler**: Add Ctrl+L case in switch block (Part 3B - ②)
+- [ ] **Row Event Listeners**: Add Ctrl+L handler to `freeQtyInput` keydown (Part 4)
+- [ ] **No-Decimal Validation**: Add the capture-phase IIFE script (Part 5)
+- [ ] **Verify**: `calculateRowAmount()` function exists in the module
+- [ ] **Verify**: `showToast()` / `showAlert()` function exists in the module
+- [ ] **Verify**: Row inputs use correct name pattern (`items[X][qty]`, `items[X][f_qty]` or `items[X][free_qty]`)
+- [ ] **Verify**: Table rows have `data-row-index` attribute OR `id="row-X"` pattern
+- [ ] **Test**: Open scheme modal with Ctrl+L → fill both fields → Enter → modal closes → focus returns to F.Qty
+- [ ] **Test**: Qty=2.5, F.Qty=1.5 (sum=4) → allowed ✅
+- [ ] **Test**: Qty=2.5, F.Qty=1.3 (sum=3.8) → warning on F.Qty, cursor stays ❌
+
+---
+
+## Part 5: Qty + F.Qty Sum Validation
+
+> [!IMPORTANT]
+> Individual Qty and F.Qty fields **CAN have decimal values** (e.g., 2.5). But the **SUM of Qty + F.Qty must be a whole number**. If the sum is decimal, a warning is shown and the cursor stays on the F.Qty field.
+
+### Behavior
+| Scenario | Qty | F.Qty | Sum | Result |
+|----------|-----|-------|-----|--------|
+| Both whole | 10 | 2 | 12 | ✅ Allowed |
+| Decimals, whole sum | 2.5 | 1.5 | 4 | ✅ Allowed |
+| Decimals, decimal sum | 2.5 | 1.3 | 3.8 | ❌ Warning, cursor stays on F.Qty |
+| Only qty decimal | 2.5 | 0 | 2.5 | ❌ Warning when leaving F.Qty |
+
+### When validation triggers
+| Trigger | Action |
+|---------|--------|
+| Enter on F.Qty | Check sum → if decimal, **block navigation to MRP**, show warning, cursor stays on F.Qty |
+| F.Qty loses focus | Check sum → if decimal, show warning, **refocus F.Qty** |
+
+> [!NOTE]
+> Validation does **NOT** trigger on the Qty field's Enter (moving to F.Qty), because the user hasn't entered F.Qty yet. The validation gate is at F.Qty → MRP transition.
+
+### Implementation — Capture-Phase IIFE
+
+Place this inside the `<script>` block at the bottom of the module file (after the scheme modal functions):
+
+```javascript
+// Validate Qty + F.Qty sum must be a whole number — show error and keep cursor on F.Qty
+(function() {
+    // ADAPT THIS SELECTOR for your module's F.Qty field name
+    const FQTY_SELECTOR = '#itemsTableBody input[name*="[f_qty]"]';
+
+    function isFQtyField(el) {
+        return el && el.matches && el.matches(FQTY_SELECTOR);
+    }
+
+    function getRowSum(row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const fQtyInput = row.querySelector('input[name*="[f_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const fQty = parseFloat(fQtyInput ? fQtyInput.value : 0) || 0;
+        return qty + fQty;
+    }
+
+    function isSumDecimal(sum) {
+        // Handle floating point precision (e.g. 2.5 + 1.5 = 3.9999999...)
+        const rounded = Math.round(sum * 10000) / 10000;
+        return rounded % 1 !== 0;
+    }
+
+    // 1. On Enter on F.Qty: validate sum before allowing navigation to MRP
+    //    Capture phase fires BEFORE inline onkeydown, so stopImmediatePropagation blocks moveToNextField
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!isFQtyField(e.target)) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            showAlert('warning', 'Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            e.target.focus();
+            e.target.select();
+        }
+    }, true);
+
+    // 2. On blur of F.Qty: validate sum and refocus if decimal
+    document.addEventListener('focusout', function(e) {
+        if (!isFQtyField(e.target)) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            showAlert('warning', 'Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            const field = e.target;
+            setTimeout(function() {
+                field.focus();
+                field.select();
+            }, 50);
+        }
+    }, true);
+})();
+```
+
+> [!NOTE]
+> **Why capture phase?** The `document.addEventListener('keydown', ..., true)` fires **before** inline `onkeydown` handlers. When Enter is pressed on F.Qty with a decimal sum, `stopImmediatePropagation()` prevents the inline handler's `moveToNextField()` from ever executing.
+
+### Adaptation Notes for Different Modules
+
+| Module | `FQTY_SELECTOR` | Alert Function | Qty Field | F.Qty Field |
+|--------|-----------------|----------------|-----------|-------------|
+| Sale | `input[name*="[free_qty]"]` | `showToast()` | `qty` | `free_qty` |
+| Breakage/Expiry | `input[name*="[f_qty]"]` | `showAlert()` | `qty` | `f_qty` |
+| Purchase Return | `input[name*="[free_qty]"]` | `alert()` | `qty` | `free_qty` |
+| Sale Challan | `input[name*="[free_qty]"]` | `showToast()` | `qty` | `free_qty` |
+
+> [!NOTE]
+> Purchase Return uses `purchase_rate` as the rate field (not `rate` or `mrp`), and row elements use `id="row-X"` with `input[name*="..."]` selectors instead of id-based selectors like `qty_0`, `rate_0`.
+
+> [!WARNING]
+> Do **NOT** auto-round or silently fix decimal sums. Show a warning and keep the cursor on F.Qty. The user must manually adjust Qty or F.Qty to make the sum a whole number.
+
+---
+
+## Reference: Existing Implementations
+
+````carousel
+### Sale Transaction
+- Modal HTML: [transaction.blade.php:L5522-5545](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/transaction.blade.php#L5522-L5545)
+- JS Functions: [transaction.blade.php:L7218-7404](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/transaction.blade.php#L7218-L7404)
+- Keyboard Bypass: [transaction.blade.php:L6718-6722](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/transaction.blade.php#L6718-L6722)
+- Ctrl+L Trigger: [transaction.blade.php:L6759-6773](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/transaction.blade.php#L6759-L6773)
+- Row Listeners: [transaction.blade.php:L3808-3820](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/transaction.blade.php#L3808-L3820)
+<!-- slide -->
+### Sale Modification
+- Modal HTML: [modification.blade.php:L6881-6904](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/modification.blade.php#L6881-L6904)
+- JS Functions: [modification.blade.php:L6906-7090](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/modification.blade.php#L6906-L7090)
+- Keyboard Bypass: [modification.blade.php:L6733-6737](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/modification.blade.php#L6733-L6737)
+- Ctrl+L Trigger: [modification.blade.php:L6768-6782](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/modification.blade.php#L6768-L6782)
+- Row Listeners: [modification.blade.php:L2229-2246](file:///c:/xampp/htdocs/bill-software/resources/views/admin/sale/modification.blade.php#L2229-L2246)
+<!-- slide -->
+### Global Handler (Shared)
+- Scheme bypass check: [transaction-shortcuts.blade.php:L95-99](file:///c:/xampp/htdocs/bill-software/resources/views/layouts/partials/transaction-shortcuts.blade.php#L95-L99)
+- This file is `@include`'d in the admin layout, so it applies to ALL modules automatically
+- No per-module changes needed here — already handles scheme modal
+````

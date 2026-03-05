@@ -1493,12 +1493,14 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
                 <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly>
             </td>
             <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1" 
-                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
+                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="any" 
+                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})"
+                       onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;}">
             </td>
             <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
-                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})">
+                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="any"
+                       onchange="calculateRowAmount(${rowIndex})" onclick="selectRowForCalculation(${rowIndex})"
+                       onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;}">
             </td>
             <td>
                 <input type="number" class="form-control" name="items[${rowIndex}][purchase_rate]" value="${purchaseRate.toFixed(2)}" step="0.01" 
@@ -1631,15 +1633,15 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
                 <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="" readonly>
             </td>
             <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1"
+                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="any"
                        onchange="calculateRowAmount(${rowIndex})"
-                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }"
+                       onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }"
                        onfocus="selectRowForCalculation(${rowIndex})">
             </td>
             <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
+                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="any"
                        onchange="calculateRowAmount(${rowIndex})"
-                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'purchase_rate'); return false; }"
+                       onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'purchase_rate'); return false; }"
                        onfocus="selectRowForCalculation(${rowIndex})">
             </td>
             <td>
@@ -1763,15 +1765,15 @@ console.log('🟢 Purchase Return: openBatchModal_purchaseReturnBatchModal =', t
                 <input type="text" class="form-control" name="items[${rowIndex}][expiry]" value="${expiryDisplay}" readonly>
             </td>
             <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="1"
+                <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="any"
                        onchange="calculateRowAmount(${rowIndex})"
-                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }"
+                       onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'free_qty'); return false; }"
                        onfocus="selectRowForCalculation(${rowIndex})">
             </td>
             <td>
-                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="1"
+                <input type="number" class="form-control" name="items[${rowIndex}][free_qty]" value="0" step="any"
                        onchange="calculateRowAmount(${rowIndex})"
-                       onkeydown="if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'purchase_rate'); return false; }"
+                       onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { event.preventDefault(); moveToNextField(${rowIndex}, 'purchase_rate'); return false; }"
                        onfocus="selectRowForCalculation(${rowIndex})">
             </td>
             <td>
@@ -3823,7 +3825,198 @@ Do you still want to add this batch to the return?`;
             window.location.reload();
         }, 300);
     }
+
+// ========== SCHEME MODAL (Ctrl+L) ==========
+let schemeModalRowIndex = null;
+
+function openSchemeModal(rowIndex) {
+    schemeModalRowIndex = rowIndex;
+    const row = document.getElementById('row-' + rowIndex);
+    if (!row) return;
+
+    const rateInput = row.querySelector('input[name*="[purchase_rate]"]');
+    const originalRate = parseFloat(row.dataset.originalRate || (rateInput ? rateInput.value : 0)) || 0;
+
+    if (!row.dataset.originalRate) {
+        row.dataset.originalRate = originalRate;
+    }
+
+    const modal = document.getElementById('schemeModal');
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    const scmOnInput = document.getElementById('schemeOnInput');
+    const scmFreeInput = document.getElementById('schemeFreeInput');
+    const origRateDisplay = document.getElementById('schemeOriginalRate');
+
+    if (origRateDisplay) origRateDisplay.textContent = originalRate.toFixed(2);
+    if (scmOnInput) scmOnInput.value = row.dataset.scmOn || '';
+    if (scmFreeInput) scmFreeInput.value = row.dataset.scmFree || '';
+
+    if (modal) modal.style.display = 'block';
+    if (backdrop) backdrop.style.display = 'block';
+
+    setTimeout(function() {
+        if (scmOnInput) { scmOnInput.focus(); scmOnInput.select(); }
+    }, 50);
+}
+
+function closeSchemeModal() {
+    const modal = document.getElementById('schemeModal');
+    const backdrop = document.getElementById('schemeModalBackdrop');
+    if (modal) modal.style.display = 'none';
+    if (backdrop) backdrop.style.display = 'none';
+    schemeModalRowIndex = null;
+}
+
+function applyScheme() {
+    if (schemeModalRowIndex === null) return;
+    const row = document.getElementById('row-' + schemeModalRowIndex);
+    if (!row) return;
+
+    const scmOn = parseFloat(document.getElementById('schemeOnInput')?.value) || 0;
+    const scmFree = parseFloat(document.getElementById('schemeFreeInput')?.value) || 0;
+    const originalRate = parseFloat(row.dataset.originalRate) || 0;
+
+    row.dataset.scmOn = scmOn;
+    row.dataset.scmFree = scmFree;
+
+    if (scmOn > 0 && scmFree > 0) {
+        const newRate = (scmOn * originalRate) / (scmOn + scmFree);
+        const rateInput = row.querySelector('input[name*="[purchase_rate]"]');
+        if (rateInput) rateInput.value = newRate.toFixed(2);
+
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const freeQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        if (qty > 0 && freeQtyInput) {
+            const freeQty = Math.round((qty / scmOn) * scmFree);
+            freeQtyInput.value = freeQty;
+        }
+
+        if (typeof calculateRowAmount === 'function') calculateRowAmount(schemeModalRowIndex);
+        alert('Scheme applied! New Rate: ' + newRate.toFixed(2));
+    }
+
+    closeSchemeModal();
+
+    setTimeout(function() {
+        const freeQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        if (freeQtyInput) { freeQtyInput.focus(); freeQtyInput.select(); }
+    }, 100);
+}
+
+function handleSchemeInputKeydown(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        const activeId = document.activeElement?.id;
+        if (activeId === 'schemeOnInput') {
+            document.getElementById('schemeFreeInput')?.focus();
+        } else {
+            applyScheme();
+        }
+        return false;
+    }
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        closeSchemeModal();
+        if (schemeModalRowIndex !== null) {
+            const row = document.getElementById('row-' + schemeModalRowIndex);
+            if (row) {
+                const freeQtyInput = row.querySelector('input[name*="[free_qty]"]');
+                if (freeQtyInput) freeQtyInput.focus();
+            }
+        }
+        return false;
+    }
+}
+
+// ========== QTY + FREE_QTY SUM VALIDATION ==========
+(function() {
+    const FQTY_SELECTOR = '#itemsTableBody input[name*="[free_qty]"]';
+
+    function isFQtyField(el) {
+        return el && el.matches && el.matches(FQTY_SELECTOR);
+    }
+
+    function getRowSum(row) {
+        const qtyInput = row.querySelector('input[name*="[qty]"]');
+        const fQtyInput = row.querySelector('input[name*="[free_qty]"]');
+        const qty = parseFloat(qtyInput ? qtyInput.value : 0) || 0;
+        const fQty = parseFloat(fQtyInput ? fQtyInput.value : 0) || 0;
+        return qty + fQty;
+    }
+
+    function isSumDecimal(sum) {
+        const rounded = Math.round(sum * 10000) / 10000;
+        return rounded % 1 !== 0;
+    }
+
+    // On Enter on free_qty: validate sum before navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        if (!isFQtyField(e.target)) return;
+        // Skip if scheme modal is open
+        const schemeModal = document.getElementById('schemeModal');
+        if (schemeModal && schemeModal.style.display === 'block') return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            e.target.focus();
+            e.target.select();
+        }
+    }, true);
+
+    // On blur of free_qty: validate sum
+    document.addEventListener('focusout', function(e) {
+        if (!isFQtyField(e.target)) return;
+
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        const sum = getRowSum(row);
+        if (isSumDecimal(sum)) {
+            alert('Qty + F.Qty must be a whole number (current sum: ' + sum.toFixed(2) + ')');
+            const field = e.target;
+            setTimeout(function() {
+                field.focus();
+                field.select();
+            }, 50);
+        }
+    }, true);
+})();
 </script>
+
+<!-- Scheme Modal HTML -->
+<div id="schemeModalBackdrop" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:99999998;"></div>
+<div id="schemeModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:8px; box-shadow:0 5px 20px rgba(0,0,0,0.3); z-index:99999999; width:340px; padding:0; overflow:hidden;">
+    <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+        <strong>Scheme (Scm.)</strong>
+        <button onclick="closeSchemeModal()" style="background:none; border:none; color:#fff; font-size:18px; cursor:pointer;">&times;</button>
+    </div>
+    <div style="padding:16px;">
+        <div style="margin-bottom:6px; font-size:12px; color:#666;">Original Pur.Rate: <strong id="schemeOriginalRate">0.00</strong></div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <label style="width:60px; font-size:12px; font-weight:600;">Scm. :</label>
+            <input type="number" id="schemeOnInput" style="flex:1; padding:4px 8px; border:1px solid #ccc; border-radius:4px; font-size:13px;" placeholder="e.g. 10" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <label style="width:60px; font-size:12px; font-weight:600;">Scm. :</label>
+            <input type="number" id="schemeFreeInput" style="flex:1; padding:4px 8px; border:1px solid #ccc; border-radius:4px; font-size:13px;" placeholder="e.g. 1" onkeydown="handleSchemeInputKeydown(event)">
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button onclick="closeSchemeModal()" style="padding:5px 14px; border:1px solid #ccc; border-radius:4px; background:#f8f9fa; cursor:pointer; font-size:12px;">Cancel</button>
+            <button onclick="applyScheme()" style="padding:5px 14px; border:none; border-radius:4px; background:#667eea; color:#fff; cursor:pointer; font-size:12px;">Apply</button>
+        </div>
+    </div>
+</div>
 
 <style>
 /* Credit Adjustment Modal Styles */

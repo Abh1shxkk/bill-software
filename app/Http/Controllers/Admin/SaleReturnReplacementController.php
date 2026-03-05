@@ -230,7 +230,7 @@ class SaleReturnReplacementController extends Controller
     public function allTransactions()
     {
         $transactions = SaleReturnReplacementTransaction::with('customer')
-            ->orderByDesc('trn_date')
+            ->reorder()
             ->orderByDesc('trn_no')
             ->get()
             ->map(function ($t) {

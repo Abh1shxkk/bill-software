@@ -29,6 +29,8 @@ class SaleReturnReplacementItem extends Model
 
     protected $casts = [
         'expiry_date' => 'date',
+        'qty' => 'decimal:2',
+        'free_qty' => 'decimal:2',
         'sale_rate' => 'decimal:2',
         'amount' => 'decimal:2',
         'mrp' => 'decimal:2',
