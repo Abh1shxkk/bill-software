@@ -19,26 +19,29 @@
     <style>
         :root {
             --header-h: 56px;
-            --footer-h: 24px;
+            --footer-h: 64px;
         }
 
         body {
             overflow: hidden;
             background: #f6f8fb;
             font-family: 'Montserrat', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
         }
 
         .app {
             display: grid;
             grid-template-columns: 260px 1fr;
-            grid-template-rows: auto 1fr auto;
+            grid-template-rows: auto minmax(0, 1fr);
             grid-template-areas:
                 "sidebar header"
-                "sidebar main"
-                "sidebar footer";
+                "sidebar main";
             height: 100vh;
+            height: 100dvh;
             position: relative;
             contain: layout style;
+            overflow: hidden;
         }
 
         .sidebar {
@@ -54,6 +57,7 @@
             z-index: 1030;
             display: flex;
             flex-direction: column;
+            min-height: 0;
             transform: translateZ(0);
             backface-visibility: hidden;
             will-change: width;
@@ -132,7 +136,6 @@
         }
 
         .app-footer {
-            grid-area: footer;
             z-index: 1;
             position: relative;
         }
@@ -141,6 +144,7 @@
             overflow: auto;
             background: #f6f8fb;
             height: auto;
+            min-height: 0;
             padding-bottom: 1rem;
             grid-area: main;
             z-index: 10;
@@ -191,9 +195,12 @@
 
         .sidebar-nav-container {
             flex: 1; /* Take remaining space */
+            min-height: 0;
             overflow-y: auto; /* Make scrollable */
             overflow-x: hidden;
             padding-bottom: 1rem;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
         }
 
         .sidebar-nav-container::-webkit-scrollbar {
@@ -280,21 +287,40 @@
         /* MOBILE FIXES - CRITICAL */
         @media (max-width: 991.98px) {
 
-            /* Prevent body scroll on mobile to fix sidebar issue */
-            body {
+            body.mobile-sidebar-open {
                 overflow: hidden !important;
-                position: fixed !important;
-                width: 100% !important;
-                height: 100vh !important;
-                height: 100dvh !important;
+            }
+
+            body.collapsed .sidebar {
+                width: 260px !important;
+            }
+
+            body.collapsed .sidebar .label,
+            body.collapsed .sidebar .brand .label {
+                opacity: 1 !important;
+                width: auto !important;
+                overflow: visible !important;
+            }
+
+            body.collapsed .sidebar .nav-link,
+            body.collapsed .sidebar [data-bs-toggle="collapse"] {
+                pointer-events: auto !important;
+                cursor: pointer !important;
+                opacity: 1 !important;
+                justify-content: flex-start !important;
+                padding: inherit !important;
+            }
+
+            body.collapsed .sidebar .collapse {
+                display: block;
             }
 
             .app {
                 grid-template-columns: 1fr;
+                grid-template-rows: auto minmax(0, 1fr);
                 grid-template-areas:
                     "header"
-                    "main"
-                    "footer";
+                    "main";
                 height: 100vh !important;
                 height: 100dvh !important;
                 overflow: hidden;
@@ -313,12 +339,24 @@
                 overflow: hidden;
                 display: flex;
                 flex-direction: column;
+                min-height: 0;
                 transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 will-change: transform;
             }
 
             .sidebar.show {
                 transform: translateX(0);
+                z-index: 1031;
+                pointer-events: auto;
+            }
+
+            .sidebar-nav-container {
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                min-height: 0 !important;
+                padding-bottom: 1.5rem;
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
             }
 
             .toggle-btn {
@@ -329,8 +367,8 @@
                 grid-column: 1 / -1;
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
-                height: 100vh !important;
-                height: 100dvh !important;
+                height: auto !important;
+                min-height: 0 !important;
                 width: 100%;
                 padding: 1rem 1rem 1rem 1rem !important;
                 -webkit-overflow-scrolling: touch;
@@ -344,6 +382,7 @@
                 z-index: 1028;
                 opacity: 0;
                 visibility: hidden;
+                pointer-events: none;
                 transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
                 top: 0 !important;
                 left: 0 !important;
@@ -356,6 +395,14 @@
             .sidebar-backdrop.show {
                 opacity: 1;
                 visibility: visible;
+                pointer-events: auto;
+                left: 260px !important;
+            }
+
+            .sidebar,
+            .sidebar * {
+                pointer-events: auto;
+                touch-action: manipulation;
             }
         }
 
@@ -1381,8 +1428,6 @@
 </head>
 
 <body>
-    <div id="sidebarBackdrop" class="sidebar-backdrop d-lg-none"></div>
-    
     <!-- Premium Floating Collapse Button - Outside sidebar for proper layering -->
     <button class="sidebar-collapse-btn d-none d-lg-flex" id="sidebarCollapseBtn" title="Toggle Sidebar">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1391,6 +1436,10 @@
     </button>
     
     <div class="app">
+        {{-- Backdrop MUST be inside .app so it shares the same stacking context as the sidebar.
+             .app has contain:layout style which creates an isolated stacking context.
+             If backdrop is outside .app, its z-index beats the sidebar's z-index. --}}
+        <div id="sidebarBackdrop" class="sidebar-backdrop d-lg-none"></div>
         @include('layouts.header')
         <aside class="sidebar p-3 position-relative">
             <div class="sidebar-header">
@@ -1433,8 +1482,8 @@
         </aside>
         <main class="content p-3">
             @yield('content')
+            @include('layouts.footer')
         </main>
-        @include('layouts.footer')
     </div>
 
     <!-- Modals Section - Rendered at body level to avoid z-index conflicts -->
@@ -1622,8 +1671,19 @@
 
             // --- MOBILE TOGGLE ---
             function toggleSidebar() {
-                sidebar.classList.toggle('show');
-                backdrop.classList.toggle('show');
+                const shouldShow = !sidebar.classList.contains('show');
+                if (window.innerWidth < 992) {
+                    document.body.classList.remove('collapsed', 'sidebar-animating');
+                }
+                sidebar.classList.toggle('show', shouldShow);
+                backdrop.classList.toggle('show', shouldShow);
+                document.body.classList.toggle('mobile-sidebar-open', shouldShow && window.innerWidth < 992);
+            }
+
+            function closeMobileSidebar() {
+                sidebar.classList.remove('show');
+                backdrop.classList.remove('show');
+                document.body.classList.remove('mobile-sidebar-open');
             }
             
             // PEAK OPTIMIZATION: Freeze content during sidebar animation
@@ -1638,8 +1698,40 @@
             
             if (btn && backdrop) {
                 btn.addEventListener('click', toggleSidebar);
-                backdrop.addEventListener('click', toggleSidebar);
             }
+
+            if (backdrop) {
+                backdrop.addEventListener('click', closeMobileSidebar);
+                backdrop.addEventListener('touchstart', closeMobileSidebar, { passive: true });
+            }
+
+            if (sidebar) {
+                sidebar.addEventListener('click', function (event) {
+                    event.stopPropagation();
+
+                    const clickedLink = event.target.closest('a[href]');
+                    if (clickedLink && window.innerWidth < 992) {
+                        setTimeout(closeMobileSidebar, 0);
+                    }
+                });
+
+                sidebar.addEventListener('touchstart', function (event) {
+                    event.stopPropagation();
+                }, { passive: true });
+            }
+
+            document.addEventListener('click', function (event) {
+                if (window.innerWidth >= 992 || !sidebar || !sidebar.classList.contains('show')) {
+                    return;
+                }
+
+                const clickedInsideSidebar = sidebar.contains(event.target);
+                const clickedToggle = headerBtn && headerBtn.contains(event.target);
+
+                if (!clickedInsideSidebar && !clickedToggle) {
+                    closeMobileSidebar();
+                }
+            });
             if (headerBtn) {
                 headerBtn.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -1652,6 +1744,14 @@
                     }
                 });
             }
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 992) {
+                    closeMobileSidebar();
+                } else {
+                    document.body.classList.remove('collapsed', 'sidebar-animating');
+                }
+            });
 
             // --- FLOATING COLLAPSE BUTTON ---
             if (collapseBtn) {
@@ -1751,7 +1851,7 @@
                     trigger.addEventListener('click', e => {
                         e.preventDefault();
                         e.stopPropagation();
-                        if (document.body.classList.contains('collapsed')) return false;
+                        if (window.innerWidth >= 992 && document.body.classList.contains('collapsed')) return false;
 
                         if (isTopLevel) {
                             // Close all other top-level menus
@@ -2703,6 +2803,7 @@
     @if(!request()->routeIs('admin.sale.transaction'))
     @include('layouts.partials.transaction-shortcuts')
     @endif
+
 </body>
 
 </html>

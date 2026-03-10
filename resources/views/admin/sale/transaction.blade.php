@@ -7430,4 +7430,338 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- ============================================ -->
+<!-- DRAFT AUTO-SAVE & RESTORE (localStorage)    -->
+<!-- Refresh/close karne par partial data vapas  -->
+<!-- aata hai. Successful save ke baad clear.    -->
+<!-- ============================================ -->
+<script>
+(function() {
+
+    const DRAFT_KEY = 'sale_transaction_draft_v2'; // v2 = localStorage version
+
+    // ─── Save current form state to sessionStorage ───────────────────────────
+    window.saveDraft = function() {
+        try {
+            var draft = {
+                series        : (document.getElementById('seriesSelect')       || {}).value || '',
+                date          : (document.getElementById('saleDate')           || {}).value || '',
+                customer_id   : (document.getElementById('customerSelect')     || {}).value || '',
+                customer_text : (document.getElementById('customerSearchInput')|| {}).value || '',
+                salesman_id   : (document.getElementById('salesmanSelect')     || {}).value || '',
+                due_date      : (document.getElementById('dueDate')            || {}).value || '',
+                cash          : (document.getElementById('cash')               || {}).value || 'N',
+                transfer      : (document.getElementById('transfer')           || {}).value || 'N',
+                remarks       : (document.getElementById('remarks')            || {}).value || '',
+                items         : [],
+                savedAt       : new Date().toISOString()
+            };
+
+            // ── Collect every row's input values + all data-attributes ───────
+            document.querySelectorAll('#itemsTableBody tr[data-row-index]').forEach(function(row) {
+                var inputs = {};
+                row.querySelectorAll('input').forEach(function(inp) {
+                    if (!inp.name) return;
+                    var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                    inputs[m ? m[1] : inp.name] = inp.value;
+                });
+
+                var dataAttrs = {};
+                Array.from(row.attributes).forEach(function(attr) {
+                    if (attr.name.startsWith('data-')) {
+                        dataAttrs[attr.name] = attr.value;
+                    }
+                });
+
+                draft.items.push({
+                    rowIndex  : parseInt(row.getAttribute('data-row-index')),
+                    inputs    : inputs,
+                    dataAttrs : dataAttrs
+                });
+            });
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            _showDraftSavedBadge();
+        } catch(e) {
+            console.warn('[Draft] Save failed:', e);
+        }
+    };
+
+    // ─── Restore form state from sessionStorage ──────────────────────────────
+    window.restoreDraft = function() {
+        try {
+            var raw = localStorage.getItem(DRAFT_KEY);
+            if (!raw) return;
+
+            var draft = JSON.parse(raw);
+            if (!draft) return;
+
+            // Skip restore if nothing meaningful was saved
+            var hasContent = draft.customer_id || draft.remarks ||
+                             (draft.items && draft.items.length > 0 &&
+                              draft.items.some(function(r) {
+                                  return r.inputs && (r.inputs.code || r.inputs.item_name || parseFloat(r.inputs.qty) > 0);
+                              }));
+            if (!hasContent) return;
+
+            _showDraftRestoredBanner(draft.savedAt);
+
+            // ── Header fields ────────────────────────────────────────────────
+            _setField('seriesSelect',  'value', draft.series,      updateInvoiceType);
+            _setField('saleDate',      'value', draft.date,        updateDayName);
+            _setField('dueDate',       'value', draft.due_date);
+            _setField('cash',          'value', draft.cash);
+            _setField('transfer',      'value', draft.transfer);
+            _setField('remarks',       'value', draft.remarks);
+
+            // ── Customer (searchable dropdown) ───────────────────────────────
+            if (draft.customer_id) {
+                var hiddenCust = document.getElementById('customerSelect');
+                var searchCust = document.getElementById('customerSearchInput');
+                if (hiddenCust) hiddenCust.value = draft.customer_id;
+                if (searchCust) searchCust.value = draft.customer_text || '';
+                setTimeout(function() { checkChooseItemsButtonState(); }, 300);
+            }
+
+            // ── Salesman ─────────────────────────────────────────────────────
+            if (draft.salesman_id) {
+                var salesmanSel = document.getElementById('salesmanSelect');
+                if (salesmanSel) {
+                    salesmanSel.value = draft.salesman_id;
+                    if (typeof updateSalesmanName === 'function') updateSalesmanName();
+                }
+            }
+
+            // ── Items table ──────────────────────────────────────────────────
+            if (draft.items && draft.items.length > 0) {
+                var tbody = document.getElementById('itemsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    itemIndex = -1;
+
+                    draft.items.forEach(function(itemData) {
+                        // Build a fresh empty row (increments itemIndex internally)
+                        var newRow = addEmptyRow();
+                        if (!newRow) return;
+
+                        var idx = parseInt(newRow.getAttribute('data-row-index'));
+
+                        // Restore input values
+                        newRow.querySelectorAll('input').forEach(function(inp) {
+                            if (!inp.name) return;
+                            var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                            var key = m ? m[1] : inp.name;
+                            if (itemData.inputs && itemData.inputs[key] !== undefined) {
+                                inp.value = itemData.inputs[key];
+                            }
+                        });
+
+                        // Restore data-attributes (skip data-row-index – keep the new one)
+                        if (itemData.dataAttrs) {
+                            Object.keys(itemData.dataAttrs).forEach(function(attr) {
+                                if (attr !== 'data-row-index') {
+                                    newRow.setAttribute(attr, itemData.dataAttrs[attr]);
+                                }
+                            });
+                        }
+
+                        // Recalculate row amount & colour
+                        if (typeof calculateRowAmount === 'function') calculateRowAmount(idx);
+                        if (typeof updateRowColor     === 'function') updateRowColor(idx);
+                    });
+
+                    // Overall totals
+                    setTimeout(function() {
+                        if (typeof calculateTotal === 'function') calculateTotal();
+                    }, 150);
+
+                    // Select & detail first row
+                    if (typeof selectRow             === 'function') selectRow(0);
+                    if (typeof updateDetailedSummary === 'function') updateDetailedSummary(0);
+                }
+            }
+
+            // Fetch customer outstanding due
+            if (draft.customer_id) {
+                setTimeout(function() {
+                    if (typeof fetchCustomerDue === 'function') fetchCustomerDue();
+                }, 400);
+            }
+
+        } catch(e) {
+            console.warn('[Draft] Restore failed:', e);
+        }
+    };
+
+    // ─── Wipe draft (called on successful form save) ──────────────────────────
+    window.clearDraft = function() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    };
+
+    // ─── Helper: set a DOM field value ───────────────────────────────────────
+    function _setField(id, prop, val, callback) {
+        if (!val && val !== 0) return;
+        var el = document.getElementById(id);
+        if (!el) return;
+        el[prop] = val;
+        if (typeof callback === 'function') callback();
+    }
+
+    // ─── Subtle "auto-saved" badge (bottom-right, fades out) ─────────────────
+    var _badgeTimer = null;
+    function _showDraftSavedBadge() {
+        var badge = document.getElementById('_draftSavedBadge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = '_draftSavedBadge';
+            badge.style.cssText = [
+                'position:fixed','bottom:18px','right:18px',
+                'background:rgba(40,167,69,0.88)','color:#fff',
+                'padding:5px 14px','border-radius:20px',
+                'font-size:11px','font-weight:600',
+                'z-index:9999','opacity:0',
+                'transition:opacity 0.35s','pointer-events:none',
+                'box-shadow:0 2px 6px rgba(0,0,0,0.2)'
+            ].join(';');
+            badge.innerHTML = '&#10003; Draft auto-saved';
+            document.body.appendChild(badge);
+        }
+        badge.style.opacity = '1';
+        clearTimeout(_badgeTimer);
+        _badgeTimer = setTimeout(function() { badge.style.opacity = '0'; }, 2200);
+    }
+
+    // ─── Restored banner (top-centre, with Discard / Keep buttons) ───────────
+    function _showDraftRestoredBanner(savedAt) {
+        var existing = document.getElementById('_draftRestoredBanner');
+        if (existing) existing.remove();
+
+        var timeStr = '';
+        try {
+            var d = new Date(savedAt);
+            timeStr = d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+        } catch(e) {}
+
+        var banner = document.createElement('div');
+        banner.id = '_draftRestoredBanner';
+        banner.style.cssText = [
+            'position:fixed','top:62px','left:50%',
+            'transform:translateX(-50%)',
+            'background:#fff3cd','border:1px solid #ffc107',
+            'color:#856404','padding:9px 18px',
+            'border-radius:8px','font-size:12px',
+            'z-index:10001','box-shadow:0 3px 10px rgba(0,0,0,0.18)',
+            'display:flex','align-items:center','gap:10px',
+            'animation:_slideDown 0.4s ease'
+        ].join(';');
+
+        banner.innerHTML =
+            '<i class="bi bi-clock-history" style="font-size:15px;"></i>' +
+            '<span><strong>Draft restored</strong> from ' + (timeStr || 'previous session') + ' &mdash; continue where you left off</span>' +
+            '<button id="_discardDraftBtn" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:6px;">Discard</button>' +
+            '<button id="_keepDraftBtn"    style="background:#28a745;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">&#10003; Keep</button>';
+
+        document.body.appendChild(banner);
+
+        // ── Discard: clear draft + reset form ────────────────────────────────
+        document.getElementById('_discardDraftBtn').addEventListener('click', function() {
+            clearDraft();
+            banner.remove();
+            var tbody = document.getElementById('itemsTableBody');
+            if (tbody) tbody.innerHTML = '';
+            itemIndex = -1;
+            // Reset header fields to defaults
+            var seriesSel = document.getElementById('seriesSelect');
+            if (seriesSel) { seriesSel.value = 'SB'; updateInvoiceType(); }
+            var saleDate = document.getElementById('saleDate');
+            if (saleDate) { saleDate.value = new Date().toISOString().split('T')[0]; updateDayName(); }
+            var dueDate = document.getElementById('dueDate');
+            if (dueDate)  dueDate.value = new Date().toISOString().split('T')[0];
+            var custHidden = document.getElementById('customerSelect');
+            if (custHidden) custHidden.value = '';
+            var custSearch = document.getElementById('customerSearchInput');
+            if (custSearch) custSearch.value = '';
+            var salesmanSel = document.getElementById('salesmanSelect');
+            if (salesmanSel) salesmanSel.value = '';
+            var cashSel = document.getElementById('cash');
+            if (cashSel) cashSel.value = 'N';
+            var transferSel = document.getElementById('transfer');
+            if (transferSel) transferSel.value = 'N';
+            var remarksFld = document.getElementById('remarks');
+            if (remarksFld) remarksFld.value = '';
+            if (typeof calculateTotal === 'function') calculateTotal();
+        });
+
+        // ── Keep: just dismiss the banner ────────────────────────────────────
+        document.getElementById('_keepDraftBtn').addEventListener('click', function() { banner.remove(); });
+
+        // Auto-dismiss after 12 s
+        setTimeout(function() { if (banner.parentNode) banner.remove(); }, 12000);
+    }
+
+    // ─── Keyframe for banner slide-down (injected once) ──────────────────────
+    if (!document.getElementById('_draftKeyframes')) {
+        var style = document.createElement('style');
+        style.id = '_draftKeyframes';
+        style.textContent = '@keyframes _slideDown { from { opacity:0; transform:translateX(-50%) translateY(-20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+        document.head.appendChild(style);
+    }
+
+    // ─── Debounced auto-save trigger ─────────────────────────────────────────
+    var _autoSaveTimer = null;
+    function _scheduleSave() {
+        clearTimeout(_autoSaveTimer);
+        _autoSaveTimer = setTimeout(window.saveDraft, 700);
+    }
+
+    // ─── Wire up listeners + restore on DOM ready ─────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Header field watchers
+        ['seriesSelect','saleDate','customerSelect','customerSearchInput',
+         'salesmanSelect','dueDate','cash','transfer','remarks'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', _scheduleSave);
+                el.addEventListener('input',  _scheduleSave);
+            }
+        });
+
+        // Items table watcher (event delegation)
+        var tbody = document.getElementById('itemsTableBody');
+        if (tbody) {
+            tbody.addEventListener('input',  _scheduleSave);
+            tbody.addEventListener('change', _scheduleSave);
+            // Also fire when rows are added/removed (item selected from modal)
+            new MutationObserver(function() { _scheduleSave(); }).observe(tbody, { childList: true });
+        }
+
+        // Restore draft — wait for loadItems() & other inits to finish first
+        setTimeout(window.restoreDraft, 900);
+    });
+
+    // ─── Hook into successful-save path to clear draft ────────────────────────
+    // clearFormAfterSave() is called on every successful transaction save.
+    // showSaveOptionsModal() is called just before it in the .then() success branch.
+    // We patch both to ensure draft is wiped as soon as save succeeds.
+    setTimeout(function() {
+        var _origClear = window.clearFormAfterSave;
+        if (typeof _origClear === 'function') {
+            window.clearFormAfterSave = function() {
+                window.clearDraft();
+                return _origClear.apply(this, arguments);
+            };
+        }
+        var _origSaveOpts = window.showSaveOptionsModal;
+        if (typeof _origSaveOpts === 'function') {
+            window.showSaveOptionsModal = function() {
+                window.clearDraft();
+                return _origSaveOpts.apply(this, arguments);
+            };
+        }
+    }, 600);
+
+})();
+</script>
+
 @endsection

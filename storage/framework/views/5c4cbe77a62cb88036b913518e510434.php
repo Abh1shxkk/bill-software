@@ -1296,7 +1296,7 @@ window.onItemBatchSelectedFromModal = function(item, batch) {
         <td>
             <input type="number" class="form-control" name="items[${rowIndex}][qty]" value="0" step="any"
                    onchange="calculateRowAmount(${rowIndex})"
-                   onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } else { event.preventDefault(); event.stopImmediatePropagation(); this.focus(); } return false; }">
+                    onkeydown="if(event.ctrlKey && (event.key==='l'||event.key==='L')){event.preventDefault();openSchemeModal(${rowIndex});return false;} if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } } return false;" />>
         </td>
         <td>
             <input type="number" class="form-control" name="items[${rowIndex}][f_qty]" value="0" step="any"
@@ -1750,7 +1750,7 @@ function addNewRowWithItem(item) {
         <td>
             <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]"
                    step="0.01" onchange="calculateRowAmount(${rowIndex})"
-                   onkeydown="if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } else { event.preventDefault(); event.stopImmediatePropagation(); this.focus(); } return false; }"
+                    onkeydown="if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } } return false;"
                    placeholder="0.00">
         </td>
         <td>
@@ -2463,7 +2463,7 @@ function addNewRow() {
         <td>
             <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][qty]" value="0" step="1"
                    onchange="calculateRowAmount(${rowIndex})"
-                   onkeydown="if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } else { event.preventDefault(); event.stopImmediatePropagation(); this.focus(); } return false; }">
+                    onkeydown="if(event.key === 'Enter') { const qty = parseFloat(this.value) || 0; if(qty > 0){ event.preventDefault(); calculateRowAmount(${rowIndex}); moveToNextField(${rowIndex}, 'f_qty'); } } return false;">
         </td>
         <td>
             <input type="number" class="form-control form-control-sm" name="items[${rowIndex}][f_qty]" value="0" step="1"
@@ -4563,6 +4563,7 @@ function initTableDiscountEnterCapture() {
 function initTableQtyEnterCapture() {
     if (window.__kbBeQtyEnterCaptureBound) return;
 
+    // Keydown handler in capture phase to intercept before inline handlers
     document.addEventListener('keydown', function(e) {
         if (e.key !== 'Enter' && e.keyCode !== 13) return;
 
@@ -4581,10 +4582,34 @@ function initTableQtyEnterCapture() {
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            active.focus();
+            // Prevent the default browser action (moving to next input)
             return false;
         }
     }, true); // Capture phase to run before inline handlers
+
+    // Also add keyup handler in capture phase to catch any lingering events
+    document.addEventListener('keyup', function(e) {
+        if (e.key !== 'Enter' && e.keyCode !== 13) return;
+
+        const active = document.activeElement;
+        if (!active) return;
+
+        // Target only Qty fields inside items table
+        const isQtyField = active.matches && active.matches('#itemsTableBody input[name*="[qty]"]');
+        if (!isQtyField) return;
+
+        const qty = parseFloat(active.value) || 0;
+        
+        // If qty is 0 or empty, prevent any further action
+        if (qty <= 0) {
+            console.log('[KB-BE][Capture][Qty] Keyup blocked (qty <= 0)', { qty });
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            active.focus();
+            return false;
+        }
+    }, true);
 
     window.__kbBeQtyEnterCaptureBound = true;
 }

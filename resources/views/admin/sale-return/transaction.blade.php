@@ -4853,4 +4853,225 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
+<!-- ============================================ -->
+<!-- AUTO-SAVE & RESTORE (localStorage)           -->
+<!-- Refresh hone par data wapas aata hai.        -->
+<!-- Successful save ke baad auto-clear hota hai. -->
+<!-- ============================================ -->
+<script>
+(function() {
+
+    var DRAFT_KEY = 'sale_return_transaction_autosave_v1';
+
+    window.autoSaveDraft = function() {
+        try {
+            var draft = {
+                return_date          : (document.getElementById('returnDate')          || {}).value || '',
+                series               : (document.getElementById('seriesSelect')        || {}).value || '',
+                customer_id          : (document.getElementById('customerSelect')      || {}).value || '',
+                customer_text        : (document.getElementById('customerSearchInput') || {}).value || '',
+                salesman_id          : (document.getElementById('salesmanSelect')      || {}).value || '',
+                original_invoice_no  : (document.getElementById('originalInvoiceNo')  || {}).value || '',
+                original_invoice_date: (document.getElementById('originalInvoiceDate') || {}).value || '',
+                original_series      : (document.getElementById('originalSeries')      || {}).value || '',
+                original_amount      : (document.getElementById('originalAmount')      || {}).value || '',
+                rate_diff            : (document.getElementById('rateDiff')            || {}).value || 'N',
+                cash                 : (document.getElementById('cash')               || {}).value || 'N',
+                tax                  : (document.getElementById('tax')                || {}).value || 'N',
+                remarks              : (document.getElementById('remarks')            || {}).value || '',
+                fixed_discount       : (document.getElementById('fixedDiscount')      || {}).value || '0',
+                items                : [],
+                savedAt              : new Date().toISOString()
+            };
+
+            document.querySelectorAll('#itemsTableBody tr').forEach(function(row, index) {
+                var rowId = row.id || ('row-' + index);
+                var inputs = {};
+                row.querySelectorAll('input').forEach(function(inp) {
+                    if (!inp.name) return;
+                    var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                    inputs[m ? m[1] : inp.name] = inp.value;
+                });
+                var dataAttrs = {};
+                Array.from(row.attributes).forEach(function(attr) {
+                    if (attr.name.startsWith('data-')) dataAttrs[attr.name] = attr.value;
+                });
+                draft.items.push({ rowId: rowId, inputs: inputs, dataAttrs: dataAttrs });
+            });
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            _showSavedBadge();
+        } catch(e) { console.warn('[AutoSave] Save failed:', e); }
+    };
+
+    window.restoreAutoSave = function() {
+        try {
+            var raw = localStorage.getItem(DRAFT_KEY);
+            if (!raw) return;
+            var draft = JSON.parse(raw);
+            if (!draft) return;
+
+            var hasContent = draft.customer_id || draft.original_invoice_no || draft.remarks ||
+                (draft.items && draft.items.some(function(r) {
+                    return r.inputs && (r.inputs.qty || r.inputs.sale_rate);
+                }));
+            if (!hasContent) return;
+
+            _showRestoredBanner(draft.savedAt);
+
+            if (draft.return_date) { var el = document.getElementById('returnDate'); if (el) { el.value = draft.return_date; if (typeof updateDayName === 'function') updateDayName(); } }
+            if (draft.series)      { var el = document.getElementById('seriesSelect'); if (el) { el.value = draft.series; if (typeof updateSeriesLabel === 'function') updateSeriesLabel(); } }
+            if (draft.salesman_id) { var el = document.getElementById('salesmanSelect'); if (el) { el.value = draft.salesman_id; if (typeof updateSalesmanName === 'function') updateSalesmanName(); } }
+            if (draft.original_invoice_no)   { var el = document.getElementById('originalInvoiceNo');   if (el) el.value = draft.original_invoice_no; }
+            if (draft.original_invoice_date) { var el = document.getElementById('originalInvoiceDate'); if (el) el.value = draft.original_invoice_date; }
+            if (draft.original_series)       { var el = document.getElementById('originalSeries');      if (el) el.value = draft.original_series; }
+            if (draft.original_amount)       { var el = document.getElementById('originalAmount');      if (el) el.value = draft.original_amount; if (document.getElementById('originalAmountContainer')) document.getElementById('originalAmountContainer').style.display = ''; }
+            if (draft.rate_diff)      { var el = document.getElementById('rateDiff');      if (el) el.value = draft.rate_diff; }
+            if (draft.cash)           { var el = document.getElementById('cash');          if (el) el.value = draft.cash; }
+            if (draft.tax)            { var el = document.getElementById('tax');           if (el) el.value = draft.tax; }
+            if (draft.remarks)        { var el = document.getElementById('remarks');       if (el) el.value = draft.remarks; }
+            if (draft.fixed_discount) { var el = document.getElementById('fixedDiscount'); if (el) el.value = draft.fixed_discount; }
+
+            if (draft.customer_id) {
+                var hiddenCust = document.getElementById('customerSelect');
+                var searchCust = document.getElementById('customerSearchInput');
+                if (hiddenCust) hiddenCust.value = draft.customer_id;
+                if (searchCust) searchCust.value = draft.customer_text || '';
+            }
+
+            if (draft.items && draft.items.length > 0) {
+                var tbody = document.getElementById('itemsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    if (typeof currentRowIndex !== 'undefined') { currentRowIndex = 0; }
+
+                    draft.items.forEach(function(itemData, idx) {
+                        var fakeItem = { item_code: '', item_name: '' };
+                        if (itemData.inputs) {
+                            fakeItem.item_code        = itemData.inputs.code        || '';
+                            fakeItem.item_name        = itemData.inputs.name        || '';
+                            fakeItem.batch_no         = itemData.inputs.batch       || '';
+                            fakeItem.expiry_date      = itemData.inputs.expiry      || '';
+                            fakeItem.return_qty       = parseFloat(itemData.inputs.qty)       || 0;
+                            fakeItem.return_fqty      = parseFloat(itemData.inputs.free_qty)  || 0;
+                            fakeItem.sale_rate        = parseFloat(itemData.inputs.sale_rate) || 0;
+                            fakeItem.discount_percent = parseFloat(itemData.inputs.dis_percent)|| 0;
+                            fakeItem.mrp              = parseFloat(itemData.inputs.mrp)       || 0;
+                            fakeItem.item_id          = itemData.inputs.item_id    || '';
+                            fakeItem.batch_id         = itemData.inputs.batch_id   || '';
+                            fakeItem.hsn_code         = itemData.inputs.hsn_code   || '';
+                            fakeItem.company_name     = itemData.inputs.company_name || '';
+                            fakeItem.packing          = itemData.inputs.packing    || '';
+                            fakeItem.unit             = itemData.inputs.unit       || '';
+                            fakeItem.cgst_percent     = parseFloat(itemData.inputs.cgst_percent) || 0;
+                            fakeItem.sgst_percent     = parseFloat(itemData.inputs.sgst_percent) || 0;
+                            fakeItem.cess_percent     = parseFloat(itemData.inputs.cess_percent) || 0;
+                        }
+                        if (typeof addItemRow === 'function') {
+                            addItemRow(fakeItem, idx);
+                        }
+                    });
+
+                    setTimeout(function() {
+                        if (typeof recalculateTotals === 'function') recalculateTotals();
+                    }, 200);
+                }
+            }
+        } catch(e) { console.warn('[AutoSave] Restore failed:', e); }
+    };
+
+    window.clearAutoSave = function() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    };
+
+    var _badgeTimer = null;
+    function _showSavedBadge() {
+        var badge = document.getElementById('_autoSaveBadge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = '_autoSaveBadge';
+            badge.style.cssText = 'position:fixed;bottom:18px;right:18px;background:rgba(40,167,69,0.88);color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;opacity:0;transition:opacity 0.35s;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,0.2)';
+            badge.innerHTML = '&#10003; Draft auto-saved';
+            document.body.appendChild(badge);
+        }
+        badge.style.opacity = '1';
+        clearTimeout(_badgeTimer);
+        _badgeTimer = setTimeout(function() { badge.style.opacity = '0'; }, 2200);
+    }
+
+    function _showRestoredBanner(savedAt) {
+        var existing = document.getElementById('_autoSaveRestoredBanner');
+        if (existing) existing.remove();
+        var timeStr = '';
+        try { timeStr = new Date(savedAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }); } catch(e) {}
+
+        var banner = document.createElement('div');
+        banner.id = '_autoSaveRestoredBanner';
+        banner.style.cssText = 'position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:9px 18px;border-radius:8px;font-size:12px;z-index:10001;box-shadow:0 3px 10px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;animation:_asBannerSlide 0.4s ease';
+        banner.innerHTML =
+            '<i class="bi bi-clock-history" style="font-size:15px;"></i>' +
+            '<span><strong>Draft restored</strong> from ' + (timeStr || 'previous session') + ' &mdash; continue where you left off</span>' +
+            '<button id="_asDiscardBtn" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:6px;">Discard</button>' +
+            '<button id="_asKeepBtn" style="background:#28a745;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">&#10003; Keep</button>';
+        document.body.appendChild(banner);
+
+        document.getElementById('_asDiscardBtn').addEventListener('click', function() {
+            clearAutoSave();
+            banner.remove();
+            var tbody = document.getElementById('itemsTableBody');
+            if (tbody) tbody.innerHTML = '';
+            if (typeof currentRowIndex !== 'undefined') currentRowIndex = 0;
+            var retDateEl = document.getElementById('returnDate');
+            if (retDateEl) { retDateEl.value = new Date().toISOString().split('T')[0]; if (typeof updateDayName === 'function') updateDayName(); }
+            ['originalInvoiceNo','originalInvoiceDate','originalSeries','originalAmount','remarks'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+            var oac = document.getElementById('originalAmountContainer'); if (oac) oac.style.display = 'none';
+            ['rateDiff','cash','tax'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = 'N'; });
+            var fdEl = document.getElementById('fixedDiscount'); if (fdEl) fdEl.value = '0';
+            var custHidden = document.getElementById('customerSelect'); if (custHidden) custHidden.value = '';
+            var custSearch = document.getElementById('customerSearchInput'); if (custSearch) custSearch.value = '';
+            if (typeof recalculateTotals === 'function') recalculateTotals();
+        });
+        document.getElementById('_asKeepBtn').addEventListener('click', function() { banner.remove(); });
+        setTimeout(function() { if (banner.parentNode) banner.remove(); }, 12000);
+    }
+
+    if (!document.getElementById('_asKeyframes')) {
+        var s = document.createElement('style');
+        s.id = '_asKeyframes';
+        s.textContent = '@keyframes _asBannerSlide { from { opacity:0; transform:translateX(-50%) translateY(-20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+        document.head.appendChild(s);
+    }
+
+    var _saveTimer = null;
+    function _scheduleSave() { clearTimeout(_saveTimer); _saveTimer = setTimeout(window.autoSaveDraft, 700); }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        ['returnDate','seriesSelect','customerSelect','customerSearchInput','salesmanSelect',
+         'originalInvoiceNo','originalInvoiceDate','rateDiff','cash','tax','remarks','fixedDiscount'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.addEventListener('change', _scheduleSave); el.addEventListener('input', _scheduleSave); }
+        });
+
+        var tbody = document.getElementById('itemsTableBody');
+        if (tbody) {
+            tbody.addEventListener('input',  _scheduleSave);
+            tbody.addEventListener('change', _scheduleSave);
+            new MutationObserver(function() { _scheduleSave(); }).observe(tbody, { childList: true });
+        }
+
+        setTimeout(window.restoreAutoSave, 900);
+    });
+
+    // Patch window.location.reload on success to clear draft first
+    setTimeout(function() {
+        var _origReload = window.location.reload.bind(window.location);
+        window.location.reload = function() {
+            window.clearAutoSave();
+            _origReload();
+        };
+    }, 500);
+
+})();
+</script>
 @endsection

@@ -5141,4 +5141,239 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
 })();
 </script>
 
+
+<!-- ============================================ -->
+<!-- AUTO-SAVE & RESTORE (localStorage)           -->
+<!-- Refresh hone par data wapas aata hai.        -->
+<!-- Successful save ke baad auto-clear hota hai. -->
+<!-- ============================================ -->
+<script>
+(function() {
+
+    var DRAFT_KEY = 'purchase_transaction_autosave_v1';
+
+    // ─── Save current form state ──────────────────────────────────────────────
+    window.autoSaveDraft = function() {
+        try {
+            var draft = {
+                bill_date     : (document.getElementById('billDate')          || {}).value || '',
+                supplier_id   : (document.getElementById('supplierSelect')    || {}).value || '',
+                supplier_text : (document.getElementById('supplierSearchInput')|| {}).value || '',
+                bill_no       : (document.getElementById('billNo')            || {}).value || '',
+                receive_date  : (document.getElementById('receiveDate')       || {}).value || '',
+                due_date      : (document.getElementById('dueDate')           || {}).value || '',
+                cash          : (document.getElementById('cash')              || {}).value || 'N',
+                transfer      : (document.getElementById('transfer')          || {}).value || 'N',
+                remarks       : (document.getElementById('remarks')           || {}).value || '',
+                items         : [],
+                rowGstData    : {},
+                savedAt       : new Date().toISOString()
+            };
+
+            // Save items
+            document.querySelectorAll('#itemsTableBody tr').forEach(function(row, index) {
+                var inputs = {};
+                row.querySelectorAll('input').forEach(function(inp) {
+                    if (!inp.name) return;
+                    var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                    inputs[m ? m[1] : inp.name] = inp.value;
+                });
+                draft.items.push({ index: index, inputs: inputs });
+            });
+
+            // Save rowGstData
+            if (typeof rowGstData !== 'undefined') {
+                draft.rowGstData = JSON.parse(JSON.stringify(rowGstData));
+            }
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            _showSavedBadge();
+        } catch(e) {
+            console.warn('[AutoSave] Save failed:', e);
+        }
+    };
+
+    // ─── Restore form state ───────────────────────────────────────────────────
+    window.restoreAutoSave = function() {
+        try {
+            var raw = localStorage.getItem(DRAFT_KEY);
+            if (!raw) return;
+            var draft = JSON.parse(raw);
+            if (!draft) return;
+
+            var hasContent = draft.supplier_id || draft.bill_no ||
+                (draft.items && draft.items.some(function(r) {
+                    return r.inputs && (r.inputs.code || r.inputs.name || parseFloat(r.inputs.qty) > 0);
+                }));
+            if (!hasContent) return;
+
+            _showRestoredBanner(draft.savedAt);
+
+            // Header
+            if (draft.bill_date)    { var el = document.getElementById('billDate');    if (el) { el.value = draft.bill_date;   if (typeof updateDayName === 'function') updateDayName(); } }
+            if (draft.bill_no)      { var el = document.getElementById('billNo');      if (el) el.value = draft.bill_no; }
+            if (draft.receive_date) { var el = document.getElementById('receiveDate'); if (el) el.value = draft.receive_date; }
+            if (draft.due_date)     { var el = document.getElementById('dueDate');     if (el) el.value = draft.due_date; }
+            if (draft.cash)         { var el = document.getElementById('cash');        if (el) el.value = draft.cash; }
+            if (draft.transfer)     { var el = document.getElementById('transfer');    if (el) el.value = draft.transfer; }
+            if (draft.remarks)      { var el = document.getElementById('remarks');     if (el) el.value = draft.remarks; }
+
+            // Supplier (hidden input + search text)
+            if (draft.supplier_id) {
+                var hiddenSup = document.getElementById('supplierSelect');
+                var searchSup = document.getElementById('supplierSearchInput');
+                if (hiddenSup) hiddenSup.value = draft.supplier_id;
+                if (searchSup) searchSup.value = draft.supplier_text || '';
+            }
+
+            // Items table
+            if (draft.items && draft.items.length > 0) {
+                var tbody = document.getElementById('itemsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+
+                    draft.items.forEach(function(itemData, newIdx) {
+                        if (typeof addNewRow === 'function') addNewRow();
+                        var rows = tbody.querySelectorAll('tr');
+                        var newRow = rows[rows.length - 1];
+                        if (!newRow) return;
+
+                        newRow.querySelectorAll('input').forEach(function(inp) {
+                            if (!inp.name) return;
+                            var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                            var key = m ? m[1] : inp.name;
+                            if (itemData.inputs && itemData.inputs[key] !== undefined) {
+                                inp.value = itemData.inputs[key];
+                            }
+                        });
+                    });
+
+                    // Restore rowGstData
+                    if (draft.rowGstData && typeof rowGstData !== 'undefined') {
+                        Object.keys(draft.rowGstData).forEach(function(k) {
+                            rowGstData[k] = draft.rowGstData[k];
+                        });
+                    }
+
+                    setTimeout(function() {
+                        var rows = tbody.querySelectorAll('tr');
+                        rows.forEach(function(row, i) {
+                            if (typeof addRowNavigationWithMrpModal === 'function') addRowNavigationWithMrpModal(row, i);
+                            if (typeof addAmountCalculation         === 'function') addAmountCalculation(row, i);
+                            if (typeof updateRowColor               === 'function') updateRowColor(i);
+                        });
+                        if (typeof checkAllRowsComplete === 'function') checkAllRowsComplete();
+                        if (typeof selectRow            === 'function') selectRow(0);
+                    }, 200);
+                }
+            }
+        } catch(e) {
+            console.warn('[AutoSave] Restore failed:', e);
+        }
+    };
+
+    // ─── Clear on successful save ─────────────────────────────────────────────
+    window.clearAutoSave = function() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    };
+
+    // ─── "Auto-saved" badge ───────────────────────────────────────────────────
+    var _badgeTimer = null;
+    function _showSavedBadge() {
+        var badge = document.getElementById('_autoSaveBadge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = '_autoSaveBadge';
+            badge.style.cssText = 'position:fixed;bottom:18px;right:18px;background:rgba(40,167,69,0.88);color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;opacity:0;transition:opacity 0.35s;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,0.2)';
+            badge.innerHTML = '&#10003; Draft auto-saved';
+            document.body.appendChild(badge);
+        }
+        badge.style.opacity = '1';
+        clearTimeout(_badgeTimer);
+        _badgeTimer = setTimeout(function() { badge.style.opacity = '0'; }, 2200);
+    }
+
+    // ─── Restored banner ──────────────────────────────────────────────────────
+    function _showRestoredBanner(savedAt) {
+        var existing = document.getElementById('_autoSaveRestoredBanner');
+        if (existing) existing.remove();
+
+        var timeStr = '';
+        try { timeStr = new Date(savedAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }); } catch(e) {}
+
+        var banner = document.createElement('div');
+        banner.id = '_autoSaveRestoredBanner';
+        banner.style.cssText = 'position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:9px 18px;border-radius:8px;font-size:12px;z-index:10001;box-shadow:0 3px 10px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;animation:_asBannerSlide 0.4s ease';
+        banner.innerHTML =
+            '<i class="bi bi-clock-history" style="font-size:15px;"></i>' +
+            '<span><strong>Draft restored</strong> from ' + (timeStr || 'previous session') + ' &mdash; continue where you left off</span>' +
+            '<button id="_asDiscardBtn" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:6px;">Discard</button>' +
+            '<button id="_asKeepBtn"    style="background:#28a745;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">&#10003; Keep</button>';
+        document.body.appendChild(banner);
+
+        document.getElementById('_asDiscardBtn').addEventListener('click', function() {
+            clearAutoSave();
+            banner.remove();
+            var tbody = document.getElementById('itemsTableBody');
+            if (tbody) tbody.innerHTML = '';
+            // Reset header
+            var billDateEl = document.getElementById('billDate');
+            if (billDateEl) { billDateEl.value = new Date().toISOString().split('T')[0]; if (typeof updateDayName === 'function') updateDayName(); }
+            ['billNo','receiveDate','dueDate','remarks'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+            var cashEl = document.getElementById('cash'); if (cashEl) cashEl.value = 'N';
+            var transferEl = document.getElementById('transfer'); if (transferEl) transferEl.value = 'N';
+            var supHidden = document.getElementById('supplierSelect'); if (supHidden) supHidden.value = '';
+            var supSearch = document.getElementById('supplierSearchInput'); if (supSearch) supSearch.value = '';
+            if (typeof addNewRow === 'function') addNewRow();
+        });
+        document.getElementById('_asKeepBtn').addEventListener('click', function() { banner.remove(); });
+        setTimeout(function() { if (banner.parentNode) banner.remove(); }, 12000);
+    }
+
+    // ─── Keyframe ─────────────────────────────────────────────────────────────
+    if (!document.getElementById('_asKeyframes')) {
+        var s = document.createElement('style');
+        s.id = '_asKeyframes';
+        s.textContent = '@keyframes _asBannerSlide { from { opacity:0; transform:translateX(-50%) translateY(-20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+        document.head.appendChild(s);
+    }
+
+    // ─── Debounced auto-save ──────────────────────────────────────────────────
+    var _saveTimer = null;
+    function _scheduleSave() {
+        clearTimeout(_saveTimer);
+        _saveTimer = setTimeout(window.autoSaveDraft, 700);
+    }
+
+    // ─── Wire listeners + restore ─────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+        ['billDate','billNo','receiveDate','dueDate','cash','transfer','remarks',
+         'supplierSelect','supplierSearchInput'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.addEventListener('change', _scheduleSave); el.addEventListener('input', _scheduleSave); }
+        });
+
+        var tbody = document.getElementById('itemsTableBody');
+        if (tbody) {
+            tbody.addEventListener('input',  _scheduleSave);
+            tbody.addEventListener('change', _scheduleSave);
+            new MutationObserver(function() { _scheduleSave(); }).observe(tbody, { childList: true });
+        }
+
+        setTimeout(window.restoreAutoSave, 900);
+    });
+
+    // ─── Patch showSuccessModalWithReload to clear draft on save ─────────────
+    setTimeout(function() {
+        var _orig = window.showSuccessModalWithReload;
+        if (typeof _orig === 'function') {
+            window.showSuccessModalWithReload = function() {
+                window.clearAutoSave();
+                return _orig.apply(this, arguments);
+            };
+        }
+    }, 800);
+
+})();
+</script>
 @endsection

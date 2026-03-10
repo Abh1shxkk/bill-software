@@ -1,7 +1,28 @@
 <nav id="appHeader" class="navbar navbar-expand-lg navbar-light app-header"
   style="background-color: white; border-bottom: 1px solid #dee2e6;">
   <div class="container-fluid">
-    
+    <div class="d-flex align-items-center justify-content-between w-100 d-lg-none mobile-header-controls">
+      <button
+        id="headerSidebarToggle"
+        class="btn btn-link text-dark px-2"
+        type="button"
+        aria-label="Open sidebar navigation"
+        title="Open sidebar"
+      >
+        <i class="bi bi-list fs-4"></i>
+      </button>
+      <button
+        class="navbar-toggler px-2 ms-auto"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#topbarNav"
+        aria-controls="topbarNav"
+        aria-expanded="false"
+        aria-label="Toggle top navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
 
     <div class="collapse navbar-collapse" id="topbarNav">
       <ul class="navbar-nav me-auto ms-3">
@@ -1159,7 +1180,8 @@
           aria-expanded="false">
           <img
             src="<?php echo e(auth()->user()->profile_picture ? asset(auth()->user()->profile_picture) : 'https://i.pravatar.cc/32'); ?>"
-            class="rounded-circle me-2" width="32" height="32" alt="avatar">
+            class="rounded-circle me-2" width="32" height="32" alt="avatar"
+            onerror="this.src='https://i.pravatar.cc/32'">
           <span class="d-none d-sm-inline"><?php echo e(auth()->user()->full_name ?? auth()->user()->name); ?></span>
         </a>
         <ul class="dropdown-menu dropdown-menu-end profile-dropdown">
@@ -1217,6 +1239,15 @@
     border: none !important;
     outline: none !important;
     box-shadow: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+    color: #1f2937;
+    text-decoration: none;
   }
 
   #headerSidebarToggle:hover {
@@ -1235,6 +1266,91 @@
   /* Navbar toggler */
   .navbar-toggler {
     border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background-color: #f8f9fa;
+  }
+
+  .navbar-toggler:focus {
+    box-shadow: none;
+  }
+
+  @media (max-width: 991.98px) {
+    .mobile-header-controls {
+      width: 100%;
+    }
+
+    #appHeader .container-fluid {
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    #topbarNav {
+      flex-basis: 100%;
+      width: 100%;
+      margin-top: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e9ecef;
+      max-height: calc(100dvh - 72px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    #topbarNav .navbar-nav {
+      gap: 0.25rem;
+    }
+
+    #topbarNav .navbar-nav.me-auto {
+      margin-left: 0 !important;
+    }
+
+    #topbarNav .navbar-nav.align-items-center {
+      align-items: stretch !important;
+      padding-top: 0.5rem;
+      border-top: 1px solid #e9ecef;
+      margin-top: 0.5rem;
+    }
+
+    #topbarNav .nav-link {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    #topbarNav .dropdown-menu,
+    #topbarNav .dropdown-submenu > .dropdown-menu {
+      position: static !important;
+      inset: auto !important;
+      transform: none !important;
+      width: 100%;
+      min-width: 100%;
+      max-width: 100%;
+      max-height: none !important;
+      overflow: visible !important;
+      margin: 0.35rem 0 0;
+      box-shadow: none;
+      border: 1px solid #e9ecef;
+      padding: 0.25rem 0;
+      animation: none;
+    }
+
+    #topbarNav .dropdown-item {
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    #topbarNav .dropdown-submenu > .dropdown-menu {
+      margin-left: 0;
+      padding-left: 0.5rem;
+    }
+
+    #topbarNav .dropdown-submenu > .dropdown-toggle::after {
+      margin-left: auto;
+      transform: rotate(90deg);
+    }
   }
 
   /* Dropdown menu styling - Windows 11 Style (Sharp) */
@@ -1384,13 +1500,6 @@
 <script>
   // Sidebar toggle functionality
   document.addEventListener('DOMContentLoaded', function () {
-    const sidebarToggle = document.getElementById('headerSidebarToggle');
-    if (sidebarToggle) {
-      sidebarToggle.addEventListener('click', function () {
-        document.body.classList.toggle('sidebar-collapsed');
-      });
-    }
-
     // Close all submenus
     function closeAllSubmenus() {
       document.querySelectorAll('.dropdown-submenu .dropdown-menu').forEach(function(menu) {
@@ -1404,6 +1513,17 @@
     // Function to position submenu using fixed positioning to break out of scrollable parents
     function adjustSubmenuPosition(submenu, submenuDropdown) {
       if (!submenuDropdown) return;
+
+      if (window.innerWidth < 992) {
+        submenuDropdown.style.position = 'static';
+        submenuDropdown.style.left = '';
+        submenuDropdown.style.top = '';
+        submenuDropdown.style.bottom = '';
+        submenuDropdown.style.zIndex = '';
+        submenuDropdown.style.maxHeight = '';
+        submenuDropdown.style.overflowY = '';
+        return;
+      }
       
       const rect = submenu.getBoundingClientRect();
       const viewportWidth = window.innerWidth;

@@ -5181,4 +5181,254 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
+
+<!-- ============================================ -->
+<!-- AUTO-SAVE & RESTORE (localStorage)           -->
+<!-- Refresh hone par data wapas aata hai.        -->
+<!-- Successful save ke baad auto-clear hota hai. -->
+<!-- ============================================ -->
+<script>
+(function() {
+
+    var DRAFT_KEY = 'breakage_expiry_transaction_autosave_v1';
+
+    // ─── Save ────────────────────────────────────────────────────────────────
+    window.autoSaveDraft = function() {
+        try {
+            var draft = {
+                series        : (document.getElementById('seriesInput')         || {}).value || '',
+                txn_date      : (document.getElementById('transactionDate')     || {}).value || '',
+                end_date      : (document.getElementById('endDate')             || {}).value || '',
+                customer_id   : (document.getElementById('customerSelect')      || {}).value || '',
+                customer_text : (document.getElementById('customerSearchInput') || {}).value || '',
+                salesman_id   : (document.getElementById('salesmanSelect')      || {}).value || '',
+                salesman_text : (document.getElementById('salesmanSearchInput') || {}).value || '',
+                gst_vno       : (document.getElementById('gstVno')              || {}).value || 'N',
+                note_type     : (document.getElementById('noteType')            || {}).value || 'N',
+                with_gst      : (document.getElementById('withGst')             || {}).value || 'N',
+                inc           : (document.getElementById('inc')            || {}).value || 'N',
+                rev_charge    : (document.getElementById('revCharge')           || {}).value || 'Y',
+                adjusted      : (document.getElementById('adjustedFlag')        || {}).value || 'X',
+                dis_rpl       : (document.getElementById('disRpl')              || {}).value || '',
+                brk           : (document.getElementById('brk')            || {}).value || '',
+                exp           : (document.getElementById('expField')            || {}).value || '',
+                items         : [],
+                savedAt       : new Date().toISOString()
+            };
+
+            // Save all row data
+            document.querySelectorAll('#itemsTableBody tr').forEach(function(row) {
+                var rowData = { id: row.id, inputs: {}, selects: {} };
+                row.querySelectorAll('input').forEach(function(inp) {
+                    var m = (inp.name || '').match(/items\[\d+\]\[(.+)\]/);
+                    if (m) rowData.inputs[m[1]] = inp.value;
+                });
+                row.querySelectorAll('select').forEach(function(sel) {
+                    var m = (sel.name || '').match(/items\[\d+\]\[(.+)\]/);
+                    if (m) rowData.selects[m[1]] = sel.value;
+                });
+                draft.items.push(rowData);
+            });
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            _showSavedBadge();
+        } catch(e) { console.warn('[AutoSave] Save failed:', e); }
+    };
+
+    // ─── Restore ─────────────────────────────────────────────────────────────
+    window.restoreAutoSave = function() {
+        try {
+            var raw = localStorage.getItem(DRAFT_KEY);
+            if (!raw) return;
+            var draft = JSON.parse(raw);
+            if (!draft) return;
+
+            var hasContent = draft.customer_id ||
+                (draft.items && draft.items.some(function(r) {
+                    return r.inputs && (r.inputs.code || r.inputs.name);
+                }));
+            if (!hasContent) return;
+
+            _showRestoredBanner(draft.savedAt);
+
+            // Header fields
+            var fld = function(id, val) { if (val) { var e = document.getElementById(id); if (e) e.value = val; } };
+            fld('seriesInput',     draft.series);
+            fld('transactionDate', draft.txn_date);
+            fld('endDate',         draft.end_date);
+            fld('gstVno',          draft.gst_vno);
+            fld('noteType',        draft.note_type);
+            fld('withGst',         draft.with_gst);
+            fld('inc',        draft.inc);
+            fld('revCharge',       draft.rev_charge);
+            fld('adjustedFlag',    draft.adjusted);
+            fld('disRpl',          draft.dis_rpl);
+            fld('brk',        draft.brk);
+            fld('expField',        draft.exp);
+
+            // Customer
+            if (draft.customer_id) {
+                var ch = document.getElementById('customerSelect');
+                var cs = document.getElementById('customerSearchInput');
+                if (ch) ch.value = draft.customer_id;
+                if (cs) cs.value = draft.customer_text || '';
+            }
+            // Salesman
+            if (draft.salesman_id) {
+                var sh = document.getElementById('salesmanSelect');
+                var ss = document.getElementById('salesmanSearchInput');
+                if (sh) sh.value = draft.salesman_id;
+                if (ss) ss.value = draft.salesman_text || '';
+            }
+
+            // Restore rows directly (rebuild from saved values)
+            if (draft.items && draft.items.length > 0) {
+                var tbody = document.getElementById('itemsTableBody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                if (typeof currentRowIndex !== 'undefined') currentRowIndex = 0;
+
+                draft.items.forEach(function(rowData, idx) {
+                    // Extract row index from saved id (e.g. "row-3" → 3)
+                    var rowIndex = idx;
+                    var m = (rowData.id || '').match(/row-(\d+)/);
+                    if (m) rowIndex = parseInt(m[1], 10);
+
+                    var inp = rowData.inputs || {};
+                    var sel = rowData.selects || {};
+                    if (!inp.code && !inp.name) return; // skip empty rows
+
+                    var brExVal = sel.br_ex || 'B';
+                    var brExOpts = '<option value="B"' + (brExVal === 'B' ? ' selected' : '') + '>B</option>' +
+                                   '<option value="E"' + (brExVal === 'E' ? ' selected' : '') + '>E</option>';
+
+                    var row = document.createElement('tr');
+                    row.id = 'row-' + rowIndex;
+                    row.innerHTML = '<td><input type="text" class="form-control" name="items[' + rowIndex + '][code]" value="' + (inp.code || '') + '" readonly></td>' +
+                        '<td><input type="text" class="form-control" name="items[' + rowIndex + '][name]" value="' + (inp.name || '') + '" readonly></td>' +
+                        '<td><input type="text" class="form-control" name="items[' + rowIndex + '][batch]" value="' + (inp.batch || '') + '" readonly></td>' +
+                        '<td><input type="text" class="form-control" name="items[' + rowIndex + '][expiry]" value="' + (inp.expiry || '') + '" readonly></td>' +
+                        '<td><select class="form-control no-select2" name="items[' + rowIndex + '][br_ex]" style="width:60px;">' + brExOpts + '</select></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][qty]" value="' + (inp.qty || 0) + '" step="any"></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][f_qty]" value="' + (inp['f_qty'] || 0) + '" step="any"></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][mrp]" value="' + (inp.mrp || 0) + '" step="0.01" readonly></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][scm_percent]" value="' + (inp['scm_percent'] || 0) + '" step="0.01"></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][dis_percent]" value="' + (inp.dis_percent || 0) + '" step="0.01"></td>' +
+                        '<td><input type="number" class="form-control readonly-field" name="items[' + rowIndex + '][amount]" value="' + (inp.amount || '0.00') + '" readonly></td>' +
+                        '<td><button type="button" class="btn btn-sm btn-danger" onclick="deleteRow(' + rowIndex + ')">&#x2715;</button></td>' +
+                        '<input type="hidden" name="items[' + rowIndex + '][item_id]"   value="' + (inp.item_id   || '') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][batch_id]"  value="' + (inp.batch_id  || '') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][s_rate]"    value="' + (inp.s_rate    || 0) + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][p_rate]"    value="' + (inp.p_rate    || 0) + '">';
+                    tbody.appendChild(row);
+
+                    if (typeof currentRowIndex !== 'undefined') currentRowIndex = Math.max(currentRowIndex, rowIndex + 1);
+                });
+
+                setTimeout(function() {
+                    if (typeof updateSummary === 'function') updateSummary();
+                    else if (typeof recalculateTotals === 'function') recalculateTotals();
+                    else if (typeof calculateTotal === 'function') calculateTotal();
+                }, 200);
+            }
+        } catch(e) { console.warn('[AutoSave] Restore failed:', e); }
+    };
+
+    // ─── Clear ───────────────────────────────────────────────────────────────
+    window.clearAutoSave = function() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    };
+
+    // ─── Badge ───────────────────────────────────────────────────────────────
+    var _badgeTimer = null;
+    function _showSavedBadge() {
+        var b = document.getElementById('_asBadge');
+        if (!b) {
+            b = document.createElement('div');
+            b.id = '_asBadge';
+            b.style.cssText = 'position:fixed;bottom:18px;right:18px;background:rgba(40,167,69,0.88);color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;opacity:0;transition:opacity 0.35s;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,0.2)';
+            b.innerHTML = '&#10003; Draft auto-saved';
+            document.body.appendChild(b);
+        }
+        b.style.opacity = '1';
+        clearTimeout(_badgeTimer);
+        _badgeTimer = setTimeout(function() { b.style.opacity = '0'; }, 2200);
+    }
+
+    // ─── Banner ──────────────────────────────────────────────────────────────
+    function _showRestoredBanner(savedAt) {
+        var ex = document.getElementById('_asRestoredBanner');
+        if (ex) ex.remove();
+        var t = '';
+        try { t = new Date(savedAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }); } catch(e) {}
+
+        var banner = document.createElement('div');
+        banner.id = '_asRestoredBanner';
+        banner.style.cssText = 'position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:9px 18px;border-radius:8px;font-size:12px;z-index:10001;box-shadow:0 3px 10px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;animation:_asBannerSlide 0.4s ease';
+        banner.innerHTML = '<i class="bi bi-clock-history" style="font-size:15px;"></i>' +
+            '<span><strong>Draft restored</strong> from ' + (t || 'previous session') + ' &mdash; continue where you left off</span>' +
+            '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:6px;">Discard</button>' +
+            '<button id="_asKeep"    style="background:#28a745;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">&#10003; Keep</button>';
+        document.body.appendChild(banner);
+
+        document.getElementById('_asDiscard').addEventListener('click', function() {
+            clearAutoSave(); banner.remove();
+            var tbody = document.getElementById('itemsTableBody');
+            if (tbody) tbody.innerHTML = '';
+            if (typeof currentRowIndex !== 'undefined') currentRowIndex = 0;
+            var d = document.getElementById('transactionDate');
+            if (d) d.value = new Date().toISOString().split('T')[0];
+            ['endDate','disRpl','brk','expField'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
+            ['gstVno','noteType','withGst','inc'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = 'N'; });
+            var rc = document.getElementById('revCharge'); if (rc) rc.value = 'Y';
+            var af = document.getElementById('adjustedFlag'); if (af) af.value = 'X';
+            var ch = document.getElementById('customerSelect'); if (ch) ch.value = '';
+            var cs = document.getElementById('customerSearchInput'); if (cs) cs.value = '';
+            var sh = document.getElementById('salesmanSelect'); if (sh) sh.value = '';
+            var ss = document.getElementById('salesmanSearchInput'); if (ss) ss.value = '';
+        });
+        document.getElementById('_asKeep').addEventListener('click', function() { banner.remove(); });
+        setTimeout(function() { if (banner.parentNode) banner.remove(); }, 12000);
+    }
+
+    if (!document.getElementById('_asKf')) {
+        var s = document.createElement('style');
+        s.id = '_asKf';
+        s.textContent = '@keyframes _asBannerSlide {from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+        document.head.appendChild(s);
+    }
+
+    // ─── Debounced save ───────────────────────────────────────────────────────
+    var _st = null;
+    function _sched() { clearTimeout(_st); _st = setTimeout(window.autoSaveDraft, 700); }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        ['seriesInput','transactionDate','endDate','customerSelect','customerSearchInput',
+         'salesmanSelect','salesmanSearchInput','gstVno','noteType','withGst',
+         'inc','revCharge','adjustedFlag','disRpl','brk','expField'
+        ].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.addEventListener('change', _sched); el.addEventListener('input', _sched); }
+        });
+        var tb = document.getElementById('itemsTableBody');
+        if (tb) {
+            tb.addEventListener('input', _sched);
+            tb.addEventListener('change', _sched);
+            new MutationObserver(function() { _sched(); }).observe(tb, { childList: true });
+        }
+        setTimeout(window.restoreAutoSave, 900);
+    });
+
+    // ─── Patch reload to clear draft on successful save ────────────────────
+    setTimeout(function() {
+        var _origReload = window.location.reload.bind(window.location);
+        window.location.reload = function() {
+            window.clearAutoSave();
+            _origReload();
+        };
+    }, 500);
+
+})();
+</script>
+
 @endsection

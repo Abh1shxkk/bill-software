@@ -7129,4 +7129,366 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
+<!-- ============================================ -->
+<!-- AUTO-SAVE & RESTORE (localStorage)           -->
+<!-- Refresh hone par data wapas aata hai.        -->
+<!-- Successful save ke baad clear ho jaata hai.  -->
+<!-- ============================================ -->
+<script>
+(function() {
+
+    const DRAFT_KEY = 'sale_modification_autosave_v1';
+
+    // ─── Save current form state ─────────────────────────────────────────────
+    window.autoSaveDraft = function() {
+        try {
+            var draft = {
+                series        : (document.getElementById('seriesSelect')    || {}).value || '',
+                invoice_no    : (document.getElementById('invoiceNo')       || {}).value || '',
+                transaction_id: (document.getElementById('transactionId')   || {}).value || '',
+                sale_date     : (document.getElementById('saleDate')        || {}).value || '',
+                due_date      : (document.getElementById('dueDate')         || {}).value || '',
+                customer_id   : (document.getElementById('customerSelect')  || {}).value || '',
+                customer_text : (function() {
+                    var sel = document.getElementById('customerSelect');
+                    if (!sel || !sel.value) return '';
+                    var opt = sel.options[sel.selectedIndex];
+                    return opt ? opt.text : '';
+                })(),
+                salesman_id   : (document.getElementById('salesmanSelect')  || {}).value || '',
+                salesman_text : (function() {
+                    var sel = document.getElementById('salesmanSelect');
+                    if (!sel || !sel.value) return '';
+                    var opt = sel.options[sel.selectedIndex];
+                    return opt ? opt.text : '';
+                })(),
+                cash          : (document.getElementById('cash')            || {}).value || 'N',
+                transfer      : (document.getElementById('transfer')        || {}).value || 'N',
+                remarks       : (document.getElementById('remarks')         || {}).value || '',
+                items         : [],
+                savedAt       : new Date().toISOString()
+            };
+
+            // ── Collect every row ────────────────────────────────────────────
+            document.querySelectorAll('#itemsTableBody tr[data-row-index]').forEach(function(row) {
+                var inputs = {};
+                row.querySelectorAll('input').forEach(function(inp) {
+                    if (!inp.name) return;
+                    var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                    inputs[m ? m[1] : inp.name] = inp.value;
+                });
+
+                var dataAttrs = {};
+                Array.from(row.attributes).forEach(function(attr) {
+                    if (attr.name.startsWith('data-')) {
+                        dataAttrs[attr.name] = attr.value;
+                    }
+                });
+
+                draft.items.push({
+                    rowIndex  : parseInt(row.getAttribute('data-row-index')),
+                    inputs    : inputs,
+                    dataAttrs : dataAttrs
+                });
+            });
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            _showSavedBadge();
+        } catch(e) {
+            console.warn('[AutoSave] Save failed:', e);
+        }
+    };
+
+    // ─── Restore form state ───────────────────────────────────────────────────
+    window.restoreAutoSave = function() {
+        try {
+            var raw = localStorage.getItem(DRAFT_KEY);
+            if (!raw) return;
+
+            var draft = JSON.parse(raw);
+            if (!draft) return;
+
+            // Skip if nothing meaningful
+            var hasContent = draft.customer_id || draft.invoice_no || draft.remarks ||
+                             (draft.items && draft.items.length > 0 &&
+                              draft.items.some(function(r) {
+                                  return r.inputs && (r.inputs.code || r.inputs.item_name || parseFloat(r.inputs.qty) > 0);
+                              }));
+            if (!hasContent) return;
+
+            _showRestoredBanner(draft.savedAt);
+
+            // ── Header ───────────────────────────────────────────────────────
+            if (draft.series) {
+                var seriesSel = document.getElementById('seriesSelect');
+                if (seriesSel) { seriesSel.value = draft.series; if (typeof updateInvoiceType === 'function') updateInvoiceType(); }
+            }
+            if (draft.invoice_no) {
+                var invEl = document.getElementById('invoiceNo');
+                if (invEl) invEl.value = draft.invoice_no;
+            }
+            if (draft.transaction_id) {
+                var trnEl = document.getElementById('transactionId');
+                if (trnEl) trnEl.value = draft.transaction_id;
+            }
+            if (draft.sale_date) {
+                var dateEl = document.getElementById('saleDate');
+                if (dateEl) { dateEl.value = draft.sale_date; if (typeof updateDayName === 'function') updateDayName(); }
+            }
+            if (draft.due_date) {
+                var dueDateEl = document.getElementById('dueDate');
+                if (dueDateEl) dueDateEl.value = draft.due_date;
+            }
+            if (draft.cash) {
+                var cashEl = document.getElementById('cash');
+                if (cashEl) cashEl.value = draft.cash;
+            }
+            if (draft.transfer) {
+                var transferEl = document.getElementById('transfer');
+                if (transferEl) transferEl.value = draft.transfer;
+            }
+            if (draft.remarks) {
+                var remarksEl = document.getElementById('remarks');
+                if (remarksEl) remarksEl.value = draft.remarks;
+            }
+
+            // ── Customer (disabled select — temp enable to set) ──────────────
+            if (draft.customer_id) {
+                var custEl = document.getElementById('customerSelect');
+                if (custEl) {
+                    var wasDisabled = custEl.disabled;
+                    custEl.disabled = false;
+                    if (typeof setSelectOption === 'function') {
+                        setSelectOption(custEl, draft.customer_id, draft.customer_text);
+                    } else {
+                        custEl.value = draft.customer_id;
+                    }
+                    setTimeout(function() {
+                        custEl.disabled = wasDisabled;
+                        if (typeof checkChooseItemsButtonState === 'function') checkChooseItemsButtonState();
+                    }, 100);
+                }
+            }
+
+            // ── Salesman (disabled select) ────────────────────────────────────
+            if (draft.salesman_id) {
+                var salEl = document.getElementById('salesmanSelect');
+                if (salEl) {
+                    var wasDisabled2 = salEl.disabled;
+                    salEl.disabled = false;
+                    if (typeof setSelectOption === 'function') {
+                        setSelectOption(salEl, draft.salesman_id, draft.salesman_text);
+                    } else {
+                        salEl.value = draft.salesman_id;
+                    }
+                    setTimeout(function() { salEl.disabled = wasDisabled2; }, 100);
+                }
+            }
+
+            // ── Items table ──────────────────────────────────────────────────
+            if (draft.items && draft.items.length > 0) {
+                var tbody = document.getElementById('itemsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    itemIndex = -1;
+
+                    draft.items.forEach(function(itemData) {
+                        var newRow = addEmptyRow();
+                        if (!newRow) return;
+
+                        var idx = parseInt(newRow.getAttribute('data-row-index'));
+
+                        // Restore input values
+                        newRow.querySelectorAll('input').forEach(function(inp) {
+                            if (!inp.name) return;
+                            var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                            var key = m ? m[1] : inp.name;
+                            if (itemData.inputs && itemData.inputs[key] !== undefined) {
+                                inp.value = itemData.inputs[key];
+                            }
+                        });
+
+                        // Restore data-attributes (keep new data-row-index)
+                        if (itemData.dataAttrs) {
+                            Object.keys(itemData.dataAttrs).forEach(function(attr) {
+                                if (attr !== 'data-row-index') {
+                                    newRow.setAttribute(attr, itemData.dataAttrs[attr]);
+                                }
+                            });
+                        }
+
+                        if (typeof calculateRowAmount === 'function') calculateRowAmount(idx);
+                        if (typeof updateRowColor     === 'function') updateRowColor(idx);
+                    });
+
+                    setTimeout(function() {
+                        if (typeof calculateTotal   === 'function') calculateTotal();
+                        if (typeof calculateSummary === 'function') calculateSummary();
+                    }, 150);
+
+                    if (typeof selectRow === 'function') selectRow(0);
+                }
+            }
+
+        } catch(e) {
+            console.warn('[AutoSave] Restore failed:', e);
+        }
+    };
+
+    // ─── Clear (successful save ke baad call karo) ────────────────────────────
+    window.clearAutoSave = function() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    };
+
+    // ─── "Auto-saved" badge (bottom-right, fade out) ─────────────────────────
+    var _badgeTimer = null;
+    function _showSavedBadge() {
+        var badge = document.getElementById('_autoSaveBadge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = '_autoSaveBadge';
+            badge.style.cssText = [
+                'position:fixed','bottom:18px','right:18px',
+                'background:rgba(40,167,69,0.88)','color:#fff',
+                'padding:5px 14px','border-radius:20px',
+                'font-size:11px','font-weight:600',
+                'z-index:9999','opacity:0',
+                'transition:opacity 0.35s','pointer-events:none',
+                'box-shadow:0 2px 6px rgba(0,0,0,0.2)'
+            ].join(';');
+            badge.innerHTML = '&#10003; Draft auto-saved';
+            document.body.appendChild(badge);
+        }
+        badge.style.opacity = '1';
+        clearTimeout(_badgeTimer);
+        _badgeTimer = setTimeout(function() { badge.style.opacity = '0'; }, 2200);
+    }
+
+    // ─── Restored banner (top-centre, Discard / Keep buttons) ────────────────
+    function _showRestoredBanner(savedAt) {
+        var existing = document.getElementById('_autoSaveRestoredBanner');
+        if (existing) existing.remove();
+
+        var timeStr = '';
+        try {
+            var d = new Date(savedAt);
+            timeStr = d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+        } catch(e) {}
+
+        var banner = document.createElement('div');
+        banner.id = '_autoSaveRestoredBanner';
+        banner.style.cssText = [
+            'position:fixed','top:62px','left:50%',
+            'transform:translateX(-50%)',
+            'background:#fff3cd','border:1px solid #ffc107',
+            'color:#856404','padding:9px 18px',
+            'border-radius:8px','font-size:12px',
+            'z-index:10001','box-shadow:0 3px 10px rgba(0,0,0,0.18)',
+            'display:flex','align-items:center','gap:10px',
+            'animation:_asBannerSlide 0.4s ease'
+        ].join(';');
+
+        banner.innerHTML =
+            '<i class="bi bi-clock-history" style="font-size:15px;"></i>' +
+            '<span><strong>Draft restored</strong> from ' + (timeStr || 'previous session') + ' &mdash; continue where you left off</span>' +
+            '<button id="_asDiscardBtn" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:6px;">Discard</button>' +
+            '<button id="_asKeepBtn"    style="background:#28a745;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">&#10003; Keep</button>';
+
+        document.body.appendChild(banner);
+
+        // Discard — clear + reset form
+        document.getElementById('_asDiscardBtn').addEventListener('click', function() {
+            clearAutoSave();
+            banner.remove();
+            var tbody = document.getElementById('itemsTableBody');
+            if (tbody) tbody.innerHTML = '';
+            itemIndex = -1;
+            // Reset header to defaults
+            var seriesSel = document.getElementById('seriesSelect');
+            if (seriesSel) { seriesSel.value = 'SB'; if (typeof updateInvoiceType === 'function') updateInvoiceType(); }
+            var dateEl2 = document.getElementById('saleDate');
+            if (dateEl2) { dateEl2.value = new Date().toISOString().split('T')[0]; if (typeof updateDayName === 'function') updateDayName(); }
+            var dueDateEl2 = document.getElementById('dueDate');
+            if (dueDateEl2) dueDateEl2.value = new Date().toISOString().split('T')[0];
+            var invEl2 = document.getElementById('invoiceNo');
+            if (invEl2) invEl2.value = '';
+            var trnEl2 = document.getElementById('transactionId');
+            if (trnEl2) trnEl2.value = '';
+            var custEl2 = document.getElementById('customerSelect');
+            if (custEl2) { custEl2.disabled = false; custEl2.value = ''; setTimeout(function(){ custEl2.disabled = true; }, 50); }
+            var salEl2 = document.getElementById('salesmanSelect');
+            if (salEl2) { salEl2.disabled = false; salEl2.value = ''; setTimeout(function(){ salEl2.disabled = true; }, 50); }
+            var cashEl2 = document.getElementById('cash');
+            if (cashEl2) cashEl2.value = 'N';
+            var transferEl2 = document.getElementById('transfer');
+            if (transferEl2) transferEl2.value = 'N';
+            var remarksEl2 = document.getElementById('remarks');
+            if (remarksEl2) remarksEl2.value = '';
+            if (typeof calculateTotal   === 'function') calculateTotal();
+            if (typeof calculateSummary === 'function') calculateSummary();
+        });
+
+        // Keep — just dismiss
+        document.getElementById('_asKeepBtn').addEventListener('click', function() { banner.remove(); });
+
+        // Auto-dismiss after 12s
+        setTimeout(function() { if (banner.parentNode) banner.remove(); }, 12000);
+    }
+
+    // ─── Keyframe (injected once) ─────────────────────────────────────────────
+    if (!document.getElementById('_asKeyframes')) {
+        var style = document.createElement('style');
+        style.id = '_asKeyframes';
+        style.textContent = '@keyframes _asBannerSlide { from { opacity:0; transform:translateX(-50%) translateY(-20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+        document.head.appendChild(style);
+    }
+
+    // ─── Debounced auto-save on any input ────────────────────────────────────
+    var _saveTimer = null;
+    function _scheduleSave() {
+        clearTimeout(_saveTimer);
+        _saveTimer = setTimeout(window.autoSaveDraft, 700);
+    }
+
+    // ─── Wire up + restore on DOM ready ──────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Header field watchers
+        ['seriesSelect','saleDate','dueDate','cash','transfer','remarks',
+         'invoiceNo','customerSelect','salesmanSelect'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('change', _scheduleSave);
+                el.addEventListener('input',  _scheduleSave);
+            }
+        });
+
+        // Items table watcher (delegation + MutationObserver for new rows)
+        var tbody = document.getElementById('itemsTableBody');
+        if (tbody) {
+            tbody.addEventListener('input',  _scheduleSave);
+            tbody.addEventListener('change', _scheduleSave);
+            new MutationObserver(function() { _scheduleSave(); }).observe(tbody, { childList: true });
+        }
+
+        // Restore — wait for page inits to finish
+        setTimeout(window.restoreAutoSave, 900);
+    });
+
+    // ─── Patch clearFormAfterSave to wipe auto-save on success ───────────────
+    setTimeout(function() {
+        var _origClear = window.clearFormAfterSave;
+        if (typeof _origClear === 'function') {
+            window.clearFormAfterSave = function() {
+                window.clearAutoSave();
+                return _origClear.apply(this, arguments);
+            };
+        }
+        // Also patch saveSale's success path via showToast hook isn't reliable,
+        // so we patch clearFormAfterSave which is always called on success.
+    }, 800);
+
+})();
+</script>
 @endsection
