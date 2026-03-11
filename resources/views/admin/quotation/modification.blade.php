@@ -1067,4 +1067,155 @@ window.addEventListener('keyup', function(e) {
     }
 }, true);
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  quotation_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'quotation_modification_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri = tr.dataset.rowIndex;
+        if(ri===undefined||ri===null||ri==='') return;
+        const g = function(n){ const el=tr.querySelector('input[name="items['+ri+']['+n+']"]'); return el?el.value:''; };
+        const code=g('code');
+        if(!code && !g('item_name')) return;
+        rows.push({
+            ri: ri,
+            itemId: tr.dataset.itemId||'',
+            batchId: tr.dataset.batchId||'',
+            code: code, item_name: g('item_name'),
+            qty: g('qty'), rate: g('rate'), mrp: g('mrp'), amount: g('amount'),
+            item_id: g('item_id'), batch_id: g('batch_id'),
+            packing: g('packing'), company_name: g('company_name'), unit: g('unit'),
+        });
+    });
+
+    const state={
+        savedAt: new Date().toISOString(),
+        quotation_id: _val('quotation_id'),
+        quotation_no: _val('quotation_no'),
+        quotation_date: _val('quotation_date'),
+        customer_id: _val('customer_id'),
+        customer_name: _val('customer_name'),
+        customerSearchInput: _val('customerSearchInput'),
+        remarks: _val('remarks'),
+        terms: _val('terms'),
+        discount_percent: _val('discount_percent'),
+        rows: rows,
+    };
+    if(!state.quotation_id && !rows.length) return;
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||!state.quotation_id) return;
+    _banner(state.savedAt, function keep(){
+        _set('quotation_id', state.quotation_id||'');
+        _set('quotation_no', state.quotation_no||'');
+        if(state.quotation_date) _set('quotation_date', state.quotation_date);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('customer_id', state.customer_id||'');
+        _set('customer_name', state.customer_name||'');
+        const ci=document.getElementById('customerSearchInput'); if(ci) ci.value=state.customerSearchInput||'';
+        _set('remarks', state.remarks||'');
+        _set('terms', state.terms||'');
+        _set('discount_percent', state.discount_percent||'0');
+
+        // Restore rows
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof currentRowIndex!=='undefined') window.currentRowIndex=0;
+
+        (state.rows||[]).forEach(function(saved){
+            const ri = saved.ri;
+            if(typeof currentRowIndex!=='undefined' && parseInt(ri)>=currentRowIndex)
+                window.currentRowIndex = parseInt(ri)+1;
+            const tr=document.createElement('tr');
+            tr.id = 'row-'+ri;
+            tr.dataset.rowIndex = ri;
+            tr.dataset.itemId = saved.itemId;
+            tr.dataset.batchId = saved.batchId;
+            tr.onclick = function(){ if(typeof selectRow==='function') selectRow(parseInt(ri)); };
+            tr.innerHTML =
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][code]" value="'+_esc(saved.code)+'" readonly onkeydown="handleCodeKeydown(event,'+ri+')"></td>'+
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][item_name]" value="'+_esc(saved.item_name)+'" readonly></td>'+
+                '<td><input type="number" class="form-control form-control-sm text-end" name="items['+ri+'][qty]" value="'+_esc(saved.qty||0)+'" step="0.001" data-custom-enter onkeydown="handleQtyKeydown(event,'+ri+')" onchange="calculateRowAmount('+ri+')"></td>'+
+                '<td><input type="number" class="form-control form-control-sm text-end" name="items['+ri+'][rate]" value="'+parseFloat(saved.rate||0).toFixed(2)+'" step="0.01" data-custom-enter onkeydown="handleRateKeydown(event,'+ri+')" onchange="calculateRowAmount('+ri+')"></td>'+
+                '<td><input type="number" class="form-control form-control-sm text-end" name="items['+ri+'][mrp]" value="'+parseFloat(saved.mrp||0).toFixed(2)+'" step="0.01" readonly></td>'+
+                '<td><input type="number" class="form-control form-control-sm text-end readonly-field" name="items['+ri+'][amount]" value="'+_esc(saved.amount||'0.00')+'" readonly></td>'+
+                '<td>'+
+                '<button type="button" class="btn btn-sm btn-danger" onclick="removeRow('+ri+')"><i class="bi bi-x"></i></button>'+
+                '<input type="hidden" name="items['+ri+'][item_id]" value="'+_esc(saved.item_id)+'">'+
+                '<input type="hidden" name="items['+ri+'][batch_id]" value="'+_esc(saved.batch_id)+'">'+
+                '<input type="hidden" name="items['+ri+'][packing]" value="'+_esc(saved.packing)+'">'+
+                '<input type="hidden" name="items['+ri+'][company_name]" value="'+_esc(saved.company_name)+'">'+
+                '<input type="hidden" name="items['+ri+'][unit]" value="'+_esc(saved.unit)+'">'+
+                '</td>';
+            if(tbody) tbody.appendChild(tr);
+        });
+
+        if(typeof calculateTotalAmount==='function') calculateTotalAmount();
+
+        // Re-enable update button
+        const ub=document.getElementById('updateBtn'); if(ub) ub.disabled=false;
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave = function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; }, 2200);
+}
+function _banner(savedAt, onKeep, onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } }, 12000);
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+        if(typeof updateQuotation==='function'){
+            const _orig=updateQuotation;
+            window.updateQuotation=function(){ clearAutoSave(); _orig.apply(this,arguments); };
+        }
+    }, 800);
+    setTimeout(restore, 900);
+    const form=document.getElementById('qtForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody, {childList:true, subtree:true});
+});
+})();
+</script>
+
 @endpush

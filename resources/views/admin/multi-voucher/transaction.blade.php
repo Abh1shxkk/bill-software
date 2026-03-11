@@ -506,4 +506,125 @@ function saveVoucher() {
 function saveAndExport() { saveVoucher(); }
 function importData() { alert('Import feature coming soon'); }
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  multi_voucher_entry_transaction_autosave_v1
+// ============================================================
+(function() {
+    const STORAGE_KEY = 'multi_voucher_entry_transaction_autosave_v1';
+    const BANNER_ID   = 'mve_tx_autosave_banner';
+    const INTERVAL_MS = 30000;
+    let _saving = false;
+    let _timer  = null;
+
+    window.markAsSaving = function() { _saving = true; };
+
+    function _ensureBanner() {
+        if (document.getElementById(BANNER_ID)) return;
+        const div = document.createElement('div');
+        div.id = BANNER_ID;
+        div.style.cssText = 'display:none;position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#ff9800;color:#fff;padding:6px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.25);';
+        document.body.appendChild(div);
+    }
+    function _showBanner(msg) { _ensureBanner(); const b = document.getElementById(BANNER_ID); b.textContent = msg; b.style.display = 'block'; }
+    function _hideBanner() { const b = document.getElementById(BANNER_ID); if (b) b.style.display = 'none'; }
+
+    function _collect() {
+        const header = {
+            narration:    document.getElementById('narration')?.value    || '',
+            fixedDebit:   document.getElementById('fixedDebit')?.checked  || false,
+            fixedCredit:  document.getElementById('fixedCredit')?.checked || false,
+            fixedAmount:  document.getElementById('fixedAmount')?.checked || false,
+        };
+        const rows = [];
+        document.querySelectorAll('#entriesBody tr').forEach(function(tr) {
+            rows.push({
+                entry_date:          tr.querySelector('.entry-date')?.value        || '',
+                debit_account_name:  tr.querySelector('.debit-name')?.value        || '',
+                debit_account_type:  tr.querySelector('.debit-type')?.value        || '',
+                debit_account_id:    tr.querySelector('.debit-id')?.value          || '',
+                credit_account_name: tr.querySelector('.credit-name')?.value       || '',
+                credit_account_type: tr.querySelector('.credit-type')?.value       || '',
+                credit_account_id:   tr.querySelector('.credit-id')?.value         || '',
+                amount:              tr.querySelector('.entry-amount')?.value      || '',
+                dr_slcd:             tr.querySelector('.dr-slcd')?.value           || '',
+            });
+        });
+        return { header: header, rows: rows };
+    }
+
+    function _hasData(state) {
+        if (!state) return false;
+        if (state.header.narration) return true;
+        if (state.rows && state.rows.some(r => r.debit_account_name || r.credit_account_name || r.amount)) return true;
+        return false;
+    }
+
+    function _doSave() {
+        const state = _collect();
+        if (!_hasData(state)) return;
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            _showBanner('\u23f1 Auto-saved ' + new Date().toLocaleTimeString());
+        } catch(e) {}
+    }
+
+    function _restore() {
+        let raw; try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) { return; }
+        if (!raw) return;
+        let state; try { state = JSON.parse(raw); } catch(e) { return; }
+        if (!_hasData(state)) return;
+
+        if (!confirm('Auto-saved data found for Multi Voucher Entry. Restore it?')) {
+            localStorage.removeItem(STORAGE_KEY); return;
+        }
+        const h = state.header;
+
+        if (h.narration)   document.getElementById('narration').value     = h.narration;
+        if (h.fixedDebit)  document.getElementById('fixedDebit').checked  = h.fixedDebit;
+        if (h.fixedCredit) document.getElementById('fixedCredit').checked = h.fixedCredit;
+        if (h.fixedAmount) document.getElementById('fixedAmount').checked = h.fixedAmount;
+
+        if (state.rows && state.rows.length) {
+            document.getElementById('entriesBody').innerHTML = '';
+            window.rowCount = 0;
+            state.rows.forEach(function(r) {
+                if (typeof addRow === 'function') addRow(r);
+            });
+        }
+
+        if (typeof calculateTotal === 'function') calculateTotal();
+        _showBanner('\u2705 Data restored!');
+        setTimeout(_hideBanner, 3000);
+    }
+
+    window.addEventListener('beforeunload', function(e) {
+        if (_saving) { _saving = false; localStorage.removeItem(STORAGE_KEY); return; }
+        const state = _collect();
+        if (_hasData(state)) { _doSave(); e.preventDefault(); e.returnValue = ''; }
+    });
+
+    function _startObserver() {
+        const obs = new MutationObserver(function() { clearTimeout(_timer); _timer = setTimeout(_doSave, 2000); });
+        const t = document.getElementById('entriesBody');
+        if (t) obs.observe(t, { childList: true, subtree: true, characterData: true, attributes: true });
+        document.addEventListener('input', function(e) {
+            const form = document.getElementById('voucherForm');
+            if (form && form.contains(e.target)) { clearTimeout(_timer); _timer = setTimeout(_doSave, 2000); }
+        });
+        document.addEventListener('change', function(e) {
+            if (['fixedDebit','fixedCredit','fixedAmount'].includes(e.target.id)) {
+                clearTimeout(_timer); _timer = setTimeout(_doSave, 2000);
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        _startObserver();
+        setInterval(_doSave, INTERVAL_MS);
+        setTimeout(_restore, 600);
+    });
+})();
+</script>
 @endsection

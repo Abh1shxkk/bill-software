@@ -1212,6 +1212,141 @@ $(document).ready(function() {
     }, 100);
 });
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  sale_return_replacement_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'sale_return_replacement_modification_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri=tr.getAttribute('data-row');
+        if(ri===null||ri==='') return;
+        const g=function(n){ const el=tr.querySelector('input[name="items['+ri+']['+n+']"]'); return el?el.value:''; };
+        if(!g('item_id')&&!g('item_code')) return;
+        rows.push({
+            ri:ri,
+            item_code:g('item_code'), item_id:g('item_id'), item_name:g('item_name'),
+            batch_no:g('batch_no'), expiry_date:g('expiry_date'),
+            qty:g('qty'), free_qty:g('free_qty'), sale_rate:g('sale_rate'),
+            discount_percent:g('discount_percent'), ft_rate:g('ft_rate'), amount:g('amount'),
+        });
+    });
+
+    const state={
+        savedAt:new Date().toISOString(),
+        trnId:_val('trnId'),
+        trn_date:_val('trn_date'),
+        customer_id:_val('customer_id'), customerSearchInput:_val('customerSearchInput'),
+        is_cash:_val('is_cash'), is_cash_display:_val('is_cash_display'),
+        fixed_discount:_val('fixed_discount'), remarks:_val('remarks'),
+        sc_percent:_val('sc_percent'), tax_percent:_val('tax_percent'),
+        dis_amt:_val('dis_amt'), scm_amt:_val('scm_amt'), scm_percent:_val('scm_percent'),
+        rows:rows,
+    };
+    if(!state.trnId && !rows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||!state.trnId) return;
+    _banner(state.savedAt, function keep(){
+        _set('trnId',state.trnId||'');
+        if(state.trn_date) _set('trn_date',state.trn_date);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('customer_id',state.customer_id||'');
+        const ci=document.getElementById('customerSearchInput'); if(ci) ci.value=state.customerSearchInput||'';
+        _set('is_cash',state.is_cash||'N');
+        _set('is_cash_display',state.is_cash_display||'N');
+        _set('fixed_discount',state.fixed_discount||'0');
+        _set('remarks',state.remarks||'');
+        _set('sc_percent',state.sc_percent||'0');
+        _set('tax_percent',state.tax_percent||'0');
+        _set('dis_amt',state.dis_amt||'0.00');
+        _set('scm_amt',state.scm_amt||'0.00');
+        _set('scm_percent',state.scm_percent||'0.00');
+
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+
+        (state.rows||[]).forEach(function(saved,idx){
+            const ri=saved.ri!==undefined?saved.ri:idx;
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row',ri);
+            tr.innerHTML=
+                '<td><input type="text" class="form-control item-code" name="items['+ri+'][item_code]" value="'+_esc(saved.item_code)+'">'+
+                    '<input type="hidden" name="items['+ri+'][item_id]" value="'+_esc(saved.item_id)+'">'+
+                '</td>'+
+                '<td><input type="text" class="form-control item-name" name="items['+ri+'][item_name]" value="'+_esc(saved.item_name)+'"></td>'+
+                '<td><input type="text" class="form-control" name="items['+ri+'][batch_no]" value="'+_esc(saved.batch_no)+'"></td>'+
+                '<td><input type="text" class="form-control" name="items['+ri+'][expiry_date]" value="'+_esc(saved.expiry_date)+'"></td>'+
+                '<td><input type="number" step="any" class="form-control qty" name="items['+ri+'][qty]" value="'+_esc(saved.qty)+'"></td>'+
+                '<td><input type="number" step="any" class="form-control f-qty" name="items['+ri+'][free_qty]" value="'+_esc(saved.free_qty||0)+'"></td>'+
+                '<td><input type="number" step="any" class="form-control sale-rate" name="items['+ri+'][sale_rate]" value="'+_esc(saved.sale_rate)+'"></td>'+
+                '<td><input type="number" step="any" class="form-control dis-percent" name="items['+ri+'][discount_percent]" value="'+_esc(saved.discount_percent||0)+'"></td>'+
+                '<td><input type="number" step="any" class="form-control ft-rate" name="items['+ri+'][ft_rate]" value="'+_esc(saved.ft_rate)+'"></td>'+
+                '<td><input type="number" step="any" class="form-control amount" name="items['+ri+'][amount]" value="'+_esc(saved.amount||'0.00')+'" readonly></td>'+
+                '<td class="text-center"><button type="button" class="btn btn-danger btn-sm remove-row"><i class="bi bi-x"></i></button></td>';
+            if(tbody) tbody.appendChild(tr);
+        });
+
+        if(typeof _recalcAll==='function') _recalcAll();
+        else if(typeof calculateTotals==='function') calculateTotals();
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origReload=window.location.reload.bind(window.location);
+        window.location.reload=function(){ clearAutoSave(); _origReload(); };
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('modificationForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endpush
 @include('components.modals.item-selection', [
     'id'           => 'saleReturnItemModal',

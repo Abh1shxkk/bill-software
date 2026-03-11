@@ -1208,4 +1208,169 @@ function cancelModification() {
     }
 }
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  bsi_unused_dump_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'bsi_unused_dump_modification_autosave_v1';
+let _t = null;
+
+function _esc(v){
+    if(v===undefined||v===null)return'';
+    return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(row){
+        const g =function(n){const el=row.querySelector('input[name*="['+n+']"]:not([type="hidden"])');return el?el.value:'';};
+        const gh=function(n){const el=row.querySelector('input[type="hidden"][name*="['+n+']"]');return el?el.value:'';};
+        rows.push({
+            id:gh('id'),
+            item_code:g('item_code'),item_name:g('item_name'),
+            batch_no:g('batch_no'),expiry:g('expiry'),
+            qty:g('qty'),free_qty:g('free_qty'),
+            rate:g('rate'),dis_percent:g('dis_percent'),scm_percent:g('scm_percent'),
+            br_ex:gh('br_ex')||'B',amount:g('amount'),
+            item_id:gh('item_id'),batch_id:gh('batch_id'),
+            mrp:gh('mrp'),purchase_rate:gh('purchase_rate'),sale_rate:gh('sale_rate'),
+            cgst:gh('cgst'),sgst:gh('sgst'),
+            company_name:gh('company_name'),packing:gh('packing'),
+            unit:gh('unit'),hsn_code:gh('hsn_code'),
+        });
+    });
+    const state={
+        savedAt:new Date().toISOString(),
+        transaction_id:_val('transaction_id'),
+        transaction_date:_val('transaction_date'),
+        trn_no:_val('trn_no'),
+        narration:_val('narration'),
+        rows:rows,
+    };
+    if(!state.transaction_id&&!rows.length) return;
+    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function _restoreRow(saved){
+    const tbody=document.getElementById('itemsTableBody');
+    const idx=rowIndex++;
+    const brLabel=saved.br_ex==='E'?'Exp':'Brk';
+    const tr=document.createElement('tr');
+    tr.id='row_'+idx;
+    tr.onclick=function(){selectRow(idx);};
+    tr.innerHTML=
+        '<td><input type="text" name="items['+idx+'][item_code]" value="'+_esc(saved.item_code)+'" readonly class="readonly-field" onkeydown="handleGridEnterKey(event,'+idx+',\'item_code\')"></td>'+
+        '<td><input type="text" name="items['+idx+'][item_name]" value="'+_esc(saved.item_name)+'" readonly class="readonly-field" onkeydown="handleGridEnterKey(event,'+idx+',\'item_name\')"></td>'+
+        '<td><input type="text" name="items['+idx+'][batch_no]" value="'+_esc(saved.batch_no)+'" readonly class="readonly-field" onkeydown="handleGridEnterKey(event,'+idx+',\'batch_no\')"></td>'+
+        '<td><input type="text" name="items['+idx+'][expiry]" value="'+_esc(saved.expiry)+'" readonly class="readonly-field" onkeydown="handleGridEnterKey(event,'+idx+',\'expiry\')"></td>'+
+        '<td><input type="number" name="items['+idx+'][qty]" value="'+_esc(saved.qty)+'" min="0" class="text-end" onchange="calculateRowAmount('+idx+')" onkeydown="handleGridEnterKey(event,'+idx+',\'qty\')"></td>'+
+        '<td><input type="number" name="items['+idx+'][free_qty]" value="'+_esc(saved.free_qty||0)+'" min="0" class="text-end" onkeydown="handleGridEnterKey(event,'+idx+',\'free_qty\')"></td>'+
+        '<td><input type="number" name="items['+idx+'][rate]" value="'+parseFloat(saved.rate||0).toFixed(2)+'" step="0.01" class="text-end" onchange="calculateRowAmount('+idx+')" onkeydown="handleGridEnterKey(event,'+idx+',\'rate\')"></td>'+
+        '<td><input type="number" name="items['+idx+'][dis_percent]" value="'+_esc(saved.dis_percent||0)+'" step="0.01" class="text-end" onchange="calculateRowAmount('+idx+')" onkeydown="handleGridEnterKey(event,'+idx+',\'dis_percent\')"></td>'+
+        '<td><input type="number" name="items['+idx+'][scm_percent]" value="'+_esc(saved.scm_percent||0)+'" step="0.01" class="text-end" data-custom-enter="true" onchange="calculateRowAmount('+idx+')" onkeydown="handleGridEnterKey(event,'+idx+',\'scm_percent\')"></td>'+
+        '<td style="position:relative;">'+
+          '<input type="text" class="form-control text-center br-ex-input" id="br_ex_display_'+idx+'" value="'+brLabel+'" readonly style="cursor:pointer;width:55px;" onfocus="openBrExDropdown('+idx+')" onclick="openBrExDropdown('+idx+')" onkeydown="handleBrExKeyDown(event,'+idx+')">'+
+          '<input type="hidden" name="items['+idx+'][br_ex]" id="br_ex_'+idx+'" value="'+_esc(saved.br_ex||'B')+'">'+
+          '<div class="br-ex-dropdown" id="br_ex_dropdown_'+idx+'" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid #ccc;border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);width:55px;">'+
+            '<div class="br-ex-option" data-value="B" onclick="selectBrEx('+idx+',\'B\',\'Brk\')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Brk</div>'+
+            '<div class="br-ex-option" data-value="E" onclick="selectBrEx('+idx+',\'E\',\'Exp\')" style="padding:4px 8px;cursor:pointer;font-size:11px;">Exp</div>'+
+          '</div>'+
+        '</td>'+
+        '<td><input type="number" name="items['+idx+'][amount]" value="'+parseFloat(saved.amount||0).toFixed(2)+'" step="0.01" class="text-end readonly-field" readonly></td>'+
+        '<td>'+
+          '<button type="button" class="btn btn-danger btn-sm py-0 px-1" onclick="removeRow('+idx+')">&times;</button>'+
+          '<input type="hidden" name="items['+idx+'][id]" value="'+_esc(saved.id)+'">'+
+          '<input type="hidden" name="items['+idx+'][item_id]" value="'+_esc(saved.item_id)+'">'+
+          '<input type="hidden" name="items['+idx+'][batch_id]" value="'+_esc(saved.batch_id)+'">'+
+          '<input type="hidden" name="items['+idx+'][mrp]" value="'+_esc(saved.mrp)+'">'+
+          '<input type="hidden" name="items['+idx+'][purchase_rate]" value="'+_esc(saved.purchase_rate)+'">'+
+          '<input type="hidden" name="items['+idx+'][sale_rate]" value="'+_esc(saved.sale_rate)+'">'+
+          '<input type="hidden" name="items['+idx+'][cgst]" value="'+_esc(saved.cgst)+'">'+
+          '<input type="hidden" name="items['+idx+'][sgst]" value="'+_esc(saved.sgst)+'">'+
+          '<input type="hidden" name="items['+idx+'][company_name]" value="'+_esc(saved.company_name)+'">'+
+          '<input type="hidden" name="items['+idx+'][packing]" value="'+_esc(saved.packing)+'">'+
+          '<input type="hidden" name="items['+idx+'][unit]" value="'+_esc(saved.unit)+'">'+
+          '<input type="hidden" name="items['+idx+'][hsn_code]" value="'+_esc(saved.hsn_code)+'">'+
+        '</td>';
+    tbody.appendChild(tr);
+    selectRow(idx);
+}
+
+function restore(){
+    let state; try{const r=localStorage.getItem(KEY);if(!r)return;state=JSON.parse(r);}catch(e){return;}
+    if(!state||(!state.transaction_id&&!state.rows.length)) return;
+    _banner(state.savedAt, function keep(){
+        _set('transaction_id',state.transaction_id||'');
+        _set('trn_no',state.trn_no||'');
+        if(state.transaction_date) _set('transaction_date',state.transaction_date);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('narration',state.narration||'');
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        rowIndex=0;
+        (state.rows||[]).forEach(_restoreRow);
+        if(typeof calculateTotals==='function') calculateTotals();
+        if(state.transaction_id){
+            const ub=document.getElementById('updateBtn'); if(ub) ub.disabled=false;
+        }
+    }, function discard(){clearAutoSave();});
+}
+
+window.clearAutoSave=function(){try{localStorage.removeItem(KEY);}catch(e){}};
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){b=document.createElement('div');b.id='_asBadge';
+     b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+     document.body.appendChild(b);}
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){b.style.opacity='0';},2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner');if(old)old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div');d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){if(done)return;done=true;d.remove();}
+    document.getElementById('_asKeep').onclick=function(){dismiss();if(onKeep)onKeep();};
+    document.getElementById('_asDiscard').onclick=function(){dismiss();if(onDiscard)onDiscard();};
+    setTimeout(function(){if(!done){dismiss();if(onKeep)onKeep();}},12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origFetch=window.fetch;
+        window.fetch=function(url){
+            const p=_origFetch.apply(this,arguments);
+            const s=(url||'').toString();
+            if(s.indexOf('unused-dump')!==-1){
+                return p.then(function(resp){
+                    resp.clone().json().then(function(d){if(d&&d.success)clearAutoSave();}).catch(function(){});
+                    return resp;
+                });
+            }
+            return p;
+        };
+    },500);
+    setTimeout(restore,900);
+    const form=document.getElementById('dumpForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endpush

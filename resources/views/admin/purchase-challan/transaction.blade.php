@@ -4565,7 +4565,152 @@ document.addEventListener('DOMContentLoaded', function() {
     'showCostDetails' => true,
 ])
 
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  purchase_challan_transaction_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'purchase_challan_transaction_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(row,index){
+        const g=function(n){const el=row.querySelector('input[name="items['+index+']['+n+']"]');return el?el.value:'';};
+        const code=g('code'); const qty=g('qty'); const purRate=g('pur_rate');
+        if(!code && !qty && !purRate) return;
+        rows.push({
+            code:code, name:g('name'), batch:g('batch'), exp:g('exp'),
+            qty:qty, free_qty:g('free_qty'), pur_rate:purRate,
+            dis_percent:g('dis_percent'), mrp:g('mrp'), amount:g('amount'),
+            _index:index
+        });
+    });
+
+    // Save rowGstData
+    const gstBlob = (typeof rowGstData !== 'undefined') ? JSON.parse(JSON.stringify(rowGstData)) : {};
+
+    const state={
+        savedAt:new Date().toISOString(),
+        billDate:_val('billDate'),
+        supplierSearchInput:_val('supplierSearchInput'),
+        supplier_id:_val('supplierSelect'),
+        billNo:_val('billNo'),
+        receiveDate:_val('receiveDate'),
+        cash:_val('cash'),
+        transfer:_val('transfer'),
+        remarks:_val('remarks'),
+        dueDate:_val('dueDate'),
+        rows:rows,
+        gstBlob:gstBlob,
+    };
+    if(!state.supplier_id && !rows.length) return;
+    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{const r=localStorage.getItem(KEY);if(!r)return;state=JSON.parse(r);}catch(e){return;}
+    if(!state||(!state.supplier_id&&!state.rows.length)) return;
+    _banner(state.savedAt, function keep(){
+        if(state.billDate) _set('billDate',state.billDate);
+        if(typeof updateDayName==='function') updateDayName();
+        // Restore supplier custom dropdown
+        _set('supplierSelect',state.supplier_id||'');
+        const si=document.getElementById('supplierSearchInput');
+        if(si) si.value=state.supplierSearchInput||'';
+        if(state.billNo) _set('billNo',state.billNo);
+        if(state.receiveDate) _set('receiveDate',state.receiveDate);
+        if(state.cash) _set('cash',state.cash);
+        if(state.transfer) _set('transfer',state.transfer);
+        if(state.remarks) _set('remarks',state.remarks);
+        if(state.dueDate) _set('dueDate',state.dueDate);
+
+        // Restore rows
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        (state.rows||[]).forEach(function(saved,i){
+            const tr=document.createElement('tr');
+            tr.innerHTML=
+                '<td><input type="text" class="form-control item-code-trigger" name="items['+i+'][code]" value="'+_esc(saved.code)+'" autocomplete="off" readonly placeholder="Press Enter"></td>'+
+                '<td><input type="text" class="form-control" name="items['+i+'][name]" value="'+_esc(saved.name)+'" autocomplete="off" readonly></td>'+
+                '<td><input type="text" class="form-control" name="items['+i+'][batch]" value="'+_esc(saved.batch)+'" autocomplete="off"></td>'+
+                '<td><input type="text" class="form-control" name="items['+i+'][exp]" value="'+_esc(saved.exp)+'" autocomplete="off"></td>'+
+                '<td><input type="number" class="form-control item-qty" name="items['+i+'][qty]" value="'+_esc(saved.qty)+'" autocomplete="off" data-row="'+i+'"></td>'+
+                '<td><input type="number" class="form-control item-fqty" name="items['+i+'][free_qty]" value="'+_esc(saved.free_qty)+'" autocomplete="off" data-row="'+i+'"></td>'+
+                '<td><input type="number" class="form-control item-pur-rate" name="items['+i+'][pur_rate]" value="'+_esc(saved.pur_rate)+'" step="0.01" autocomplete="off" data-row="'+i+'"></td>'+
+                '<td><input type="number" class="form-control item-dis-percent" name="items['+i+'][dis_percent]" value="'+_esc(saved.dis_percent)+'" step="0.01" autocomplete="off" data-row="'+i+'"></td>'+
+                '<td><input type="number" class="form-control item-ft-rate" name="items['+i+'][mrp]" value="'+_esc(saved.mrp)+'" step="0.01" autocomplete="off"></td>'+
+                '<td><input type="number" class="form-control readonly-field item-amount" name="items['+i+'][amount]" value="'+_esc(saved.amount)+'" readonly tabindex="-1"></td>'+
+                '<td class="text-center"><button type="button" class="btn btn-sm btn-danger" onclick="deleteRow('+i+')" style="padding:4px 8px;font-weight:bold;">\xd7</button></td>';
+            if(tbody) tbody.appendChild(tr);
+            // Reattach row navigation and calculation
+            if(typeof addRowNavigationWithMrpModal==='function') addRowNavigationWithMrpModal(tr,i);
+            if(typeof addAmountCalculation==='function') addAmountCalculation(tr,i);
+        });
+
+        // Restore rowGstData
+        if(state.gstBlob && typeof rowGstData!=='undefined'){
+            for(var k in rowGstData) delete rowGstData[k];
+            Object.assign(rowGstData, state.gstBlob);
+        }
+
+        if(typeof calculateSummary==='function') calculateSummary();
+        else if(typeof calculateTotals==='function') calculateTotals();
+    }, function discard(){clearAutoSave();});
+}
+
+window.clearAutoSave=function(){try{localStorage.removeItem(KEY);}catch(e){}};
+
+function _esc(v){
+    if(v===undefined||v===null)return'';
+    return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){b=document.createElement('div');b.id='_asBadge';
+     b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+     document.body.appendChild(b);}
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){b.style.opacity='0';},2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner');if(old)old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div');d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){if(done)return;done=true;d.remove();}
+    document.getElementById('_asKeep').onclick=function(){dismiss();if(onKeep)onKeep();};
+    document.getElementById('_asDiscard').onclick=function(){dismiss();if(onDiscard)onDiscard();};
+    setTimeout(function(){if(!done){dismiss();if(onKeep)onKeep();}},12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    // Patch reloadPageAfterSuccess to clear draft before reloading
+    setTimeout(function(){
+        if(typeof reloadPageAfterSuccess==='function'){
+            const _orig=reloadPageAfterSuccess;
+            window.reloadPageAfterSuccess=function(){clearAutoSave();_orig.apply(this,arguments);};
+        }
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('purchaseChallanForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endsection
-
-
-

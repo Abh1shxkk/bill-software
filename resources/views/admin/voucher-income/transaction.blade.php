@@ -1344,4 +1344,169 @@ function deleteVoucher() { alert('Delete available in modification mode'); }
 function printVoucher() { window.print(); }
 function reverseVoucher() { alert('Reverse available in modification mode'); }
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  voucher_income_transaction_autosave_v1
+// ============================================================
+(function() {
+    const STORAGE_KEY = 'voucher_income_transaction_autosave_v1';
+    const BANNER_ID   = 'vi_tx_autosave_banner';
+    const INTERVAL_MS = 30000;
+    let _saving = false;
+    let _timer  = null;
+
+    window.markAsSaving = function() { _saving = true; };
+
+    function _ensureBanner() {
+        if (document.getElementById(BANNER_ID)) return;
+        const div = document.createElement('div');
+        div.id = BANNER_ID;
+        div.style.cssText = 'display:none;position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#ff9800;color:#fff;padding:6px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.25);';
+        document.body.appendChild(div);
+    }
+    function _showBanner(msg) { _ensureBanner(); const b = document.getElementById(BANNER_ID); b.textContent = msg; b.style.display = 'block'; }
+    function _hideBanner() { const b = document.getElementById(BANNER_ID); if (b) b.style.display = 'none'; }
+
+    function _collect() {
+        const header = {
+            voucherDate:        document.getElementById('voucherDate')?.value        || '',
+            voucherNo:          document.getElementById('voucherNo')?.value          || '',
+            localInter:         document.getElementById('localInter')?.value         || '',
+            description:        document.getElementById('description')?.value        || '',
+            customerId:         document.getElementById('customerId')?.value         || '',
+            customerNameInput:  document.getElementById('customerNameInput')?.value  || '',
+            customerNameHidden: document.getElementById('customerNameHidden')?.value || '',
+            customerDisplay:    document.getElementById('customerDisplay')?.value    || '',
+            addressDisplay:     document.getElementById('addressDisplay')?.value     || '',
+            gstNo:              document.getElementById('gstNo')?.value              || '',
+            panNo:              document.getElementById('panNo')?.value              || '',
+            city:               document.getElementById('city')?.value               || '',
+            pin:                document.getElementById('pin')?.value                || '',
+            tdsPercent:         document.getElementById('tdsPercent')?.value         || '0',
+            debitAccountId:     document.getElementById('debitAccountId')?.value     || '',
+            debitAccountType:   document.getElementById('debitAccountType')?.value   || '',
+            debitAccountName:   document.getElementById('debitAccountName')?.value   || '',
+            debitAccountInput:  document.getElementById('debitAccountInput')?.value  || '',
+        };
+        const hsnRows = [];
+        document.querySelectorAll('#hsnTableBody tr').forEach(function(tr) {
+            hsnRows.push({
+                hsn_code:     tr.querySelector('.hsn-code')?.value      || '',
+                amount:       tr.querySelector('.hsn-amount')?.value    || '',
+                gst_percent:  tr.querySelector('.hsn-gst')?.value       || '',
+                cgst_percent: tr.querySelector('.hsn-cgst-pct')?.value  || '',
+                cgst_amount:  tr.querySelector('.hsn-cgst-amt')?.value  || '',
+                sgst_percent: tr.querySelector('.hsn-sgst-pct')?.value  || '',
+                sgst_amount:  tr.querySelector('.hsn-sgst-amt')?.value  || '',
+            });
+        });
+        const accountRows = [];
+        document.querySelectorAll('#accountsTableBody tr').forEach(function(tr) {
+            accountRows.push({
+                account_code: tr.querySelector('.account-code')?.value || '',
+                account_name: tr.querySelector('.account-name')?.value || '',
+                account_type: tr.querySelector('.account-type')?.value || '',
+                account_id:   tr.querySelector('.account-id')?.value   || '',
+            });
+        });
+        return { header: header, hsnRows: hsnRows, accountRows: accountRows };
+    }
+
+    function _hasData(state) {
+        if (!state) return false;
+        const h = state.header;
+        if (h.customerId || h.description) return true;
+        if (state.hsnRows && state.hsnRows.some(r => r.hsn_code || r.amount)) return true;
+        if (state.accountRows && state.accountRows.some(r => r.account_name)) return true;
+        return false;
+    }
+
+    function _doSave() {
+        const state = _collect();
+        if (!_hasData(state)) return;
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            _showBanner('\u23f1 Auto-saved ' + new Date().toLocaleTimeString());
+        } catch(e) {}
+    }
+
+    function _restore() {
+        let raw; try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) { return; }
+        if (!raw) return;
+        let state; try { state = JSON.parse(raw); } catch(e) { return; }
+        if (!_hasData(state)) return;
+
+        if (!confirm('Auto-saved data found for Voucher Income. Restore it?')) {
+            localStorage.removeItem(STORAGE_KEY); return;
+        }
+        const h = state.header;
+
+        if (h.voucherDate)  document.getElementById('voucherDate').value  = h.voucherDate;
+        if (h.localInter)   document.getElementById('localInter').value   = h.localInter;
+        if (h.description)  document.getElementById('description').value  = h.description;
+
+        if (h.customerId) {
+            document.getElementById('customerId').value          = h.customerId;
+            document.getElementById('customerNameInput').value   = h.customerNameInput;
+            document.getElementById('customerNameHidden').value  = h.customerNameHidden;
+            document.getElementById('customerDisplay').value     = h.customerDisplay;
+            document.getElementById('addressDisplay').value      = h.addressDisplay;
+            document.getElementById('gstNo').value               = h.gstNo;
+            document.getElementById('panNo').value               = h.panNo;
+            document.getElementById('city').value                = h.city;
+            if (document.getElementById('pin')) document.getElementById('pin').value = h.pin;
+        }
+
+        if (h.tdsPercent) document.getElementById('tdsPercent').value = h.tdsPercent;
+
+        if (h.debitAccountId) {
+            document.getElementById('debitAccountId').value    = h.debitAccountId;
+            document.getElementById('debitAccountType').value  = h.debitAccountType;
+            document.getElementById('debitAccountName').value  = h.debitAccountName;
+            document.getElementById('debitAccountInput').value = h.debitAccountInput;
+        }
+
+        if (state.hsnRows && state.hsnRows.length) {
+            document.getElementById('hsnTableBody').innerHTML = '';
+            window.hsnRowCount = 0;
+            state.hsnRows.forEach(function(r) { if (typeof addHsnRow === 'function') addHsnRow(r); });
+        }
+
+        if (state.accountRows && state.accountRows.length) {
+            document.getElementById('accountsTableBody').innerHTML = '';
+            window.accountRowCount = 0;
+            state.accountRows.forEach(function(r) { if (typeof addAccountRow === 'function') addAccountRow(r); });
+        }
+
+        if (typeof calculateTotals === 'function') calculateTotals();
+        _showBanner('\u2705 Data restored!');
+        setTimeout(_hideBanner, 3000);
+    }
+
+    window.addEventListener('beforeunload', function(e) {
+        if (_saving) { _saving = false; localStorage.removeItem(STORAGE_KEY); return; }
+        const state = _collect();
+        if (_hasData(state)) { _doSave(); e.preventDefault(); e.returnValue = ''; }
+    });
+
+    function _startObserver() {
+        const obs = new MutationObserver(function() { clearTimeout(_timer); _timer = setTimeout(_doSave, 2000); });
+        ['hsnTableBody', 'accountsTableBody'].forEach(function(id) {
+            const t = document.getElementById(id);
+            if (t) obs.observe(t, { childList: true, subtree: true, characterData: true, attributes: true });
+        });
+        document.addEventListener('input', function(e) {
+            const form = document.getElementById('voucherForm');
+            if (form && form.contains(e.target)) { clearTimeout(_timer); _timer = setTimeout(_doSave, 2000); }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        _startObserver();
+        setInterval(_doSave, INTERVAL_MS);
+        setTimeout(_restore, 600);
+    });
+})();
+</script>
 @endsection

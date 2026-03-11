@@ -1596,4 +1596,178 @@ function deleteVoucher() { alert('Delete functionality available in modification
 function printVoucher() { window.print(); }
 function reverseVoucher() { alert('Reverse functionality available in modification mode'); }
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  voucher_purchase_transaction_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'voucher_purchase_transaction_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    // --- HSN rows ---
+    const hsnRows=[];
+    document.querySelectorAll('#hsnTableBody tr').forEach(function(tr){
+        const ri=tr.getAttribute('data-row'); if(!ri) return;
+        const gc=function(cls){ const el=tr.querySelector('.'+cls); return el?el.value:''; };
+        if(!gc('hsn-code')&&!(parseFloat(gc('hsn-amount'))>0)) return;
+        hsnRows.push({ ri:ri,
+            hsnCode:gc('hsn-code'), amount:gc('hsn-amount'), gstPct:gc('hsn-gst'),
+            cgstPct:gc('hsn-cgst-pct'), cgstAmt:gc('hsn-cgst-amt'),
+            sgstPct:gc('hsn-sgst-pct'), sgstAmt:gc('hsn-sgst-amt'),
+        });
+    });
+    // --- Account rows ---
+    const accRows=[];
+    document.querySelectorAll('#accountsTableBody tr').forEach(function(tr){
+        const ri=tr.getAttribute('data-row'); if(!ri) return;
+        const gc=function(cls){ const el=tr.querySelector('.'+cls); return el?el.value:''; };
+        if(!gc('account-name')) return;
+        accRows.push({ ri:ri,
+            code:gc('account-code'), name:gc('account-name'),
+            type:gc('account-type'), id:gc('account-id'),
+        });
+    });
+
+    const state={
+        savedAt:new Date().toISOString(),
+        voucherDate:_val('voucherDate'), voucherNo:_val('voucherNo'),
+        billNo:_val('billNo'), billDate:_val('billDate'),
+        localInter:_val('localInter'), rcm:_val('rcm'),
+        description:_val('description'),
+        supplierId:_val('supplierId'), supplierDisplay:_val('supplierDisplay'),
+        gstNo:_val('gstNo'), panNo:_val('panNo'), city:_val('city'), pin:_val('pin'),
+        tdsPercent:_val('tdsPercent'),
+        paymentType:_val('paymentType'),
+        creditAccountId:_val('creditAccountId'), creditAccountType:_val('creditAccountType'),
+        creditAccountName:_val('creditAccountName'), creditAccountInput:_val('creditAccountInput'),
+        chequeNo:_val('chequeNo'),
+        hsnRows:hsnRows, accRows:accRows,
+    };
+    if(!state.supplierId&&!hsnRows.length&&!accRows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||(!state.supplierId&&!state.hsnRows.length&&!state.accRows.length)) return;
+    _banner(state.savedAt, function keep(){
+        if(state.voucherDate) _set('voucherDate',state.voucherDate);
+        _set('voucherNo',state.voucherNo||''); _set('voucherNoDisplay',state.voucherNo||'');
+        _set('billNo',state.billNo||'');
+        if(state.billDate) _set('billDate',state.billDate);
+        _set('localInter',state.localInter||'L');
+        _set('rcm',state.rcm||'N');
+        _set('description',state.description||'');
+        _set('supplierId',state.supplierId||''); _set('supplierDisplay',state.supplierDisplay||'');
+        _set('gstNo',state.gstNo||''); _set('panNo',state.panNo||'');
+        _set('city',state.city||''); _set('pin',state.pin||'');
+        _set('tdsPercent',state.tdsPercent||'0');
+        _set('paymentType',state.paymentType||'1');
+        _set('creditAccountId',state.creditAccountId||'');
+        _set('creditAccountType',state.creditAccountType||'');
+        _set('creditAccountName',state.creditAccountName||'');
+        _set('creditAccountInput',state.creditAccountInput||'');
+        _set('chequeNo',state.chequeNo||'');
+
+        // Restore HSN rows
+        const hsnTbody=document.getElementById('hsnTableBody');
+        if(hsnTbody) hsnTbody.innerHTML='';
+        if(typeof hsnRowCount!=='undefined') window.hsnRowCount=0;
+        (state.hsnRows||[]).forEach(function(saved){
+            const ri=parseInt(saved.ri);
+            if(typeof hsnRowCount!=='undefined'&&ri>=hsnRowCount) window.hsnRowCount=ri;
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row',ri);
+            tr.onclick=function(){ if(typeof selectHsnRowEl==='function') selectHsnRowEl(tr); };
+            tr.innerHTML=
+                '<td><input type="text" class="hsn-code" name="items['+ri+'][hsn_code]" value="'+_esc(saved.hsnCode)+'" onclick="selectHsnRowEl(this.closest(\'tr\'))" autocomplete="off"></td>'+
+                '<td><input type="number" class="hsn-amount text-end" name="items['+ri+'][amount]" value="'+_esc(saved.amount)+'" step="0.01" onchange="calculateHsnRow(this.closest(\'tr\')); checkAddHsnRow();" onclick="selectHsnRowEl(this.closest(\'tr\'))"></td>'+
+                '<td><input type="number" class="hsn-gst text-end" name="items['+ri+'][gst_percent]" value="'+_esc(saved.gstPct)+'" step="0.01" onchange="calculateHsnRow(this.closest(\'tr\'))" onclick="selectHsnRowEl(this.closest(\'tr\'))"></td>'+
+                '<td><input type="number" class="hsn-cgst-pct text-end bg-light" name="items['+ri+'][cgst_percent]" value="'+_esc(saved.cgstPct)+'" readonly></td>'+
+                '<td><input type="number" class="hsn-cgst-amt text-end bg-light" name="items['+ri+'][cgst_amount]" value="'+_esc(saved.cgstAmt)+'" readonly></td>'+
+                '<td><input type="number" class="hsn-sgst-pct text-end bg-light" name="items['+ri+'][sgst_percent]" value="'+_esc(saved.sgstPct)+'" readonly></td>'+
+                '<td><input type="number" class="hsn-sgst-amt text-end bg-light" name="items['+ri+'][sgst_amount]" value="'+_esc(saved.sgstAmt)+'" readonly></td>';
+            if(hsnTbody) hsnTbody.appendChild(tr);
+        });
+
+        // Restore Account rows
+        const accTbody=document.getElementById('accountsTableBody');
+        if(accTbody) accTbody.innerHTML='';
+        if(typeof accountRowCount!=='undefined') window.accountRowCount=0;
+        (state.accRows||[]).forEach(function(saved){
+            const ri=parseInt(saved.ri);
+            if(typeof accountRowCount!=='undefined'&&ri>=accountRowCount) window.accountRowCount=ri;
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row',ri);
+            tr.onclick=function(){ if(typeof selectAccountRowEl==='function') selectAccountRowEl(tr); };
+            tr.innerHTML=
+                '<td><input type="text" class="account-code" name="accounts['+ri+'][account_code]" value="'+_esc(saved.code)+'" tabindex="-1" style="cursor:pointer;" readonly'+
+                ' onclick="selectAccountRowEl(this.closest(\'tr\')); openAccountModal();"'+
+                ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();selectAccountRowEl(this.closest(\'tr\'));openAccountModal();}"></td>'+
+                '<td><input type="text" class="account-name" name="accounts['+ri+'][account_name]" value="'+_esc(saved.name)+'" readonly'+
+                ' onclick="selectAccountRowEl(this.closest(\'tr\')); openAccountModal();"'+
+                ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();selectAccountRowEl(this.closest(\'tr\'));openAccountModal();}"'+
+                ' tabindex="-1">'+
+                '<input type="hidden" class="account-type" name="accounts['+ri+'][account_type]" value="'+_esc(saved.type)+'">'+
+                '<input type="hidden" class="account-id" name="accounts['+ri+'][account_id]" value="'+_esc(saved.id)+'"></td>';
+            if(accTbody) accTbody.appendChild(tr);
+        });
+
+        if(typeof calculateTds==='function') calculateTds();
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+        const _origReload=window.location.reload.bind(window.location);
+        window.location.reload=function(){ clearAutoSave(); _origReload(); };
+    },800);
+    setTimeout(restore,900);
+    document.addEventListener('input',_sched);
+    document.addEventListener('change',_sched);
+    ['hsnTableBody','accountsTableBody'].forEach(function(id){
+        const t=document.getElementById(id);
+        if(t) new MutationObserver(_sched).observe(t,{childList:true,subtree:true});
+    });
+});
+})();
+</script>
+
 @endsection

@@ -1431,4 +1431,142 @@ window.addEventListener('keydown', function(e) {
 
 
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  supplier_payment_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'supplier_payment_modification_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _chk(id,v){ const el=document.getElementById(id); if(el) el.checked=!!v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri = tr.dataset.rowIndex;
+        if(ri===undefined||ri===null||ri==='') return;
+        const gc=function(cls){ const el=tr.querySelector('.'+cls); return el?el.value:''; };
+        const code = tr.querySelector('td:first-child input')?.value||'';
+        const name = tr.querySelector('td:nth-child(2) input')?.value||'';
+        if(!code&&!name) return;
+        const bd = (typeof rowBankDetails!=='undefined') ? (rowBankDetails[ri]||{}) : {};
+        rows.push({
+            ri:ri,
+            supplierId:tr.dataset.supplierId||'', paymentType:tr.dataset.paymentType||'cash',
+            code:code, name:name,
+            chequeNo:gc('cheque-no'), chequeDate:gc('cheque-date'),
+            amount:gc('amount-input'), unadjusted:gc('unadjusted-input'),
+            bankName:bd.bankName||'', bankArea:bd.bankArea||'', closedOn:bd.closedOn||'',
+        });
+    });
+    const cp = (typeof currentPayment!=='undefined'&&currentPayment) ? currentPayment : null;
+    const state={
+        savedAt:new Date().toISOString(),
+        currentPayment: cp ? JSON.stringify(cp) : '',
+        paymentDate:_val('paymentDate'), ledger:_val('ledger'),
+        bankSelect:_val('bankSelect'), bankSearchInput:_val('bankSearchInput'),
+        currencyDetail:document.getElementById('currencyDetail')?.checked||false,
+        rows:rows,
+    };
+    if(!cp && !rows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||!state.currentPayment) return;
+    _banner(state.savedAt, function keep(){
+        try{ if(state.currentPayment) window.currentPayment=JSON.parse(state.currentPayment); }catch(e){}
+        if(state.paymentDate) _set('paymentDate',state.paymentDate);
+        _set('ledger',state.ledger||'SL');
+        _set('bankSelect',state.bankSelect||''); _set('bankSearchInput',state.bankSearchInput||'');
+        _chk('currencyDetail',state.currencyDetail);
+
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof itemRowCount!=='undefined') window.itemRowCount=0;
+        if(typeof rowBankDetails!=='undefined') window.rowBankDetails={};
+
+        (state.rows||[]).forEach(function(saved){
+            const ri=parseInt(saved.ri);
+            if(typeof itemRowCount!=='undefined'&&ri>=itemRowCount) window.itemRowCount=ri+1;
+            if(typeof rowBankDetails!=='undefined'){
+                rowBankDetails[ri]={ bankName:saved.bankName||'', bankArea:saved.bankArea||'', closedOn:saved.closedOn||'' };
+            }
+            const tr=document.createElement('tr');
+            tr.id='itemRow_'+ri;
+            tr.dataset.rowIndex=ri;
+            tr.dataset.supplierId=saved.supplierId||'';
+            tr.dataset.paymentType=saved.paymentType||'cash';
+            tr.onclick=function(e){ if(e.target.tagName!=='INPUT'&&e.target.tagName!=='BUTTON') if(typeof selectRow==='function') selectRow(ri); };
+            tr.innerHTML=
+                '<td><input type="text" class="form-control" value="'+_esc(saved.code)+'" readonly></td>'+
+                '<td><input type="text" class="form-control" value="'+_esc(saved.name)+'" readonly></td>'+
+                '<td><input type="text" class="form-control cheque-no" data-row="'+ri+'" value=""></td>'+
+                '<td><input type="date" class="form-control cheque-date" data-row="'+ri+'"></td>'+
+                '<td><input type="number" class="form-control amount-input" data-row="'+ri+'" step="0.01" value="0.00"></td>'+
+                '<td><input type="number" class="form-control unadjusted-input" data-row="'+ri+'" step="0.01" value="0.00" readonly></td>'+
+                '<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow('+ri+')"><i class="bi bi-trash"></i></button></td>';
+            if(tbody) tbody.appendChild(tr);
+            tr.querySelector('.cheque-no').value      = saved.chequeNo||'';
+            tr.querySelector('.cheque-date').value    = saved.chequeDate||'';
+            tr.querySelector('.amount-input').value   = saved.amount||'0.00';
+            tr.querySelector('.unadjusted-input').value = saved.unadjusted||'0.00';
+            if(typeof setupRowEventListeners==='function') setupRowEventListeners(tr, ri);
+        });
+
+        if(typeof updateTotals==='function') updateTotals();
+        else if(typeof calculateTotals==='function') calculateTotals();
+        const ub=document.getElementById('updateBtn'); if(ub) ub.disabled=false;
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+    },800);
+    setTimeout(restore,900);
+    document.addEventListener('input',_sched);
+    document.addEventListener('change',_sched);
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endsection

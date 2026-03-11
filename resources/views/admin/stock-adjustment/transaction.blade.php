@@ -957,4 +957,174 @@ function escapeHtml(text) {
     return div.innerHTML.replace(/'/g, "\\'");
 }
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  stock_adjustment_transaction_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'stock_adjustment_transaction_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _expiryDisp(raw){
+    if(!raw||raw==='-') return '-';
+    try{ return new Date(raw).toLocaleDateString('en-GB',{month:'2-digit',year:'numeric'}); }catch(e){ return raw; }
+}
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri=tr.getAttribute('data-row');
+        if(ri===null||ri==='') return;
+        const g=function(n){ const el=tr.querySelector('input[name="items['+ri+']['+n+']"]'); return el?el.value:''; };
+        if(!g('item_id')) return;
+        const adjDisp=tr.querySelector('.adjustment-type-display');
+        rows.push({
+            ri:ri,
+            itemId:tr.getAttribute('data-item-id')||'',
+            batchId:tr.getAttribute('data-batch-id')||'',
+            item_id:g('item_id'), item_code:g('item_code'), item_name:g('item_name'),
+            batch_id:g('batch_id'), batch_no:g('batch_no'), expiry_date:g('expiry_date'),
+            adjustment_type:g('adjustment_type'), adjustment_type_display:adjDisp?adjDisp.value:'S',
+            qty:g('qty'), cost:g('cost'), amount:g('amount'),
+            packing:g('packing'), company_name:g('company_name'), mrp:g('mrp'),
+            unit:g('unit'), cl_qty:g('cl_qty'),
+        });
+    });
+
+    const state={
+        savedAt:new Date().toISOString(),
+        adjustmentDate:_val('adjustmentDate'),
+        remarks:_val('remarks'),
+        rows:rows,
+    };
+    if(!state.adjustmentDate && !rows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||(!state.adjustmentDate&&!state.rows.length)) return;
+    _banner(state.savedAt, function keep(){
+        if(state.adjustmentDate) _set('adjustmentDate',state.adjustmentDate);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('remarks',state.remarks||'');
+
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof rowCount!=='undefined') window.rowCount=0;
+
+        (state.rows||[]).forEach(function(saved){
+            const ri=saved.ri;
+            if(typeof rowCount!=='undefined'&&parseInt(ri)>=rowCount) window.rowCount=parseInt(ri)+1;
+            const adjType=saved.adjustment_type||'S';
+            const adjDisp=saved.adjustment_type_display||adjType;
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row',ri);
+            tr.setAttribute('data-item-id',saved.itemId||'');
+            tr.setAttribute('data-batch-id',saved.batchId||'');
+            tr.innerHTML=
+                '<td>'+
+                    '<input type="text" class="form-control form-control-sm readonly-field" value="'+_esc(saved.item_code)+'" readonly>'+
+                    '<input type="hidden" name="items['+ri+'][item_id]" value="'+_esc(saved.item_id)+'">'+
+                    '<input type="hidden" name="items['+ri+'][item_code]" value="'+_esc(saved.item_code)+'">'+
+                '</td>'+
+                '<td>'+
+                    '<input type="text" class="form-control form-control-sm readonly-field" value="'+_esc(saved.item_name)+'" readonly>'+
+                    '<input type="hidden" name="items['+ri+'][item_name]" value="'+_esc(saved.item_name)+'">'+
+                '</td>'+
+                '<td>'+
+                    '<input type="text" class="form-control form-control-sm readonly-field" value="'+_esc(saved.batch_no||'-')+'" readonly>'+
+                    '<input type="hidden" name="items['+ri+'][batch_id]" value="'+_esc(saved.batch_id)+'">'+
+                    '<input type="hidden" name="items['+ri+'][batch_no]" value="'+_esc(saved.batch_no)+'">'+
+                '</td>'+
+                '<td>'+
+                    '<input type="text" class="form-control form-control-sm readonly-field" value="'+_esc(_expiryDisp(saved.expiry_date))+'" readonly>'+
+                    '<input type="hidden" name="items['+ri+'][expiry_date]" value="'+_esc(saved.expiry_date)+'">'+
+                '</td>'+
+                '<td class="custom-dropdown-wrapper">'+
+                    '<input type="text" class="form-control form-control-sm cursor-pointer adjustment-type-display text-center" value="'+_esc(adjDisp)+'" readonly style="background:white!important;cursor:pointer;height:26px;padding:2px 4px;" onkeydown="handleShExKeydown(event,this,'+ri+')" onclick="toggleShExDropdown('+ri+')">'+
+                    '<input type="hidden" class="adjustment-type" name="items['+ri+'][adjustment_type]" value="'+_esc(adjType)+'">'+
+                    '<div class="custom-dropdown-menu" id="shExDropdown_'+ri+'">'+
+                        '<div class="custom-dropdown-item" onclick="selectShEx(\'S\','+ri+')">S (Shortage)</div>'+
+                        '<div class="custom-dropdown-item" onclick="selectShEx(\'E\','+ri+')">E (Excess)</div>'+
+                    '</div>'+
+                '</td>'+
+                '<td><input type="number" class="form-control form-control-sm qty-input" name="items['+ri+'][qty]" value="'+_esc(saved.qty||0)+'" step="0.01" min="0" onchange="calculateRowAmount('+ri+')" onkeyup="calculateRowAmount('+ri+')"></td>'+
+                '<td>'+
+                    '<input type="number" class="form-control form-control-sm readonly-field cost-input" name="items['+ri+'][cost]" value="'+parseFloat(saved.cost||0).toFixed(2)+'" step="0.01" readonly>'+
+                    '<input type="hidden" name="items['+ri+'][packing]" value="'+_esc(saved.packing)+'">'+
+                    '<input type="hidden" name="items['+ri+'][company_name]" value="'+_esc(saved.company_name)+'">'+
+                    '<input type="hidden" name="items['+ri+'][mrp]" value="'+_esc(saved.mrp||0)+'">'+
+                    '<input type="hidden" name="items['+ri+'][unit]" value="'+_esc(saved.unit||'1')+'">'+
+                    '<input type="hidden" name="items['+ri+'][cl_qty]" value="'+_esc(saved.cl_qty||0)+'">'+
+                '</td>'+
+                '<td><input type="number" class="form-control form-control-sm readonly-field amount-input" name="items['+ri+'][amount]" value="'+_esc(saved.amount||'0.00')+'" step="0.01" readonly></td>'+
+                '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteRow('+ri+')" title="Delete"><i class="bi bi-trash"></i></button></td>';
+            if(tbody) tbody.appendChild(tr);
+            // row click handler
+            tr.addEventListener('click',function(e){
+                if(e.target.tagName!=='BUTTON'&&e.target.tagName!=='I'){
+                    if(typeof selectRow==='function') selectRow(parseInt(ri));
+                }
+            });
+        });
+
+        if(typeof calculateTotals==='function') calculateTotals();
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        // saveTransaction uses window.location.href after setTimeout — patch location.href setter
+        const _origSave=(typeof saveTransaction==='function')?saveTransaction:null;
+        if(_origSave){
+            window.saveTransaction=function(){
+                // will clear on success inside the setTimeout redirect — patch location
+                clearAutoSave();
+                _origSave.apply(this,arguments);
+            };
+        }
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('stockAdjustmentForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endpush

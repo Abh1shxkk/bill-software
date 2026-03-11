@@ -437,4 +437,88 @@ function resetForm() {
 
 // (legacy and save functions defined above in main script block)
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  pending_order_item_transaction_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'pending_order_item_transaction_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+
+function save(){
+    const state={
+        savedAt:new Date().toISOString(),
+        item_id:_val('item_id'),
+        item_code:_val('item_code'),
+        item_name:_val('item_name'),
+        action_type:_val('action_type'),
+        action_type_display:_val('action_type_display'),
+        quantity:_val('quantity'),
+    };
+    if(!state.item_id) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||!state.item_id) return;
+    _banner(state.savedAt, function keep(){
+        _set('item_id',  state.item_id||'');
+        _set('item_code',state.item_code||'');
+        _set('item_name',state.item_name||'');
+        _set('action_type',        state.action_type||'I');
+        _set('action_type_display',state.action_type_display||'I');
+        _set('quantity', state.quantity||'');
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        // markAsSaving wrap (called before fetch)
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+        // resetForm override — clears draft on success
+        const _origReset=(typeof window.resetForm==='function')?window.resetForm:null;
+        window.resetForm=function(){ clearAutoSave(); if(_origReset) _origReset.apply(this,arguments); };
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('poiForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+});
+})();
+</script>
+
 @endpush

@@ -4559,4 +4559,205 @@ function handleSchemeInputKeydown(event) {
     min-width: 120px;
 }
 </style>
+
+<!-- ============================================ -->
+<!-- AUTO-SAVE & RESTORE (localStorage)           -->
+<!-- ============================================ -->
+<script>
+(function() {
+
+    var DRAFT_KEY = 'purchase_return_modification_autosave_v1';
+
+    window.autoSaveDraft = function() {
+        try {
+            var draft = {
+                return_date   : (document.getElementById('return_date')         || {}).value || '',
+                trn_no        : (document.getElementById('trn_no')              || {}).value || '',
+                supplier_id   : (document.getElementById('supplier_id')|| {}).value || '',
+                supplier_text : (document.getElementById('supplierSearchInput') || {}).value || '',
+                invoice_no    : (document.getElementById('invoice_no')          || {}).value || '',
+                invoice_date  : (document.getElementById('invoice_date')        || {}).value || '',
+                gst_vno       : (document.getElementById('gst_vno')             || {}).value || '',
+                remarks       : (document.getElementById('remarks')             || {}).value || '',
+                tax_flag      : (document.getElementById('tax_flag')            || {}).value || 'Y',
+                rate_diff     : (document.getElementById('rate_diff')           || {}).value || 'N',
+                items         : [],
+                savedAt       : new Date().toISOString()
+            };
+            document.querySelectorAll('#itemsTableBody tr').forEach(function(row) {
+                var rowData = { id: row.id, inputs: {} };
+                row.querySelectorAll('input, select').forEach(function(inp) {
+                    var m = (inp.name || '').match(/items\[\d+\]\[(.+)\]/);
+                    if (m) rowData.inputs[m[1]] = inp.value;
+                });
+                draft.items.push(rowData);
+            });
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            _showSavedBadge();
+        } catch(e) { console.warn('[AutoSave] Save failed:', e); }
+    };
+
+    window.restoreAutoSave = function() {
+        try {
+            var raw = localStorage.getItem(DRAFT_KEY);
+            if (!raw) return;
+            var draft = JSON.parse(raw);
+            if (!draft) return;
+            var hasContent = draft.supplier_id || draft.invoice_no ||
+                (draft.items && draft.items.some(function(r) { return r.inputs && (r.inputs.code || r.inputs.name); }));
+            if (!hasContent) return;
+
+            _showRestoredBanner(draft.savedAt);
+
+            var fld = function(id, val) { if (val) { var e = document.getElementById(id); if (e && !e.readOnly) e.value = val; } };
+            fld('return_date',  draft.return_date);
+            fld('invoice_no',   draft.invoice_no);
+            fld('invoice_date', draft.invoice_date);
+            fld('gst_vno',      draft.gst_vno);
+            fld('remarks',      draft.remarks);
+            fld('tax_flag',     draft.tax_flag);
+            fld('rate_diff',    draft.rate_diff);
+            if (draft.trn_no) { var el = document.getElementById('trn_no'); if (el && !el.readOnly) el.value = draft.trn_no; }
+
+            if (draft.supplier_id) {
+                var sh = document.getElementById('supplier_id');
+                var ss = document.getElementById('supplierSearchInput');
+                if (sh) sh.value = draft.supplier_id;
+                if (ss) ss.value = draft.supplier_text || '';
+            }
+
+            if (draft.items && draft.items.length > 0) {
+                var tbody = document.getElementById('itemsTableBody');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+                try { currentRowIndex = 0; } catch(e) {}
+
+                draft.items.forEach(function(rowData) {
+                    var inp = rowData.inputs || {};
+                    if (!inp.code && !inp.name) return;
+                    var m2 = (rowData.id || '').match(/row-(\d+)/);
+                    var rowIndex = m2 ? parseInt(m2[1], 10) : 0;
+                    var row = document.createElement('tr');
+                    row.id = 'row-' + rowIndex;
+                    row.innerHTML =
+                        '<td><input type="text" class="form-control" name="items[' + rowIndex + '][code]" value="' + (inp.code||'') + '" readonly></td>' +
+                        '<td><input type="text" class="form-control" name="items[' + rowIndex + '][name]" value="' + (inp.name||'') + '" readonly></td>' +
+                        '<td><input type="text" class="form-control" name="items[' + rowIndex + '][batch]" value="' + (inp.batch||'') + '" readonly></td>' +
+                        '<td><input type="text" class="form-control" name="items[' + rowIndex + '][expiry]" value="' + (inp.expiry||'') + '" readonly></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][qty]" value="' + (inp.qty||0) + '" step="any"></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][free_qty]" value="' + (inp.free_qty||0) + '" step="any"></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][purchase_rate]" value="' + (inp.purchase_rate||0) + '" step="0.01"></td>' +
+                        '<td><input type="number" class="form-control" name="items[' + rowIndex + '][dis_percent]" value="' + (inp.dis_percent||0) + '" step="0.01"></td>' +
+                        '<td><input type="number" class="form-control readonly-field" name="items[' + rowIndex + '][ft_rate]" value="' + (inp.ft_rate||'0.00') + '" step="0.01" readonly></td>' +
+                        '<td><input type="number" class="form-control readonly-field" name="items[' + rowIndex + '][ft_amount]" value="' + (inp.ft_amount||'0.00') + '" readonly></td>' +
+                        '<td><button type="button" class="btn btn-sm btn-danger" onclick="deleteRow(' + rowIndex + ')">&#x2715;</button></td>' +
+                        '<input type="hidden" name="items[' + rowIndex + '][item_id]"      value="' + (inp.item_id||'') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][batch_id]"     value="' + (inp.batch_id||'') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][hsn_code]"     value="' + (inp.hsn_code||'') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][company_name]" value="' + (inp.company_name||'') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][packing]"      value="' + (inp.packing||'') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][unit]"         value="' + (inp.unit||'') + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][cgst_percent]" value="' + (inp.cgst_percent||0) + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][sgst_percent]" value="' + (inp.sgst_percent||0) + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][cess_percent]" value="' + (inp.cess_percent||0) + '">' +
+                        '<input type="hidden" name="items[' + rowIndex + '][mrp]"          value="' + (inp.mrp||0) + '">';
+                    tbody.appendChild(row);
+                    try { if (rowIndex >= currentRowIndex) currentRowIndex = rowIndex + 1; } catch(e) {}
+                });
+
+                setTimeout(function() {
+                    if (typeof recalculateTotals === 'function') recalculateTotals();
+                }, 200);
+            }
+        } catch(e) { console.warn('[AutoSave] Restore failed:', e); }
+    };
+
+    window.clearAutoSave = function() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    };
+
+    var _bt = null;
+    function _showSavedBadge() {
+        var b = document.getElementById('_asBadge');
+        if (!b) {
+            b = document.createElement('div');
+            b.id = '_asBadge';
+            b.style.cssText = 'position:fixed;bottom:18px;right:18px;background:rgba(40,167,69,0.88);color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;opacity:0;transition:opacity 0.35s;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,0.2)';
+            b.innerHTML = '&#10003; Draft auto-saved';
+            document.body.appendChild(b);
+        }
+        b.style.opacity = '1';
+        clearTimeout(_bt);
+        _bt = setTimeout(function() { b.style.opacity = '0'; }, 2200);
+    }
+
+    function _showRestoredBanner(savedAt) {
+        var ex = document.getElementById('_asRestoredBanner');
+        if (ex) ex.remove();
+        var t = '';
+        try { t = new Date(savedAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }); } catch(e) {}
+        var banner = document.createElement('div');
+        banner.id = '_asRestoredBanner';
+        banner.style.cssText = 'position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:9px 18px;border-radius:8px;font-size:12px;z-index:10001;box-shadow:0 3px 10px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;animation:_asBannerSlide 0.4s ease';
+        banner.innerHTML =
+            '<i class="bi bi-clock-history" style="font-size:15px;"></i>' +
+            '<span><strong>Draft restored</strong> from ' + (t || 'previous session') + ' &mdash; continue where you left off</span>' +
+            '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:6px;">Discard</button>' +
+            '<button id="_asKeep" style="background:#28a745;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">&#10003; Keep</button>';
+        document.body.appendChild(banner);
+        document.getElementById('_asDiscard').addEventListener('click', function() {
+            clearAutoSave(); banner.remove();
+            var tbody = document.getElementById('itemsTableBody');
+            if (tbody) tbody.innerHTML = '';
+            try { currentRowIndex = 0; } catch(e) {}
+            var d = document.getElementById('return_date');
+            if (d) d.value = new Date().toISOString().split('T')[0];
+            ['invoice_no','invoice_date','gst_vno','remarks'].forEach(function(id) { var e = document.getElementById(id); if (e) e.value = ''; });
+            var tf = document.getElementById('tax_flag'); if (tf) tf.value = 'Y';
+            var rd = document.getElementById('rate_diff'); if (rd) rd.value = 'N';
+            var sh = document.getElementById('supplier_id'); if (sh) sh.value = '';
+            var ss = document.getElementById('supplierSearchInput'); if (ss) ss.value = '';
+            if (typeof recalculateTotals === 'function') recalculateTotals();
+        });
+        document.getElementById('_asKeep').addEventListener('click', function() { banner.remove(); });
+        setTimeout(function() { if (banner.parentNode) banner.remove(); }, 12000);
+    }
+
+    if (!document.getElementById('_asKf')) {
+        var s = document.createElement('style');
+        s.id = '_asKf';
+        s.textContent = '@keyframes _asBannerSlide{from{opacity:0;transform:translateX(-50%) translateY(-20px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';
+        document.head.appendChild(s);
+    }
+
+    var _st = null;
+    function _sched() { clearTimeout(_st); _st = setTimeout(window.autoSaveDraft, 700); }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        ['return_date','trn_no','invoice_no','invoice_date','gst_vno','remarks',
+         'tax_flag','rate_diff','supplier_id','supplierSearchInput'
+        ].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.addEventListener('change', _sched); el.addEventListener('input', _sched); }
+        });
+        var tb = document.getElementById('itemsTableBody');
+        if (tb) {
+            tb.addEventListener('input', _sched);
+            tb.addEventListener('change', _sched);
+            new MutationObserver(function() { _sched(); }).observe(tb, { childList: true });
+        }
+        setTimeout(window.restoreAutoSave, 900);
+    });
+
+    setTimeout(function() {
+        var _origReload = window.location.reload.bind(window.location);
+        window.location.reload = function() {
+            window.clearAutoSave();
+            _origReload();
+        };
+    }, 500);
+
+})();
+</script>
+
 @endpush

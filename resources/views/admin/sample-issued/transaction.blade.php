@@ -1273,4 +1273,161 @@ document.addEventListener('keydown', function(e) {
     }
 }, true);
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  sample_issued_transaction_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'sample_issued_transaction_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri=tr.dataset.rowIndex;
+        if(ri===undefined||ri===null||ri==='') return;
+        const g=function(n){ const el=tr.querySelector('[name="items['+ri+']['+n+']"]'); return el?el.value:''; };
+        if(!g('code')&&!g('name')) return;
+        rows.push({
+            ri:ri,
+            itemId:tr.dataset.itemId||'', itemData:tr.dataset.itemData||'{}',
+            batchId:tr.dataset.batchId||'', batchData:tr.dataset.batchData||'{}',
+            code:g('code'), name:g('name'), batch:g('batch'), expiry:g('expiry'),
+            qty:g('qty'), rate:g('rate'), amount:g('amount'),
+            item_id:g('item_id'), batch_id:g('batch_id'), packing:g('packing'),
+            unit:g('unit'), company_name:g('company_name'), hsn_code:g('hsn_code'), mrp:g('mrp'),
+        });
+    });
+
+    const state={
+        savedAt:new Date().toISOString(),
+        sit_transaction_date:_val('sit_transaction_date'),
+        sit_party_type:_val('sit_party_type'),
+        sit_partyTypeDisplay:_val('sit_partyTypeDisplay'),
+        party_id:_val('party_id'),
+        party_name:_val('party_name'),
+        sit_partyDisplay:_val('sit_partyDisplay'),
+        sit_remarks:_val('sit_remarks'),
+        sit_on_field:_val('sit_on_field'),
+        sit_rate:_val('sit_rate'),
+        sit_tag:_val('sit_tag'),
+        sit_gr_no:_val('sit_gr_no'),
+        sit_gr_date:_val('sit_gr_date'),
+        sit_cases:_val('sit_cases'),
+        sit_road_permit:_val('sit_road_permit'),
+        sit_truck_no:_val('sit_truck_no'),
+        sit_transport:_val('sit_transport'),
+        rows:rows,
+    };
+    if(!state.party_id && !rows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||(!state.party_id&&!state.rows.length)) return;
+    _banner(state.savedAt, function keep(){
+        if(state.sit_transaction_date) _set('sit_transaction_date',state.sit_transaction_date);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('sit_party_type',state.sit_party_type||'');
+        const ptd=document.getElementById('sit_partyTypeDisplay'); if(ptd) ptd.value=state.sit_partyTypeDisplay||'';
+        _set('party_id',state.party_id||'');
+        _set('party_name',state.party_name||'');
+        const pd=document.getElementById('sit_partyDisplay'); if(pd) pd.value=state.sit_partyDisplay||'';
+        _set('sit_remarks',state.sit_remarks||'');
+        _set('sit_on_field',state.sit_on_field||'');
+        _set('sit_rate',state.sit_rate||'0');
+        _set('sit_tag',state.sit_tag||'');
+        _set('sit_gr_no',state.sit_gr_no||'');
+        if(state.sit_gr_date) _set('sit_gr_date',state.sit_gr_date);
+        _set('sit_cases',state.sit_cases||'0');
+        _set('sit_road_permit',state.sit_road_permit||'');
+        _set('sit_truck_no',state.sit_truck_no||'');
+        _set('sit_transport',state.sit_transport||'');
+
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof currentRowIndex!=='undefined') window.currentRowIndex=0;
+
+        (state.rows||[]).forEach(function(saved){
+            const ri=saved.ri;
+            if(typeof currentRowIndex!=='undefined'&&parseInt(ri)>=currentRowIndex) window.currentRowIndex=parseInt(ri)+1;
+            const tr=document.createElement('tr');
+            tr.id='row-'+ri;
+            tr.dataset.rowIndex=ri;
+            tr.dataset.itemId=saved.itemId||''; tr.dataset.itemData=saved.itemData||'{}';
+            tr.dataset.batchId=saved.batchId||''; tr.dataset.batchData=saved.batchData||'{}';
+            tr.onclick=function(){ if(typeof selectRow==='function') selectRow(parseInt(ri)); };
+            tr.innerHTML=
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][code]" value="'+_esc(saved.code)+'" readonly onfocus="selectRow('+ri+')"></td>'+
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][name]" value="'+_esc(saved.name)+'" readonly onfocus="selectRow('+ri+')"></td>'+
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][batch]" value="'+_esc(saved.batch)+'" onkeydown="handleBatchKeydown(event,'+ri+')" onfocus="selectRow('+ri+')" data-custom-enter></td>'+
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][expiry]" value="'+_esc(saved.expiry)+'" placeholder="MM/YY" onkeydown="handleExpiryKeydown(event,'+ri+')" onfocus="selectRow('+ri+')" data-custom-enter></td>'+
+                '<td><input type="number" class="form-control form-control-sm" name="items['+ri+'][qty]" value="'+_esc(saved.qty||'')+'" step="1" min="1" onchange="calculateRowAmount('+ri+')" onkeydown="handleQtyKeydown(event,'+ri+')" onfocus="selectRow('+ri+')" data-custom-enter></td>'+
+                '<td><input type="number" class="form-control form-control-sm" name="items['+ri+'][rate]" value="'+parseFloat(saved.rate||0).toFixed(2)+'" step="0.01" onchange="calculateRowAmount('+ri+')" onkeydown="handleRateKeydown(event,'+ri+')" onfocus="selectRow('+ri+')" data-custom-enter></td>'+
+                '<td><input type="number" class="form-control form-control-sm readonly-field" name="items['+ri+'][amount]" value="'+_esc(saved.amount||'')+'" step="0.01" readonly onfocus="selectRow('+ri+')"></td>'+
+                '<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow('+ri+')"><i class="bi bi-x"></i></button>'+
+                '<input type="hidden" name="items['+ri+'][item_id]" value="'+_esc(saved.item_id)+'">'+
+                '<input type="hidden" name="items['+ri+'][batch_id]" value="'+_esc(saved.batch_id)+'">'+
+                '<input type="hidden" name="items['+ri+'][packing]" value="'+_esc(saved.packing)+'">'+
+                '<input type="hidden" name="items['+ri+'][unit]" value="'+_esc(saved.unit)+'">'+
+                '<input type="hidden" name="items['+ri+'][company_name]" value="'+_esc(saved.company_name)+'">'+
+                '<input type="hidden" name="items['+ri+'][hsn_code]" value="'+_esc(saved.hsn_code)+'">'+
+                '<input type="hidden" name="items['+ri+'][mrp]" value="'+_esc(saved.mrp||0)+'"></td>';
+            if(tbody) tbody.appendChild(tr);
+        });
+
+        if(typeof calculateTotals==='function') calculateTotals();
+        else if(typeof calculateTotal==='function') calculateTotal();
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('siForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endpush

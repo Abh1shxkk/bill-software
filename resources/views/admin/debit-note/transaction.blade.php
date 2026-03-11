@@ -2650,4 +2650,154 @@ function navigateField(currentElement, direction) {
     font-weight: 500;
 }
 </style>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  debit_note_transaction_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'debit_note_transaction_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _radio(name){ const el=document.querySelector('input[name="'+name+'"]:checked'); return el?el.value:''; }
+function _setRadio(name,v){ const el=document.querySelector('input[name="'+name+'"][value="'+v+'"]'); if(el){el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}));} }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#hsnTableBody tr[data-row]').forEach(function(tr){
+        const idx=tr.getAttribute('data-row');
+        const hsn=tr.querySelector('.hsn-code')?.value||'';
+        const amt=tr.querySelector('.hsn-amount')?.value||'';
+        if(!hsn && !parseFloat(amt)) return;
+        rows.push({
+            idx:idx,
+            hsn_code:hsn, amount:amt,
+            gst_percent:tr.querySelector('.hsn-gst')?.value||'0',
+            cgst_percent:tr.querySelector('.hsn-cgst-percent')?.value||'0',
+            cgst_amount:tr.querySelector('.hsn-cgst-amount')?.value||'0',
+            sgst_percent:tr.querySelector('.hsn-sgst-percent')?.value||'0',
+            sgst_amount:tr.querySelector('.hsn-sgst-amount')?.value||'0',
+        });
+    });
+
+    const state={
+        savedAt:new Date().toISOString(),
+        debitNoteId:_val('debitNoteId'),
+        debitNoteDate:_val('debitNoteDate'),
+        reason:_val('reason'), reasonDisplay:_val('reasonDisplay'),
+        debit_party_type:_radio('debit_party_type'),
+        partySelect:_val('partySelect'), partySearchInput:_val('partySearchInput'),
+        salesmanSelect:_val('salesmanSelect'),
+        credit_account_type:_radio('credit_account_type'),
+        accountNo:_val('accountNo'), invRefNo:_val('invRefNo'),
+        invoiceDate:_val('invoiceDate'), gstVno:_val('gstVno'),
+        partyTrnNo:_val('partyTrnNo'), partyTrnDate:_val('partyTrnDate'),
+        amount:_val('amount'), narration:_val('narration'),
+        tcsAmount:_val('tcsAmount'), roundOff:_val('roundOff'),
+        grossAmount:_val('grossAmount'), totalGst:_val('totalGst'),
+        netAmount:_val('netAmount'), dnAmount:_val('dnAmount'),
+        rows:rows,
+    };
+    if(!state.partySelect && !rows.length) return;
+    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{const r=localStorage.getItem(KEY);if(!r)return;state=JSON.parse(r);}catch(e){return;}
+    if(!state||(!state.partySelect&&!state.rows.length)) return;
+    _banner(state.savedAt, function keep(){
+        if(state.debitNoteId) _set('debitNoteId',state.debitNoteId);
+        if(state.debitNoteDate) _set('debitNoteDate',state.debitNoteDate);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('reason',state.reason||'');
+        const rd=document.getElementById('reasonDisplay'); if(rd) rd.value=state.reasonDisplay||'';
+        if(state.debit_party_type) _setRadio('debit_party_type',state.debit_party_type);
+        _set('partySelect',state.partySelect||'');
+        const pi=document.getElementById('partySearchInput'); if(pi) pi.value=state.partySearchInput||'';
+        _set('salesmanSelect',state.salesmanSelect||'');
+        if(state.credit_account_type) _setRadio('credit_account_type',state.credit_account_type);
+        _set('accountNo',state.accountNo||'');
+        _set('invRefNo',state.invRefNo||'');
+        if(state.invoiceDate) _set('invoiceDate',state.invoiceDate);
+        _set('gstVno',state.gstVno||'');
+        _set('partyTrnNo',state.partyTrnNo||'');
+        if(state.partyTrnDate) _set('partyTrnDate',state.partyTrnDate);
+        _set('amount',state.amount||'0.00');
+        _set('narration',state.narration||'');
+        _set('tcsAmount',state.tcsAmount||'0.00');
+        _set('roundOff',state.roundOff||'0.00');
+        _set('grossAmount',state.grossAmount||'0.00');
+        _set('totalGst',state.totalGst||'0.00');
+        _set('netAmount',state.netAmount||'0.00');
+        _set('dnAmount',state.dnAmount||'0.00');
+
+        const tbody=document.getElementById('hsnTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof hsnRowCount!=='undefined') window.hsnRowCount=0;
+        (state.rows||[]).forEach(function(saved){
+            const n=typeof hsnRowCount!=='undefined'?hsnRowCount:parseInt(saved.idx);
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row',n);
+            tr.innerHTML=
+                '<td><input type="text" class="form-control form-control-sm hsn-code readonly-field" name="items['+n+'][hsn_code]" value="'+_esc(saved.hsn_code)+'" readonly></td>'+
+                '<td><input type="number" class="form-control form-control-sm hsn-amount" name="items['+n+'][amount]" step="0.01" value="'+_esc(saved.amount)+'" onchange="calculateGst('+n+')" onkeyup="calculateGst('+n+')"></td>'+
+                '<td><input type="number" class="form-control form-control-sm hsn-gst readonly-field" name="items['+n+'][gst_percent]" step="0.01" value="'+_esc(saved.gst_percent)+'" readonly></td>'+
+                '<td><input type="number" class="form-control form-control-sm hsn-cgst-percent readonly-field" name="items['+n+'][cgst_percent]" step="0.01" value="'+_esc(saved.cgst_percent)+'" readonly></td>'+
+                '<td><input type="number" class="form-control form-control-sm hsn-cgst-amount readonly-field" name="items['+n+'][cgst_amount]" step="0.01" value="'+_esc(saved.cgst_amount)+'" readonly></td>'+
+                '<td><input type="number" class="form-control form-control-sm hsn-sgst-percent readonly-field" name="items['+n+'][sgst_percent]" step="0.01" value="'+_esc(saved.sgst_percent)+'" readonly></td>'+
+                '<td><input type="number" class="form-control form-control-sm hsn-sgst-amount readonly-field" name="items['+n+'][sgst_amount]" step="0.01" value="'+_esc(saved.sgst_amount)+'" readonly></td>'+
+                '<td><button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteHsnRow('+n+')" title="Delete"><i class="bi bi-trash"></i></button></td>';
+            if(tbody) tbody.appendChild(tr);
+            if(typeof hsnRowCount!=='undefined') window.hsnRowCount++;
+        });
+        if(typeof calculateTotals==='function') calculateTotals();
+    }, function discard(){clearAutoSave();});
+}
+
+window.clearAutoSave=function(){try{localStorage.removeItem(KEY);}catch(e){}};
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){b=document.createElement('div');b.id='_asBadge';
+     b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+     document.body.appendChild(b);}
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){b.style.opacity='0';},2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner');if(old)old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div');d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){if(done)return;done=true;d.remove();}
+    document.getElementById('_asKeep').onclick=function(){dismiss();if(onKeep)onKeep();};
+    document.getElementById('_asDiscard').onclick=function(){dismiss();if(onDiscard)onDiscard();};
+    setTimeout(function(){if(!done){dismiss();if(onKeep)onKeep();}},12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('debitNoteForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('hsnTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endpush

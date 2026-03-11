@@ -395,4 +395,105 @@ function saveTransaction() {
     .catch(e => alert('Failed to save transaction'));
 }
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  cash_deposited_withdrawn_transaction_autosave_v1
+// ============================================================
+(function() {
+    const STORAGE_KEY = 'cash_deposited_withdrawn_transaction_autosave_v1';
+    const BANNER_ID   = 'cdw_tx_autosave_banner';
+    const INTERVAL_MS = 30000;
+    let _saving = false;
+    let _timer  = null;
+
+    window.markAsSaving = function() { _saving = true; };
+
+    function _ensureBanner() {
+        if (document.getElementById(BANNER_ID)) return;
+        const div = document.createElement('div');
+        div.id = BANNER_ID;
+        div.style.cssText = 'display:none;position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#ff9800;color:#fff;padding:6px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.25);';
+        document.body.appendChild(div);
+    }
+    function _showBanner(msg) { _ensureBanner(); const b = document.getElementById(BANNER_ID); b.textContent = msg; b.style.display = 'block'; }
+    function _hideBanner() { const b = document.getElementById(BANNER_ID); if (b) b.style.display = 'none'; }
+
+    function _collect() {
+        return {
+            transactionDate: document.getElementById('transactionDate')?.value  || '',
+            transactionType: document.getElementById('transactionType')?.value  || '',
+            bankId:          document.getElementById('bankId')?.value           || '',
+            bankDisplay:     document.getElementById('bankDisplay')?.value      || '',
+            bankNameHidden:  document.getElementById('bankNameHidden')?.value   || '',
+            chequeNo:        document.getElementById('chequeNo')?.value         || '',
+            amount:          document.getElementById('amount')?.value           || '',
+            narration:       document.getElementById('narration')?.value        || '',
+        };
+    }
+
+    function _hasData(state) {
+        if (!state) return false;
+        return !!(state.bankId || state.amount || state.narration || state.chequeNo);
+    }
+
+    function _doSave() {
+        const state = _collect();
+        if (!_hasData(state)) return;
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            _showBanner('\u23f1 Auto-saved ' + new Date().toLocaleTimeString());
+        } catch(e) {}
+    }
+
+    function _restore() {
+        let raw; try { raw = localStorage.getItem(STORAGE_KEY); } catch(e) { return; }
+        if (!raw) return;
+        let state; try { state = JSON.parse(raw); } catch(e) { return; }
+        if (!_hasData(state)) return;
+
+        if (!confirm('Auto-saved data found for Cash Deposited/Withdrawn. Restore it?')) {
+            localStorage.removeItem(STORAGE_KEY); return;
+        }
+
+        if (state.transactionDate) document.getElementById('transactionDate').value = state.transactionDate;
+        if (state.transactionType) document.getElementById('transactionType').value = state.transactionType;
+        if (state.bankId) {
+            document.getElementById('bankId').value      = state.bankId;
+            document.getElementById('bankDisplay').value = state.bankDisplay;
+            document.getElementById('bankNameHidden').value = state.bankNameHidden;
+        }
+        if (state.chequeNo)  document.getElementById('chequeNo').value  = state.chequeNo;
+        if (state.amount)    document.getElementById('amount').value    = state.amount;
+        if (state.narration) document.getElementById('narration').value = state.narration;
+
+        // Update day name and type label if those functions exist
+        if (typeof updateDayName === 'function') updateDayName();
+
+        _showBanner('\u2705 Data restored!');
+        setTimeout(_hideBanner, 3000);
+    }
+
+    window.addEventListener('beforeunload', function(e) {
+        if (_saving) { _saving = false; localStorage.removeItem(STORAGE_KEY); return; }
+        const state = _collect();
+        if (_hasData(state)) { _doSave(); e.preventDefault(); e.returnValue = ''; }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Input listener
+        document.addEventListener('input', function(e) {
+            const form = document.getElementById('transactionForm');
+            if (form && form.contains(e.target)) { clearTimeout(_timer); _timer = setTimeout(_doSave, 2000); }
+        });
+        // Change listener (for hidden inputs set via JS)
+        document.addEventListener('change', function(e) {
+            const form = document.getElementById('transactionForm');
+            if (form && form.contains(e.target)) { clearTimeout(_timer); _timer = setTimeout(_doSave, 2000); }
+        });
+        setInterval(_doSave, INTERVAL_MS);
+        setTimeout(_restore, 400);
+    });
+})();
+</script>
 @endsection

@@ -1296,4 +1296,146 @@ function _handleBrowseModalKey(e) {
 }
 
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  voucher_entry_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'voucher_entry_modification_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri=tr.getAttribute('data-row'); if(!ri) return;
+        const gc=function(cls){ const el=tr.querySelector('.'+cls); return el?el.value:''; };
+        if(!gc('account-name')&&!(parseFloat(gc('debit-amount'))>0)&&!(parseFloat(gc('credit-amount'))>0)) return;
+        rows.push({ ri:ri,
+            accountName:gc('account-name'), accountType:gc('account-type'),
+            accountId:gc('account-id'), accountCode:gc('account-code'),
+            debit:gc('debit-amount'), credit:gc('credit-amount'),
+        });
+    });
+    const vid=(typeof currentVoucherId!=='undefined')?currentVoucherId:null;
+    const state={
+        savedAt:new Date().toISOString(),
+        currentVoucherId:vid,
+        multiNarration:_val('multiNarration'), voucherType:_val('voucherType'),
+        voucherDate:_val('voucherDate'), narration:_val('narration'),
+        rows:rows,
+    };
+    if(!vid&&!rows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||!state.currentVoucherId) return;
+    _banner(state.savedAt, function keep(){
+        try{ if(state.currentVoucherId!=null) window.currentVoucherId=state.currentVoucherId; }catch(e){}
+        _set('multiNarration',state.multiNarration||'N');
+        _set('voucherType',state.voucherType||'');
+        if(state.voucherDate) _set('voucherDate',state.voucherDate);
+        _set('narration',state.narration||'');
+        // also set hidden voucherId input if present
+        const vi=document.getElementById('voucherId'); if(vi) vi.value=state.currentVoucherId||'';
+
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof itemRowCount!=='undefined') window.itemRowCount=0;
+
+        (state.rows||[]).forEach(function(saved){
+            const n=parseInt(saved.ri);
+            if(typeof itemRowCount!=='undefined'&&n>=itemRowCount) window.itemRowCount=n;
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row',n);
+            tr.innerHTML=
+                '<td>'+
+                  '<div class="d-flex align-items-center gap-1">'+
+                    '<input type="text" class="form-control account-name" name="items['+n+'][account_name]"'+
+                        ' value="'+_esc(saved.accountName)+'"'+
+                        ' tabindex="'+(100+n*3)+'"'+
+                        ' placeholder="Enter / click to select"'+
+                        ' style="cursor:pointer;flex:1;">'+
+                    '<input type="hidden" class="account-type" name="items['+n+'][account_type]" value="'+_esc(saved.accountType)+'">'+
+                    '<input type="hidden" class="account-id"   name="items['+n+'][account_id]"   value="'+_esc(saved.accountId)+'">'+
+                    '<input type="hidden" class="account-code" name="items['+n+'][account_code]" value="'+_esc(saved.accountCode)+'">'+
+                  '</div>'+
+                '</td>'+
+                '<td>'+
+                  '<input type="number" class="form-control text-end debit-amount" name="items['+n+'][debit_amount]"'+
+                      ' step="0.01" tabindex="'+(101+n*3)+'"'+
+                      ' onchange="calculateTotals();updateRowStatus(this.closest(\'tr\'));clearOtherAmount(this,\'credit\')">'+
+                '</td>'+
+                '<td>'+
+                  '<input type="number" class="form-control text-end credit-amount" name="items['+n+'][credit_amount]"'+
+                      ' step="0.01" tabindex="'+(102+n*3)+'"'+
+                      ' onchange="calculateTotals();updateRowStatus(this.closest(\'tr\'));clearOtherAmount(this,\'debit\')">'+
+                '</td>'+
+                '<td class="text-center">'+
+                  '<button type="button" class="btn btn-sm btn-outline-danger" tabindex="-1" onclick="removeRow(this)" title="Remove">'+
+                    '<i class="bi bi-trash"></i>'+
+                  '</button>'+
+                '</td>';
+            if(tbody) tbody.appendChild(tr);
+            tr.querySelector('.debit-amount').value  = saved.debit||'';
+            tr.querySelector('.credit-amount').value = saved.credit||'';
+            if(typeof wireRowKeys==='function') wireRowKeys(tr);
+            if(typeof updateRowStatus==='function') updateRowStatus(tr);
+        });
+        if(typeof calculateTotals==='function') calculateTotals();
+        const ub=document.getElementById('updateBtn'); if(ub) ub.disabled=false;
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+        const _origReload=window.location.reload.bind(window.location);
+        window.location.reload=function(){ clearAutoSave(); _origReload(); };
+    },800);
+    setTimeout(restore,900);
+    document.addEventListener('input',_sched);
+    document.addEventListener('change',_sched);
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endsection

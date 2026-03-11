@@ -1863,4 +1863,151 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  customer_receipt_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'customer_receipt_modification_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _chk(id,v){ const el=document.getElementById(id); if(el) el.checked=!!v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri=tr.getAttribute('data-row');
+        if(!ri) return;
+        const gc=function(cls){ const el=tr.querySelector('.'+cls); return el?el.value:''; };
+        if(!gc('party-code')&&!gc('party-name')&&!(parseFloat(gc('amount'))>0)) return;
+        rows.push({
+            ri:ri,
+            customerId:tr.getAttribute('data-customer-id')||'',
+            partyCode:gc('party-code'), partyName:gc('party-name'),
+            chequeNo:gc('cheque-no'), chequeDate:gc('cheque-date'),
+            chequeBankName:gc('cheque-bank-name'), chequeBankArea:gc('cheque-bank-area'),
+            chequeClosedOn:gc('cheque-closed-on'),
+            amount:gc('amount'), unadjusted:gc('unadjusted'),
+        });
+    });
+    const rId=(typeof currentReceiptId!=='undefined')?currentReceiptId:'';
+    const state={
+        savedAt:new Date().toISOString(),
+        currentReceiptId:rId,
+        receiptDate:_val('receiptDate'), ledger:_val('ledger'),
+        salesmanSelect:_val('salesmanSelect'), salesmanCode:_val('salesmanCode'),
+        areaSelect:_val('areaSelect'), areaCode:_val('areaCode'),
+        routeSelect:_val('routeSelect'), routeCode:_val('routeCode'),
+        bankSelect:_val('bankSelect'),
+        collBoySelect:_val('collBoySelect'), collBoyCode:_val('collBoyCode'),
+        dayValue:_val('dayValue'), tag:_val('tag'),
+        currencyDetail:document.getElementById('currencyDetail')?.checked||false,
+        rows:rows,
+    };
+    if(!rId && !rows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||!state.currentReceiptId) return;
+    _banner(state.savedAt, function keep(){
+        try{ if(state.currentReceiptId) window.currentReceiptId=state.currentReceiptId; }catch(e){}
+        if(state.receiptDate) _set('receiptDate',state.receiptDate);
+        _set('ledger',state.ledger||'CL');
+        _set('salesmanSelect',state.salesmanSelect||''); _set('salesmanCode',state.salesmanCode||'');
+        _set('areaSelect',state.areaSelect||''); _set('areaCode',state.areaCode||'');
+        _set('routeSelect',state.routeSelect||''); _set('routeCode',state.routeCode||'');
+        _set('bankSelect',state.bankSelect||'');
+        _set('collBoySelect',state.collBoySelect||''); _set('collBoyCode',state.collBoyCode||'');
+        _set('dayValue',state.dayValue||''); _set('tag',state.tag||'');
+        _chk('currencyDetail',state.currencyDetail);
+
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof itemRowCount!=='undefined') window.itemRowCount=0;
+
+        (state.rows||[]).forEach(function(saved){
+            const ri=parseInt(saved.ri);
+            if(typeof itemRowCount!=='undefined'&&ri>=itemRowCount) window.itemRowCount=ri;
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row',ri);
+            tr.setAttribute('data-customer-id',saved.customerId||'');
+            tr.onclick=function(e){ if(e.target.tagName!=='BUTTON'&&e.target.tagName!=='I'){ if(typeof selectRow==='function') selectRow(this); } };
+            tr.innerHTML=
+                '<td><input type="text" class="form-control party-code readonly-field" value="'+_esc(saved.partyCode)+'" readonly></td>'+
+                '<td><input type="text" class="form-control party-name readonly-field" value="'+_esc(saved.partyName)+'" readonly>'+
+                    '<input type="hidden" class="customer-id" name="items['+ri+'][customer_id]" value="'+_esc(saved.customerId)+'">'+
+                '</td>'+
+                '<td><input type="text" class="form-control cheque-no" name="items['+ri+'][cheque_no]" onchange="onChequeNoChange(this)">'+
+                    '<input type="hidden" class="cheque-bank-name" name="items['+ri+'][cheque_bank_name]">'+
+                    '<input type="hidden" class="cheque-bank-area" name="items['+ri+'][cheque_bank_area]">'+
+                    '<input type="hidden" class="cheque-closed-on" name="items['+ri+'][cheque_closed_on]">'+
+                '</td>'+
+                '<td><input type="date" class="form-control cheque-date" name="items['+ri+'][cheque_date]"></td>'+
+                '<td><input type="number" class="form-control text-end amount" name="items['+ri+'][amount]" step="0.01" onchange="calculateTotals(); updateRowStatus(this.closest(\'tr\'))"></td>'+
+                '<td><input type="number" class="form-control text-end unadjusted" name="items['+ri+'][unadjusted]" step="0.01"></td>'+
+                '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Remove"><i class="bi bi-trash"></i></button></td>';
+            if(tbody) tbody.appendChild(tr);
+            tr.querySelector('.cheque-no').value    = saved.chequeNo||'';
+            tr.querySelector('.cheque-date').value  = saved.chequeDate||'';
+            tr.querySelector('.cheque-bank-name').value = saved.chequeBankName||'';
+            tr.querySelector('.cheque-bank-area').value = saved.chequeBankArea||'';
+            tr.querySelector('.cheque-closed-on').value = saved.chequeClosedOn||'';
+            tr.querySelector('.amount').value       = saved.amount||'';
+            tr.querySelector('.unadjusted').value   = saved.unadjusted||'';
+        });
+
+        if(typeof calculateTotals==='function') calculateTotals();
+        const ub=document.getElementById('updateBtn'); if(ub) ub.disabled=false;
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+    },800);
+    setTimeout(restore,900);
+    document.addEventListener('input',_sched);
+    document.addEventListener('change',_sched);
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endsection

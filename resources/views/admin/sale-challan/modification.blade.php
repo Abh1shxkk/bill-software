@@ -5357,4 +5357,194 @@ window.onBatchSelectedFromModal = function(item, batch) {
     'showCostDetails' => true,
 ])
 
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  sale_challan_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'sale_challan_modification_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){
+    if(v===undefined||v===null)return'';
+    return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr[data-row-index]').forEach(function(tr){
+        const idx = tr.getAttribute('data-row-index');
+        const g=function(n){const el=tr.querySelector('input[name="items['+idx+']['+n+']"]');return el?el.value:'';};
+        const code=g('code');
+        if(!code && !g('item_name')) return;
+        rows.push({
+            idx:idx,
+            code:code, item_name:g('item_name'), batch:g('batch'), expiry:g('expiry'),
+            qty:g('qty'), free_qty:g('free_qty'), rate:g('rate'),
+            discount:g('discount'), mrp:g('mrp'), amount:g('amount'),
+            da_item_id:tr.getAttribute('data-item-id')||'',
+            da_hsn:tr.getAttribute('data-hsn-code')||'',
+            da_cgst:tr.getAttribute('data-cgst')||'0',
+            da_sgst:tr.getAttribute('data-sgst')||'0',
+            da_cess:tr.getAttribute('data-cess')||'0',
+            da_packing:tr.getAttribute('data-packing')||'',
+            da_unit:tr.getAttribute('data-unit')||'',
+            da_company:tr.getAttribute('data-company')||'',
+            da_batch_code:tr.getAttribute('data-batch-code')||'',
+            da_case_qty:tr.getAttribute('data-case-qty')||'0',
+            da_box_qty:tr.getAttribute('data-box-qty')||'0',
+            da_batch_id:tr.getAttribute('data-batch-id')||'',
+            da_batch_pur_rate:tr.getAttribute('data-batch-purchase-rate')||'0',
+            da_batch_cost_gst:tr.getAttribute('data-batch-cost-gst')||'0',
+            da_trx_id:tr.getAttribute('data-transaction-id')||'',
+        });
+    });
+
+    const gstBlob=(typeof rowGstData!=='undefined')?JSON.parse(JSON.stringify(rowGstData)):{};
+
+    const state={
+        savedAt:new Date().toISOString(),
+        transactionId:_val('transactionId'),
+        challanDate:_val('challanDate'),
+        customerSearchInput:_val('customerSearchInput'),
+        customer_id:_val('customerSelect'),
+        salesmanSearchInput:_val('salesmanSearchInput'),
+        salesman_id:_val('salesmanSelect'),
+        cash:_val('cash'),
+        transfer:_val('transfer'),
+        dueDate:_val('dueDate'),
+        remarks:_val('remarks'),
+        rows:rows,
+        gstBlob:gstBlob,
+    };
+    if(!state.transactionId && !rows.length) return;
+    try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{const r=localStorage.getItem(KEY);if(!r)return;state=JSON.parse(r);}catch(e){return;}
+    if(!state||(!state.transactionId&&!state.rows.length)) return;
+    _banner(state.savedAt, function keep(){
+        _set('transactionId',state.transactionId||'');
+        if(state.challanDate) _set('challanDate',state.challanDate);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('customerSelect',state.customer_id||'');
+        const ci=document.getElementById('customerSearchInput');
+        if(ci) ci.value=state.customerSearchInput||'';
+        _set('salesmanSelect',state.salesman_id||'');
+        const si=document.getElementById('salesmanSearchInput');
+        if(si) si.value=state.salesmanSearchInput||'';
+        _set('cash',state.cash||'N');
+        _set('transfer',state.transfer||'N');
+        if(state.dueDate) _set('dueDate',state.dueDate);
+        _set('remarks',state.remarks||'');
+
+        // Restore rows
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof itemIndex!=='undefined') window.itemIndex=-1;
+
+        (state.rows||[]).forEach(function(saved){
+            const i=saved.idx;
+            if(typeof itemIndex!=='undefined' && parseInt(i)>itemIndex) window.itemIndex=parseInt(i);
+            const tr=document.createElement('tr');
+            tr.setAttribute('data-row-index',i);
+            tr.setAttribute('data-item-id',saved.da_item_id);
+            tr.setAttribute('data-hsn-code',saved.da_hsn);
+            tr.setAttribute('data-cgst',saved.da_cgst);
+            tr.setAttribute('data-sgst',saved.da_sgst);
+            tr.setAttribute('data-cess',saved.da_cess);
+            tr.setAttribute('data-packing',saved.da_packing);
+            tr.setAttribute('data-unit',saved.da_unit);
+            tr.setAttribute('data-company',saved.da_company);
+            tr.setAttribute('data-batch-code',saved.da_batch_code);
+            tr.setAttribute('data-case-qty',saved.da_case_qty);
+            tr.setAttribute('data-box-qty',saved.da_box_qty);
+            tr.setAttribute('data-batch-purchase-rate',saved.da_batch_pur_rate);
+            tr.setAttribute('data-batch-cost-gst',saved.da_batch_cost_gst);
+            if(saved.da_batch_id) tr.setAttribute('data-batch-id',saved.da_batch_id);
+            if(saved.da_trx_id) tr.setAttribute('data-transaction-id',saved.da_trx_id);
+            tr.innerHTML=
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][code]" value="'+_esc(saved.code)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][item_name]" value="'+_esc(saved.item_name)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][batch]" value="'+_esc(saved.batch)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][expiry]" value="'+_esc(saved.expiry)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items['+i+'][qty]" id="qty_'+i+'" value="'+_esc(saved.qty)+'" placeholder="0" step="any" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" ></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items['+i+'][free_qty]" id="free_qty_'+i+'" value="'+_esc(saved.free_qty||0)+'" step="any" style="font-size:10px;"></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items['+i+'][rate]" id="rate_'+i+'" value="'+parseFloat(saved.rate||0).toFixed(2)+'" step="0.01" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" ></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items['+i+'][discount]" id="discount_'+i+'" value="'+_esc(saved.discount||'')+'" placeholder="0" step="0.01" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" ></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items['+i+'][mrp]" id="mrp_'+i+'" value="'+parseFloat(saved.mrp||0).toFixed(2)+'" step="0.01" style="font-size:10px;" readonly></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items['+i+'][amount]" id="amount_'+i+'" value="'+_esc(saved.amount||'0.00')+'" style="font-size:10px;" readonly></td>'+
+                '<td class="p-0 text-center"><button type="button" class="btn btn-danger btn-sm" onclick="deleteRow('+i+')" title="Delete Row" style="font-size:9px;padding:2px 5px;"><i class="bi bi-trash"></i></button></td>';
+            if(tbody) tbody.appendChild(tr);
+            if(typeof addRowEventListeners==='function') addRowEventListeners(tr,parseInt(i));
+        });
+
+        if(state.gstBlob && typeof rowGstData!=='undefined'){
+            for(var k in rowGstData) delete rowGstData[k];
+            Object.assign(rowGstData,state.gstBlob);
+        }
+
+        if(typeof calculateSummary==='function') calculateSummary();
+        else if(typeof calculateTotals==='function') calculateTotals();
+
+        // Re-enable update button if transaction loaded
+        if(state.transactionId){
+            const ub=document.getElementById('updateBtn');if(ub) ub.disabled=false;
+        }
+    }, function discard(){clearAutoSave();});
+}
+
+window.clearAutoSave=function(){try{localStorage.removeItem(KEY);}catch(e){}};
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){b=document.createElement('div');b.id='_asBadge';
+     b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+     document.body.appendChild(b);}
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){b.style.opacity='0';},2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner');if(old)old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div');d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){if(done)return;done=true;d.remove();}
+    document.getElementById('_asKeep').onclick=function(){dismiss();if(onKeep)onKeep();};
+    document.getElementById('_asDiscard').onclick=function(){dismiss();if(onDiscard)onDiscard();};
+    setTimeout(function(){if(!done){dismiss();if(onKeep)onKeep();}},12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        if(typeof reloadPageAfterSuccess==='function'){
+            const _orig=reloadPageAfterSuccess;
+            window.reloadPageAfterSuccess=function(){clearAutoSave();_orig.apply(this,arguments);};
+        }
+        if(typeof clearFormAfterSave==='function'){
+            const _origClear=clearFormAfterSave;
+            window.clearFormAfterSave=function(){clearAutoSave();_origClear.apply(this,arguments);};
+        }
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('saleTransactionForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true,attributes:true});
+});
+})();
+</script>
+
 @endsection

@@ -1893,4 +1893,101 @@ function cancelTransaction() {
 
 document.getElementById('round_off')?.addEventListener('change', calculateTotals);
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  bsi_received_transaction_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'bsi_received_transaction_autosave_v1';
+let _t = null;
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _chk(id){ const el=document.getElementById(id); return el?el.checked:false; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _setChk(id,v){ const el=document.getElementById(id); if(el) el.checked=!!v; }
+
+function save(){
+    const state={
+        savedAt:new Date().toISOString(),
+        transaction_date:_val('transaction_date'),
+        supplierSearchInput:_val('supplierSearchInput'),
+        supplier_id:_val('supplier_id'),
+        supplier_name:_val('supplier_name'),
+        party_trn_no:_val('party_trn_no'),
+        party_date:_val('party_date'),
+        claim_flag:_val('claim_flag'),
+        received_as_debit_note:_chk('received_as_debit_note'),
+        claim_amount:_val('claim_amount'),
+        round_off:_val('round_off'),
+        remarks:_val('remarks'),
+    };
+    const hasData = state.supplier_id || state.party_trn_no || parseFloat(state.claim_amount||0)>0;
+    if(!hasData) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||(!state.supplier_id&&!state.party_trn_no)) return;
+    _banner(state.savedAt, function keep(){
+        if(state.transaction_date) _set('transaction_date',state.transaction_date);
+        // Restore supplier custom dropdown
+        _set('supplier_id',state.supplier_id||'');
+        _set('supplier_name',state.supplier_name||'');
+        const si=document.getElementById('supplierSearchInput');
+        if(si) si.value=state.supplierSearchInput||'';
+        _set('party_trn_no',state.party_trn_no||'');
+        if(state.party_date) _set('party_date',state.party_date);
+        _set('claim_flag',state.claim_flag||'Y');
+        _setChk('received_as_debit_note',state.received_as_debit_note);
+        _set('claim_amount',state.claim_amount||'0.00');
+        _set('round_off',state.round_off||'0.00');
+        _set('remarks',state.remarks||'');
+        if(typeof calculateTotals==='function') calculateTotals();
+        if(typeof calculateFromClaimAmount==='function') calculateFromClaimAmount();
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{localStorage.removeItem(KEY);}catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){b=document.createElement('div');b.id='_asBadge';
+     b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+     document.body.appendChild(b);}
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){b.style.opacity='0';},2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner');if(old)old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div');d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){dismiss();if(onKeep)onKeep();};
+    document.getElementById('_asDiscard').onclick=function(){dismiss();if(onDiscard)onDiscard();};
+    setTimeout(function(){if(!done){dismiss();if(onKeep)onKeep();}},12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    // Patch window.location.reload to clear draft on success
+    setTimeout(function(){
+        const _origReload=window.location.reload.bind(window.location);
+        window.location.reload=function(){clearAutoSave();_origReload();};
+    },500);
+    setTimeout(restore, 900);
+    const form=document.getElementById('receivedForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+});
+})();
+</script>
+
 @endpush

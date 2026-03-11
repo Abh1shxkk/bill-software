@@ -1031,4 +1031,155 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 's' && e.ctrlKey && !e.shiftKey && !e.altKey) { e.preventDefault(); updateTransaction(); return false; }
 }, true);
 </script>
+
+<script>
+// ============================================================
+// AUTO-SAVE  —  godown_breakage_expiry_modification_autosave_v1
+// ============================================================
+(function(){
+'use strict';
+const KEY = 'godown_breakage_expiry_modification_autosave_v1';
+let _t = null;
+
+function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function _set(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function _esc(v){ if(v===undefined||v===null)return''; return String(v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+
+function _buildBrexTd(ri, brexType){
+    const isExp = brexType==='EXPIRY';
+    const dispTxt = isExp?'Exp':'Brk';
+    return '<td class="brex-td">'+
+        '<div class="brex-dropdown" id="brex-dropdown-'+ri+'">'+
+        '<input type="text" class="brex-display" id="brex-display-'+ri+'" value="'+dispTxt+'" readonly '+
+        'onclick="toggleBrexDropdown('+ri+')" onfocus="selectRow('+ri+'); openBrexDropdown('+ri+')" data-custom-enter>'+
+        '<input type="hidden" name="items['+ri+'][br_ex_type]" id="brex-value-'+ri+'" value="'+brexType+'">'+
+        '<div class="brex-list" id="brex-list-'+ri+'">'+
+        '<div class="brex-option'+(isExp?'':' selected')+'" data-value="BREAKAGE" onclick="selectBrexOption('+ri+',\'BREAKAGE\',\'Brk\')">Brk</div>'+
+        '<div class="brex-option'+(isExp?' selected':'')+'" data-value="EXPIRY" onclick="selectBrexOption('+ri+',\'EXPIRY\',\'Exp\')">Exp</div>'+
+        '</div></div></td>';
+}
+
+
+function save(){
+    const rows=[];
+    document.querySelectorAll('#itemsTableBody tr').forEach(function(tr){
+        const ri=tr.dataset.rowIndex;
+        if(ri===undefined||ri===null||ri==='') return;
+        const g=function(n){ const el=tr.querySelector('[name="items['+ri+']['+n+']"]'); return el?el.value:''; };
+        if(!g('code')&&!g('name')) return;
+        rows.push({
+            ri:ri,
+            itemId:tr.dataset.itemId||'', itemData:tr.dataset.itemData||'{}',
+            batchId:tr.dataset.batchId||'', batchData:tr.dataset.batchData||'{}',
+            code:g('code'), name:g('name'), batch:g('batch'), expiry:g('expiry'),
+            br_ex_type:g('br_ex_type')||'BREAKAGE',
+            qty:g('qty'), cost:g('cost'), amount:g('amount'),
+            item_id:g('item_id'), batch_id:g('batch_id'), packing:g('packing'), unit:g('unit'),
+        });
+    });
+
+    const state={
+        savedAt:new Date().toISOString(),
+        transaction_id:_val('transaction_id'),
+        transaction_date:_val('transaction_date'),
+        trn_no:_val('trn_no'),
+        narration:_val('narration'),
+        srlno:_val('srlno'),
+        rows:rows,
+    };
+    if(!state.transaction_id && !rows.length) return;
+    try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
+    _badge();
+}
+function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
+
+function restore(){
+    let state; try{ const r=localStorage.getItem(KEY); if(!r)return; state=JSON.parse(r); }catch(e){return;}
+    if(!state||!state.transaction_id) return;
+    _banner(state.savedAt, function keep(){
+        _set('transaction_id',state.transaction_id||'');
+        _set('trn_no',state.trn_no||'');
+        if(state.transaction_date) _set('transaction_date',state.transaction_date);
+        if(typeof updateDayName==='function') updateDayName();
+        _set('narration',state.narration||'');
+        _set('srlno',state.srlno||'');
+
+        const tbody=document.getElementById('itemsTableBody');
+        if(tbody) tbody.innerHTML='';
+        if(typeof currentRowIndex!=='undefined') window.currentRowIndex=0;
+
+        (state.rows||[]).forEach(function(saved){
+            const ri=saved.ri;
+            if(typeof currentRowIndex!=='undefined'&&parseInt(ri)>=currentRowIndex) window.currentRowIndex=parseInt(ri)+1;
+            const tr=document.createElement('tr');
+            tr.id='row-'+ri;
+            tr.dataset.rowIndex=ri;
+            tr.dataset.itemId=saved.itemId||''; tr.dataset.itemData=saved.itemData||'{}';
+            tr.dataset.batchId=saved.batchId||''; tr.dataset.batchData=saved.batchData||'{}';
+            tr.onclick=function(){ if(typeof selectRow==='function') selectRow(parseInt(ri)); };
+            tr.innerHTML=
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][code]" value="'+_esc(saved.code)+'" readonly onfocus="selectRow('+ri+')"></td>'+
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][name]" value="'+_esc(saved.name)+'" readonly onfocus="selectRow('+ri+')"></td>'+
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][batch]" value="'+_esc(saved.batch)+'" readonly onfocus="selectRow('+ri+')"></td>'+
+                '<td><input type="text" class="form-control form-control-sm" name="items['+ri+'][expiry]" value="'+_esc(saved.expiry)+'" readonly onfocus="selectRow('+ri+')"></td>'+
+                _buildBrexTd(ri, saved.br_ex_type||'BREAKAGE')+
+                '<td><input type="number" class="form-control form-control-sm" name="items['+ri+'][qty]" value="'+_esc(saved.qty||1)+'" onchange="calculateRowAmount('+ri+')" onkeydown="handleGbeModQtyKeydown(event,'+ri+')" onfocus="selectRow('+ri+')" data-custom-enter></td>'+
+                '<td><input type="number" class="form-control form-control-sm" name="items['+ri+'][cost]" value="'+parseFloat(saved.cost||0).toFixed(2)+'" step="0.01" onchange="calculateRowAmount('+ri+')" onkeydown="handleGbeModCostKeydown(event,'+ri+')" onfocus="selectRow('+ri+')" data-custom-enter></td>'+
+                '<td><input type="number" class="form-control form-control-sm readonly-field" name="items['+ri+'][amount]" value="'+_esc(saved.amount||'')+'" step="0.01" readonly onfocus="selectRow('+ri+')"></td>'+
+                '<td><button type="button" class="btn btn-sm btn-danger" onclick="removeRow('+ri+')"><i class="bi bi-x"></i></button></td>'+
+                '<input type="hidden" name="items['+ri+'][item_id]" value="'+_esc(saved.item_id)+'">'+
+                '<input type="hidden" name="items['+ri+'][batch_id]" value="'+_esc(saved.batch_id)+'">'+
+                '<input type="hidden" name="items['+ri+'][packing]" value="'+_esc(saved.packing)+'">'+
+                '<input type="hidden" name="items['+ri+'][unit]" value="'+_esc(saved.unit)+'">';
+            if(tbody){ tbody.appendChild(tr); tr.classList.add('row-complete'); }
+        });
+
+        if(typeof calculateTotalAmount==='function') calculateTotalAmount();
+        else if(typeof calculateTotals==='function') calculateTotals();
+
+        const ub=document.getElementById('updateBtn'); if(ub) ub.disabled=false;
+    }, function discard(){ clearAutoSave(); });
+}
+
+window.clearAutoSave=function(){ try{ localStorage.removeItem(KEY); }catch(e){} };
+
+function _badge(){
+    let b=document.getElementById('_asBadge');
+    if(!b){ b=document.createElement('div'); b.id='_asBadge';
+      b.style.cssText='position:fixed;bottom:18px;right:18px;background:#198754;color:#fff;padding:5px 12px;border-radius:20px;font-size:11px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;';
+      document.body.appendChild(b); }
+    b.textContent='\u2713 Draft saved'; b.style.opacity='1';
+    setTimeout(function(){ b.style.opacity='0'; },2200);
+}
+function _banner(savedAt,onKeep,onDiscard){
+    const old=document.getElementById('_asBanner'); if(old) old.remove();
+    const t=savedAt?new Date(savedAt).toLocaleTimeString():'';
+    const d=document.createElement('div'); d.id='_asBanner';
+    d.style.cssText='position:fixed;top:10px;left:calc(240px + 50%);transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;padding:8px 16px;border-radius:6px;z-index:9999;display:flex;align-items:center;gap:10px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,0.15);';
+    d.innerHTML='<span>\uD83D\uDCCB Unsaved draft restored'+(t?' ('+t+')':'')+' </span>'+
+        '<button id="_asKeep" style="background:#198754;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Keep</button>'+
+        '<button id="_asDiscard" style="background:#dc3545;color:#fff;border:none;padding:3px 10px;border-radius:4px;cursor:pointer;font-size:11px;">Discard</button>';
+    document.body.appendChild(d);
+    let done=false;
+    function dismiss(){ if(done)return; done=true; d.remove(); }
+    document.getElementById('_asKeep').onclick=function(){ dismiss(); if(onKeep) onKeep(); };
+    document.getElementById('_asDiscard').onclick=function(){ dismiss(); if(onDiscard) onDiscard(); };
+    setTimeout(function(){ if(!done){ dismiss(); if(onKeep) onKeep(); } },12000);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+    setTimeout(function(){
+        const _origMark=(typeof window.markAsSaving==='function')?window.markAsSaving:null;
+        window.markAsSaving=function(){ clearAutoSave(); if(_origMark) _origMark.apply(this,arguments); };
+    },800);
+    setTimeout(restore,900);
+    const form=document.getElementById('gbeForm');
+    if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
+    const tbody=document.getElementById('itemsTableBody');
+    if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true});
+});
+})();
+</script>
+
 @endpush

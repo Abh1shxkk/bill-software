@@ -1,4 +1,4 @@
- nnnnnnnnn{{-- Keyboard Shortcuts Inline Script - No external JS file needed --}}
+{{-- Keyboard Shortcuts Inline Script - No external JS file needed --}}
 <script>
 /**
  * EasySol-style Global Keyboard Shortcuts
