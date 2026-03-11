@@ -19,6 +19,61 @@
     .modal-body-custom { padding: 1rem; max-height: 400px; overflow-y: auto; }
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; text-align: right; border-radius: 0 0 8px 8px; }
     .item-row:hover { background-color: #fff3cd !important; cursor: pointer; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Header col-md-6 → 100% ── */
+    .header-section .row > .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .header-section .field-group {
+        flex-wrap: nowrap !important;
+    }
+    .header-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* item_code fixed width stays, item_name grows */
+    #item_code { flex: 0 0 80px !important; }
+    /* Action type dropdown stays compact */
+    #action_type_display { flex: 0 0 60px !important; }
+    /* Quantity input grows */
+    #quantity { flex: 1 !important; width: auto !important; }
+
+    /* ── Action Buttons → full width wrap ── */
+    .d-flex.justify-content-center.gap-3.mt-4 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-center.gap-3.mt-4 .btn {
+        flex: 1 !important;
+        padding: 12px 4px !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 @endpush
 

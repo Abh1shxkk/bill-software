@@ -166,6 +166,116 @@
         background-color: #e9ecef;
         color: #0d6efd;
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Header row → wrap ── */
+    .header-row {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .header-row .field-group {
+        flex: 1 1 100% !important;
+        flex-wrap: nowrap !important;
+    }
+    .header-row .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Search/Past buttons inline */
+    .header-row .field-group .btn {
+        flex-shrink: 0 !important;
+    }
+    /* Insert Item button full width */
+    .header-row .field-group:last-child {
+        flex: 1 1 100% !important;
+    }
+    .header-row .field-group:last-child .btn {
+        width: 100% !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 620px !important; }
+
+    /* ── Additional Details Section ── */
+    #sa_detailSection .row > .col-md-9,
+    #sa_detailSection .row > .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    /* Detail fields → 2-per-row */
+    #sa_detailSection .d-flex.align-items-center.gap-3 {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #sa_detailSection .d-flex.align-items-center.gap-3 > .d-flex.align-items-center.gap-1 {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 100px !important;
+    }
+    #sa_detailSection .d-flex.align-items-center.gap-3 > .d-flex.align-items-center.gap-1 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* ms-auto (SrNo) */
+    #sa_detailSection .ms-auto {
+        margin-left: 0 !important;
+    }
+    /* Total → full width */
+    #sa_detailSection .col-md-3 .d-flex.justify-content-end {
+        justify-content: flex-start !important;
+        margin-top: 8px !important;
+    }
+    #sa_detailSection .col-md-3 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → wrap ── */
+    #sa_actionButtons {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #sa_actionButtons > div {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    #sa_actionButtons .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -243,7 +353,7 @@
             </div>
 
             <!-- Additional Details Section -->
-            <div class="bg-light border rounded p-2 mb-2" style="background: #f5f5f5 !important;">
+            <div id="sa_detailSection" class="bg-light border rounded p-2 mb-2" style="background: #f5f5f5 !important;">
                 <div class="row">
                     <div class="col-md-9">
                         <div class="d-flex align-items-center gap-3" style="font-size: 12px;">
@@ -291,7 +401,7 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="d-flex justify-content-between">
+            <div id="sa_actionButtons" class="d-flex justify-content-between">
                 <div>
                     <button type="button" class="btn btn-secondary" onclick="cancelTransaction()">
                         <i class="bi bi-x-circle me-1"></i> Cancel Stock Adjustment

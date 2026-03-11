@@ -1,69 +1,32 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Purchase Modification'); ?>
 
-@section('title', 'Purchase Transaction')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Scoped styles - only affect content area, not sidebar */
-    .content {
-        --primary: #0d6efd;
-        --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        --border-radius: 8px;
-    }
-
-    /* Card Styles - scoped to content */
-    .content .card {
-        border: none;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        margin-bottom: 1.5rem;
-    }
-
-    .content .card-header {
-        background-color: white;
-        border-bottom: 1px solid rgba(0,0,0,0.08);
-        padding: 1rem 1.25rem;
-        font-weight: 600;
-    }
-
-    .content .card-body {
-        padding: 1.25rem;
-    }
-
-    .page-title {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #1a1a1a;
-        margin: 0;
-    }
-
-    .page-actions {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    /* Compact form adjustments - preserving original functionality */
-    .compact-form {
-        font-size: 11px;
+    .content .compact-form {
         padding: 8px;
-        background: #f5f5f5;
     }
     
-    .compact-form label {
+    .content .compact-form label {
         font-weight: 600;
         font-size: 11px;
         margin-bottom: 0;
         white-space: nowrap;
     }
     
-    .compact-form input,
-    .compact-form select {
+    .content .compact-form input,
+    .content .compact-form select {
         font-size: 11px;
         padding: 2px 6px;
         height: 26px;
     }
     
-    .header-section {
+    .content .compact-form .form-control:focus {
+        box-shadow: none;
+        border-color: #0d6efd;
+    }
+    
+    .content .header-section {
         background: white;
         border: 1px solid #dee2e6;
         padding: 10px;
@@ -71,96 +34,24 @@
         border-radius: 4px;
     }
     
-    .header-row {
+    .content .header-row {
         display: flex;
         align-items: center;
         gap: 15px;
         margin-bottom: 6px;
     }
     
-    .field-group {
+    .content .field-group {
         display: flex;
         align-items: center;
         gap: 6px;
     }
     
-    .inner-card {
+    .content .inner-card {
         background: #e8f4f8;
         border: 1px solid #b8d4e0;
         padding: 8px;
         border-radius: 3px;
-    }
-
-    /* ============================================ */
-    /* SEARCHABLE DROPDOWN STYLES */
-    /* ============================================ */
-    .searchable-dropdown {
-        position: relative;
-    }
-
-    .searchable-dropdown-input {
-        width: 100%;
-        cursor: text;
-    }
-
-    .searchable-dropdown-input:focus {
-        border-color: #86b7fe;
-        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
-    }
-
-    .searchable-dropdown-list {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        max-height: 250px;
-        overflow-y: auto;
-        background: white;
-        border: 1px solid #dee2e6;
-        border-top: none;
-        border-radius: 0 0 4px 4px;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .searchable-dropdown-list .dropdown-item {
-        padding: 6px 10px;
-        cursor: pointer;
-        font-size: 11px;
-        border-bottom: 1px solid #f0f0f0;
-        transition: background-color 0.15s;
-    }
-
-    .searchable-dropdown-list .dropdown-item:last-child {
-        border-bottom: none;
-    }
-
-    .searchable-dropdown-list .dropdown-item:hover {
-        background-color: #f8f9fa;
-    }
-
-    .searchable-dropdown-list .dropdown-item.highlighted {
-        background-color: #007bff !important;
-        color: white !important;
-    }
-
-    .searchable-dropdown-list .dropdown-item.selected {
-        background-color: #e7f3ff;
-        font-weight: 600;
-    }
-
-    .searchable-dropdown-list .dropdown-item.hidden {
-        display: none;
-    }
-
-    /* Modal button highlight */
-    #purchaseChallanModal .kbd-highlight,
-    #pendingOrdersModal .kbd-highlight,
-    #alertModal .kbd-highlight,
-    #mrpDetailsModal .kbd-highlight {
-        outline: 2px solid #0d6efd !important;
-        outline-offset: 1px;
-        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
     }
     
     .table-compact {
@@ -172,7 +63,7 @@
     .table-compact td {
         padding: 4px;
         vertical-align: middle;
-        height: 45px;
+        height: 45px; /* Fixed row height for consistent 6-row display */
     }
     
     .table-compact th {
@@ -180,7 +71,7 @@
         font-weight: 600;
         text-align: center;
         border: 1px solid #dee2e6;
-        height: 40px;
+        height: 40px; /* Fixed header height */
     }
     
     .table-compact input {
@@ -193,6 +84,7 @@
     
     /* Table container - Shows exactly 6 rows + header */
     #itemsTableContainer {
+        /* Header: 40px + 6 Rows: 6 × 45px = 310px total */
         max-height: 310px !important;
     }
     
@@ -269,19 +161,49 @@
         display: none;
         position: fixed;
         top: 50%;
-        left: 50%;
+        left: calc(50% + 130px); /* Account for sidebar width (260px / 2 = 130px) */
         transform: translate(-50%, -50%) scale(0.7);
         width: 90%;
         max-width: 900px;
-        z-index: 9999;
+        max-height: 90vh;
+        z-index: 10000; /* Higher than sidebar z-index (1030) */
         opacity: 0;
         transition: all 0.3s ease-in-out;
+        overflow: hidden;
     }
     
     .pending-orders-modal.show {
         display: block;
         transform: translate(-50%, -50%) scale(1);
         opacity: 1;
+    }
+    
+    /* Specific styling for invoice list modal */
+    #invoiceListModal {
+        max-width: 1200px;
+        max-height: 90vh;
+        /* Adjust left position for invoice modal */
+        left: calc(50% + 130px);
+    }
+    
+    /* When sidebar is collapsed, adjust positioning */
+    .collapsed .pending-orders-modal,
+    .collapsed #invoiceListModal {
+        left: calc(50% + 36px); /* Account for collapsed sidebar (72px / 2 = 36px) */
+    }
+    
+    #invoiceListModal .pending-orders-content {
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* Mobile responsive - center modal on mobile */
+    @media (max-width: 991.98px) {
+        .pending-orders-modal,
+        #invoiceListModal {
+            left: 50%; /* Center on mobile since sidebar is hidden */
+        }
     }
     
     .pending-orders-content {
@@ -341,6 +263,13 @@
         justify-content: flex-end;
         gap: 10px;
     }
+
+    /* Modal button highlight */
+    #mrpDetailsModal .kbd-highlight {
+        outline: 2px solid #0d6efd !important;
+        outline-offset: 1px;
+        box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25) !important;
+    }
     
     .pending-orders-backdrop {
         display: none;
@@ -350,7 +279,7 @@
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.6);
-        z-index: 9998;
+        z-index: 9999; /* Below modal but above everything else */
         opacity: 0;
         transition: opacity 0.3s ease;
     }
@@ -402,12 +331,11 @@
     
     .alert-modal-header {
         padding: 1rem 1.5rem;
-        background: #dc3545;
         color: white;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-bottom: 2px solid #c82333;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
     }
     
     .alert-modal-header.success {
@@ -415,10 +343,15 @@
         border-bottom-color: #1e7e34;
     }
     
+    .alert-modal-header.error {
+        background: #dc3545;
+        border-bottom-color: #c82333;
+    }
+    
     .alert-modal-header.warning {
         background: #ffc107;
-        border-bottom-color: #e0a800;
         color: #212529;
+        border-bottom-color: #e0a800;
     }
     
     .alert-modal-header.info {
@@ -428,19 +361,36 @@
     
     .alert-modal-title {
         margin: 0;
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         font-weight: 600;
+        letter-spacing: 1px;
+    }
+    
+    .btn-close-modal {
+        background: transparent;
+        border: none;
+        color: inherit;
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
         display: flex;
         align-items: center;
-        gap: 8px;
+        justify-content: center;
+        border-radius: 4px;
+        transition: background 0.2s;
+    }
+    
+    .btn-close-modal:hover {
+        background: rgba(255, 255, 255, 0.2);
     }
     
     .alert-modal-body {
         padding: 1.5rem;
         background: #fff;
-        font-size: 14px;
-        line-height: 1.5;
         white-space: pre-line;
+        line-height: 1.5;
     }
     
     .alert-modal-footer {
@@ -448,7 +398,7 @@
         background: #f8f9fa;
         border-top: 1px solid #dee2e6;
         display: flex;
-        justify-content: center;
+        justify-content: flex-end;
         gap: 10px;
     }
     
@@ -564,7 +514,33 @@
         from { transform: scaleX(1); }
         to { transform: scaleX(0); }
     }
-
+    
+    /* Custom Dropdown Styles */
+    .custom-dropdown-menu .dropdown-item:hover {
+        background-color: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .custom-dropdown-menu .dropdown-item:active {
+        background-color: #bbdefb;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+    
+    .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
 </style>
 
 <!-- ============================================================ -->
@@ -576,20 +552,14 @@
     body { overflow-x: hidden !important; }
     .card-body { padding: 8px !important; }
 
-    /* ── Page title row ── */
-    #pt_pageTitleRow {
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-    }
-
     /* ── Header Row 1: Date + Supplier ── */
-    #pt_headerRow1 {
+    #pm_headerRow1 {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 8px !important;
         margin-bottom: 8px !important;
     }
-    #pt_headerRow1 .field-group {
+    #pm_headerRow1 .field-group {
         display: flex !important;
         flex-wrap: nowrap !important;
         align-items: center !important;
@@ -598,41 +568,40 @@
     }
     #billDate       { width: 150px !important; flex-shrink: 0 !important; }
     #dayName        { flex: 1 !important; width: auto !important; min-width: 0 !important; }
-    #supplierDropdownWrapper { width: 100% !important; max-width: 100% !important; }
+    .custom-dropdown-wrapper { width: 100% !important; max-width: 100% !important; }
+    #supplierSearchInput { width: 100% !important; }
 
     /* ── Header Row 2: Inner card + Right col ── */
-    #pt_headerRow2 {
+    #pm_headerRow2 {
         flex-direction: column !important;
         gap: 10px !important;
     }
-    #pt_headerRightCol {
+    #pm_headerRightCol {
         width: 100% !important;
         min-width: 0 !important;
     }
-    #pt_headerRightCol .field-group {
+    #pm_headerRightCol .field-group {
         display: flex !important;
         align-items: center !important;
         width: 100% !important;
         gap: 6px !important;
     }
-    #pt_headerRightCol .field-group input,
-    #pt_headerRightCol .field-group select {
+    #pm_headerRightCol .field-group input {
         flex: 1 !important; width: auto !important; min-width: 0 !important;
     }
-    #insertOrdersBtn { width: 100% !important; }
+    #pm_headerRightCol button { width: 100% !important; }
 
-    .inner-card { width: 100% !important; min-width: 0 !important; }
-    .inner-card .col-md-6,
-    .inner-card .col-md-7,
-    .inner-card .col-md-5,
-    .inner-card .col-md-3 {
+    .content .inner-card { width: 100% !important; min-width: 0 !important; }
+    .content .inner-card .col-md-6,
+    .content .inner-card .col-md-7,
+    .content .inner-card .col-md-5,
+    .content .inner-card .col-md-3 {
         flex: 0 0 100% !important; max-width: 100% !important;
     }
-    .inner-card .field-group {
+    .content .inner-card .field-group {
         display: flex !important; align-items: center !important; gap: 6px !important;
     }
-    .inner-card .field-group input,
-    .inner-card .field-group select {
+    .content .inner-card .field-group input {
         flex: 1 !important; width: auto !important; min-width: 0 !important;
     }
     #cash     { width: 55px !important; flex-shrink: 0 !important; }
@@ -647,27 +616,27 @@
     .table-compact { min-width: 680px !important; }
 
     /* ── Calculation Section ── */
-    #pt_calcSection {
+    #pm_calcSection {
         flex-direction: column !important;
         gap: 10px !important;
     }
-    #pt_calcLeftBlock,
-    #pt_calcRightBlock {
+    #pm_calcLeftBlock,
+    #pm_calcRightBlock {
         width: 100% !important;
         min-width: 0 !important;
     }
-    #pt_calcRightBlock {
+    #pm_calcRightBlock {
         flex-direction: row !important;
         flex-wrap: wrap !important;
         gap: 8px !important;
     }
-    #pt_calcRightBlock > div {
+    #pm_calcRightBlock > div {
         flex: 1 1 45% !important;
         min-width: 130px !important;
     }
-    #pt_calcSection .d-flex.align-items-center.gap-2 { width: 100% !important; }
-    #pt_calcSection .d-flex.align-items-center.gap-2 input,
-    #pt_calcSection .d-flex.align-items-center.gap-2 > div.border {
+    #pm_calcSection .d-flex.align-items-center.gap-2 { width: 100% !important; }
+    #pm_calcSection .d-flex.align-items-center.gap-2 input,
+    #pm_calcSection .d-flex.align-items-center.gap-2 > div.border {
         flex: 1 !important; width: auto !important; min-width: 0 !important;
     }
     #calc_hsn_display, #calc_cgst, #calc_sgst, #calc_cess,
@@ -677,24 +646,24 @@
         width: 100% !important; max-width: 100% !important;
     }
 
-    /* ── Summary Section ── */
-    #pt_summarySection { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-    #pt_summaryGrid1, #pt_summaryGrid2 {
+    /* ── Summary Section: override inline grid ── */
+    #pm_summarySection { overflow-x: auto !important; }
+    #pm_summaryGrid1, #pm_summaryGrid2 {
         display: grid !important;
         grid-template-columns: repeat(2, 1fr) !important;
         gap: 8px !important;
     }
 
     /* ── Detail Info Section ── */
-    #pt_detailSection {
+    #pm_detailSection {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
-    #pt_detailSection table { min-width: 580px !important; }
+    #pm_detailSection table { min-width: 580px !important; }
 
     /* ── Action Buttons ── */
-    #pt_actionButtons { gap: 8px !important; }
-    #pt_actionButtons .btn {
+    #pm_actionButtons { gap: 8px !important; }
+    #pm_actionButtons .btn {
         flex: 1 !important; font-size: 14px !important; padding: 10px 0 !important;
     }
 
@@ -706,419 +675,435 @@
 }
 </style>
 
-<div id="pt_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-plus me-2"></i> Purchase Transaction</h4>
-        <div class="text-muted small">Create new purchase transaction</div>
+        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Purchase Modification</h4>
+        <div class="text-muted small">Modify existing purchase transaction</div>
     </div>
 </div>
 
 <div class="card shadow-sm border-0 rounded">
-    <div class="card-body">
-                <form id="purchaseForm" method="POST" autocomplete="off" onsubmit="return false;">
-                    @csrf
-                    
-                    <!-- Header Section -->
-                    <div class="header-section">
-                        <!-- Row 1: Date, Supplier -->
-                        <div id="pt_headerRow1" class="header-row">
-                            <div class="field-group">
-                                <label>Bill / Ledger Date</label>
-                                <input type="date" class="form-control" name="bill_date" id="billDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()" data-kb-order="1">
-                                <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 90px;">
+    <div class="card-body compact-form">
+    <form id="purchaseForm" method="POST" autocomplete="off" onsubmit="return false;">
+        <?php echo csrf_field(); ?>
+        
+        <!-- Header Section -->
+        <div class="header-section">
+            <!-- Row 1: Date, Supplier -->
+            <div id="pm_headerRow1" class="header-row">
+                <div class="field-group">
+                    <label>Bill / Ledger Date</label>
+                    <input type="date" class="form-control" name="bill_date" id="billDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 140px;" onchange="updateDayName()">
+                    <input type="text" class="form-control readonly-field" id="dayName" value="<?php echo e(date('l')); ?>" readonly style="width: 90px;">
+                </div>
+                
+                <div class="field-group" style="position: relative;">
+                    <label>Supplier:</label>
+                    <div class="custom-dropdown-wrapper" style="width: 250px; position: relative;">
+                        <input type="text" 
+                               class="form-control no-select2" 
+                               id="supplierSearchInput" 
+                               placeholder="Type to search supplier..."
+                               autocomplete="off"
+                               style="width: 100%;">
+                        <input type="hidden" name="supplier_id" id="supplierSelect">
+                        
+                        <div id="supplierDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
+                            <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
+                                Select Supplier
                             </div>
-                            
-                            <div class="field-group">
-                                <label>Supplier:</label>
-                                <div class="searchable-dropdown" id="supplierDropdownWrapper" style="position: relative; width: 250px;">
-                                    <input type="text"
-                                           class="form-control searchable-dropdown-input"
-                                           id="supplierSearchInput"
-                                           placeholder="Type to search supplier..."
-                                           autocomplete="off"
-                                           style="width: 100%;"
-                                           data-kb-order="2">
-                                    <input type="hidden" name="supplier_id" id="supplierSelect" value="">
-                                    <div class="searchable-dropdown-list" id="supplierDropdownList" style="display: none;">
-                                        <div class="dropdown-item" data-value="" data-name="">Select Supplier</div>
-                                        @foreach($suppliers ?? [] as $supplier)
-                                            <div class="dropdown-item"
-                                                 data-value="{{ $supplier->supplier_id }}"
-                                                 data-name="{{ $supplier->name }}"
-                                                 data-code="{{ $supplier->code ?? '' }}">
-                                                {{ $supplier->code ?? '' }} - {{ $supplier->name }}
-                                            </div>
-                                        @endforeach
+                            <div id="supplierList" class="dropdown-list">
+                                <?php $__currentLoopData = $suppliers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="dropdown-item" 
+                                         data-id="<?php echo e($supplier->supplier_id); ?>" 
+                                         data-name="<?php echo e($supplier->name); ?>"
+                                         style="padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0;">
+                                        - <?php echo e($supplier->name); ?>
+
                                     </div>
-                                </div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Row 2: Bill No, Trn No, Inner Card -->
+            <div id="pm_headerRow2" class="d-flex gap-3">
+                <!-- Left Side -->
+               
+                
+                <!-- Right Side - Inner Card -->
+                <div class="inner-card flex-grow-1">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <div class="field-group">
+                                <label style="width: 100px;">Receive Date</label>
+                                <input type="date" class="form-control" name="receive_date" id="receiveDate" value="<?php echo e(date('Y-m-d')); ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="field-group">
+                                <label>Cash:</label>
+                                <input type="text" class="form-control" name="cash" id="cash" value="N" maxlength="1" style="width: 50px;">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="field-group">
+                                <label>Transfer:</label>
+                                <input type="text" class="form-control" name="transfer" id="transfer" value="N" maxlength="1" style="width: 50px;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-2 mt-1">
+                        <div class="col-md-7">
+                            <div class="field-group">
+                                <label>Remarks:</label>
+                                <input type="text" class="form-control" name="remarks" id="remarks">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="field-group">
+                                <label style="width: 80px;">Due Date:</label>
+                                <input type="date" class="form-control" name="due_date" id="dueDate" value="<?php echo e(date('Y-m-d')); ?>">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <div id="pm_headerRightCol" style="width: 200px;">
+                    <div class="field-group mb-2">
+                        <label style="width: 60px;">Bill No.:</label>
+                        <input type="text" class="form-control" name="bill_no" id="billNo" placeholder="1111">
+                    </div>
+                    <div class="field-group mb-2">
+                        <label style="width: 60px;">Trn.No.:</label>
+                        <input type="text" class="form-control" name="trn_no" id="trnNo" placeholder="Enter Trn No">
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-sm btn-success" onclick="fetchBillByTrnNo()" style="width: 100%;">
+                            <i class="bi bi-download"></i> Fetch Bill
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Items Table -->
+        <div class="bg-white border rounded p-2 mb-2">
+            <div class="table-responsive" style="overflow-y: auto;" id="itemsTableContainer">
+                <table class="table table-bordered table-compact">
+                    <thead style="position: sticky; top: 0; background: #e9ecef; z-index: 10;">
+                        <tr>
+                            <th style="width: 60px;">Code</th>
+                            <th style="width: 250px;">Item Name</th>
+                            <th style="width: 80px;">Batch</th>
+                            <th style="width: 70px;">Exp.</th>
+                            <th style="width: 60px;">Qty.</th>
+                            <th style="width: 60px;">F.Qty.</th>
+                            <th style="width: 80px;">Pur. Rate</th>
+                            <th style="width: 60px;">Dis.%</th>
+                            <th style="width: 80px;">MRP</th>
+                            <th style="width: 90px;">Amount</th>
+                            <th style="width: 120px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsTableBody">
+                        <!-- Rows will be added dynamically when pending order is loaded or via Add Row button -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Calculation Section -->
+        <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div id="pm_calcSection" class="d-flex align-items-start border rounded p-3" style="font-size: 11px; background: #fafafa; gap: 30px;">
+                <!-- HSN Code Block (First) -->
+                <div id="pm_calcLeftBlock" class="d-flex flex-column gap-2" style="min-width: 180px;">
+                    <!-- HSN Code -->
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="mb-0" style="min-width: 80px;"><strong>HSN Code:</strong></label>
+                        <input type="text" class="form-control readonly-field text-center" id="calc_hsn_display" readonly style="width: 110px; height: 28px;" value="---">
+                    </div>
+                    
+                    <!-- CGST(%) -->
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="mb-0" style="min-width: 80px;"><strong>CGST(%):</strong></label>
+                        <input type="text" class="form-control readonly-field text-center" id="calc_cgst" readonly style="width: 110px; height: 28px;" value="0">
+                    </div>
+                    
+                    <!-- SGST(%) -->
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="mb-0" style="min-width: 80px;"><strong>SGST(%):</strong></label>
+                        <input type="text" class="form-control readonly-field text-center" id="calc_sgst" readonly style="width: 110px; height: 28px;" value="0">
+                    </div>
+                    
+                    <!-- Cess (%) -->
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="mb-0" style="min-width: 80px;"><strong>Cess (%):</strong></label>
+                        <input type="text" class="form-control readonly-field text-center" id="calc_cess" readonly style="width: 110px; height: 28px;" value="0">
+                    </div>
+                </div>
+                
+                <!-- Right Side Fields (4 Columns) -->
+                <div id="pm_calcRightBlock" class="d-flex" style="gap: 25px; flex: 1;">
+                    <!-- Column 1 -->
+                    <div class="d-flex flex-column gap-2" style="min-width: 150px;">
+                        <!-- Spl. Rate -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 70px;"><strong>Spl. Rate</strong></label>
+                            <input type="number" class="form-control readonly-field" id="calc_spl_rate" readonly step="0.01" style="width: 90px; height: 28px;" value="0.00">
+                        </div>
+                        
+                        <!-- W.S.Rate -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 70px;"><strong>W.S.Rate</strong></label>
+                            <input type="number" class="form-control readonly-field" id="calc_ws_rate" readonly step="0.01" style="width: 90px; height: 28px;" value="0.00">
+                        </div>
+                        
+                        <!-- TAX % -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 70px;"><strong>TAX %</strong></label>
+                            <input type="number" class="form-control readonly-field" id="calc_tax_percent" readonly step="0.01" style="width: 90px; height: 28px;" value="0.000">
+                        </div>
+                    </div>
+                    
+                    <!-- Column 2 -->
+                    <div class="d-flex flex-column gap-2" style="min-width: 160px;">
+                        <!-- CGST Amt -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 80px;"><strong>CGST Amt:</strong></label>
+                            <div class="border rounded px-2 py-1" style="background: #fff; min-width: 80px; text-align: right; height: 28px; display: flex; align-items: center; justify-content: flex-end;">
+                                <strong id="calc_cgst_amount">0.00</strong>
                             </div>
                         </div>
                         
-                        <!-- Row 2: Bill No, Trn No, Inner Card -->
-                        <div id="pt_headerRow2" class="d-flex gap-3">
-                            <!-- Left Side -->
-                           
-                            
-                            <!-- Right Side - Inner Card -->
-                            <div class="inner-card flex-grow-1">
-                                <div class="row g-2">
-                                    <div class="col-md-6">
-                                        <div class="field-group">
-                                            <label style="width: 100px;">Receive Date</label>
-                                            <input type="date" class="form-control" name="receive_date" id="receiveDate" value="{{ date('Y-m-d') }}" data-kb-order="3">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="field-group">
-                                            <label>Cash:</label>
-                                            <select class="form-control" name="cash" id="cash" style="width: 60px;" data-kb-order="4">
-                                                <option value="N" selected>N</option>
-                                                <option value="Y">Y</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="field-group">
-                                            <label>Transfer:</label>
-                                            <input type="text" class="form-control" name="transfer" id="transfer" value="N" maxlength="1" style="width: 50px;" data-kb-order="5">
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="row g-2 mt-1">
-                                    <div class="col-md-7">
-                                        <div class="field-group">
-                                            <label>Remarks:</label>
-                                            <input type="text" class="form-control" name="remarks" id="remarks" data-kb-order="6">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-5">
-                                        <div class="field-group">
-                                            <label style="width: 80px;">Due Date:</label>
-                                            <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}" data-kb-order="7">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                             <div id="pt_headerRightCol" style="width: 200px;">
-                                <div class="field-group mb-2">
-                                    <label style="width: 60px;">Bill No.:</label>
-                                    <input type="text" class="form-control" name="bill_no" id="billNo" placeholder="1111" data-kb-order="8">
-                                </div>
-                                <div class="field-group mb-2">
-                                    <label style="width: 60px;">Trn.No.:</label>
-                                    <input type="text" class="form-control readonly-field" name="trn_no" id="trnNo" value="{{ $nextTrnNo ?? 1 }}" readonly>
-                                </div>
-                                <div class="text-center">
-                                    <button type="button" class="btn btn-sm btn-info" id="insertOrdersBtn" onclick="openPendingOrdersModal()" style="width: 100%;">
-                                        <i class="bi bi-list-check"></i> Insert Orders
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Items Table -->
-                    <div class="bg-white border rounded p-2 mb-2">
-                        <div class="table-responsive" style="overflow-y: auto;" id="itemsTableContainer">
-                            <table class="table table-bordered table-compact">
-                                <thead style="position: sticky; top: 0; background: #e9ecef; z-index: 10;">
-                                    <tr>
-                                        <th style="width: 60px;">Code</th>
-                                        <th style="width: 250px;">Item Name</th>
-                                        <th style="width: 80px;">Batch</th>
-                                        <th style="width: 70px;">Exp.</th>
-                                        <th style="width: 60px;">Qty.</th>
-                                        <th style="width: 60px;">F.Qty</th>
-                                        <th style="width: 80px;">Pur. Rate</th>
-                                        <th style="width: 60px;">Dis.%</th>
-                                        <th style="width: 80px;">MRP</th>
-                                        <th style="width: 90px;">Amount</th>
-                                        <th style="width: 120px;">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="itemsTableBody">
-                                    <!-- Rows will be added dynamically when pending order is loaded or via Add Row button -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <!-- Calculation Section -->
-                    <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                        <div id="pt_calcSection" class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
-                            <!-- HSN Code Block (First) -->
-                            <div id="pt_calcLeftBlock" class="d-flex flex-column gap-2">
-                                <!-- HSN Code -->
-                                <div class="d-flex align-items-center gap-2">
-                                    <label class="mb-0" style="min-width: 75px;"><strong>HSN Code:</strong></label>
-                                    <input type="text" class="form-control readonly-field text-center" id="calc_hsn_display" readonly style="width: 100px; height: 28px;" value="---">
-                                </div>
-                                
-                                <!-- CGST(%) -->
-                                <div class="d-flex align-items-center gap-2">
-                                    <label class="mb-0" style="min-width: 75px;"><strong>CGST(%):</strong></label>
-                                    <input type="text" class="form-control readonly-field text-center" id="calc_cgst" readonly style="width: 100px; height: 28px;" value="0">
-                                </div>
-                                
-                                <!-- SGST(%) -->
-                                <div class="d-flex align-items-center gap-2">
-                                    <label class="mb-0" style="min-width: 75px;"><strong>SGST(%):</strong></label>
-                                    <input type="text" class="form-control readonly-field text-center" id="calc_sgst" readonly style="width: 100px; height: 28px;" value="0">
-                                </div>
-                                
-                                <!-- Cess (%) -->
-                                <div class="d-flex align-items gap-2">
-                                    <label class="mb-0" style="min-width: 75px;"><strong>Cess (%):</strong></label>
-                                    <input type="text" class="form-control readonly-field text-center" id="calc_cess" readonly style="width: 100px; height: 28px;" value="0">
-                                </div>
-                            </div>
-                            
-                            <!-- Right Side Fields (2 Columns) -->
-                            <div id="pt_calcRightBlock" class="d-flex gap-3">
-                                <!-- Column 1 -->
-                                <div class="d-flex flex-column gap-2">
-                                    <!-- Spl. Rate -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 65px;"><strong>Spl. Rate</strong></label>
-                                        <input type="number" class="form-control readonly-field" id="calc_spl_rate" readonly step="0.01" style="width: 80px; height: 28px;" value="0.00">
-                                    </div>
-                                    
-                                    <!-- W.S.Rate -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 65px;"><strong>W.S.Rate</strong></label>
-                                        <input type="number" class="form-control readonly-field" id="calc_ws_rate" readonly step="0.01" style="width: 80px; height: 28px;" value="0.00">
-                                    </div>
-                                    
-                                    <!-- TAX % -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 65px;"><strong>TAX %</strong></label>
-                                        <input type="number" class="form-control readonly-field" id="calc_tax_percent" readonly step="0.01" style="width: 80px; height: 28px;" value="0.000">
-                                    </div>
-                                </div>
-                                
-                                <!-- Column 2 -->
-                                <div class="d-flex flex-column gap-2">
-                                    <!-- CGST Amt -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 75px;"><strong>CGST Amt:</strong></label>
-                                        <div class="border rounded px-2 py-1" style="background: #fff; min-width: 70px; text-align: right; height: 28px; display: flex; align-items: center; justify-content: flex-end;">
-                                            <strong id="calc_cgst_amount">0.00</strong>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- SGST Amt -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 75px;"><strong>SGST Amt:</strong></label>
-                                        <div class="border rounded px-2 py-1" style="background: #fff; min-width: 70px; text-align: right; height: 28px; display: flex; align-items: center; justify-content: flex-end;">
-                                            <strong id="calc_sgst_amount">0.00</strong>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- CESS Amt -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 75px;"><strong>CESS Amt:</strong></label>
-                                        <div class="border rounded px-2 py-1" style="background: #fff; min-width: 70px; text-align: right; height: 28px; display: flex; align-items: center; justify-content: flex-end;">
-                                            <strong id="calc_cess_amount">0.00</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Column 3 -->
-                                <div class="d-flex flex-column gap-2">
-                                    <!-- Excise -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 50px;"><strong>Excise</strong></label>
-                                        <input type="number" class="form-control readonly-field" id="calc_excise" readonly step="0.01" style="width: 70px; height: 28px;" value="0.00">
-                                    </div>
-                                    
-                                    <!-- MRP -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 50px;"><strong>MRP</strong></label>
-                                        <input type="number" class="form-control readonly-field" id="calc_mrp" readonly step="0.01" style="width: 80px; height: 28px;" value="0.00">
-                                    </div>
-                                    
-                                    <!-- SC% -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 50px;"><strong>SC%</strong></label>
-                                        <input type="number" class="form-control readonly-field" id="calc_sc_percent" readonly step="0.01" style="width: 70px; height: 28px;" value="0.000">
-                                    </div>
-                                </div>
-                                
-                                <!-- Column 4 (Inc, S.Rate, Less) -->
-                                <div class="d-flex flex-column gap-2">
-                                    <!-- Inc. -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 50px;"><strong>Inc.</strong></label>
-                                        <input type="text" class="form-control text-center readonly-field" id="calc_inc" readonly style="width: 60px; height: 28px;" value="Y">
-                                    </div>
-                                    
-                                    <!-- S.Rate -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 50px;"><strong>S.Rate</strong></label>
-                                        <input type="number" class="form-control text-end" id="calc_s_rate" step="0.01" style="width: 90px; height: 28px;" value="0.00">
-                                    </div>
-                                    
-                                    <!-- Less -->
-                                    <div class="d-flex align-items-center gap-2">
-                                        <label class="mb-0" style="min-width: 50px;"><strong>Less</strong></label>
-                                        <input type="number" class="form-control text-end readonly-field" id="calc_less" readonly step="0.01" style="width: 80px; height: 28px;" value="0.00">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Summary Section -->
-                    <div id="pt_summarySection" class="bg-white border rounded p-2 mb-2">
-                        <!-- Row 1: 6 fields -->
-                        <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold; white-space: nowrap;">N.T AMT</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="nt_amt" readonly step="0.01" style="width: 80px; height: 26px; background: #fff3cd;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">SC</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="sc_amt" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">SCM.</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="scm_amt" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">DIS.</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="dis_amt" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">LESS</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="less_amt" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">Tax</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="tax_amt" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
+                        <!-- SGST Amt -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 80px;"><strong>SGST Amt:</strong></label>
+                            <div class="border rounded px-2 py-1" style="background: #fff; min-width: 80px; text-align: right; height: 28px; display: flex; align-items: center; justify-content: flex-end;">
+                                <strong id="calc_sgst_amount">0.00</strong>
                             </div>
                         </div>
                         
-                        <!-- Row 2: 6 fields -->
-                        <div class="d-flex align-items-center mt-2" style="font-size: 11px; gap: 10px;">
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold; white-space: nowrap;">NET AMT.</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="net_amt" readonly step="0.01" style="width: 80px; height: 26px; background: #fff3cd; font-weight: bold;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">Scm.%</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="scm_percent" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">TCS</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="tcs_amt" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold; white-space: nowrap;">Dis1 Amt</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="dis1_amt" readonly step="0.01" style="width: 80px; height: 26px; background: #ffcccc;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold;">TOF</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="tof_amt" readonly step="0.01" style="width: 80px; height: 26px;" value="0.00">
-                            </div>
-                            
-                            <div class="d-flex align-items-center" style="gap: 5px;">
-                                <label class="mb-0" style="font-weight: bold; white-space: nowrap;">INV.AMT.</label>
-                                <input type="number" class="form-control form-control-sm readonly-field text-end" id="inv_amt" readonly step="0.01" style="width: 80px; height: 26px; background: #fff3cd; font-weight: bold;" value="0.00">
+                        <!-- CESS Amt -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 80px;"><strong>CESS Amt:</strong></label>
+                            <div class="border rounded px-2 py-1" style="background: #fff; min-width: 80px; text-align: right; height: 28px; display: flex; align-items: center; justify-content: flex-end;">
+                                <strong id="calc_cess_amount">0.00</strong>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Detailed Info Section -->
-                    <div id="pt_detailSection" class="bg-white border rounded p-2 mb-2">
-                        <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
-                            <tr>
-                                <td style="padding: 3px;"><strong>Unit</strong></td>
-                                <td style="padding: 3px;"><input type="text" class="form-control form-control-sm" id="unit" value="1" style="height: 22px; width: 50px;"></td>
-                                <td style="padding: 3px;"><strong>N.T Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="nt_amt_detail" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                                <td style="padding: 3px;"><strong>Scm.Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="scm_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>Tax Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="tax_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>Cost</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="cost" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>Srl.No.</strong></td>
-                                <td style="padding: 3px;"><input type="text" class="form-control form-control-sm text-center" id="srl_no1" value="1" style="height: 22px; width: 40px;"></td>
-                                <td style="padding: 3px;"><input type="text" class="form-control form-control-sm text-center" id="srl_no2" value="1" style="height: 22px; width: 40px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 3px;"><strong>Lctn</strong></td>
-                                <td style="padding: 3px;"><input type="text" class="form-control form-control-sm" id="lctn" value="" style="height: 22px; width: 50px;"></td>
-                                <td style="padding: 3px;"><strong>SC Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="sc_amt_detail" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                                <td style="padding: 3px;"><strong>Dis1.Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="dis1_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>Net Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="net_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>Cost+GST</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="cost_gst" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>P.SCM.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-center" id="p_scm1" value="0" style="height: 22px; width: 40px;"></td>
-                                <td style="padding: 3px; text-align: center; font-weight: bold;">+</td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-center" id="p_scm2" value="0" style="height: 22px; width: 40px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 3px;"><strong>Cl.Qty</strong></td>
-                                <td style="padding: 3px;"><input type="text" class="form-control form-control-sm" id="cl_qty" value="" style="height: 22px; width: 50px;"></td>
-                                <td style="padding: 3px;"><strong>Dis. Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="dis_amt_detail" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                                <td style="padding: 3px;"><strong>Less</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="less_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>Comp :</strong></td>
-                                <td style="padding: 3px;"><input type="text" class="form-control form-control-sm" id="comp" value="" style="height: 22px; width: 100px;"></td>
-                                <td style="padding: 3px;"><strong>Vol.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-end" id="vol" value="0" style="height: 22px; width: 50px;"></td>
-                                <td style="padding: 3px;"><strong>S.SCM.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-center" id="s_scm1" value="0" style="height: 22px; width: 40px;"></td>
-                                <td style="padding: 3px; text-align: center; font-weight: bold;">+</td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-center" id="s_scm2" value="0" style="height: 22px; width: 40px;"></td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 3px;"><strong>Pack</strong></td>
-                                <td style="padding: 3px;"><input type="text" class="form-control form-control-sm" id="pack_detail" value="" style="height: 22px; width: 50px;"></td>
-                                <td style="padding: 3px;"><strong>Hs.Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="hs_amt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                                <td style="padding: 3px;"><strong>Gross Amt.</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="gross_amt" readonly value="0.00" style="height: 22px; width: 70px;"></td>
-                                <td style="padding: 3px;"><strong>Scm%</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-end" id="scm_percent_detail" value="0.00" style="height: 22px; width: 60px;"></td>
-                                <td style="padding: 3px;"><strong>Dis1.%</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-end" id="dis1_percent" value="0.00" style="height: 22px; width: 60px;"></td>
-                                <td style="padding: 3px;"><strong>%</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-end" id="percent1" value="0.00" style="height: 22px; width: 50px;"></td>
-                                <td style="padding: 3px;"><strong>%</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-end" id="percent2" value="0.00" style="height: 22px; width: 50px;"></td>
-                                <td style="padding: 3px;"><strong>%</strong></td>
-                                <td style="padding: 3px;"><input type="number" class="form-control form-control-sm text-end" id="percent3" value="0.00" style="height: 22px; width: 50px;"></td>
-                            </tr>
-                        </table>
+                    <!-- Column 3 -->
+                    <div class="d-flex flex-column gap-2" style="min-width: 140px;">
+                        <!-- Excise -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 55px;"><strong>Excise</strong></label>
+                            <input type="number" class="form-control readonly-field" id="calc_excise" readonly step="0.01" style="width: 85px; height: 28px;" value="0.00">
+                        </div>
+                        
+                        <!-- MRP -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 55px;"><strong>MRP</strong></label>
+                            <input type="number" class="form-control readonly-field" id="calc_mrp" readonly step="0.01" style="width: 85px; height: 28px;" value="0.00">
+                        </div>
+                        
+                        <!-- SC% -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 55px;"><strong>SC%</strong></label>
+                            <input type="number" class="form-control readonly-field" id="calc_sc_percent" readonly step="0.01" style="width: 85px; height: 28px;" value="0.000">
+                        </div>
                     </div>
                     
-                    <!-- Action Buttons -->
-                    <div id="pt_actionButtons" class="d-flex gap-2">
-                        <button type="button" class="btn btn-primary btn-sm" onclick="savePurchase()">
-                            <i class="bi bi-save"></i> Save
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.reload()">
-                            <i class="bi bi-x-circle"></i> Cancel
-                        </button>
+                    <!-- Column 4 (Inc, S.Rate, Less) -->
+                    <div class="d-flex flex-column gap-2" style="min-width: 150px;">
+                        <!-- Inc. -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 55px;"><strong>Inc.</strong></label>
+                            <input type="text" class="form-control text-center readonly-field" id="calc_inc" readonly style="width: 70px; height: 28px;" value="Y">
+                        </div>
+                        
+                        <!-- S.Rate -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 55px;"><strong>S.Rate</strong></label>
+                            <input type="number" class="form-control text-end" id="calc_s_rate" step="0.01" style="width: 95px; height: 28px;" value="0.00">
+                        </div>
+                        
+                        <!-- Less -->
+                        <div class="d-flex align-items-center gap-2">
+                            <label class="mb-0" style="min-width: 55px;"><strong>Less</strong></label>
+                            <input type="number" class="form-control text-end readonly-field" id="calc_less" readonly step="0.01" style="width: 95px; height: 28px;" value="0.00">
+                        </div>
                     </div>
-                </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Summary Section -->
+        <div id="pm_summarySection" class="bg-white border rounded p-2 mb-2">
+            <div id="pm_summaryGrid1" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; font-size: 11px; align-items: center;">
+                <!-- Row 1 -->
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold; white-space: nowrap;">N.T AMT</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="nt_amt" readonly step="0.01" style="width: 100%; height: 28px; background: #fff3cd;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">SC</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="sc_amt" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">SCM.</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="scm_amt" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">DIS.</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="dis_amt" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">LESS</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="less_amt" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                </div>
+                
+                <div style="visibility: hidden;">
+                    <div class="d-flex align-items-center" style="gap: 6px;">
+                        <label class="mb-0" style="font-weight: bold;">Tax</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold; white-space: nowrap;">NET AMT.</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="net_amt" readonly step="0.01" style="width: 100%; height: 28px; background: #fff3cd; font-weight: bold;" value="0.00">
+                </div>
+            </div>
+            
+            <!-- Row 2 -->
+            <div id="pm_summaryGrid2" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; font-size: 11px; align-items: center; margin-top: 12px;">
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">Tax</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="tax_amt" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">Scm.%</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="scm_percent" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">TCS</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="tcs_amt" readonly step="0.01" style="width: 100%; height: 28px; background: #ffcccc;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold; white-space: nowrap;">Dis1 Amt</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="dis1_amt" readonly step="0.01" style="width: 100%; height: 28px; background: #ffcccc;" value="0.00">
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold;">TOF</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="tof_amt" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                </div>
+                
+                <div style="visibility: hidden;">
+                    <div class="d-flex align-items-center" style="gap: 6px;">
+                        <label class="mb-0" style="font-weight: bold;">Tax</label>
+                        <input type="number" class="form-control form-control-sm readonly-field text-end" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
+                    </div>
+                </div>
+                
+                <div class="d-flex align-items-center" style="gap: 6px;">
+                    <label class="mb-0" style="font-weight: bold; white-space: nowrap;">INV.AMT.</label>
+                    <input type="number" class="form-control form-control-sm readonly-field text-end" id="inv_amt" readonly step="0.01" style="width: 100%; height: 28px; background: #fff3cd; font-weight: bold;" value="0.00">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detailed Info Section -->
+        <div id="pm_detailSection" class="bg-white border rounded p-2 mb-2">
+            <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 3px;"><strong>Unit</strong></td>
+                    <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="unit" readonly value="1" style="height: 22px; width: 50px;"></td>
+                    <td style="padding: 3px;"><strong>N.T Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="nt_amt_detail" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                    <td style="padding: 3px;"><strong>Scm.Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="scm_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>Tax Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="tax_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>Cost</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="cost" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>Srl.No.</strong></td>
+                    <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="srl_no1" readonly value="1" style="height: 22px; width: 40px;"></td>
+                    <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="srl_no2" readonly value="1" style="height: 22px; width: 40px;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;"><strong>Lctn</strong></td>
+                    <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="lctn" readonly value="" style="height: 22px; width: 50px;"></td>
+                    <td style="padding: 3px;"><strong>SC Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="sc_amt_detail" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                    <td style="padding: 3px;"><strong>Dis1.Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="dis1_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>Net Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="net_amt_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>Cost+GST</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="cost_gst" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>P.SCM.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-center" id="p_scm1" readonly value="0" style="height: 22px; width: 40px;"></td>
+                    <td style="padding: 3px; text-align: center; font-weight: bold;">+</td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-center" id="p_scm2" readonly value="0" style="height: 22px; width: 40px;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;"><strong>Cl.Qty</strong></td>
+                    <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="cl_qty" readonly value="" style="height: 22px; width: 50px;"></td>
+                    <td style="padding: 3px;"><strong>Dis. Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="dis_amt_detail" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                    <td style="padding: 3px;"><strong>Less</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="less_detail" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>Comp :</strong></td>
+                    <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="comp" readonly value="" style="height: 22px; width: 100px;"></td>
+                    <td style="padding: 3px;"><strong>Vol.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="vol" readonly value="0" style="height: 22px; width: 50px;"></td>
+                    <td style="padding: 3px;"><strong>S.SCM.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-center" id="s_scm1" readonly value="0" style="height: 22px; width: 40px;"></td>
+                    <td style="padding: 3px; text-align: center; font-weight: bold;">+</td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-center" id="s_scm2" readonly value="0" style="height: 22px; width: 40px;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 3px;"><strong>Pack</strong></td>
+                    <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="pack_detail" readonly value="" style="height: 22px; width: 50px;"></td>
+                    <td style="padding: 3px;"><strong>Hs.Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="hs_amt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                    <td style="padding: 3px;"><strong>Gross Amt.</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="gross_amt" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                    <td style="padding: 3px;"><strong>Scm%</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="scm_percent_detail" readonly value="0.00" style="height: 22px; width: 60px;"></td>
+                    <td style="padding: 3px;"><strong>Dis1.%</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="dis1_percent" readonly value="0.00" style="height: 22px; width: 60px;"></td>
+                    <td style="padding: 3px;"><strong>%</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="percent1" readonly value="0.00" style="height: 22px; width: 50px;"></td>
+                    <td style="padding: 3px;"><strong>%</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="percent2" readonly value="0.00" style="height: 22px; width: 50px;"></td>
+                    <td style="padding: 3px;"><strong>%</strong></td>
+                    <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="percent3" readonly value="0.00" style="height: 22px; width: 50px;"></td>
+                </tr>
+            </table>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div id="pm_actionButtons" class="d-flex gap-2">
+            <button type="button" class="btn btn-primary btn-sm" onclick="savePurchase()">
+                <i class="bi bi-save"></i> Save
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="resetForm()">
+                <i class="bi bi-x-circle"></i> Cancel
+            </button>
+        </div>
+    </form>
     </div>
 </div>
 
@@ -1285,7 +1270,7 @@
             </div>
         </div>
         <div class="pending-orders-footer">
-            <button type="button" class="btn btn-secondary" id="pendingOrdersExitBtn" onclick="closePendingOrdersModal()">
+            <button type="button" class="btn btn-secondary" onclick="closePendingOrdersModal()">
                 <i class="bi bi-x-circle"></i> Exit ( Esc )
             </button>
             <button type="button" class="btn btn-primary" id="generateInvoiceBtn">
@@ -1307,16 +1292,230 @@ function updateDayName() {
     }
 }
 
+// Ensure a select has an option with the given value; create if missing, then select it
+function setSelectOption(selectElement, value, displayText) {
+    if (!selectElement) return;
+    
+    let option = Array.from(selectElement.options).find(opt => String(opt.value) === String(value));
+    if (!option && value) {
+        option = new Option(displayText || String(value), String(value), true, true);
+        selectElement.add(option);
+    }
+    if (option) {
+        // If we have a label to show, update option text as well
+        if (displayText && option.text !== displayText) {
+            option.text = displayText;
+        }
+        selectElement.value = String(value);
+    }
+}
+
+// Update supplier name (no separate field needed - name shown in dropdown)
+function updateSupplierName() {
+    // Supplier name already displayed in dropdown, no separate field needed
+}
+
+// Set supplier by ID (for loading existing data)
+function setSupplierById(supplierId) {
+    const supplierSearchInput = document.getElementById('supplierSearchInput');
+    const supplierSelect = document.getElementById('supplierSelect');
+    const supplierList = document.getElementById('supplierList');
+    
+    if (!supplierSearchInput || !supplierSelect || !supplierList) return;
+    
+    // Find supplier by ID
+    const item = supplierList.querySelector(`.dropdown-item[data-id="${supplierId}"]`);
+    if (item) {
+        const supplierName = item.getAttribute('data-name');
+        supplierSearchInput.value = supplierName;
+        supplierSelect.value = supplierId;
+    }
+}
+
 // Current selected row index
 let currentSelectedRow = null;
-let pendingOrdersSelectedIndex = -1;
-let pendingOrdersFocusMode = 'rows'; // 'rows' | 'actions'
-let pendingOrdersActionIndex = 0; // 0 = Exit, 1 = Generate
 let mrpFocusMode = 'fields'; // 'fields' | 'actions'
 let mrpActionIndex = 0; // 0 = Cancel, 1 = Save
 
 // S.Rate Enter key navigation to next row
 document.addEventListener('DOMContentLoaded', function() {
+    // Supplier dropdown functionality
+    const supplierSearchInput = document.getElementById('supplierSearchInput');
+    const supplierDropdown = document.getElementById('supplierDropdown');
+    const supplierSelect = document.getElementById('supplierSelect');
+    const supplierList = document.getElementById('supplierList');
+    
+    if (supplierSearchInput && supplierDropdown) {
+        // Show dropdown on focus
+        supplierSearchInput.addEventListener('focus', function() {
+            supplierDropdown.style.display = 'block';
+            filterSuppliers('');
+        });
+        
+        // Filter suppliers on input
+        supplierSearchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            filterSuppliers(searchTerm);
+            supplierDropdown.style.display = 'block';
+        });
+        
+        // Handle supplier selection
+        supplierList.addEventListener('click', function(e) {
+            const item = e.target.closest('.dropdown-item');
+            if (item) {
+                const supplierId = item.getAttribute('data-id');
+                const supplierName = item.getAttribute('data-name');
+                
+                supplierSearchInput.value = supplierName;
+                supplierSelect.value = supplierId;
+                supplierDropdown.style.display = 'none';
+                
+                updateSupplierName();
+            }
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!supplierSearchInput.contains(e.target) && !supplierDropdown.contains(e.target)) {
+                supplierDropdown.style.display = 'none';
+            }
+        });
+        
+        // Keyboard navigation
+        supplierSearchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const visibleItems = supplierList.querySelectorAll('.dropdown-item:not([style*="display: none"])');
+                if (visibleItems.length === 1) {
+                    // Auto-select if only one match
+                    visibleItems[0].click();
+                }
+                supplierDropdown.style.display = 'none';
+                
+                // Move to trn no field
+                const trnNoField = document.getElementById('trnNo');
+                if (trnNoField) {
+                    trnNoField.focus();
+                    trnNoField.select();
+                }
+            } else if (e.key === 'Escape') {
+                supplierDropdown.style.display = 'none';
+            }
+        });
+    }
+    
+    // Filter suppliers function
+    function filterSuppliers(searchTerm) {
+        const items = supplierList.querySelectorAll('.dropdown-item');
+        let visibleCount = 0;
+        
+        items.forEach(item => {
+            const name = item.getAttribute('data-name').toLowerCase();
+            if (name.includes(searchTerm)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Show "No results" if no matches
+        if (visibleCount === 0 && !document.getElementById('noResults')) {
+            const noResults = document.createElement('div');
+            noResults.id = 'noResults';
+            noResults.style.padding = '12px';
+            noResults.style.textAlign = 'center';
+            noResults.style.color = '#999';
+            noResults.textContent = 'No suppliers found';
+            supplierList.appendChild(noResults);
+        } else if (visibleCount > 0) {
+            const noResults = document.getElementById('noResults');
+            if (noResults) noResults.remove();
+        }
+    }
+    
+    // Add Enter key support for Bill No and Trn No fields
+    const billNoField = document.getElementById('billNo');
+    const trnNoField = document.getElementById('trnNo');
+    
+    if (billNoField) {
+        billNoField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const billValue = billNoField.value.trim();
+                if (billValue) {
+                    fetchBillByTrnNo();
+                } else {
+                    // Move to Trn No if Bill No is empty
+                    if (trnNoField) {
+                        trnNoField.focus();
+                        trnNoField.select();
+                    }
+                }
+            }
+        });
+    }
+    
+    if (trnNoField) {
+        trnNoField.addEventListener('keydown', function(e) {
+            const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+            if (isEnter) {
+                e.preventDefault();
+                const trnValue = trnNoField.value.trim();
+                const billValue = billNoField ? billNoField.value.trim() : '';
+                if (trnValue || billValue) {
+                    fetchBillByTrnNo();
+                } else {
+                    // No Trn No -> focus Fetch Bill button and trigger it (opens invoice list modal)
+                    const fetchBtn = document.querySelector('button[onclick*="fetchBillByTrnNo"]');
+                    if (fetchBtn) {
+                        fetchBtn.focus();
+                        fetchBtn.click();
+                    } else {
+                        openInvoiceListModal();
+                    }
+                }
+            }
+        });
+    }
+
+    // Capture handler to ensure Trn No Enter always triggers fetch (or modal)
+    if (trnNoField) {
+        window.addEventListener('keydown', function(e) {
+            const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+            const active = document.activeElement;
+            if (!isEnter || !active || active.id !== 'trnNo') return;
+
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const trnValue = trnNoField.value.trim();
+            const billValue = billNoField ? billNoField.value.trim() : '';
+            if (trnValue || billValue) {
+                fetchBillByTrnNo();
+            } else {
+                const fetchBtn = document.querySelector('button[onclick*="fetchBillByTrnNo"]');
+                if (fetchBtn) {
+                    fetchBtn.focus();
+                    fetchBtn.click();
+                } else if (typeof openInvoiceListModal === 'function') {
+                    openInvoiceListModal();
+                }
+            }
+        }, true);
+    }
+
+    // Default focus on Bill No (only if nothing preloaded)
+    setTimeout(() => {
+        const billValue = billNoField ? billNoField.value.trim() : '';
+        const trnValue = trnNoField ? trnNoField.value.trim() : '';
+        if (billNoField && !billValue && !trnValue) {
+            billNoField.focus();
+            billNoField.select();
+        }
+    }, 200);
+    
     const sRateField = document.getElementById('calc_s_rate');
     if (sRateField) {
         function isRowEmpty(row) {
@@ -1324,7 +1523,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const inputs = row.querySelectorAll('input');
             for (const input of inputs) {
                 const name = input.getAttribute('name') || '';
-                // Ignore amount field (readonly/calculated)
                 if (name.includes('[amount]')) continue;
                 const value = (input.value || '').trim();
                 if (value !== '' && value !== '0' && value !== '0.00') {
@@ -1362,7 +1560,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const tbody = document.getElementById('itemsTableBody');
                 const rows = tbody ? Array.from(tbody.querySelectorAll('tr')) : [];
                 const nextRowIndex = currentActiveRow + 1;
-                
+
                 if (nextRowIndex < rows.length) {
                     const nextRow = rows[nextRowIndex];
                     if (isRowEmpty(nextRow)) {
@@ -1396,32 +1594,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        function handleSaleRateEnter(e) {
-            const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
-            if (!isEnter) return;
-            // Block other handlers from hijacking Enter (ex: moving to Unit field)
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
+        sRateField.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                console.log('S.Rate Enter pressed');
+                console.log('currentActiveRow:', currentActiveRow);
+                console.log('isRowSelected before:', isRowSelected);
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                advanceFromSaleRate(e);
+            }
+        });
 
-            console.log('S.Rate Enter pressed');
-            console.log('currentActiveRow:', currentActiveRow);
-            console.log('isRowSelected before:', isRowSelected);
-                
-            advanceFromSaleRate(e);
-        }
-
-        // Capture to beat global handlers that may move focus elsewhere
-        sRateField.addEventListener('keydown', handleSaleRateEnter, true);
-        // Bubble fallback
-        sRateField.addEventListener('keydown', handleSaleRateEnter);
-
-        // Window capture to preempt document-level handlers (prevents Unit focus)
+        // Capture to preempt global handlers (prevents focus jumping to Unit)
         window.addEventListener('keydown', function(e) {
             const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
-            if (!isEnter) return;
             const active = document.activeElement;
-            if (!active || active.id !== 'calc_s_rate') return;
+            if (!isEnter || !active || active.id !== 'calc_s_rate') return;
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
@@ -1429,61 +1618,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, true);
     }
 });
-
-// ============================================
-// PURCHASE CHALLAN MODAL KEYBOARD HANDLING
-// ============================================
-document.addEventListener('keydown', function(e) {
-    const modal = document.getElementById('purchaseChallanModal');
-    if (!modal || !modal.classList.contains('show')) return;
-
-    const closeBtn = document.getElementById('purchaseChallanCloseBtn');
-    const loadBtn = document.getElementById('purchaseChallanLoadBtn');
-    const buttons = [closeBtn, loadBtn].filter(Boolean);
-    if (buttons.length === 0) return;
-
-    let currentIndex = buttons.findIndex(btn => btn.classList.contains('kbd-highlight'));
-    if (currentIndex === -1) currentIndex = 0;
-
-    function highlight(index) {
-        buttons.forEach(btn => btn.classList.remove('kbd-highlight'));
-        const target = buttons[index];
-        if (target) target.classList.add('kbd-highlight');
-    }
-
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        e.stopPropagation();
-        const nextIndex = currentIndex <= 0 ? buttons.length - 1 : currentIndex - 1;
-        highlight(nextIndex);
-        return;
-    }
-
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        e.stopPropagation();
-        const nextIndex = currentIndex >= buttons.length - 1 ? 0 : currentIndex + 1;
-        highlight(nextIndex);
-        return;
-    }
-
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        const target = buttons[currentIndex];
-        if (target) target.click();
-        return;
-    }
-
-    if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        if (typeof closePurchaseChallanModal === 'function') {
-            closePurchaseChallanModal();
-        }
-        return;
-    }
-}, true);
 
 // Setup on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -1495,6 +1629,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         checkAllRowsComplete();
     }, 100);
+    
+    // Auto-load transaction if preloadTrnNo is provided
+    <?php if(isset($preloadTrnNo) && $preloadTrnNo): ?>
+        // Set the transaction number in the input field
+        const trnNoInput = document.getElementById('trnNo');
+        if (trnNoInput) {
+            trnNoInput.value = '<?php echo e($preloadTrnNo); ?>';
+            // Auto-fetch the bill data
+            setTimeout(() => {
+                fetchBillByTrnNo();
+            }, 1000);
+        }
+    <?php endif; ?>
     
     // Prevent form submission on Enter key (except for Save button)
     const form = document.getElementById('purchaseForm');
@@ -1567,203 +1714,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// ============================================
-// HEADER KEYBOARD NAVIGATION (PURCHASE)
-// ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Disable Select2 on purchase header dropdowns if initialized
-    if (window.$ && $.fn.select2) {
-        const $supplier = $('#supplierSelect');
-        if ($supplier.length && $supplier.data('select2')) {
-            $supplier.select2('destroy');
-            $supplier.removeClass('select2-hidden-accessible');
-            $supplier.next('.select2-container').remove();
-        }
-    }
-
-    const headerSection = document.querySelector('.header-section');
-    if (!headerSection) return;
-
-    function isFocusable(el) {
-        if (!el) return false;
-        if (el.disabled || el.readOnly) return false;
-        if (el.offsetParent === null) return false;
-        return true;
-    }
-
-    function getHeaderFields() {
-        const fields = Array.from(headerSection.querySelectorAll('[data-kb-order]'))
-            .filter(isFocusable)
-            .sort((a, b) => {
-                const aOrder = parseInt(a.getAttribute('data-kb-order'), 10);
-                const bOrder = parseInt(b.getAttribute('data-kb-order'), 10);
-                return (aOrder || 0) - (bOrder || 0);
-            });
-        return fields;
-    }
-
-    console.log('[KB] Header nav init', {
-        hasHeaderSection: !!headerSection,
-        headerFields: getHeaderFields().map(f => f.id)
-    });
-
-    function isBlockingModalOpen() {
-        return !!document.querySelector(
-            '#alertModal.show, #pendingOrdersModal.show, #purchaseChallanModal.show, #mrpDetailsModal.show, .pending-orders-modal.show, .alert-modal.show'
-        );
-    }
-
-    function triggerInsertOrders(source = 'unknown') {
-        if (isBlockingModalOpen()) {
-            console.log('[KB] triggerInsertOrders skipped (modal open)', { source });
-            return;
-        }
-        const insertBtn = document.getElementById('insertOrdersBtn');
-        console.log('[KB] triggerInsertOrders', {
-            source,
-            hasInsertBtn: !!insertBtn
-        });
-        if (insertBtn) {
-            insertBtn.click();
-        } else if (typeof openPendingOrdersModal === 'function') {
-            openPendingOrdersModal();
-        }
-    }
-
-    function focusHeaderByIndex(index) {
-        const headerFields = getHeaderFields();
-        if (index < 0 || index >= headerFields.length) return;
-        const el = headerFields[index];
-        if (el) {
-            el.focus();
-            if (el.select) el.select();
-        }
-    }
-
-    function getHeaderIndex(el) {
-        return getHeaderFields().indexOf(el);
-    }
-
-    getHeaderFields().forEach(field => {
-        if (field.tagName.toLowerCase() === 'select') {
-            field.addEventListener('change', function() {
-                const idx = getHeaderIndex(this);
-                if (idx >= 0) {
-                    focusHeaderByIndex(idx + 1);
-                }
-            });
-        }
-    });
-
-    const insertOrdersBtn = document.getElementById('insertOrdersBtn');
-    if (insertOrdersBtn) {
-        insertOrdersBtn.addEventListener('click', function() {
-            console.log('[KB] Insert Orders button clicked');
-        });
-    }
-
-    const billNoInput = document.getElementById('billNo');
-    if (billNoInput) {
-        // Window-level capture to beat any document-level capture handlers
-        window.addEventListener('keydown', function(e) {
-            const target = e.target;
-            const isBillNoTarget = target && target.id === 'billNo';
-            const isBillNoActive = document.activeElement && document.activeElement.id === 'billNo';
-            if ((isBillNoTarget || isBillNoActive) && (e.key === 'Enter' || e.keyCode === 13)) {
-                if (isBlockingModalOpen()) {
-                    console.log('[KB] BillNo Enter ignored (modal open)');
-                    return;
-                }
-                console.log('[KB] BillNo Enter (window capture)', {
-                    targetId: target?.id,
-                    activeId: document.activeElement?.id
-                });
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                triggerInsertOrders('billNo-window');
-            }
-        }, true);
-
-        billNoInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                if (isBlockingModalOpen()) {
-                    console.log('[KB] BillNo Enter ignored (modal open)');
-                    return;
-                }
-                console.log('[KB] BillNo Enter (direct listener)', {
-                    id: this.id,
-                    value: this.value
-                });
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                triggerInsertOrders('billNo-direct');
-            }
-        }, true);
-    }
-
-    headerSection.addEventListener('keydown', function(e) {
-        const activeEl = document.activeElement;
-        if (!activeEl || !headerSection.contains(activeEl)) return;
-
-        // Let supplier searchable dropdown handle its own keys
-        if (activeEl.id === 'supplierSearchInput') {
-            return;
-        }
-
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            const idx = getHeaderIndex(activeEl);
-            if (idx > 0) focusHeaderByIndex(idx - 1);
-            return;
-        }
-
-        if (e.key === 'Enter') {
-            const idx = getHeaderIndex(activeEl);
-            console.log('[KB] Header Enter', {
-                activeId: activeEl.id,
-                activeName: activeEl.name,
-                idx
-            });
-            if (activeEl.id === 'billNo') {
-                e.preventDefault();
-                triggerInsertOrders('billNo-header');
-                return;
-            }
-
-            if (activeEl.tagName.toLowerCase() === 'select') {
-                e.preventDefault();
-                activeEl.focus();
-                activeEl.click();
-                return;
-            }
-
-            if (idx >= 0) {
-                e.preventDefault();
-                focusHeaderByIndex(idx + 1);
-            }
-        }
-});
-});
-
-// Ctrl+S -> Save Purchase Transaction
-window.addEventListener('keydown', function(e) {
-    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
-    if (!isCtrlS || e.repeat) return;
-    if (typeof isBlockingModalOpen === 'function' && isBlockingModalOpen()) {
-        console.log('[KB] Ctrl+S ignored (modal open)');
-        return;
-    }
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    console.log('[KB] Ctrl+S -> savePurchase');
-    if (typeof savePurchase === 'function') {
-        savePurchase();
-    }
-}, true);
-
 // Add row selection listeners
 function addRowSelectionListeners() {
     const rows = document.querySelectorAll('#itemsTableBody tr');
@@ -1802,7 +1752,7 @@ function selectRow(index) {
 
 // Fetch item details from database
 function fetchItemDetails(itemCode) {
-    const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
+    const url = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -1820,11 +1770,44 @@ function fetchItemDetails(itemCode) {
 
 // Fetch item details for calculation section (when focusing on any cell in row)
 function fetchItemDetailsForCalculation(itemCode, rowIndex) {
-    const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
+    // In MODIFICATION mode: Preserve saved pur_rate, but use latest rates for s_rate, ws_rate, spl_rate, mrp
+    const savedPurRate = rowGstData[rowIndex]?.saved_pur_rate;
+    const savedSRate = rowGstData[rowIndex]?.s_rate;
+    const savedWsRate = rowGstData[rowIndex]?.ws_rate;
+    const savedSplRate = rowGstData[rowIndex]?.spl_rate;
+    const savedMrp = rowGstData[rowIndex]?.mrp;
+    
+    const url = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.item) {
+                // MODIFICATION MODE LOGIC:
+                // If we're in modification mode (currentTransactionId exists) and have saved_pur_rate:
+                // - Keep old pur_rate from transaction
+                // - Use latest rates from item table for s_rate, ws_rate, spl_rate, mrp
+                
+                if (currentTransactionId && savedPurRate !== undefined && savedPurRate !== null) {
+                    // Modification mode: Override pur_rate with saved value
+                    console.log(`Row ${rowIndex}: MODIFICATION MODE - Using saved pur_rate:`, savedPurRate);
+                    // Don't override item.pur_rate here, it's already in the row input
+                }
+                
+                // If we have saved rates in rowGstData (from item table fetch), use them
+                // Otherwise use rates from current item fetch (which are latest anyway)
+                if (savedSRate !== undefined && savedSRate !== null) {
+                    data.item.s_rate = savedSRate;
+                }
+                if (savedWsRate !== undefined && savedWsRate !== null) {
+                    data.item.ws_rate = savedWsRate;
+                }
+                if (savedSplRate !== undefined && savedSplRate !== null) {
+                    data.item.spl_rate = savedSplRate;
+                }
+                if (savedMrp !== undefined && savedMrp !== null) {
+                    data.item.mrp = savedMrp;
+                }
+                
                 populateCalculationSectionForRow(data.item, rowIndex);
             } else {
                 clearCalculationSection();
@@ -1980,7 +1963,7 @@ function calculateAndSaveGstForRow(rowIndex) {
     console.log(`Calculating GST for row ${rowIndex}, amount: ${amount}, itemCode: ${itemCode}`);
     
     // Fetch item to get GST percentages
-    const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
+    const url = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -2093,13 +2076,7 @@ function populateDetailedInfoSection(item, rowIndex) {
     document.getElementById('unit').value = item.unit || '1';
     document.getElementById('pack_detail').value = item.packing || '1*10';
     document.getElementById('comp').value = item.company?.short_name || item.company?.name || 'N/A';
-    
-    // Fetch total batch quantity for this item (Cl.Qty)
-    if (item.id) {
-        fetchItemTotalQty(item.id);
-    } else {
-        document.getElementById('cl_qty').value = '0';
-    }
+    document.getElementById('cl_qty').value = qty || '0';
     
     // Check if row has complete calculated data
     if (rowGstData[rowIndex] && rowGstData[rowIndex].calculated) {
@@ -2145,24 +2122,6 @@ function updateDetailedInfoWithCalculatedData(rowIndex) {
         document.getElementById('cost_gst').value = rowGstData[rowIndex].costGst;
         document.getElementById('gross_amt').value = rowGstData[rowIndex].amount;
     }
-}
-
-// Fetch total batch quantity for an item (Cl.Qty)
-function fetchItemTotalQty(itemId) {
-    const url = `{{ url('/admin/api/item-total-qty') }}/${itemId}`;
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('cl_qty').value = data.total_qty || 0;
-            } else {
-                document.getElementById('cl_qty').value = '0';
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching item total qty:', error);
-            document.getElementById('cl_qty').value = '0';
-        });
 }
 
 // Clear Detailed Info Section
@@ -2224,19 +2183,10 @@ function updateSummarySection() {
 
 // Load pending orders from supplier
 function loadPendingOrders(supplierId) {
-    const url = `{{ url('/admin/suppliers') }}/${supplierId}/pending-orders-data`;
-    console.log('📡 Fetching pending orders from:', url);
-    
+    const url = `<?php echo e(url('/admin/suppliers')); ?>/${supplierId}/pending-orders-data`;
     fetch(url)
-        .then(response => {
-            console.log('📡 Response status:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('✅ Data received:', data);
             if (data.success) {
                 displayPendingOrders(data.orders);
                 // Show modal
@@ -2246,18 +2196,37 @@ function loadPendingOrders(supplierId) {
             }
         })
         .catch(error => {
-            console.error('❌ Error loading pending orders:', error);
-            showAlert('Error loading pending orders: ' + error.message, 'error');
+            console.error('Error:', error);
+            showAlert('Error loading pending orders', 'error');
         });
+}
+
+// Helper function to position modal in content area (not over sidebar)
+function positionModalInContentArea(modalElement) {
+    if (!modalElement) return;
+    
+    // Calculate sidebar width dynamically
+    const sidebar = document.querySelector('.sidebar');
+    let sidebarWidth = 260; // Default sidebar width
+    if (sidebar) {
+        sidebarWidth = sidebar.offsetWidth;
+    }
+    
+    // Adjust modal position to center in content area (not viewport)
+    // Content area starts after sidebar, so we need to shift modal right by half sidebar width
+    const leftOffset = sidebarWidth / 2;
+    modalElement.style.left = `calc(50% + ${leftOffset}px)`;
 }
 
 // Show pending orders modal (internal function)
 function showPendingOrdersModal() {
-    // Hide existing backdrops first
-    hideAllBackdrops();
-    
     const modal = document.getElementById('pendingOrdersModal');
     const backdrop = document.getElementById('pendingOrdersBackdrop');
+    
+    if (!modal || !backdrop) return;
+    
+    // Position modal in content area
+    positionModalInContentArea(modal);
     
     backdrop.style.display = 'block';
     modal.style.display = 'block';
@@ -2266,13 +2235,6 @@ function showPendingOrdersModal() {
         backdrop.classList.add('show');
         modal.classList.add('show');
     }, 10);
-
-    // Reset pending orders modal focus state
-    pendingOrdersFocusMode = 'rows';
-    pendingOrdersActionIndex = 0;
-    const exitBtn = document.getElementById('pendingOrdersExitBtn');
-    const genBtn = document.getElementById('generateInvoiceBtn');
-    [exitBtn, genBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
 }
 
 // Open pending orders modal (called from Insert Orders button)
@@ -2284,24 +2246,8 @@ function openPendingOrdersModal() {
         return;
     }
     
-    // First check for pending challans
-    const challanUrl = `{{ url('/admin/purchase-challan/supplier') }}/${supplierId}/challans`;
-    fetch(challanUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success && data.challans && data.challans.length > 0) {
-                // Show pending challans modal
-                showPurchaseChallanModal(supplierId);
-            } else {
-                // No pending challans, show pending orders
-                loadPendingOrders(supplierId);
-            }
-        })
-        .catch(error => {
-            console.error('Error checking challans:', error);
-            // On error, fallback to pending orders
-            loadPendingOrders(supplierId);
-        });
+    // Load pending orders for selected supplier
+    loadPendingOrders(supplierId);
 }
 
 // Close pending orders modal
@@ -2333,10 +2279,25 @@ let currentActiveRow = 0;
 let currentItemData = null;
 let isRowSelected = false; // Track if entire row is selected vs cell focus
 
+// Global variable to store current transaction ID (for update mode)
+let currentTransactionId = null;
+
 // Open MRP Details Modal
 function openMrpDetailsModal() {
     const modal = document.getElementById('mrpDetailsModal');
     const backdrop = document.getElementById('mrpDetailsBackdrop');
+    
+    if (!modal || !backdrop) return;
+
+    // Reset focus mode for MRP modal
+    mrpFocusMode = 'fields';
+    mrpActionIndex = 0;
+    const cancelBtn = document.getElementById('mrpCancelBtn');
+    const saveBtn = document.getElementById('saveMrpDetailsBtn');
+    [cancelBtn, saveBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
+    
+    // Position modal in content area
+    positionModalInContentArea(modal);
     
     backdrop.style.display = 'block';
     modal.style.display = 'block';
@@ -2344,17 +2305,12 @@ function openMrpDetailsModal() {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
-        // Focus on Case input first
+        // Focus on first field (Case)
         const caseInput = document.getElementById('mrp_case');
         if (caseInput) {
             caseInput.focus();
             caseInput.select();
         }
-        mrpFocusMode = 'fields';
-        mrpActionIndex = 0;
-        const cancelBtn = document.getElementById('mrpCancelBtn');
-        const saveBtn = document.getElementById('saveMrpDetailsBtn');
-        [cancelBtn, saveBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
     }, 10);
 }
 
@@ -2395,7 +2351,7 @@ function openEmptyMrpModal() {
 function populateMrpModal(itemCode) {
     console.log('populateMrpModal called with itemCode:', itemCode);
     
-    const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
+    const url = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -2407,8 +2363,22 @@ function populateMrpModal(itemCode) {
                 document.getElementById('mrp_pack').textContent = data.item.packing || '---';
                 document.getElementById('mrp_case').value = data.item.case_qty || 0;
                 document.getElementById('mrp_box').value = data.item.box_qty || 0;
+                
+                // MODIFICATION MODE LOGIC: Use latest rates from item table
+                // But if we have saved_pur_rate (modification mode), show it instead
+                const savedPurRate = rowGstData[currentActiveRow]?.saved_pur_rate;
+                
                 document.getElementById('mrp_value').value = data.item.mrp || 0;
-                document.getElementById('mrp_pur_rate').value = data.item.pur_rate || 0;
+                
+                // In modification mode, show old pur_rate from transaction, otherwise show current item pur_rate
+                if (currentTransactionId && savedPurRate !== undefined && savedPurRate !== null) {
+                    document.getElementById('mrp_pur_rate').value = savedPurRate;
+                    console.log('MRP Modal: Using saved pur_rate from transaction:', savedPurRate);
+                } else {
+                    document.getElementById('mrp_pur_rate').value = data.item.pur_rate || 0;
+                }
+                
+                // Always use latest rates for s_rate, ws_rate, spl_rate (from item table)
                 document.getElementById('mrp_sale_rate').value = data.item.s_rate || 0;
                 document.getElementById('mrp_ws_rate').value = data.item.ws_rate || 0;
                 document.getElementById('mrp_spl_rate').value = data.item.spl_rate || 0;
@@ -2479,12 +2449,12 @@ document.getElementById('saveMrpDetailsBtn').addEventListener('click', function(
     
     closeMrpDetailsModal();
     
-    // Focus on Purchase Rate field in the row (next step after MRP modal)
+    // Focus on Purchase Rate field
     const purRateInput = currentRow.querySelector('input[name*="[pur_rate]"]');
     if (purRateInput) {
         setTimeout(() => {
             purRateInput.focus();
-            if (purRateInput.select) purRateInput.select();
+            purRateInput.select();
         }, 100);
     }
 });
@@ -2533,7 +2503,6 @@ function handleMrpDetailsKeyboard(e) {
 
     if (mrpFocusMode === 'fields' && isEnter) {
         const activeEl = document.activeElement;
-        // Force action mode after Excise
         if (activeEl && activeEl.id === 'mrp_excise') {
             mrpFocusMode = 'actions';
             mrpActionIndex = 0;
@@ -2549,7 +2518,6 @@ function handleMrpDetailsKeyboard(e) {
                 if (nextField.select) nextField.select();
             }
         } else {
-            // Move to actions after last field
             mrpFocusMode = 'actions';
             mrpActionIndex = 0;
             highlightAction(mrpActionIndex);
@@ -2594,12 +2562,40 @@ function handleMrpDetailsKeyboard(e) {
     return false;
 }
 
+// Use window capture to preempt other handlers
 window.addEventListener('keydown', function(e) {
     const handled = handleMrpDetailsKeyboard(e);
     if (handled) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
+    }
+}, true);
+
+// Capture: MRP field (table) Enter -> focus Sale Rate
+window.addEventListener('keydown', function(e) {
+    const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
+    if (!isEnter) return;
+    const active = document.activeElement;
+    if (!active || active.tagName !== 'INPUT') return;
+    const name = active.getAttribute('name') || '';
+    if (!name.includes('[mrp]')) return;
+    const rowEl = active.closest('tr');
+    if (!rowEl || !rowEl.closest('#itemsTableBody')) return;
+
+    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
+    const rowIndex = rows.indexOf(rowEl);
+    if (rowIndex >= 0) {
+        currentActiveRow = rowIndex;
+    }
+
+    const sRateField = document.getElementById('calc_s_rate');
+    if (sRateField) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        sRateField.focus();
+        sRateField.select();
     }
 }, true);
 
@@ -2734,7 +2730,6 @@ document.addEventListener('keydown', function(e) {
 function displayPendingOrders(orders) {
     const tbody = document.getElementById('pendingOrdersBody');
     tbody.innerHTML = '';
-    pendingOrdersSelectedIndex = -1;
     
     if (orders.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="text-center">No pending orders found</td></tr>';
@@ -2750,11 +2745,6 @@ function displayPendingOrders(orders) {
         row.addEventListener('click', function() {
             tbody.querySelectorAll('tr').forEach(r => r.classList.remove('table-primary'));
             this.classList.add('table-primary');
-            pendingOrdersSelectedIndex = index;
-            pendingOrdersFocusMode = 'rows';
-            const exitBtn = document.getElementById('pendingOrdersExitBtn');
-            const genBtn = document.getElementById('generateInvoiceBtn');
-            [exitBtn, genBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
         });
         
         row.innerHTML = `
@@ -2768,14 +2758,6 @@ function displayPendingOrders(orders) {
         
         tbody.appendChild(row);
     });
-
-    // Auto-highlight first row for keyboard navigation
-    const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => !row.querySelector('td[colspan]'));
-    if (rows.length > 0) {
-        rows.forEach(r => r.classList.remove('table-primary'));
-        pendingOrdersSelectedIndex = 0;
-        rows[0].classList.add('table-primary');
-    }
 }
 
 // Generate Invoice button
@@ -2788,163 +2770,40 @@ document.getElementById('generateInvoiceBtn').addEventListener('click', function
     }
     
     const orderNo = selectedRow.getAttribute('data-order-no');
-    const pendingModal = document.getElementById('pendingOrdersModal');
-    const wasPendingOpen = pendingModal && pendingModal.classList.contains('show');
-    if (wasPendingOpen) {
-        closePendingOrdersModal();
-    }
     
-    showConfirm(`Generate invoice for Order No: ${orderNo}?`, function() {
+    if (confirm(`Generate invoice for Order No: ${orderNo}?`)) {
+        // Load order items
         loadOrderItems(orderNo);
-    }, function() {
-        if (wasPendingOpen) {
-            showPendingOrdersModal();
-        }
-    }, 'Generate Invoice');
+    }
 });
-
-// ============================================
-// PENDING ORDERS MODAL KEYBOARD HANDLING
-// ============================================
-function handlePendingOrdersKeyboard(e) {
-    const modal = document.getElementById('pendingOrdersModal');
-    if (!modal || !modal.classList.contains('show')) return false;
-
-    const tbody = document.getElementById('pendingOrdersBody');
-    if (!tbody) return false;
-
-    const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => {
-        return !row.querySelector('td[colspan]');
-    });
-    const exitBtn = document.getElementById('pendingOrdersExitBtn');
-    const genBtn = document.getElementById('generateInvoiceBtn');
-    const actionButtons = [exitBtn, genBtn].filter(Boolean);
-
-    function highlightAction(index) {
-        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
-        const btn = actionButtons[index];
-        if (btn) btn.classList.add('kbd-highlight');
-    }
-
-    function clearActionHighlight() {
-        actionButtons.forEach(btn => btn.classList.remove('kbd-highlight'));
-    }
-
-    if (pendingOrdersFocusMode === 'rows' && e.key === 'ArrowDown') {
-        if (rows.length === 0) return true;
-        pendingOrdersSelectedIndex = (pendingOrdersSelectedIndex + 1) % rows.length;
-        rows.forEach(r => r.classList.remove('table-primary'));
-        const selectedRow = rows[pendingOrdersSelectedIndex];
-        if (selectedRow) {
-            selectedRow.classList.add('table-primary');
-            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
-        return true;
-    }
-
-    if (pendingOrdersFocusMode === 'rows' && e.key === 'ArrowUp') {
-        if (rows.length === 0) return true;
-        pendingOrdersSelectedIndex = pendingOrdersSelectedIndex <= 0 ? rows.length - 1 : pendingOrdersSelectedIndex - 1;
-        rows.forEach(r => r.classList.remove('table-primary'));
-        const selectedRow = rows[pendingOrdersSelectedIndex];
-        if (selectedRow) {
-            selectedRow.classList.add('table-primary');
-            selectedRow.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
-        return true;
-    }
-
-    if (pendingOrdersFocusMode === 'rows' && e.key === 'Enter') {
-        if (rows.length === 0) return true;
-        if (pendingOrdersSelectedIndex < 0) {
-            pendingOrdersSelectedIndex = 0;
-        }
-        const selectedRow = rows[pendingOrdersSelectedIndex];
-        if (selectedRow) selectedRow.classList.add('table-primary');
-        pendingOrdersFocusMode = 'actions';
-        pendingOrdersActionIndex = 0;
-        highlightAction(pendingOrdersActionIndex);
-        return true;
-    }
-
-    if (pendingOrdersFocusMode === 'actions' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-        if (actionButtons.length === 0) return true;
-        if (e.key === 'ArrowLeft') {
-            pendingOrdersActionIndex = pendingOrdersActionIndex <= 0 ? actionButtons.length - 1 : pendingOrdersActionIndex - 1;
-        } else {
-            pendingOrdersActionIndex = pendingOrdersActionIndex >= actionButtons.length - 1 ? 0 : pendingOrdersActionIndex + 1;
-        }
-        highlightAction(pendingOrdersActionIndex);
-        return true;
-    }
-
-    if (pendingOrdersFocusMode === 'actions' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
-        pendingOrdersFocusMode = 'rows';
-        clearActionHighlight();
-        return true;
-    }
-
-    if (pendingOrdersFocusMode === 'actions' && e.key === 'Enter') {
-        const btn = actionButtons[pendingOrdersActionIndex];
-        if (btn) btn.click();
-        return true;
-    }
-
-    if (e.key === 'Escape') {
-        if (typeof closePendingOrdersModal === 'function') {
-            closePendingOrdersModal();
-        }
-        return true;
-    }
-
-    return false;
-}
-
-// Use window capture to preempt other handlers
-window.addEventListener('keydown', function(e) {
-    const handled = handlePendingOrdersKeyboard(e);
-    if (handled) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-    }
-}, true);
 
 // Load order items and populate table
 function loadOrderItems(orderNo) {
     const supplierId = document.getElementById('supplierSelect').value;
-    const url = `{{ url('/admin/suppliers') }}/${supplierId}/pending-orders/${orderNo}/items`;
-    console.log('📡 Fetching order items from:', url);
     
+    const url = `<?php echo e(url('/admin/suppliers')); ?>/${supplierId}/pending-orders/${orderNo}/items`;
     fetch(url)
-        .then(response => {
-            console.log('📡 Response status:', response.status);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('✅ Order items received:', data);
             if (data.success) {
                 populateItemsTable(data.items);
                 
                 // Close modal
                 closePendingOrdersModal();
                 
-                // Focus on first row batch field
+                // Focus on first cell
                 setTimeout(() => {
-                    const batchInput = document.querySelector('#itemsTableBody tr:first-child input[name*="[batch]"]');
-                    if (batchInput) {
-                        batchInput.focus();
-                        if (batchInput.select) batchInput.select();
+                    const firstInput = document.querySelector('#itemsTableBody tr:first-child input');
+                    if (firstInput) {
+                        firstInput.focus();
+                        firstInput.select();
                     }
                 }, 300);
             }
         })
         .catch(error => {
-            console.error('❌ Error loading order items:', error);
-            showAlert('Error loading order items: ' + error.message, 'error');
+            console.error('Error:', error);
+            showAlert('Error loading order items', 'error');
         });
 }
 
@@ -2953,8 +2812,9 @@ function populateItemsTable(items) {
     const tbody = document.getElementById('itemsTableBody');
     tbody.innerHTML = '';
     
-    // Only render actual items
-    const totalRows = items.length;
+    // Ensure minimum 10 rows
+    const minRows = 10;
+    const totalRows = Math.max(items.length, minRows);
     
     for (let index = 0; index < totalRows; index++) {
         const item = items[index] || {}; // Empty object if no item data
@@ -2966,8 +2826,8 @@ function populateItemsTable(items) {
         
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td><input type="text" class="form-control readonly-field" name="items[${index}][code]" value="${item.item_code || ''}" tabindex="-1" autocomplete="off" readonly></td>
-            <td><input type="text" class="form-control readonly-field" name="items[${index}][name]" value="${item.item_name || ''}" tabindex="-1" autocomplete="off" readonly></td>
+            <td><input type="text" class="form-control" name="items[${index}][code]" value="${item.item_code || ''}" tabindex="${index * 10 + 1}" autocomplete="off"></td>
+            <td><input type="text" class="form-control" name="items[${index}][name]" value="${item.item_name || ''}" tabindex="${index * 10 + 2}" autocomplete="off"></td>
             <td><input type="text" class="form-control" name="items[${index}][batch]" tabindex="${index * 10 + 3}" autocomplete="off"></td>
             <td><input type="text" class="form-control" name="items[${index}][exp]" tabindex="${index * 10 + 4}" autocomplete="off"></td>
             <td><input type="number" class="form-control item-qty" name="items[${index}][qty]" value="${item.order_qty || ''}" tabindex="${index * 10 + 5}" autocomplete="off" data-row="${index}"></td>
@@ -2996,11 +2856,6 @@ function populateItemsTable(items) {
                 currentActiveRow = index;
                 isRowSelected = false;
                 
-                // Store original discount value when discount field gets focus
-                if (input.classList.contains('item-dis-percent')) {
-                    input.setAttribute('data-original-discount', input.value || '0');
-                }
-                
                 const itemCode = row.querySelector('input[name*="[code]"]').value;
                 
                 if (itemCode && itemCode.trim() !== '') {
@@ -3015,22 +2870,12 @@ function populateItemsTable(items) {
         updateRowColor(index);
     }
     
+    // Check all rows after populating
+    checkAllRowsComplete();
+    
     // Set first row as selected (full row selection mode)
     currentActiveRow = 0;
     selectRow(0);
-
-    // Focus first row batch field for editing
-    setTimeout(() => {
-        const firstRow = tbody.querySelector('tr');
-        const batchInput = firstRow?.querySelector('input[name*="[batch]"]');
-        if (batchInput) {
-            batchInput.focus();
-            if (batchInput.select) batchInput.select();
-        }
-    }, 100);
-    
-    // Check all rows after populating
-    checkAllRowsComplete();
 }
 
 // Add Enter key navigation with MRP modal trigger
@@ -3062,13 +2907,27 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
         
         // Add keyboard navigation listener
         input.addEventListener('keydown', function(e) {
-            const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
             // Enter key navigation
-            if (isEnter) {
+            if (e.key === 'Enter') {
                 e.preventDefault();
                 
+                // Check if this is the Code field
+                if (input.name && input.name.includes('[code]')) {
+                    const code = input.value.trim();
+                    if (!code) {
+                        // Empty code field - Open Item Selection Modal
+                        console.log('Code field empty, opening Item Selection Modal');
+                        if (typeof openChooseItemsModal === 'function') {
+                            openChooseItemsModal();
+                        }
+                    } else {
+                        // Barcode entered - Fetch item and open Batch Modal
+                        console.log('Barcode entered:', code);
+                        fetchItemByBarcodeAndOpenBatchModal(code, rowIndex);
+                    }
+                }
                 // Check if this is the F.Qty field
-                if (input.classList.contains('item-fqty')) {
+                else if (input.classList.contains('item-fqty')) {
                     console.log('F.Qty Enter pressed, rowIndex:', rowIndex);
                     // Get item code from current row
                     const itemCode = row.querySelector('input[name*="[code]"]').value;
@@ -3088,38 +2947,34 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
                 }
                 // Check if this is the Dis% field
                 else if (input.classList.contains('item-dis-percent')) {
-                    console.log('Dis% Enter pressed');
-                    
-                    // Get current and original discount values
                     const currentValue = parseFloat(input.value) || 0;
                     const originalValue = parseFloat(input.getAttribute('data-original-discount') || 0);
                     
-                    // Show modal if discount value has CHANGED from original
                     if (currentValue !== originalValue) {
-                        console.log('Discount changed from', originalValue, 'to', currentValue, '- showing modal');
+                        console.log('Discount changed, showing modal');
                         showDiscountOptionsModal(rowIndex, currentValue);
                     } else {
-                        console.log('Discount unchanged, moving to MRP field');
+                        console.log('Dis% Enter pressed, moving to MRP field');
+                        currentActiveRow = rowIndex;
                         const mrpField = row.querySelector('input[name*="[mrp]"]');
                         if (mrpField) {
                             mrpField.focus();
-                            if (mrpField.select) mrpField.select();
+                            mrpField.select();
                         }
                     }
                 }
                 // Check if this is the MRP field
                 else if (input.getAttribute('name') && input.getAttribute('name').includes('[mrp]')) {
-                    console.log('MRP Enter pressed, moving to S.Rate in calculation section');
-                    // Update current active row before moving to S.Rate
+                    console.log('MRP Enter pressed, moving to S.Rate');
                     currentActiveRow = rowIndex;
                     const sRateField = document.getElementById('calc_s_rate');
                     if (sRateField) {
                         sRateField.focus();
                         sRateField.select();
                     }
-                    // Prevent any other handlers from hijacking Enter
                     e.stopPropagation();
                     e.stopImmediatePropagation();
+                    return;
                 } else {
                     // Move to next input in same row
                     const nextIndex = colIndex + 1;
@@ -3181,35 +3036,6 @@ function addRowNavigationWithMrpModal(row, rowIndex) {
     });
 }
 
-// Global capture: ensure MRP Enter always moves to Sale Rate
-window.addEventListener('keydown', function(e) {
-    const isEnter = (e.key === 'Enter' || e.key === 'NumpadEnter' || e.keyCode === 13);
-    if (!isEnter) return;
-    const active = document.activeElement;
-    if (!active || active.id === 'calc_mrp') return;
-    if (active.tagName !== 'INPUT') return;
-    const name = active.getAttribute('name') || '';
-    if (!name.includes('[mrp]')) return;
-    const rowEl = active.closest('tr');
-    if (!rowEl || !rowEl.closest('#itemsTableBody')) return;
-
-    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr'));
-    const rowIndex = rows.indexOf(rowEl);
-    if (rowIndex >= 0) {
-        currentActiveRow = rowIndex;
-    }
-
-    const sRateField = document.getElementById('calc_s_rate');
-    if (sRateField) {
-        console.log('[KB] MRP Enter (capture) -> S.Rate', { rowIndex });
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        sRateField.focus();
-        sRateField.select();
-    }
-}, true);
-
 // Add amount calculation to row
 function addAmountCalculation(row, rowIndex) {
     const qtyInput = row.querySelector('.item-qty');
@@ -3235,6 +3061,10 @@ function addAmountCalculation(row, rowIndex) {
         
         // Update row color based on completion status
         updateRowColor(rowIndex);
+        
+        // Update summaries whenever amount changes
+        calculateAllSummaries();
+        updateDetailedSummary();
         
         // If this row was already calculated, recalculate GST with new amount
         if (rowGstData[rowIndex] && rowGstData[rowIndex].calculated) {
@@ -3272,8 +3102,9 @@ function addAmountCalculation(row, rowIndex) {
                 updateDetailedInfoWithCalculatedData(rowIndex);
             }
             
-            // Update summary section
-            updateSummarySection();
+            // Update all summaries
+            calculateAllSummaries();
+            updateDetailedSummary();
             
             // Update row color
             updateRowColor(rowIndex);
@@ -3458,17 +3289,17 @@ function savePurchase() {
     
     // Validate required fields
     if (!headerData.bill_date) {
-        showAlert('Please select Bill Date', 'warning');
+        showAlert('⚠️ Please select Bill Date', 'warning');
         return;
     }
     
     if (!headerData.supplier_id) {
-        showAlert('Please select Supplier', 'warning');
+        showAlert('⚠️ Please select Supplier', 'warning');
         return;
     }
     
     if (!headerData.bill_no || headerData.bill_no.trim() === '') {
-        showAlert('Bill No. is required!\n\nPlease enter Bill No. before saving.', 'warning');
+        showAlert('⚠️ Bill No. is required!\n\nPlease enter Bill No. before saving.', 'warning');
         document.getElementById('billNo').focus();
         return;
     }
@@ -3521,9 +3352,6 @@ function savePurchase() {
                 cost: calculatedData.cost || 0,
                 cost_gst: calculatedData.costGst || 0,
                 
-                // Batch ID from challan (if loaded from challan)
-                batch_id: calculatedData.batch_id || null,
-                
                 row_order: index
             });
         }
@@ -3533,35 +3361,8 @@ function savePurchase() {
     
     // Validate items
     if (items.length === 0) {
-        showAlert('Please add at least one item with quantity and rate.\n\nUse "Add Row" button to add items.', 'error');
+        showAlert('⚠️ Please add at least one item with quantity and rate.\n\nUse "Add Row" button to add items.', 'warning');
         return;
-    }
-    
-    // Validate batch number and expiry date for all items
-    const invalidItems = [];
-    items.forEach((item, index) => {
-        if (!item.batch_no || item.batch_no.trim() === '') {
-            invalidItems.push(`Row ${index + 1}: Batch Number is required`);
-        }
-        if (!item.expiry_date || item.expiry_date.trim() === '') {
-            invalidItems.push(`Row ${index + 1}: Expiry Date is required`);
-        }
-    });
-    
-    if (invalidItems.length > 0) {
-        const errorMessage = 'Please fill the following required fields:\n\n' + invalidItems.join('\n');
-        showAlert(errorMessage, 'error');
-        return;
-    }
-    
-    // Check if this is from a challan
-    const purchaseForm = document.getElementById('purchaseForm');
-    const challanId = purchaseForm?.dataset?.challanId || null;
-    const challanNo = purchaseForm?.dataset?.challanNo || null;
-    
-    // Add challan_id to header if from challan
-    if (challanId) {
-        headerData.challan_id = challanId;
     }
     
     // 3. Prepare final payload
@@ -3571,24 +3372,25 @@ function savePurchase() {
     };
     
     console.log('=== SAVING PURCHASE TRANSACTION ===');
+    console.log('Current Transaction ID:', currentTransactionId);
     console.log('Header Data:', headerData);
     console.log('Items Count:', items.length);
     console.log('Items Data:', items);
-    console.log('Challan ID:', challanId || 'None');
     console.log('Full Payload:', payload);
     console.log('===================================');
     
-    // 🔥 Mark as saving to prevent exit confirmation dialog
-    if (typeof window.markAsSaving === 'function') {
-        window.markAsSaving();
-    }
+    // 4. Determine if this is UPDATE or CREATE
+    const isUpdate = currentTransactionId !== null && currentTransactionId !== undefined;
+    const saveUrl = isUpdate 
+        ? `<?php echo e(url('/admin/purchase/transactions')); ?>/${currentTransactionId}`
+        : '<?php echo e(url('/admin/purchase/transaction/store')); ?>';
+    const method = isUpdate ? 'PUT' : 'POST';
     
-    // 4. Send to backend
-    const saveUrl = '{{ url('/admin/purchase/transaction/store') }}';
-    console.log('💾 Saving to URL:', saveUrl);
+    console.log(`Using ${isUpdate ? 'UPDATE' : 'CREATE'} mode:`, saveUrl, method);
     
+    // Send to backend
     fetch(saveUrl, {
-        method: 'POST',
+        method: method,
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -3614,30 +3416,26 @@ function savePurchase() {
     })
     .then(data => {
         if (data.success) {
-            // Show success modal and reload page when OK is clicked
-            let successMsg = 'Purchase Transaction saved successfully!\n\nTransaction No: ' + data.trn_no + '\nBill No: ' + data.bill_no;
-            if (data.from_challan) {
-                successMsg += '\n\nChallan has been marked as invoiced.';
-            }
-            showSuccessModalWithReload(successMsg);
+            const action = isUpdate ? 'updated' : 'saved';
+            showSuccessModalWithReload(`✅ Purchase Transaction ${action} successfully!\n\nTransaction No: ${data.trn_no || headerData.trn_no || 'N/A'}\nBill No: ${data.bill_no || headerData.bill_no}`);
         } else {
-            // Check if it's a duplicate bill no error
-            if (data.error === 'DUPLICATE_BILL_NO' && data.existing_transaction) {
+            // Check if it's a duplicate bill no error (only for CREATE mode)
+            if (!isUpdate && data.error === 'DUPLICATE_BILL_NO' && data.existing_transaction) {
                 const existing = data.existing_transaction;
-                const confirmMsg = `RECORD ALREADY EXISTS!\n\n` +
+                const confirmMsg = `⚠️ RECORD ALREADY EXISTS!\n\n` +
                     `Bill No: ${existing.bill_no}\n` +
                     `Transaction No: ${existing.trn_no}\n` +
                     `Bill Date: ${existing.bill_date}\n\n` +
                     `${data.suggestion}\n\n` +
-                    `Click Yes to open Modification page, or No to stay here.`;
+                    `Click OK to open Modification page, or Cancel to stay here.`;
                 
-                showConfirm(confirmMsg, function() {
+                if (confirm(confirmMsg)) {
                     // Redirect to modification page with transaction ID
                     window.location.href = `/admin/purchase/transactions/${existing.id}/edit`;
-                }, null, 'Duplicate Bill Number');
+                }
             } else {
                 // Show detailed error for other errors
-                let errorMsg = '❌ Error saving purchase transaction:\n\n';
+                let errorMsg = `❌ Error ${isUpdate ? 'updating' : 'saving'} purchase transaction:\n\n`;
                 errorMsg += 'Message: ' + (data.message || data.error || 'Unknown error') + '\n';
                 if (data.file) errorMsg += 'File: ' + data.file + '\n';
                 if (data.line) errorMsg += 'Line: ' + data.line + '\n';
@@ -3650,7 +3448,7 @@ function savePurchase() {
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('An error occurred while saving the purchase transaction.\n\nPlease check console for details.', 'error');
+        showAlert('❌ An error occurred while saving the purchase transaction.\n\nPlease check console for details.', 'error');
     });
 }
 
@@ -3698,11 +3496,6 @@ function addNewRow() {
             currentActiveRow = newIndex;
             isRowSelected = false;
             
-            // Store original discount value when discount field gets focus
-            if (input.classList.contains('item-dis-percent')) {
-                input.setAttribute('data-original-discount', input.value || '0');
-            }
-            
             const itemCode = row.querySelector('input[name*="[code]"]').value;
             
             if (itemCode && itemCode.trim() !== '') {
@@ -3721,16 +3514,30 @@ function deleteRow(rowIndex) {
     const tbody = document.getElementById('itemsTableBody');
     const rows = tbody.querySelectorAll('tr');
     
-    // Allow deletion if there's more than 1 row
+    // Allow deletion if there's more than 1 row, or if the row has actual data
     if (rows.length <= 1) {
-        showAlert('Cannot delete! At least one row is required.', 'error');
+        showAlert('Cannot delete! At least one row is required.', 'warning');
         return;
     }
     
-    showConfirm('Are you sure you want to delete this row?', function() {
-        const tbody = document.getElementById('itemsTableBody');
-        const rows = tbody.querySelectorAll('tr');
-        rows[rowIndex].remove();
+    // Check if the row being deleted has any data
+    const rowToDelete = rows[rowIndex];
+    if (rowToDelete) {
+        const hasData = Array.from(rowToDelete.querySelectorAll('input')).some(input => {
+            return input.value && input.value.trim() !== '' && input.value !== '0' && input.value !== '0.00';
+        });
+        
+        // If row has data, ask for confirmation
+        if (hasData) {
+            if (!confirm('This row contains data. Are you sure you want to delete it?')) {
+                return;
+            }
+        }
+    }
+    
+    // Proceed with deletion
+    if (rowToDelete) {
+        rowToDelete.remove();
         
         // Delete saved GST data for this row
         if (rowGstData[rowIndex]) {
@@ -3741,7 +3548,222 @@ function deleteRow(rowIndex) {
         reindexRows();
         
         console.log(`Row ${rowIndex} deleted`);
+        
+        // Recalculate all summaries after deletion
+        calculateAllSummaries();
+        
+        // Update detailed summary section
+        updateDetailedSummary();
+        
+        // Clear calculation section if no rows with data remain
+        clearCalculationSectionIfEmpty();
+    }
+}
+
+// Calculate all summaries (main summary section)
+function calculateAllSummaries() {
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    let totalNTAmt = 0;      // N.T AMT - Net Total Amount
+    let totalSCAmt = 0;      // SC - Service Charge
+    let totalSCMAmt = 0;     // SCM - Scheme Amount
+    let totalDisAmt = 0;     // DIS - Discount Amount
+    let totalLessAmt = 0;    // LESS - Less Amount
+    let totalTaxAmt = 0;     // Tax - Total Tax Amount
+    let totalTCSAmt = 0;     // TCS - Tax Collected at Source
+    let totalDis1Amt = 0;    // Dis1 Amt - Additional Discount
+    let totalTOFAmt = 0;     // TOF - Turn Over Fee
+    
+    // Calculate totals from all rows
+    rows.forEach((row, index) => {
+        const qtyInput = row.querySelector('.item-qty');
+        const purRateInput = row.querySelector('.item-pur-rate');
+        const disPercentInput = row.querySelector('.item-dis-percent');
+        const amountInput = row.querySelector('.item-amount');
+        
+        if (qtyInput && purRateInput && amountInput) {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const purRate = parseFloat(purRateInput.value) || 0;
+            const disPercent = parseFloat(disPercentInput?.value) || 0;
+            const amount = parseFloat(amountInput.value) || 0;
+            
+            // Only calculate if row has meaningful data
+            if (qty > 0 && purRate > 0) {
+                const grossAmount = qty * purRate;
+                const discountAmount = grossAmount * (disPercent / 100);
+                const netAmount = grossAmount - discountAmount;
+                
+                totalNTAmt += netAmount;
+                totalDisAmt += discountAmount;
+                
+                // Get GST data for this row if available
+                if (rowGstData[index]) {
+                    const gstData = rowGstData[index];
+                    const cgstAmt = parseFloat(gstData.cgstAmount) || 0;
+                    const sgstAmt = parseFloat(gstData.sgstAmount) || 0;
+                    const cessAmt = parseFloat(gstData.cessAmount) || 0;
+                    
+                    totalTaxAmt += (cgstAmt + sgstAmt + cessAmt);
+                }
+            }
+        }
     });
+    
+    // Calculate final amounts
+    const netAmt = totalNTAmt + totalTaxAmt - totalDisAmt - totalLessAmt + totalSCAmt + totalSCMAmt;
+    const invAmt = netAmt + totalTCSAmt + totalTOFAmt - totalDis1Amt;
+    
+    // Update summary section fields
+    document.getElementById('nt_amt').value = totalNTAmt.toFixed(2);
+    document.getElementById('sc_amt').value = totalSCAmt.toFixed(2);
+    document.getElementById('scm_amt').value = totalSCMAmt.toFixed(2);
+    document.getElementById('dis_amt').value = totalDisAmt.toFixed(2);
+    document.getElementById('less_amt').value = totalLessAmt.toFixed(2);
+    document.getElementById('net_amt').value = netAmt.toFixed(2);
+    
+    // Row 2 fields
+    document.getElementById('tax_amt').value = totalTaxAmt.toFixed(2);
+    document.getElementById('scm_percent').value = '0.00'; // Calculate if needed
+    document.getElementById('tcs_amt').value = totalTCSAmt.toFixed(2);
+    document.getElementById('dis1_amt').value = totalDis1Amt.toFixed(2);
+    document.getElementById('tof_amt').value = totalTOFAmt.toFixed(2);
+    document.getElementById('inv_amt').value = invAmt.toFixed(2);
+    
+    console.log('📊 Summary calculated:', {
+        ntAmt: totalNTAmt,
+        taxAmt: totalTaxAmt,
+        disAmt: totalDisAmt,
+        netAmt: netAmt,
+        invAmt: invAmt
+    });
+}
+
+// Update detailed summary section
+function updateDetailedSummary() {
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    let totalNTAmt = 0;
+    let totalSCAmt = 0;
+    let totalSCMAmt = 0;
+    let totalDisAmt = 0;
+    let totalTaxAmt = 0;
+    let totalNetAmt = 0;
+    let totalCost = 0;
+    let totalCostGST = 0;
+    
+    // Calculate from all rows
+    rows.forEach((row, index) => {
+        const qtyInput = row.querySelector('.item-qty');
+        const purRateInput = row.querySelector('.item-pur-rate');
+        const disPercentInput = row.querySelector('.item-dis-percent');
+        
+        if (qtyInput && purRateInput) {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const purRate = parseFloat(purRateInput.value) || 0;
+            const disPercent = parseFloat(disPercentInput?.value) || 0;
+            
+            if (qty > 0 && purRate > 0) {
+                const grossAmount = qty * purRate;
+                const discountAmount = grossAmount * (disPercent / 100);
+                const netAmount = grossAmount - discountAmount;
+                
+                totalNTAmt += netAmount;
+                totalDisAmt += discountAmount;
+                totalCost += netAmount; // Cost = Net Amount before tax
+                
+                // Add GST if available
+                if (rowGstData[index]) {
+                    const gstData = rowGstData[index];
+                    const cgstAmt = parseFloat(gstData.cgstAmount) || 0;
+                    const sgstAmt = parseFloat(gstData.sgstAmount) || 0;
+                    const cessAmt = parseFloat(gstData.cessAmount) || 0;
+                    const totalGst = cgstAmt + sgstAmt + cessAmt;
+                    
+                    totalTaxAmt += totalGst;
+                    totalCostGST += (netAmount + totalGst);
+                }
+            }
+        }
+    });
+    
+    totalNetAmt = totalNTAmt + totalTaxAmt;
+    
+    // Update detailed summary fields
+    document.getElementById('nt_amt_detail').value = totalNTAmt.toFixed(2);
+    document.getElementById('sc_amt_detail').value = totalSCAmt.toFixed(2);
+    document.getElementById('scm_amt_detail').value = totalSCMAmt.toFixed(2);
+    document.getElementById('dis_amt_detail').value = totalDisAmt.toFixed(2);
+    document.getElementById('tax_amt_detail').value = totalTaxAmt.toFixed(2);
+    document.getElementById('net_amt_detail').value = totalNetAmt.toFixed(2);
+    document.getElementById('cost').value = totalCost.toFixed(2);
+    document.getElementById('cost_gst').value = totalCostGST.toFixed(2);
+    
+    // Update other fields with default values
+    document.getElementById('unit').value = '1';
+    document.getElementById('srl_no1').value = '1';
+    document.getElementById('srl_no2').value = '1';
+    document.getElementById('lctn').value = '';
+    document.getElementById('cl_qty').value = '';
+    document.getElementById('comp').value = '';
+    
+    console.log('📋 Detailed summary updated:', {
+        ntAmt: totalNTAmt,
+        taxAmt: totalTaxAmt,
+        netAmt: totalNetAmt,
+        cost: totalCost,
+        costGST: totalCostGST
+    });
+}
+
+// Clear calculation section if no rows with data remain
+function clearCalculationSectionIfEmpty() {
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    
+    // Check if any row has meaningful data
+    let hasData = false;
+    rows.forEach(row => {
+        const qtyInput = row.querySelector('.item-qty');
+        const purRateInput = row.querySelector('.item-pur-rate');
+        
+        if (qtyInput && purRateInput) {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const purRate = parseFloat(purRateInput.value) || 0;
+            
+            if (qty > 0 && purRate > 0) {
+                hasData = true;
+            }
+        }
+    });
+    
+    // If no data, clear calculation section
+    if (!hasData) {
+        // Clear HSN and GST display
+        document.getElementById('calc_hsn_display').value = '---';
+        document.getElementById('calc_cgst').value = '0';
+        document.getElementById('calc_sgst').value = '0';
+        document.getElementById('calc_cess').value = '0';
+        document.getElementById('calc_tax_percent').value = '0.000';
+        
+        // Clear GST amounts
+        document.getElementById('calc_cgst_amount').textContent = '0.00';
+        document.getElementById('calc_sgst_amount').textContent = '0.00';
+        document.getElementById('calc_cess_amount').textContent = '0.00';
+        
+        // Clear other calculation fields
+        document.getElementById('calc_spl_rate').value = '0.00';
+        document.getElementById('calc_ws_rate').value = '0.00';
+        document.getElementById('calc_excise').value = '0.00';
+        document.getElementById('calc_mrp').value = '0.00';
+        document.getElementById('calc_sc_percent').value = '0.000';
+        document.getElementById('calc_inc').value = 'Y';
+        document.getElementById('calc_s_rate').value = '0.00';
+        document.getElementById('calc_less').value = '0.00';
+        
+        console.log('🧹 Calculation section cleared - no data remaining');
+    }
 }
 
 // Reindex rows after deletion
@@ -3786,6 +3808,9 @@ function openInsertItemModal(rowIndex) {
         return;
     }
     
+    // Position modal in content area
+    positionModalInContentArea(modal);
+    
     backdrop.style.display = 'block';
     modal.style.display = 'block';
     
@@ -3811,19 +3836,15 @@ function closeInsertItemModal() {
     const modal = document.getElementById('insertItemModal');
     const backdrop = document.getElementById('insertItemBackdrop');
     
-    if (modal) {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-        }, 300);
-    }
+    if (!modal || !backdrop) return;
     
-    if (backdrop) {
-        backdrop.classList.remove('show');
-        setTimeout(() => {
-            backdrop.style.display = 'none';
-        }, 300);
-    }
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+        backdrop.style.display = 'none';
+    }, 300);
     
     insertRowIndex = null;
 }
@@ -3833,7 +3854,7 @@ function loadAllItems() {
     console.log('🔄 Fetching items from backend...');
     
     // Try to fetch from backend
-    const url = '{{ url('/admin/items/all') }}';
+    const url = '<?php echo e(url('/admin/items/all')); ?>';
     fetch(url)
         .then(response => {
             console.log('📡 Response status:', response.status);
@@ -3924,9 +3945,6 @@ function selectItemForInsertion(item) {
     row.querySelector('input[name*="[name]"]').value = item.name || '';
     row.querySelector('input[name*="[mrp]"]').value = item.mrp || '';
     
-    // Fetch and populate last batch number
-    fetchLastBatchNumber(item.code, insertRowIndex);
-    
     // Close modal
     closeInsertItemModal();
     
@@ -3940,45 +3958,6 @@ function selectItemForInsertion(item) {
     }, 100);
     
     console.log(`Item ${item.code} inserted into row ${insertRowIndex}`);
-}
-
-// Fetch last batch number for an item
-function fetchLastBatchNumber(itemCode, rowIndex) {
-    if (!itemCode || itemCode.trim() === '') return;
-    
-    const url = `{{ url('/admin/items') }}/${encodeURIComponent(itemCode)}/last-batch`;
-    console.log('🔍 Fetching last batch for item:', itemCode, 'from:', url);
-    
-    fetch(url, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('📦 Last batch data received:', data);
-        
-        if (data.success && data.batch_no) {
-            const rows = document.querySelectorAll('#itemsTableBody tr');
-            const row = rows[rowIndex];
-            
-            if (row) {
-                const batchInput = row.querySelector('input[name*="[batch]"]');
-                if (batchInput) {
-                    batchInput.value = data.batch_no;
-                    console.log(`✅ Auto-populated batch: ${data.batch_no} for item: ${itemCode}`);
-                }
-            }
-        } else {
-            console.log('ℹ️ No previous batch found for item:', itemCode);
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error fetching last batch:', error);
-        // Don't show error to user as this is optional functionality
-    });
 }
 
 // Search items in modal
@@ -4001,53 +3980,657 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
-    
-    // Add event listeners for manual item code entry
-    setupItemCodeListeners();
 });
 
-// Setup event listeners for item code inputs to auto-populate batch numbers
-function setupItemCodeListeners() {
-    const tbody = document.getElementById('itemsTableBody');
-    if (!tbody) return;
+// ============================================
+// MODIFICATION BLADE SPECIFIC FUNCTIONS
+// ============================================
+
+// Fetch Bill by Transaction Number or Bill Number
+function fetchBillByTrnNo() {
+    const trnNo = document.getElementById('trnNo').value.trim();
+    const billNo = document.getElementById('billNo').value.trim();
     
-    // Use event delegation for dynamically added rows
-    tbody.addEventListener('blur', function(e) {
-        if (e.target && e.target.name && e.target.name.includes('[code]')) {
-            const itemCode = e.target.value.trim();
-            if (itemCode) {
-                // Find the row index
-                const row = e.target.closest('tr');
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-                const rowIndex = rows.indexOf(row);
-                
-                if (rowIndex !== -1) {
-                    // Fetch and populate last batch number
-                    fetchLastBatchNumber(itemCode, rowIndex);
+    // Check if either Trn No or Bill No is entered
+    if (!trnNo && !billNo) {
+        // If neither entered, show invoice list modal
+        openInvoiceListModal();
+        return;
+    }
+    
+    // Priority: Trn No first, then Bill No
+    const identifier = trnNo || billNo;
+    const searchType = trnNo ? 'Trn No' : 'Bill No';
+    
+    // Show loading
+    console.log(`Fetching bill with ${searchType}:`, identifier);
+    
+    // Disable button and show loading
+    const fetchBtn = document.querySelector('button[onclick*="fetchBillByTrnNo"]');
+    const originalText = fetchBtn?.innerHTML;
+    if (fetchBtn) {
+        fetchBtn.disabled = true;
+        fetchBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Loading...';
+    }
+    
+    // Fetch bill data from backend
+    const url = `<?php echo e(url('/admin/purchase/fetch-bill')); ?>/${encodeURIComponent(identifier)}`;
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                populateBillData(data.bill);
+                // Show success message
+                console.log(`✅ Bill fetched successfully using ${searchType}: ${identifier}`);
+            } else {
+                showAlert(data.message || 'Bill not found', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching bill:', error);
+            if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_REFUSED')) {
+                showAlert('❌ Server connection error!\n\nPlease check:\n1. Laravel server is running (php artisan serve)\n2. Server is accessible at http://127.0.0.1:8000\n3. Check browser console for details', 'error');
+            } else {
+                showAlert('❌ Error fetching bill: ' + error.message, 'error');
+            }
+        })
+        .finally(() => {
+            // Re-enable button
+            if (fetchBtn && originalText) {
+                fetchBtn.disabled = false;
+                fetchBtn.innerHTML = originalText;
+            }
+        });
+}
+
+// Open Invoice List Modal
+function openInvoiceListModal() {
+    const modal = document.getElementById('invoiceListModal');
+    const backdrop = document.getElementById('invoiceListBackdrop');
+    
+    if (!modal || !backdrop) {
+        console.error('Invoice list modal elements not found!');
+        return;
+    }
+    
+    // Position modal in content area
+    positionModalInContentArea(modal);
+    
+    backdrop.style.display = 'block';
+    modal.style.display = 'block';
+    
+    setTimeout(() => {
+        backdrop.classList.add('show');
+        modal.classList.add('show');
+    }, 10);
+    
+    // Load invoices
+    loadInvoiceList();
+
+    // Auto-highlight first row (once invoices load)
+    setTimeout(() => {
+        const rows = Array.from(document.querySelectorAll('#invoiceListBody .invoice-row'));
+        rows.forEach(r => r.classList.remove('table-primary'));
+        if (rows.length > 0) {
+            rows[0].classList.add('table-primary');
+            rows[0].scrollIntoView({ block: 'nearest' });
+        }
+    }, 300);
+}
+
+// Close Invoice List Modal
+function closeInvoiceListModal() {
+    const modal = document.getElementById('invoiceListModal');
+    const backdrop = document.getElementById('invoiceListBackdrop');
+    
+    if (!modal || !backdrop) return;
+    
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+    
+    setTimeout(() => {
+        modal.style.display = 'none';
+        backdrop.style.display = 'none';
+    }, 300);
+}
+
+// Load Invoice List
+function loadInvoiceList() {
+    console.log('Loading invoice list...');
+    
+    const url = '<?php echo e(url('/admin/purchase/invoice-list')); ?>';
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayInvoiceList(data.invoices);
+            } else {
+                console.error('Failed to load invoices');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading invoices:', error);
+        });
+}
+
+// Helper function to format date
+function formatDate(dateValue) {
+    if (!dateValue) return '---';
+    
+    // If it's already a formatted date string, return as is
+    if (typeof dateValue === 'string' && dateValue.length <= 10 && !dateValue.includes('T')) {
+        return dateValue;
+    }
+    
+    // Parse ISO date string
+    try {
+        const date = new Date(dateValue);
+        if (isNaN(date.getTime())) return '---';
+        
+        // Format as DD-MM-YYYY
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    } catch (e) {
+        return '---';
+    }
+}
+
+// Display Invoice List in Modal
+function displayInvoiceList(invoices) {
+    const tbody = document.getElementById('invoiceListBody');
+    tbody.innerHTML = '';
+    
+    if (invoices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No invoices found</td></tr>';
+        return;
+    }
+    
+    invoices.forEach(invoice => {
+        const row = document.createElement('tr');
+        row.style.cursor = 'pointer';
+        row.classList.add('invoice-row');
+        
+        // Format dates properly
+        const billDate = formatDate(invoice.bill_date);
+        const receiveDate = formatDate(invoice.receive_date);
+        
+        row.innerHTML = `
+            <td>${invoice.bill_no || '---'}</td>
+            <td class="text-center">${billDate}</td>
+            <td class="text-center">${receiveDate}</td>
+            <td>${invoice.supplier_name || '---'}</td>
+            <td class="text-center">${invoice.created_by || 'MASTER'}</td>
+            <td class="text-center">${invoice.modified_by || 'MASTER'}</td>
+            <td class="text-end">₹${parseFloat(invoice.net_amount || 0).toFixed(2)}</td>
+            <td class="text-center"><strong>${invoice.trn_no}</strong></td>
+        `;
+        
+        // Click to select invoice
+        row.addEventListener('click', function() {
+            selectInvoice(invoice.trn_no);
+        });
+        
+        // Highlight on hover
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#d4edff';
+        });
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+        
+        tbody.appendChild(row);
+    });
+
+    // Auto-highlight first row
+    const rows = Array.from(document.querySelectorAll('#invoiceListBody .invoice-row'));
+    rows.forEach(r => r.classList.remove('table-primary'));
+    if (rows.length > 0) {
+        rows[0].classList.add('table-primary');
+    }
+}
+
+// Keyboard navigation for Invoice List modal (capture to block global handlers)
+window.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('invoiceListModal');
+    if (!modal || !modal.classList.contains('show')) return;
+
+    // Always block arrow/enter/escape from bubbling to global handlers
+    const isNavKey = (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === 'Enter' || e.key === 'Escape');
+    if (isNavKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+    }
+
+    const rows = Array.from(document.querySelectorAll('#invoiceListBody .invoice-row'));
+    if (rows.length === 0) return;
+
+    const currentIndex = rows.findIndex(r => r.classList.contains('table-primary'));
+    let nextIndex = currentIndex;
+
+    if (e.key === 'ArrowDown') {
+        nextIndex = currentIndex < rows.length - 1 ? currentIndex + 1 : 0;
+    } else if (e.key === 'ArrowUp') {
+        nextIndex = currentIndex > 0 ? currentIndex - 1 : rows.length - 1;
+    } else if (e.key === 'Enter') {
+        const activeRow = currentIndex >= 0 ? rows[currentIndex] : rows[0];
+        if (activeRow) {
+            activeRow.click();
+        }
+        return;
+    } else if (e.key === 'Escape') {
+        closeInvoiceListModal();
+        return;
+    } else {
+        return;
+    }
+
+    rows.forEach(r => r.classList.remove('table-primary'));
+    const target = rows[nextIndex];
+    if (target) {
+        target.classList.add('table-primary');
+        target.scrollIntoView({ block: 'nearest' });
+    }
+}, true);
+
+// Select Invoice from Modal
+function selectInvoice(trnNo) {
+    document.getElementById('trnNo').value = trnNo;
+    closeInvoiceListModal();
+    fetchBillByTrnNo();
+}
+
+// Reset form to clear modification mode
+function resetForm() {
+    currentTransactionId = null;
+    rowGstData = {};
+    rowDetailedData = {};
+    window.location.reload();
+}
+
+// Helper function to format date for HTML date input (YYYY-MM-DD)
+function formatDateForInput(dateValue) {
+    if (!dateValue) return '';
+    
+    // If already in YYYY-MM-DD format, return as is
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue;
+    }
+    
+    // If it's a date string, try to parse it
+    const date = new Date(dateValue);
+    if (isNaN(date.getTime())) return '';
+    
+    // Format as YYYY-MM-DD
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Fetch supplier name by supplier_id
+async function fetchSupplierName(supplierId) {
+    if (!supplierId) return null;
+    
+    try {
+        // Try to get from existing dropdown options first
+        const supplierSelect = document.getElementById('supplierSelect');
+        if (supplierSelect) {
+            const option = Array.from(supplierSelect.options).find(opt => opt.value === String(supplierId));
+            if (option && option.textContent.trim() !== '') {
+                return option.textContent;
+            }
+        }
+        
+        // If not found, try to fetch from backend API
+        try {
+            const url = `<?php echo e(url('/admin/purchase/supplier')); ?>/${supplierId}/name`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.name) {
+                    console.log('✅ Supplier name fetched from API:', data.name);
+                    return data.name;
+                }
+            }
+        } catch (err) {
+            console.error('Error fetching supplier name from API:', err);
+        }
+        
+        console.warn('⚠️ Could not fetch supplier name from any endpoint');
+        return null;
+    } catch (error) {
+        console.error('❌ Error fetching supplier name:', error);
+        return null;
+    }
+}
+
+// Populate Bill Data into Form
+function populateBillData(bill) {
+    console.log('Populating bill data:', bill);
+    console.log('Bill date:', bill.bill_date, 'Type:', typeof bill.bill_date);
+    console.log('Receive date:', bill.receive_date, 'Type:', typeof bill.receive_date);
+    console.log('Due date:', bill.due_date, 'Type:', typeof bill.due_date);
+    console.log('Supplier ID:', bill.supplier_id, 'Type:', typeof bill.supplier_id);
+    console.log('Cash:', bill.cash, 'Transfer:', bill.transfer);
+    console.log('Transaction ID:', bill.transaction_id);
+    
+    // Store transaction ID for update mode
+    currentTransactionId = bill.transaction_id || null;
+    console.log('Current Transaction ID set to:', currentTransactionId);
+    
+    // Header Section - Format dates properly
+    const billDateInput = document.getElementById('billDate');
+    const receiveDateInput = document.getElementById('receiveDate');
+    const dueDateInput = document.getElementById('dueDate');
+    const supplierSelect = document.getElementById('supplierSelect');
+    const billNoInput = document.getElementById('billNo');
+    const trnNoInput = document.getElementById('trnNo');
+    const cashInput = document.getElementById('cash');
+    const transferInput = document.getElementById('transfer');
+    const remarksInput = document.getElementById('remarks');
+    
+    // Set Bill Date
+    if (billDateInput) {
+        const formattedBillDate = formatDateForInput(bill.bill_date);
+        billDateInput.value = formattedBillDate;
+        console.log('Set billDate to:', formattedBillDate);
+        updateDayName();
+    }
+    
+    // Set Supplier - Ensure proper selection (supports hidden input dropdown)
+    if (supplierSelect) {
+        const supplierId = String(bill.supplier_id || '');
+        console.log('Setting supplier_id to:', supplierId, 'Type:', typeof supplierId);
+
+        const supplierSearchInput = document.getElementById('supplierSearchInput');
+        const supplierList = document.getElementById('supplierList');
+        const isSelect = supplierSelect.tagName && supplierSelect.tagName.toLowerCase() === 'select';
+
+        if (!isSelect) {
+            // Hidden input + custom dropdown
+            supplierSelect.value = supplierId;
+            let supplierName = bill.supplier_name || '';
+            if (!supplierName && supplierList && supplierId) {
+                const item = supplierList.querySelector(`.dropdown-item[data-id="${supplierId}"]`);
+                if (item) supplierName = item.getAttribute('data-name') || '';
+            }
+            if (supplierSearchInput) {
+                supplierSearchInput.value = supplierName || '';
+            }
+        } else {
+            // Native select fallback (if ever used)
+            const optionExists = Array.from(supplierSelect.options || []).some(option => option.value === supplierId);
+
+            if (optionExists) {
+                supplierSelect.value = supplierId;
+                console.log('✅ Supplier selected:', supplierSelect.options[supplierSelect.selectedIndex]?.text);
+            } else {
+                console.log('⚠️ Supplier ID not found in dropdown');
+
+                let supplierName = bill.supplier_name || '';
+                if (supplierName) {
+                    const option = document.createElement('option');
+                    option.value = supplierId;
+                    option.textContent = supplierName;
+                    supplierSelect.appendChild(option);
+                    supplierSelect.value = supplierId;
+                    console.log('✅ Supplier option added using bill data:', supplierName);
+                } else if (supplierId) {
+                    console.log('Fetching supplier name from backend...');
+                    fetchSupplierName(supplierId).then(name => {
+                        if (name) {
+                            const existingOption = Array.from(supplierSelect.options || []).find(opt => opt.value === supplierId);
+                            if (!existingOption) {
+                                const option = document.createElement('option');
+                                option.value = supplierId;
+                                option.textContent = name;
+                                supplierSelect.appendChild(option);
+                            }
+                            supplierSelect.value = supplierId;
+                            console.log('✅ Supplier option added from backend:', name);
+                        } else {
+                            console.error('❌ Could not fetch supplier name for ID:', supplierId);
+                            const option = document.createElement('option');
+                            option.value = supplierId;
+                            option.textContent = `Supplier ${supplierId}`;
+                            supplierSelect.appendChild(option);
+                            supplierSelect.value = supplierId;
+                        }
+                    });
                 }
             }
         }
-    }, true);
-}
 
-// Hide specific backdrops when new modal opens (excluding insert item modal)
-function hideAllBackdrops() {
-    // Hide pending orders modal
-    const pendingOrdersBackdrop = document.getElementById('pendingOrdersBackdrop');
-    const pendingOrdersModal = document.getElementById('pendingOrdersModal');
-    if (pendingOrdersBackdrop && pendingOrdersBackdrop.classList.contains('show')) {
-        pendingOrdersBackdrop.classList.remove('show');
-        setTimeout(() => {
-            pendingOrdersBackdrop.style.display = 'none';
-        }, 300);
-    }
-    if (pendingOrdersModal && pendingOrdersModal.classList.contains('show')) {
-        pendingOrdersModal.classList.remove('show');
-        setTimeout(() => {
-            pendingOrdersModal.style.display = 'none';
-        }, 300);
+        // Trigger change event to ensure any listeners are notified
+        supplierSelect.dispatchEvent(new Event('change', { bubbles: true }));
     }
     
+    // Set Bill No and Trn No
+    if (billNoInput) {
+        billNoInput.value = bill.bill_no || '';
+        console.log('Set bill_no to:', bill.bill_no);
+    }
+    if (trnNoInput) {
+        trnNoInput.value = bill.trn_no || '';
+        console.log('Set trn_no to:', bill.trn_no);
+    }
+    
+    // Set Receive Date
+    if (receiveDateInput) {
+        const formattedReceiveDate = formatDateForInput(bill.receive_date);
+        receiveDateInput.value = formattedReceiveDate;
+        console.log('Set receiveDate to:', formattedReceiveDate);
+    }
+    
+    // Set Cash and Transfer (uppercase)
+    if (cashInput) {
+        const cashValue = (bill.cash || 'N').toString().toUpperCase();
+        cashInput.value = cashValue;
+        console.log('Set cash to:', cashValue);
+    }
+    if (transferInput) {
+        const transferValue = (bill.transfer || 'N').toString().toUpperCase();
+        transferInput.value = transferValue;
+        console.log('Set transfer to:', transferValue);
+    }
+    
+    // Set Remarks
+    if (remarksInput) {
+        remarksInput.value = bill.remarks || '';
+        console.log('Set remarks to:', bill.remarks);
+    }
+    
+    // Set Due Date
+    if (dueDateInput) {
+        const formattedDueDate = formatDateForInput(bill.due_date);
+        dueDateInput.value = formattedDueDate;
+        console.log('Set dueDate to:', formattedDueDate);
+    }
+    
+    // Clear existing items
+    document.getElementById('itemsTableBody').innerHTML = '';
+    
+    // Populate Items
+    if (bill.items && bill.items.length > 0) {
+        bill.items.forEach((item, index) => {
+            addNewRow();
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            const row = rows[rows.length - 1];
+            const rowIndex = rows.length - 1;
+            
+            // Fix field names to match actual form field names
+            row.querySelector('input[name*="[code]"]').value = item.item_code || '';
+            const nameInput = row.querySelector('input[name*="[name]"]');
+            if (nameInput) {
+                nameInput.value = item.item_name || '';
+                nameInput.setAttribute('readonly', true);
+                nameInput.classList.add('readonly-field');
+            }
+            row.querySelector('input[name*="[batch]"]').value = item.batch_number || '';
+            row.querySelector('input[name*="[exp]"]').value = item.expiry_date || ''; // Fixed: was [expiry]
+            row.querySelector('input[name*="[qty]"]').value = item.quantity || '';
+            row.querySelector('input[name*="[free_qty]"]').value = item.free_quantity || '';
+            row.querySelector('input[name*="[pur_rate]"]').value = item.p_rate || ''; // Fixed: was [rate]
+            row.querySelector('input[name*="[dis_percent]"]').value = item.discount_percent || ''; // Fixed: was [discount]
+            row.querySelector('input[name*="[mrp]"]').value = item.mrp || '';
+            row.querySelector('input[name*="[amount]"]').value = item.amount || '';
+            
+            // Initialize rowGstData for this row
+            if (!rowGstData[rowIndex]) {
+                rowGstData[rowIndex] = {};
+            }
+            
+            // Store ONLY pur_rate from saved transaction - all other rates will come from item table
+            rowGstData[rowIndex].saved_pur_rate = parseFloat(item.p_rate) || 0;
+            console.log(`Row ${rowIndex}: Saved pur_rate from transaction:`, rowGstData[rowIndex].saved_pur_rate);
+            
+            // Fetch latest rates from item table (S.Rate, WS.Rate, SPL.Rate, MRP)
+            const itemCode = item.item_code;
+            if (itemCode && itemCode.trim() !== '') {
+                console.log(`Row ${rowIndex}: Fetching latest rates from item table for code:`, itemCode);
+                
+                // Fetch item details to get latest rates
+                const itemUrl = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode.trim()}`;
+                fetch(itemUrl)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.item) {
+                            // Update rowGstData with LATEST rates from item table
+                            rowGstData[rowIndex].s_rate = parseFloat(data.item.s_rate || 0);
+                            rowGstData[rowIndex].ws_rate = parseFloat(data.item.ws_rate || 0);
+                            rowGstData[rowIndex].spl_rate = parseFloat(data.item.spl_rate || 0);
+                            rowGstData[rowIndex].mrp = parseFloat(data.item.mrp || 0);
+                            
+                            // Update MRP field in row with latest value from item table
+                            row.querySelector('input[name*="[mrp]"]').value = data.item.mrp || 0;
+                            
+                            console.log(`Row ${rowIndex}: Latest rates from item table:`, {
+                                s_rate: rowGstData[rowIndex].s_rate,
+                                ws_rate: rowGstData[rowIndex].ws_rate,
+                                spl_rate: rowGstData[rowIndex].spl_rate,
+                                mrp: rowGstData[rowIndex].mrp,
+                                pur_rate: rowGstData[rowIndex].saved_pur_rate
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error(`Row ${rowIndex}: Error fetching item rates:`, error);
+                    });
+            }
+            
+            // Trigger amount calculation for this row
+            setTimeout(() => {
+                // Recalculate amount if needed
+                const qtyInput = row.querySelector('input[name*="[qty]"]');
+                const purRateInput = row.querySelector('input[name*="[pur_rate]"]');
+                const disPercentInput = row.querySelector('input[name*="[dis_percent]"]');
+                if (qtyInput && purRateInput) {
+                    // Trigger input event to recalculate
+                    qtyInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }, 100);
+        });
+    }
+    
+    // Populate Summary Section
+    document.getElementById('nt_amt').value = parseFloat(bill.nt_amt || 0).toFixed(2);
+    document.getElementById('sc_amt').value = parseFloat(bill.sc_amt || 0).toFixed(2);
+    document.getElementById('scm_amt').value = parseFloat(bill.scm_amt || 0).toFixed(2);
+    document.getElementById('dis_amt').value = parseFloat(bill.dis_amt || 0).toFixed(2);
+    document.getElementById('less_amt').value = parseFloat(bill.less_amt || 0).toFixed(2);
+    document.getElementById('tax_amt').value = parseFloat(bill.tax_amt || 0).toFixed(2);
+    document.getElementById('net_amt').value = parseFloat(bill.net_amt || 0).toFixed(2);
+    document.getElementById('scm_percent').value = parseFloat(bill.scm_percent || 0).toFixed(2);
+    document.getElementById('tcs_amt').value = parseFloat(bill.tcs_amt || 0).toFixed(2);
+    document.getElementById('dis1_amt').value = parseFloat(bill.dis1_amt || 0).toFixed(2);
+    document.getElementById('tof_amt').value = parseFloat(bill.tof_amt || 0).toFixed(2);
+    document.getElementById('inv_amt').value = parseFloat(bill.inv_amt || 0).toFixed(2);
+    
+    // Populate Detailed Info Section
+    document.getElementById('unit').value = bill.unit || '1';
+    document.getElementById('nt_amt_detail').value = parseFloat(bill.nt_amt || 0).toFixed(2);
+    document.getElementById('scm_amt_detail').value = parseFloat(bill.scm_amt || 0).toFixed(2);
+    document.getElementById('tax_amt_detail').value = parseFloat(bill.tax_amt || 0).toFixed(2);
+    document.getElementById('cost').value = parseFloat(bill.cost || 0).toFixed(2);
+    document.getElementById('lctn').value = bill.location || '';
+    document.getElementById('sc_amt_detail').value = parseFloat(bill.sc_amt || 0).toFixed(2);
+    document.getElementById('dis1_amt_detail').value = parseFloat(bill.dis1_amt || 0).toFixed(2);
+    document.getElementById('net_amt_detail').value = parseFloat(bill.net_amt || 0).toFixed(2);
+    document.getElementById('cost_gst').value = parseFloat(bill.cost_gst || 0).toFixed(2);
+    document.getElementById('cl_qty').value = bill.cl_qty || '';
+    document.getElementById('dis_amt_detail').value = parseFloat(bill.dis_amt || 0).toFixed(2);
+    document.getElementById('less_detail').value = parseFloat(bill.less_amt || 0).toFixed(2);
+    document.getElementById('comp').value = bill.company || '';
+    document.getElementById('vol').value = bill.volume || '0';
+    document.getElementById('pack_detail').value = bill.packing || '';
+    document.getElementById('hs_amt').value = parseFloat(bill.hs_amt || 0).toFixed(2);
+    document.getElementById('gross_amt').value = parseFloat(bill.gross_amt || 0).toFixed(2);
+    document.getElementById('scm_percent_detail').value = parseFloat(bill.scm_percent || 0).toFixed(2);
+    document.getElementById('dis1_percent').value = parseFloat(bill.dis1_percent || 0).toFixed(2);
+    
+    // Recalculate GST for all rows that have items (with delay to ensure DOM is ready)
+    setTimeout(() => {
+        const rows = document.querySelectorAll('#itemsTableBody tr');
+        rows.forEach((row, index) => {
+            const itemCode = row.querySelector('input[name*="[code]"]')?.value?.trim();
+            const amount = parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0;
+            
+            if (itemCode && amount > 0) {
+                // Fetch item details and calculate GST
+                fetchItemDetailsForCalculation(itemCode, index);
+                // Calculate GST after a short delay to allow item details to load
+                setTimeout(() => {
+                    calculateAndSaveGstForRow(index);
+                }, 200);
+            }
+        });
+        
+        // Update summary section after all calculations
+        setTimeout(() => {
+            updateSummarySection();
+            
+            // Update row colors after all calculations
+            const rows = document.querySelectorAll('#itemsTableBody tr');
+            rows.forEach((row, index) => {
+                updateRowColor(index);
+            });
+            checkAllRowsComplete();
+        }, 500);
+    }, 300);
+    
+    // Show appropriate message based on mode
+    if (currentTransactionId) {
+        showAlert('✅ Bill fetched successfully!\n\nYou are in MODIFICATION mode.\nChanges will UPDATE the existing transaction.', 'success');
+    } else {
+        showAlert('✅ Bill fetched successfully!', 'success');
+    }
+}
+
+// Modal System Functions
+// Hide all existing backdrops when new modal opens
+function hideAllBackdrops() {
     // Hide alert modal
     const alertBackdrop = document.getElementById('alertBackdrop');
     const alertModal = document.getElementById('alertModal');
@@ -4064,19 +4647,19 @@ function hideAllBackdrops() {
         }, 300);
     }
     
-    // Hide MRP details modal if exists
-    const mrpBackdrop = document.getElementById('mrpDetailsBackdrop');
-    const mrpModal = document.getElementById('mrpDetailsModal');
-    if (mrpBackdrop && mrpBackdrop.classList.contains('show')) {
-        mrpBackdrop.classList.remove('show');
+    // Hide invoice list modal
+    const invoiceBackdrop = document.getElementById('invoiceListBackdrop');
+    const invoiceModal = document.getElementById('invoiceListModal');
+    if (invoiceBackdrop && invoiceBackdrop.classList.contains('show')) {
+        invoiceBackdrop.classList.remove('show');
         setTimeout(() => {
-            mrpBackdrop.style.display = 'none';
+            invoiceBackdrop.style.display = 'none';
         }, 300);
     }
-    if (mrpModal && mrpModal.classList.contains('show')) {
-        mrpModal.classList.remove('show');
+    if (invoiceModal && invoiceModal.classList.contains('show')) {
+        invoiceModal.classList.remove('show');
         setTimeout(() => {
-            mrpModal.style.display = 'none';
+            invoiceModal.style.display = 'none';
         }, 300);
     }
 }
@@ -4225,6 +4808,9 @@ function showSuccessModalWithReload(message, title = 'Success') {
 
 // Reload page after success modal
 function reloadPageAfterSuccess() {
+    if (typeof window.resetFormDirty === 'function') {
+        window.resetFormDirty();
+    }
     closeAlert();
     // Small delay to allow modal close animation
     setTimeout(() => {
@@ -4259,8 +4845,8 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     
     // Set footer with Yes/No buttons
     footer.innerHTML = `
-        <button type="button" class="btn btn-secondary" id="alertConfirmNoBtn" onclick="handleConfirmCancel()">No</button>
-        <button type="button" class="btn btn-primary" id="alertConfirmYesBtn" onclick="handleConfirmYes()">Yes</button>
+        <button type="button" class="btn btn-secondary" onclick="handleConfirmCancel()">No</button>
+        <button type="button" class="btn btn-primary" onclick="handleConfirmYes()">Yes</button>
     `;
     
     // Show modal with enhanced effects
@@ -4270,11 +4856,6 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
-        const yesBtn = document.getElementById('alertConfirmYesBtn');
-        const noBtn = document.getElementById('alertConfirmNoBtn');
-        [yesBtn, noBtn].forEach(btn => btn?.classList.remove('kbd-highlight'));
-        if (yesBtn) yesBtn.classList.add('kbd-highlight');
-        if (yesBtn) yesBtn.focus();
     }, 10);
 }
 
@@ -4315,19 +4896,13 @@ function closeAlert() {
 }
 
 // ============================================
-// ALERT CONFIRM MODAL KEYBOARD HANDLING
+// ALERT MODAL KEYBOARD HANDLING (OK on Enter)
 // ============================================
-// Simple OK alert (success/info/error) keyboard handling
-document.addEventListener('keydown', function(e) {
-    const alertModal = document.getElementById('alertModal');
-    if (!alertModal || !alertModal.classList.contains('show')) return;
+window.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('alertModal');
+    if (!modal || !modal.classList.contains('show')) return;
 
-    // If confirm buttons exist, let confirm handler handle it
-    const yesBtn = document.getElementById('alertConfirmYesBtn');
-    const noBtn = document.getElementById('alertConfirmNoBtn');
-    if (yesBtn || noBtn) return;
-
-    const okBtn = alertModal.querySelector('.alert-modal-footer button');
+    const okBtn = modal.querySelector('.alert-modal-footer button');
     if (!okBtn) return;
 
     if (e.key === 'Enter') {
@@ -4335,63 +4910,20 @@ document.addEventListener('keydown', function(e) {
         e.stopPropagation();
         e.stopImmediatePropagation();
         okBtn.click();
-        return;
-    }
 
-    if (e.key === 'Escape') {
+        // After closing, focus batch field in first row
+        setTimeout(() => {
+            const batchInput = document.querySelector('#itemsTableBody tr:first-child input[name*="[batch]"]');
+            if (batchInput) {
+                batchInput.focus();
+                if (batchInput.select) batchInput.select();
+            }
+        }, 450);
+    } else if (e.key === 'Escape') {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
         closeAlert();
-    }
-}, true);
-
-document.addEventListener('keydown', function(e) {
-    const alertModal = document.getElementById('alertModal');
-    if (!alertModal || !alertModal.classList.contains('show')) return;
-
-    const yesBtn = document.getElementById('alertConfirmYesBtn');
-    const noBtn = document.getElementById('alertConfirmNoBtn');
-    if (!yesBtn || !noBtn) return;
-
-    const buttons = [noBtn, yesBtn];
-    let currentIndex = buttons.findIndex(btn => btn.classList.contains('kbd-highlight'));
-    if (currentIndex === -1) currentIndex = 1; // default Yes
-
-    function highlight(index) {
-        buttons.forEach(btn => btn.classList.remove('kbd-highlight'));
-        const btn = buttons[index];
-        if (btn) btn.classList.add('kbd-highlight');
-    }
-
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        e.stopPropagation();
-        const nextIndex = currentIndex <= 0 ? buttons.length - 1 : currentIndex - 1;
-        highlight(nextIndex);
-        return;
-    }
-
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        e.stopPropagation();
-        const nextIndex = currentIndex >= buttons.length - 1 ? 0 : currentIndex + 1;
-        highlight(nextIndex);
-        return;
-    }
-
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        const btn = buttons[currentIndex];
-        if (btn) btn.click();
-        return;
-    }
-
-    if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
-        handleConfirmCancel();
     }
 }, true);
 
@@ -4402,6 +4934,184 @@ document.addEventListener('DOMContentLoaded', function() {
         alertBackdrop.addEventListener('click', closeAlert);
     }
 });
+
+// Ctrl+S -> Save (Update) Purchase Transaction
+window.addEventListener('keydown', function(e) {
+    const isCtrlS = (e.key === 's' || e.key === 'S') && (e.ctrlKey || e.metaKey);
+    if (!isCtrlS || e.repeat) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    if (typeof savePurchase === 'function') {
+        savePurchase();
+    }
+}, true);
+
+// ============================================
+// DISCOUNT OPTIONS MODAL FUNCTIONS
+// ============================================
+
+let currentDiscountRowIndex = null;
+let companyDiscounts = {};
+
+function showDiscountOptionsModal(rowIndex, discountValue) {
+    currentDiscountRowIndex = rowIndex;
+    const row = document.querySelector(`#itemsTableBody tr:nth-child(${rowIndex + 1})`);
+    const itemName = row?.querySelector('input[name*="[name]"]')?.value || 'Unknown Item';
+    const companyName = row?.getAttribute('data-company-name') || 'Unknown Company';
+    
+    document.getElementById('discountItemName').textContent = itemName;
+    document.getElementById('discountCompanyName').textContent = companyName;
+    
+    if (discountValue === 0) {
+        document.getElementById('discountValue').textContent = 'Remove Discount';
+        document.getElementById('discountValue').style.color = '#dc3545';
+    } else {
+        document.getElementById('discountValue').textContent = discountValue + '%';
+        document.getElementById('discountValue').style.color = '#28a745';
+    }
+    
+    document.getElementById('discountOptionsBackdrop').style.display = 'block';
+    document.getElementById('discountOptionsModal').style.display = 'block';
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').classList.add('show');
+        document.getElementById('discountOptionsModal').classList.add('show');
+    }, 10);
+}
+
+function closeDiscountOptionsModal() {
+    document.getElementById('discountOptionsBackdrop').classList.remove('show');
+    document.getElementById('discountOptionsModal').classList.remove('show');
+    setTimeout(() => {
+        document.getElementById('discountOptionsBackdrop').style.display = 'none';
+        document.getElementById('discountOptionsModal').style.display = 'none';
+    }, 300);
+    
+    if (currentDiscountRowIndex !== null) {
+        currentActiveRow = currentDiscountRowIndex;
+        if (typeof calculateAndSaveGstForRow === 'function') calculateAndSaveGstForRow(currentDiscountRowIndex);
+        const sRateField = document.getElementById('calc_s_rate');
+        if (sRateField) { sRateField.focus(); sRateField.select(); }
+        currentDiscountRowIndex = null;
+    }
+}
+
+function applyDiscountOption(option) {
+    const rowIndex = currentDiscountRowIndex;
+    const row = document.querySelector(`#itemsTableBody tr:nth-child(${rowIndex + 1})`);
+    const discountInput = row?.querySelector('input[name*="[dis_percent]"]');
+    const discountValue = parseFloat(discountInput?.value) || 0;
+    const itemId = row?.getAttribute('data-item-id');
+    const companyId = row?.getAttribute('data-company-id');
+    const companyName = row?.getAttribute('data-company-name') || '';
+    
+    const isRemoval = discountValue === 0;
+    disableDiscountModalButtons();
+    
+    switch(option) {
+        case 'temporary':
+            row?.setAttribute('data-original-discount', discountValue.toString());
+            showToast(`Discount ${isRemoval ? 'removed' : 'set to ' + discountValue + '%'} temporarily`, 'success');
+            closeDiscountOptionsModal();
+            enableDiscountModalButtons();
+            break;
+            
+        case 'company':
+            if (companyId) {
+                showToast('Saving discount to company...', 'info');
+                saveDiscountToCompany(companyId, discountValue, function(success) {
+                    if (success) {
+                        companyDiscounts[companyId] = discountValue;
+                        applyCompanyDiscountToAllRows(companyId, discountValue);
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        showToast(isRemoval ? `✅ Discount removed for company: ${companyName}` : `✅ Discount ${discountValue}% saved for company: ${companyName}`, 'success');
+                    } else {
+                        showToast('❌ Failed to save discount to company', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Company not found', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+            
+        case 'item':
+            if (itemId) {
+                showToast('Saving discount to item...', 'info');
+                saveDiscountToItem(itemId, discountValue, function(success) {
+                    if (success) {
+                        row?.setAttribute('data-original-discount', discountValue.toString());
+                        showToast(isRemoval ? '✅ Discount removed permanently for this item' : `✅ Discount ${discountValue}% saved permanently for this item`, 'success');
+                    } else {
+                        showToast('❌ Failed to save discount to item', 'error');
+                    }
+                    closeDiscountOptionsModal();
+                    enableDiscountModalButtons();
+                });
+            } else {
+                showToast('Item ID not found', 'warning');
+                closeDiscountOptionsModal();
+                enableDiscountModalButtons();
+            }
+            break;
+    }
+}
+
+function disableDiscountModalButtons() {
+    ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed'; }
+    });
+}
+
+function enableDiscountModalButtons() {
+    ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }
+    });
+}
+
+function applyCompanyDiscountToAllRows(companyId, discountValue) {
+    document.querySelectorAll('#itemsTableBody tr').forEach((row, index) => {
+        if (row.getAttribute('data-company-id') == companyId) {
+            const discountInput = row.querySelector('input[name*="[dis_percent]"]');
+            if (discountInput) {
+                discountInput.value = discountValue;
+                row.setAttribute('data-original-discount', discountValue.toString());
+                if (typeof calculateRowAmount === 'function') calculateRowAmount(index);
+            }
+        }
+    });
+    if (typeof updateSummarySection === 'function') updateSummarySection();
+}
+
+function saveDiscountToCompany(companyId, discountValue, callback) {
+    fetch('<?php echo e(route("admin.purchase.saveCompanyDiscount")); ?>', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>', 'Accept': 'application/json' },
+        body: JSON.stringify({ company_id: companyId, discount_percent: discountValue })
+    })
+    .then(response => response.json())
+    .then(data => { if (callback) callback(data.success); })
+    .catch(error => { console.error('Error:', error); if (callback) callback(false); });
+}
+
+function saveDiscountToItem(itemId, discountValue, callback) {
+    fetch('<?php echo e(route("admin.purchase.saveItemDiscount")); ?>', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>', 'Accept': 'application/json' },
+        body: JSON.stringify({ item_id: itemId, discount_percent: discountValue })
+    })
+    .then(response => response.json())
+    .then(data => { if (callback) callback(data.success); })
+    .catch(error => { console.error('Error:', error); if (callback) callback(false); });
+}
+
+document.getElementById('discountOptionsBackdrop')?.addEventListener('click', closeDiscountOptionsModal);
+
 </script>
 
 <!-- Toast Container -->
@@ -4426,40 +5136,45 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
-<!-- Purchase Challan Selection Modal -->
-<div id="purchaseChallanBackdrop" class="pending-orders-backdrop"></div>
-<div id="purchaseChallanModal" class="pending-orders-modal">
-    <div class="pending-orders-content" style="max-width: 550px;">
-        <div class="pending-orders-header" style="background: #007bff; border-bottom-color: #0056b3; padding: 8px 15px;">
-            <h5 class="pending-orders-title" style="font-size: 14px; margin: 0;">Pending Purchase Challans (SpaceBar)</h5>
-            <button type="button" class="btn-close-modal" onclick="closePurchaseChallanModal()">×</button>
+<!-- Invoice List Modal Backdrop -->
+<div id="invoiceListBackdrop" class="pending-orders-backdrop"></div>
+
+<!-- Invoice List Modal -->
+<div id="invoiceListModal" class="pending-orders-modal" style="max-width: 900px; max-height: 70vh;">
+    <div class="pending-orders-content" style="display: flex; flex-direction: column; max-height: 70vh;">
+        <div class="pending-orders-header" style="background: #ff6b35; color: white; flex-shrink: 0;">
+            <h5 class="pending-orders-title">List of Purchase Invoices</h5>
+            <button type="button" class="btn-close-modal" onclick="closeInvoiceListModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
         </div>
-        <div class="pending-orders-body" style="max-height: 350px; overflow-y: auto; padding: 0;">
-            <table class="table table-bordered table-hover mb-0" style="font-size: 12px;">
-                <thead style="position: sticky; top: 0; z-index: 10; background: #e9ecef;">
-                    <tr>
-                        <th style="width: 120px;">Challan No.</th>
-                        <th style="width: 100px;">Date</th>
-                        <th style="width: 80px; text-align: center;">Generate</th>
-                        <th style="width: 100px; text-align: right;">Amount</th>
-                    </tr>
-                </thead>
-                <tbody id="challanTableBody">
-                    <tr>
-                        <td colspan="4" class="text-center">Select a supplier to view pending challans</td>
-                    </tr>
-                </tbody>
-                <tfoot style="background: #f8f9fa; font-weight: bold;">
-                    <tr>
-                        <td colspan="3" class="text-end">Total :</td>
-                        <td class="text-end" id="challanTotalAmount">0.00</td>
-                    </tr>
-                </tfoot>
-            </table>
+        <div class="pending-orders-body" style="padding: 0; overflow: hidden; flex: 1; display: flex; flex-direction: column;">
+            <div class="table-responsive" style="flex: 1; overflow-y: auto; max-height: calc(70vh - 120px);">
+                <table class="table table-bordered table-hover mb-0" style="font-size: 12px;">
+                    <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+                        <tr>
+                            <th style="width: 120px;">Pur Inv. No</th>
+                            <th style="width: 110px;">Inv. Date</th>
+                            <th style="width: 110px;">Entry Date</th>
+                            <th>Supplier</th>
+                            <th style="width: 80px;">UID</th>
+                            <th style="width: 80px;">F UID</th>
+                            <th style="width: 100px;">Amount</th>
+                            <th style="width: 100px;">Trn.No.</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoiceListBody">
+                        <tr>
+                            <td colspan="8" class="text-center">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="pending-orders-footer" style="padding: 8px 15px;">
-            <button type="button" class="btn btn-sm btn-secondary" id="purchaseChallanCloseBtn" onclick="closePurchaseChallanModal()">Close (Esc)</button>
-            <button type="button" class="btn btn-sm btn-primary" id="purchaseChallanLoadBtn" onclick="loadSelectedChallan()">Load Selected</button>
+        <div class="pending-orders-footer" style="flex-shrink: 0; padding: 10px 15px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeInvoiceListModal()">
+                <i class="bi bi-x-circle"></i> Close
+            </button>
         </div>
     </div>
 </div>
@@ -4503,751 +5218,236 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- Reusable Item Selection Modal Component -->
+<?php echo $__env->make('components.modals.item-selection', [
+    'id' => 'chooseItemsModal',
+    'module' => 'purchase-modification',
+    'showStock' => true,
+    'rateType' => 'pur_rate',
+    'showCompany' => true,
+    'showHsn' => true,
+    'batchModalId' => 'batchSelectionModal',
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<!-- Reusable Batch Selection Modal Component -->
+<?php echo $__env->make('components.modals.batch-selection', [
+    'id' => 'batchSelectionModal',
+    'module' => 'purchase-modification',
+    'showOnlyAvailable' => false,
+    'rateType' => 'pur_rate',
+    'showCostDetails' => true,
+    'showSupplier' => true,
+    'showPurchaseRate' => true
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
 <script>
-// Add change event to supplier hidden input (searchable dropdown)
-document.addEventListener('DOMContentLoaded', function() {
-    const supplierSelect = document.getElementById('supplierSelect');
-    if (supplierSelect) {
-        let previousValue = '';
-        
-        supplierSelect.addEventListener('change', function() {
-            const supplierId = this.value;
-            if (supplierId && supplierId !== previousValue) {
-                previousValue = supplierId;
-                // Do not auto-open pending challan/orders modal on supplier select.
-                // User will trigger Insert Orders manually.
-            }
-        });
-    }
-});
+// ============================================================================
+// MODAL COMPONENT BRIDGE SCRIPT - Purchase Modification
+// ============================================================================
 
-// Global variable to store selected challan
-let selectedChallanId = null;
-let selectedChallanNo = null;
-
-// Function to show Purchase Challan modal
-function showPurchaseChallanModal(supplierId) {
-    const modal = document.getElementById('purchaseChallanModal');
-    const backdrop = document.getElementById('purchaseChallanBackdrop');
-    const tableBody = document.getElementById('challanTableBody');
-    const totalAmountEl = document.getElementById('challanTotalAmount');
-    
-    // Reset selection
-    selectedChallanId = null;
-    selectedChallanNo = null;
-    
-    // Show loading
-    tableBody.innerHTML = '<tr><td colspan="4" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>';
-    totalAmountEl.textContent = '0.00';
-    
-    // Show modal
-    backdrop.classList.add('show');
-    modal.classList.add('show');
-    
-    // Fetch challans from API
-    const challanUrl = `{{ url('/admin/purchase-challan/supplier') }}/${supplierId}/challans`;
-    fetch(challanUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.challans.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No pending challans found</td></tr>';
-                    totalAmountEl.textContent = '0.00';
-                } else {
-                    let html = '';
-                    let totalAmount = 0;
-                    
-                    data.challans.forEach((challan, index) => {
-                        const amount = parseFloat(challan.net_amount) || 0;
-                        totalAmount += amount;
-                        
-                        // Format date as DD-MMM-YY
-                        const dateObj = new Date(challan.challan_date);
-                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                        const formattedDate = `${String(dateObj.getDate()).padStart(2, '0')}-${months[dateObj.getMonth()]}-${String(dateObj.getFullYear()).slice(-2)}`;
-                        
-                        html += `
-                            <tr class="challan-row" data-challan-id="${challan.id}" data-challan-no="${challan.challan_no}" 
-                                onclick="selectChallanRow(this, ${challan.id}, '${challan.challan_no}')" 
-                                style="cursor: pointer;">
-                                <td>${challan.challan_no}</td>
-                                <td>${formattedDate}</td>
-                                <td class="text-center">${challan.is_invoiced ? 'Y' : 'N'}</td>
-                                <td class="text-end">${amount.toFixed(2)}</td>
-                            </tr>
-                        `;
-                    });
-                    tableBody.innerHTML = html;
-                    totalAmountEl.textContent = totalAmount.toFixed(2);
-                    
-                    // Auto-select first row
-                    const firstRow = tableBody.querySelector('.challan-row');
-                    if (firstRow) {
-                        selectChallanRow(firstRow, data.challans[0].id, data.challans[0].challan_no);
-                    }
-                }
-            } else {
-                tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error: ${data.message}</td></tr>`;
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading challans</td></tr>';
-        });
+// Track which row barcode was entered for
+if (typeof window.pendingBarcodeRowIndex === 'undefined') {
+    window.pendingBarcodeRowIndex = null;
 }
 
-// Select challan row
-function selectChallanRow(row, challanId, challanNo) {
-    // Remove selection from all rows
-    document.querySelectorAll('.challan-row').forEach(r => {
-        r.classList.remove('table-primary');
-        r.style.backgroundColor = '';
-    });
-    
-    // Select this row
-    row.classList.add('table-primary');
-    row.style.backgroundColor = '#0d6efd';
-    row.style.color = 'white';
-    
-    // Store selection
-    selectedChallanId = challanId;
-    selectedChallanNo = challanNo;
-}
-
-// Load selected challan
-function loadSelectedChallan() {
-    if (!selectedChallanId) {
-        showAlert('Please select a challan first', 'warning');
-        return;
+// Override openChooseItemsModal (if button exists)
+window.openChooseItemsModal = function() {
+    if (typeof openItemModal_chooseItemsModal === 'function') {
+        openItemModal_chooseItemsModal();
     }
-    loadChallanIntoPurchase(selectedChallanId, selectedChallanNo);
-}
+};
 
-// Function to close Purchase Challan modal
-function closePurchaseChallanModal() {
-    const modal = document.getElementById('purchaseChallanModal');
-    const backdrop = document.getElementById('purchaseChallanBackdrop');
-    
-    modal.classList.remove('show');
-    backdrop.classList.remove('show');
-    
-    // After closing challan modal, check if there are pending orders to show
-    const supplierId = document.getElementById('supplierSelect')?.value;
-    if (supplierId) {
-        // Small delay to allow modal close animation to complete
-        setTimeout(() => {
-            loadPendingOrders(supplierId);
-        }, 300);
-    }
-}
-
-// Function to load challan into purchase transaction
-function loadChallanIntoPurchase(challanId, challanNo) {
-    // Confirm with user
-    if (!confirm('This will load the challan items into the current form. Continue?')) {
-        return;
-    }
-    
-    // Fetch challan details using the new detailed endpoint
-    const detailsUrl = `{{ url('/admin/purchase-challan') }}/${challanId}/details`;
-    fetch(detailsUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const challan = data.challan;
-                
-                // Populate header fields
-                document.getElementById('billDate').value = challan.challan_date || '';
-                document.getElementById('billNo').value = challan.supplier_invoice_no || '';
-                document.getElementById('receiveDate').value = challan.supplier_invoice_date || challan.challan_date || '';
-                document.getElementById('dueDate').value = challan.due_date || '';
-                document.getElementById('remarks').value = (challan.remarks || '') + ' [From Challan: ' + challan.challan_no + ']';
-                document.getElementById('cash').value = challan.cash_flag || 'N';
-                document.getElementById('transfer').value = challan.transfer_flag || 'N';
-                
-                // Update day name
-                updateDayName();
-                
-                // Clear existing rows
-                const tbody = document.getElementById('itemsTableBody');
-                tbody.innerHTML = '';
-                
-                // Reset rowGstData
-                for (let key in rowGstData) {
-                    delete rowGstData[key];
-                }
-                
-                // Add items from challan
-                if (challan.items && challan.items.length > 0) {
-                    challan.items.forEach((item, index) => {
-                        addChallanItemRow(item, index);
-                    });
-                    
-                    // Update summary section
-                    document.getElementById('nt_amt').value = parseFloat(challan.nt_amount || 0).toFixed(2);
-                    document.getElementById('sc_amt').value = parseFloat(challan.sc_amount || 0).toFixed(2);
-                    document.getElementById('scm_amt').value = parseFloat(challan.scm_amount || 0).toFixed(2);
-                    document.getElementById('dis_amt').value = parseFloat(challan.dis_amount || 0).toFixed(2);
-                    document.getElementById('tax_amt').value = parseFloat(challan.tax_amount || 0).toFixed(2);
-                    document.getElementById('net_amt').value = parseFloat(challan.net_amount || 0).toFixed(2);
-                    document.getElementById('inv_amt').value = parseFloat(challan.net_amount || 0).toFixed(2);
-                }
-                
-                // Close modal
-                closePurchaseChallanModal();
-                
-                // Show success message
-                showAlert('Challan loaded successfully! Please review and save.', 'success', 'Challan Loaded');
-                
-                // Store challan ID for later reference (when saving, mark as invoiced)
-                document.getElementById('purchaseForm').dataset.challanId = challanId;
-                document.getElementById('purchaseForm').dataset.challanNo = challanNo;
-            } else {
-                showAlert('Error loading challan: ' + data.message, 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Error loading challan details', 'error');
-        });
-}
-
-// Add a row with challan item data
-function addChallanItemRow(item, index) {
-    const tbody = document.getElementById('itemsTableBody');
-    
-    const row = document.createElement('tr');
-    row.innerHTML = `
-        <td><input type="text" class="form-control" name="items[${index}][code]" value="${item.item_code || ''}" autocomplete="off"></td>
-        <td><input type="text" class="form-control" name="items[${index}][name]" value="${item.item_name || ''}" autocomplete="off"></td>
-        <td><input type="text" class="form-control" name="items[${index}][batch]" value="${item.batch_no || ''}" autocomplete="off"></td>
-        <td><input type="text" class="form-control" name="items[${index}][exp]" value="${item.expiry_date || ''}" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-qty" name="items[${index}][qty]" value="${item.qty || ''}" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-fqty" name="items[${index}][free_qty]" value="${item.free_qty || ''}" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-pur-rate" name="items[${index}][pur_rate]" value="${parseFloat(item.purchase_rate || 0).toFixed(2)}" step="0.01" autocomplete="off"></td>
-        <td><input type="number" class="form-control item-dis-percent" name="items[${index}][dis_percent]" value="${parseFloat(item.discount_percent || 0).toFixed(2)}" step="0.01" autocomplete="off"></td>
-        <td><input type="number" class="form-control" name="items[${index}][mrp]" value="${parseFloat(item.mrp || 0).toFixed(2)}" step="0.01" autocomplete="off"></td>
-        <td><input type="number" class="form-control readonly-field item-amount" name="items[${index}][amount]" value="${parseFloat(item.net_amount || 0).toFixed(2)}" readonly></td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-primary" onclick="openInsertItemModal(${index})" title="Insert Item" style="padding: 4px 8px; margin-right: 5px; font-weight: bold;">+</button>
-            <button type="button" class="btn btn-sm btn-danger" onclick="deleteRow(${index})" title="Delete Row" style="padding: 4px 8px; font-weight: bold;">×</button>
-        </td>
-    `;
-    
-    tbody.appendChild(row);
-    
-    // Store GST data for this row
-    rowGstData[index] = {
-        calculated: true,
-        cgstPercent: item.cgst_percent || 0,
-        sgstPercent: item.sgst_percent || 0,
-        cessPercent: item.cess_percent || 0,
-        cgstAmount: parseFloat(item.cgst_amount || 0).toFixed(2),
-        sgstAmount: parseFloat(item.sgst_amount || 0).toFixed(2),
-        cessAmount: parseFloat(item.cess_amount || 0).toFixed(2),
-        taxAmount: (parseFloat(item.cgst_amount || 0) + parseFloat(item.sgst_amount || 0) + parseFloat(item.cess_amount || 0)).toFixed(2),
-        netAmount: parseFloat(item.net_amount || 0).toFixed(2),
-        amount: parseFloat(item.net_amount || 0).toFixed(2),
-        s_rate: item.sale_rate || 0,
-        ws_rate: 0,
-        spl_rate: 0,
-        mrp: item.mrp || 0,
-        batch_id: item.batch_id || null
-    };
-    
-    // Add event listeners to new row
-    if (typeof addRowNavigationWithMrpModal === 'function') {
-        addRowNavigationWithMrpModal(row, index);
-    }
-    if (typeof addAmountCalculation === 'function') {
-        addAmountCalculation(row, index);
-    }
-    
-    // Update row color
-    if (typeof updateRowColor === 'function') {
-        updateRowColor(index);
-    }
-    
-    // Add focus listeners
-    const inputs = row.querySelectorAll('input:not([readonly])');
-    inputs.forEach(input => {
-        input.addEventListener('focus', function(e) {
-            currentActiveRow = index;
-            isRowSelected = false;
-            
-            // Store original discount value when discount field gets focus
-            if (input.classList.contains('item-dis-percent')) {
-                input.setAttribute('data-original-discount', input.value || '0');
-            }
-            
-            const itemCode = row.querySelector('input[name*="[code]"]').value;
-            
-            if (itemCode && itemCode.trim() !== '') {
-                if (typeof fetchItemDetailsForCalculation === 'function') {
-                    fetchItemDetailsForCalculation(itemCode.trim(), index);
-                }
-            } else {
-                if (typeof clearCalculationSection === 'function') {
-                    clearCalculationSection();
-                }
-            }
-        });
-    });
-    
-    console.log(`Challan item row ${index} added:`, item.item_name);
-}
-
-// ============================================
-// DISCOUNT OPTIONS MODAL FUNCTIONS
-// ============================================
-
-// Global variables for discount modal
-let currentDiscountRowIndex = null;
-let companyDiscounts = {}; // Store company discounts for current session
-
-// Show discount options modal
-function showDiscountOptionsModal(rowIndex, discountValue) {
-    currentDiscountRowIndex = rowIndex;
-    
-    // Get item and company info from the row
-    const row = document.querySelector(`#itemsTableBody tr:nth-child(${rowIndex + 1})`);
-    const itemName = row?.querySelector('input[name*="[name]"]')?.value || 'Unknown Item';
-    const companyName = row?.getAttribute('data-company-name') || 'Unknown Company';
-    
-    // Update modal content
-    document.getElementById('discountItemName').textContent = itemName;
-    document.getElementById('discountCompanyName').textContent = companyName;
-    
-    // Show appropriate message based on discount value
-    if (discountValue === 0) {
-        document.getElementById('discountValue').textContent = 'Remove Discount';
-        document.getElementById('discountValue').style.color = '#dc3545'; // Red color for removal
+// Override openBatchSelectionModal to use new component
+window.openBatchSelectionModal = function(item) {
+    console.log('🔗 Bridge: Opening Batch Modal via new component for:', item?.name);
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
     } else {
-        document.getElementById('discountValue').textContent = discountValue + '%';
-        document.getElementById('discountValue').style.color = '#28a745'; // Green color for setting
+        console.error('Batch Modal component not loaded');
+    }
+};
+
+// Override closeBatchSelectionModal to use new component
+window.closeBatchSelectionModal = function() {
+    console.log('🔗 Bridge: Closing Batch Modal via new component');
+    if (typeof closeBatchModal_batchSelectionModal === 'function') {
+        closeBatchModal_batchSelectionModal();
+    }
+    window.pendingBarcodeRowIndex = null;
+};
+
+// Callback when item and batch are selected from new modal component
+window.onItemBatchSelectedFromModal = function(item, batch) {
+    console.log('✅ Bridge: Item+Batch selected from new modal:', item?.name, batch?.batch_no);
+    
+    // Store selected batch for compatibility
+    window.selectedBatch = batch;
+    
+    // Check if this is from barcode entry (existing row) or generic add (new row)
+    if (window.pendingBarcodeRowIndex !== null) {
+        // Populate existing row
+        populateRowWithItemAndBatch(window.pendingBarcodeRowIndex, item, batch);
+        window.pendingBarcodeRowIndex = null;
+    } else {
+        // Add new row
+        addItemToTable(item, batch);
     }
     
-    // Show modal
-    document.getElementById('discountOptionsBackdrop').style.display = 'block';
-    document.getElementById('discountOptionsModal').style.display = 'block';
-    setTimeout(() => {
-        document.getElementById('discountOptionsBackdrop').classList.add('show');
-        document.getElementById('discountOptionsModal').classList.add('show');
-    }, 10);
-}
+    // Cleanup
+    window.selectedBatch = null;
+};
 
-// Close discount options modal
-function closeDiscountOptionsModal() {
-    document.getElementById('discountOptionsBackdrop').classList.remove('show');
-    document.getElementById('discountOptionsModal').classList.remove('show');
-    setTimeout(() => {
-        document.getElementById('discountOptionsBackdrop').style.display = 'none';
-        document.getElementById('discountOptionsModal').style.display = 'none';
-    }, 300);
-    
-    // Continue navigation after modal closes
-    if (currentDiscountRowIndex !== null) {
-        const rowIndex = currentDiscountRowIndex;
-        
-        // Update current active row
-        currentActiveRow = rowIndex;
-        
-        // Calculate and save GST amounts for this row
-        if (typeof calculateAndSaveGstForRow === 'function') {
-            calculateAndSaveGstForRow(rowIndex);
-        }
-        
-        // Move to S.Rate in calculation section
-        const sRateField = document.getElementById('calc_s_rate');
-        if (sRateField) {
-            sRateField.focus();
-            sRateField.select();
-        }
+// Also support the simpler callback name
+window.onBatchSelectedFromModal = function(item, batch) {
+    window.onItemBatchSelectedFromModal(item, batch);
+};
+
+// Listen for item selection to open batch modal (for compatibility)
+window.onItemSelectedFromModal = function(item) {
+    console.log('🔗 Bridge: Item selected, opening batch modal for:', item?.name);
+    if (typeof openBatchModal_batchSelectionModal === 'function') {
+        openBatchModal_batchSelectionModal(item);
     }
-    
-    currentDiscountRowIndex = null;
-}
+};
 
-// Apply discount option
-function applyDiscountOption(option) {
-    const rowIndex = currentDiscountRowIndex;
-    const row = document.querySelector(`#itemsTableBody tr:nth-child(${rowIndex + 1})`);
-    const discountInput = row?.querySelector('input[name*="[dis_percent]"]');
-    const discountValue = parseFloat(discountInput?.value) || 0;
-    const itemId = row?.getAttribute('data-item-id');
-    const companyId = row?.getAttribute('data-company-id');
-    const companyName = row?.getAttribute('data-company-name') || '';
+// Move to next row's code field (creates new row if needed)
+function moveToNextRowCodeField(currentRowIndex) {
+    const tbody = document.getElementById('itemsTableBody');
+    const allRows = tbody.querySelectorAll('tr');
+    let nextRow = null;
     
-    // Determine if this is a removal (discount = 0)
-    const isRemoval = discountValue === 0;
-    const actionText = isRemoval ? 'removed' : `set to ${discountValue}%`;
-    
-    // Disable all buttons to prevent multiple clicks
-    disableDiscountModalButtons();
-    
-    switch(option) {
-        case 'temporary':
-            // Just close modal and continue
-            row?.setAttribute('data-original-discount', discountValue.toString());
-            showToast(`Discount ${actionText} temporarily`, 'success');
-            closeDiscountOptionsModal();
-            enableDiscountModalButtons();
+    // Find next row after current
+    for (let i = 0; i < allRows.length; i++) {
+        if (i > currentRowIndex) {
+            nextRow = allRows[i];
             break;
-            
-        case 'company':
-            // Save discount to company INSTANTLY to database
-            if (companyId) {
-                showToast('Saving discount to company...', 'info');
+        }
+    }
+    
+    // If no next row, create a new empty row
+    if (!nextRow) {
+        addNewRow();
+        // Get the newly added row
+        const rows = tbody.querySelectorAll('tr');
+        nextRow = rows[rows.length - 1];
+    }
+    
+    // Focus on code field of next row
+    if (nextRow) {
+        const codeInput = nextRow.querySelector('input[name*="[code]"]');
+        if (codeInput) {
+            codeInput.focus();
+            codeInput.select();
+        }
+    }
+}
+
+// Fetch item by barcode and open batch modal
+function fetchItemByBarcodeAndOpenBatchModal(barcode, rowIndex) {
+    console.log('🔍 Fetching item by barcode:', barcode, 'for row:', rowIndex);
+    
+    // Store the row index for later population
+    window.pendingBarcodeRowIndex = rowIndex;
+    
+    // Fetch item from API
+    fetch(`<?php echo e(url('/admin/api/items/search')); ?>?search=${encodeURIComponent(barcode)}&exact=1`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.items && data.items.length > 0) {
+                const item = data.items[0];
+                console.log('✅ Found item:', item.name);
                 
-                saveDiscountToCompany(companyId, discountValue, function(success) {
-                    if (success) {
-                        companyDiscounts[companyId] = discountValue;
-                        applyCompanyDiscountToAllRows(companyId, discountValue);
-                        row?.setAttribute('data-original-discount', discountValue.toString());
-                        
-                        if (isRemoval) {
-                            showToast(`✅ Discount removed for company: ${companyName}`, 'success');
-                        } else {
-                            showToast(`✅ Discount ${discountValue}% saved for company: ${companyName}`, 'success');
-                        }
-                    } else {
-                        showToast('❌ Failed to save discount to company', 'error');
-                    }
-                    closeDiscountOptionsModal();
-                    enableDiscountModalButtons();
-                });
+                // Open batch modal for this item
+                if (typeof openBatchModal_batchSelectionModal === 'function') {
+                    openBatchModal_batchSelectionModal(item);
+                } else if (typeof openBatchSelectionModal === 'function') {
+                    openBatchSelectionModal(item);
+                }
             } else {
-                showToast('Company not found for this item', 'warning');
-                closeDiscountOptionsModal();
-                enableDiscountModalButtons();
+                console.warn('⚠️ No item found for barcode:', barcode);
+                alert('Item not found for barcode: ' + barcode);
+                window.pendingBarcodeRowIndex = null;
             }
-            break;
-            
-        case 'item':
-            // Save discount to item INSTANTLY to database
-            if (itemId) {
-                showToast('Saving discount to item...', 'info');
-                
-                saveDiscountToItem(itemId, discountValue, function(success) {
-                    if (success) {
-                        row?.setAttribute('data-original-discount', discountValue.toString());
-                        
-                        if (isRemoval) {
-                            showToast('✅ Discount removed permanently for this item', 'success');
-                        } else {
-                            showToast(`✅ Discount ${discountValue}% saved permanently for this item`, 'success');
-                        }
-                    } else {
-                        showToast('❌ Failed to save discount to item', 'error');
-                    }
-                    closeDiscountOptionsModal();
-                    enableDiscountModalButtons();
-                });
-            } else {
-                showToast('Item ID not found', 'warning');
-                closeDiscountOptionsModal();
-                enableDiscountModalButtons();
-            }
-            break;
-    }
+        })
+        .catch(error => {
+            console.error('Error fetching item:', error);
+            alert('Error fetching item. Please try again.');
+            window.pendingBarcodeRowIndex = null;
+        });
 }
 
-// Disable discount modal buttons during save
-function disableDiscountModalButtons() {
-    const buttons = ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'];
-    buttons.forEach(btnId => {
-        const btn = document.getElementById(btnId);
-        if (btn) {
-            btn.disabled = true;
-            btn.style.opacity = '0.6';
-            btn.style.cursor = 'not-allowed';
-        }
-    });
-}
-
-// Enable discount modal buttons after save
-function enableDiscountModalButtons() {
-    const buttons = ['discountBtnTemporary', 'discountBtnCompany', 'discountBtnItem'];
-    buttons.forEach(btnId => {
-        const btn = document.getElementById(btnId);
-        if (btn) {
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-        }
-    });
-}
-
-// Apply company discount to all rows with same company
-function applyCompanyDiscountToAllRows(companyId, discountValue) {
+// Populate a specific row with item and batch data (for barcode entry)
+function populateRowWithItemAndBatch(rowIndex, item, batch) {
     const rows = document.querySelectorAll('#itemsTableBody tr');
-    rows.forEach((row, index) => {
-        const rowCompanyId = row.getAttribute('data-company-id');
-        if (rowCompanyId == companyId) {
-            const discountInput = row.querySelector('input[name*="[dis_percent]"]');
-            if (discountInput) {
-                discountInput.value = discountValue;
-                row.setAttribute('data-original-discount', discountValue.toString());
-                calculateRowAmount(index);
-            }
-        }
-    });
-    updateSummarySection();
-}
-
-// Save discount to company via API - INSTANT SAVE with callback
-function saveDiscountToCompany(companyId, discountValue, callback) {
-    console.log('🔵 Saving company purchase discount:', { companyId, discountValue });
+    const row = rows[rowIndex];
     
-    fetch('{{ route("admin.purchase.saveCompanyDiscount") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            company_id: companyId,
-            discount_percent: discountValue
-        })
-    })
-    .then(response => {
-        console.log('📥 Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('📦 Response data:', data);
-        if (data.success) {
-            console.log('✅ Company discount saved successfully:', data.message);
-            if (callback) callback(true);
-        } else {
-            console.error('❌ Failed to save company discount:', data.message);
-            alert('Error: ' + data.message);
-            if (callback) callback(false);
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error saving company discount:', error);
-        alert('Network error: ' + error.message);
-        if (callback) callback(false);
-    });
-}
-
-// Save discount to item via API - INSTANT SAVE with callback
-function saveDiscountToItem(itemId, discountValue, callback) {
-    console.log('🔵 Saving item purchase discount:', { itemId, discountValue });
-    
-    fetch('{{ route("admin.purchase.saveItemDiscount") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-            item_id: itemId,
-            discount_percent: discountValue
-        })
-    })
-    .then(response => {
-        console.log('📥 Response status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('📦 Response data:', data);
-        if (data.success) {
-            console.log('✅ Item discount saved successfully:', data.message);
-            if (callback) callback(true);
-        } else {
-            console.error('❌ Failed to save item discount:', data.message);
-            alert('Error: ' + data.message);
-            if (callback) callback(false);
-        }
-    })
-    .catch(error => {
-        console.error('❌ Error saving item discount:', error);
-        alert('Network error: ' + error.message);
-        if (callback) callback(false);
-    });
-}
-
-// Close modal on backdrop click
-document.getElementById('discountOptionsBackdrop')?.addEventListener('click', closeDiscountOptionsModal);
-
-</script>
-
-<!-- ============================================ -->
-<!-- SEARCHABLE SUPPLIER DROPDOWN SYSTEM -->
-<!-- ============================================ -->
-<script>
-(function() {
-    'use strict';
-
-    const supplierInput = document.getElementById('supplierSearchInput');
-    const supplierHiddenInput = document.getElementById('supplierSelect');
-    const supplierDropdownList = document.getElementById('supplierDropdownList');
-
-    if (!supplierInput || !supplierDropdownList || !supplierHiddenInput) {
-        console.warn('Supplier searchable dropdown elements not found');
+    if (!row) {
+        console.error('Row not found for index:', rowIndex);
         return;
     }
-
-    let highlightedIndex = -1;
-    let isDropdownOpen = false;
-
-    function getVisibleItems() {
-        return Array.from(supplierDropdownList.querySelectorAll('.dropdown-item:not(.hidden)'));
+    
+    console.log('📝 Populating row', rowIndex, 'with item:', item.name, 'batch:', batch.batch_no);
+    
+    // Populate fields
+    const codeInput = row.querySelector('input[name*="[code]"]');
+    const nameInput = row.querySelector('input[name*="[name]"]');
+    const batchInput = row.querySelector('input[name*="[batch]"]');
+    const expiryInput = row.querySelector('input[name*="[expiry]"]');
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    const purRateInput = row.querySelector('input[name*="[pur_rate]"]');
+    const mrpInput = row.querySelector('input[name*="[mrp]"]');
+    
+    if (codeInput) codeInput.value = item.code || '';
+    if (nameInput) {
+        nameInput.value = item.name || '';
+        // Make name field readonly
+        nameInput.setAttribute('readonly', true);
+        nameInput.classList.add('readonly-field');
     }
-
-    function showDropdown() {
-        supplierDropdownList.style.display = 'block';
-        isDropdownOpen = true;
-        highlightedIndex = -1;
+    if (batchInput) batchInput.value = batch.batch_no || '';
+    if (expiryInput) expiryInput.value = batch.expiry_date || '';
+    if (purRateInput) purRateInput.value = batch.pur_rate || item.pur_rate || '';
+    if (mrpInput) mrpInput.value = batch.mrp || item.mrp || '';
+    
+    // Set data attributes
+    row.setAttribute('data-item-id', item.item_id);
+    row.setAttribute('data-batch-id', batch.batch_id || '');
+    row.setAttribute('data-company-id', item.company_id || '');
+    
+    // Focus on quantity field
+    if (qtyInput) {
+        qtyInput.focus();
+        qtyInput.select();
     }
-
-    function hideDropdown() {
-        supplierDropdownList.style.display = 'none';
-        isDropdownOpen = false;
-        highlightedIndex = -1;
-        supplierDropdownList.querySelectorAll('.dropdown-item').forEach(item => {
-            item.classList.remove('highlighted');
-        });
+    
+    // Trigger calculation updates
+    if (typeof fetchItemDetailsForCalculation === 'function') {
+        fetchItemDetailsForCalculation(item.code, rowIndex);
     }
+}
 
-    function filterItems(searchText) {
-        const items = supplierDropdownList.querySelectorAll('.dropdown-item');
-        const search = searchText.toLowerCase().trim();
+// Add item to table (for Choose Items modal - adds new row)
+function addItemToTable(item, batch) {
+    console.log('➕ Adding new item to table:', item.name, 'batch:', batch.batch_no);
+    
+    // Add a new row
+    addNewRow();
+    
+    // Get the newly added row
+    const tbody = document.getElementById('itemsTableBody');
+    const rows = tbody.querySelectorAll('tr');
+    const newRow = rows[rows.length - 1];
+    const rowIndex = rows.length - 1;
+    
+    // Populate the new row
+    populateRowWithItemAndBatch(rowIndex, item, batch);
+}
 
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            const code = (item.dataset.code || '').toLowerCase();
-            const name = (item.dataset.name || '').toLowerCase();
-
-            if (search === '' || text.includes(search) || code.includes(search) || name.includes(search)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-
-        highlightedIndex = -1;
-        items.forEach(item => item.classList.remove('highlighted'));
-    }
-
-    function highlightItem(index) {
-        const visibleItems = getVisibleItems();
-        visibleItems.forEach(item => item.classList.remove('highlighted'));
-
-        if (index >= 0 && index < visibleItems.length) {
-            highlightedIndex = index;
-            visibleItems[index].classList.add('highlighted');
-            visibleItems[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
-    }
-
-    function selectItem(item) {
-        const value = item.dataset.value;
-        const name = item.dataset.name || '';
-        const code = item.dataset.code || '';
-
-        supplierHiddenInput.value = value;
-
-        if (value) {
-            supplierInput.value = code ? `${code} - ${name}` : name;
-        } else {
-            supplierInput.value = '';
-        }
-
-        supplierDropdownList.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
-        item.classList.add('selected');
-
-        hideDropdown();
-
-        supplierHiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-
-    supplierInput.addEventListener('focus', function() {
-        showDropdown();
-        filterItems(this.value);
-    });
-
-    supplierInput.addEventListener('input', function() {
-        showDropdown();
-        filterItems(this.value);
-    });
-
-    supplierInput.addEventListener('keydown', function(e) {
-        if (!isDropdownOpen) {
-            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-                showDropdown();
-                filterItems(this.value);
-            }
-            return;
-        }
-
-        const visibleItems = getVisibleItems();
-
-        switch (e.key) {
-            case 'ArrowDown':
-                e.preventDefault();
-                e.stopPropagation();
-                if (highlightedIndex < visibleItems.length - 1) {
-                    highlightItem(highlightedIndex + 1);
-                } else {
-                    highlightItem(0);
-                }
-                break;
-            case 'ArrowUp':
-                e.preventDefault();
-                e.stopPropagation();
-                if (highlightedIndex > 0) {
-                    highlightItem(highlightedIndex - 1);
-                } else {
-                    highlightItem(visibleItems.length - 1);
-                }
-                break;
-            case 'Enter':
-                e.preventDefault();
-                e.stopPropagation();
-                if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
-                    selectItem(visibleItems[highlightedIndex]);
-                } else if (visibleItems.length > 0) {
-                    selectItem(visibleItems[0]);
-                }
-                break;
-            case 'Escape':
-                e.preventDefault();
-                e.stopPropagation();
-                hideDropdown();
-                break;
-            case 'Tab':
-                if (highlightedIndex >= 0 && highlightedIndex < visibleItems.length) {
-                    selectItem(visibleItems[highlightedIndex]);
-                }
-                hideDropdown();
-                break;
-        }
-    });
-
-    supplierDropdownList.addEventListener('click', function(e) {
-        const item = e.target.closest('.dropdown-item');
-        if (item) {
-            selectItem(item);
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('#supplierDropdownWrapper')) {
-            hideDropdown();
-        }
-    });
-
-    console.log('🔍 Searchable Supplier Dropdown Initialized');
-})();
+console.log('🔗 Modal Component Bridge Loaded - Purchase Modification');
 </script>
 
 <!-- ============================================ -->
-<!-- VISUAL FOCUS INDICATORS (MATCH SALE MODIFICATION) -->
+<!-- VISUAL FOCUS INDICATORS (MATCH PURCHASE TRANSACTION) -->
 <!-- ============================================ -->
 <script>
 (function() {
@@ -5289,7 +5489,7 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
 <script>
 (function() {
 
-    var DRAFT_KEY = 'purchase_transaction_autosave_v1';
+    var DRAFT_KEY = 'purchase_modification_autosave_v1';
 
     // ─── Save current form state ──────────────────────────────────────────────
     window.autoSaveDraft = function() {
@@ -5299,6 +5499,7 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
                 supplier_id   : (document.getElementById('supplierSelect')    || {}).value || '',
                 supplier_text : (document.getElementById('supplierSearchInput')|| {}).value || '',
                 bill_no       : (document.getElementById('billNo')            || {}).value || '',
+                trn_no        : (document.getElementById('trnNo')             || {}).value || '',
                 receive_date  : (document.getElementById('receiveDate')       || {}).value || '',
                 due_date      : (document.getElementById('dueDate')           || {}).value || '',
                 cash          : (document.getElementById('cash')              || {}).value || 'N',
@@ -5340,7 +5541,7 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
             var draft = JSON.parse(raw);
             if (!draft) return;
 
-            var hasContent = draft.supplier_id || draft.bill_no ||
+            var hasContent = draft.supplier_id || draft.bill_no || draft.trn_no ||
                 (draft.items && draft.items.some(function(r) {
                     return r.inputs && (r.inputs.code || r.inputs.name || parseFloat(r.inputs.qty) > 0);
                 }));
@@ -5351,6 +5552,7 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
             // Header
             if (draft.bill_date)    { var el = document.getElementById('billDate');    if (el) { el.value = draft.bill_date;   if (typeof updateDayName === 'function') updateDayName(); } }
             if (draft.bill_no)      { var el = document.getElementById('billNo');      if (el) el.value = draft.bill_no; }
+            if (draft.trn_no)       { var el = document.getElementById('trnNo');       if (el) el.value = draft.trn_no; }
             if (draft.receive_date) { var el = document.getElementById('receiveDate'); if (el) el.value = draft.receive_date; }
             if (draft.due_date)     { var el = document.getElementById('dueDate');     if (el) el.value = draft.due_date; }
             if (draft.cash)         { var el = document.getElementById('cash');        if (el) el.value = draft.cash; }
@@ -5371,7 +5573,7 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
                 if (tbody) {
                     tbody.innerHTML = '';
 
-                    draft.items.forEach(function(itemData, newIdx) {
+                    draft.items.forEach(function(itemData) {
                         if (typeof addNewRow === 'function') addNewRow();
                         var rows = tbody.querySelectorAll('tr');
                         var newRow = rows[rows.length - 1];
@@ -5458,7 +5660,7 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
             // Reset header
             var billDateEl = document.getElementById('billDate');
             if (billDateEl) { billDateEl.value = new Date().toISOString().split('T')[0]; if (typeof updateDayName === 'function') updateDayName(); }
-            ['billNo','receiveDate','dueDate','remarks'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+            ['billNo','trnNo','receiveDate','dueDate','remarks'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
             var cashEl = document.getElementById('cash'); if (cashEl) cashEl.value = 'N';
             var transferEl = document.getElementById('transfer'); if (transferEl) transferEl.value = 'N';
             var supHidden = document.getElementById('supplierSelect'); if (supHidden) supHidden.value = '';
@@ -5486,7 +5688,7 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
 
     // ─── Wire listeners + restore ─────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function() {
-        ['billDate','billNo','receiveDate','dueDate','cash','transfer','remarks',
+        ['billDate','billNo','trnNo','receiveDate','dueDate','cash','transfer','remarks',
          'supplierSelect','supplierSearchInput'].forEach(function(id) {
             var el = document.getElementById(id);
             if (el) { el.addEventListener('change', _scheduleSave); el.addEventListener('input', _scheduleSave); }
@@ -5511,8 +5713,17 @@ document.getElementById('discountOptionsBackdrop')?.addEventListener('click', cl
                 return _orig.apply(this, arguments);
             };
         }
+        // Also patch resetForm (Cancel button calls this in modification)
+        var _origReset = window.resetForm;
+        if (typeof _origReset === 'function') {
+            window.resetForm = function() {
+                window.clearAutoSave();
+                return _origReset.apply(this, arguments);
+            };
+        }
     }, 800);
 
 })();
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/purchase/modification.blade.php ENDPATH**/ ?>

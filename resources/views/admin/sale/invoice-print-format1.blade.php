@@ -305,12 +305,12 @@ if (!function_exists('numberToIndianWords')) {
             @endphp
             <tr>
                 <td colspan="14" style="font-size: 8px; padding: 2px 5px;">
-                    SGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($sgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;6%&gt; 0.00 on 0.00 &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
+                    SGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($sgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
                 </td>
             </tr>
             <tr>
                 <td colspan="14" style="font-size: 8px; padding: 2px 5px;">
-                    CGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($cgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;6%&gt; 0.00 on 0.00 &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
+                    CGST : &lt;0%&gt; 0.00 &lt;2.5%&gt; {{ number_format($cgst, 2) }} on {{ number_format($taxableAmount, 2) }} &lt;9%&gt; 0.00 on 0.00 &lt;14%&gt; 0.00 on 0.00
                 </td>
             </tr>
             

@@ -32,6 +32,111 @@
     /* Custom Dropdown Styles */
     .custom-dropdown-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
     .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #f0f8ff; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Header Row 1: col-md-* → 100% ── */
+    .header-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .header-section .field-group {
+        flex-wrap: nowrap !important;
+    }
+    .header-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Supplier dropdown full width */
+    #sti_supplierDropdownWrapper,
+    #stim_supplierDropdownWrapper {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+    /* Day name standalone input */
+    .header-section .col-md-1 > input {
+        width: 100% !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 660px !important; }
+
+    /* ── Rates Section (inner-card): col-md-* → 50% ── */
+    .inner-card .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* ── Summary → full width ── */
+    .summary-section.d-flex.justify-content-end,
+    .summary-section.mb-2.d-flex.justify-content-end {
+        justify-content: stretch !important;
+    }
+    .summary-section .field-group {
+        width: 100% !important;
+    }
+    .summary-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Footer: col-md-* → 50% (2-per-row), ms-auto reset ── */
+    .footer-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        margin-left: 0 !important;
+    }
+    .footer-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → wrap ── */
+    .d-flex.justify-content-between.mt-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.mt-3 .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 <?php $__env->stopPush(); ?>
 

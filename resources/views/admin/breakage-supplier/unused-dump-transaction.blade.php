@@ -37,6 +37,125 @@
     /* Action Buttons */
     .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
     .action-buttons .btn { min-width: 100px; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    /* ── Base ── */
+    body { overflow-x: hidden !important; }
+    .bsi-form { padding: 4px !important; }
+
+    /* ── Page title row ── */
+    .bsi-form > .d-flex.justify-content-between {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .bsi-form > .d-flex.justify-content-between > div.d-flex {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .bsi-form > .d-flex.justify-content-between .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+        font-size: 12px !important;
+    }
+
+    /* ── Header: col-md-2 (left) + col-md-10 (narration) → stack ── */
+    .header-section .row.g-2 {
+        flex-direction: column !important;
+    }
+    .header-section .col-md-2,
+    .header-section .col-md-10 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    /* Left col Date/Day/TrnNo inputs fill width */
+    .header-section .col-md-2 .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+    .header-section .col-md-2 .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Narration textarea full width */
+    #narration { width: 100% !important; }
+
+    /* ── Items Table → horizontal scroll (already min-width:900px) ── */
+    .bg-white.border.rounded .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* ── Footer Section (Gray) → 2-per-row wrap ── */
+    .footer-section .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .footer-section .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 110px !important;
+    }
+    .footer-section .d-flex.align-items-center > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary Section (Pink) → already flex-wrap, fix input widths ── */
+    .summary-section .d-flex.gap-2 {
+        gap: 4px !important;
+    }
+    .summary-section .d-flex.gap-2 > div.d-flex {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 120px !important;
+    }
+    .summary-section .d-flex.gap-2 > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── First Footer Section (Purple) → 2-per-row wrap ── */
+    .first-footer-section .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .first-footer-section .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 110px !important;
+    }
+    .first-footer-section .d-flex.align-items-center > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → full width stretch ── */
+    .action-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        margin-top: 10px !important;
+    }
+    .action-buttons .btn {
+        flex: 1 1 calc(50% - 6px) !important;
+        padding: 10px 4px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
 </style>
 @endpush
 

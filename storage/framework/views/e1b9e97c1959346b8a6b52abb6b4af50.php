@@ -2647,6 +2647,104 @@ function navigateField(currentElement, direction) {
     padding: 10px 20px;
     font-weight: 500;
 }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 10px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+        font-size: 12px !important;
+    }
+
+    /* ── Search section (modification) ── */
+    .card .row.g-2.align-items-end .col-md-4,
+    .card .row.g-2.align-items-end .col-md-2 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── Debit Note Details card: col-md-* → full width ── */
+    .row.g-3 > .col-md-2,
+    .row.g-3 > .col-md-3,
+    .row.g-3 > .col-md-4,
+    .row.g-3 > .col-md-6,
+    .row.g-3 > .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── Party Details: left + right col-md-6 → stack ── */
+    .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    /* inner col-md-6 inside party cards */
+    .col-md-6 .row.g-2 > .col-md-6,
+    .col-md-6 .row.g-2 > .col-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── Party Trn row: col-md-3 → full width ── */
+    .row.g-2.mt-2 > .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── HSN Table → horizontal scroll ── */
+    #hsnTable {
+        min-width: 580px !important;
+    }
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* ── Narration + Summary row → stack ── */
+    .row > .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── Action Buttons → wrap, full width ── */
+    .card .d-flex.justify-content-between {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .card .d-flex.justify-content-between > div {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .card .d-flex.justify-content-between > div .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
 </style>
 
 <script>

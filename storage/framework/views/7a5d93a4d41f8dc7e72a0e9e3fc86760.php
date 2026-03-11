@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Stock Transfer Incoming Return Transaction'); ?>
 
-@section('title', 'Stock Transfer Incoming Return Transaction')
-
-@push('styles')
+<?php $__env->startPush('styles'); ?>
 <style>
     .stir-form { font-size: 11px; }
     .stir-form label { font-weight: 600; font-size: 11px; margin-bottom: 0; white-space: nowrap; }
@@ -136,9 +134,9 @@
     .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
 }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
 <section class="stir-form py-3">
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -147,7 +145,7 @@
                 <div class="text-muted small">Create new stock transfer incoming return (Stock will be REDUCED)</div>
             </div>
             <div>
-                <a href="{{ route('admin.stock-transfer-incoming-return.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="<?php echo e(route('admin.stock-transfer-incoming-return.index')); ?>" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-list me-1"></i> View All
                 </a>
             </div>
@@ -156,17 +154,17 @@
         <div class="card shadow-sm border-0 rounded">
             <div class="card-body">
                 <form id="stirForm" method="POST" autocomplete="off">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <!-- Header Section -->
                     <div class="header-section">
                         <div class="row g-2 mb-2">
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 40px;">Date :</label>
-                                    <input type="date" id="stirt_transaction_date" name="transaction_date" class="form-control" value="{{ date('Y-m-d') }}" onchange="updateDayName()" required data-custom-enter>
+                                    <input type="date" id="stirt_transaction_date" name="transaction_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" onchange="updateDayName()" required data-custom-enter>
                                 </div>
                                 <div class="ms-5 mt-1">
-                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="{{ date('l') }}" readonly style="width: 100px;">
+                                    <input type="text" id="day_name" name="day_name" class="form-control readonly-field text-center" value="<?php echo e(date('l')); ?>" readonly style="width: 100px;">
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -180,14 +178,15 @@
                                         <input type="hidden" id="supplier_id" name="supplier_id">
                                         <input type="hidden" id="name" name="name">
                                         <div class="custom-dropdown-list" id="stirt_supplierList" style="display: none; position: absolute; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ccc; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                                            @foreach($suppliers as $supplier)
+                                            <?php $__currentLoopData = $suppliers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $supplier): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                 <div class="custom-dropdown-item" 
-                                                     data-value="{{ $supplier->supplier_id }}" 
-                                                     data-name="{{ $supplier->name }}"
-                                                     onclick="selectSupplier('{{ $supplier->supplier_id }}', '{{ addslashes($supplier->name) }}')">
-                                                    {{ $supplier->name }}
+                                                     data-value="<?php echo e($supplier->supplier_id); ?>" 
+                                                     data-name="<?php echo e($supplier->name); ?>"
+                                                     onclick="selectSupplier('<?php echo e($supplier->supplier_id); ?>', '<?php echo e(addslashes($supplier->name)); ?>')">
+                                                    <?php echo e($supplier->name); ?>
+
                                                 </div>
-                                            @endforeach
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </div>
                                     </div>
                                 </div>
@@ -199,7 +198,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 50px;">Trn.No :</label>
-                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="{{ $nextTrnNo }}" readonly>
+                                    <input type="text" id="trn_no" name="trn_no" class="form-control readonly-field" value="<?php echo e($nextTrnNo); ?>" readonly>
                                 </div>
                             </div>
                         </div>
@@ -213,7 +212,7 @@
                             <div class="col-md-2">
                                 <div class="field-group">
                                     <label style="width: 60px;">GR Date:</label>
-                                    <input type="date" id="stirt_gr_date" name="gr_date" class="form-control" value="{{ date('Y-m-d') }}" data-custom-enter>
+                                    <input type="date" id="stirt_gr_date" name="gr_date" class="form-control" value="<?php echo e(date('Y-m-d')); ?>" data-custom-enter>
                                 </div>
                             </div>
                             <div class="col-md-1">
@@ -325,7 +324,7 @@
 </section>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'chooseItemsModal',
     'module' => 'stock-transfer-incoming-return',
     'showStock' => true,
@@ -333,19 +332,19 @@
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'batchSelectionModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'batchSelectionModal',
     'module' => 'stock-transfer-incoming-return',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <script>
 let currentRowIndex = 0;
 let itemsData = [];
@@ -370,7 +369,7 @@ function updateNameFromSupplier() {
 }
 
 function loadItems() {
-    fetch('{{ route("admin.items.get-all") }}')
+    fetch('<?php echo e(route("admin.items.get-all")); ?>')
         .then(response => response.json())
         .then(data => {
             itemsData = data.items || [];
@@ -533,7 +532,7 @@ function selectItemFromModal(item) {
 
 function showBatchSelectionForItem(item, rowIndex) {
     // Fetch ALL batches for this item
-    fetch(`{{ url('admin/api/item-batches') }}/${item.id}`)
+    fetch(`<?php echo e(url('admin/api/item-batches')); ?>/${item.id}`)
         .then(response => response.json())
         .then(data => {
             const batches = data.batches || data || [];
@@ -694,7 +693,7 @@ function checkBatchAndProcess(rowIndex, batchNo) {
     if (batchCheckInProgress) return;
     batchCheckInProgress = true;
     
-    fetch(`{{ route('admin.batches.check-batch') }}?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
+    fetch(`<?php echo e(route('admin.batches.check-batch')); ?>?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`)
         .then(response => response.json())
         .then(data => {
             if (data.exists && data.batches && data.batches.length > 0) {
@@ -988,7 +987,7 @@ function saveTransaction() {
     }
     
     const data = {
-        _token: '{{ csrf_token() }}',
+        _token: '<?php echo e(csrf_token()); ?>',
         transaction_date: document.getElementById('stirt_transaction_date').value,
         day_name: document.getElementById('day_name').value,
         name: name,
@@ -1012,12 +1011,12 @@ function saveTransaction() {
         window.markAsSaving();
     }
     
-    fetch('{{ route("admin.stock-transfer-incoming-return.store") }}', {
+    fetch('<?php echo e(route("admin.stock-transfer-incoming-return.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(data)
     })
@@ -1025,7 +1024,7 @@ function saveTransaction() {
     .then(result => {
         if (result.success) {
             alert(result.message + '\nTrn No: ' + result.trn_no);
-            window.location.href = '{{ route("admin.stock-transfer-incoming-return.index") }}';
+            window.location.href = '<?php echo e(route("admin.stock-transfer-incoming-return.index")); ?>';
         } else {
             alert(result.message || 'Error saving transaction');
         }
@@ -1038,7 +1037,7 @@ function saveTransaction() {
 
 function cancelTransaction() {
     if (confirm('Are you sure you want to cancel? All unsaved data will be lost.')) {
-        window.location.href = '{{ route("admin.stock-transfer-incoming-return.index") }}';
+        window.location.href = '<?php echo e(route("admin.stock-transfer-incoming-return.index")); ?>';
     }
 }
 
@@ -1404,4 +1403,5 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 </script>
 
-@endpush
+<?php $__env->stopPush(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/stock-transfer-incoming-return/transaction.blade.php ENDPATH**/ ?>

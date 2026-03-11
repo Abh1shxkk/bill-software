@@ -643,7 +643,184 @@
 
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<!-- ============================================================ -->
+<!--  MOBILE RESPONSIVE CSS  — Pure layout fix, no logic change   -->
+<!-- ============================================================ -->
+<style>
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    #bet_pageTitleRow {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #bet_pageTitleRow > div { flex-wrap: wrap !important; gap: 6px !important; }
+    #bet_pageTitleRow .btn { font-size: 12px !important; padding: 5px 8px !important; }
+
+    /* ── Header Row 1: Series + Date + End Date → vertical stack ── */
+    #bet_headerRow1 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    #bet_headerRow1 .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    /* Series input tiny, dates fixed width */
+    #seriesInput     { width: 70px !important; flex-shrink: 0 !important; }
+    #transactionDate { width: 150px !important; flex-shrink: 0 !important; }
+    #endDate         { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* ── Header Row 2: inner-card-sr + right col → vertical stack ── */
+    #bet_headerRow2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* inner-card-sr — full width */
+    .inner-card-sr {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .inner-card-sr .col-md-5,
+    .inner-card-sr .col-md-3,
+    .inner-card-sr .col-md-2,
+    .inner-card-sr .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card-sr .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: nowrap !important;
+    }
+    .inner-card-sr .field-group input,
+    .inner-card-sr .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Customer/Salesman search wrapper — full width */
+    .inner-card-sr .custom-dropdown-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    /* Small flag inputs — keep compact */
+    #gstVno, #noteType, #withGst,
+    #incField, #revCharge, #adjustedFlag {
+        width: 50px !important;
+        flex-shrink: 0 !important;
+    }
+    #disRpl, #brkField, #expField {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* Right side column — full width */
+    #bet_headerRightCol {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #bet_headerRightCol .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    #bet_headerRightCol .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #bet_headerRightCol .btn { width: 100% !important; }
+
+    /* ── Items Table ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 680px !important; }
+
+    /* ── Calculation Section ── */
+    #bet_calcSection {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    #bet_calcLeftBlock {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #bet_calcRightBlock {
+        width: 100% !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #bet_calcRightBlock > div {
+        flex: 1 1 45% !important;
+        min-width: 110px !important;
+    }
+    #bet_calcSection .d-flex.align-items-center.gap-2 { width: 100% !important; }
+    #bet_calcSection .d-flex.align-items-center.gap-2 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary Section ── */
+    #bet_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #bet_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 110px !important;
+    }
+    #bet_summarySection .d-flex.align-items-center > div.d-flex input {
+        width: 100% !important;
+    }
+
+    /* ── Additional Fields Section: col-lg-* → 2-col on mobile ── */
+    #bet_additionalSection .col-lg-2,
+    #bet_additionalSection .col-lg-1 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    #bet_additionalSection .d-flex.align-items-center.mb-2 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons ── */
+    #bet_actionButtons {
+        gap: 8px !important;
+    }
+    #bet_actionButtons .btn {
+        flex: 1 !important;
+        font-size: 14px !important;
+        padding: 10px 0 !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important; right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
+</style>
+
+<div id="bet_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-plus me-2"></i> Breakage/Expiry Transaction</h4>
         <div class="text-muted small">Create new breakage/expiry transaction</div>
@@ -663,7 +840,7 @@
             <!-- Header Section -->
             <div class="header-sectionSR">
                 <!-- Row 1 -->
-                <div class="header-row">
+                <div id="bet_headerRow1" class="header-row">
                     <div class="field-group">
                         <label>Series:</label>
                         <input type="text" class="form-control" name="series" id="seriesInput" style="width: 60px;" value="BE">
@@ -680,7 +857,7 @@
                 </div>
 
                 <!-- Row 2 -->
-                <div class="d-flex gap-3">
+                <div id="bet_headerRow2" class="d-flex gap-3">
 
                     <!-- Right Side - Inner Card SR -->
                     <div class="inner-card-sr flex-grow-1">
@@ -825,7 +1002,7 @@
 
                         </div>
                     </div>
-                    <div style="width: 200px;">
+                    <div id="bet_headerRightCol" style="width: 200px;">
                         <div class="field-group mb-2">
                             <label style="width: 150px;">Sr. No.:</label>
                             <input type="text" class="form-control readonly-field" name="sr_no" value="{{ $nextSrNo ?? '1' }}" readonly>
@@ -870,9 +1047,9 @@
 
             <!-- Calculation Section -->
             <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
+                <div id="bet_calcSection" class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!--  -->
-                    <div class="d-flex flex-column gap-2">
+                    <div id="bet_calcLeftBlock" class="d-flex flex-column gap-2">
                         <!-- HSN Code -->
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0" style="min-width: 75px;"><strong>HSN Code:</strong></label>
@@ -895,7 +1072,7 @@
                     </div>
 
                     <!-- Right Side Fields (2 Columns) -->
-                    <div class="d-flex gap-3">
+                    <div id="bet_calcRightBlock" class="d-flex gap-3">
                         <!-- Column 1 -->
                         <div class="d-flex flex-column gap-2">
                             <!-- SC -->
@@ -970,7 +1147,7 @@
 
 
             <!-- Summary Section -->
-            <div class="bg-white border rounded p-2 mb-2">
+            <div id="bet_summarySection" class="bg-white border rounded p-2 mb-2">
                 <!-- Row 1: 6 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -1007,7 +1184,7 @@
             </div>
 
             <!-- Additional Fields (same as original) -->
-            <div class="col-12 mb-4 bg-white border rounded p-2 mb-2">
+            <div id="bet_additionalSection" class="col-12 mb-4 bg-white border rounded p-2 mb-2">
                 <div class="row gx-3" style="font-size: 11px; gap: 10px;">
                     <!-- col 1 -->
                     <div class="col-lg-2">
@@ -1128,7 +1305,7 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="d-flex gap-2">
+            <div id="bet_actionButtons" class="d-flex gap-2">
                 <button type="button" class="btn btn-primary btn-sm" id="saveTransactionBtn" onclick="saveTransaction()">
                     <i class="bi bi-save"></i> Save
                 </button>

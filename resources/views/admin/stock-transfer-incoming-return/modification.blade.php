@@ -39,6 +39,107 @@
     /* Invoice row highlight */
     #invoiceListBody tr.invoice-row-active { background-color: #cce5ff !important; outline: 2px solid #007bff; }
     #invoiceListBody tr.invoice-row-active td { background-color: #cce5ff !important; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Header: col-md-* → 100% ── */
+    .header-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .header-section .field-group {
+        flex-wrap: nowrap !important;
+    }
+    .header-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Day name: remove ms-5 indent on mobile */
+    .header-section .ms-5.mt-1 {
+        margin-left: 0 !important;
+    }
+    .header-section .ms-5.mt-1 input {
+        width: 100% !important;
+    }
+    /* Supplier dropdown full width */
+    #stirt_supplierDropdownWrapper,
+    #stirm_supplierDropdownWrapper {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 560px !important; }
+
+    /* ── Summary → full width ── */
+    .summary-section.mb-2.d-flex.justify-content-end {
+        justify-content: stretch !important;
+    }
+    .summary-section .field-group {
+        width: 100% !important;
+    }
+    .summary-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Footer: col-md-* → 50% (2-per-row), ms-auto reset ── */
+    .footer-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+        margin-left: 0 !important;
+    }
+    .footer-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → wrap ── */
+    .d-flex.justify-content-between.mt-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.mt-3 .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 @endpush
 

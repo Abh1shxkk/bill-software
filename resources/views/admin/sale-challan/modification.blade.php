@@ -600,9 +600,124 @@
         from { transform: scaleX(1); }
         to { transform: scaleX(0); }
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    #scm_pageTitleRow {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #scm_pageTitleRow .d-flex.gap-2 { flex-wrap: wrap !important; gap: 4px !important; }
+    #scm_pageTitleRow .btn { flex: 1 1 calc(50% - 4px) !important; text-align: center !important; font-size: 12px !important; }
+
+    /* ── Header Row 1 (.header-row) → wrap ── */
+    .header-row {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .header-row .field-group {
+        flex: 1 1 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-bottom: 4px !important;
+    }
+    .header-row .field-group input,
+    .header-row .field-group select { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    .header-row .searchable-dropdown { width: 100% !important; }
+    .header-row .searchable-dropdown input { width: 100% !important; }
+
+    /* ── Header Row 2 → vertical stack ── */
+    #scm_headerRow2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    /* Left col (InvNo/Salesman/Choose Items) */
+    #scm_headerLeft {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #scm_headerLeft .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+    }
+    #scm_headerLeft .field-group input { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    #scm_headerLeft .searchable-dropdown { width: 100% !important; }
+    #scm_headerLeft .searchable-dropdown input { width: 100% !important; }
+    #scm_headerLeft .btn { width: 100% !important; }
+
+    /* Inner card → full width */
+    .inner-card {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .inner-card .col-md-6,
+    .inner-card .col-md-3,
+    .inner-card .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .inner-card .field-group input { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    #cash, #transfer { width: 36px !important; flex-shrink: 0 !important; flex-grow: 0 !important; }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 700px !important; }
+
+    /* ── Calc Section → vertical stack ── */
+    #scm_calcSection .d-flex.align-items-start.gap-3 {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    #scm_calcSection .d-flex.align-items-start.gap-3 > div:first-child { min-width: 0 !important; width: 100% !important; }
+    #scm_calcSection .d-flex.align-items-start.gap-3 > div:nth-child(2) { width: 100% !important; }
+    #scm_calcSection .d-flex.gap-3:last-child { flex-wrap: wrap !important; gap: 6px !important; }
+    #scm_calcSection .d-flex.gap-3:last-child > div { flex: 1 1 calc(50% - 6px) !important; min-width: 130px !important; }
+    #scm_calcSection .d-flex.align-items-center.gap-2 input,
+    #scm_calcSection .d-flex.align-items-center.gap-2 > div.border { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* ── Summary → 2-per-row wrap ── */
+    #scm_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #scm_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 120px !important;
+    }
+    #scm_summarySection .d-flex.align-items-center > div.d-flex input { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* ── Detail Table → horizontal scroll ── */
+    #scm_detailSection {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #scm_detailSection table { min-width: 600px !important; }
+
+    /* ── Action Buttons → full width ── */
+    #scm_actionButtons { flex-wrap: wrap !important; gap: 8px !important; }
+    #scm_actionButtons .btn { flex: 1 !important; padding: 10px 0 !important; text-align: center !important; }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div id="scm_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Sale Challan Modification</h4>
         <div class="text-muted small">Modify existing sale challans (Only pending challans can be modified)</div>
@@ -678,9 +793,9 @@
                 </div>
                 
                 <!-- Row 2: Challan No, Sales Man, Inner Card -->
-                <div class="d-flex gap-3">
+                <div id="scm_headerRow2" class="d-flex gap-3">
                     <!-- Left Side - Invoice & Salesman -->
-                    <div style="width: 250px;">
+                    <div id="scm_headerLeft" style="width: 250px;">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Inv.No.:</label>
                             <input type="text" class="form-control" name="challan_no" id="invoiceNo" value="" placeholder="Type Challan No." style="background-color: #fff8dc;">
@@ -791,7 +906,7 @@
 
             
             <!-- Calculation Section (matching purchase module structure) -->
-            <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div id="scm_calcSection" class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!-- Left Section: Case, Box, HSN Code Block -->
                     <div class="d-flex flex-column gap-2" style="min-width: 200px;">
@@ -906,7 +1021,7 @@
             </div>
             
             <!-- Summary Section (matching image - pink background) -->
-            <div class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
+            <div id="scm_summarySection" class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
                 <!-- Row 1: 7 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -955,7 +1070,7 @@
             </div>
             
             <!-- Detailed Info Section (matching image - orange background) -->
-            <div class="bg-white border rounded p-2 mb-2" style="background: #ffe6cc;">
+            <div id="scm_detailSection" class="bg-white border rounded p-2 mb-2" style="background: #ffe6cc;">
                 <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
                     <!-- Row 1: Packing | N.T.Amt. | Scm. % | Sub.Tot. | Comp | Srino -->
                     <tr>
@@ -1016,7 +1131,7 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="d-flex gap-2">
+            <div id="scm_actionButtons" class="d-flex gap-2">
                 <button type="button" class="btn btn-primary btn-sm" onclick="saveSale()">
                     <i class="bi bi-save"></i> Save
                 </button>

@@ -545,6 +545,138 @@
     }
 </style>
 
+<!-- ============================================================ -->
+<!--  MOBILE RESPONSIVE CSS  — Pure layout fix, no logic change   -->
+<!-- ============================================================ -->
+<style>
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Header Row 1: Date + Supplier ── */
+    #pm_headerRow1 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    #pm_headerRow1 .field-group {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+    }
+    #billDate       { width: 150px !important; flex-shrink: 0 !important; }
+    #dayName        { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    .custom-dropdown-wrapper { width: 100% !important; max-width: 100% !important; }
+    #supplierSearchInput { width: 100% !important; }
+
+    /* ── Header Row 2: Inner card + Right col ── */
+    #pm_headerRow2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    #pm_headerRightCol {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #pm_headerRightCol .field-group {
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+    }
+    #pm_headerRightCol .field-group input {
+        flex: 1 !important; width: auto !important; min-width: 0 !important;
+    }
+    #pm_headerRightCol button { width: 100% !important; }
+
+    .content .inner-card { width: 100% !important; min-width: 0 !important; }
+    .content .inner-card .col-md-6,
+    .content .inner-card .col-md-7,
+    .content .inner-card .col-md-5,
+    .content .inner-card .col-md-3 {
+        flex: 0 0 100% !important; max-width: 100% !important;
+    }
+    .content .inner-card .field-group {
+        display: flex !important; align-items: center !important; gap: 6px !important;
+    }
+    .content .inner-card .field-group input {
+        flex: 1 !important; width: auto !important; min-width: 0 !important;
+    }
+    #cash     { width: 55px !important; flex-shrink: 0 !important; }
+    #transfer { width: 55px !important; flex-shrink: 0 !important; }
+    #remarks, #receiveDate, #dueDate { width: 100% !important; }
+
+    /* ── Items Table ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 680px !important; }
+
+    /* ── Calculation Section ── */
+    #pm_calcSection {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    #pm_calcLeftBlock,
+    #pm_calcRightBlock {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #pm_calcRightBlock {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #pm_calcRightBlock > div {
+        flex: 1 1 45% !important;
+        min-width: 130px !important;
+    }
+    #pm_calcSection .d-flex.align-items-center.gap-2 { width: 100% !important; }
+    #pm_calcSection .d-flex.align-items-center.gap-2 input,
+    #pm_calcSection .d-flex.align-items-center.gap-2 > div.border {
+        flex: 1 !important; width: auto !important; min-width: 0 !important;
+    }
+    #calc_hsn_display, #calc_cgst, #calc_sgst, #calc_cess,
+    #calc_spl_rate, #calc_ws_rate, #calc_tax_percent,
+    #calc_excise, #calc_mrp, #calc_sc_percent,
+    #calc_inc, #calc_s_rate, #calc_less {
+        width: 100% !important; max-width: 100% !important;
+    }
+
+    /* ── Summary Section: override inline grid ── */
+    #pm_summarySection { overflow-x: auto !important; }
+    #pm_summaryGrid1, #pm_summaryGrid2 {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 8px !important;
+    }
+
+    /* ── Detail Info Section ── */
+    #pm_detailSection {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #pm_detailSection table { min-width: 580px !important; }
+
+    /* ── Action Buttons ── */
+    #pm_actionButtons { gap: 8px !important; }
+    #pm_actionButtons .btn {
+        flex: 1 !important; font-size: 14px !important; padding: 10px 0 !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important; right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Purchase Modification</h4>
@@ -560,7 +692,7 @@
         <!-- Header Section -->
         <div class="header-section">
             <!-- Row 1: Date, Supplier -->
-            <div class="header-row">
+            <div id="pm_headerRow1" class="header-row">
                 <div class="field-group">
                     <label>Bill / Ledger Date</label>
                     <input type="date" class="form-control" name="bill_date" id="billDate" value="{{ date('Y-m-d') }}" style="width: 140px;" onchange="updateDayName()">
@@ -598,7 +730,7 @@
             </div>
             
             <!-- Row 2: Bill No, Trn No, Inner Card -->
-            <div class="d-flex gap-3">
+            <div id="pm_headerRow2" class="d-flex gap-3">
                 <!-- Left Side -->
                
                 
@@ -640,7 +772,7 @@
                         </div>
                     </div>
                 </div>
-                 <div style="width: 200px;">
+                 <div id="pm_headerRightCol" style="width: 200px;">
                     <div class="field-group mb-2">
                         <label style="width: 60px;">Bill No.:</label>
                         <input type="text" class="form-control" name="bill_no" id="billNo" placeholder="1111">
@@ -686,9 +818,9 @@
         
         <!-- Calculation Section -->
         <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div class="d-flex align-items-start border rounded p-3" style="font-size: 11px; background: #fafafa; gap: 30px;">
+            <div id="pm_calcSection" class="d-flex align-items-start border rounded p-3" style="font-size: 11px; background: #fafafa; gap: 30px;">
                 <!-- HSN Code Block (First) -->
-                <div class="d-flex flex-column gap-2" style="min-width: 180px;">
+                <div id="pm_calcLeftBlock" class="d-flex flex-column gap-2" style="min-width: 180px;">
                     <!-- HSN Code -->
                     <div class="d-flex align-items-center gap-2">
                         <label class="mb-0" style="min-width: 80px;"><strong>HSN Code:</strong></label>
@@ -715,7 +847,7 @@
                 </div>
                 
                 <!-- Right Side Fields (4 Columns) -->
-                <div class="d-flex" style="gap: 25px; flex: 1;">
+                <div id="pm_calcRightBlock" class="d-flex" style="gap: 25px; flex: 1;">
                     <!-- Column 1 -->
                     <div class="d-flex flex-column gap-2" style="min-width: 150px;">
                         <!-- Spl. Rate -->
@@ -810,8 +942,8 @@
         </div>
         
         <!-- Summary Section -->
-        <div class="bg-white border rounded p-2 mb-2">
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; font-size: 11px; align-items: center;">
+        <div id="pm_summarySection" class="bg-white border rounded p-2 mb-2">
+            <div id="pm_summaryGrid1" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; font-size: 11px; align-items: center;">
                 <!-- Row 1 -->
                 <div class="d-flex align-items-center" style="gap: 6px;">
                     <label class="mb-0" style="font-weight: bold; white-space: nowrap;">N.T AMT</label>
@@ -852,7 +984,7 @@
             </div>
             
             <!-- Row 2 -->
-            <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; font-size: 11px; align-items: center; margin-top: 12px;">
+            <div id="pm_summaryGrid2" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; font-size: 11px; align-items: center; margin-top: 12px;">
                 <div class="d-flex align-items-center" style="gap: 6px;">
                     <label class="mb-0" style="font-weight: bold;">Tax</label>
                     <input type="number" class="form-control form-control-sm readonly-field text-end" id="tax_amt" readonly step="0.01" style="width: 100%; height: 28px;" value="0.00">
@@ -893,7 +1025,7 @@
         </div>
         
         <!-- Detailed Info Section -->
-        <div class="bg-white border rounded p-2 mb-2">
+        <div id="pm_detailSection" class="bg-white border rounded p-2 mb-2">
             <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
                 <tr>
                     <td style="padding: 3px;"><strong>Unit</strong></td>
@@ -964,7 +1096,7 @@
         </div>
         
         <!-- Action Buttons -->
-        <div class="d-flex gap-2">
+        <div id="pm_actionButtons" class="d-flex gap-2">
             <button type="button" class="btn btn-primary btn-sm" onclick="savePurchase()">
                 <i class="bi bi-save"></i> Save
             </button>

@@ -1,9 +1,7 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Sale Challan Modification'); ?>
+<?php $__env->startSection('disable_select2', '1'); ?>
 
-@section('title', 'Sale Challan Transaction')
-@section('disable_select2', '1')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     /* Compact form adjustments - preserving original functionality */
     .compact-form {
@@ -143,39 +141,13 @@
         color: #2e7d32 !important;
     }
 
-    /* Selected row - GREEN border to show which row's data is displayed */
     .row-selected {
-        border: 3px solid #28a745 !important;
-        box-shadow: 0 0 8px rgba(40, 167, 69, 0.5);
+        background-color: #d4edff !important;
+        border: 2px solid #007bff !important;
     }
 
     .row-selected td {
-        border-top: none !important;
-        border-bottom: none !important;
-    }
-    
-    .row-selected td:first-child {
-        border-left: 3px solid #28a745 !important;
-    }
-    
-    .row-selected td:last-child {
-        border-right: 3px solid #28a745 !important;
-    }
-
-    /* Row states - RED for incomplete, GREEN for complete */
-    .table-danger td,
-    .table-danger input {
-        background-color: #f8d7da !important;
-    }
-    
-    .table-success td,
-    .table-success input {
-        background-color: #d4edda !important;
-    }
-    
-    /* Finalized (complete) rows - no selection allowed */
-    tr[data-finalized="true"] {
-        cursor: default !important;
+        background-color: #d4edff !important;
     }
 
     /* Pending Orders Modal Styles (matching purchase transaction) */
@@ -183,10 +155,10 @@
         display: none;
         position: fixed;
         top: 50%;
-        left: 50%;
+        left: calc(240px + 45%); /* Sidebar width + 45% of remaining width */
         transform: translate(-50%, -50%) scale(0.7);
-        width: 90%;
-        max-width: 900px;
+        width: 70%; /* Smaller modal width */
+        max-width: 950px;
         z-index: 9999;
         opacity: 0;
         transition: all 0.3s ease-in-out;
@@ -260,9 +232,9 @@
         display: none;
         position: fixed;
         top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        left: 240px; /* Start after sidebar */
+        right: 0;
+        bottom: 0;
         background: rgba(0, 0, 0, 0.6);
         z-index: 9998;
         opacity: 0;
@@ -320,9 +292,9 @@
         display: none;
         position: fixed;
         top: 50%;
-        left: 50%;
+        left: calc(240px + 45%); /* Sidebar width + 45% of remaining width */
         transform: translate(-50%, -50%) scale(0.7);
-        width: 90%;
+        width: 70%; /* Smaller modal width */
         max-width: 900px;
         z-index: 9999;
         opacity: 0;
@@ -331,7 +303,7 @@
 
     .choose-items-modal.show {
         display: block;
-        transform: translate(-50%, -50%) scale(1);
+        transform: translate(-50%, -50()) scale(1);
         opacity: 1;
     }
 
@@ -377,9 +349,9 @@
         display: none;
         position: fixed;
         top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        left: 240px; /* Start after sidebar */
+        right: 0;
+        bottom: 0;
         background: rgba(0, 0, 0, 0.6);
         z-index: 9998;
         opacity: 0;
@@ -410,6 +382,22 @@
     #itemsTableBody td:last-child button {
         display: inline-block;
         vertical-align: middle;
+    }
+    
+    /* Compact styling for invoices table */
+    #invoicesTableBody td {
+        padding: 6px 4px;
+        font-size: 11px;
+    }
+    
+    #invoicesTableBody .badge {
+        font-size: 9px;
+        padding: 3px 6px;
+    }
+
+    #invoicesTableBody tr.kb-active,
+    #invoicesTableBody tr.kb-active td {
+        background-color: #cfe8ff !important;
     }
 
     /* Alert Modal Styles */
@@ -491,6 +479,11 @@
         display: flex;
         justify-content: center;
         gap: 10px;
+    }
+
+    .alert-modal-footer button.kb-active {
+        outline: 2px solid #0d6efd;
+        outline-offset: 1px;
     }
     
     .alert-modal-backdrop {
@@ -613,52 +606,52 @@
     .card-body { padding: 8px !important; }
 
     /* ── Page title row ── */
-    #sct_pageTitleRow {
+    #scm_pageTitleRow {
         flex-wrap: wrap !important;
         gap: 6px !important;
     }
-    #sct_pageTitleRow .btn { flex: 1 1 calc(50% - 6px) !important; text-align: center !important; }
+    #scm_pageTitleRow .d-flex.gap-2 { flex-wrap: wrap !important; gap: 4px !important; }
+    #scm_pageTitleRow .btn { flex: 1 1 calc(50% - 4px) !important; text-align: center !important; font-size: 12px !important; }
 
-    /* ── Header: Left + Middle + Inner-card → vertical stack ── */
-    #sct_headerFlex {
+    /* ── Header Row 1 (.header-row) → wrap ── */
+    .header-row {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .header-row .field-group {
+        flex: 1 1 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-bottom: 4px !important;
+    }
+    .header-row .field-group input,
+    .header-row .field-group select { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    .header-row .searchable-dropdown { width: 100% !important; }
+    .header-row .searchable-dropdown input { width: 100% !important; }
+
+    /* ── Header Row 2 → vertical stack ── */
+    #scm_headerRow2 {
         flex-direction: column !important;
         gap: 10px !important;
     }
-
-    /* Left col (Date/DayName/ChallanNo) — full width */
-    #sct_headerLeft {
-        min-width: 0 !important;
+    /* Left col (InvNo/Salesman/Choose Items) */
+    #scm_headerLeft {
         width: 100% !important;
+        min-width: 0 !important;
     }
-    #sct_headerLeft .field-group {
+    #scm_headerLeft .field-group {
         display: flex !important;
         align-items: center !important;
         gap: 6px !important;
         margin-bottom: 6px !important;
     }
-    #sct_headerLeft .field-group input {
-        flex: 1 !important;
-        width: auto !important;
-        min-width: 0 !important;
-    }
+    #scm_headerLeft .field-group input { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    #scm_headerLeft .searchable-dropdown { width: 100% !important; }
+    #scm_headerLeft .searchable-dropdown input { width: 100% !important; }
+    #scm_headerLeft .btn { width: 100% !important; }
 
-    /* Middle col (Customer/Salesman/Choose Items) — full width */
-    #sct_headerMiddle {
-        min-width: 0 !important;
-        width: 100% !important;
-    }
-    #sct_headerMiddle .field-group {
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        margin-bottom: 6px !important;
-    }
-    #sct_headerMiddle .searchable-dropdown {
-        width: 100% !important;
-    }
-    #sct_headerMiddle .searchable-dropdown input { width: 100% !important; }
-
-    /* Inner card (DueDate/Remarks/CustomerDue) — full width */
+    /* Inner card → full width */
     .inner-card {
         width: 100% !important;
         min-width: 0 !important;
@@ -674,13 +667,8 @@
         align-items: center !important;
         gap: 6px !important;
     }
-    .inner-card .field-group input {
-        flex: 1 !important;
-        width: auto !important;
-        min-width: 0 !important;
-    }
-    .inner-card .d-flex.gap-2 { flex-wrap: wrap !important; }
-    .inner-card .d-flex.gap-2 .field-group { flex: 1 1 calc(50% - 6px) !important; }
+    .inner-card .field-group input { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    #cash, #transfer { width: 36px !important; flex-shrink: 0 !important; flex-grow: 0 !important; }
 
     /* ── Items Table → horizontal scroll ── */
     #itemsTableContainer {
@@ -690,178 +678,165 @@
     #itemsTableContainer .table-compact { min-width: 700px !important; }
 
     /* ── Calc Section → vertical stack ── */
-    #sct_calcSection .d-flex.align-items-start.gap-3 {
+    #scm_calcSection .d-flex.align-items-start.gap-3 {
         flex-direction: column !important;
         gap: 8px !important;
     }
-    /* Left block: Case/Box/HSN → full width */
-    #sct_calcSection .d-flex.align-items-start.gap-3 > div:first-child {
-        min-width: 0 !important;
-        width: 100% !important;
-    }
-    /* Middle block: CGST/SGST/Cess → full width */
-    #sct_calcSection .d-flex.align-items-start.gap-3 > div:nth-child(2) {
-        width: 100% !important;
-    }
-    /* Right block: amounts → wrap 2-col */
-    #sct_calcSection .d-flex.gap-3:last-child {
-        flex-wrap: wrap !important;
-        gap: 6px !important;
-    }
-    #sct_calcSection .d-flex.gap-3:last-child > div {
-        flex: 1 1 calc(50% - 6px) !important;
-        min-width: 130px !important;
-    }
-    #sct_calcSection .d-flex.align-items-center.gap-2 input,
-    #sct_calcSection .d-flex.align-items-center.gap-2 > div.border {
-        flex: 1 !important;
-        width: auto !important;
-        min-width: 0 !important;
-    }
+    #scm_calcSection .d-flex.align-items-start.gap-3 > div:first-child { min-width: 0 !important; width: 100% !important; }
+    #scm_calcSection .d-flex.align-items-start.gap-3 > div:nth-child(2) { width: 100% !important; }
+    #scm_calcSection .d-flex.gap-3:last-child { flex-wrap: wrap !important; gap: 6px !important; }
+    #scm_calcSection .d-flex.gap-3:last-child > div { flex: 1 1 calc(50% - 6px) !important; min-width: 130px !important; }
+    #scm_calcSection .d-flex.align-items-center.gap-2 input,
+    #scm_calcSection .d-flex.align-items-center.gap-2 > div.border { flex: 1 !important; width: auto !important; min-width: 0 !important; }
 
-    /* ── Summary Section → 2-per-row wrap ── */
-    #sct_summarySection .d-flex.align-items-center {
+    /* ── Summary → 2-per-row wrap ── */
+    #scm_summarySection .d-flex.align-items-center {
         flex-wrap: wrap !important;
         gap: 6px !important;
     }
-    #sct_summarySection .d-flex.align-items-center > div.d-flex {
+    #scm_summarySection .d-flex.align-items-center > div.d-flex {
         flex: 1 1 calc(50% - 6px) !important;
         min-width: 120px !important;
     }
-    #sct_summarySection .d-flex.align-items-center > div.d-flex input {
-        flex: 1 !important;
-        width: auto !important;
-        min-width: 0 !important;
-    }
+    #scm_summarySection .d-flex.align-items-center > div.d-flex input { flex: 1 !important; width: auto !important; min-width: 0 !important; }
 
     /* ── Detail Table → horizontal scroll ── */
-    #sct_detailSection {
+    #scm_detailSection {
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
     }
-    #sct_detailSection table { min-width: 600px !important; }
+    #scm_detailSection table { min-width: 600px !important; }
 
     /* ── Action Buttons → full width ── */
-    #sct_actionButtons {
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-    }
-    #sct_actionButtons .btn {
-        flex: 1 !important;
-        padding: 10px 0 !important;
-        text-align: center !important;
-    }
+    #scm_actionButtons { flex-wrap: wrap !important; gap: 8px !important; }
+    #scm_actionButtons .btn { flex: 1 !important; padding: 10px 0 !important; text-align: center !important; }
 
     .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
 }
 </style>
 
-<div id="sct_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
+<div id="scm_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
-        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-file-earmark-text me-2"></i> Sale Challan Transaction</h4>
-        <div class="text-muted small">Create new sale challan (Stock will be deducted, Invoice created later)</div>
+        <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Sale Challan Modification</h4>
+        <div class="text-muted small">Modify existing sale challans (Only pending challans can be modified)</div>
     </div>
-    <div>
-        <a href="{{ route('admin.sale-challan.invoices') }}" class="btn btn-primary">
-            <i class="bi bi-file-earmark-text me-1"></i> Challan List
-        </a>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary btn-sm" onclick="openDateRangeModal()">
+            <i class="bi bi-calendar-range"></i> Filter by Date
+        </button>
+        <button type="button" class="btn btn-success btn-sm" onclick="openAllInvoicesModal()">
+            <i class="bi bi-list-ul"></i> All Invoices
+        </button>
     </div>
 </div>
 
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
-        <form id="saleChallanForm" method="POST" autocomplete="off" onsubmit="return false;">
-            @csrf
+        <form id="saleTransactionForm" method="POST" autocomplete="off" onsubmit="return false;">
+            <?php echo csrf_field(); ?>
             
             <!-- Header Section -->
             <div class="header-section">
-                <!-- Main Header Row -->
-                <div id="sct_headerFlex" class="d-flex gap-3">
-                    <!-- Left Side - Date & Challan No (Image 1 style) -->
-                    <div id="sct_headerLeft" style="min-width: 220px; border: 1px solid #ccc; padding: 8px; background: #f5f5f5;">
-                        <div class="field-group mb-2">
-                            <label style="width: 80px;">Date</label>
-                            <span style="margin-right: 5px;">:</span>
-                            <input type="date" class="form-control" name="date" id="challanDate" value="{{ date('Y-m-d') }}" style="width: 120px;" onchange="updateDayName()">
-                            <input type="text" class="form-control readonly-field" id="dayName" value="{{ date('l') }}" readonly style="width: 85px; margin-left: 5px;">
-                        </div>
-                        <div class="field-group">
-                            <label style="width: 80px;">Challan No.</label>
-                            <span style="margin-right: 5px;">:</span>
-                            <input type="text" class="form-control" name="challan_no" id="challanNo" value="{{ $nextChallanNo }}" style="width: 80px; background-color: #f8f9fa;">
-                        </div>
+                <!-- Row 1: Series, Date, Customer -->
+                <div class="header-row">
+                    <div class="field-group">
+                        <label>Series:</label>
+                        <select class="form-control no-select2" name="series" id="seriesSelect" style="width: 60px;" onchange="updateInvoiceType()">
+                            <option value="SB" selected>SB</option>
+                            <option value="S2">S2</option>
+                        </select>
+                        <input type="text" class="form-control readonly-field" id="invoiceTypeDisplay" value="TAX INVOICE" readonly style="width: 130px; text-align: center; font-weight: bold;">
                     </div>
                     
-                    <!-- Middle Section - Customer, Salesman, Choose Items -->
-                    <div id="sct_headerMiddle" style="min-width: 300px;">
-                        <div class="field-group mb-2">
-                            <label style="width: 70px;">Customer:</label>
-                            <div class="searchable-dropdown" id="customerDropdownWrapper" style="width: 250px;">
-                                <input type="text"
-                                       id="customerSearchInput"
-                                       class="form-control searchable-dropdown-input"
-                                       placeholder="Type to search customer..."
-                                       autocomplete="off"
-                                       data-custom-enter="true">
-                                <div class="searchable-dropdown-list" id="customerDropdownList">
-                                    <div class="dropdown-item" data-value="" data-name="" data-code="">Select Customer</div>
-                                    @foreach($customers as $customer)
-                                        <div class="dropdown-item"
-                                             data-value="{{ $customer->id }}"
-                                             data-name="{{ $customer->name }}"
-                                             data-code="{{ $customer->code ?? '' }}">
-                                            {{ $customer->code ?? '' }} - {{ $customer->name }}
-                                        </div>
-                                    @endforeach
-                                </div>
-                                <select class="form-control no-select2"
-                                        name="customer_id"
-                                        id="customerSelect"
-                                        style="display: none;"
-                                        autocomplete="off"
-                                        onchange="updateCustomerName(); fetchCustomerDue();">
-                                    <option value="">Select Customer</option>
-                                    @foreach($customers as $customer)
-                                        <option value="{{ $customer->id }}" data-name="{{ $customer->name }}" data-code="{{ $customer->code ?? '' }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                                    @endforeach
-                                </select>
+                    <div class="field-group">
+                        <label>Challan Date</label>
+                        <input type="date" class="form-control" name="date" id="challanDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 140px;" onchange="updateDayName()">
+                        <input type="text" class="form-control readonly-field" id="dayName" value="<?php echo e(date('l')); ?>" readonly style="width: 90px;">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label>Customer:</label>
+                        <div class="searchable-dropdown" id="customerDropdownWrapper" style="width: 250px;">
+                            <input type="text"
+                                   id="customerSearchInput"
+                                   class="form-control searchable-dropdown-input readonly-field"
+                                   placeholder="-- Select Customer --"
+                                   autocomplete="off"
+                                   data-custom-enter="true"
+                                   readonly>
+                            <div class="searchable-dropdown-list" id="customerDropdownList">
+                                <div class="dropdown-item" data-value="" data-name="" data-code="">-- Select Customer --</div>
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <div class="dropdown-item"
+                                         data-value="<?php echo e($customer->id); ?>"
+                                         data-name="<?php echo e($customer->name); ?>"
+                                         data-code="<?php echo e($customer->code ?? ''); ?>">
+                                        <?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?>
+
+                                    </div>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </div>
+                            <select class="form-control readonly-field no-select2"
+                                    name="customer_id"
+                                    id="customerSelect"
+                                    style="display: none;"
+                                    autocomplete="off"
+                                    disabled>
+                                <option value="">-- Select Customer --</option>
+                                <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>" data-code="<?php echo e($customer->code ?? ''); ?>"><?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Row 2: Challan No, Sales Man, Inner Card -->
+                <div id="scm_headerRow2" class="d-flex gap-3">
+                    <!-- Left Side - Invoice & Salesman -->
+                    <div id="scm_headerLeft" style="width: 250px;">
+                        <div class="field-group mb-2">
+                            <label style="width: 70px;">Inv.No.:</label>
+                            <input type="text" class="form-control" name="challan_no" id="invoiceNo" value="" placeholder="Type Challan No." style="background-color: #fff8dc;">
+                            <input type="hidden" id="transactionId" value="">
                         </div>
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Sales Man:</label>
                             <div class="searchable-dropdown" id="salesmanDropdownWrapper" style="width: 170px;">
                                 <input type="text"
                                        id="salesmanSearchInput"
-                                       class="form-control searchable-dropdown-input"
-                                       placeholder="Type to search salesman..."
+                                       class="form-control searchable-dropdown-input readonly-field"
+                                       placeholder="-- Select Salesman --"
                                        autocomplete="off"
-                                       data-custom-enter="true">
+                                       data-custom-enter="true"
+                                       readonly>
                                 <div class="searchable-dropdown-list" id="salesmanDropdownList">
-                                    <div class="dropdown-item" data-value="" data-name="" data-code="">Select</div>
-                                    @foreach($salesmen as $salesman)
+                                    <div class="dropdown-item" data-value="" data-name="" data-code="">-- Select Salesman --</div>
+                                    <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                         <div class="dropdown-item"
-                                             data-value="{{ $salesman->id }}"
-                                             data-name="{{ $salesman->name }}"
-                                             data-code="{{ $salesman->code ?? '' }}">
-                                            {{ $salesman->code ?? '' }} - {{ $salesman->name }}
+                                             data-value="<?php echo e($salesman->id); ?>"
+                                             data-name="<?php echo e($salesman->name); ?>"
+                                             data-code="<?php echo e($salesman->code ?? ''); ?>">
+                                            <?php echo e($salesman->code ?? ''); ?> - <?php echo e($salesman->name); ?>
+
                                         </div>
-                                    @endforeach
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
-                                <select class="form-control no-select2"
+                                <select class="form-control readonly-field no-select2"
                                         name="salesman_id"
                                         id="salesmanSelect"
-                                        autocomplete="off"
                                         style="display: none;"
-                                        onchange="updateSalesmanName()">
-                                    <option value="">Select</option>
-                                    @foreach($salesmen as $salesman)
-                                        <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}" data-code="{{ $salesman->code ?? '' }}">{{ $salesman->code ?? '' }}</option>
-                                    @endforeach
+                                        autocomplete="off"
+                                        disabled>
+                                    <option value="">-- Select Salesman --</option>
+                                    <?php $__currentLoopData = $salesmen; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <option value="<?php echo e($salesman->id); ?>" data-name="<?php echo e($salesman->name); ?>" data-code="<?php echo e($salesman->code ?? ''); ?>"><?php echo e($salesman->code ?? ''); ?> - <?php echo e($salesman->name); ?></option>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </select>
                             </div>
                         </div>
-                        <div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="chooseItemsBtn" onclick="openChooseItemsModal()">
+                        <div class="text-center">
+                            <button type="button" class="btn btn-warning btn-sm" id="chooseItemsBtn" onclick="handleChooseItemsClick()" style="width: 100%;">
                                 <i class="bi bi-list-check"></i> Choose Items
                             </button>
                         </div>
@@ -873,37 +848,33 @@
                             <div class="col-md-6">
                                 <div class="field-group">
                                     <label style="width: 80px;">Due Date</label>
-                                    <input type="date" class="form-control" name="due_date" id="dueDate" value="{{ date('Y-m-d') }}">
+                                    <input type="date" class="form-control" name="due_date" id="dueDate" value="<?php echo e(date('Y-m-d')); ?>">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-3">
                                 <div class="field-group">
-                                    <label>Remarks:</label>
-                                    <input type="text" class="form-control" name="remarks" id="remarks">
+                                    <label>Cash:</label>
+                                    <input type="text" class="form-control" name="cash" id="cash" value="N" maxlength="1" style="width: 50px;">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-group">
+                                    <label>Transfer:</label>
+                                    <input type="text" class="form-control" name="transfer" id="transfer" value="N" maxlength="1" style="width: 50px;">
                                 </div>
                             </div>
                         </div>
                         
                         <div class="row g-2 mt-1">
                             <div class="col-md-12">
-                                <div class="d-flex gap-2">
-                                    <div class="field-group flex-grow-1">
-                                        <label>Customer DUE:</label>
-                                        <input type="text" class="form-control readonly-field" id="customerDue" readonly value="0.00" style="background: #fff3cd; color: #856404; font-weight: bold;" title="Customer's existing pending due amount">
-                                    </div>
-                                    <div class="field-group flex-grow-1">
-                                        <label>Pending Challans:</label>
-                                        <input type="text" class="form-control readonly-field" id="pendingChallans" readonly value="0" style="background: #d1ecf1; color: #0c5460;" title="Number of pending challans for this customer">
-                                    </div>
+                                <div class="field-group">
+                                    <label>Remarks:</label>
+                                    <input type="text" class="form-control" name="remarks" id="remarks">
                                 </div>
-                                <small class="text-muted mt-1 d-block">* Due amount will be calculated when challan is converted to Sale Invoice</small>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- Hidden fields for cash and transfer (default values) -->
-                <input type="hidden" name="cash" id="cash" value="N">
-                <input type="hidden" name="transfer" id="transfer" value="N">
             </div>
 
             
@@ -935,7 +906,7 @@
 
             
             <!-- Calculation Section (matching purchase module structure) -->
-            <div id="sct_calcSection" class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div id="scm_calcSection" class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!-- Left Section: Case, Box, HSN Code Block -->
                     <div class="d-flex flex-column gap-2" style="min-width: 200px;">
@@ -1050,7 +1021,7 @@
             </div>
             
             <!-- Summary Section (matching image - pink background) -->
-            <div id="sct_summarySection" class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
+            <div id="scm_summarySection" class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
                 <!-- Row 1: 7 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -1098,63 +1069,71 @@
                 </div>
             </div>
             
-            <!-- Detailed Info Section (matching image 2 - gray background) -->
-            <div id="sct_detailSection" class="border rounded p-2 mb-2" style="background: #d0d0d0;">
+            <!-- Detailed Info Section (matching image - orange background) -->
+            <div id="scm_detailSection" class="bg-white border rounded p-2 mb-2" style="background: #ffe6cc;">
                 <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
-                    <!-- Row 1: Packing | N.T.Amt. | Scm. Amt. | Comp: | SrIno | SCM. -->
+                    <!-- Row 1: Packing | N.T.Amt. | Scm. % | Sub.Tot. | Comp | Srino -->
                     <tr>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Packing</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="text" class="form-control form-control-sm readonly-field" id="detailPacking" readonly value="" style="height: 22px; width: 60px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>N.T.Amt.</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailNtAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Scm. Amt.</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailScmAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Comp :</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="text" class="form-control form-control-sm readonly-field" id="detailCompany" readonly value="" style="height: 22px; width: 100px;"></td>
-                        <td style="padding: 3px; border: 1px solid #999;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>SrIno</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;" colspan="3">
-                            <div class="d-flex align-items-center gap-1">
-                                <strong>SCM.</strong>
-                                <input type="number" class="form-control form-control-sm readonly-field text-center" id="detailScm1" readonly value="0" style="height: 22px; width: 40px;">
-                                <strong>+</strong>
-                                <input type="number" class="form-control form-control-sm readonly-field text-center" id="detailScm2" readonly value="0" style="height: 22px; width: 40px;">
-                            </div>
-                        </td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Packing</strong></td>
+                        <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field" id="detailPacking" readonly value="" style="height: 22px; width: 60px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>N.T.Amt.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailNtAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Scm. %</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailScmPercent" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Sub.Tot.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailSubTot" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Comp</strong></td>
+                        <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field" id="detailCompany" readonly value="" style="height: 22px; width: 100px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Srino</strong></td>
+                        <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="detailSrIno" readonly value="" style="height: 22px; width: 60px;"></td>
                     </tr>
                     
-                    <!-- Row 2: Unit | SC Amt. | Sub Tot. | Lctn: | -->
+                    <!-- Row 2: Unit | SC Amt. | Scm.Amt. | Tax Amt. | SCM. -->
                     <tr>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Unit</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="detailUnit" readonly value="1" style="height: 22px; width: 60px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>SC Amt.</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailScAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Sub Tot.</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailSubTot" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Lctn :</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="text" class="form-control form-control-sm readonly-field" id="detailLctn" readonly value="" style="height: 22px; width: 100px;"></td>
-                        <td style="padding: 3px; border: 1px solid #999;" colspan="5"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Unit</strong></td>
+                        <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-center" id="detailUnit" readonly value="1" style="height: 22px; width: 60px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>SC Amt.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailScAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Scm.Amt.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailScmAmt" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Tax Amt.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailTaxAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;" colspan="2"><strong>SCM.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-center" id="detailScm1" readonly value="0" style="height: 22px; width: 40px;"></td>
+                        <td style="padding: 3px; text-align: center; font-weight: bold;">+</td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-center" id="detailScm2" readonly value="0" style="height: 22px; width: 40px;"></td>
                     </tr>
                     
-                    <!-- Row 3: Cl. Qty | Dis. Amt. | Tax Amt. | Net Amt. -->
+                    <!-- Row 3: Cl. Qty | Dis. Amt. | Net Amt. | COST + GST | Vol. | Batch Code -->
                     <tr>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Cl. Qty</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="text" class="form-control form-control-sm readonly-field text-end" id="detailClQty" readonly value="" style="height: 22px; width: 60px; background: #add8e6;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Dis. Amt.</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailDisAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Tax Amt.</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailTaxAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
-                        <td style="padding: 3px; background: #c0c0c0; border: 1px solid #999;"><strong>Net Amt.</strong></td>
-                        <td style="padding: 3px; border: 1px solid #999;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailNetAmt" readonly value="0.00" style="height: 22px; width: 100px;"></td>
-                        <td style="padding: 3px; border: 1px solid #999;" colspan="5"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Cl. Qty</strong></td>
+                        <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field text-end" id="detailClQty" readonly value="" style="height: 22px; width: 60px; background: #add8e6;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Dis. Amt.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailDisAmt" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Net Amt.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailNetAmt" readonly value="0.00" style="height: 22px; width: 70px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>COST + GST</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailCostGst" readonly value="0.00" style="height: 22px; width: 80px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Vol.</strong></td>
+                        <td style="padding: 3px;"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailVol" readonly value="0" style="height: 22px; width: 40px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Batch Code</strong></td>
+                        <td style="padding: 3px;" colspan="2"><input type="text" class="form-control form-control-sm readonly-field text-center" id="detailBatchCode" readonly value="" style="height: 22px; width: 100px;"></td>
+                    </tr>
+                    
+                    <!-- Row 4: Lctn | HS Amt. -->
+                    <tr>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>Lctn</strong></td>
+                        <td style="padding: 3px;"><input type="text" class="form-control form-control-sm readonly-field" id="detailLctn" readonly value="" style="height: 22px; width: 60px;"></td>
+                        <td style="padding: 3px; background: #ffe6cc;"><strong>HS Amt.</strong></td>
+                        <td style="padding: 3px;" colspan="9"><input type="number" class="form-control form-control-sm readonly-field text-end" id="detailHsAmt" readonly value="0.00" style="height: 22px; width: 100px;"></td>
                     </tr>
                 </table>
             </div>
             
             <!-- Action Buttons -->
-            <div id="sct_actionButtons" class="d-flex gap-2">
-                <button type="button" class="btn btn-warning btn-sm" onclick="saveChallan()">
-                    <i class="bi bi-save"></i> Save Challan
+            <div id="scm_actionButtons" class="d-flex gap-2">
+                <button type="button" class="btn btn-primary btn-sm" onclick="saveSale()">
+                    <i class="bi bi-save"></i> Save
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.reload()">
                     <i class="bi bi-x-circle"></i> Cancel
@@ -1277,7 +1256,7 @@
             </div>
         </div>
         <div class="pending-orders-footer">
-            <button type="button" class="btn btn-primary btn-sm" onclick="if(window.selectedBatch) selectBatchFromModal(window.selectedBatch); else alert('Please select a batch first');">
+            <button type="button" class="btn btn-primary btn-sm" onclick="if(window.selectedBatch) selectBatchFromModal(window.selectedBatch); else showAlert('Please select a batch first', 'warning', 'Batch Required');">
                 <i class="bi bi-check-circle"></i> Select Batch
             </button>
             <button type="button" class="btn btn-secondary btn-sm" onclick="closeBatchSelectionModal()">
@@ -1294,75 +1273,68 @@ let itemIndex = -1;
 let currentSelectedRowIndex = null;
 let pendingItemSelection = null; // Store item data when waiting for batch selection
 let rowGstData = {}; // Store GST calculations for each row
-
-// Callback function when item and batch are selected from reusable modal
-window.onItemBatchSelectedFromModal = function(item, batch) {
-    console.log('Item selected from reusable modal:', item);
-    console.log('Batch selected from reusable modal:', batch);
-    
-    // Transform item data to expected format
-    const transformedItem = {
-        id: item.id,
-        bar_code: item.bar_code || item.code || '',
-        name: item.name || '',
-        packing: item.packing || '',
-        company_name: item.company_name || item.company || '',
-        hsn_code: item.hsn_code || '',
-        unit: item.unit || '',
-        cgst_percent: item.cgst_percent || 0,
-        sgst_percent: item.sgst_percent || 0,
-        cess_percent: item.cess_percent || 0,
-        s_rate: item.s_rate || 0,
-        case_qty: item.case_qty || 0
-    };
-    
-    // Transform batch data to expected format
-    const transformedBatch = {
-        id: batch.id,
-        batch_no: batch.batch_no || '',
-        expiry_date: batch.expiry_date || '',
-        expiry_display: batch.expiry_display || '',
-        mrp: batch.mrp || batch.avg_mrp || 0,
-        avg_mrp: batch.avg_mrp || batch.mrp || 0,
-        s_rate: batch.s_rate || batch.avg_s_rate || 0,
-        avg_s_rate: batch.avg_s_rate || batch.s_rate || 0,
-        pur_rate: batch.p_rate || batch.pur_rate || 0,
-        total_qty: batch.qty || batch.total_qty || 0
-    };
-    
-    // Use existing addItemToTable function
-    if (typeof addItemToTable === 'function') {
-        addItemToTable(transformedItem, transformedBatch);
-    } else {
-        console.error('addItemToTable function not found');
-        alert('Error: Could not add item to table. Please try again.');
-    }
-};
+let pendingTableFocusTarget = null; // 'batch' | 'code' | null
 
 // Load items on page load
 document.addEventListener('DOMContentLoaded', function() {
     loadItems();
     
-    // Customer name update and button state check
+    // Auto-load transaction if challan_no is provided in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const invoiceNoParam = urlParams.get('challan_no');
+    
+    if (invoiceNoParam) {
+        const invoiceNoInput = document.getElementById('invoiceNo');
+        if (invoiceNoInput) {
+            invoiceNoInput.value = invoiceNoParam;
+            // Auto-fetch the invoice data
+            setTimeout(() => {
+                loadTransactionByInvoiceNo(invoiceNoParam);
+            }, 500);
+        }
+    }
+    
+    // Invoice number update and button state check
+    const invoiceNoInput = document.getElementById('invoiceNo');
+    if (invoiceNoInput) {
+        invoiceNoInput.addEventListener('input', function() {
+            checkChooseItemsButtonState();
+        });
+        
+        // Load transaction on Enter key
+        invoiceNoInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const invoiceNo = this.value.trim();
+                if (invoiceNo && invoiceNo !== 'Loading...') {
+                    loadTransactionByInvoiceNo(invoiceNo);
+                } else if (!invoiceNo) {
+                    // If empty, open invoices modal
+                    openAllInvoicesModal();
+                }
+            }
+        });
+    }
+    
+    // Customer name update
     const customerSelect = document.getElementById('customerSelect');
     if (customerSelect) {
         customerSelect.addEventListener('change', function() {
             updateCustomerName();
-            checkChooseItemsButtonState();
         });
     }
     
-    // Salesman name update and button state check
+    // Salesman name update
     const salesmanSelect = document.getElementById('salesmanSelect');
     if (salesmanSelect) {
         salesmanSelect.addEventListener('change', function() {
             updateSalesmanName();
-            checkChooseItemsButtonState();
         });
     }
     
     // Initial button state check on page load
     checkChooseItemsButtonState();
+    initInvoicesModalKeyboardHandlers();
     
     // Item search in modal
     const itemSearchInput = document.getElementById('itemSearchInput');
@@ -1375,24 +1347,31 @@ document.addEventListener('DOMContentLoaded', function() {
     if (batchSearchInput) {
         batchSearchInput.addEventListener('input', filterBatchesInModal);
     }
-    
-    // Add click event to ALL existing rows for selection (GREEN border)
-    const existingRows = document.querySelectorAll('#itemsTableBody tr');
-    existingRows.forEach(row => {
-        row.style.cursor = 'pointer';
-        row.addEventListener('click', function(e) {
-            // Don't trigger if clicking on delete button
-            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
-                return;
-            }
-            const rowIdx = parseInt(this.getAttribute('data-row-index'));
-            if (!isNaN(rowIdx)) {
-                selectRow(rowIdx);
-            }
-        });
-    });
-    console.log('✅ Click events added to', existingRows.length, 'existing rows');
 });
+
+// Ensure a select has an option with the given value; create if missing, then select it
+function setSelectOption(selectElement, value, displayText) {
+    if (!selectElement) return;
+    // Temporarily enable to allow value changes to reflect cleanly
+    const wasDisabled = selectElement.disabled;
+    selectElement.disabled = false;
+    
+    let option = Array.from(selectElement.options).find(opt => String(opt.value) === String(value));
+    if (!option && value) {
+        option = new Option(displayText || String(value), String(value), true, true);
+        selectElement.add(option);
+    }
+    if (option) {
+        // If we have a label to show, update option text as well
+        if (displayText && option.text !== displayText) {
+            option.text = displayText;
+        }
+        selectElement.value = String(value);
+    }
+    
+    // Restore disabled state
+    selectElement.disabled = wasDisabled;
+}
 
 // Load items from server
 function loadItems() {
@@ -1406,11 +1385,9 @@ let itemsCurrentPage = 1;
 let itemsPerPage = 50;
 let itemsHasMore = true;
 let itemsLoading = false;
-let itemsSearchTerm = '';
-let itemsSearchTimeout = null;
 
-// Load paginated items with optional search
-function loadPaginatedItems(page, isInitial = false, searchTerm = '') {
+// Load paginated items
+function loadPaginatedItems(page, isInitial = false) {
     if (itemsLoading || (!itemsHasMore && !isInitial)) return;
     
     itemsLoading = true;
@@ -1419,20 +1396,9 @@ function loadPaginatedItems(page, isInitial = false, searchTerm = '') {
     if (!isInitial) {
         const loadingIndicator = document.getElementById('itemsLoadingIndicator');
         if (loadingIndicator) loadingIndicator.style.display = 'block';
-    } else {
-        // Show loading message in table body
-        const tbody = document.getElementById('chooseItemsBody');
-        if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm text-primary me-2"></div> Loading items...</td></tr>';
-        }
     }
     
-    // Build URL with search parameter
-    let url = `{{ route("admin.sale-challan.getItems") }}?page=${page}&per_page=${itemsPerPage}`;
-    if (searchTerm) {
-        url += `&search=${encodeURIComponent(searchTerm)}`;
-    }
-    
+    const url = `<?php echo e(route("admin.sale-challan.getItems")); ?>?page=${page}&per_page=${itemsPerPage}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -1457,11 +1423,7 @@ function loadPaginatedItems(page, isInitial = false, searchTerm = '') {
             }
             
             // Store loaded items
-            if (isInitial) {
-                itemsData = items;
-            } else {
-                itemsData = itemsData.concat(items);
-            }
+            itemsData = itemsData.concat(items);
             
             if (isInitial) {
                 console.log('Items loaded:', items.length);
@@ -1484,58 +1446,20 @@ function loadPaginatedItems(page, isInitial = false, searchTerm = '') {
         });
 }
 
-// Update challan type based on series
-function updateChallanType() {
+// Update invoice type based on series
+function updateInvoiceType() {
     const series = document.getElementById('seriesSelect').value;
-    const display = document.getElementById('challanTypeDisplay');
+    const display = document.getElementById('invoiceTypeDisplay');
     if (series === 'S2') {
-        display.value = 'GST CHALLAN';
-    } else if (series === 'SC') {
-        display.value = 'SALE CHALLAN';
+        display.value = 'GST INVOICE';
+    } else if (series === 'SB') {
+        display.value = 'TAX INVOICE';
     }
 }
 
 // Update customer name (no separate field needed - name shown in dropdown)
 function updateCustomerName() {
     // Customer name already displayed in dropdown, no separate field needed
-}
-
-// Fetch Customer Due Amount and Pending Challans
-function fetchCustomerDue() {
-    const customerSelect = document.getElementById('customerSelect');
-    const customerId = customerSelect.value;
-    
-    // Reset if no customer selected
-    if (!customerId) {
-        document.getElementById('customerDue').value = '0.00';
-        document.getElementById('pendingChallans').value = '0';
-        return;
-    }
-    
-    // Fetch customer's pending challan due from Sale Challan module
-    fetch(`{{ url('admin/sale-challan/customer') }}/${customerId}/due`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const dueAmount = parseFloat(data.due_amount || 0);
-            document.getElementById('customerDue').value = dueAmount.toFixed(2);
-            
-            // Show pending challans count if available
-            if (data.pending_count !== undefined) {
-                document.getElementById('pendingChallans').value = data.pending_count;
-            }
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching customer due:', error);
-    });
 }
 
 // Update salesman name (no separate field needed - name shown in dropdown)
@@ -1554,46 +1478,51 @@ function updateDayName() {
     }
 }
 
-// Check if Choose Items button should be enabled
+// Check if Choose Items button should be enabled (modified for modification page)
 function checkChooseItemsButtonState() {
-    const customerId = document.getElementById('customerSelect')?.value;
-    const salesmanId = document.getElementById('salesmanSelect')?.value;
+    const invoiceNoInput = document.getElementById('invoiceNo');
+    const invoiceNo = invoiceNoInput?.value?.trim();
+    const transactionId = document.getElementById('transactionId')?.value;
     const chooseItemsBtn = document.getElementById('chooseItemsBtn');
     
     if (chooseItemsBtn) {
-        if (customerId && salesmanId) {
-            // Both selected - enable button (visual only)
-            chooseItemsBtn.classList.remove('btn-secondary', 'btn-warning');
-            chooseItemsBtn.classList.add('btn-info');
+        if (transactionId) {
+            // Transaction loaded - button opens items modal to add more items
+            chooseItemsBtn.classList.remove('btn-warning', 'btn-info');
+            chooseItemsBtn.classList.add('btn-success');
             chooseItemsBtn.style.opacity = '1';
-            chooseItemsBtn.title = 'Click to choose items';
+            chooseItemsBtn.innerHTML = '<i class="bi bi-plus-circle"></i> Add More Items';
+            chooseItemsBtn.title = 'Add more items to this invoice';
         } else {
-            // Not both selected - show as warning (but keep clickable for validation message)
-            chooseItemsBtn.classList.remove('btn-info');
+            // No transaction loaded - button opens invoices modal
+            chooseItemsBtn.classList.remove('btn-info', 'btn-success');
             chooseItemsBtn.classList.add('btn-warning');
-            chooseItemsBtn.style.opacity = '0.7';
-            chooseItemsBtn.title = 'Please select Customer and Sales Man first';
+            chooseItemsBtn.style.opacity = '1';
+            chooseItemsBtn.innerHTML = '<i class="bi bi-list-check"></i> Choose Invoice';
+            chooseItemsBtn.title = 'Click to select an invoice to modify';
         }
     }
 }
 
-// Open Choose Items Modal
-function openChooseItemsModal() {
-    // Validate: Customer must be selected
-    const customerId = document.getElementById('customerSelect')?.value;
-    if (!customerId) {
-        showAlert('Please select Customer first!\n\nCustomer selection is required before choosing items.', 'warning', 'Customer Required');
-        const customerInput = document.getElementById('customerSearchInput');
-        if (customerInput) customerInput.focus();
-        return;
-    }
+// Handle Choose Items button click - opens invoices modal if no transaction, or items modal if transaction loaded
+function handleChooseItemsClick() {
+    const transactionId = document.getElementById('transactionId')?.value;
     
-    // Validate: Salesman must be selected
-    const salesmanId = document.getElementById('salesmanSelect')?.value;
-    if (!salesmanId) {
-        showAlert('Please select Sales Man first!\n\nSales Man selection is required before choosing items.', 'warning', 'Sales Man Required');
-        const salesmanInput = document.getElementById('salesmanSearchInput');
-        if (salesmanInput) salesmanInput.focus();
+    if (transactionId) {
+        // Transaction already loaded - open items modal to add more items
+        openChooseItemsModal();
+    } else {
+        // No transaction loaded - open invoices modal to select invoice
+        openAllInvoicesModal();
+    }
+}
+
+// Open Choose Items Modal (Modified for modification page - only called when transaction is loaded)
+async function openChooseItemsModal() {
+    const transactionId = document.getElementById('transactionId')?.value;
+    
+    if (!transactionId) {
+        showAlert('Please select an invoice first!\n\nClick "Choose Invoice" or "All Invoices" to select an invoice to modify.', 'warning', 'Invoice Required');
         return;
     }
     
@@ -1603,30 +1532,32 @@ function openChooseItemsModal() {
         return;
     }
     
-    // Fallback to old inline modal
+    // Now open the modal to add more items
     const modal = document.getElementById('chooseItemsModal');
     const backdrop = document.getElementById('chooseItemsBackdrop');
     
-    // Reset pagination and search state
+    // Reset pagination state and load items
     itemsCurrentPage = 1;
     itemsHasMore = true;
     itemsLoading = false;
     itemsData = [];
-    itemsSearchTerm = '';
-    
-    // Clear search input
-    const searchInput = document.getElementById('itemSearchInput');
-    if (searchInput) {
-        searchInput.value = '';
-    }
     
     // Show modal first
     setTimeout(() => {
         modal.classList.add('show');
         backdrop.classList.add('show');
         
-        // Then load paginated items (with empty search)
-        loadPaginatedItems(itemsCurrentPage, true, '');
+        // Reset keyboard highlight index
+        window._chooseItemsKbIndex = -1;
+        
+        // Then load paginated items
+        loadPaginatedItems(itemsCurrentPage, true);
+        
+        // Focus search input
+        setTimeout(() => {
+            const searchInput = document.getElementById('itemSearchInput');
+            if (searchInput) { searchInput.focus(); searchInput.value = ''; }
+        }, 100);
     }, 10);
 }
 
@@ -1637,6 +1568,87 @@ function closeChooseItemsModal() {
     modal.classList.remove('show');
     backdrop.classList.remove('show');
 }
+
+// ========== CHOOSE ITEMS MODAL KEYBOARD NAVIGATION ==========
+(function() {
+    function isChooseItemsModalOpen() {
+        const modal = document.getElementById('chooseItemsModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function getVisibleRows() {
+        const rows = Array.from(document.querySelectorAll('#chooseItemsBody tr'));
+        return rows.filter(r => r.style.display !== 'none');
+    }
+
+    function highlightRow(index) {
+        const rows = getVisibleRows();
+        rows.forEach(r => {
+            r.classList.remove('item-row-selected');
+            r.style.backgroundColor = '';
+        });
+        if (index >= 0 && index < rows.length) {
+            rows[index].classList.add('item-row-selected');
+            rows[index].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    window.addEventListener('keydown', function(e) {
+        if (!isChooseItemsModalOpen()) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const rows = getVisibleRows();
+            if (rows.length === 0) return;
+            let idx = (window._chooseItemsKbIndex === undefined) ? -1 : window._chooseItemsKbIndex;
+            idx++;
+            if (idx >= rows.length) idx = rows.length - 1;
+            window._chooseItemsKbIndex = idx;
+            highlightRow(idx);
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const rows = getVisibleRows();
+            if (rows.length === 0) return;
+            let idx = (window._chooseItemsKbIndex === undefined) ? 0 : window._chooseItemsKbIndex;
+            idx--;
+            if (idx < 0) idx = 0;
+            window._chooseItemsKbIndex = idx;
+            highlightRow(idx);
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const rows = getVisibleRows();
+            const idx = window._chooseItemsKbIndex;
+            if (idx >= 0 && idx < rows.length) {
+                rows[idx].click();
+            }
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeChooseItemsModal();
+            return;
+        }
+    }, true);
+
+    // Reset highlight when search changes
+    const searchInput = document.getElementById('itemSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            window._chooseItemsKbIndex = -1;
+        });
+    }
+})();
 
 // Display items in modal (legacy - for backward compatibility)
 function displayItemsInModal() {
@@ -1772,35 +1784,30 @@ function setupItemsInfiniteScroll() {
     scrollContainer.addEventListener('scroll', function() {
         // Check if scrolled near bottom
         if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 50) {
-            // Load more items if available (with current search term)
+            // Load more items if available
             if (itemsHasMore && !itemsLoading) {
-                loadPaginatedItems(itemsCurrentPage, false, itemsSearchTerm);
+                loadPaginatedItems(itemsCurrentPage, false);
             }
         }
     });
 }
 
-// Filter items in modal - now uses server-side search
+// Filter items in modal
 function filterItemsInModal() {
-    const searchText = document.getElementById('itemSearchInput').value.trim();
+    const searchText = document.getElementById('itemSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#chooseItemsBody tr');
     
-    // Clear existing timeout
-    if (itemsSearchTimeout) {
-        clearTimeout(itemsSearchTimeout);
-    }
-    
-    // Debounce search - wait 300ms after user stops typing
-    itemsSearchTimeout = setTimeout(() => {
-        itemsSearchTerm = searchText;
+    rows.forEach(row => {
+        const name = (row.cells[0]?.textContent || '').toLowerCase();
+        const hsn = (row.cells[1]?.textContent || '').toLowerCase();
+        const company = (row.cells[3]?.textContent || '').toLowerCase();
         
-        // Reset pagination and reload with search term
-        itemsCurrentPage = 1;
-        itemsHasMore = true;
-        itemsLoading = false;
-        itemsData = [];
-        
-        loadPaginatedItems(itemsCurrentPage, true, searchText);
-    }, 300);
+        if (name.includes(searchText) || hsn.includes(searchText) || company.includes(searchText)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
 }
 
 // Select item from modal
@@ -1838,6 +1845,16 @@ function openBatchSelectionModal(item) {
     setTimeout(() => {
         modal.classList.add('show');
         backdrop.classList.add('show');
+        
+        // Reset keyboard highlight index
+        window._batchSelectionKbIndex = -1;
+        window.selectedBatch = null;
+        
+        // Focus batch search input
+        setTimeout(() => {
+            const batchSearch = document.getElementById('batchSearchInput');
+            if (batchSearch) { batchSearch.focus(); batchSearch.value = ''; }
+        }, 100);
     }, 10);
 }
 
@@ -1850,11 +1867,92 @@ function closeBatchSelectionModal() {
     pendingItemSelection = null;
 }
 
+// ========== BATCH SELECTION MODAL KEYBOARD NAVIGATION ==========
+(function() {
+    function isBatchModalOpen() {
+        const modal = document.getElementById('batchSelectionModal');
+        return modal && modal.classList.contains('show');
+    }
+
+    function getVisibleBatchRows() {
+        const rows = Array.from(document.querySelectorAll('#batchSelectionBody tr'));
+        return rows.filter(r => r.style.display !== 'none');
+    }
+
+    function highlightBatchRow(index) {
+        const rows = getVisibleBatchRows();
+        rows.forEach(r => {
+            r.classList.remove('item-row-selected');
+        });
+        if (index >= 0 && index < rows.length) {
+            rows[index].classList.add('item-row-selected');
+            rows[index].scrollIntoView({ block: 'nearest' });
+            // Trigger click to populate batch details and set selectedBatch
+            rows[index].click();
+        }
+    }
+
+    window.addEventListener('keydown', function(e) {
+        if (!isBatchModalOpen()) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const rows = getVisibleBatchRows();
+            if (rows.length === 0) return;
+            let idx = (window._batchSelectionKbIndex === undefined) ? -1 : window._batchSelectionKbIndex;
+            idx++;
+            if (idx >= rows.length) idx = rows.length - 1;
+            window._batchSelectionKbIndex = idx;
+            highlightBatchRow(idx);
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const rows = getVisibleBatchRows();
+            if (rows.length === 0) return;
+            let idx = (window._batchSelectionKbIndex === undefined) ? 0 : window._batchSelectionKbIndex;
+            idx--;
+            if (idx < 0) idx = 0;
+            window._batchSelectionKbIndex = idx;
+            highlightBatchRow(idx);
+            return;
+        }
+
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            // If a batch is selected, confirm selection
+            if (window.selectedBatch) {
+                selectBatchFromModal(window.selectedBatch);
+            }
+            return;
+        }
+
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            closeBatchSelectionModal();
+            return;
+        }
+    }, true);
+
+    // Reset highlight when batch search changes
+    const batchSearch = document.getElementById('batchSearchInput');
+    if (batchSearch) {
+        batchSearch.addEventListener('input', function() {
+            window._batchSelectionKbIndex = -1;
+        });
+    }
+})();
+
 // Load batches for item
 function loadBatchesForItem(itemId) {
     console.log('🔄 Loading batches for item ID:', itemId);
     
-    const url = `{{ url('/admin/api/item-batches') }}/${itemId}`;
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
     fetch(url)
         .then(response => {
             console.log('📡 Response status:', response.status);
@@ -2090,24 +2188,17 @@ function selectBatchFromModal(batch) {
     console.log('✅ Selected batch:', selectedBatch);
     console.log('📦 Batch ID:', selectedBatch.id);
     
-    // Store item and batch before closing modal
-    const itemToAdd = pendingItemSelection;
-    const batchToAdd = selectedBatch;
+    // Add item to table with batch
+    addItemToTable(pendingItemSelection, selectedBatch);
     
-    // Close batch modal FIRST
+    // Close batch modal
     closeBatchSelectionModal();
     
     // Clear selected batch
     window.selectedBatch = null;
-    
-    // Add item to table AFTER modal is fully closed
-    setTimeout(() => {
-        console.log('📦 Adding item to table after modal close');
-        addItemToTable(itemToAdd, batchToAdd);
-    }, 150);
 }
 
-// Find first empty row that can be reused
+// Find first empty row in the table
 function findFirstEmptyRow() {
     const rows = document.querySelectorAll('#itemsTableBody tr');
     
@@ -2165,9 +2256,6 @@ function populateExistingRow(row, item, batch) {
     if (expiryInput) expiryInput.value = expiryDisplay;
     if (rateInput) rateInput.value = rate.toFixed(2);
     if (mrpInput) mrpInput.value = parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2);
-
-    // Keep table Enter handling isolated from global Enter navigation
-    ensureRowKeyboardInputAttributes(row);
     
     // Store item data in row attributes
     row.setAttribute('data-item-id', item.id);
@@ -2200,7 +2288,7 @@ function populateExistingRow(row, item, batch) {
     return rowIndex;
 }
 
-// Add item to table (FIXED VERSION - reuses empty rows)
+// Add item to table (FIXED: reuses empty rows instead of always creating new ones)
 function addItemToTable(item, batch) {
     console.log('🔄 Adding item to table:', item.name);
     
@@ -2224,11 +2312,11 @@ function addItemToTable(item, batch) {
         itemIndex++;
         const tbody = document.getElementById('itemsTableBody');
         
-        targetRow = document.createElement('tr');
-        targetRow.setAttribute('data-row-index', itemIndex);
-        targetRow.setAttribute('data-item-id', item.id);
-        targetRow.style.cursor = 'pointer';
-        targetRow.addEventListener('click', function(e) {
+        const newRow = document.createElement('tr');
+        newRow.setAttribute('data-row-index', itemIndex);
+        newRow.setAttribute('data-item-id', item.id);
+        newRow.style.cursor = 'pointer';
+        newRow.addEventListener('click', function(e) {
             const clickedRow = e.currentTarget;
             const rowIdx = parseInt(clickedRow.getAttribute('data-row-index'));
             selectRow(rowIdx);
@@ -2250,15 +2338,15 @@ function addItemToTable(item, batch) {
             }
         }
         
-        targetRow.innerHTML = `
-            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly data-custom-enter="true"></td>
-            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" step="any" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" step="any" style="font-size: 10px;" data-custom-enter="true"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
-            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+        newRow.innerHTML = `
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.bar_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.name || ''}" style="font-size: 10px;" autocomplete="off"></td>
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${batch.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${expiryDisplay}" style="font-size: 10px;" autocomplete="off"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" step="any" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" step="any" style="font-size: 10px;"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${rate.toFixed(2)}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+            <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="${parseFloat(batch.avg_mrp || batch.mrp || item.mrp || 0).toFixed(2)}" step="0.01" style="font-size: 10px;" readonly></td>
             <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][amount]" id="amount_${itemIndex}" value="0.00" style="font-size: 10px;" readonly></td>
             <td class="p-0 text-center">
@@ -2269,42 +2357,43 @@ function addItemToTable(item, batch) {
         `;
         
         // Store item data in row attributes
-        targetRow.setAttribute('data-hsn-code', item.hsn_code || '');
-        targetRow.setAttribute('data-cgst', item.cgst_percent || 0);
-        targetRow.setAttribute('data-sgst', item.sgst_percent || 0);
-        targetRow.setAttribute('data-cess', item.cess_percent || 0);
-        targetRow.setAttribute('data-packing', item.packing || '');
-        targetRow.setAttribute('data-unit', item.unit || '');
-        targetRow.setAttribute('data-company', item.company_name || item.company || '');
-        targetRow.setAttribute('data-batch-code', batch.batch_no || '');
-        targetRow.setAttribute('data-case-qty', item.case_qty || 0);
-        targetRow.setAttribute('data-box-qty', item.box_qty || 0);
+        newRow.setAttribute('data-hsn-code', item.hsn_code || '');
+        newRow.setAttribute('data-cgst', item.cgst_percent || 0);
+        newRow.setAttribute('data-sgst', item.sgst_percent || 0);
+        newRow.setAttribute('data-cess', item.cess_percent || 0);
+        newRow.setAttribute('data-packing', item.packing || '');
+        newRow.setAttribute('data-unit', item.unit || '');
+        newRow.setAttribute('data-company', item.company_name || item.company || '');
+        newRow.setAttribute('data-batch-code', batch.batch_no || '');
+        newRow.setAttribute('data-case-qty', item.case_qty || 0);
+        newRow.setAttribute('data-box-qty', item.box_qty || 0);
         
         // Store batch purchase details
-        targetRow.setAttribute('data-batch-purchase-rate', batch.avg_pur_rate || batch.pur_rate || 0);
-        targetRow.setAttribute('data-batch-cost-gst', batch.avg_cost_gst || batch.cost_gst || 0);
-        targetRow.setAttribute('data-batch-supplier', batch.supplier_name || '');
-        targetRow.setAttribute('data-batch-purchase-date', batch.purchase_date_display || batch.purchase_date || '');
+        newRow.setAttribute('data-batch-purchase-rate', batch.avg_pur_rate || batch.pur_rate || 0);
+        newRow.setAttribute('data-batch-cost-gst', batch.avg_cost_gst || batch.cost_gst || 0);
+        newRow.setAttribute('data-batch-supplier', batch.supplier_name || '');
+        newRow.setAttribute('data-batch-purchase-date', batch.purchase_date_display || batch.purchase_date || '');
         
         // 🔥 IMPORTANT: Store batch ID for quantity reduction (must be number)
         const batchId = batch.id ? parseInt(batch.id) : '';
         if (batchId) {
-            targetRow.setAttribute('data-batch-id', batchId.toString());
+            newRow.setAttribute('data-batch-id', batchId.toString());
             console.log('✅ Batch ID stored in new row:', batchId);
         } else {
             console.warn('⚠️ No batch ID found in batch object:', batch);
         }
         
         // Mark row as incomplete initially
-        targetRow.setAttribute('data-complete', 'false');
-        targetRow.classList.add('table-danger'); // Red background for incomplete
+        newRow.setAttribute('data-complete', 'false');
+        newRow.classList.add('table-danger'); // Red background for incomplete
         
-        tbody.appendChild(targetRow);
+        tbody.appendChild(newRow);
         
         // Add event listeners for editing
-        addRowEventListeners(targetRow, itemIndex);
+        addRowEventListeners(newRow, itemIndex);
         
         targetRowIndex = itemIndex;
+        targetRow = newRow;
     }
     
     // Update row color
@@ -2319,16 +2408,13 @@ function addItemToTable(item, batch) {
     // Scroll row into view
     targetRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
-    // Focus on Qty field after modal is fully closed and event listeners are attached
+    // Focus on Qty field after modal is fully closed
     setTimeout(() => {
-        // Get fresh reference to qty field (after cloning in addRowEventListeners)
         const qtyField = targetRow.querySelector('input[name*="[qty]"]');
         if (qtyField) {
             qtyField.focus();
             qtyField.select();
             console.log('✅ Cursor moved to Qty field for row', targetRowIndex);
-        } else {
-            console.error('❌ Qty field not found for row', targetRowIndex);
         }
     }, 200);
     
@@ -2338,93 +2424,100 @@ function addItemToTable(item, batch) {
 
 // Add event listeners to row for editing functionality
 function addRowEventListeners(row, rowIndex) {
-    console.log('🔧 Adding event listeners for row', rowIndex);
-
-    // Prevent global header Enter handlers from hijacking table field Enter
-    ensureRowKeyboardInputAttributes(row);
-
-    // Avoid duplicate bindings when row is reused
-    if (row.dataset.rowKeyboardBound === '1') {
-        return;
-    }
-    row.dataset.rowKeyboardBound = '1';
+    // Get all input fields in order
+    const qtyInput = row.querySelector('input[name*="[qty]"]');
+    const freeQtyInput = row.querySelector('input[name*="[free_qty]"]');
+    const rateInput = row.querySelector('input[name*="[rate]"]');
+    const discountInput = row.querySelector('input[name*="[discount]"]');
     
-    // Use event delegation on the row itself for better reliability
-    row.addEventListener('keydown', function(e) {
-        if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) return;
-        // Ctrl+L → open scheme modal from qty or free_qty
-        if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
-            const fn = (e.target.name || '');
-            if (fn.includes('[qty]') || fn.includes('[free_qty]')) {
+    // Qty field - Enter moves to Free Qty (only if qty > 0)
+    if (qtyInput) {
+        qtyInput.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
                 e.preventDefault();
-                e.stopPropagation();
                 openSchemeModal(rowIndex);
                 return;
             }
-        }
-        if (e.key !== 'Enter' && e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
-        
-        const target = e.target;
-        const fieldName = target.name || '';
-        
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Determine which field and move to next
-            if (fieldName.includes('[qty]')) {
-                const qty = parseFloat(target.value) || 0;
+            if (e.key === 'Enter') {
+                const qty = parseFloat(this.value) || 0;
                 if (qty <= 0) {
                     // Stay on qty field if value is 0 or empty
-                    console.log('⏎ Enter on Qty blocked (qty <= 0)');
-                    target.focus();
+                    e.preventDefault();
+                    this.focus();
                     return;
                 }
-                console.log('⏎ Enter on Qty → F.Qty');
+                e.preventDefault();
                 calculateRowAmount(rowIndex);
-                const freeQty = row.querySelector('input[name*="[free_qty]"]');
-                if (freeQty) { freeQty.focus(); freeQty.select(); }
+                if (freeQtyInput) freeQtyInput.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateToRow(rowIndex - 1);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateToRow(rowIndex + 1);
             }
-            else if (fieldName.includes('[free_qty]')) {
-                console.log('⏎ Enter on F.Qty → Rate');
-                const rate = row.querySelector('input[name*="[rate]"]');
-                if (rate) { rate.focus(); rate.select(); }
+        });
+    }
+    
+    // Free Qty field - Enter moves to Rate
+    if (freeQtyInput) {
+        freeQtyInput.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && (e.key === 'l' || e.key === 'L')) {
+                e.preventDefault();
+                openSchemeModal(rowIndex);
+                return;
             }
-            else if (fieldName.includes('[rate]')) {
-                console.log('⏎ Enter on Rate → Dis%');
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (rateInput) rateInput.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateToRow(rowIndex - 1);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateToRow(rowIndex + 1);
+            }
+        });
+    }
+    
+    // Rate field - Enter moves to Discount
+    if (rateInput) {
+        rateInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
                 calculateRowAmount(rowIndex);
-                const discount = row.querySelector('input[name*="[discount]"]');
-                if (discount) { discount.focus(); discount.select(); }
+                if (discountInput) discountInput.focus();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateToRow(rowIndex - 1);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateToRow(rowIndex + 1);
             }
-            else if (fieldName.includes('[discount]')) {
-                console.log('⏎ Enter on Dis% → Row Complete + Add New Row');
+        });
+    }
+    
+    // Discount field - Enter finalizes row and moves to next
+    if (discountInput) {
+        discountInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
                 calculateRowAmount(rowIndex);
-                
-                // Mark row as complete (GREEN)
-                markRowComplete(rowIndex);
-                
-                // Add next row and move cursor to its code field
-                addNewRow();
+                calculateTotal();
 
-                // Clear sections for next item
-                clearCalculationSection();
-                clearDetailedSummary();
-
-                // Recalculate summary
+                // Finalize current row, then trigger Add Row flow and move cursor to new row code
+                updateRowColor(rowIndex);
                 calculateSummary();
-
-                console.log('✅ Row', rowIndex, 'completed, new row added');
+                triggerAddRowAndFocusCode(rowIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateToRow(rowIndex - 1);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateToRow(rowIndex + 1);
             }
-        }
-        else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            navigateToRow(rowIndex - 1);
-        }
-        else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            navigateToRow(rowIndex + 1);
-        }
-    });
+        });
+    }
     
     // Listen for code changes to fetch item details
     const codeInput = row.querySelector('input[name*="[code]"]');
@@ -2439,12 +2532,15 @@ function addRowEventListeners(row, rowIndex) {
         });
         
         codeInput.addEventListener('keydown', function(e) {
-            if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) return;
             if (e.key === 'Enter') {
                 e.preventDefault();
-                e.stopPropagation();
-                // Open item component (Choose Items modal flow)
-                openChooseItemsModal();
+                const itemCode = this.value.trim();
+                if (itemCode) {
+                    fetchItemDetailsForRow(itemCode, rowIndex);
+                }
+                // Move to next field
+                const nextInput = row.querySelector('input[name*="[item_name]"]');
+                if (nextInput) nextInput.focus();
             }
         });
     }
@@ -2452,6 +2548,9 @@ function addRowEventListeners(row, rowIndex) {
     // Listen for item name changes
     const nameInput = row.querySelector('input[name*="[item_name]"]');
     if (nameInput) {
+        // Item name should come from selected item, not manual typing.
+        nameInput.readOnly = true;
+        nameInput.style.background = '#f8f9fa';
         nameInput.addEventListener('blur', function() {
             updateDetailedSummary(rowIndex);
         });
@@ -2474,13 +2573,6 @@ function addRowEventListeners(row, rowIndex) {
     }
 }
 
-function ensureRowKeyboardInputAttributes(row) {
-    if (!row) return;
-    row.querySelectorAll('input[name*="[code]"], input[name*="[qty]"], input[name*="[free_qty]"], input[name*="[rate]"], input[name*="[discount]"]').forEach(function(input) {
-        input.setAttribute('data-custom-enter', 'true');
-    });
-}
-
 // Navigate to specific row
 function navigateToRow(targetRowIndex) {
     // Check if row exists by data-row-index
@@ -2498,6 +2590,106 @@ function navigateToRow(targetRowIndex) {
         qtyField.focus();
         // Don't select - let user continue typing
     }
+}
+
+function focusRowCodeField(rowIndex, selectText = false) {
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (!row) return false;
+
+    const codeField = row.querySelector('input[name*="[code]"]');
+    if (!codeField) return false;
+
+    selectRow(rowIndex);
+    codeField.focus();
+    if (selectText && typeof codeField.select === 'function') {
+        codeField.select();
+    }
+    return true;
+}
+
+function focusFirstTableCodeField() {
+    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr[data-row-index]'));
+    if (!rows.length) return false;
+    const firstIndex = parseInt(rows[0].getAttribute('data-row-index'), 10);
+    if (isNaN(firstIndex)) return false;
+    return focusRowCodeField(firstIndex, true);
+}
+
+function focusRowBatchField(rowIndex, selectText = false) {
+    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
+    if (!row) return false;
+
+    const batchField = row.querySelector('input[name*="[batch]"]');
+    if (!batchField) return false;
+
+    selectRow(rowIndex);
+    batchField.focus();
+    if (selectText && typeof batchField.select === 'function') {
+        batchField.select();
+    }
+    return true;
+}
+
+function focusFirstTableBatchField() {
+    const rows = Array.from(document.querySelectorAll('#itemsTableBody tr[data-row-index]'));
+    if (!rows.length) return false;
+    const firstIndex = parseInt(rows[0].getAttribute('data-row-index'), 10);
+    if (isNaN(firstIndex)) return false;
+    return focusRowBatchField(firstIndex, true);
+}
+
+function triggerAddRowAndFocusCode(currentRowIndex) {
+    // Use passed current row index, or fall back to itemIndex for backward compatibility
+    const oldIndex = (typeof currentRowIndex === 'number') ? currentRowIndex : itemIndex;
+    
+    // Check if next row already exists and has data
+    const allRows = document.querySelectorAll('#itemsTableBody tr');
+    let nextRow = null;
+    let currentRowFound = false;
+    
+    for (const row of allRows) {
+        const rowIdx = parseInt(row.getAttribute('data-row-index'));
+        if (currentRowFound && nextRow === null) {
+            nextRow = row;
+            break;
+        }
+        if (rowIdx === oldIndex) {
+            currentRowFound = true;
+        }
+    }
+    
+    // If next row exists, check if it has data (item code or qty)
+    if (nextRow) {
+        const nextCode = nextRow.querySelector('input[name*="[code]"]')?.value?.trim();
+        const nextQty = parseFloat(nextRow.querySelector('input[name*="[qty]"]')?.value) || 0;
+        
+        if (nextCode || nextQty > 0) {
+            // Next row is already filled, move to its qty field
+            console.log('[KB-SCMOD] Next row already filled, moving to its qty field', { nextRowIndex: nextRow.getAttribute('data-row-index') });
+            const nextQtyField = nextRow.querySelector('input[name*="[qty]"]');
+            if (nextQtyField) {
+                nextQtyField.focus();
+                nextQtyField.select();
+                return;
+            }
+        }
+    }
+    
+    // No filled next row found, create a new row
+    const addRowBtn = document.querySelector('button[onclick="addNewRow()"]');
+    if (addRowBtn) {
+        addRowBtn.click();
+    } else {
+        addNewRow();
+    }
+
+    setTimeout(() => {
+        if (itemIndex > oldIndex) {
+            focusRowCodeField(itemIndex, true);
+        } else {
+            focusFirstTableCodeField();
+        }
+    }, 140);
 }
 
 // Move to next row (create new if needed)
@@ -2539,7 +2731,7 @@ function moveToNextRow(currentRowIndex) {
 
 // Fetch item details when code is entered/changed
 function fetchItemDetailsForRow(itemCode, rowIndex) {
-    const url = `{{ url('/admin/items/get-by-code') }}/${itemCode}`;
+    const url = `<?php echo e(url('/admin/items/get-by-code')); ?>/${itemCode}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -2593,7 +2785,7 @@ function fetchItemDetailsForRow(itemCode, rowIndex) {
 }
 
 
-// Select row - shows row data in calculation & additional details section
+// Select row
 function selectRow(rowIndex) {
     // Find the actual row by data-row-index attribute
     const targetRow = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
@@ -2601,29 +2793,25 @@ function selectRow(rowIndex) {
         return; // Row doesn't exist
     }
     
-    console.log('🔵 Selecting row', rowIndex);
-    
-    // Remove previous selection from ALL rows
+    // Remove previous selection from all rows
     const allRows = document.querySelectorAll('#itemsTableBody tr');
-    allRows.forEach(r => {
-        r.classList.remove('row-selected');
-    });
+    allRows.forEach(r => r.classList.remove('row-selected'));
     
-    // Add selection to target row (GREEN border)
+    // Add selection to target row
     targetRow.classList.add('row-selected');
     currentSelectedRowIndex = rowIndex;
     
     // Scroll row into view if needed
     targetRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     
-    // Update calculation section (HSN, GST, Case, Box) - shows THIS row's data
+    // Update calculation section (HSN, GST, Case, Box)
     updateCalculationSection(rowIndex);
     
-    // Update detailed summary section - shows THIS row's data
+    // Update detailed summary section
     updateDetailedSummary(rowIndex);
 }
 
-// Update calculation section with SELECTED ROW data (row-based display)
+// Update calculation section with current row data
 function updateCalculationSection(rowIndex) {
     const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
     if (!row) {
@@ -2631,9 +2819,7 @@ function updateCalculationSection(rowIndex) {
         return;
     }
     
-    console.log('🔢 Updating calculation section for row', rowIndex);
-    
-    // Get item data from row attributes
+    // Get item data
     const hsnCode = row.getAttribute('data-hsn-code') || '---';
     const cgst = parseFloat(row.getAttribute('data-cgst') || 0);
     const sgst = parseFloat(row.getAttribute('data-sgst') || 0);
@@ -2641,14 +2827,10 @@ function updateCalculationSection(rowIndex) {
     const caseQty = parseFloat(row.getAttribute('data-case-qty') || 0);
     const boxQty = parseFloat(row.getAttribute('data-box-qty') || 0);
     
-    // Get current values from row inputs (using querySelector for fresh reference)
-    const qtyInput = row.querySelector('input[name*="[qty]"]');
-    const rateInput = row.querySelector('input[name*="[rate]"]');
-    const discountInput = row.querySelector('input[name*="[discount]"]');
-    
-    const qty = parseFloat(qtyInput?.value) || 0;
-    const rate = parseFloat(rateInput?.value) || 0;
-    const discount = parseFloat(discountInput?.value) || 0;
+    // Get current values from inputs
+    const qty = parseFloat(document.getElementById(`qty_${rowIndex}`)?.value) || 0;
+    const rate = parseFloat(document.getElementById(`rate_${rowIndex}`)?.value) || 0;
+    const discount = parseFloat(document.getElementById(`discount_${rowIndex}`)?.value) || 0;
     
     // Calculate total amount (before discount)
     const totalAmount = qty * rate;
@@ -2663,25 +2845,21 @@ function updateCalculationSection(rowIndex) {
     const cases = caseQty > 0 ? Math.floor(qty / caseQty) : 0;
     const boxes = boxQty > 0 ? Math.floor((qty % caseQty) / boxQty) : 0;
     
-    // Helper functions for null-safe updates
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    
     // Update Case and Box
-    setVal('calc_case', cases);
-    setVal('calc_box', boxes);
+    document.getElementById('calc_case').value = cases;
+    document.getElementById('calc_box').value = boxes;
     
     // Update HSN Code
-    setVal('calc_hsn_code', hsnCode);
+    document.getElementById('calc_hsn_code').value = hsnCode;
     
     // Update GST percentages
-    setVal('calc_cgst', cgst.toFixed(2));
-    setVal('calc_sgst', sgst.toFixed(2));
-    setVal('calc_cess', cess.toFixed(2));
+    document.getElementById('calc_cgst').value = cgst.toFixed(2);
+    document.getElementById('calc_sgst').value = sgst.toFixed(2);
+    document.getElementById('calc_cess').value = cess.toFixed(2);
     
     // Calculate total tax percentage
     const totalTaxPercent = cgst + sgst + cess;
-    setVal('calc_tax_percent', totalTaxPercent.toFixed(3));
+    document.getElementById('calc_tax_percent').value = totalTaxPercent.toFixed(3);
     
     // Calculate GST amounts on DISCOUNTED AMOUNT
     if (discountedAmount > 0) {
@@ -2689,31 +2867,28 @@ function updateCalculationSection(rowIndex) {
         const sgstAmount = (discountedAmount * sgst / 100).toFixed(2);
         const cessAmount = (discountedAmount * cess / 100).toFixed(2);
         
-        setText('calc_cgst_amount', cgstAmount);
-        setText('calc_sgst_amount', sgstAmount);
-        setText('calc_cess_amount', cessAmount);
+        document.getElementById('calc_cgst_amount').textContent = cgstAmount;
+        document.getElementById('calc_sgst_amount').textContent = sgstAmount;
+        document.getElementById('calc_cess_amount').textContent = cessAmount;
     } else {
-        setText('calc_cgst_amount', '0.00');
-        setText('calc_sgst_amount', '0.00');
-        setText('calc_cess_amount', '0.00');
+        document.getElementById('calc_cgst_amount').textContent = '0.00';
+        document.getElementById('calc_sgst_amount').textContent = '0.00';
+        document.getElementById('calc_cess_amount').textContent = '0.00';
     }
 }
 
 // Clear calculation section
 function clearCalculationSection() {
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-    
-    setVal('calc_case', '0');
-    setVal('calc_box', '0');
-    setVal('calc_hsn_code', '---');
-    setVal('calc_cgst', '0');
-    setVal('calc_sgst', '0');
-    setVal('calc_cess', '0');
-    setVal('calc_tax_percent', '0.000');
-    setText('calc_cgst_amount', '0.00');
-    setText('calc_sgst_amount', '0.00');
-    setText('calc_cess_amount', '0.00');
+    document.getElementById('calc_case').value = '0';
+    document.getElementById('calc_box').value = '0';
+    document.getElementById('calc_hsn_code').value = '---';
+    document.getElementById('calc_cgst').value = '0';
+    document.getElementById('calc_sgst').value = '0';
+    document.getElementById('calc_cess').value = '0';
+    document.getElementById('calc_tax_percent').value = '0.000';
+    document.getElementById('calc_cgst_amount').textContent = '0.00';
+    document.getElementById('calc_sgst_amount').textContent = '0.00';
+    document.getElementById('calc_cess_amount').textContent = '0.00';
 }
 
 // Update detailed summary section (shows when item is populated)
@@ -2741,6 +2916,8 @@ function updateDetailedSummary(rowIndex) {
     const cgst = row.getAttribute('data-cgst') || 0;
     const sgst = row.getAttribute('data-sgst') || 0;
     const cess = row.getAttribute('data-cess') || 0;
+    const caseQty = row.getAttribute('data-case-qty') || 0;
+    const boxQty = row.getAttribute('data-box-qty') || 0;
     
     // Get batch purchase details
     const batchPurchaseRate = parseFloat(row.getAttribute('data-batch-purchase-rate') || 0);
@@ -2749,67 +2926,62 @@ function updateDetailedSummary(rowIndex) {
     const totalGstPercent = parseFloat(cgst) + parseFloat(sgst) + parseFloat(cess);
     const costPlusGst = batchPurchaseRate * (1 + (totalGstPercent / 100));
     
-    // Get values from inputs (use row querySelector for fresh reference)
-    const qtyInput = row.querySelector('input[name*="[qty]"]');
-    const rateInput = row.querySelector('input[name*="[rate]"]');
-    const discountInput = row.querySelector('input[name*="[discount]"]');
-    
-    const qty = parseFloat(qtyInput?.value) || 0;
-    const rate = parseFloat(rateInput?.value) || 0;
-    const discount = parseFloat(discountInput?.value) || 0;
-    
-    // Helper function to safely set value
-    const setFieldValue = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.value = value;
-    };
+    // Get values from inputs
+    const qty = parseFloat(document.getElementById(`qty_${rowIndex}`)?.value) || 0;
+    const rate = parseFloat(document.getElementById(`rate_${rowIndex}`)?.value) || 0;
+    const discount = parseFloat(document.getElementById(`discount_${rowIndex}`)?.value) || 0;
     
     // ALWAYS show basic fields
-    setFieldValue('detailPacking', packing);
-    setFieldValue('detailUnit', unit);
-    setFieldValue('detailCompany', company);
-    setFieldValue('detailCostGst', costPlusGst.toFixed(2));
+    document.getElementById('detailPacking').value = packing;
+    document.getElementById('detailUnit').value = unit;
+    document.getElementById('detailCompany').value = company;
+    document.getElementById('detailCostGst').value = costPlusGst.toFixed(2);
     
     // Get batch code from row
     const batchInput = row.querySelector('input[name*="[batch]"]');
     const batchCodeValue = batchInput ? batchInput.value : '';
-    setFieldValue('detailBatchCode', batchCodeValue);
+    document.getElementById('detailBatchCode').value = batchCodeValue;
     
     // Fetch total quantity from all batches for this item
     const itemId = row.getAttribute('data-item-id');
     if (itemId) {
         fetchTotalBatchQuantity(itemId);
     } else {
-        setFieldValue('detailClQty', qty || '');
+        // If no item ID, just show current row quantity
+        document.getElementById('detailClQty').value = qty || '';
     }
     
     // Calculate amounts properly
-    const ntAmt = qty * rate;
-    const discountAmt = ntAmt * (discount / 100);
-    const subTot = ntAmt - discountAmt;
+    const ntAmt = qty * rate;  // N.T.Amt = Total amount before discount
+    const discountAmt = ntAmt * (discount / 100);  // Discount amount
+    const subTot = ntAmt - discountAmt;  // Sub.Tot = Amount after discount
+    
+    // Calculate tax on DISCOUNTED amount (Sub.Tot)
     const taxAmt = subTot * ((parseFloat(cgst) + parseFloat(sgst) + parseFloat(cess)) / 100);
+    
+    // Net Amount = Sub.Tot + Tax
     const netAmt = subTot + taxAmt;
     
-    // Update detailed summary fields with null checks
-    setFieldValue('detailNtAmt', ntAmt.toFixed(2));
-    setFieldValue('detailDisAmt', discountAmt.toFixed(2));
-    setFieldValue('detailSubTot', subTot.toFixed(2));
-    setFieldValue('detailTaxAmt', taxAmt.toFixed(2));
-    setFieldValue('detailNetAmt', netAmt.toFixed(2));
-    setFieldValue('detailScAmt', '0.00');
-    setFieldValue('detailScmPercent', '0.00');
-    setFieldValue('detailScmAmt', '0.00');
-    setFieldValue('detailHsAmt', '0.00');
-    setFieldValue('detailLctn', '');
-    setFieldValue('detailVol', '0');
-    setFieldValue('detailSrIno', '');
-    setFieldValue('detailScm1', '0');
-    setFieldValue('detailScm2', '0');
+    // Update detailed summary fields
+    document.getElementById('detailNtAmt').value = ntAmt.toFixed(2);  // Total before discount
+    document.getElementById('detailDisAmt').value = discountAmt.toFixed(2);  // Discount amount
+    document.getElementById('detailSubTot').value = subTot.toFixed(2);  // Sub Total = Total - Discount
+    document.getElementById('detailTaxAmt').value = taxAmt.toFixed(2);  // Tax on discounted amount
+    document.getElementById('detailNetAmt').value = netAmt.toFixed(2);  // Final net amount
+    document.getElementById('detailScAmt').value = '0.00';  // SC Amount (not used)
+    document.getElementById('detailScmPercent').value = '0.00';  // Scm % (not used)
+    document.getElementById('detailScmAmt').value = '0.00';  // Scm Amount (not used)
+    document.getElementById('detailHsAmt').value = '0.00';  // HS Amount (not used)
+    document.getElementById('detailLctn').value = '';  // Location (not used)
+    document.getElementById('detailVol').value = '0';  // Volume (not used)
+    document.getElementById('detailSrIno').value = '';  // Serial no (not used)
+    document.getElementById('detailScm1').value = '0';  // Scm 1 (not used)
+    document.getElementById('detailScm2').value = '0';  // Scm 2 (not used)
 }
 
 // Fetch total quantity from all batches for an item
 function fetchTotalBatchQuantity(itemId) {
-    const url = `{{ url('/admin/api/item-batches') }}/${itemId}`;
+    const url = `<?php echo e(url('/admin/api/item-batches')); ?>/${itemId}`;
     fetch(url)
         .then(response => response.json())
         .then(data => {
@@ -2842,52 +3014,45 @@ function fetchTotalBatchQuantity(itemId) {
 
 // Clear detailed summary
 function clearDetailedSummary() {
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-    
-    setVal('detailPacking', '');
-    setVal('detailUnit', '1');
-    setVal('detailCompany', '');
-    setVal('detailClQty', '');
-    setVal('detailLctn', '');
-    setVal('detailBatchCode', '');
-    setVal('detailNtAmt', '0.00');
-    setVal('detailScAmt', '0.00');
-    setVal('detailDisAmt', '0.00');
-    setVal('detailHsAmt', '0.00');
-    setVal('detailScmPercent', '0.00');
-    setVal('detailScmAmt', '0.00');
-    setVal('detailSubTot', '0.00');
-    setVal('detailTaxAmt', '0.00');
-    setVal('detailNetAmt', '0.00');
-    setVal('detailCostGst', '0.00');
-    setVal('detailVol', '0');
-    setVal('detailSrIno', '');
-    setVal('detailScm1', '0');
-    setVal('detailScm2', '0');
+    document.getElementById('detailPacking').value = '';
+    document.getElementById('detailUnit').value = '1';
+    document.getElementById('detailCompany').value = '';
+    document.getElementById('detailClQty').value = '';
+    document.getElementById('detailLctn').value = '';
+    document.getElementById('detailBatchCode').value = '';
+    document.getElementById('detailNtAmt').value = '0.00';
+    document.getElementById('detailScAmt').value = '0.00';
+    document.getElementById('detailDisAmt').value = '0.00';
+    document.getElementById('detailHsAmt').value = '0.00';
+    document.getElementById('detailScmPercent').value = '0.00';
+    document.getElementById('detailScmAmt').value = '0.00';
+    document.getElementById('detailSubTot').value = '0.00';
+    document.getElementById('detailTaxAmt').value = '0.00';
+    document.getElementById('detailNetAmt').value = '0.00';
+    document.getElementById('detailCostGst').value = '0.00';
+    document.getElementById('detailVol').value = '0';
+    document.getElementById('detailSrIno').value = '';
+    document.getElementById('detailScm1').value = '0';
+    document.getElementById('detailScm2').value = '0';
 }
 
 // Calculate row amount
 function calculateRowAmount(rowIndex) {
-    // Get row and use querySelector for fresh references
-    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-    if (!row) return;
-    
-    const qtyInput = row.querySelector('input[name*="[qty]"]');
-    const rateInput = row.querySelector('input[name*="[rate]"]');
-    const amountInput = row.querySelector('input[name*="[amount]"]');
-    
-    const qty = parseFloat(qtyInput?.value) || 0;
-    const rate = parseFloat(rateInput?.value) || 0;
+    const qty = parseFloat(document.getElementById(`qty_${rowIndex}`)?.value) || 0;
+    const rate = parseFloat(document.getElementById(`rate_${rowIndex}`)?.value) || 0;
     
     // Amount = Qty × Rate ONLY (discount NOT applied here)
     const amount = qty * rate;
     
-    if (amountInput) amountInput.value = amount.toFixed(2);
+    document.getElementById(`amount_${rowIndex}`).value = amount.toFixed(2);
     
     // Update row color
     updateRowColor(rowIndex);
     
-    // Always update summary (calculates all totals)
+    // Calculate totals
+    calculateTotal();
+    
+    // Always update summary (not just for complete rows)
     calculateSummary();
     
     // If this is the currently selected row, update calculation & detailed summary
@@ -2897,62 +3062,66 @@ function calculateRowAmount(rowIndex) {
     }
 }
 
-// Check if row is complete
+// Check if row is complete (always true when called from moveToNextRow)
 function isRowComplete(rowIndex) {
     const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
     if (!row) return false;
     
-    // Check if row is marked as finalized (Enter pressed on Dis%)
-    return row.getAttribute('data-finalized') === 'true';
+    // If row has any data, consider it complete
+    // User can always edit it later
+    const code = row.querySelector('input[name*="[code]"]')?.value?.trim();
+    const itemName = row.querySelector('input[name*="[item_name]"]')?.value?.trim();
+    
+    // Row is complete if it has item code or name
+    return (code || itemName) ? true : false;
 }
 
-// Mark row as complete (called when Enter pressed on Dis%)
-function markRowComplete(rowIndex) {
-    const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
-    if (!row) return;
-    
-    // Mark as finalized
-    row.setAttribute('data-finalized', 'true');
-    row.setAttribute('data-complete', 'true');
-    
-    // Remove old color classes and add GREEN
-    row.classList.remove('table-danger', 'row-selected');
-    row.classList.add('table-success');
-    
-    console.log('✅ Row', rowIndex, 'marked as complete (GREEN)');
-}
-
-// Update row color based on state
+// Update row color based on completion
 function updateRowColor(rowIndex) {
     const row = document.querySelector(`tr[data-row-index="${rowIndex}"]`);
     if (!row) return;
     
-    // If row is already finalized (GREEN), don't change it
-    if (row.getAttribute('data-finalized') === 'true') {
-        return;
-    }
-    
-    // Remove old color classes (but keep row-selected if present)
+    // Remove old color classes
     row.classList.remove('table-danger', 'table-success');
     
-    // Check if row has item data
-    const code = row.querySelector('input[name*="[code]"]')?.value?.trim();
-    const itemName = row.querySelector('input[name*="[item_name]"]')?.value?.trim();
-    
-    if (code || itemName) {
-        // Has item but not finalized - RED (incomplete)
-        row.setAttribute('data-complete', 'false');
-        row.classList.add('table-danger');
+    // Check if row is complete
+    if (isRowComplete(rowIndex)) {
+        // Mark as complete - GREEN
+        row.setAttribute('data-complete', 'true');
+        row.classList.add('table-success');
+    } else {
+        // Mark as incomplete - RED (if has any data)
+        const code = row.querySelector('input[name*="[code]"]')?.value?.trim();
+        const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+        const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
+        
+        if (code || qty > 0 || rate > 0) {
+            row.setAttribute('data-complete', 'false');
+            row.classList.add('table-danger');
+        }
     }
 }
 
-// Calculate total - redirects to calculateSummary
+// Calculate total
 function calculateTotal() {
-    // Total is now calculated in calculateSummary() and shown in summary section
-    calculateSummary();
+    let total = 0;
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    
+    rows.forEach(row => {
+        const amountInput = row.querySelector('input[name*="[amount]"]');
+        if (amountInput) {
+            const amount = parseFloat(amountInput.value) || 0;
+            total += amount;
+        }
+    });
+    
+    const totalEl = document.getElementById('totalAmount');
+    if (totalEl) {
+        totalEl.value = total.toFixed(2);
+    }
 }
 
-// Calculate summary - LOOPS through ALL rows and calculates totals
+// Calculate summary (when all rows are complete)
 function calculateSummary() {
     const rows = document.querySelectorAll('#itemsTableBody tr');
     let totalNtAmt = 0;      // N.T.Amt - Total amount before discount
@@ -2961,30 +3130,24 @@ function calculateSummary() {
     let totalTax = 0;        // Tax - Total CGST + SGST + CESS
     let totalNet = 0;        // Net - Final amount
     
-    console.log('📊 Calculating summary for', rows.length, 'rows');
-    
     rows.forEach(row => {
-        // Get item data using querySelector (works with cloned elements)
+        // Count ALL rows that have item data (RED or GREEN doesn't matter)
+        const rowIndex = row.getAttribute('data-row-index');
         const itemCode = row.querySelector('input[name*="[code]"]')?.value?.trim();
         const itemName = row.querySelector('input[name*="[item_name]"]')?.value?.trim();
         
         // Only process rows that have item
         if (itemCode || itemName) {
-            // Use querySelector on row for fresh references
-            const qtyInput = row.querySelector('input[name*="[qty]"]');
-            const rateInput = row.querySelector('input[name*="[rate]"]');
-            const discountInput = row.querySelector('input[name*="[discount]"]');
-            
-            const qty = parseFloat(qtyInput?.value) || 0;
-            const rate = parseFloat(rateInput?.value) || 0;
-            const discount = parseFloat(discountInput?.value) || 0;
+            const qty = parseFloat(document.getElementById(`qty_${rowIndex}`)?.value) || 0;
+            const rate = parseFloat(document.getElementById(`rate_${rowIndex}`)?.value) || 0;
+            const discount = parseFloat(document.getElementById(`discount_${rowIndex}`)?.value) || 0;
             
             // Calculate amounts for this row
             const rowAmount = qty * rate;  // Amount before discount
             const rowDiscount = rowAmount * (discount / 100);  // Discount amount
             const rowAfterDiscount = rowAmount - rowDiscount;  // Amount after discount
             
-            // Get GST percentages from row attributes
+            // Get GST percentages
             const cgst = parseFloat(row.getAttribute('data-cgst')) || 0;
             const sgst = parseFloat(row.getAttribute('data-sgst')) || 0;
             const cess = parseFloat(row.getAttribute('data-cess')) || 0;
@@ -2997,27 +3160,21 @@ function calculateSummary() {
             totalDisAmt += rowDiscount;
             totalFTAmt += rowAfterDiscount;
             totalTax += rowTax;
-            
-            console.log(`   Row ${itemCode}: Qty=${qty}, Rate=${rate}, Dis=${discount}%, Amount=${rowAmount.toFixed(2)}, Tax=${rowTax.toFixed(2)}`);
         }
     });
     
     // Calculate Net Amount: Amount after discount + Tax
     totalNet = totalFTAmt + totalTax;
     
-    console.log(`📊 Summary Totals: NT=${totalNtAmt.toFixed(2)}, Dis=${totalDisAmt.toFixed(2)}, Tax=${totalTax.toFixed(2)}, Net=${totalNet.toFixed(2)}`);
-    
-    // Update summary fields with null checks
-    const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-    
-    setVal('nt_amt', totalNtAmt.toFixed(2));      // Total before discount
-    setVal('sc_amt', '0.00');                      // SC (not used)
-    setVal('ft_amt', totalNtAmt.toFixed(2));      // F.T.Amt = N.T.Amt
-    setVal('dis_amt', totalDisAmt.toFixed(2));    // Total discount
-    setVal('scm_amt', '0.00');                     // Scm (not used)
-    setVal('tax_amt', totalTax.toFixed(2));       // Total tax
-    setVal('net_amt', totalNet.toFixed(2));       // Final net amount
-    setVal('scm_percent', '0.00');                 // Scm % (not used)
+    // Update summary fields
+    document.getElementById('nt_amt').value = totalNtAmt.toFixed(2);  // Total before discount
+    document.getElementById('sc_amt').value = '0.00';  // SC (not used in sale)
+    document.getElementById('ft_amt').value = totalNtAmt.toFixed(2);  // F.T.Amt = N.T.Amt
+    document.getElementById('dis_amt').value = totalDisAmt.toFixed(2);  // Total discount
+    document.getElementById('scm_amt').value = '0.00';  // Scm (not used)
+    document.getElementById('tax_amt').value = totalTax.toFixed(2);  // Total tax
+    document.getElementById('net_amt').value = totalNet.toFixed(2);  // Final net amount
+    document.getElementById('scm_percent').value = '0.00';  // Scm % (not used)
 }
 
 // Add new empty row
@@ -3029,24 +3186,20 @@ function addNewRow() {
     newRow.setAttribute('data-row-index', itemIndex);
     newRow.style.cursor = 'pointer';
     newRow.addEventListener('click', function(e) {
-        // Don't trigger if clicking on button
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
-            return;
-        }
         const clickedRow = e.currentTarget;
         const rowIdx = parseInt(clickedRow.getAttribute('data-row-index'));
         selectRow(rowIdx);
     });
     
     newRow.innerHTML = `
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly data-custom-enter="true"></td>
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" style="font-size: 10px; background: #f8f9fa;" autocomplete="off" readonly></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" step="any" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" step="any" style="font-size: 10px;" data-custom-enter="true"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
-        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})" data-custom-enter="true"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" style="font-size: 10px;" autocomplete="off"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="" placeholder="0" step="any" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="0" step="any" style="font-size: 10px;"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+        <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="0" step="0.01" style="font-size: 10px;" readonly></td>
         <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][amount]" id="amount_${itemIndex}" value="0.00" style="font-size: 10px;" readonly></td>
         <td class="p-0 text-center">
@@ -3072,8 +3225,6 @@ function addNewRow() {
             codeInput.focus();
         }
     }, 100);
-
-    return itemIndex;
 }
 
 // Delete row
@@ -3097,7 +3248,7 @@ function deleteSelectedItem() {
     if (currentSelectedRowIndex !== null) {
         deleteRow(currentSelectedRowIndex);
     } else {
-        alert('Please select a row to delete');
+        showAlert('Please select a row to delete', 'warning', 'No Row Selected');
     }
 }
 
@@ -3106,13 +3257,13 @@ function insertItem() {
     openChooseItemsModal();
 }
 
-// Save sale challan transaction
-function saveChallan() {
+// Save sale transaction
+function saveSale() {
     // Collect header data
     const headerData = {
-        series: document.getElementById('seriesSelect')?.value || 'SC',
+        series: document.getElementById('seriesSelect')?.value || 'SB',
         date: document.getElementById('challanDate')?.value || '',
-        challan_no: document.getElementById('challanNo')?.value || '',
+        challan_no: document.getElementById('invoiceNo')?.value || '',
         due_date: document.getElementById('dueDate')?.value || null,
         customer_id: document.getElementById('customerSelect')?.value || '',
         salesman_id: document.getElementById('salesmanSelect')?.value || null,
@@ -3150,7 +3301,6 @@ function saveChallan() {
     const items = [];
     const rows = document.querySelectorAll('#itemsTableBody tr');
     
-    let hasZeroQtyItems = false;
     rows.forEach((row, index) => {
         const itemCode = row.querySelector('input[name*="[code]"]')?.value?.trim();
         const itemName = row.querySelector('input[name*="[item_name]"]')?.value?.trim();
@@ -3158,14 +3308,9 @@ function saveChallan() {
         const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
         
         const hasItemInfo = itemCode || itemName;
+        const hasQuantityOrRate = qty > 0 || rate > 0;
         
-        // Check if item has info but qty is 0
-        if (hasItemInfo && qty <= 0) {
-            hasZeroQtyItems = true;
-        }
-        
-        // Only include items with qty > 0
-        if (hasItemInfo && qty > 0) {
+        if (hasItemInfo && hasQuantityOrRate) {
             // Get batch_id from row attribute - convert to number
             let batchId = row.getAttribute('data-batch-id');
             if (batchId) {
@@ -3178,7 +3323,7 @@ function saveChallan() {
             }
             
             // Log for debugging
-            console.log('📦 Adding item to challan:', {
+            console.log('📦 Adding item to sale:', {
                 item_name: itemName || itemCode,
                 batch_no: row.querySelector('input[name*="[batch]"]')?.value?.trim() || '',
                 batch_id: batchId,
@@ -3204,26 +3349,9 @@ function saveChallan() {
     
     // Validate items
     if (items.length === 0) {
-        if (hasZeroQtyItems) {
-            showAlert('All items have zero quantity.\n\nPlease enter quantity for at least one item.', 'warning', 'Quantity Required');
-        } else {
-            showAlert('Please add at least one item.\n\nUse "Choose Items" button to add items.', 'warning', 'Items Required');
-        }
+        showAlert('Please add at least one item.\n\nUse "Choose Items" button to add items.', 'warning', 'Items Required');
         return;
     }
-    
-    // 🔥 Recalculate summary before saving to ensure amounts are correct
-    calculateSummary();
-    
-    // Re-read header data after recalculation
-    headerData.nt_amount = parseFloat(document.getElementById('nt_amt')?.value) || 0;
-    headerData.sc_amount = parseFloat(document.getElementById('sc_amt')?.value) || 0;
-    headerData.ft_amount = parseFloat(document.getElementById('ft_amt')?.value) || 0;
-    headerData.dis_amount = parseFloat(document.getElementById('dis_amt')?.value) || 0;
-    headerData.scm_amount = parseFloat(document.getElementById('scm_amt')?.value) || 0;
-    headerData.tax_amount = parseFloat(document.getElementById('tax_amt')?.value) || 0;
-    headerData.net_amount = parseFloat(document.getElementById('net_amt')?.value) || 0;
-    headerData.scm_percent = parseFloat(document.getElementById('scm_percent')?.value) || 0;
     
     // Prepare final payload
     const payload = {
@@ -3232,7 +3360,7 @@ function saveChallan() {
         _token: document.querySelector('input[name="_token"]').value
     };
     
-    console.log('=== SAVING SALE CHALLAN ===');
+    console.log('=== SAVING SALE TRANSACTION ===');
     console.log('Header Data:', headerData);
     console.log('Items Count:', items.length);
     console.log('Items Data:', items);
@@ -3257,7 +3385,7 @@ function saveChallan() {
     }
     
     // Send to server
-    fetch('{{ route("admin.sale-challan.store") }}', {
+    fetch('<?php echo e(route("admin.sale-challan.store")); ?>', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -3294,7 +3422,7 @@ function saveChallan() {
     })
     .then(data => {
         if (data.success) {
-            showSuccessModalWithReload('Sale Challan saved successfully!\n\nChallan No: ' + data.challan_no + '\n\nStock has been deducted. Invoice can be created later.', 'Success');
+            showSuccessModalWithReload('Sale Transaction saved successfully!\n\nChallan No: ' + data.challan_no, 'Success');
         } else {
             showAlert('Error: ' + (data.message || 'Unknown error'), 'error', 'Save Failed');
         }
@@ -3305,33 +3433,33 @@ function saveChallan() {
     });
 }
 
-// Fetch next challan number from server
-async function fetchNextChallanNo() {
+// Fetch next invoice number from server
+async function fetchNextInvoiceNo() {
     try {
-        const response = await fetch('{{ route("admin.sale-challan.next-challan-no") }}');
+        const response = await fetch('<?php echo e(route("admin.sale-challan.next-challan-no")); ?>');
         const data = await response.json();
         if (data.success && data.next_challan_no) {
-            document.getElementById('challanNo').value = data.next_challan_no;
-            console.log('Next challan number updated:', data.next_challan_no);
+            document.getElementById('invoiceNo').value = data.next_challan_no;
+            console.log('Next invoice number updated:', data.next_challan_no);
         } else {
             // Fallback: increment locally
-            const currentChallanNo = document.getElementById('challanNo').value;
-            const match = currentChallanNo.match(/SCH-(\d+)/);
+            const currentInvoiceNo = document.getElementById('invoiceNo').value;
+            const match = currentInvoiceNo.match(/INV-(\d+)/);
             if (match) {
                 const nextNum = parseInt(match[1]) + 1;
-                const nextChallanNo = 'SCH-' + String(nextNum).padStart(6, '0');
-                document.getElementById('challanNo').value = nextChallanNo;
+                const nextInvoiceNo = 'INV-' + String(nextNum).padStart(6, '0');
+                document.getElementById('invoiceNo').value = nextInvoiceNo;
             }
         }
     } catch (error) {
-        console.error('Error fetching next challan number:', error);
+        console.error('Error fetching next invoice number:', error);
         // Fallback: increment locally
-        const currentChallanNo = document.getElementById('challanNo').value;
-        const match = currentChallanNo.match(/SCH-(\d+)/);
+        const currentInvoiceNo = document.getElementById('invoiceNo').value;
+        const match = currentInvoiceNo.match(/INV-(\d+)/);
         if (match) {
             const nextNum = parseInt(match[1]) + 1;
-            const nextChallanNo = 'SCH-' + String(nextNum).padStart(6, '0');
-            document.getElementById('challanNo').value = nextChallanNo;
+            const nextInvoiceNo = 'INV-' + String(nextNum).padStart(6, '0');
+            document.getElementById('invoiceNo').value = nextInvoiceNo;
         }
     }
 }
@@ -3383,9 +3511,959 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         closeChooseItemsModal();
         closeBatchSelectionModal();
-        closeAlert();
+        closeDateRangeModal();
+        closeInvoicesModal();
     }
 });
+
+// ============================================
+// MODIFICATION FUNCTIONALITY - DATE RANGE & INVOICE SELECTION
+// ============================================
+
+// Open Date Range Modal
+function openDateRangeModal() {
+    const modal = document.getElementById('dateRangeModal');
+    const backdrop = document.getElementById('dateRangeBackdrop');
+    
+    // Set default dates (last 30 days)
+    const today = new Date();
+    const last30Days = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    
+    document.getElementById('filterFromDate').value = last30Days.toISOString().split('T')[0];
+    document.getElementById('filterToDate').value = today.toISOString().split('T')[0];
+    
+    modal.classList.add('show');
+    backdrop.classList.add('show');
+}
+
+// Close Date Range Modal
+function closeDateRangeModal() {
+    const modal = document.getElementById('dateRangeModal');
+    const backdrop = document.getElementById('dateRangeBackdrop');
+    
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+}
+
+// Filter Invoices by Date Range
+async function filterInvoicesByDate() {
+    const fromDate = document.getElementById('filterFromDate').value;
+    const toDate = document.getElementById('filterToDate').value;
+    
+    if (!fromDate || !toDate) {
+        showAlert('Please select both From and To dates', 'warning', 'Date Required');
+        return;
+    }
+    
+    if (new Date(fromDate) > new Date(toDate)) {
+        showAlert('From date cannot be after To date', 'warning', 'Invalid Date Range');
+        return;
+    }
+    
+    closeDateRangeModal();
+    loadInvoices(fromDate, toDate);
+}
+
+// Open All Invoices Modal
+function openAllInvoicesModal() {
+    initInvoicesModalKeyboardHandlers();
+    loadInvoices(); // Load all invoices without date filter
+}
+
+// Close Invoices Modal
+function closeInvoicesModal() {
+    const modal = document.getElementById('invoicesModal');
+    const backdrop = document.getElementById('invoicesBackdrop');
+    
+    modal.classList.remove('show');
+    backdrop.classList.remove('show');
+    window.__saleChallanModInvoiceRowIndex = -1;
+}
+
+function isInvoicesModalOpen() {
+    const modal = document.getElementById('invoicesModal');
+    return !!(modal && modal.classList.contains('show'));
+}
+
+function getInvoiceModalRows() {
+    return Array.from(document.querySelectorAll('#invoicesTableBody tr[data-transaction-id]'));
+}
+
+function setActiveInvoiceModalRow(index, ensureVisible = true) {
+    const rows = getInvoiceModalRows();
+    rows.forEach(row => {
+        row.classList.remove('kb-active');
+        row.removeAttribute('aria-selected');
+    });
+
+    if (!rows.length) {
+        window.__saleChallanModInvoiceRowIndex = -1;
+        return;
+    }
+
+    let safeIndex = index;
+    if (safeIndex < 0) safeIndex = 0;
+    if (safeIndex >= rows.length) safeIndex = rows.length - 1;
+
+    rows[safeIndex].classList.add('kb-active');
+    rows[safeIndex].setAttribute('aria-selected', 'true');
+    rows[safeIndex].setAttribute('tabindex', '-1');
+    window.__saleChallanModInvoiceRowIndex = safeIndex;
+
+    if (ensureVisible) {
+        rows[safeIndex].scrollIntoView({ block: 'nearest' });
+    }
+    rows[safeIndex].focus({ preventScroll: true });
+}
+
+function triggerActiveInvoiceModalRowSelection() {
+    const rows = getInvoiceModalRows();
+    if (!rows.length) return;
+
+    const idx = Number.isInteger(window.__saleChallanModInvoiceRowIndex)
+        ? window.__saleChallanModInvoiceRowIndex
+        : 0;
+
+    const safeIndex = Math.max(0, Math.min(idx, rows.length - 1));
+    const transactionId = parseInt(rows[safeIndex].getAttribute('data-transaction-id'), 10);
+    if (!transactionId) return;
+
+    selectInvoice(transactionId);
+}
+
+function handleInvoicesModalKeyDown(e, source) {
+    if (!isInvoicesModalOpen()) return;
+
+    const key = e.key;
+    if (key !== 'ArrowDown' && key !== 'ArrowUp' && key !== 'Enter' && key !== 'Escape') return;
+
+    // keyup fallback path: if keydown was already handled for same key just before, skip this keyup
+    if (e.type === 'keyup') {
+        const lastTs = window.__saleChallanModInvoiceKeydownTs || 0;
+        const lastKey = window.__saleChallanModInvoiceLastKey || '';
+        if ((Date.now() - lastTs) < 120 && lastKey === key) {
+            return;
+        }
+    } else if (e.type === 'keydown') {
+        window.__saleChallanModInvoiceKeydownTs = Date.now();
+        window.__saleChallanModInvoiceLastKey = key;
+    }
+
+    // De-duplicate same keyboard event across window/document/modal capture listeners
+    if (e.__saleChallanModInvoiceHandled) return;
+    e.__saleChallanModInvoiceHandled = true;
+
+    console.log('[KB-SCMOD][InvoicesModal]', {
+        source: source || 'unknown',
+        eventType: e.type || 'keydown',
+        key: key,
+        target: e.target ? (e.target.id || e.target.tagName || null) : null,
+        activeElement: document.activeElement ? (document.activeElement.id || document.activeElement.tagName || null) : null,
+        rows: getInvoiceModalRows().length,
+        activeRowIndex: window.__saleChallanModInvoiceRowIndex
+    });
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+    }
+
+    if (key === 'Escape') {
+        closeInvoicesModal();
+        const invoiceNo = document.getElementById('invoiceNo');
+        if (invoiceNo) {
+            invoiceNo.focus();
+            if (typeof invoiceNo.select === 'function') invoiceNo.select();
+        }
+        return;
+    }
+
+    const rows = getInvoiceModalRows();
+    if (!rows.length) return;
+
+    if (!Number.isInteger(window.__saleChallanModInvoiceRowIndex) || window.__saleChallanModInvoiceRowIndex < 0) {
+        window.__saleChallanModInvoiceRowIndex = 0;
+    }
+
+    if (key === 'ArrowDown') {
+        setActiveInvoiceModalRow(window.__saleChallanModInvoiceRowIndex + 1, true);
+        return;
+    }
+
+    if (key === 'ArrowUp') {
+        setActiveInvoiceModalRow(window.__saleChallanModInvoiceRowIndex - 1, true);
+        return;
+    }
+
+    if (key === 'Enter') {
+        triggerActiveInvoiceModalRowSelection();
+    }
+}
+
+function initInvoicesModalKeyboardHandlers() {
+    if (window.__saleChallanModInvoicesKbBound) return;
+    window.__saleChallanModInvoicesKbBound = true;
+    window.__saleChallanModInvoiceRowIndex = -1;
+    window.__saleChallanModInvoiceKeydownTs = 0;
+    window.__saleChallanModInvoiceLastKey = '';
+
+    const invoicesModal = document.getElementById('invoicesModal');
+    if (invoicesModal) {
+        invoicesModal.addEventListener('keydown', function(e) {
+            handleInvoicesModalKeyDown(e, 'modal-capture');
+        }, true);
+        invoicesModal.addEventListener('keyup', function(e) {
+            handleInvoicesModalKeyDown(e, 'modal-capture-keyup');
+        }, true);
+        console.log('[KB-SCMOD] invoices modal capture key handler attached');
+    } else {
+        console.warn('[KB-SCMOD] #invoicesModal not found for keyboard handler');
+    }
+
+    document.addEventListener('keydown', function(e) {
+        handleInvoicesModalKeyDown(e, 'document-capture');
+    }, true);
+    document.addEventListener('keyup', function(e) {
+        handleInvoicesModalKeyDown(e, 'document-capture-keyup');
+    }, true);
+
+    window.addEventListener('keydown', function(e) {
+        handleInvoicesModalKeyDown(e, 'window-capture');
+    }, true);
+    window.addEventListener('keyup', function(e) {
+        handleInvoicesModalKeyDown(e, 'window-capture-keyup');
+    }, true);
+
+    console.log('[KB-SCMOD] invoices modal keyboard handlers initialized');
+}
+
+// Load Invoices (with optional date filter)
+async function loadInvoices(fromDate = null, toDate = null) {
+    const modal = document.getElementById('invoicesModal');
+    const backdrop = document.getElementById('invoicesBackdrop');
+    const tbody = document.getElementById('invoicesTableBody');
+    const title = document.getElementById('invoicesModalTitle');
+    
+    // Show modal with loading state
+    modal.classList.add('show');
+    backdrop.classList.add('show');
+    modal.setAttribute('tabindex', '-1');
+    setTimeout(() => {
+        if (isInvoicesModalOpen()) {
+            modal.focus();
+        }
+    }, 0);
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Loading invoices...</td></tr>';
+    
+    // Update title based on filter
+    if (fromDate && toDate) {
+        title.textContent = `Sale Invoices (${formatDate(fromDate)} to ${formatDate(toDate)})`;
+    } else {
+        title.textContent = 'All Sale Invoices';
+    }
+    
+    try {
+        // Build URL with query parameters
+        let url = '<?php echo e(route("admin.sale-challan.modification.challans")); ?>';
+        if (fromDate && toDate) {
+            url += `?from_date=${fromDate}&to_date=${toDate}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        // API returns 'challans' not 'invoices'
+        const challans = data.challans || [];
+        
+        if (data.success && challans.length > 0) {
+            tbody.innerHTML = '';
+            challans.forEach((challan, index) => {
+                const row = `
+                    <tr style="cursor: pointer;" data-transaction-id="${challan.id}" onclick="selectInvoice(${challan.id})">
+                        <td class="text-center">${challan.challan_no}</td>
+                        <td class="text-center">${challan.challan_date}</td>
+                        <td>${challan.customer_name}</td>
+                        <td class="text-end">₹${parseFloat(challan.net_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                        <td class="text-center">${challan.status_badge}</td>
+                        <td class="text-center">
+                            <span class="badge bg-${challan.is_invoiced ? 'success' : 'warning'}">
+                                ${challan.is_invoiced ? 'Invoiced' : 'Pending'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+
+            getInvoiceModalRows().forEach((row, rowIndex) => {
+                row.addEventListener('mouseenter', function() {
+                    setActiveInvoiceModalRow(rowIndex, false);
+                });
+            });
+
+            setActiveInvoiceModalRow(0, false);
+            
+            // Update total count
+            document.getElementById('invoicesTotal').textContent = `Total: ${challans.length} challan(s)`;
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No challans found</td></tr>';
+            document.getElementById('invoicesTotal').textContent = 'Total: 0 challan(s)';
+            window.__saleChallanModInvoiceRowIndex = -1;
+        }
+    } catch (error) {
+        console.error('Error loading challans:', error);
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading challans</td></tr>';
+        showAlert('Error loading challans: ' + error.message, 'error', 'Load Failed');
+        window.__saleChallanModInvoiceRowIndex = -1;
+    }
+}
+
+// Load Transaction by Invoice Number
+async function loadTransactionByInvoiceNo(invoiceNo) {
+    try {
+        // Get invoice number from input if not provided
+        const invoiceNoInput = document.getElementById('invoiceNo');
+        let invoiceNumber = invoiceNo || invoiceNoInput.value.trim();
+        
+        // Validate invoice number
+        if (!invoiceNumber || invoiceNumber === 'Loading...') {
+            showAlert('Please enter a valid invoice number', 'warning', 'Invoice Number Required');
+            return false;
+        }
+        
+        // Show loading indicator
+        const originalValue = invoiceNoInput.value;
+        invoiceNoInput.value = 'Loading...';
+        invoiceNoInput.disabled = true;
+        
+        // Search for challan by challan number
+        const url = `<?php echo e(url('/admin/sale-challan/modification/search')); ?>?challan_no=${encodeURIComponent(invoiceNumber)}`;
+        const response = await fetch(url);
+        
+        // Check if response is OK
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Server error:', errorText);
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+        
+        // Parse JSON response
+        const data = await response.json();
+        
+        // Re-enable input
+        invoiceNoInput.disabled = false;
+        
+        if (data.success && data.transaction) {
+            populateFormWithTransaction(data.transaction);
+            pendingTableFocusTarget = 'batch';
+            showAlert('Invoice loaded successfully!\n\nYou can now modify the transaction or add more items.', 'success', 'Invoice Loaded');
+            return true;
+        } else {
+            showAlert('Challan Not found: ' + invoiceNumber + '\n\nPlease check the invoice number and try again.', 'error', 'Challan Not Found');
+            invoiceNoInput.value = originalValue;
+            return false;
+        }
+    } catch (error) {
+        console.error('Error loading invoice:', error);
+        
+        // Re-enable input
+        const invoiceNoInput = document.getElementById('invoiceNo');
+        invoiceNoInput.disabled = false;
+        
+        // Restore original value
+        const invoiceNoInput2 = document.getElementById('invoiceNo');
+        const originalValue = invoiceNoInput2.value === 'Loading...' ? '' : invoiceNoInput2.value;
+        invoiceNoInput2.value = originalValue;
+        
+        showAlert('Error loading invoice: ' + error.message + '\n\nPlease check the invoice number and try again.', 'error', 'Load Failed');
+        return false;
+    }
+}
+
+// Select Invoice and Load Data
+async function selectInvoice(transactionId) {
+    closeInvoicesModal();
+    
+    // Show loading indicator
+    const invoiceNoInput = document.getElementById('invoiceNo');
+    invoiceNoInput.value = 'Loading...';
+    
+    try {
+        // Use sale-challan route instead of sale route
+        const url = `<?php echo e(url('/admin/sale-challan/modification')); ?>/${transactionId}`;
+        console.log('🔄 Fetching challan from:', url);
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        console.log('📦 API Response:', data);
+        console.log('📦 Transaction object:', data.transaction);
+        console.log('📦 Items in response:', data.transaction?.items);
+        console.log('📦 Items count:', data.transaction?.items?.length);
+        
+        if (data.success && data.transaction) {
+            populateFormWithTransaction(data.transaction);
+            pendingTableFocusTarget = 'batch';
+            showAlert('Challan loaded successfully!\n\nYou can now modify the challan.', 'success', 'Challan Loaded');
+        } else {
+            showAlert('Error: ' + (data.message || 'Failed to load challan'), 'error', 'Load Failed');
+            invoiceNoInput.value = '';
+        }
+    } catch (error) {
+        console.error('Error loading challan:', error);
+        showAlert('Error loading challan: ' + error.message, 'error', 'Load Failed');
+        invoiceNoInput.value = '';
+    }
+}
+
+// Fetch customer name by ID
+async function fetchCustomerName(customerId) {
+    if (!customerId) return '';
+    
+    try {
+        // Find customer in the dropdown options first
+        const customerSelect = document.getElementById('customerSelect');
+        if (customerSelect) {
+            for (let i = 0; i < customerSelect.options.length; i++) {
+                if (customerSelect.options[i].value == customerId) {
+                    return customerSelect.options[i].getAttribute('data-name') || '';
+                }
+            }
+        }
+        
+        // If not found in dropdown, we'll use the customer_id as fallback
+        return 'Customer ID: ' + customerId;
+    } catch (error) {
+        console.error('Error fetching customer name:', error);
+        return 'Customer ID: ' + customerId;
+    }
+}
+
+// Fetch salesman name by ID
+async function fetchSalesmanName(salesmanId) {
+    if (!salesmanId) return '';
+    
+    try {
+        // Find salesman in the dropdown options first
+        const salesmanSelect = document.getElementById('salesmanSelect');
+        if (salesmanSelect) {
+            for (let i = 0; i < salesmanSelect.options.length; i++) {
+                if (salesmanSelect.options[i].value == salesmanId) {
+                    return salesmanSelect.options[i].getAttribute('data-name') || '';
+                }
+            }
+        }
+        
+        // If not found in dropdown, we'll use the salesman_id as fallback
+        return 'Salesman ID: ' + salesmanId;
+    } catch (error) {
+        console.error('Error fetching salesman name:', error);
+        return 'Salesman ID: ' + salesmanId;
+    }
+}
+
+// Populate Form with Transaction Data
+async function populateFormWithTransaction(transaction) {
+    console.log('Populating form with transaction:', transaction);
+    
+    // Store transaction ID for update
+    document.getElementById('transactionId').value = transaction.id;
+    
+    // Populate header fields
+    document.getElementById('invoiceNo').value = transaction.challan_no;
+    document.getElementById('seriesSelect').value = transaction.series || 'SB';
+    document.getElementById('challanDate').value = transaction.challan_date;
+    document.getElementById('dueDate').value = transaction.due_date || transaction.challan_date;
+    
+    // Populate customer and salesman data
+    const customerSelect = document.getElementById('customerSelect');
+    const salesmanSelect = document.getElementById('salesmanSelect');
+    
+    // Handle customer data
+    const customerId = transaction.customer_id || '';
+    let customerName = transaction.customer_name || (transaction.customer && transaction.customer.name) || '';
+    let customerCode = transaction.customer_code || (transaction.customer && transaction.customer.code) || '';
+    
+    // Debug: Customer data
+    console.log('Customer ID:', customerId, 'Name:', customerName);
+    
+    // If customer name is missing, fetch it
+    if (customerId && !customerName) {
+        customerName = await fetchCustomerName(customerId);
+    }
+    
+    if (customerId && customerSelect) {
+        // Temporarily enable to set value
+        customerSelect.disabled = false;
+        
+        // Find and select the customer option
+        let customerFound = false;
+        for (let i = 0; i < customerSelect.options.length; i++) {
+            if (customerSelect.options[i].value == customerId) {
+                customerSelect.selectedIndex = i;
+                customerFound = true;
+                console.log('✅ Customer selected:', customerSelect.options[i].text);
+                // Get the actual name and code from dropdown if missing
+                if (!customerName) {
+                    customerName = customerSelect.options[i].getAttribute('data-name') || '';
+                }
+                if (!customerCode) {
+                    customerCode = customerSelect.options[i].getAttribute('data-code') || '';
+                }
+                break;
+            }
+        }
+        
+        // If customer not found in dropdown, add it
+        if (!customerFound && customerName) {
+            console.log('Adding new customer option:', customerName);
+            const customerOptionText = (customerCode ? customerCode + ' - ' : '') + customerName;
+            const newOption = new Option(customerOptionText, customerId, true, true);
+            newOption.setAttribute('data-name', customerName);
+            newOption.setAttribute('data-code', customerCode);
+            customerSelect.add(newOption);
+        }
+        
+        // Force the selection to show
+        if (customerFound || (!customerFound && customerName)) {
+            customerSelect.value = customerId;
+            // Force display update
+            customerSelect.dispatchEvent(new Event('change'));
+        }
+        
+        // Add a small delay before disabling to ensure selection sticks
+        setTimeout(() => {
+            customerSelect.disabled = true;
+            console.log('Customer dropdown disabled. Current value:', customerSelect.value, customerSelect.options[customerSelect.selectedIndex]?.text);
+        }, 100);
+    }
+    
+    // Handle salesman data
+    const salesmanId = transaction.salesman_id || '';
+    let salesmanName = transaction.salesman_name || (transaction.salesman && transaction.salesman.name) || '';
+    let salesmanCode = transaction.salesman_code || (transaction.salesman && transaction.salesman.code) || '';
+    
+    // Debug: Salesman data
+    console.log('Salesman ID:', salesmanId, 'Name:', salesmanName);
+    
+    // If salesman name is missing, fetch it
+    if (salesmanId && !salesmanName) {
+        salesmanName = await fetchSalesmanName(salesmanId);
+    }
+    
+    if (salesmanId && salesmanSelect) {
+        // Temporarily enable to set value
+        salesmanSelect.disabled = false;
+        
+        // Find and select the salesman option
+        let salesmanFound = false;
+        for (let i = 0; i < salesmanSelect.options.length; i++) {
+            if (salesmanSelect.options[i].value == salesmanId) {
+                salesmanSelect.selectedIndex = i;
+                salesmanFound = true;
+                console.log('✅ Salesman selected:', salesmanSelect.options[i].text);
+                // Get the actual name and code from dropdown if missing
+                if (!salesmanName) {
+                    salesmanName = salesmanSelect.options[i].getAttribute('data-name') || '';
+                }
+                if (!salesmanCode) {
+                    salesmanCode = salesmanSelect.options[i].getAttribute('data-code') || '';
+                }
+                break;
+            }
+        }
+        
+        // If salesman not found in dropdown, add it
+        if (!salesmanFound && salesmanName) {
+            console.log('Adding new salesman option:', salesmanName);
+            const salesmanOptionText = (salesmanCode ? salesmanCode + ' - ' : '') + salesmanName;
+            const newOption = new Option(salesmanOptionText, salesmanId, true, true);
+            newOption.setAttribute('data-name', salesmanName);
+            newOption.setAttribute('data-code', salesmanCode);
+            salesmanSelect.add(newOption);
+        }
+        
+        // Force the selection to show
+        if (salesmanFound || (!salesmanFound && salesmanName)) {
+            salesmanSelect.value = salesmanId;
+            // Force display update
+            salesmanSelect.dispatchEvent(new Event('change'));
+        }
+        
+        // Add a small delay before disabling to ensure selection sticks
+        setTimeout(() => {
+            salesmanSelect.disabled = true;
+            console.log('Salesman dropdown disabled. Current value:', salesmanSelect.value, salesmanSelect.options[salesmanSelect.selectedIndex]?.text);
+        }, 100);
+    }
+    
+    // Set values with null checks
+    const cashEl = document.getElementById('cash');
+    const transferEl = document.getElementById('transfer');
+    const remarksEl = document.getElementById('remarks');
+    
+    if (cashEl) cashEl.value = transaction.cash_flag || 'N';
+    if (transferEl) transferEl.value = transaction.transfer_flag || 'N';
+    if (remarksEl) remarksEl.value = transaction.remarks || '';
+    
+    // Populate summary amounts from transaction with null checks
+    const setFieldValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+    };
+    
+    setFieldValue('nt_amt', parseFloat(transaction.nt_amount || 0).toFixed(2));
+    setFieldValue('sc_amt', parseFloat(transaction.sc_amount || 0).toFixed(2));
+    setFieldValue('ft_amt', parseFloat(transaction.ft_amount || 0).toFixed(2));
+    setFieldValue('dis_amt', parseFloat(transaction.dis_amount || 0).toFixed(2));
+    setFieldValue('scm_amt', parseFloat(transaction.scm_amount || 0).toFixed(2));
+    setFieldValue('tax_amt', parseFloat(transaction.tax_amount || 0).toFixed(2));
+    setFieldValue('net_amt', parseFloat(transaction.net_amount || 0).toFixed(2));
+    setFieldValue('scm_percent', parseFloat(transaction.scm_percent || 0).toFixed(2));
+    setFieldValue('totalAmount', parseFloat(transaction.net_amount || 0).toFixed(2));
+    
+    // Update UI states
+    updateDayName();
+    updateInvoiceType();
+    checkChooseItemsButtonState();
+    
+    // Clear existing items
+    const tbody = document.getElementById('itemsTableBody');
+    tbody.innerHTML = '';
+    itemIndex = -1; // Reset item index
+    
+    // Debug: Log items data
+    console.log('🔍 Transaction items:', transaction.items);
+    console.log('🔍 Items count:', transaction.items ? transaction.items.length : 0);
+    
+    // Populate items
+    if (transaction.items && transaction.items.length > 0) {
+        console.log('✅ Loading', transaction.items.length, 'items into table');
+        transaction.items.forEach((item, index) => {
+            itemIndex++;
+            const newRow = document.createElement('tr');
+            newRow.setAttribute('data-row-index', itemIndex);
+            newRow.setAttribute('data-item-id', item.item_id || '');
+            newRow.style.cursor = 'pointer';
+            
+            const rowIdx = itemIndex;
+            newRow.addEventListener('click', function(e) {
+                const clickedRow = e.currentTarget;
+                const rowIndex = parseInt(clickedRow.getAttribute('data-row-index'));
+                selectRow(rowIndex);
+            });
+            
+            // Create row HTML
+            newRow.innerHTML = `
+                <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][code]" value="${item.item_code || ''}" style="font-size: 10px;" autocomplete="off"></td>
+                <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][item_name]" value="${item.item_name || ''}" style="font-size: 10px;" autocomplete="off"></td>
+                <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][batch]" value="${item.batch_no || ''}" style="font-size: 10px;" autocomplete="off"></td>
+                <td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items[${itemIndex}][expiry]" value="${item.expiry_date || ''}" style="font-size: 10px;" autocomplete="off"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items[${itemIndex}][qty]" id="qty_${itemIndex}" value="${item.qty || 0}" placeholder="0" step="any" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][free_qty]" id="free_qty_${itemIndex}" value="${item.free_qty || 0}" step="any" style="font-size: 10px;"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items[${itemIndex}][rate]" id="rate_${itemIndex}" value="${item.sale_rate || 0}" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items[${itemIndex}][discount]" id="discount_${itemIndex}" value="${item.discount_percent > 0 ? item.discount_percent : ''}" placeholder="0" step="0.01" style="font-size: 10px;" data-row="${itemIndex}" onchange="calculateRowAmount(${itemIndex})" oninput="calculateRowAmount(${itemIndex})"></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][mrp]" id="mrp_${itemIndex}" value="${item.mrp || 0}" step="0.01" style="font-size: 10px;" readonly></td>
+                <td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items[${itemIndex}][amount]" id="amount_${itemIndex}" value="${item.amount || 0}" style="font-size: 10px;" readonly></td>
+                <td class="p-0 text-center">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteRow(${itemIndex})" title="Delete Row" style="font-size: 9px; padding: 2px 5px;">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            
+            // Store item attributes for calculations
+            newRow.setAttribute('data-hsn-code', item.hsn_code || '');
+            newRow.setAttribute('data-cgst', item.cgst_percent || 0);
+            newRow.setAttribute('data-sgst', item.sgst_percent || 0);
+            newRow.setAttribute('data-cess', item.cess_percent || 0);
+            newRow.setAttribute('data-packing', item.packing || '');
+            newRow.setAttribute('data-unit', item.unit || '1');
+            newRow.setAttribute('data-company', item.company_name || '');
+            newRow.setAttribute('data-batch-code', item.batch_no || '');
+            newRow.setAttribute('data-case-qty', item.case_qty || 0);
+            newRow.setAttribute('data-box-qty', item.box_qty || 0);
+            
+            // Store batch_id if available
+            if (item.batch_id) {
+                newRow.setAttribute('data-batch-id', item.batch_id);
+            }
+            
+            // Mark row as complete
+            newRow.setAttribute('data-complete', 'true');
+            newRow.classList.add('table-success');
+            
+            tbody.appendChild(newRow);
+            console.log('✅ Row added:', itemIndex, item.item_name, 'Qty:', item.qty, 'Rate:', item.sale_rate);
+            
+            // Add event listeners
+            addRowEventListeners(newRow, itemIndex);
+        });
+        console.log('✅ All items loaded. Total rows in table:', tbody.querySelectorAll('tr').length);
+    } else {
+        console.log('⚠️ No items found in transaction');
+    }
+    
+    // Don't auto-calculate - use values from database
+    // The summary values are already populated above from transaction data
+    
+    // Select first row if available to show detailed summary
+    if (transaction.items && transaction.items.length > 0) {
+        setTimeout(() => {
+            selectRow(0);
+            // Populate detailed summary for first item
+            updateDetailedSummary(0);
+            updateCalculationSection(0);
+            // Recalculate all row amounts and summary
+            for (let i = 0; i <= itemIndex; i++) {
+                calculateRowAmount(i);
+            }
+            calculateSummary();
+        }, 100);
+    }
+    
+    console.log('Form populated successfully with data from database');
+    
+    // Final check - ensure dropdowns maintain their selections
+    setTimeout(() => {
+        const finalCustomerSelect = document.getElementById('customerSelect');
+        const finalSalesmanSelect = document.getElementById('salesmanSelect');
+        
+        if (transaction.customer_id && finalCustomerSelect) {
+            finalCustomerSelect.value = transaction.customer_id;
+            console.log('Final check - Customer dropdown value:', finalCustomerSelect.value, finalCustomerSelect.options[finalCustomerSelect.selectedIndex]?.text);
+        }
+        
+        if (transaction.salesman_id && finalSalesmanSelect) {
+            finalSalesmanSelect.value = transaction.salesman_id;
+            console.log('Final check - Salesman dropdown value:', finalSalesmanSelect.value, finalSalesmanSelect.options[finalSalesmanSelect.selectedIndex]?.text);
+        }
+    }, 200);
+}
+
+// Format date for display
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+// Modify the saveSale function to handle updates
+const originalSaveSale = saveSale;
+saveSale = function() {
+    const transactionId = document.getElementById('transactionId').value;
+    
+    if (transactionId) {
+        // Update existing transaction
+        updateSale(transactionId);
+    } else {
+        // This is modification page, shouldn't create new
+        showAlert('Please select an invoice to modify.\n\nUse "Filter by Date" or "All Invoices" button to select an invoice.', 'warning', 'Invoice Required');
+    }
+};
+
+// Update Sale Transaction
+async function updateSale(transactionId) {
+    // Collect header data
+    const headerData = {
+        series: document.getElementById('seriesSelect')?.value || 'SB',
+        date: document.getElementById('challanDate')?.value || '',
+        challan_no: document.getElementById('invoiceNo')?.value || '',
+        due_date: document.getElementById('dueDate')?.value || null,
+        customer_id: document.getElementById('customerSelect')?.value || '',
+        salesman_id: document.getElementById('salesmanSelect')?.value || null,
+        cash: document.getElementById('cash')?.value || 'N',
+        transfer: document.getElementById('transfer')?.value || 'N',
+        remarks: document.getElementById('remarks')?.value || '',
+        
+        // Summary amounts
+        nt_amount: parseFloat(document.getElementById('nt_amt')?.value) || 0,
+        sc_amount: parseFloat(document.getElementById('sc_amt')?.value) || 0,
+        ft_amount: parseFloat(document.getElementById('ft_amt')?.value) || 0,
+        dis_amount: parseFloat(document.getElementById('dis_amt')?.value) || 0,
+        scm_amount: parseFloat(document.getElementById('scm_amt')?.value) || 0,
+        tax_amount: parseFloat(document.getElementById('tax_amt')?.value) || 0,
+        net_amount: parseFloat(document.getElementById('net_amt')?.value) || 0,
+        scm_percent: parseFloat(document.getElementById('scm_percent')?.value) || 0,
+        tcs_amount: 0,
+        excise_amount: 0,
+    };
+    
+    // Validate required fields
+    if (!headerData.date) {
+        showAlert('Please select Date', 'warning', 'Date Required');
+        return;
+    }
+    
+    if (!headerData.customer_id) {
+        showAlert('Please select Customer', 'warning', 'Customer Required');
+        return;
+    }
+    
+    // Collect items data
+    const items = [];
+    const rows = document.querySelectorAll('#itemsTableBody tr');
+    
+    rows.forEach((row, index) => {
+        const itemCode = row.querySelector('input[name*="[code]"]')?.value?.trim();
+        const itemName = row.querySelector('input[name*="[item_name]"]')?.value?.trim();
+        const qty = parseFloat(row.querySelector('input[name*="[qty]"]')?.value) || 0;
+        const rate = parseFloat(row.querySelector('input[name*="[rate]"]')?.value) || 0;
+        
+        const hasItemInfo = itemCode || itemName;
+        const hasQuantityOrRate = qty > 0 || rate > 0;
+        
+        if (hasItemInfo && hasQuantityOrRate) {
+            let batchId = row.getAttribute('data-batch-id');
+            if (batchId) {
+                batchId = parseInt(batchId);
+                if (isNaN(batchId)) batchId = null;
+            } else {
+                batchId = null;
+            }
+            
+            items.push({
+                item_code: itemCode || '',
+                item_name: itemName || '',
+                batch: row.querySelector('input[name*="[batch]"]')?.value?.trim() || '',
+                batch_id: batchId,
+                expiry: row.querySelector('input[name*="[expiry]"]')?.value || null,
+                qty: qty,
+                free_qty: parseFloat(row.querySelector('input[name*="[free_qty]"]')?.value) || 0,
+                rate: rate,
+                discount: parseFloat(row.querySelector('input[name*="[discount]"]')?.value) || 0,
+                mrp: parseFloat(row.querySelector('input[name*="[mrp]"]')?.value) || 0,
+                amount: parseFloat(row.querySelector('input[name*="[amount]"]')?.value) || 0,
+                row_order: index
+            });
+        }
+    });
+    
+    // Validate items
+    if (items.length === 0) {
+        showAlert('Please add at least one item.', 'warning', 'Items Required');
+        return;
+    }
+    
+    // Prepare payload
+    const payload = {
+        ...headerData,
+        items: items,
+        _token: document.querySelector('input[name="_token"]').value
+    };
+    
+    console.log('=== UPDATING SALE TRANSACTION ===');
+    console.log('Transaction ID:', transactionId);
+    console.log('Payload:', payload);
+    
+    // 🔥 Mark as saving to prevent exit confirmation dialog
+    if (typeof window.markAsSaving === 'function') {
+        window.markAsSaving();
+    }
+    
+    try {
+        const url = `<?php echo e(url('/admin/sale-challan/modification')); ?>/${transactionId}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showSuccessModalWithReload('Sale Transaction updated successfully!\n\nChallan No: ' + data.challan_no + '\n\nPage will refresh now.', 'Update Successful');
+        } else {
+            showAlert('Error: ' + (data.message || 'Unknown error'), 'error', 'Update Failed');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error: ' + error.message, 'error', 'Update Failed');
+    }
+}
+</script>
+
+<!-- Date Range Filter Modal -->
+<div id="dateRangeModal" class="pending-orders-modal">
+    <div class="pending-orders-content" style="max-width: 500px;">
+        <div class="pending-orders-header">
+            <h5 class="pending-orders-title">Filter Sale Invoices by Date</h5>
+            <button type="button" class="btn-close-modal" onclick="closeDateRangeModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="pending-orders-body p-4">
+            <div class="mb-3">
+                <label class="form-label"><strong>From Date:</strong></label>
+                <input type="date" class="form-control" id="filterFromDate">
+            </div>
+            <div class="mb-3">
+                <label class="form-label"><strong>To Date:</strong></label>
+                <input type="date" class="form-control" id="filterToDate">
+            </div>
+        </div>
+        <div class="pending-orders-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeDateRangeModal()">Cancel</button>
+            <button type="button" class="btn btn-primary" onclick="filterInvoicesByDate()">
+                <i class="bi bi-search"></i> Search Invoices
+            </button>
+        </div>
+    </div>
+</div>
+<div id="dateRangeBackdrop" class="pending-orders-backdrop"></div>
+
+<!-- Sale Invoices List Modal -->
+<div id="invoicesModal" class="pending-orders-modal" style="max-width: 800px;">
+    <div class="pending-orders-content">
+        <div class="pending-orders-header">
+            <h5 class="pending-orders-title" id="invoicesModalTitle">List of Sale Invoices as on: <?php echo e(date('d-M-y')); ?></h5>
+            <button type="button" class="btn-close-modal" onclick="closeInvoicesModal()">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="pending-orders-body">
+            <div class="table-responsive" style="max-height: 450px; overflow-y: auto;">
+                <table class="table table-bordered table-hover mb-0" style="font-size: 11px; min-width: 100%;">
+                    <thead style="position: sticky; top: 0; background: #f8f9fa; z-index: 10;">
+                        <tr>
+                            <th class="text-center" style="width: 16%; font-size: 11px; padding: 8px 4px;">Challan No.</th>
+                            <th class="text-center" style="width: 12%; font-size: 11px; padding: 8px 4px;">Date</th>
+                            <th style="width: 24%; font-size: 11px; padding: 8px 4px;">Customer Name</th>
+                            <th class="text-end" style="width: 14%; font-size: 11px; padding: 8px 4px;">Amount</th>
+                            <th class="text-center" style="width: 17%; font-size: 11px; padding: 8px 4px;">Status</th>
+                            <th class="text-center" style="width: 17%; font-size: 11px; padding: 8px 4px;">Payment</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoicesTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border spinner-border-sm me-2"></div>Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="pending-orders-footer">
+            <div class="flex-grow-1">
+                <strong id="invoicesTotal">Total: 0 invoice(s)</strong>
+            </div>
+            <button type="button" class="btn btn-secondary" onclick="closeInvoicesModal()">Close</button>
+        </div>
+    </div>
+</div>
+<div id="invoicesBackdrop" class="pending-orders-backdrop"></div>
+
+<script>
+// Initialize backdrop click listeners for new modals
+document.getElementById('dateRangeBackdrop')?.addEventListener('click', closeDateRangeModal);
+document.getElementById('invoicesBackdrop')?.addEventListener('click', closeInvoicesModal);
 
 // ============================================
 // TOAST NOTIFICATION FUNCTIONS
@@ -3512,6 +4590,7 @@ function showAlert(message, type = 'error', title = null) {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        primeAlertModalKeyboardDefault();
     }, 10);
 }
 
@@ -3542,6 +4621,7 @@ function showSuccessModalWithReload(message, title = 'Success') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        primeAlertModalKeyboardDefault();
     }, 10);
 }
 
@@ -3557,6 +4637,44 @@ function reloadPageAfterSuccess() {
 // Store callback functions globally
 let confirmCallback = null;
 let cancelCallback = null;
+let alertModalActiveBtnIndex = -1;
+
+function isAlertModalOpen() {
+    const modal = document.getElementById('alertModal');
+    return !!(modal && modal.classList.contains('show') && modal.style.display !== 'none');
+}
+
+function getAlertModalButtons() {
+    const modal = document.getElementById('alertModal');
+    if (!modal) return [];
+    return Array.from(modal.querySelectorAll('.alert-modal-footer button:not([disabled])'));
+}
+
+function setAlertModalActiveButton(index, shouldFocus = true) {
+    const buttons = getAlertModalButtons();
+    buttons.forEach(btn => btn.classList.remove('kb-active'));
+
+    if (!buttons.length) {
+        alertModalActiveBtnIndex = -1;
+        return;
+    }
+
+    let safeIndex = index;
+    if (safeIndex < 0) safeIndex = 0;
+    if (safeIndex >= buttons.length) safeIndex = buttons.length - 1;
+
+    buttons[safeIndex].classList.add('kb-active');
+    alertModalActiveBtnIndex = safeIndex;
+    if (shouldFocus) {
+        buttons[safeIndex].focus();
+    }
+}
+
+function primeAlertModalKeyboardDefault() {
+    const buttons = getAlertModalButtons();
+    if (!buttons.length) return;
+    setAlertModalActiveButton(buttons.length - 1, true);
+}
 
 // Confirmation Modal Function
 function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
@@ -3592,6 +4710,7 @@ function showConfirm(message, onConfirm, onCancel = null, title = 'Confirm') {
     setTimeout(() => {
         backdrop.classList.add('show');
         modal.classList.add('show');
+        primeAlertModalKeyboardDefault();
     }, 10);
 }
 
@@ -3623,119 +4742,27 @@ function closeAlert() {
     
     modal.classList.remove('show');
     backdrop.classList.remove('show');
+    getAlertModalButtons().forEach(btn => btn.classList.remove('kb-active'));
+    alertModalActiveBtnIndex = -1;
     
     // Hide after animation
     setTimeout(() => {
         modal.style.display = 'none';
         backdrop.style.display = 'none';
+
+        if (pendingTableFocusTarget) {
+            const target = pendingTableFocusTarget;
+            pendingTableFocusTarget = null;
+            setTimeout(() => {
+                if (target === 'batch') {
+                    focusFirstTableBatchField();
+                } else {
+                    focusFirstTableCodeField();
+                }
+            }, 60);
+        }
     }, 400);
 }
-
-function isAlertModalOpen() {
-    const modal = document.getElementById('alertModal');
-    return !!(modal && modal.classList.contains('show'));
-}
-
-function getActiveKeyboardModal() {
-    const modalSelector = [
-        '#alertModal',
-        '#saveOptionsModal',
-        '#chooseItemsModal',
-        '#batchSelectionModal',
-        '#reusableItemsModal',
-        '#reusableBatchModal',
-        '.pending-orders-modal',
-        '.custom-modal',
-        '.modal',
-        '.swal2-container',
-        '.swal2-popup'
-    ].join(', ');
-
-    const modals = Array.from(document.querySelectorAll(modalSelector)).filter(function(el) {
-        const styles = window.getComputedStyle(el);
-        return styles.display !== 'none' && styles.visibility !== 'hidden';
-    });
-
-    if (!modals.length) return null;
-
-    modals.sort(function(a, b) {
-        const za = parseInt(window.getComputedStyle(a).zIndex || '0', 10);
-        const zb = parseInt(window.getComputedStyle(b).zIndex || '0', 10);
-        return zb - za;
-    });
-
-    return modals[0];
-}
-
-function isAnyKeyboardLockModalOpen() {
-    return !!getActiveKeyboardModal();
-}
-
-function triggerAlertModalDefaultAction() {
-    const modal = document.getElementById('alertModal');
-    if (!modal) return;
-    const buttons = modal.querySelectorAll('.alert-modal-footer button:not([disabled])');
-    if (!buttons || !buttons.length) return;
-
-    // Default action is the right-most button:
-    // single-button modal => OK
-    // confirm modal => Yes
-    const actionBtn = buttons[buttons.length - 1];
-    actionBtn.click();
-}
-
-// Alert modal keyboard handling:
-// Enter => OK/Yes action
-document.addEventListener('keydown', function(e) {
-    if (!isAlertModalOpen()) return;
-    if (e.key !== 'Enter') return;
-
-    e.preventDefault();
-    e.stopPropagation();
-    if (typeof e.stopImmediatePropagation === 'function') {
-        e.stopImmediatePropagation();
-    }
-
-    triggerAlertModalDefaultAction();
-}, true);
-
-// Modal keyboard lock:
-// If any modal is open, block outside-focus key actions so keyboard works only in modal.
-window.addEventListener('keydown', function(e) {
-    const activeModal = getActiveKeyboardModal();
-    if (!activeModal) return;
-
-    const target = e.target;
-    if (target && activeModal.contains(target)) return;
-
-    const key = e.key || '';
-    const isSaveShortcut = (e.ctrlKey || e.metaKey) && key.toLowerCase() === 's';
-    const lockKeys = ['Enter', 'Escape', 'Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-    if (!lockKeys.includes(key) && !isSaveShortcut) return;
-
-    console.log('[KB-SC][ModalLock] blocked outside-modal key', {
-        key: key,
-        modalId: activeModal.id || null
-    });
-
-    e.preventDefault();
-    e.stopPropagation();
-    if (typeof e.stopImmediatePropagation === 'function') {
-        e.stopImmediatePropagation();
-    }
-
-    if (key === 'Enter' && activeModal.id === 'alertModal') {
-        triggerAlertModalDefaultAction();
-        return;
-    }
-
-    const focusable = activeModal.querySelector(
-        'input:not([disabled]), button:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    );
-    if (focusable) {
-        focusable.focus();
-    }
-}, true);
 
 // Close modal when clicking backdrop
 document.addEventListener('DOMContentLoaded', function() {
@@ -3744,6 +4771,45 @@ document.addEventListener('DOMContentLoaded', function() {
         alertBackdrop.addEventListener('click', closeAlert);
     }
 });
+
+// Alert modal keyboard flow:
+// Left/Right/Tab switch button, Enter triggers active button, Esc closes modal.
+document.addEventListener('keydown', function(e) {
+    if (!isAlertModalOpen()) return;
+    if (!['ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Tab'].includes(e.key)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+    }
+
+    if (e.key === 'Escape') {
+        closeAlert();
+        return;
+    }
+
+    const buttons = getAlertModalButtons();
+    if (!buttons.length) return;
+
+    if (!Number.isInteger(alertModalActiveBtnIndex) || alertModalActiveBtnIndex < 0 || alertModalActiveBtnIndex >= buttons.length) {
+        alertModalActiveBtnIndex = buttons.length - 1;
+    }
+
+    if (e.key === 'ArrowLeft') {
+        setAlertModalActiveButton((alertModalActiveBtnIndex - 1 + buttons.length) % buttons.length, true);
+        return;
+    }
+
+    if (e.key === 'ArrowRight' || e.key === 'Tab') {
+        setAlertModalActiveButton((alertModalActiveBtnIndex + 1) % buttons.length, true);
+        return;
+    }
+
+    if (e.key === 'Enter') {
+        buttons[alertModalActiveBtnIndex].click();
+    }
+}, true);
 </script>
 
 <script>
@@ -3764,6 +4830,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function show() {
+            if (input.readOnly || select.disabled) return;
             list.style.display = 'block';
             isOpen = true;
         }
@@ -3773,6 +4840,20 @@ document.addEventListener('DOMContentLoaded', function() {
             isOpen = false;
             highlightedIndex = -1;
             list.querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('highlighted'));
+        }
+
+        function rebuildFromSelect() {
+            list.innerHTML = '';
+            Array.from(select.options).forEach(option => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.dataset.value = option.value || '';
+                item.dataset.name = option.getAttribute('data-name') || '';
+                item.dataset.code = option.getAttribute('data-code') || '';
+                item.textContent = option.text || '';
+                list.appendChild(item);
+            });
+            syncInputFromSelect();
         }
 
         function filter(term) {
@@ -3799,53 +4880,46 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         function syncInputFromSelect() {
-            const value = select.value;
-            if (!value) {
-                input.value = '';
-                list.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('selected'));
-                return;
-            }
-
-            const option = Array.from(select.options).find(o => String(o.value) === String(value));
-            if (!option) return;
-
-            input.value = option.text || '';
-            list.querySelectorAll('.dropdown-item').forEach(i => {
-                i.classList.toggle('selected', String(i.dataset.value) === String(value));
+            const option = select.options[select.selectedIndex];
+            input.value = option ? (option.text || '') : '';
+            list.querySelectorAll('.dropdown-item').forEach(item => {
+                item.classList.toggle('selected', String(item.dataset.value) === String(select.value));
             });
+            input.readOnly = !!select.disabled;
         }
 
         function selectItem(item, focusNext = true) {
+            if (select.disabled) return;
             const value = item.dataset.value || '';
             if (select.value !== value) {
                 select.value = value;
                 select.dispatchEvent(new Event('change', { bubbles: true }));
             } else {
-                // keep downstream behavior consistent
                 select.dispatchEvent(new Event('change', { bubbles: true }));
             }
-
             syncInputFromSelect();
             hide();
-
             if (focusNext && typeof config.onSelect === 'function') {
                 config.onSelect();
             }
         }
 
         input.addEventListener('focus', function() {
+            rebuildFromSelect();
             show();
             filter(this.value);
         });
 
         input.addEventListener('input', function() {
+            if (input.readOnly || select.disabled) return;
             show();
             filter(this.value);
         });
 
         input.addEventListener('keydown', function(e) {
-            const items = getVisibleItems();
+            if (input.readOnly || select.disabled) return;
 
+            const items = getVisibleItems();
             if (e.key === 'ArrowDown') {
                 e.preventDefault();
                 if (!isOpen) {
@@ -3856,7 +4930,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return;
             }
-
             if (e.key === 'ArrowUp') {
                 e.preventDefault();
                 if (!isOpen) {
@@ -3867,36 +4940,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 return;
             }
-
             if (e.key === 'Enter') {
-                if (isOpen) {
-                    e.preventDefault();
-                    const targetItem =
-                        (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
-                    if (targetItem) {
-                        selectItem(targetItem, true);
-                    } else if (typeof config.onSelect === 'function') {
-                        config.onSelect();
-                    }
-                } else if (typeof config.onEnterWhenClosed === 'function') {
-                    e.preventDefault();
-                    config.onEnterWhenClosed();
-                }
+                if (!isOpen) return;
+                e.preventDefault();
+                const targetItem =
+                    (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
+                if (targetItem) selectItem(targetItem, true);
                 return;
             }
-
             if (e.key === 'Escape') {
                 e.preventDefault();
                 hide();
             }
-
             if (e.key === 'Tab') {
-                if (isOpen) {
-                    const targetItem =
-                        (highlightedIndex >= 0 && highlightedIndex < items.length) ? items[highlightedIndex] : items[0];
-                    if (targetItem) selectItem(targetItem, false);
-                    hide();
-                }
+                if (isOpen) hide();
             }
         });
 
@@ -3909,17 +4966,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         select.addEventListener('change', syncInputFromSelect);
 
+        const observer = new MutationObserver(function() {
+            rebuildFromSelect();
+        });
+        observer.observe(select, { attributes: true, childList: true, subtree: true });
+
         document.addEventListener('click', function(e) {
             const wrapper = document.getElementById(config.wrapperId);
-            if (wrapper && !wrapper.contains(e.target)) {
-                hide();
-            }
+            if (wrapper && !wrapper.contains(e.target)) hide();
         });
 
-        syncInputFromSelect();
+        rebuildFromSelect();
         return {
-            focus: () => input.focus(),
-            hide
+            focus: function() { input.focus(); },
+            sync: syncInputFromSelect
         };
     }
 
@@ -3932,8 +4992,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function getNextFocusable(order, currentId) {
+        const currentIdx = order.indexOf(currentId);
+        if (currentIdx < 0) return null;
+        for (let i = currentIdx + 1; i < order.length; i++) {
+            const el = document.getElementById(order[i]);
+            if (!el) continue;
+            if (el.disabled) continue;
+            return order[i];
+        }
+        return null;
+    }
+
     function initHeaderKeyboardFlow() {
-        const order = ['challanDate', 'customerSearchInput', 'salesmanSearchInput', 'dueDate', 'remarks', 'chooseItemsBtn'];
+        const order = ['seriesSelect', 'challanDate', 'invoiceNo', 'dueDate', 'cash', 'transfer', 'remarks', 'chooseItemsBtn'];
         order.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.setAttribute('data-custom-enter', 'true');
@@ -3941,45 +5013,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.addEventListener('keydown', function(e) {
             if (e.key !== 'Enter') return;
-
             const active = document.activeElement;
-            if (!active || !active.id || !order.includes(active.id)) return;
+            if (!active || !active.id) return;
+            if (!order.includes(active.id)) return;
             if (active.closest('#itemsTableBody')) return;
 
-            // Allow dropdowns to handle Enter when open
-            if (active.id === 'customerSearchInput' || active.id === 'salesmanSearchInput') return;
+            // Keep existing invoice loader behavior intact
+            if (active.id === 'invoiceNo') return;
 
             e.preventDefault();
             e.stopPropagation();
 
             if (active.id === 'chooseItemsBtn') {
-                openChooseItemsModal();
+                handleChooseItemsClick();
                 return;
             }
 
-            const idx = order.indexOf(active.id);
-            if (idx >= 0 && idx < order.length - 1) {
-                focusField(order[idx + 1]);
-            }
+            const nextId = getNextFocusable(order, active.id);
+            if (nextId) focusField(nextId);
         }, true);
     }
 
+    function isAnyBlockingModalOpenForTableKeys() {
+        const modalSelectors = [
+            '#invoicesModal.show',
+            '#dateRangeModal.show',
+            '#chooseItemsModal.show',
+            '#batchSelectionModal.show',
+            '#alertModal.show',
+            '#saveOptionsModal.show',
+            '.pending-orders-modal.show',
+            '.custom-modal.show',
+            '.modal.show'
+        ];
+        return !!document.querySelector(modalSelectors.join(','));
+    }
+
     function initTableEnterFallback() {
-        // Run at window capture phase so page-level global handlers can't hijack Enter
+        // Capture phase so row-level/global key handlers can't hijack Enter in grid flow
         window.addEventListener('keydown', function(e) {
             if (e.key !== 'Enter') return;
-            if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) return;
+            if (isAnyBlockingModalOpenForTableKeys()) return;
+
             const target = e.target;
             if (!target) return;
+
             const row = target.closest('#itemsTableBody tr[data-row-index]');
             if (!row) return;
 
-            const fieldName = target.name || '';
             const rowIndex = parseInt(row.getAttribute('data-row-index') || '-1', 10);
             if (isNaN(rowIndex) || rowIndex < 0) return;
 
+            const fieldName = String(target.name || '');
+            if (!fieldName) return;
+
+            // Qty Enter -> validate qty > 0 before allowing navigation
+            if (fieldName.includes('[qty]')) {
+                const qty = parseFloat(target.value) || 0;
+                if (qty <= 0) {
+                    console.log('[KB-SCMOD][TableCapture] Qty Enter blocked (qty <= 0)', { rowIndex, qty });
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof e.stopImmediatePropagation === 'function') {
+                        e.stopImmediatePropagation();
+                    }
+                    target.focus();
+                    return;
+                }
+            }
+
+            // Dis% Enter -> finalize row + trigger Add Row + focus new row code
             if (fieldName.includes('[discount]')) {
-                console.log('[KB-SC][Capture] Dis% Enter', { rowIndex: rowIndex, fieldName: fieldName });
+                console.log('[KB-SCMOD][TableCapture] Dis% Enter', { rowIndex, fieldName });
                 e.preventDefault();
                 e.stopPropagation();
                 if (typeof e.stopImmediatePropagation === 'function') {
@@ -3987,16 +5092,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 calculateRowAmount(rowIndex);
-                markRowComplete(rowIndex);
-                addNewRow();
-                clearCalculationSection();
-                clearDetailedSummary();
+                calculateTotal();
+                updateRowColor(rowIndex);
                 calculateSummary();
+                triggerAddRowAndFocusCode(rowIndex);
                 return;
             }
 
+            // Code Enter -> open item chooser
             if (fieldName.includes('[code]')) {
-                console.log('[KB-SC][Capture] Code Enter', { rowIndex: rowIndex, fieldName: fieldName });
+                console.log('[KB-SCMOD][TableCapture] Code Enter', { rowIndex, fieldName });
                 e.preventDefault();
                 e.stopPropagation();
                 if (typeof e.stopImmediatePropagation === 'function') {
@@ -4007,18 +5112,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }, true);
     }
 
-    function isBlockingModalOpenForSave() {
-        if (typeof isAnyKeyboardLockModalOpen === 'function' && isAnyKeyboardLockModalOpen()) {
-            return true;
-        }
-        return !!document.querySelector('.swal2-container[style*=\"display: block\"], .swal2-popup.swal2-show');
-    }
-
     function initCtrlSSaveShortcut() {
-        if (window.__saleChallanCtrlSBound) return;
-        window.__saleChallanCtrlSBound = true;
+        if (window.__saleChallanModCtrlSBound) return;
+        window.__saleChallanModCtrlSBound = true;
 
-        // Capture phase so global handlers cannot override this shortcut
         window.addEventListener('keydown', function(e) {
             if (!(e.ctrlKey || e.metaKey)) return;
             if ((e.key || '').toLowerCase() !== 's') return;
@@ -4029,59 +5126,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.stopImmediatePropagation();
             }
 
-            if (isBlockingModalOpenForSave()) {
-                console.log('[KB-SC] Ctrl+S ignored (modal open)');
+            if (isAnyBlockingModalOpenForTableKeys()) {
+                console.log('[KB-SCMOD] Ctrl+S ignored (modal open)');
                 return;
             }
 
-            if (typeof saveChallan === 'function') {
-                console.log('[KB-SC] Ctrl+S -> saveChallan()');
-                saveChallan();
+            if (typeof saveSale === 'function') {
+                console.log('[KB-SCMOD] Ctrl+S -> saveSale()');
+                saveSale();
             }
         }, true);
     }
 
-    function initSaleChallanTransactionKeyboard() {
+    function initSaleChallanModificationKeyboard() {
         const customerDropdown = initSearchableDropdown({
             wrapperId: 'customerDropdownWrapper',
             inputId: 'customerSearchInput',
             listId: 'customerDropdownList',
-            selectId: 'customerSelect',
-            onSelect: function() {
-                focusField('salesmanSearchInput');
-            },
-            onEnterWhenClosed: function() {
-                focusField('salesmanSearchInput');
-            }
+            selectId: 'customerSelect'
         });
 
         const salesmanDropdown = initSearchableDropdown({
             wrapperId: 'salesmanDropdownWrapper',
             inputId: 'salesmanSearchInput',
             listId: 'salesmanDropdownList',
-            selectId: 'salesmanSelect',
-            onSelect: function() {
-                focusField('dueDate');
-            },
-            onEnterWhenClosed: function() {
-                focusField('dueDate');
-            }
+            selectId: 'salesmanSelect'
         });
 
         initHeaderKeyboardFlow();
+        initInvoicesModalKeyboardHandlers();
         initTableEnterFallback();
         initCtrlSSaveShortcut();
 
-        // Start from date field as requested flow
+        // Keep display synced if existing logic updates selects programmatically
+        if (customerDropdown) customerDropdown.sync();
+        if (salesmanDropdown) salesmanDropdown.sync();
+
+        // Start from invoice no (common flow for modification)
         setTimeout(function() {
-            focusField('challanDate');
+            focusField('invoiceNo');
         }, 120);
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSaleChallanTransactionKeyboard);
+        document.addEventListener('DOMContentLoaded', initSaleChallanModificationKeyboard);
     } else {
-        initSaleChallanTransactionKeyboard();
+        initSaleChallanModificationKeyboard();
     }
 })();
 
@@ -4364,7 +5454,7 @@ window.onBatchSelectedFromModal = function(item, batch) {
 </script>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'reusableItemsModal',
     'module' => 'sale-challan',
     'showStock' => true,
@@ -4372,24 +5462,24 @@ window.onBatchSelectedFromModal = function(item, batch) {
     'showCompany' => true,
     'showHsn' => true,
     'batchModalId' => 'reusableBatchModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'reusableBatchModal',
     'module' => 'sale-challan',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => true,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 
 <script>
 // ============================================================
-// AUTO-SAVE  —  sale_challan_transaction_autosave_v1
+// AUTO-SAVE  —  sale_challan_modification_autosave_v1
 // ============================================================
 (function(){
 'use strict';
-const KEY = 'sale_challan_transaction_autosave_v1';
+const KEY = 'sale_challan_modification_autosave_v1';
 let _t = null;
 
 function _val(id){ const el=document.getElementById(id); return el?el.value:''; }
@@ -4405,28 +5495,27 @@ function save(){
         const idx = tr.getAttribute('data-row-index');
         const g=function(n){const el=tr.querySelector('input[name="items['+idx+']['+n+']"]');return el?el.value:'';};
         const code=g('code');
-        // Only save rows that have item data
         if(!code && !g('item_name')) return;
         rows.push({
-            idx: idx,
+            idx:idx,
             code:code, item_name:g('item_name'), batch:g('batch'), expiry:g('expiry'),
             qty:g('qty'), free_qty:g('free_qty'), rate:g('rate'),
             discount:g('discount'), mrp:g('mrp'), amount:g('amount'),
-            // data-attributes
-            da_item_id: tr.getAttribute('data-item-id')||'',
-            da_hsn: tr.getAttribute('data-hsn-code')||'',
-            da_cgst: tr.getAttribute('data-cgst')||'0',
-            da_sgst: tr.getAttribute('data-sgst')||'0',
-            da_cess: tr.getAttribute('data-cess')||'0',
-            da_packing: tr.getAttribute('data-packing')||'',
-            da_unit: tr.getAttribute('data-unit')||'',
-            da_company: tr.getAttribute('data-company')||'',
-            da_batch_code: tr.getAttribute('data-batch-code')||'',
-            da_case_qty: tr.getAttribute('data-case-qty')||'0',
-            da_box_qty: tr.getAttribute('data-box-qty')||'0',
-            da_batch_id: tr.getAttribute('data-batch-id')||'',
-            da_batch_pur_rate: tr.getAttribute('data-batch-purchase-rate')||'0',
-            da_batch_cost_gst: tr.getAttribute('data-batch-cost-gst')||'0',
+            da_item_id:tr.getAttribute('data-item-id')||'',
+            da_hsn:tr.getAttribute('data-hsn-code')||'',
+            da_cgst:tr.getAttribute('data-cgst')||'0',
+            da_sgst:tr.getAttribute('data-sgst')||'0',
+            da_cess:tr.getAttribute('data-cess')||'0',
+            da_packing:tr.getAttribute('data-packing')||'',
+            da_unit:tr.getAttribute('data-unit')||'',
+            da_company:tr.getAttribute('data-company')||'',
+            da_batch_code:tr.getAttribute('data-batch-code')||'',
+            da_case_qty:tr.getAttribute('data-case-qty')||'0',
+            da_box_qty:tr.getAttribute('data-box-qty')||'0',
+            da_batch_id:tr.getAttribute('data-batch-id')||'',
+            da_batch_pur_rate:tr.getAttribute('data-batch-purchase-rate')||'0',
+            da_batch_cost_gst:tr.getAttribute('data-batch-cost-gst')||'0',
+            da_trx_id:tr.getAttribute('data-transaction-id')||'',
         });
     });
 
@@ -4434,20 +5523,20 @@ function save(){
 
     const state={
         savedAt:new Date().toISOString(),
+        transactionId:_val('transactionId'),
         challanDate:_val('challanDate'),
-        challanNo:_val('challanNo'),
         customerSearchInput:_val('customerSearchInput'),
         customer_id:_val('customerSelect'),
         salesmanSearchInput:_val('salesmanSearchInput'),
         salesman_id:_val('salesmanSelect'),
-        dueDate:_val('dueDate'),
-        remarks:_val('remarks'),
         cash:_val('cash'),
         transfer:_val('transfer'),
+        dueDate:_val('dueDate'),
+        remarks:_val('remarks'),
         rows:rows,
         gstBlob:gstBlob,
     };
-    if(!state.customer_id && !rows.length) return;
+    if(!state.transactionId && !rows.length) return;
     try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}
     _badge();
 }
@@ -4455,33 +5544,29 @@ function _sched(){ clearTimeout(_t); _t=setTimeout(save,700); }
 
 function restore(){
     let state; try{const r=localStorage.getItem(KEY);if(!r)return;state=JSON.parse(r);}catch(e){return;}
-    if(!state||(!state.customer_id&&!state.rows.length)) return;
+    if(!state||(!state.transactionId&&!state.rows.length)) return;
     _banner(state.savedAt, function keep(){
+        _set('transactionId',state.transactionId||'');
         if(state.challanDate) _set('challanDate',state.challanDate);
         if(typeof updateDayName==='function') updateDayName();
-        if(state.challanNo) _set('challanNo',state.challanNo);
         _set('customerSelect',state.customer_id||'');
         const ci=document.getElementById('customerSearchInput');
         if(ci) ci.value=state.customerSearchInput||'';
         _set('salesmanSelect',state.salesman_id||'');
         const si=document.getElementById('salesmanSearchInput');
         if(si) si.value=state.salesmanSearchInput||'';
-        if(state.dueDate) _set('dueDate',state.dueDate);
-        _set('remarks',state.remarks||'');
         _set('cash',state.cash||'N');
         _set('transfer',state.transfer||'N');
+        if(state.dueDate) _set('dueDate',state.dueDate);
+        _set('remarks',state.remarks||'');
 
         // Restore rows
         const tbody=document.getElementById('itemsTableBody');
         if(tbody) tbody.innerHTML='';
-        // Reset itemIndex
-        if(typeof itemIndex!=='undefined') {
-            window.itemIndex = -1;
-        }
+        if(typeof itemIndex!=='undefined') window.itemIndex=-1;
 
         (state.rows||[]).forEach(function(saved){
             const i=saved.idx;
-            // Update global itemIndex
             if(typeof itemIndex!=='undefined' && parseInt(i)>itemIndex) window.itemIndex=parseInt(i);
             const tr=document.createElement('tr');
             tr.setAttribute('data-row-index',i);
@@ -4499,24 +5584,23 @@ function restore(){
             tr.setAttribute('data-batch-purchase-rate',saved.da_batch_pur_rate);
             tr.setAttribute('data-batch-cost-gst',saved.da_batch_cost_gst);
             if(saved.da_batch_id) tr.setAttribute('data-batch-id',saved.da_batch_id);
+            if(saved.da_trx_id) tr.setAttribute('data-transaction-id',saved.da_trx_id);
             tr.innerHTML=
-                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][code]" value="'+_esc(saved.code)+'" style="font-size:10px;background:#f8f9fa;" autocomplete="off" readonly data-custom-enter="true"></td>'+
-                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][item_name]" value="'+_esc(saved.item_name)+'" style="font-size:10px;background:#f8f9fa;" autocomplete="off" readonly></td>'+
-                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][batch]" value="'+_esc(saved.batch)+'" style="font-size:10px;background:#f8f9fa;" autocomplete="off" readonly></td>'+
-                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][expiry]" value="'+_esc(saved.expiry)+'" style="font-size:10px;background:#f8f9fa;" autocomplete="off" readonly></td>'+
-                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items['+i+'][qty]" id="qty_'+i+'" value="'+_esc(saved.qty)+'" placeholder="0" step="any" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" data-custom-enter="true"></td>'+
-                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items['+i+'][free_qty]" id="free_qty_'+i+'" value="'+_esc(saved.free_qty||0)+'" step="any" style="font-size:10px;" data-custom-enter="true"></td>'+
-                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items['+i+'][rate]" id="rate_'+i+'" value="'+parseFloat(saved.rate||0).toFixed(2)+'" step="0.01" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" data-custom-enter="true"></td>'+
-                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items['+i+'][discount]" id="discount_'+i+'" value="'+_esc(saved.discount||'')+'" placeholder="0" step="0.01" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" data-custom-enter="true"></td>'+
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][code]" value="'+_esc(saved.code)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][item_name]" value="'+_esc(saved.item_name)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][batch]" value="'+_esc(saved.batch)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="text" class="form-control form-control-sm border-0" name="items['+i+'][expiry]" value="'+_esc(saved.expiry)+'" style="font-size:10px;" autocomplete="off"></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-qty" name="items['+i+'][qty]" id="qty_'+i+'" value="'+_esc(saved.qty)+'" placeholder="0" step="any" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" ></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items['+i+'][free_qty]" id="free_qty_'+i+'" value="'+_esc(saved.free_qty||0)+'" step="any" style="font-size:10px;"></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-rate" name="items['+i+'][rate]" id="rate_'+i+'" value="'+parseFloat(saved.rate||0).toFixed(2)+'" step="0.01" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" ></td>'+
+                '<td class="p-0"><input type="number" class="form-control form-control-sm border-0 item-discount" name="items['+i+'][discount]" id="discount_'+i+'" value="'+_esc(saved.discount||'')+'" placeholder="0" step="0.01" style="font-size:10px;" data-row="'+i+'" onchange="calculateRowAmount('+i+')" oninput="calculateRowAmount('+i+')" ></td>'+
                 '<td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items['+i+'][mrp]" id="mrp_'+i+'" value="'+parseFloat(saved.mrp||0).toFixed(2)+'" step="0.01" style="font-size:10px;" readonly></td>'+
                 '<td class="p-0"><input type="number" class="form-control form-control-sm border-0" name="items['+i+'][amount]" id="amount_'+i+'" value="'+_esc(saved.amount||'0.00')+'" style="font-size:10px;" readonly></td>'+
                 '<td class="p-0 text-center"><button type="button" class="btn btn-danger btn-sm" onclick="deleteRow('+i+')" title="Delete Row" style="font-size:9px;padding:2px 5px;"><i class="bi bi-trash"></i></button></td>';
             if(tbody) tbody.appendChild(tr);
-            // Reattach row event listeners
             if(typeof addRowEventListeners==='function') addRowEventListeners(tr,parseInt(i));
         });
 
-        // Restore rowGstData
         if(state.gstBlob && typeof rowGstData!=='undefined'){
             for(var k in rowGstData) delete rowGstData[k];
             Object.assign(rowGstData,state.gstBlob);
@@ -4524,6 +5608,11 @@ function restore(){
 
         if(typeof calculateSummary==='function') calculateSummary();
         else if(typeof calculateTotals==='function') calculateTotals();
+
+        // Re-enable update button if transaction loaded
+        if(state.transactionId){
+            const ub=document.getElementById('updateBtn');if(ub) ub.disabled=false;
+        }
     }, function discard(){clearAutoSave();});
 }
 
@@ -4555,19 +5644,17 @@ function _banner(savedAt,onKeep,onDiscard){
 
 document.addEventListener('DOMContentLoaded',function(){
     setTimeout(function(){
-        // Patch reloadPageAfterSuccess → clear draft before reload
         if(typeof reloadPageAfterSuccess==='function'){
             const _orig=reloadPageAfterSuccess;
             window.reloadPageAfterSuccess=function(){clearAutoSave();_orig.apply(this,arguments);};
         }
-        // Patch clearFormAfterSave → clear draft on successful save
         if(typeof clearFormAfterSave==='function'){
             const _origClear=clearFormAfterSave;
             window.clearFormAfterSave=function(){clearAutoSave();_origClear.apply(this,arguments);};
         }
     },800);
     setTimeout(restore,900);
-    const form=document.getElementById('saleChallanForm');
+    const form=document.getElementById('saleTransactionForm');
     if(form){ form.addEventListener('input',_sched); form.addEventListener('change',_sched); }
     const tbody=document.getElementById('itemsTableBody');
     if(tbody) new MutationObserver(_sched).observe(tbody,{childList:true,subtree:true,attributes:true});
@@ -4575,4 +5662,5 @@ document.addEventListener('DOMContentLoaded',function(){
 })();
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-challan/modification.blade.php ENDPATH**/ ?>

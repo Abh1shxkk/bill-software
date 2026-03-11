@@ -603,9 +603,158 @@
         from { transform: scaleX(1); }
         to { transform: scaleX(0); }
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    #sct_pageTitleRow {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #sct_pageTitleRow .btn { flex: 1 1 calc(50% - 6px) !important; text-align: center !important; }
+
+    /* ── Header: Left + Middle + Inner-card → vertical stack ── */
+    #sct_headerFlex {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* Left col (Date/DayName/ChallanNo) — full width */
+    #sct_headerLeft {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    #sct_headerLeft .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+    }
+    #sct_headerLeft .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* Middle col (Customer/Salesman/Choose Items) — full width */
+    #sct_headerMiddle {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    #sct_headerMiddle .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin-bottom: 6px !important;
+    }
+    #sct_headerMiddle .searchable-dropdown {
+        width: 100% !important;
+    }
+    #sct_headerMiddle .searchable-dropdown input { width: 100% !important; }
+
+    /* Inner card (DueDate/Remarks/CustomerDue) — full width */
+    .inner-card {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .inner-card .col-md-6,
+    .inner-card .col-md-3,
+    .inner-card .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .inner-card .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    .inner-card .d-flex.gap-2 { flex-wrap: wrap !important; }
+    .inner-card .d-flex.gap-2 .field-group { flex: 1 1 calc(50% - 6px) !important; }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 700px !important; }
+
+    /* ── Calc Section → vertical stack ── */
+    #sct_calcSection .d-flex.align-items-start.gap-3 {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    /* Left block: Case/Box/HSN → full width */
+    #sct_calcSection .d-flex.align-items-start.gap-3 > div:first-child {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    /* Middle block: CGST/SGST/Cess → full width */
+    #sct_calcSection .d-flex.align-items-start.gap-3 > div:nth-child(2) {
+        width: 100% !important;
+    }
+    /* Right block: amounts → wrap 2-col */
+    #sct_calcSection .d-flex.gap-3:last-child {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #sct_calcSection .d-flex.gap-3:last-child > div {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 130px !important;
+    }
+    #sct_calcSection .d-flex.align-items-center.gap-2 input,
+    #sct_calcSection .d-flex.align-items-center.gap-2 > div.border {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary Section → 2-per-row wrap ── */
+    #sct_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #sct_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 120px !important;
+    }
+    #sct_summarySection .d-flex.align-items-center > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Detail Table → horizontal scroll ── */
+    #sct_detailSection {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #sct_detailSection table { min-width: 600px !important; }
+
+    /* ── Action Buttons → full width ── */
+    #sct_actionButtons {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #sct_actionButtons .btn {
+        flex: 1 !important;
+        padding: 10px 0 !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div id="sct_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-file-earmark-text me-2"></i> Sale Challan Transaction</h4>
         <div class="text-muted small">Create new sale challan (Stock will be deducted, Invoice created later)</div>
@@ -625,9 +774,9 @@
             <!-- Header Section -->
             <div class="header-section">
                 <!-- Main Header Row -->
-                <div class="d-flex gap-3">
+                <div id="sct_headerFlex" class="d-flex gap-3">
                     <!-- Left Side - Date & Challan No (Image 1 style) -->
-                    <div style="min-width: 220px; border: 1px solid #ccc; padding: 8px; background: #f5f5f5;">
+                    <div id="sct_headerLeft" style="min-width: 220px; border: 1px solid #ccc; padding: 8px; background: #f5f5f5;">
                         <div class="field-group mb-2">
                             <label style="width: 80px;">Date</label>
                             <span style="margin-right: 5px;">:</span>
@@ -642,7 +791,7 @@
                     </div>
                     
                     <!-- Middle Section - Customer, Salesman, Choose Items -->
-                    <div style="min-width: 300px;">
+                    <div id="sct_headerMiddle" style="min-width: 300px;">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Customer:</label>
                             <div class="searchable-dropdown" id="customerDropdownWrapper" style="width: 250px;">
@@ -786,7 +935,7 @@
 
             
             <!-- Calculation Section (matching purchase module structure) -->
-            <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div id="sct_calcSection" class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!-- Left Section: Case, Box, HSN Code Block -->
                     <div class="d-flex flex-column gap-2" style="min-width: 200px;">
@@ -901,7 +1050,7 @@
             </div>
             
             <!-- Summary Section (matching image - pink background) -->
-            <div class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
+            <div id="sct_summarySection" class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
                 <!-- Row 1: 7 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -950,7 +1099,7 @@
             </div>
             
             <!-- Detailed Info Section (matching image 2 - gray background) -->
-            <div class="border rounded p-2 mb-2" style="background: #d0d0d0;">
+            <div id="sct_detailSection" class="border rounded p-2 mb-2" style="background: #d0d0d0;">
                 <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
                     <!-- Row 1: Packing | N.T.Amt. | Scm. Amt. | Comp: | SrIno | SCM. -->
                     <tr>
@@ -1003,7 +1152,7 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="d-flex gap-2">
+            <div id="sct_actionButtons" class="d-flex gap-2">
                 <button type="button" class="btn btn-warning btn-sm" onclick="saveChallan()">
                     <i class="bi bi-save"></i> Save Challan
                 </button>

@@ -79,6 +79,116 @@
     .table-compact tbody tr:hover { background: #e3f2fd; }
     .table-compact tbody tr.selected-row { background: #bbdefb !important; border: 2px solid #1976d2 !important; }
     .table-compact tbody tr.selected-row td { border-color: #1976d2; }
+
+@media (max-width: 767px) {
+    /* ── Page title row ── */
+    .cts .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+    }
+    .cts .d-flex.justify-content-between.align-items-center.mb-3 > div {
+        width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+
+    /* ── Header left-col (style="width:200px") ── */
+    #trn-left-col {
+        width: 100% !important;
+        flex: 0 0 100% !important;
+    }
+
+    /* ── d-flex gap-3 mb-2 (header outer row) ── */
+    .cts .header-section .d-flex.gap-3.mb-2 {
+        flex-wrap: wrap !important;
+    }
+
+    /* ── inner-card cols ── */
+    .cts .inner-card .col-md-4,
+    .cts .inner-card .col-md-5,
+    .cts .inner-card .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── field-group inputs ── */
+    .cts .field-group {
+        flex-wrap: wrap !important;
+    }
+    .cts .field-group input,
+    .cts .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── supplierWrapper ── */
+    #supplierWrapper {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+
+    /* ── Items table ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact {
+        min-width: 820px !important;
+    }
+
+    /* ── Calculation section ── */
+    .bg-white.border.rounded.p-2.mb-2 .d-flex.flex-wrap input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Invoice info section (pink #f8c0f8) ── */
+    .border.rounded.p-2.mb-2[style*="background: #f8c0f8"] .d-flex {
+        flex-wrap: wrap !important;
+    }
+    .border.rounded.p-2.mb-2[style*="background: #f8c0f8"] input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Totals row section (pink #f8c0c0) ── */
+    .border.rounded.p-2.mb-2[style*="background: #f8c0c0"] .d-flex {
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+    }
+    .border.rounded.p-2.mb-2[style*="background: #f8c0c0"] input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary section (grey #d4d4d4) ── */
+    .border.rounded.p-2.mb-2[style*="background: #d4d4d4"] .d-flex {
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+    }
+    .border.rounded.p-2.mb-2[style*="background: #d4d4d4"] input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action buttons ── */
+    .d-flex.justify-content-between.mt-3 {
+        flex-wrap: wrap !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+        display: flex !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div .btn,
+    .d-flex.justify-content-between.mt-3 > .btn {
+        flex: 1 !important;
+        margin: 2px !important;
+    }
+}
 </style>
 <?php $__env->stopPush(); ?>
 
@@ -98,7 +208,7 @@
                     <!-- Header Section -->
                     <div class="header-section">
                         <div class="d-flex gap-3 mb-2">
-                            <div style="width: 200px;">
+                            <div id="trn-left-col" style="width: 200px;">
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">Date:</label>
                                     <input type="date" id="claim_date" name="claim_date" class="form-control" style="width: 140px;" value="<?php echo e(date('Y-m-d')); ?>" required>

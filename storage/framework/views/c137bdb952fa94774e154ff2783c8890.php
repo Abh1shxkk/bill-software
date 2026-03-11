@@ -45,6 +45,130 @@
     .custom-dropdown-item:hover, .custom-dropdown-item.highlighted {
         background-color: #cce5ff;
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 10px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Header: main d-flex gap-3 → vertical stack ── */
+    #rnt_headerFlex {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* Left col (Date/Day/TrnNo) — override width:180px */
+    #rnt_headerLeft {
+        width: 100% !important;
+    }
+    #rnt_headerLeft .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* Middle col (inner-card: Supplier + Insert Items) — full width */
+    #rnt_headerFlex .inner-card {
+        width: 100% !important;
+    }
+    #rnt_headerFlex .inner-card .row.g-2 > .col-md-8,
+    #rnt_headerFlex .inner-card .row.g-2 > .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    #rnt_headerFlex .inner-card .custom-dropdown-container {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+    #rnt_headerFlex .inner-card .field-group {
+        flex-wrap: nowrap !important;
+    }
+    #rnt_headerFlex .inner-card .field-group input {
+        flex: 1 !important;
+        min-width: 0 !important;
+    }
+
+    /* Right col (Pending/Balance) — override width:200px */
+    #rnt_headerRight {
+        width: 100% !important;
+    }
+    #rnt_headerRight .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 560px !important; }
+
+    /* ── Summary → full width ── */
+    .summary-section .d-flex.justify-content-end,
+    .summary-section.d-flex.justify-content-end {
+        justify-content: stretch !important;
+    }
+    .summary-section .field-group,
+    .summary-section > .field-group {
+        width: 100% !important;
+    }
+    .summary-section .field-group input,
+    .summary-section > .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+    }
+
+    /* ── Footer: col-md-* → full width ── */
+    .footer-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    .footer-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* SCM row: keep inline */
+    .footer-section .field-group span { flex-shrink: 0 !important; }
+
+    /* ── Action Buttons → wrap ── */
+    .d-flex.justify-content-between.mt-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.mt-3 .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 <?php $__env->stopPush(); ?>
 
@@ -69,9 +193,9 @@
                     <?php echo csrf_field(); ?>
                     <!-- Header Section -->
                     <div class="header-section">
-                        <div class="d-flex gap-3 mb-2">
+                        <div id="rnt_headerFlex" class="d-flex gap-3 mb-2">
                             <!-- Left Side -->
-                            <div style="width: 180px;">
+                            <div id="rnt_headerLeft" style="width: 180px;">
                                 <div class="field-group mb-2">
                                     <label style="width: 50px;">Date:</label>
                                     <input type="date" id="transaction_date" name="transaction_date" class="form-control" style="width: 120px;" value="<?php echo e(date('Y-m-d')); ?>" onchange="updateDayName()" required>
@@ -112,7 +236,7 @@
                             </div>
 
                             <!-- Right Side - Summary -->
-                            <div style="width: 200px;">
+                            <div id="rnt_headerRight" style="width: 200px;">
                                 <div class="field-group mb-2">
                                     <label style="width: 120px;">Pending Br./Expiry:</label>
                                     <input type="text" id="pending_br_expiry" name="pending_br_expiry" class="form-control readonly-field text-end text-danger" style="width: 80px;" value="0.00" readonly>

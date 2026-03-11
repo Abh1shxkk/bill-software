@@ -102,6 +102,153 @@
         background-color: #e9ecef !important;
         cursor: not-allowed;
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn,
+    .d-flex.justify-content-between.align-items-center.mb-3 .load-section {
+        flex: 1 1 calc(50% - 4px) !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .load-section {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .load-section input {
+        flex: 1 !important;
+        min-width: 0 !important;
+        width: auto !important;
+    }
+
+    /* ── Header Row 1 (.header-row) → wrap ── */
+    .header-row {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .header-row .field-group {
+        flex: 1 1 100% !important;
+        flex-wrap: nowrap !important;
+    }
+    .header-row .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Customer dropdown wrapper override width:250px */
+    #customerDropdownWrapper {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+    #customerDropdownWrapper input {
+        width: 100% !important;
+    }
+
+    /* ── Header Row 2 → vertical stack ── */
+    #srrt_headerRow2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    /* Left col (width:250px) → full width */
+    #srrt_headerLeft {
+        width: 100% !important;
+    }
+    #srrt_headerLeft .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #srrt_headerLeft .btn { width: 100% !important; }
+
+    /* Inner card → full width */
+    .inner-card {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .inner-card .col-md-4,
+    .inner-card .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Cash flag — stay compact */
+    #is_cash_display { width: 50px !important; flex-shrink: 0 !important; flex-grow: 0 !important; }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 620px !important; }
+
+    /* ── Calc Section → vertical stack ── */
+    #srrt_calcSection .d-flex.align-items-start.gap-3 {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    #srrt_calcSection .d-flex.align-items-start.gap-3 > div {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+    #srrt_calcSection .d-flex.align-items-center.gap-2 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary Section → 2-per-row wrap ── */
+    #srrt_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #srrt_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 120px !important;
+    }
+    #srrt_summarySection .d-flex.align-items-center > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Detail Table → horizontal scroll ── */
+    #srrt_detailSection {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #srrt_detailSection table { min-width: 560px !important; }
+
+    /* ── Action Buttons → wrap ── */
+    #srrt_actionButtons {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #srrt_actionButtons .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -151,9 +298,9 @@
                 </div>
                 
                 <!-- Row 2: S.R.No, Inner Card -->
-                <div class="d-flex gap-3">
+                <div id="srrt_headerRow2" class="d-flex gap-3">
                     <!-- Left Side - S.R.No -->
-                    <div style="width: 250px;">
+                    <div id="srrt_headerLeft" style="width: 250px;">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">S.R.No.:</label>
                             <input type="text" class="form-control readonly-field" name="trn_no" id="trnNo" value="<?php echo e($nextTrnNo); ?>" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
@@ -238,7 +385,7 @@
 
             
             <!-- Calculation Section (matching Sale module structure) -->
-            <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div id="srrt_calcSection" class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                 <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!-- Left Section -->
                     <div class="d-flex flex-column gap-2" style="min-width: 200px;">
@@ -271,7 +418,7 @@
             </div>
             
             <!-- Summary Section (matching Sale module - pink background) -->
-            <div class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
+            <div id="srrt_summarySection" class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
                 <!-- Row 1: 7 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -320,7 +467,7 @@
             </div>
             
             <!-- Detailed Info Section (matching Sale module - orange background) -->
-            <div class="bg-white border rounded p-2 mb-2" style="background: #ffe6cc;">
+            <div id="srrt_detailSection" class="bg-white border rounded p-2 mb-2" style="background: #ffe6cc;">
                 <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
                     <!-- Row 1 -->
                     <tr>
@@ -377,7 +524,7 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="d-flex gap-2">
+            <div id="srrt_actionButtons" class="d-flex gap-2">
                 <button type="button" class="btn btn-primary btn-sm" id="saveBtn">
                     <i class="bi bi-save"></i> Save
                 </button>

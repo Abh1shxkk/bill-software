@@ -818,7 +818,188 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<!-- ============================================================ -->
+<!--  MOBILE RESPONSIVE CSS  — Pure layout fix, no logic change   -->
+<!-- ============================================================ -->
+<style>
+/* Add wrapper IDs for responsive targeting */
+#mobileResponsiveWrapper { width: 100%; }
+
+@media (max-width: 767px) {
+
+    /* ── Prevent page-level overflow ── */
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title ── */
+    #pageTitleRow {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    /* ===== HEADER ROW 1: Series / Date / Customer ===== */
+    #headerRow1 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    #headerRow1 .field-group {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+    }
+    /* Series + TAX INVOICE side by side */
+    #seriesSelect        { width: 80px  !important; flex-shrink: 0 !important; }
+    #invoiceTypeDisplay  { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    /* Date + Day name side by side */
+    #saleDate            { width: 150px !important; flex-shrink: 0 !important; }
+    #dayName             { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+    /* Customer full width */
+    #customerDropdownWrapper { width: 100% !important; max-width: 100% !important; }
+
+    /* ===== HEADER ROW 2: Left col + Inner card ===== */
+    #headerRow2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    #headerLeftCol {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #headerLeftCol .field-group {
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+    }
+    #headerLeftCol .field-group input,
+    #headerLeftCol .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #chooseItemsBtn { width: 100% !important; }
+
+    /* Inner card full width */
+    .inner-card {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    .inner-card .col-md-6,
+    .inner-card .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .inner-card .field-group input,
+    .inner-card .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #dueDate   { width: 100% !important; }
+    #cash      { width: 55px !important; flex-shrink: 0 !important; }
+    #transfer  { width: 55px !important; flex-shrink: 0 !important; }
+    #remarks   { width: 100% !important; }
+
+    /* DUE / PDC / TOTAL */
+    #duePdcTotalRow {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #duePdcTotalRow .field-group {
+        flex: 1 1 80px !important;
+        min-width: 80px !important;
+    }
+    #duePdcTotalRow .field-group input {
+        width: 100% !important;
+    }
+
+    /* ===== ITEMS TABLE ===== */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 680px !important; }
+
+    /* ===== CALCULATION SECTION ===== */
+    #calcSection {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    #calcLeftBlock,
+    #calcMiddleBlock,
+    #calcRightBlock {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #calcRightBlock { flex-direction: row !important; flex-wrap: wrap !important; gap: 8px !important; }
+    #calcRightBlock > div { flex: 1 1 45% !important; min-width: 120px !important; }
+
+    #calc_case, #calc_box, #calc_hsn_code,
+    #calc_cgst, #calc_sgst, #calc_cess,
+    #calc_tax_percent, #calc_excise, #calc_tcs, #calc_sc_percent {
+        width: 100% !important; max-width: 100% !important;
+    }
+    #calc_cgst_amount, #calc_sgst_amount, #calc_cess_amount {
+        min-width: 0 !important; flex: 1 !important;
+    }
+    #calcSection .d-flex.align-items-center.gap-2 {
+        width: 100% !important;
+    }
+    #calcSection .d-flex.align-items-center.gap-2 input,
+    #calcSection .d-flex.align-items-center.gap-2 > div.border {
+        flex: 1 !important; width: auto !important; min-width: 0 !important;
+    }
+
+    /* ===== SUMMARY SECTION (pink) ===== */
+    #summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 110px !important;
+    }
+    #nt_amt, #sc_amt, #ft_amt, #dis_amt,
+    #scm_amt, #tax_amt, #net_amt, #scm_percent {
+        width: 100% !important;
+    }
+
+    /* ===== DETAIL TABLE (orange) ===== */
+    #detailSection {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #detailSection table { min-width: 580px !important; }
+
+    /* ===== SAVE / CANCEL BUTTONS ===== */
+    #actionButtons {
+        gap: 8px !important;
+    }
+    #actionButtons .btn {
+        flex: 1 !important;
+        font-size: 14px !important;
+        padding: 10px 0 !important;
+    }
+
+    /* ===== TOAST ===== */
+    .toast-container {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
+</style>
+
+<div id="pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-receipt me-2"></i> Sale Transaction</h4>
         <div class="text-muted small">Create new sale transaction</div>
@@ -838,7 +1019,7 @@
             <!-- Header Section -->
             <div class="header-section">
                 <!-- Row 1: Series, Date, Customer -->
-                <div class="header-row">
+                <div id="headerRow1" class="header-row">
                     <div class="field-group">
                         <label>Series:</label>
                         <select class="form-control no-select2" name="series" id="seriesSelect" style="width: 100px; padding: 2px 4px; font-weight: 600;" onchange="updateInvoiceType()">
@@ -882,9 +1063,9 @@
                 </div>
                 
                 <!-- Row 2: Invoice No, Sales Man, Inner Card -->
-                <div class="d-flex gap-3">
+                <div id="headerRow2" class="d-flex gap-3">
                     <!-- Left Side - Invoice & Salesman -->
-                    <div style="width: 250px;">
+                    <div id="headerLeftCol" style="width: 250px;">
                         <div class="field-group mb-2">
                             <label style="width: 70px;">Inv.No.:</label>
                             <input type="text" class="form-control readonly-field" name="invoice_no" id="invoiceNo" value="{{ $nextInvoiceNo }}" readonly style="background-color: #f8f9fa; cursor: not-allowed;">
@@ -945,7 +1126,7 @@
                         
                         <div class="row g-2 mt-1">
                             <div class="col-md-12">
-                                <div class="d-flex gap-2">
+                                <div id="duePdcTotalRow" class="d-flex gap-2">
                                     <div class="field-group flex-grow-1">
                                         <label>DUE:</label>
                                         <input type="text" class="form-control readonly-field" name="due" readonly value="0.00">
@@ -1013,9 +1194,9 @@
             
             <!-- Calculation Section (matching purchase module structure) -->
             <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
+                <div id="calcSection" class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!-- Left Section: Case, Box, HSN Code Block -->
-                    <div class="d-flex flex-column gap-2" style="min-width: 200px;">
+                    <div id="calcLeftBlock" class="d-flex flex-column gap-2" style="min-width: 200px;">
                         <!-- Case -->
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0" style="min-width: 75px;"><strong>Case</strong></label>
@@ -1036,7 +1217,7 @@
                     </div>
                     
                     <!-- Middle Section: GST Details -->
-                    <div class="d-flex flex-column gap-2">
+                    <div id="calcMiddleBlock" class="d-flex flex-column gap-2">
                         <!-- CGST(%) -->
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0" style="min-width: 75px; background: #ffcccc; padding: 4px 8px; border-radius: 3px;"><strong>CGST(%):</strong></label>
@@ -1057,7 +1238,7 @@
                     </div>
                     
                     <!-- Right Side: GST Amounts and Other Fields -->
-                    <div class="d-flex gap-3">
+                    <div id="calcRightBlock" class="d-flex gap-3">
                         <!-- Column 1: GST Amounts -->
                         <div class="d-flex flex-column gap-2">
                             <!-- CGST Amt -->
@@ -1127,7 +1308,7 @@
             </div>
             
             <!-- Summary Section (matching image - pink background) -->
-            <div class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
+            <div id="summarySection" class="bg-white border rounded p-2 mb-2" style="background: #ffcccc;">
                 <!-- Row 1: 7 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -1176,7 +1357,7 @@
             </div>
             
             <!-- Detailed Info Section (matching image - orange background) -->
-            <div class="bg-white border rounded p-2 mb-2" style="background: #ffe6cc;">
+            <div id="detailSection" class="bg-white border rounded p-2 mb-2" style="background: #ffe6cc;">
                 <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
                     <!-- Row 1: Packing | N.T.Amt. | Scm. % | Sub.Tot. | Comp | Srino -->
                     <tr>
@@ -1237,7 +1418,7 @@
             </div>
             
             <!-- Action Buttons -->
-            <div class="d-flex gap-2">
+            <div id="actionButtons" class="d-flex gap-2">
                 <button type="button" class="btn btn-primary btn-sm" onclick="saveSale()">
                     <i class="bi bi-save"></i> Save
                 </button>

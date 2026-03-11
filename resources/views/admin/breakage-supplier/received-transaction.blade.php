@@ -98,6 +98,164 @@
     .modal-footer-custom { padding: 8px 12px; border-top: 1px solid #ddd; text-align: right; }
     .claim-row:hover { background: #e3f2fd !important; cursor: pointer; }
     .claim-row.selected { background: #007bff !important; color: #fff !important; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    /* ── Base ── */
+    body { overflow-x: hidden !important; }
+    .bsi-form { padding: 4px !important; }
+
+    /* ── Page title row ── */
+    .bsi-form > .d-flex.justify-content-between {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .bsi-form > .d-flex.justify-content-between > div.d-flex {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .bsi-form > .d-flex.justify-content-between .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+        font-size: 12px !important;
+    }
+
+    /* ── Header Section: col-md-2 + col-md-10 → stack ── */
+    .header-section .row.g-2 {
+        flex-direction: column !important;
+    }
+    .header-section .col-md-2,
+    .header-section .col-md-10 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    .header-section .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+    .header-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* Inner card cols → full width */
+    .inner-card .col-md-5,
+    .inner-card .col-md-4,
+    .inner-card .col-md-3,
+    .inner-card .col-md-2 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+    }
+    .inner-card .field-group input,
+    .inner-card .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Supplier dropdown full width */
+    .inner-card .custom-dropdown-wrapper {
+        width: 100% !important;
+    }
+
+    /* ── Claim Section: all cols → full width ── */
+    .claim-section .row.g-2 {
+        flex-direction: column !important;
+    }
+    .claim-section .col-md-2,
+    .claim-section .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .claim-section .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+    .claim-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Small flag input stays compact */
+    #claim_flag {
+        width: 32px !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+    }
+
+    /* ── HSN Table → horizontal scroll ── */
+    .hsn-table {
+        min-width: 540px !important;
+    }
+    .bg-white.border.rounded .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    /* HSN section top buttons → wrap */
+    .bg-white.border.rounded .d-flex.justify-content-between {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+
+    /* ── Summary Section → stack cols full width ── */
+    .summary-section .row.g-2 {
+        flex-direction: column !important;
+    }
+    .summary-section .col-md-2,
+    .summary-section .col-md-6,
+    .summary-section .col-md-8 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .summary-section .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+    .summary-section .field-group input,
+    .summary-section input.form-control {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    .summary-section label {
+        white-space: nowrap !important;
+        min-width: 90px !important;
+    }
+
+    /* ── Action Buttons → full width stretch ── */
+    .action-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        margin-top: 10px !important;
+    }
+    .action-buttons .btn {
+        flex: 1 1 calc(50% - 6px) !important;
+        padding: 10px 4px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
 </style>
 @endpush
 

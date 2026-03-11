@@ -556,9 +556,130 @@
         to { transform: scaleX(0); }
     }
 
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    #pc_pageTitleRow {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #pc_pageTitleRow .d-flex { flex-wrap: wrap !important; gap: 4px !important; }
+    #pc_pageTitleRow .btn { flex: 1 1 calc(50% - 4px) !important; text-align: center !important; font-size: 12px !important; }
+
+    /* ── Header Section rows → full width inputs ── */
+    .header-section .d-flex.align-items-center.gap-2 {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .header-section .d-flex.align-items-center.gap-2 input.form-control {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Supplier dropdown full width */
+    .header-section .searchable-dropdown {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+    .header-section .searchable-dropdown input { width: 100% !important; }
+
+    /* Search section (modification only — yellow bg) */
+    .header-section[style*="fff3cd"] .d-flex.align-items-center.gap-2 {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .header-section[style*="fff3cd"] .btn {
+        flex: 1 1 calc(50% - 6px) !important;
+        text-align: center !important;
+    }
+    .header-section[style*="fff3cd"] input.form-control {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 700px !important; }
+
+    /* ── Calc Section → vertical stack ── */
+    #pc_calcSection .d-flex.align-items-start.gap-3 {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    /* Left block (HSN/CGST/SGST/Cess) → full width */
+    #pc_calcSection .d-flex.align-items-start.gap-3 > div.d-flex.flex-column {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #pc_calcSection .d-flex.align-items-start.gap-3 > div.d-flex.flex-column .d-flex.align-items-center input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Right block (d-flex gap-3 with 4 columns) → 2-col wrap */
+    #pc_calcSection .d-flex.gap-3 {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #pc_calcSection .d-flex.gap-3 > div.d-flex.flex-column {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 130px !important;
+    }
+    #pc_calcSection .d-flex.align-items-center.gap-2 input,
+    #pc_calcSection .d-flex.align-items-center.gap-2 > div.border {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary Section → 2-per-row wrap ── */
+    #pc_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #pc_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 120px !important;
+    }
+    #pc_summarySection .d-flex.align-items-center > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Detail Table → horizontal scroll ── */
+    #pc_detailSection {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #pc_detailSection table { min-width: 560px !important; }
+
+    /* ── Action Buttons → full width wrap ── */
+    #pc_actionButtons {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #pc_actionButtons .btn {
+        flex: 1 1 calc(50% - 6px) !important;
+        padding: 10px 4px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div id="pc_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Purchase Challan Modification</h4>
         <div class="text-muted small">Modify existing purchase challan</div>
@@ -656,7 +777,7 @@
                     </div>
                     
                     <!-- Calculation Section -->
-                    <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    <div id="pc_calcSection" class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
                         <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                             <!-- HSN Code Block (First) -->
                             <div class="d-flex flex-column gap-2">
@@ -782,7 +903,7 @@
                     
                     
                     <!-- Summary Section -->
-                    <div class="bg-white border rounded p-2 mb-2">
+                    <div id="pc_summarySection" class="bg-white border rounded p-2 mb-2">
                         <!-- Row 1: 7 fields -->
                         <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                             <div class="d-flex align-items-center" style="gap: 5px;">
@@ -830,7 +951,7 @@
                     <input type="hidden" id="tof_amt" value="0.00">
                     
                     <!-- Detailed Info Section -->
-                    <div class="bg-white border rounded p-2 mb-2">
+                    <div id="pc_detailSection" class="bg-white border rounded p-2 mb-2">
                         <table style="width: 100%; font-size: 11px; border-collapse: collapse;">
                             <tr>
                                 <td style="padding: 3px;"><strong>Packing</strong></td>
@@ -872,7 +993,7 @@
                     </div>
                     
                     <!-- Action Buttons -->
-                    <div class="d-flex gap-2">
+                    <div id="pc_actionButtons" class="d-flex gap-2">
                         <button type="button" class="btn btn-success btn-sm" onclick="updatePurchaseChallan()" id="updateBtn" disabled>
                             <i class="bi bi-save"></i> Update (End)
                         </button>

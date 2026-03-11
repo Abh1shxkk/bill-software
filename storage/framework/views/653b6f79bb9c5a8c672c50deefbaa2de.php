@@ -132,67 +132,187 @@
     outline-offset: 2px !important;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
 }
-
-/* ============================================
-   DRAFT SYSTEM STYLES
-============================================ */
-.draft-modal {
-    display: none;
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%) scale(0.85);
-    width: 72%; max-width: 900px;
-    z-index: 10001;
-    opacity: 0;
-    transition: all 0.3s ease-in-out;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-}
-.draft-modal.show { display: block; transform: translate(-50%, -50%) scale(1); opacity: 1; }
-.draft-modal-backdrop {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 10000; opacity: 0;
-    transition: opacity 0.3s ease;
-}
-.draft-modal-backdrop.show { display: block; opacity: 1; }
-.draft-modal-header {
-    padding: 14px 20px; background: #fd7e14; color: white;
-    display: flex; justify-content: space-between; align-items: center;
-}
-.draft-modal-header h5 { margin: 0; font-size: 1.05rem; font-weight: 600; }
-.draft-modal-body { padding: 16px; background: #fff; max-height: 430px; overflow-y: auto; }
-.draft-modal-footer {
-    padding: 12px 20px; background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-    display: flex; justify-content: space-between; align-items: center;
-}
-.draft-card {
-    border: 1px solid #dee2e6; border-radius: 6px;
-    padding: 10px 14px; margin-bottom: 8px;
-    background: #fff; cursor: pointer;
-    transition: background 0.12s, border-color 0.12s;
-}
-.draft-card:hover          { background: #e8f4ff; border-color: #0d6efd; }
-.draft-card.draft-selected { background: #d0e8ff; border-color: #0d6efd; border-width: 2px; }
-.draft-title       { font-size: 12px; font-weight: 700; color: #212529; }
-.draft-meta        { font-size: 10px; color: #6c757d; }
-.draft-items-count { font-size: 10px; background: #0d6efd; color: white; border-radius: 10px; padding: 1px 7px; }
-.draft-amount      { font-size: 13px; font-weight: 700; color: #198754; }
-.draft-empty-state { text-align: center; padding: 40px 20px; color: #6c757d; }
-.draft-empty-state i { font-size: 3rem; display: block; margin-bottom: 12px; opacity: 0.4; }
-.draft-close-btn {
-    background: transparent; border: none; color: white;
-    font-size: 1.4rem; cursor: pointer; line-height: 1;
-    padding: 0 4px; border-radius: 3px; transition: background 0.15s;
-}
-.draft-close-btn:hover { background: rgba(255,255,255,0.2); }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<!-- ============================================================ -->
+<!--  MOBILE RESPONSIVE CSS  — Pure layout fix, no logic change   -->
+<!-- ============================================================ -->
+<style>
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    #srm_pageTitleRow {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #srm_pageTitleRow > div { flex-wrap: wrap !important; gap: 6px !important; }
+    #srm_pageTitleRow .btn { font-size: 12px !important; padding: 5px 8px !important; }
+
+    /* ── Header Row 1: SR + Date → column stack ── */
+    #srm_headerRow1 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    #srm_headerRow1 .field-group {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+    }
+    /* Series select — small fixed width */
+    #seriesSelect    { width: 70px  !important; flex-shrink: 0 !important; }
+    /* Series label — fills remaining space */
+    #seriesLabel     { flex: 1 !important; white-space: normal !important; font-size: 11px !important; }
+    /* Date — fixed, day name fills rest */
+    #returnDate      { width: 150px !important; flex-shrink: 0 !important; }
+    #dayName         { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* ── Header Row 2: inner-card-sr + right col ── */
+    #srm_headerRow2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* inner-card-sr — full width */
+    .inner-card-sr {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    /* Bootstrap col-md-* inside inner card → full width */
+    .inner-card-sr .col-md-6,
+    .inner-card-sr .col-md-3,
+    .inner-card-sr .col-md-2,
+    .inner-card-sr .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card-sr .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .inner-card-sr .field-group input,
+    .inner-card-sr .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Customer search dropdown — full width */
+    .custom-dropdown-wrapper { width: 100% !important; max-width: 100% !important; }
+    /* Small flag inputs — keep compact */
+    #rateDiff, #cash, #tax { width: 50px !important; flex-shrink: 0 !important; }
+    #originalSeries  { width: 55px !important; flex-shrink: 0 !important; }
+    #originalAmount  { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* Right side column — full width */
+    #srm_headerRightCol {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #srm_headerRightCol .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    #srm_headerRightCol .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #insertOrdersBtn { width: 100% !important; }
+
+    /* ── Items Table ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 680px !important; }
+
+    /* ── Calculation Section ── */
+    #srm_calcSection {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    #srm_calcLeftBlock,
+    #srm_calcMiddleBlock,
+    #srm_calcRightBlock {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #srm_calcRightBlock {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #srm_calcRightBlock > div { flex: 1 1 45% !important; min-width: 110px !important; }
+
+    #srm_calcSection .d-flex.align-items-center.gap-2 { width: 100% !important; }
+    #srm_calcSection .d-flex.align-items-center.gap-2 input {
+        flex: 1 !important; width: auto !important; min-width: 0 !important;
+    }
+    #calc_hsn_code, #calc_cgst_percent, #calc_cgst_amount,
+    #calc_sgst_percent, #calc_sgst_amount, #calc_cess_percent, #calc_cess_amount,
+    #calc_sc_percent, #calc_tax_percent, #calc_excise, #calc_tsr {
+        width: 100% !important; max-width: 100% !important;
+    }
+
+    /* ── Summary Section ── */
+    #srm_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #srm_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 110px !important;
+    }
+    #srm_summarySection .d-flex.align-items-center > div.d-flex input {
+        width: 100% !important;
+    }
+    #ntAmount, #scAmount, #ftAmount, #disAmount,
+    #scmAmount, #taxAmount, #netAmount, #scmPercent, #tcsAmount {
+        width: 100% !important;
+    }
+
+    /* ── Additional Fields Section: col-lg-* → 2-col on mobile ── */
+    #srm_additionalSection .col-lg-2,
+    #srm_additionalSection .col-lg-1 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    #srm_additionalSection .d-flex.align-items-center.mb-2 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons ── */
+    #srm_actionButtons {
+        justify-content: stretch !important;
+        gap: 8px !important;
+    }
+    #srm_actionButtons .btn {
+        flex: 1 !important;
+        font-size: 14px !important;
+        padding: 10px 0 !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important; right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
+</style>
+
+<div id="srm_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-pencil-square me-2"></i> Sale Return Modification</h4>
         <div class="text-muted small">Modify existing sale return transaction</div>
@@ -207,7 +327,7 @@
             <!-- Header Section -->
             <div class="header-section">
                 <!-- Row 1: SR No, Date -->
-                <div class="header-row">
+                <div id="srm_headerRow1" class="header-row">
                     <div class="field-group">
                         <label>SR.:</label>
                         <select class="form-control no-select2" name="series" id="seriesSelect" style="width: 60px;" onchange="updateSeriesLabel()">
@@ -224,7 +344,7 @@
                 </div>
                 
                 <!-- Row 2: Inner Card and Right Side -->
-                <div class="d-flex gap-3">
+                <div id="srm_headerRow2" class="d-flex gap-3">
                     <!-- Left Side - Inner Card -->
                     <div class="inner-card-sr flex-grow-1">
                         <div class="row g-2">
@@ -338,7 +458,7 @@
                     </div>
                     
                     <!-- Right Side -->
-                    <div style="width: 200px;">
+                    <div id="srm_headerRightCol" style="width: 200px;">
                         <div class="field-group mb-2">
                             <label style="width: 150px;">S.R. No.:</label>
                             <input type="text" class="form-control" name="sr_no" id="srNo" value="" placeholder="Enter SR No">
@@ -386,9 +506,9 @@
             
             <!-- Calculation Section -->
             <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
+                <div id="srm_calcSection" class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!-- Left Section: HSN Code, CGST -->
-                    <div class="d-flex flex-column gap-2">
+                    <div id="srm_calcLeftBlock" class="d-flex flex-column gap-2">
                         <!-- HSN Code -->
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0" style="min-width: 75px;"><strong>HSN Code:</strong></label>
@@ -404,7 +524,7 @@
                     </div>
                     
                     <!-- Middle Section: SGST, Cess -->
-                    <div class="d-flex flex-column gap-2">
+                    <div id="srm_calcMiddleBlock" class="d-flex flex-column gap-2">
                         <!-- SGST(%) -->
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0" style="min-width: 75px;"><strong>SGST(%):</strong></label>
@@ -421,7 +541,7 @@
                     </div>
                     
                     <!-- Right Side: SC%, TAX%, Excise, TSR -->
-                    <div class="d-flex gap-3">
+                    <div id="srm_calcRightBlock" class="d-flex gap-3">
                         <!-- Column 1: SC % -->
                         <div class="d-flex flex-column gap-2">
                             <div class="d-flex align-items-center gap-2">
@@ -458,7 +578,7 @@
             </div>
             
             <!-- Summary Section -->
-            <div class="bg-white border rounded p-2 mb-2">
+            <div id="srm_summarySection" class="bg-white border rounded p-2 mb-2">
                 <!-- Row 1: 6 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -512,7 +632,7 @@
             </div>
 
             <!-- Additional Fields Section -->
-            <div class="col-12 mb-4 bg-white border rounded p-2 mb-2">
+            <div id="srm_additionalSection" class="col-12 mb-4 bg-white border rounded p-2 mb-2">
                 <div class="row gx-3" style="font-size: 11px;">
                     <!-- col 1 -->
                     <div class="col-lg-2">
@@ -657,16 +777,9 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="d-flex justify-content-end gap-2 mt-3 flex-wrap">
+            <div id="srm_actionButtons" class="d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-secondary" onclick="window.location.href='<?php echo e(route('admin.dashboard')); ?>'">
                     <i class="bi bi-x-circle me-1"></i> Cancel
-                </button>
-                <button type="button" class="btn btn-warning" id="saveDraftBtn" onclick="saveDraft()">
-                    <i class="bi bi-file-earmark-plus me-1"></i> Save Draft
-                </button>
-                <button type="button" class="btn btn-info text-white" id="viewDraftsBtn" onclick="openDraftsModal()">
-                    <i class="bi bi-folder2-open me-1"></i> Drafts
-                    <span id="draftCountBadge" class="badge bg-white text-dark ms-1" style="font-size:10px;">0</span>
                 </button>
                 <button type="button" class="btn btn-primary" id="submitBtn" onclick="saveTransaction()">
                     <i class="bi bi-check-circle me-1"></i> Save Sale Return
@@ -5149,442 +5262,228 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+
 <!-- ============================================ -->
-<!-- DRAFT SYSTEM — Sale Return Modification     -->
+<!-- AUTO-SAVE & RESTORE (localStorage)           -->
+<!-- Refresh hone par data wapas aata hai.        -->
+<!-- Successful save ke baad auto-clear hota hai. -->
 <!-- ============================================ -->
-
-<div id="draftModalBackdrop" class="draft-modal-backdrop"></div>
-
-<div id="draftModal" class="draft-modal">
-    <div class="draft-modal-header">
-        <h5><i class="bi bi-folder2-open me-2"></i>Saved Drafts</h5>
-        <button class="draft-close-btn" onclick="closeDraftsModal()" title="Close">&#x2715;</button>
-    </div>
-    <div class="draft-modal-body">
-        <div class="mb-3 d-flex gap-2 align-items-center">
-            <input type="text" id="draftSearchInput" class="form-control form-control-sm"
-                placeholder="Search by customer, SR no., invoice no., or remarks..."
-                oninput="filterDraftsList()" style="font-size:12px;">
-            <button type="button" class="btn btn-sm btn-outline-danger"
-                onclick="clearAllDrafts()" style="white-space:nowrap; font-size:11px;">
-                <i class="bi bi-trash3"></i> Clear All
-            </button>
-        </div>
-        <div id="draftListContainer">
-            <div class="draft-empty-state">
-                <i class="bi bi-file-earmark-x"></i>
-                No drafts saved yet.<br>
-                <small>Click "Save Draft" to store your current work.</small>
-            </div>
-        </div>
-    </div>
-    <div class="draft-modal-footer">
-        <span class="text-muted" style="font-size:11px;" id="draftCountLabel">0 draft(s)</span>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-primary btn-sm" id="loadDraftBtn"
-                onclick="loadSelectedDraft()" disabled>
-                <i class="bi bi-box-arrow-in-down me-1"></i>Load Selected
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="closeDraftsModal()">
-                <i class="bi bi-x-circle me-1"></i>Close
-            </button>
-        </div>
-    </div>
-</div>
-
 <script>
-// ============================================
-// DRAFT SYSTEM — Sale Return Modification
-// ============================================
+(function() {
 
-const DRAFT_STORAGE_KEY = 'sale_return_modification_drafts';
-let selectedDraftId = null;
+    var DRAFT_KEY = 'sale_return_modification_autosave_v1';
 
-// ── Collect form state ───────────────────────
-function collectFormState() {
-    const header = {
-        return_date:           document.getElementById('returnDate')?.value          || '',
-        series:                document.getElementById('seriesSelect')?.value        || 'SR',
-        customer_id:           document.getElementById('customerSelect')?.value      || '',
-        customer_text:         document.getElementById('customerSearchInput')?.value || '',
-        salesman_id:           document.getElementById('salesmanSelect')?.value      || '',
-        sr_no:                 document.getElementById('srNo')?.value                || '',
-        original_invoice_no:   document.getElementById('originalInvoiceNo')?.value   || '',
-        original_invoice_date: document.getElementById('originalInvoiceDate')?.value || '',
-        original_series:       document.getElementById('originalSeries')?.value      || '',
-        original_amount:       document.getElementById('originalAmount')?.value      || '',
-        rate_diff:             document.getElementById('rateDiff')?.value            || 'N',
-        cash:                  document.getElementById('cash')?.value                || 'N',
-        tax:                   document.getElementById('tax')?.value                 || 'N',
-        remarks:               document.getElementById('remarks')?.value             || '',
-        fixed_discount:        document.getElementById('fixedDiscount')?.value       || '0',
+    window.autoSaveDraft = function() {
+        try {
+            var draft = {
+                return_date          : (document.getElementById('returnDate')          || {}).value || '',
+                series               : (document.getElementById('seriesSelect')        || {}).value || '',
+                customer_id          : (document.getElementById('customerSelect')      || {}).value || '',
+                customer_text        : (document.getElementById('customerSearchInput') || {}).value || '',
+                salesman_id          : (document.getElementById('salesmanSelect')      || {}).value || '',
+                original_invoice_no  : (document.getElementById('originalInvoiceNo')  || {}).value || '',
+                original_invoice_date: (document.getElementById('originalInvoiceDate') || {}).value || '',
+                original_series      : (document.getElementById('originalSeries')      || {}).value || '',
+                original_amount      : (document.getElementById('originalAmount')      || {}).value || '',
+                rate_diff            : (document.getElementById('rateDiff')            || {}).value || 'N',
+                cash                 : (document.getElementById('cash')               || {}).value || 'N',
+                tax                  : (document.getElementById('tax')                || {}).value || 'N',
+                remarks              : (document.getElementById('remarks')            || {}).value || '',
+                fixed_discount       : (document.getElementById('fixedDiscount')      || {}).value || '0',
+                sr_no                : (document.getElementById('srNo')               || {}).value || '',
+                items                : [],
+                savedAt              : new Date().toISOString()
+            };
+
+            document.querySelectorAll('#itemsTableBody tr').forEach(function(row, index) {
+                var rowId = row.id || ('row-' + index);
+                var inputs = {};
+                row.querySelectorAll('input').forEach(function(inp) {
+                    if (!inp.name) return;
+                    var m = inp.name.match(/items\[\d+\]\[(.+)\]/);
+                    inputs[m ? m[1] : inp.name] = inp.value;
+                });
+                var dataAttrs = {};
+                Array.from(row.attributes).forEach(function(attr) {
+                    if (attr.name.startsWith('data-')) dataAttrs[attr.name] = attr.value;
+                });
+                draft.items.push({ rowId: rowId, inputs: inputs, dataAttrs: dataAttrs });
+            });
+
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+            _showSavedBadge();
+        } catch(e) { console.warn('[AutoSave] Save failed:', e); }
     };
 
-    const summary = {
-        ntAmount:  document.getElementById('ntAmount')?.value  || '0.00',
-        scAmount:  document.getElementById('scAmount')?.value  || '0.00',
-        ftAmount:  document.getElementById('ftAmount')?.value  || '0.00',
-        disAmount: document.getElementById('disAmount')?.value || '0.00',
-        scmAmount: document.getElementById('scmAmount')?.value || '0.00',
-        taxAmount: document.getElementById('taxAmount')?.value || '0.00',
-        netAmount: document.getElementById('netAmount')?.value || '0.00',
-        scmPercent:document.getElementById('scmPercent')?.value|| '0.00',
-        tcsAmount: document.getElementById('tcsAmount')?.value || '0.00',
-        hsAmount:  document.getElementById('hsAmount')?.value  || '0.00',
+    window.restoreAutoSave = function() {
+        try {
+            var raw = localStorage.getItem(DRAFT_KEY);
+            if (!raw) return;
+            var draft = JSON.parse(raw);
+            if (!draft) return;
+
+            var hasContent = draft.customer_id || draft.original_invoice_no || draft.remarks ||
+                (draft.items && draft.items.some(function(r) {
+                    return r.inputs && (r.inputs.qty || r.inputs.sale_rate);
+                }));
+            if (!hasContent) return;
+
+            _showRestoredBanner(draft.savedAt);
+
+            if (draft.return_date) { var el = document.getElementById('returnDate'); if (el) { el.value = draft.return_date; if (typeof updateDayName === 'function') updateDayName(); } }
+            if (draft.series)      { var el = document.getElementById('seriesSelect'); if (el) { el.value = draft.series; if (typeof updateSeriesLabel === 'function') updateSeriesLabel(); } }
+            if (draft.salesman_id) { var el = document.getElementById('salesmanSelect'); if (el) { el.value = draft.salesman_id; if (typeof updateSalesmanName === 'function') updateSalesmanName(); } }
+            if (draft.original_invoice_no)   { var el = document.getElementById('originalInvoiceNo');   if (el) el.value = draft.original_invoice_no; }
+            if (draft.original_invoice_date) { var el = document.getElementById('originalInvoiceDate'); if (el) el.value = draft.original_invoice_date; }
+            if (draft.original_series)       { var el = document.getElementById('originalSeries');      if (el) el.value = draft.original_series; }
+            if (draft.original_amount)       { var el = document.getElementById('originalAmount');      if (el) el.value = draft.original_amount; if (document.getElementById('originalAmountContainer')) document.getElementById('originalAmountContainer').style.display = ''; }
+            if (draft.rate_diff)      { var el = document.getElementById('rateDiff');      if (el) el.value = draft.rate_diff; }
+            if (draft.cash)           { var el = document.getElementById('cash');          if (el) el.value = draft.cash; }
+            if (draft.tax)            { var el = document.getElementById('tax');           if (el) el.value = draft.tax; }
+            if (draft.remarks)        { var el = document.getElementById('remarks');       if (el) el.value = draft.remarks; }
+            if (draft.fixed_discount) { var el = document.getElementById('fixedDiscount'); if (el) el.value = draft.fixed_discount; }
+            if (draft.sr_no) { var el = document.getElementById('srNo'); if (el) el.value = draft.sr_no; }
+
+            if (draft.customer_id) {
+                var hiddenCust = document.getElementById('customerSelect');
+                var searchCust = document.getElementById('customerSearchInput');
+                if (hiddenCust) hiddenCust.value = draft.customer_id;
+                if (searchCust) searchCust.value = draft.customer_text || '';
+            }
+
+            if (draft.items && draft.items.length > 0) {
+                var tbody = document.getElementById('itemsTableBody');
+                if (tbody) {
+                    tbody.innerHTML = '';
+                    if (typeof currentRowIndex !== 'undefined') { currentRowIndex = 0; }
+
+                    draft.items.forEach(function(itemData, idx) {
+                        var fakeItem = { item_code: '', item_name: '' };
+                        if (itemData.inputs) {
+                            fakeItem.item_code        = itemData.inputs.code        || '';
+                            fakeItem.item_name        = itemData.inputs.name        || '';
+                            fakeItem.batch_no         = itemData.inputs.batch       || '';
+                            fakeItem.expiry_date      = itemData.inputs.expiry      || '';
+                            fakeItem.return_qty       = parseFloat(itemData.inputs.qty)       || 0;
+                            fakeItem.return_fqty      = parseFloat(itemData.inputs.free_qty)  || 0;
+                            fakeItem.sale_rate        = parseFloat(itemData.inputs.sale_rate) || 0;
+                            fakeItem.discount_percent = parseFloat(itemData.inputs.dis_percent)|| 0;
+                            fakeItem.mrp              = parseFloat(itemData.inputs.mrp)       || 0;
+                            fakeItem.item_id          = itemData.inputs.item_id    || '';
+                            fakeItem.batch_id         = itemData.inputs.batch_id   || '';
+                            fakeItem.hsn_code         = itemData.inputs.hsn_code   || '';
+                            fakeItem.company_name     = itemData.inputs.company_name || '';
+                            fakeItem.packing          = itemData.inputs.packing    || '';
+                            fakeItem.unit             = itemData.inputs.unit       || '';
+                            fakeItem.cgst_percent     = parseFloat(itemData.inputs.cgst_percent) || 0;
+                            fakeItem.sgst_percent     = parseFloat(itemData.inputs.sgst_percent) || 0;
+                            fakeItem.cess_percent     = parseFloat(itemData.inputs.cess_percent) || 0;
+                        }
+                        if (typeof addItemRow === 'function') {
+                            addItemRow(fakeItem, idx);
+                        }
+                    });
+
+                    setTimeout(function() {
+                        if (typeof recalculateTotals === 'function') recalculateTotals();
+                    }, 200);
+                }
+            }
+        } catch(e) { console.warn('[AutoSave] Restore failed:', e); }
     };
 
-    const items = [];
-    document.querySelectorAll('#itemsTableBody tr').forEach(row => {
-        const idx = row.id ? row.id.replace('row-', '') : null;
-        if (idx === null) return;
+    window.clearAutoSave = function() {
+        try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+    };
 
-        const code = row.querySelector(`input[name="items[${idx}][code]"]`)?.value?.trim() || '';
-        const name = row.querySelector(`input[name="items[${idx}][name]"]`)?.value?.trim() || '';
-        if (!code && !name) return;
-
-        items.push({
-            idx,
-            code,
-            name,
-            batch:        row.querySelector(`input[name="items[${idx}][batch]"]`)?.value         || '',
-            expiry:       row.querySelector(`input[name="items[${idx}][expiry]"]`)?.value        || '',
-            qty:          row.querySelector(`input[name="items[${idx}][qty]"]`)?.value           || '0',
-            free_qty:     row.querySelector(`input[name="items[${idx}][free_qty]"]`)?.value      || '0',
-            sale_rate:    row.querySelector(`input[name="items[${idx}][sale_rate]"]`)?.value     || '0',
-            dis_percent:  row.querySelector(`input[name="items[${idx}][dis_percent]"]`)?.value   || '0',
-            mrp:          row.querySelector(`input[name="items[${idx}][mrp]"]`)?.value           || '0',
-            amount:       row.querySelector(`input[name="items[${idx}][amount]"]`)?.value        || '0.00',
-            item_id:      row.querySelector(`input[name="items[${idx}][item_id]"]`)?.value       || '',
-            batch_id:     row.querySelector(`input[name="items[${idx}][batch_id]"]`)?.value      || '',
-            hsn_code:     row.querySelector(`input[name="items[${idx}][hsn_code]"]`)?.value      || '',
-            company_name: row.querySelector(`input[name="items[${idx}][company_name]"]`)?.value  || '',
-            packing:      row.querySelector(`input[name="items[${idx}][packing]"]`)?.value       || '',
-            unit:         row.querySelector(`input[name="items[${idx}][unit]"]`)?.value          || '',
-            cgst_percent: row.querySelector(`input[name="items[${idx}][cgst_percent]"]`)?.value  || '0',
-            sgst_percent: row.querySelector(`input[name="items[${idx}][sgst_percent]"]`)?.value  || '0',
-            cess_percent: row.querySelector(`input[name="items[${idx}][cess_percent]"]`)?.value  || '0',
-            itemData:     row.dataset.itemData ? JSON.parse(row.dataset.itemData) : {},
-            completed:    row.dataset.completed || 'false',
-            editable:     row.dataset.editable  || 'true',
-        });
-    });
-
-    return { header, summary, items };
-}
-
-// ── Save Draft ───────────────────────────────
-function saveDraft() {
-    const { header, summary, items } = collectFormState();
-
-    const hasCust    = header.customer_id;
-    const hasSrNo    = header.sr_no.trim();
-    const hasInvoice = header.original_invoice_no.trim();
-    const hasItems   = items.length > 0;
-
-    if (!hasCust && !hasSrNo && !hasInvoice && !hasItems) {
-        showAlert('warning', 'Nothing to save as draft. Please fill in some data first.');
-        return;
-    }
-
-    const custLabel    = header.customer_text
-        ? header.customer_text.split(' - ').pop().trim()
-        : (header.customer_id ? 'Customer #' + header.customer_id : 'Unknown');
-    const srLabel      = hasSrNo    ? 'SR#' + header.sr_no              : '';
-    const invoiceLabel = hasInvoice ? 'Inv#' + header.original_invoice_no : '';
-    const idLabel      = [srLabel, invoiceLabel].filter(Boolean).join(' | ') || 'No ID';
-    const draftName    = `${idLabel} — ${custLabel}`;
-
-    const drafts  = getDrafts();
-    const draftId = Date.now().toString();
-
-    drafts.unshift({
-        id: draftId,
-        name: draftName,
-        savedAt: new Date().toLocaleString('en-IN'),
-        srNo: header.sr_no,
-        invoiceNo: header.original_invoice_no,
-        customerText: custLabel,
-        netAmount: summary.netAmount,
-        itemCount: items.length,
-        header,
-        summary,
-        items,
-    });
-
-    saveDraftsToStorage(drafts);
-    updateDraftBadge();
-    showAlert('success', `Draft "${draftName}" saved! (${items.length} item${items.length !== 1 ? 's' : ''})`);
-}
-
-// ── Storage helpers ──────────────────────────
-function getDrafts() {
-    try { return JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) || '[]'); }
-    catch (e) { return []; }
-}
-function saveDraftsToStorage(drafts) {
-    try { localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(drafts)); }
-    catch (e) { showAlert('error', 'Could not save draft: storage may be full.'); }
-}
-function updateDraftBadge() {
-    const b = document.getElementById('draftCountBadge');
-    if (b) b.textContent = getDrafts().length;
-}
-
-// ── Open / Close Modal ───────────────────────
-function openDraftsModal() {
-    selectedDraftId = null;
-    const modal = document.getElementById('draftModal');
-    const bd    = document.getElementById('draftModalBackdrop');
-    renderDraftsList();
-    bd.style.display    = 'block';
-    modal.style.display = 'block';
-    setTimeout(() => {
-        bd.classList.add('show');
-        modal.classList.add('show');
-        const s = document.getElementById('draftSearchInput');
-        if (s) { s.value = ''; s.focus(); }
-    }, 10);
-}
-function closeDraftsModal() {
-    const modal = document.getElementById('draftModal');
-    const bd    = document.getElementById('draftModalBackdrop');
-    modal.classList.remove('show');
-    bd.classList.remove('show');
-    setTimeout(() => {
-        modal.style.display = 'none';
-        bd.style.display    = 'none';
-    }, 300);
-    selectedDraftId = null;
-    const lb = document.getElementById('loadDraftBtn');
-    if (lb) lb.disabled = true;
-}
-
-// ── Render list ──────────────────────────────
-function renderDraftsList(filter = '') {
-    const container  = document.getElementById('draftListContainer');
-    const countLabel = document.getElementById('draftCountLabel');
-    const loadBtn    = document.getElementById('loadDraftBtn');
-    let drafts = getDrafts();
-
-    if (filter) {
-        const q = filter.toLowerCase();
-        drafts = drafts.filter(d =>
-            (d.name          || '').toLowerCase().includes(q) ||
-            (d.srNo          || '').toLowerCase().includes(q) ||
-            (d.invoiceNo     || '').toLowerCase().includes(q) ||
-            (d.customerText  || '').toLowerCase().includes(q) ||
-            (d.header?.remarks || '').toLowerCase().includes(q)
-        );
-    }
-
-    if (countLabel) countLabel.textContent = `${drafts.length} draft(s)`;
-    if (loadBtn)    loadBtn.disabled = (selectedDraftId === null);
-
-    if (!drafts.length) {
-        container.innerHTML = `
-            <div class="draft-empty-state">
-                <i class="bi bi-file-earmark-x"></i>
-                ${filter ? 'No drafts match your search.' : 'No drafts saved yet.<br><small>Click "Save Draft" to store your current work.</small>'}
-            </div>`;
-        return;
-    }
-
-    container.innerHTML = drafts.map(d => {
-        const isSel = d.id === selectedDraftId;
-        const net   = parseFloat(d.netAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        return `
-        <div class="draft-card ${isSel ? 'draft-selected' : ''}"
-             onclick="selectDraftCard('${d.id}')"
-             ondblclick="loadDraftById('${d.id}')">
-            <div class="d-flex justify-content-between align-items-start">
-                <div style="flex:1; min-width:0;">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="draft-title">${escapeHtml(d.name)}</span>
-                        <span class="draft-items-count">${d.itemCount} item${d.itemCount !== 1 ? 's' : ''}</span>
-                    </div>
-                    <div class="draft-meta">
-                        <i class="bi bi-clock me-1"></i>${escapeHtml(d.savedAt)}
-                        ${d.header?.remarks ? ` &nbsp;|&nbsp; <i class="bi bi-chat-text me-1"></i>${escapeHtml(d.header.remarks)}` : ''}
-                    </div>
-                </div>
-                <div class="d-flex flex-column align-items-end gap-1 ms-2">
-                    <span class="draft-amount">₹${net}</span>
-                    <button type="button" class="btn btn-outline-danger btn-sm"
-                        style="font-size:9px; padding:1px 6px;"
-                        onclick="event.stopPropagation(); deleteDraftById('${d.id}')">
-                        <i class="bi bi-trash"></i> Delete
-                    </button>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
-}
-
-function filterDraftsList() {
-    renderDraftsList(document.getElementById('draftSearchInput')?.value || '');
-}
-
-function selectDraftCard(draftId) {
-    selectedDraftId = draftId;
-    const lb = document.getElementById('loadDraftBtn');
-    if (lb) lb.disabled = false;
-    renderDraftsList(document.getElementById('draftSearchInput')?.value || '');
-}
-
-// ── Load Draft ───────────────────────────────
-function loadSelectedDraft() {
-    if (!selectedDraftId) return;
-    loadDraftById(selectedDraftId);
-}
-
-function loadDraftById(draftId) {
-    const draft = getDrafts().find(d => d.id === draftId);
-    if (!draft) { showAlert('error', 'Draft not found.'); return; }
-    closeDraftsModal();
-
-    const currentRows = document.querySelectorAll('#itemsTableBody tr').length;
-    const currentCust = document.getElementById('customerSelect')?.value;
-
-    if (currentRows > 0 || currentCust) {
-        if (!confirm(`Load draft "${draft.name}"?\n\nThis will replace your current form data.`)) return;
-    }
-    applyDraftToForm(draft);
-}
-
-function applyDraftToForm(draft) {
-    const { header, summary, items } = draft;
-    const setVal = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined) el.value = v; };
-
-    // ── Header ──
-    setVal('returnDate',          header.return_date);
-    setVal('seriesSelect',        header.series);
-    setVal('srNo',                header.sr_no);
-    setVal('rateDiff',            header.rate_diff);
-    setVal('cash',                header.cash);
-    setVal('tax',                 header.tax);
-    setVal('remarks',             header.remarks);
-    setVal('fixedDiscount',       header.fixed_discount);
-    setVal('originalInvoiceNo',   header.original_invoice_no);
-    setVal('originalInvoiceDate', header.original_invoice_date);
-    setVal('originalSeries',      header.original_series);
-    setVal('originalAmount',      header.original_amount);
-    if (header.return_date) updateDayName();
-    if (typeof updateSeriesLabel  === 'function') updateSeriesLabel();
-
-    setVal('salesmanSelect', header.salesman_id);
-    if (typeof updateSalesmanName === 'function') updateSalesmanName();
-
-    if (header.customer_id) {
-        setVal('customerSelect',      header.customer_id);
-        setVal('customerSearchInput', header.customer_text || '');
-        const cs = document.getElementById('customerSelect');
-        if (cs) cs.setAttribute('data-customer-name', header.customer_text || '');
-    }
-
-    const oac = document.getElementById('originalAmountContainer');
-    if (oac && header.original_amount) oac.style.display = '';
-
-    // ── Items table ──
-    const tbody = document.getElementById('itemsTableBody');
-    tbody.innerHTML = '';
-    currentRowIndex = 0;
-
-    (items || []).forEach((itemData, _i) => {
-        const itemObj = Object.assign({}, itemData.itemData || {}, {
-            item_code:        itemData.code,
-            item_name:        itemData.name,
-            batch_no:         itemData.batch,
-            expiry_date:      itemData.expiry,
-            return_qty:       parseFloat(itemData.qty)         || 0,
-            return_fqty:      parseFloat(itemData.free_qty)    || 0,
-            sale_rate:        parseFloat(itemData.sale_rate)   || 0,
-            discount_percent: parseFloat(itemData.dis_percent) || 0,
-            mrp:              parseFloat(itemData.mrp)         || 0,
-            item_id:          itemData.item_id,
-            batch_id:         itemData.batch_id,
-            hsn_code:         itemData.hsn_code,
-            company_name:     itemData.company_name,
-            packing:          itemData.packing,
-            unit:             itemData.unit,
-            cgst_percent:     parseFloat(itemData.cgst_percent) || 0,
-            sgst_percent:     parseFloat(itemData.sgst_percent) || 0,
-            cess_percent:     parseFloat(itemData.cess_percent) || 0,
-            _editable:        itemData.editable !== 'false',
-        });
-        addItemRow(itemObj, _i);
-    });
-
-    // ── Summary ──
-    setVal('ntAmount',  summary.ntAmount);
-    setVal('scAmount',  summary.scAmount);
-    setVal('ftAmount',  summary.ftAmount);
-    setVal('disAmount', summary.disAmount);
-    setVal('scmAmount', summary.scmAmount);
-    setVal('taxAmount', summary.taxAmount);
-    setVal('netAmount', summary.netAmount);
-    setVal('scmPercent',summary.scmPercent);
-    setVal('tcsAmount', summary.tcsAmount);
-    setVal('hsAmount',  summary.hsAmount);
-
-    setTimeout(() => {
-        recalculateTotals();
-        showAlert('success', `Draft "${draft.name}" loaded successfully!`);
-    }, 150);
-}
-
-// ── Delete single draft ──────────────────────
-function deleteDraftById(draftId) {
-    saveDraftsToStorage(getDrafts().filter(d => d.id !== draftId));
-    updateDraftBadge();
-    if (selectedDraftId === draftId) {
-        selectedDraftId = null;
-        const lb = document.getElementById('loadDraftBtn');
-        if (lb) lb.disabled = true;
-    }
-    renderDraftsList(document.getElementById('draftSearchInput')?.value || '');
-}
-
-// ── Clear all drafts ─────────────────────────
-function clearAllDrafts() {
-    const count = getDrafts().length;
-    if (!count) { showAlert('info', 'No drafts to clear.'); return; }
-    if (!confirm(`Delete ALL ${count} draft(s)?\n\nThis cannot be undone.`)) return;
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    updateDraftBadge();
-    selectedDraftId = null;
-    const lb = document.getElementById('loadDraftBtn');
-    if (lb) lb.disabled = true;
-    renderDraftsList();
-}
-
-// ── XSS helper ───────────────────────────────
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-        .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
-}
-
-// ── Init ─────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-    const bd = document.getElementById('draftModalBackdrop');
-    if (bd) bd.addEventListener('click', closeDraftsModal);
-    updateDraftBadge();
-});
-
-// Ctrl+D = Save Draft
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && (e.key === 'd' || e.key === 'D')) {
-        const anyOpen = document.querySelector('#draftModal.show, .credit-note-modal.show');
-        if (!anyOpen) {
-            e.preventDefault();
-            saveDraft();
+    var _badgeTimer = null;
+    function _showSavedBadge() {
+        var badge = document.getElementById('_autoSaveBadge');
+        if (!badge) {
+            badge = document.createElement('div');
+            badge.id = '_autoSaveBadge';
+            badge.style.cssText = 'position:fixed;bottom:18px;right:18px;background:rgba(40,167,69,0.88);color:#fff;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;z-index:9999;opacity:0;transition:opacity 0.35s;pointer-events:none;box-shadow:0 2px 6px rgba(0,0,0,0.2)';
+            badge.innerHTML = '&#10003; Draft auto-saved';
+            document.body.appendChild(badge);
         }
+        badge.style.opacity = '1';
+        clearTimeout(_badgeTimer);
+        _badgeTimer = setTimeout(function() { badge.style.opacity = '0'; }, 2200);
     }
-});
 
-console.log('✅ Draft System Loaded — Sale Return Modification');
+    function _showRestoredBanner(savedAt) {
+        var existing = document.getElementById('_autoSaveRestoredBanner');
+        if (existing) existing.remove();
+        var timeStr = '';
+        try { timeStr = new Date(savedAt).toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' }); } catch(e) {}
+
+        var banner = document.createElement('div');
+        banner.id = '_autoSaveRestoredBanner';
+        banner.style.cssText = 'position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#fff3cd;border:1px solid #ffc107;color:#856404;padding:9px 18px;border-radius:8px;font-size:12px;z-index:10001;box-shadow:0 3px 10px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;animation:_asBannerSlide 0.4s ease';
+        banner.innerHTML =
+            '<i class="bi bi-clock-history" style="font-size:15px;"></i>' +
+            '<span><strong>Draft restored</strong> from ' + (timeStr || 'previous session') + ' &mdash; continue where you left off</span>' +
+            '<button id="_asDiscardBtn" style="background:#dc3545;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;margin-left:6px;">Discard</button>' +
+            '<button id="_asKeepBtn" style="background:#28a745;color:#fff;border:none;border-radius:4px;padding:3px 10px;font-size:11px;cursor:pointer;">&#10003; Keep</button>';
+        document.body.appendChild(banner);
+
+        document.getElementById('_asDiscardBtn').addEventListener('click', function() {
+            clearAutoSave();
+            banner.remove();
+            var tbody = document.getElementById('itemsTableBody');
+            if (tbody) tbody.innerHTML = '';
+            if (typeof currentRowIndex !== 'undefined') currentRowIndex = 0;
+            var retDateEl = document.getElementById('returnDate');
+            if (retDateEl) { retDateEl.value = new Date().toISOString().split('T')[0]; if (typeof updateDayName === 'function') updateDayName(); }
+            ['originalInvoiceNo','originalInvoiceDate','originalSeries','originalAmount','remarks'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+            var oac = document.getElementById('originalAmountContainer'); if (oac) oac.style.display = 'none';
+            ['rateDiff','cash','tax'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = 'N'; });
+            var fdEl = document.getElementById('fixedDiscount'); if (fdEl) fdEl.value = '0';
+            var custHidden = document.getElementById('customerSelect'); if (custHidden) custHidden.value = '';
+            var custSearch = document.getElementById('customerSearchInput'); if (custSearch) custSearch.value = '';
+            if (typeof recalculateTotals === 'function') recalculateTotals();
+        });
+        document.getElementById('_asKeepBtn').addEventListener('click', function() { banner.remove(); });
+        setTimeout(function() { if (banner.parentNode) banner.remove(); }, 12000);
+    }
+
+    if (!document.getElementById('_asKeyframes')) {
+        var s = document.createElement('style');
+        s.id = '_asKeyframes';
+        s.textContent = '@keyframes _asBannerSlide { from { opacity:0; transform:translateX(-50%) translateY(-20px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+        document.head.appendChild(s);
+    }
+
+    var _saveTimer = null;
+    function _scheduleSave() { clearTimeout(_saveTimer); _saveTimer = setTimeout(window.autoSaveDraft, 700); }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        ['returnDate','seriesSelect','customerSelect','customerSearchInput','salesmanSelect',
+         'originalInvoiceNo','originalInvoiceDate','rateDiff','cash','tax','remarks','fixedDiscount'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) { el.addEventListener('change', _scheduleSave); el.addEventListener('input', _scheduleSave); }
+        });
+
+        var tbody = document.getElementById('itemsTableBody');
+        if (tbody) {
+            tbody.addEventListener('input',  _scheduleSave);
+            tbody.addEventListener('change', _scheduleSave);
+            new MutationObserver(function() { _scheduleSave(); }).observe(tbody, { childList: true });
+        }
+
+        setTimeout(window.restoreAutoSave, 900);
+    });
+
+    // Patch window.location.reload on success to clear draft first
+    setTimeout(function() {
+        var _origReload = window.location.reload.bind(window.location);
+        window.location.reload = function() {
+            window.clearAutoSave();
+            _origReload();
+        };
+    }, 500);
+
+})();
 </script>
-
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/sale-return/modification.blade.php ENDPATH**/ ?>

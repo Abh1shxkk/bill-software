@@ -39,6 +39,99 @@
     .custom-dropdown-item:hover, .custom-dropdown-item.highlighted {
         background-color: #cce5ff;
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-2 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Header: d-flex gap-3 → vertical stack ── */
+    .header-section .d-flex.gap-3.align-items-center {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+    }
+    .header-section .field-group {
+        flex-wrap: nowrap !important;
+    }
+    .header-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    .header-section .custom-dropdown-container {
+        flex: 1 !important;
+        width: 100% !important;
+    }
+    /* Load Invoice button */
+    .header-section .btn.ms-auto {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    .border.rounded.mb-2 {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 560px !important; }
+
+    /* ── Summary → full width ── */
+    .summary-section .d-flex.justify-content-end {
+        justify-content: stretch !important;
+    }
+    .summary-section .d-flex.justify-content-end input {
+        flex: 1 !important;
+        width: auto !important;
+    }
+
+    /* ── Footer: col-md-* → 50% width (2-per-row) ── */
+    .footer-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    .footer-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → wrap ── */
+    .d-flex.justify-content-between.pt-2.border-top {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.pt-2.border-top > div,
+    .d-flex.justify-content-between.pt-2.border-top > button {
+        flex: 1 !important;
+        display: flex !important;
+        gap: 6px !important;
+    }
+    .d-flex.justify-content-between.pt-2.border-top .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 @endpush
 

@@ -30,6 +30,111 @@
     .custom-dropdown-list { display: none; position: absolute; z-index: 1000; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #ced4da; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 2px; }
     .custom-dropdown-item { padding: 6px 10px; cursor: pointer; font-size: 11px; }
     .custom-dropdown-item:hover, .custom-dropdown-item.active { background-color: #007bff; color: white; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .qt-form { font-size: 12px !important; }
+    .card-body { padding: 10px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+        font-size: 12px !important;
+    }
+
+    /* ── Header Section: col-md-* → full width ── */
+    .header-section .row.g-2 > .col-md-2,
+    .header-section .row.g-2 > .col-md-4,
+    .header-section .row.g-2 > .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    /* field-group inputs → flex grow */
+    .header-section .field-group {
+        flex-wrap: nowrap !important;
+    }
+    .header-section .field-group input,
+    .header-section .field-group textarea {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    .header-section .custom-dropdown-container {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer,
+    .bg-white.border.rounded.p-2.mb-2 .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 500px !important; }
+
+    /* ── Summary → full width ── */
+    .summary-section.d-flex.justify-content-end {
+        justify-content: stretch !important;
+    }
+    .summary-section .field-group {
+        width: 100% !important;
+    }
+    .summary-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+    }
+
+    /* ── Footer Section: col-md-* → full width ── */
+    .footer-section .row.g-2 > .col-md-2,
+    .footer-section .row.g-2 > .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .footer-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → wrap ── */
+    .d-flex.justify-content-between.mt-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div,
+    .d-flex.justify-content-between.mt-3 > button {
+        width: 100% !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .d-flex.justify-content-between.mt-3 .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
 </style>
 <?php $__env->stopPush(); ?>
 

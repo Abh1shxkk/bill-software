@@ -58,6 +58,81 @@
     .sv-custom-dropdown .sv-dd-list.show { display: block; }
     .sv-dd-item { padding: 5px 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 11px; }
     .sv-dd-item:hover, .sv-dd-item.active { background-color: #e6f3ff; }
+
+@media (max-width: 767px) {
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-2 {
+        flex-wrap: wrap !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 > h5 {
+        width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 > .d-flex.gap-2 {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 .btn {
+        flex: 1 !important;
+        margin: 2px !important;
+    }
+
+    /* ── Header row cols ── */
+    .header-section .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* ── field-group inputs / selects ── */
+    .field-group {
+        flex-wrap: wrap !important;
+    }
+    .field-group input,
+    .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Customer & Salesman custom dropdowns ── */
+    #sv_customerDropdownWrapper,
+    #sv_salesmanDropdownWrapper {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+    .sv-custom-dropdown {
+        width: 100% !important;
+    }
+
+    /* ── HSN table: horizontal scroll ── */
+    .hsn-table-container {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .hsn-table {
+        min-width: 600px !important;
+    }
+
+    /* ── Totals section cols ── */
+    .totals-section .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+    .totals-table {
+        width: 100% !important;
+    }
+
+    /* ── Action buttons (Save / Exit) ── */
+    .d-flex.justify-content-center.gap-3.mt-3 {
+        flex-wrap: wrap !important;
+    }
+    .d-flex.justify-content-center.gap-3.mt-3 .btn-hsn {
+        flex: 1 !important;
+        margin: 2px !important;
+    }
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">

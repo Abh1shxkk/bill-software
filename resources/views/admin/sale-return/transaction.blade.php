@@ -136,7 +136,185 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<!-- ============================================================ -->
+<!--  MOBILE RESPONSIVE CSS  — Pure layout fix, no logic change   -->
+<!-- ============================================================ -->
+<style>
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    #srt_pageTitleRow {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #srt_pageTitleRow > div { flex-wrap: wrap !important; gap: 6px !important; }
+    #srt_pageTitleRow .btn { font-size: 12px !important; padding: 5px 8px !important; }
+
+    /* ── Header Row 1: SR + Date → column stack ── */
+    #srt_headerRow1 {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    #srt_headerRow1 .field-group {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        gap: 6px !important;
+    }
+    /* Series select — small fixed width */
+    #seriesSelect    { width: 70px  !important; flex-shrink: 0 !important; }
+    /* Series label — fills remaining space */
+    #seriesLabel     { flex: 1 !important; white-space: normal !important; font-size: 11px !important; }
+    /* Date — fixed, day name fills rest */
+    #returnDate      { width: 150px !important; flex-shrink: 0 !important; }
+    #dayName         { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* ── Header Row 2: inner-card-sr + right col ── */
+    #srt_headerRow2 {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+
+    /* inner-card-sr — full width */
+    .inner-card-sr {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    /* Bootstrap col-md-* inside inner card → full width */
+    .inner-card-sr .col-md-6,
+    .inner-card-sr .col-md-3,
+    .inner-card-sr .col-md-2,
+    .inner-card-sr .col-md-12 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card-sr .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .inner-card-sr .field-group input,
+    .inner-card-sr .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Customer search dropdown — full width */
+    .custom-dropdown-wrapper { width: 100% !important; max-width: 100% !important; }
+    /* Small flag inputs — keep compact */
+    #rateDiff, #cash, #tax { width: 50px !important; flex-shrink: 0 !important; }
+    #originalSeries  { width: 55px !important; flex-shrink: 0 !important; }
+    #originalAmount  { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* Right side column — full width */
+    #srt_headerRightCol {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #srt_headerRightCol .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    #srt_headerRightCol .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #insertOrdersBtn { width: 100% !important; }
+
+    /* ── Items Table ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 680px !important; }
+
+    /* ── Calculation Section ── */
+    #srt_calcSection {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    #srt_calcLeftBlock,
+    #srt_calcMiddleBlock,
+    #srt_calcRightBlock {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #srt_calcRightBlock {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    #srt_calcRightBlock > div { flex: 1 1 45% !important; min-width: 110px !important; }
+
+    #srt_calcSection .d-flex.align-items-center.gap-2 { width: 100% !important; }
+    #srt_calcSection .d-flex.align-items-center.gap-2 input {
+        flex: 1 !important; width: auto !important; min-width: 0 !important;
+    }
+    #calc_hsn_code, #calc_cgst_percent, #calc_cgst_amount,
+    #calc_sgst_percent, #calc_sgst_amount, #calc_cess_percent, #calc_cess_amount,
+    #calc_sc_percent, #calc_tax_percent, #calc_excise, #calc_tsr {
+        width: 100% !important; max-width: 100% !important;
+    }
+
+    /* ── Summary Section ── */
+    #srt_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #srt_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 110px !important;
+    }
+    #srt_summarySection .d-flex.align-items-center > div.d-flex input {
+        width: 100% !important;
+    }
+    #ntAmount, #scAmount, #ftAmount, #disAmount,
+    #scmAmount, #taxAmount, #netAmount, #scmPercent, #tcsAmount {
+        width: 100% !important;
+    }
+
+    /* ── Additional Fields Section: col-lg-* → 2-col on mobile ── */
+    #srt_additionalSection .col-lg-2,
+    #srt_additionalSection .col-lg-1 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    #srt_additionalSection .d-flex.align-items-center.mb-2 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons ── */
+    #srt_actionButtons {
+        justify-content: stretch !important;
+        gap: 8px !important;
+    }
+    #srt_actionButtons .btn {
+        flex: 1 !important;
+        font-size: 14px !important;
+        padding: 10px 0 !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important; right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
+</style>
+
+<div id="srt_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-plus me-2"></i> Sale Return Transaction</h4>
         <div class="text-muted small">Create new sale return transaction</div>
@@ -151,7 +329,7 @@
             <!-- Header Section -->
             <div class="header-section">
                 <!-- Row 1: SR No, Date -->
-                <div class="header-row">
+                <div id="srt_headerRow1" class="header-row">
                     <div class="field-group">
                         <label>SR.:</label>
                         <select class="form-control no-select2" name="series" id="seriesSelect" data-kb-order="1" style="width: 60px;" onchange="updateSeriesLabel()">
@@ -168,7 +346,7 @@
                 </div>
                 
                 <!-- Row 2: Inner Card and Right Side -->
-                <div class="d-flex gap-3">
+                <div id="srt_headerRow2" class="d-flex gap-3">
                     <!-- Left Side - Inner Card -->
                     <div class="inner-card-sr flex-grow-1">
                         <div class="row g-2">
@@ -277,7 +455,7 @@
                     </div>
                     
                     <!-- Right Side -->
-                    <div style="width: 200px;">
+                    <div id="srt_headerRightCol" style="width: 200px;">
                         <div class="field-group mb-2">
                             <label style="width: 150px;">S.R. No.:</label>
                             <input type="text" class="form-control readonly-field" name="sr_no" id="srNo" value="{{ $nextSRNo }}" readonly>
@@ -325,9 +503,9 @@
             
             <!-- Calculation Section -->
             <div class="bg-white border rounded p-3 mb-2" style="box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
+                <div id="srt_calcSection" class="d-flex align-items-start gap-3 border rounded p-2" style="font-size: 11px; background: #fafafa;">
                     <!-- Left Section: HSN Code, CGST -->
-                    <div class="d-flex flex-column gap-2">
+                    <div id="srt_calcLeftBlock" class="d-flex flex-column gap-2">
                         <!-- HSN Code -->
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0" style="min-width: 75px;"><strong>HSN Code:</strong></label>
@@ -343,7 +521,7 @@
                     </div>
                     
                     <!-- Middle Section: SGST, Cess -->
-                    <div class="d-flex flex-column gap-2">
+                    <div id="srt_calcMiddleBlock" class="d-flex flex-column gap-2">
                         <!-- SGST(%) -->
                         <div class="d-flex align-items-center gap-2">
                             <label class="mb-0" style="min-width: 75px;"><strong>SGST(%):</strong></label>
@@ -360,7 +538,7 @@
                     </div>
                     
                     <!-- Right Side: SC%, TAX%, Excise, TSR -->
-                    <div class="d-flex gap-3">
+                    <div id="srt_calcRightBlock" class="d-flex gap-3">
                         <!-- Column 1: SC % -->
                         <div class="d-flex flex-column gap-2">
                             <div class="d-flex align-items-center gap-2">
@@ -397,7 +575,7 @@
             </div>
             
             <!-- Summary Section -->
-            <div class="bg-white border rounded p-2 mb-2">
+            <div id="srt_summarySection" class="bg-white border rounded p-2 mb-2">
                 <!-- Row 1: 6 fields -->
                 <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                     <div class="d-flex align-items-center" style="gap: 5px;">
@@ -451,7 +629,7 @@
             </div>
 
             <!-- Additional Fields Section -->
-            <div class="col-12 mb-4 bg-white border rounded p-2 mb-2">
+            <div id="srt_additionalSection" class="col-12 mb-4 bg-white border rounded p-2 mb-2">
                 <div class="row gx-3" style="font-size: 11px;">
                     <!-- col 1 -->
                     <div class="col-lg-2">
@@ -596,7 +774,7 @@
             </div>
 
             <!-- Action Buttons -->
-            <div class="d-flex justify-content-end gap-2 mt-3">
+            <div id="srt_actionButtons" class="d-flex justify-content-end gap-2 mt-3">
                 <button type="button" class="btn btn-secondary" onclick="window.location.href='{{ route('admin.dashboard') }}'">
                     <i class="bi bi-x-circle me-1"></i> Cancel
                 </button>

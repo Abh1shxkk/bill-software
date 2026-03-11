@@ -55,6 +55,156 @@
     /* Action Buttons */
     .action-buttons { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
     .action-buttons .btn { min-width: 100px; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    /* ── Base ── */
+    body { overflow-x: hidden !important; }
+    .bsi-form { padding: 4px !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .bsi-form > .d-flex.justify-content-between {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .bsi-form > .d-flex.justify-content-between > div.d-flex {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+
+    /* ── Header: col-md-2 (left) + col-md-10 (inner card) → stack ── */
+    .header-section .row.g-2 {
+        flex-direction: column !important;
+    }
+    .header-section .col-md-2,
+    .header-section .col-md-10 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* Left col: Date/Day/TrnNo inputs fill width */
+    .header-section .col-md-2 .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        margin-bottom: 4px !important;
+    }
+    .header-section .col-md-2 .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #day_name { flex: 1 !important; width: auto !important; }
+    #trn_no   { flex: 1 !important; width: auto !important; }
+
+    /* Inner card cols → full width */
+    .inner-card .col-md-5,
+    .inner-card .col-md-4,
+    .inner-card .col-md-3,
+    .inner-card .col-md-2 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        flex-wrap: nowrap !important;
+    }
+    .inner-card .field-group input,
+    .inner-card .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Supplier dropdown full width */
+    .inner-card .custom-dropdown-wrapper {
+        width: 100% !important;
+    }
+    /* Note type tiny dropdown stays compact */
+    #noteTypeSearchInput { width: 55px !important; flex-shrink: 0 !important; flex-grow: 0 !important; }
+    /* Tax/Inc small flags stay compact */
+    #tax_flag, #inc_flag { width: 32px !important; flex-shrink: 0 !important; flex-grow: 0 !important; }
+    /* Small count fields */
+    #dis_count, #rpl_count, #brk_count, #exp_count {
+        width: 45px !important; flex-shrink: 0 !important; flex-grow: 0 !important;
+    }
+
+    /* ── Items Table → horizontal scroll (already has min-width:900px) ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* ── Footer Section (Gray - SC%, CGST, etc.) → wrap rows ── */
+    .footer-section .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .footer-section .d-flex.align-items-center > div.d-flex,
+    .footer-section .d-flex.align-items-center > div.gst-box {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 120px !important;
+    }
+    .footer-section .d-flex.align-items-center > div.d-flex input,
+    .footer-section .d-flex.align-items-center > div.gst-box input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary Section (Pink) → already flex-wrap, just fix input widths ── */
+    .summary-section .d-flex.gap-2 {
+        gap: 4px !important;
+    }
+    .summary-section .d-flex.gap-2 > div.d-flex {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 120px !important;
+    }
+    .summary-section .d-flex.gap-2 > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── First Footer Section (Purple) → wrap rows ── */
+    .first-footer-section .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+    }
+    .first-footer-section .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 4px) !important;
+        min-width: 120px !important;
+    }
+    .first-footer-section .d-flex.align-items-center > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → full width stretch ── */
+    .action-buttons {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .action-buttons .btn {
+        flex: 1 1 calc(50% - 6px) !important;
+        padding: 10px 0 !important;
+        font-size: 13px !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
 </style>
 @endpush
 

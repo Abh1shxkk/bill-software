@@ -1,9 +1,7 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Breakage/Expiry Modification'); ?>
+<?php $__env->startSection('disable_select2', '1'); ?>
 
-@section('title', 'Breakage/Expiry Modification')
-@section('disable_select2', '1')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     * {
         margin: 0;
@@ -756,7 +754,7 @@
         <div class="text-muted small">Modify existing breakage/expiry invoices</div>
     </div>
     <div>
-        <a href="{{ route('admin.dashboard') }}" class="btn btn-outline-secondary btn-sm">
+        <a href="<?php echo e(route('admin.dashboard')); ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
         </a>
     </div>
@@ -765,7 +763,7 @@
 <div class="card shadow-sm border-0 rounded">
     <div class="card-body">
         <form id="breakageExpiryTransactionForm" method="POST" autocomplete="off">
-            @csrf
+            <?php echo csrf_field(); ?>
 
             <!-- Header Section -->
             <div class="header-sectionSR">
@@ -778,7 +776,7 @@
 
                     <div class="field-group">
                         <label>Date:</label>
-                        <input type="date" class="form-control" id="transactionDate" name="transaction_date" style="width: 140px;" value="{{ date('Y-m-d') }}">
+                        <input type="date" class="form-control" id="transactionDate" name="transaction_date" style="width: 140px;" value="<?php echo e(date('Y-m-d')); ?>">
                     </div>
                     <div class="field-group">
                         <label>End Date:</label>
@@ -802,24 +800,25 @@
                                                autocomplete="off">
                                         <select class="form-control" name="customer_id" id="customerSelect" autocomplete="off" style="display: none;">
                                             <option value="">Select Customer</option>
-                                            @foreach($customers ?? [] as $customer)
-                                                <option value="{{ $customer->id }}" data-name="{{ $customer->name }}">{{ $customer->code ?? '' }} - {{ $customer->name }}</option>
-                                            @endforeach
+                                            <?php $__currentLoopData = $customers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($customer->id); ?>" data-name="<?php echo e($customer->name); ?>"><?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                         <div id="customerDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
                                             <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
                                                 Select Customer
                                             </div>
                                             <div id="customerList" class="dropdown-list">
-                                                @foreach($customers ?? [] as $customer)
+                                                <?php $__currentLoopData = $customers ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <div class="dropdown-item"
-                                                         data-id="{{ $customer->id }}"
-                                                         data-name="{{ $customer->name }}"
-                                                         data-code="{{ $customer->code ?? '' }}"
+                                                         data-id="<?php echo e($customer->id); ?>"
+                                                         data-name="<?php echo e($customer->name); ?>"
+                                                         data-code="<?php echo e($customer->code ?? ''); ?>"
                                                          style="padding: 6px 10px; cursor: pointer;">
-                                                        {{ $customer->code ?? '' }} - {{ $customer->name }}
+                                                        <?php echo e($customer->code ?? ''); ?> - <?php echo e($customer->name); ?>
+
                                                     </div>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </div>
                                         </div>
                                     </div>
@@ -856,24 +855,25 @@
                                                autocomplete="off">
                                         <select class="form-control" name="salesman_id" id="salesmanSelect" autocomplete="off" style="display: none;">
                                             <option value="">Select Salesman</option>
-                                            @foreach($salesmen ?? [] as $salesman)
-                                                <option value="{{ $salesman->id }}" data-name="{{ $salesman->name }}">{{ $salesman->code ?? '' }} - {{ $salesman->name }}</option>
-                                            @endforeach
+                                            <?php $__currentLoopData = $salesmen ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <option value="<?php echo e($salesman->id); ?>" data-name="<?php echo e($salesman->name); ?>"><?php echo e($salesman->code ?? ''); ?> - <?php echo e($salesman->name); ?></option>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                         <div id="salesmanDropdown" class="custom-dropdown-menu" style="display: none; position: absolute; top: 100%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;">
                                             <div class="dropdown-header" style="padding: 8px 12px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; font-weight: 600; font-size: 13px;">
                                                 Select Salesman
                                             </div>
                                             <div id="salesmanList" class="dropdown-list">
-                                                @foreach($salesmen ?? [] as $salesman)
+                                                <?php $__currentLoopData = $salesmen ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $salesman): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <div class="dropdown-item"
-                                                         data-id="{{ $salesman->id }}"
-                                                         data-name="{{ $salesman->name }}"
-                                                         data-code="{{ $salesman->code ?? '' }}"
+                                                         data-id="<?php echo e($salesman->id); ?>"
+                                                         data-name="<?php echo e($salesman->name); ?>"
+                                                         data-code="<?php echo e($salesman->code ?? ''); ?>"
                                                          style="padding: 6px 10px; cursor: pointer;">
-                                                        {{ $salesman->code ?? '' }} - {{ $salesman->name }}
+                                                        <?php echo e($salesman->code ?? ''); ?> - <?php echo e($salesman->name); ?>
+
                                                     </div>
-                                                @endforeach
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                             </div>
                                         </div>
                                     </div>
@@ -934,7 +934,7 @@
                         
                         <div class="field-group mb-2">
                             <label style="width: 80px;">Or Date:</label>
-                            <input type="date" id="invoice_date_filter" class="form-control" style="width: 130px;" value="{{ date('Y-m-d') }}">
+                            <input type="date" id="invoice_date_filter" class="form-control" style="width: 130px;" value="<?php echo e(date('Y-m-d')); ?>">
                         </div>
                         
                         <div class="text-center mt-2">
@@ -1247,7 +1247,7 @@
                 <button type="button" class="btn btn-primary btn-sm" id="saveTransactionBtn" onclick="saveTransaction()">
                     <i class="bi bi-save"></i> Save
                 </button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='{{ route('admin.dashboard') }}'">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.location.href='<?php echo e(route('admin.dashboard')); ?>'">
                     <i class="bi bi-x-circle"></i> Cancel
                 </button>
             </div>
@@ -1557,12 +1557,12 @@ function loadInvoice() {
 function loadInvoiceBySrNo(srNo) {
     showAlert('info', 'Loading invoice...');
     
-    fetch(`{{ url('/admin/breakage-expiry') }}/get-by-sr-no/${encodeURIComponent(srNo)}`, {
+    fetch(`<?php echo e(url('/admin/breakage-expiry')); ?>/get-by-sr-no/${encodeURIComponent(srNo)}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         }
     })
     .then(response => response.json())
@@ -1597,7 +1597,7 @@ function openInvoiceSelectionModal() {
 function loadInvoicesByDate(date) {
     showAlert('info', 'Loading invoices...');
     
-    fetch(`{{ route("admin.breakage-expiry.index") }}?ajax=1&date_from=${date}&date_to=${date}`, {
+    fetch(`<?php echo e(route("admin.breakage-expiry.index")); ?>?ajax=1&date_from=${date}&date_to=${date}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -1878,12 +1878,12 @@ function initBatchModalKeyboard(reset = false) {
 function selectInvoice(invoiceId) {
     showAlert('info', 'Loading invoice details...');
     
-    fetch(`{{ url('/admin/breakage-expiry') }}/${invoiceId}`, {
+    fetch(`<?php echo e(url('/admin/breakage-expiry')); ?>/${invoiceId}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         }
     })
     .then(response => response.json())
@@ -2259,7 +2259,7 @@ function loadPaginatedItems(page, isInitial = false) {
         if (loadingIndicator) loadingIndicator.style.display = 'block';
     }
     
-    const url = `{{ route("admin.items.all") }}?page=${page}&per_page=${itemsPerPage}`;
+    const url = `<?php echo e(route("admin.items.all")); ?>?page=${page}&per_page=${itemsPerPage}`;
     
     fetch(url, {
         method: 'GET',
@@ -2614,7 +2614,7 @@ function checkBatchExists(rowIndex, itemId, batchNo) {
     const row = document.getElementById(`row-${rowIndex}`);
     if (!row) return;
     
-    fetch(`{{ route('admin.batches.check-batch') }}?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`, {
+    fetch(`<?php echo e(route('admin.batches.check-batch')); ?>?item_id=${itemId}&batch_no=${encodeURIComponent(batchNo)}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -4181,8 +4181,8 @@ function submitTransaction(withCreditNote = false, adjustments = []) {
     });
     
     const url = transactionId 
-        ? `{{ url('/admin/breakage-expiry/transaction') }}/${transactionId}`
-        : '{{ route("admin.breakage-expiry.transaction.store") }}';
+        ? `<?php echo e(url('/admin/breakage-expiry/transaction')); ?>/${transactionId}`
+        : '<?php echo e(route("admin.breakage-expiry.transaction.store")); ?>';
     const method = transactionId ? 'PUT' : 'POST';
     
     console.log('Transaction mode:', transactionId ? 'UPDATE' : 'CREATE');
@@ -4250,14 +4250,14 @@ function fetchCustomerSales(customerId) {
     showAlert('info', 'Loading customer sales...');
     
     // Use the existing customers/{customer}/sales route
-    const url = `{{ url('/admin/customers') }}/${customerId}/sales`;
+    const url = `<?php echo e(url('/admin/customers')); ?>/${customerId}/sales`;
     
     fetch(url, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         }
     })
     .then(response => response.json())
@@ -4425,12 +4425,12 @@ function showAdjustmentModal(sales, customer) {
     
     // If editing existing transaction, fetch existing adjustments
     if (transactionId) {
-        fetch(`{{ url('/admin/breakage-expiry/transaction') }}/${transactionId}/adjustments`, {
+        fetch(`<?php echo e(url('/admin/breakage-expiry/transaction')); ?>/${transactionId}/adjustments`, {
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
             }
         })
         .then(response => response.json())
@@ -4708,12 +4708,12 @@ function openCreateBatchModal() {
     const itemData = JSON.parse(row.dataset.itemData || '{}');
     
     // Fetch item details to pre-populate the form
-    fetch(`{{ url('/admin/items') }}/${itemId}`, {
+    fetch(`<?php echo e(url('/admin/items')); ?>/${itemId}`, {
         method: 'GET',
         headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         }
     })
         .then(response => {
@@ -4791,11 +4791,11 @@ function saveBatch() {
     }
     
     // Save batch to database
-    fetch(`{{ route('admin.batches.store') }}`, {
+    fetch(`<?php echo e(route('admin.batches.store')); ?>`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
         },
         body: JSON.stringify(batchData)
     })
@@ -5218,7 +5218,7 @@ function showAlert(type, message) {
 </div>
 
 <!-- Item and Batch Selection Modal Components -->
-@include('components.modals.item-selection', [
+<?php echo $__env->make('components.modals.item-selection', [
     'id' => 'chooseItemsModal',
     'module' => 'breakage-expiry',
     'showStock' => true,
@@ -5226,15 +5226,15 @@ function showAlert(type, message) {
     'showCompany' => true,
     'showHsn' => false,
     'batchModalId' => 'batchSelectionModal',
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-@include('components.modals.batch-selection', [
+<?php echo $__env->make('components.modals.batch-selection', [
     'id' => 'batchSelectionModal',
     'module' => 'breakage-expiry',
     'showOnlyAvailable' => true,
     'rateType' => 's_rate',
     'showCostDetails' => false,
-])
+], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <!-- ============================================ -->
 <!-- SCHEME MODAL FUNCTIONALITY -->
@@ -5764,4 +5764,5 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/breakage-expiry/modification.blade.php ENDPATH**/ ?>

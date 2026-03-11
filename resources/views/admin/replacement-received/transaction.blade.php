@@ -47,6 +47,127 @@
     .custom-dropdown-item:hover, .custom-dropdown-item.highlighted {
         background-color: #cce5ff;
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3,
+    .d-flex.justify-content-between.align-items-center.mb-2 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child,
+    .d-flex.justify-content-between.align-items-center.mb-2 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn,
+    .d-flex.justify-content-between.align-items-center.mb-2 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Header: d-flex gap-4 → vertical stack ── */
+    .header-section .d-flex.gap-4.align-items-center {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+    }
+    .header-section .field-group {
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+    }
+    /* Override inline widths on date/day/rpl.no inputs */
+    .header-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Supplier dropdown full width */
+    .header-section .field-group.flex-grow-1 {
+        width: 100% !important;
+    }
+    .header-section .custom-dropdown-container {
+        flex: 1 !important;
+        width: 100% !important;
+    }
+    /* Insert Invoice / Insert Items buttons */
+    .header-section > .d-flex.gap-4 > button,
+    .header-section .btn.ms-auto,
+    .header-section .btn.ms-2 {
+        width: 100% !important;
+        margin-left: 0 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer,
+    .border.rounded.mb-2 {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 660px !important; }
+
+    /* ── Rates Section (inner-card / calc-section): col-md-* → 50% ── */
+    .inner-card .row.g-2 > [class*="col-md-"],
+    .calc-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+
+    /* ── Summary → full width ── */
+    .summary-section .d-flex.justify-content-end {
+        justify-content: stretch !important;
+        align-items: center !important;
+    }
+    .summary-section .d-flex.justify-content-end input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Footer: col-md-* → 50% ── */
+    .footer-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    .footer-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* P.SCM / S.SCM inline inputs — keep compact */
+    .footer-section .field-group span { flex-shrink: 0 !important; }
+
+    /* ── Action Buttons → wrap ── */
+    .d-flex.justify-content-between.mt-3,
+    .d-flex.justify-content-between.pt-2.border-top {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div,
+    .d-flex.justify-content-between.pt-2.border-top > div {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.mt-3 > div > button,
+    .d-flex.justify-content-between.mt-3 > div .btn,
+    .d-flex.justify-content-between.pt-2.border-top > div .btn,
+    .d-flex.justify-content-between.pt-2.border-top > button {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 @endpush
 

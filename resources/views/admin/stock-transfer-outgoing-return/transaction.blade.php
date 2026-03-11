@@ -42,6 +42,109 @@
     .modal-header-custom { padding: 1rem; background: #17a2b8; color: white; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
     .modal-body-custom { padding: 1rem; max-height: 400px; overflow-y: auto; }
     .modal-footer-custom { padding: 1rem; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: right; border-radius: 0 0 8px 8px; }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    body { overflow-x: hidden !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-3 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 > div:last-child {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+        width: 100% !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-3 .btn {
+        flex: 1 1 calc(50% - 4px) !important;
+        text-align: center !important;
+    }
+
+    /* ── Search section (modification only) ── */
+    .search-section .row.g-2 { flex-wrap: wrap !important; }
+    .search-section .col-auto {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+    }
+    .search-section .col-auto input { width: 100% !important; }
+    .search-section .col-auto .btn { width: 100% !important; }
+
+    /* ── Header section: col-md-* → 100% ── */
+    .header-section .row.g-2 > [class*="col-md-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .header-section .field-group { flex-wrap: nowrap !important; }
+    .header-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #stor_customerDropdownWrapper,
+    #storm_customerDropdownWrapper,
+    #customerDropdownWrapper {
+        width: 100% !important;
+    }
+
+    /* ── GR Section: col-auto → 50% (2-per-row) ── */
+    .gr-section .row.g-2 > .col-auto {
+        flex: 1 1 calc(50% - 8px) !important;
+        max-width: calc(50% - 8px) !important;
+    }
+    .gr-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 560px !important; }
+
+    /* ── Net section → full width ── */
+    .net-section .row.g-2 > .col-auto {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+    }
+    .net-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Footer section: col-auto → 50% (2-per-row) ── */
+    .footer-section .row.g-2 > .col-auto {
+        flex: 1 1 calc(50% - 8px) !important;
+        max-width: calc(50% - 8px) !important;
+    }
+    .footer-section .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Button Section → wrap, equal width ── */
+    .btn-section {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    .btn-section .btn {
+        flex: 1 !important;
+        padding: 10px 4px !important;
+        text-align: center !important;
+    }
+
+    .toast-container { left: 10px !important; right: 10px !important; max-width: calc(100vw - 20px) !important; }
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">

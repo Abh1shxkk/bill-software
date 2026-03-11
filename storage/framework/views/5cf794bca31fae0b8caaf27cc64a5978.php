@@ -144,13 +144,162 @@
         outline: none !important;
         box-shadow: none !important;
     }
+
+    /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 767px) {
+
+    /* ── Body overflow ── */
+    body { overflow-x: hidden !important; }
+    .prt { padding-top: 10px !important; padding-bottom: 10px !important; }
+    .card-body { padding: 8px !important; }
+
+    /* ── Page title ── */
+    #prt_pageTitleRow { flex-wrap: wrap !important; gap: 6px !important; }
+
+    /* ── Header Row 1: Left col + inner card → vertical stack ── */
+    #prt_headerRow1 {
+        flex-direction: column !important;
+        gap: 10px !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* Left column (Date/Day/TNo/Insert Orders) → full width */
+    #prt_headerLeftCol {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    #prt_headerLeftCol .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    #prt_headerLeftCol .field-group label {
+        flex-shrink: 0 !important;
+        width: 60px !important;
+    }
+    #prt_headerLeftCol .field-group input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    #insertOrderBtn { width: 100% !important; }
+
+    /* Inner card → full width */
+    .inner-card-prt {
+        width: 100% !important;
+        min-width: 0 !important;
+        overflow: visible !important;
+    }
+    /* All Bootstrap cols inside inner card → full width */
+    .inner-card-prt .col-md-4,
+    .inner-card-prt .col-md-5,
+    .inner-card-prt .col-md-6,
+    .inner-card-prt .col-md-3,
+    .inner-card-prt .col-md-2 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .inner-card-prt .field-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        flex-wrap: nowrap !important;
+    }
+    .inner-card-prt .field-group input,
+    .inner-card-prt .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    /* Supplier searchable dropdown — full width */
+    .searchable-dropdown,
+    #supplierDropdownWrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    #supplierSearchInput { width: 100% !important; }
+    /* Small flag inputs — stay compact */
+    #tax_flag, #rate_diff {
+        width: 50px !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+    }
+
+    /* ── Items Table → horizontal scroll ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact { min-width: 680px !important; }
+
+    /* ── Calculation Section → 2-col wrap ── */
+    #prt_calcSection { overflow: visible !important; }
+    #prt_calcSection .d-flex.flex-wrap.align-items-center.gap-3 {
+        gap: 6px !important;
+    }
+    #prt_calcSection .d-flex.align-items-center.gap-1 {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 140px !important;
+    }
+    #prt_calcSection .d-flex.align-items-center.gap-1 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Summary Section → 2-per-row wrap ── */
+    #prt_summarySection .d-flex.align-items-center {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+    #prt_summarySection .d-flex.align-items-center > div.d-flex {
+        flex: 1 1 calc(50% - 6px) !important;
+        min-width: 120px !important;
+    }
+    #prt_summarySection .d-flex.align-items-center > div.d-flex input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Additional Fields → 2-col grid ── */
+    #prt_additionalSection .col-lg-2,
+    #prt_additionalSection .col-lg-1 {
+        flex: 0 0 50% !important;
+        max-width: 50% !important;
+    }
+    #prt_additionalSection .d-flex.align-items-center.mb-2 input {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Action Buttons → full width ── */
+    #prt_actionButtons {
+        justify-content: stretch !important;
+        gap: 8px !important;
+    }
+    #prt_actionButtons .btn {
+        flex: 1 !important;
+        padding: 10px 0 !important;
+        font-size: 14px !important;
+        text-align: center !important;
+    }
+
+    /* ── Toast ── */
+    .toast-container {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+}
 </style>
 <?php $__env->stopPush(); ?>
 
 <?php $__env->startSection('content'); ?>
     <section class="prt py-5">
         <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div id="prt_pageTitleRow" class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h4 class="mb-0 d-flex align-items-center"><i class="bi bi-cart-plus me-2"></i> Purchase Return
                         Transaction
@@ -166,9 +315,9 @@
                         <!-- Header Section -->
                         <div class="header-section-prt">
                             <!-- Row 1 -->
-                            <div class="d-flex gap-3 mb-2">
+                            <div id="prt_headerRow1" class="d-flex gap-3 mb-2">
                                 <!-- Left Side - Date, Day, T.No, and Insert Orders stacked vertically -->
-                                <div style="width: 200px;">
+                                <div id="prt_headerLeftCol" style="width: 200px;">
                                     <div class="field-group mb-2">
                                         <label style="width: 50px;">Date:</label>
                                         <input type="date" id="return_date" name="return_date" class="form-control" style="width: 140px;" value="<?php echo e(date('Y-m-d')); ?>" required>
@@ -303,7 +452,7 @@
 
 
                         <!-- Calculation Section -->
-                        <div class="bg-white border rounded p-2 mb-2" style="overflow: hidden;">
+                        <div id="prt_calcSection" class="bg-white border rounded p-2 mb-2" style="overflow: hidden;">
                             <div class="d-flex flex-wrap align-items-center gap-3" style="font-size: 11px;">
                                 <!-- HSN Code -->
                                 <div class="d-flex align-items-center gap-1">
@@ -378,7 +527,7 @@
 
 
                         <!-- Summary Section -->
-                        <div class="bg-white border rounded p-2 mb-2">
+                        <div id="prt_summarySection" class="bg-white border rounded p-2 mb-2">
                             <!-- Row 1: 6 fields -->
                             <div class="d-flex align-items-center" style="font-size: 11px; gap: 10px;">
                                 <div class="d-flex align-items-center" style="gap: 5px;">
@@ -432,7 +581,7 @@
                         </div>
 
                         <!-- Additional Fields Section -->
-                        <div class="col-12 mb-4 bg-white border rounded p-2 mb-2">
+                        <div id="prt_additionalSection" class="col-12 mb-4 bg-white border rounded p-2 mb-2">
                             <div class="row gx-3" style="font-size: 11px;">
                                 <!-- col 1 - Packing, Unit, Cl.Qty, Lctn -->
                                 <div class="col-lg-2">
@@ -597,7 +746,7 @@
                         </div>
 
                         <!-- Action Buttons -->
-                        <div class="d-flex justify-content-end gap-2 mt-3">
+                        <div id="prt_actionButtons" class="d-flex justify-content-end gap-2 mt-3">
                             <button type="button" class="btn btn-secondary" onclick="window.location.href='<?php echo e(route('admin.dashboard')); ?>'">
                                 <i class="bi bi-x-circle me-1"></i> Cancel
                             </button>
