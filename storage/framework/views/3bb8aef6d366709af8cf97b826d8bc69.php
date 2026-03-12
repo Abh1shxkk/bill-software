@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Cash Deposited / Withdrawn from Bank'); ?>
 
-@section('title', 'Cash Deposited / Withdrawn from Bank')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <style>
     .bank-form { background: #e0e0e0; padding: 20px; }
     .bank-form-inner { background: #f5f5f5; border: 1px solid #999; padding: 20px; max-width: 600px; margin: 0 auto; }
@@ -86,12 +84,12 @@
         <div class="form-title">-: CASH DEPOSITED / WITHDRAWN FROM BANK :-</div>
         
         <form id="transactionForm" autocomplete="off">
-            @csrf
+            <?php echo csrf_field(); ?>
             <div class="form-row">
                 <div class="form-label">Date :</div>
                 <div class="form-input">
-                    <input type="date" name="transaction_date" id="transactionDate" value="{{ date('Y-m-d') }}" style="width: 150px;" onchange="updateDayName()" data-custom-enter>
-                    <span class="day-display" id="dayName">{{ date('l') }}</span>
+                    <input type="date" name="transaction_date" id="transactionDate" value="<?php echo e(date('Y-m-d')); ?>" style="width: 150px;" onchange="updateDayName()" data-custom-enter>
+                    <span class="day-display" id="dayName"><?php echo e(date('l')); ?></span>
                 </div>
             </div>
 
@@ -106,7 +104,7 @@
             <div class="form-row">
                 <div class="form-label">Bank :</div>
                 <div class="form-input" style="position: relative;">
-                    {{-- Custom dropdown replaces native select --}}
+                    
                     <input type="text" id="bankDisplay" placeholder="Select an option" readonly autocomplete="off" data-custom-enter>
                     <input type="hidden" name="bank_id" id="bankId" value="">
                     <input type="hidden" id="bankNameHidden" value="">
@@ -114,11 +112,11 @@
                         <input type="text" id="bankSearchInput" placeholder="Type to search..." data-custom-enter>
                         <div id="bankOpts">
                             <div class="bank-opt" data-val="" data-name="" style="color:#888;">--- Select Bank ---</div>
-                            @foreach($banks as $bank)
+                            <?php $__currentLoopData = $banks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $bank): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="bank-opt"
-                                 data-val="{{ $bank->id }}"
-                                 data-name="{{ $bank->name }}">{{ $bank->alter_code ?? $bank->id }} - {{ $bank->name }}</div>
-                            @endforeach
+                                 data-val="<?php echo e($bank->id); ?>"
+                                 data-name="<?php echo e($bank->name); ?>"><?php echo e($bank->alter_code ?? $bank->id); ?> - <?php echo e($bank->name); ?></div>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                     </div>
                 </div>
@@ -147,14 +145,14 @@
 
             <div class="footer-section">
                 <button type="button" class="btn btn-primary btn-action" id="btnSave" onclick="saveTransaction()">Save</button>
-                <a href="{{ route('admin.bank-transaction.index') }}" class="btn btn-secondary btn-action ms-2" id="btnExit">Exit (Esc)</a>
+                <a href="<?php echo e(route('admin.bank-transaction.index')); ?>" class="btn btn-secondary btn-action ms-2" id="btnExit">Exit (Esc)</a>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-const banks = @json($banks);
+const banks = <?php echo json_encode($banks, 15, 512) ?>;
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDayName();
@@ -405,7 +403,7 @@ function saveTransaction() {
         cheque_no: document.getElementById('chequeNo').value,
         amount: parseFloat(amount),
         narration: document.getElementById('narration').value,
-        _token: '{{ csrf_token() }}'
+        _token: '<?php echo e(csrf_token()); ?>'
     };
     
     // Mark as saving to prevent exit confirmation dialog
@@ -413,9 +411,9 @@ function saveTransaction() {
         window.markAsSaving();
     }
     
-    fetch('{{ route("admin.bank-transaction.store") }}', {
+    fetch('<?php echo e(route("admin.bank-transaction.store")); ?>', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>' },
         body: JSON.stringify(formData)
     })
     .then(r => r.json())
@@ -531,4 +529,5 @@ function saveTransaction() {
     });
 })();
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\bill-software\resources\views/admin/bank-transaction/transaction.blade.php ENDPATH**/ ?>

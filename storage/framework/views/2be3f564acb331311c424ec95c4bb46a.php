@@ -2133,7 +2133,10 @@
     </script>
 
     <!-- Transaction Date Validator - Global Script -->
-    <script src="<?php echo e(asset('js/transaction-date-validator.js')); ?>?v=<?php echo e(time()); ?>"></script>
+    <?php ($transactionDateValidatorPath = public_path('js/transaction-date-validator.js')); ?>
+    <?php if(file_exists($transactionDateValidatorPath)): ?>
+        <script src="<?php echo e(asset('js/transaction-date-validator.js')); ?>?v=<?php echo e(filemtime($transactionDateValidatorPath)); ?>"></script>
+    <?php endif; ?>
 
     <?php echo $__env->yieldPushContent('scripts'); ?>
 
@@ -2783,11 +2786,7 @@
     </script>
     
     <!-- Exit Confirmation Modal for Transaction/Modification Pages - MUST load before keyboard shortcuts -->
-    <?php
-        $currentPath = request()->path();
-        $shouldShowExitConfirm = str_contains($currentPath, 'transaction') || str_contains($currentPath, 'modification');
-    ?>
-    <?php if($shouldShowExitConfirm): ?>
+    <?php if(str_contains(request()->path(), 'transaction') || str_contains(request()->path(), 'modification')): ?>
     <?php echo $__env->make('layouts.partials.exit-confirmation', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <?php endif; ?>
     

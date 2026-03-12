@@ -88,6 +88,55 @@
     .custom-modal-close { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; line-height: 1; }
     .custom-modal-body { padding: 15px; overflow-y: auto; flex: 1; }
     .custom-modal-footer { padding: 10px 15px; border-top: 1px solid #ddd; display: flex; justify-content: flex-end; gap: 10px; }
+
+@media (max-width: 767px) {
+    /* ── Header: stack col-auto fields ── */
+    .header-section .row.g-2 { flex-direction: column !important; }
+    .header-section .col-auto {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 4px !important;
+    }
+    .header-section .col-auto input { width: 100% !important; }
+
+    /* ── Main body cols stack ── */
+    .row.g-0 > .col-md-8,
+    .row.g-0 > .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── Inner col-auto rows (supplier, gst, pan, city, pin) ── */
+    .row.g-1 .col-auto {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 4px !important;
+    }
+    .row.g-1 .col-auto input { width: 100% !important; }
+
+    /* ── Supplier dropdown ── */
+    #supplierDisplay { width: 100% !important; }
+    #supplierMenu    { width: 100% !important; }
+
+    /* ── All tables: horizontal scroll ── */
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-grid { min-width: 420px !important; }
+    .table-hsn  { min-width: 500px !important; }
+    .table-gst  { min-width: 420px !important; }
+
+    /* ── Footer buttons ── */
+    .footer-section.d-flex.justify-content-end.gap-2 {
+        flex-wrap: wrap !important;
+        justify-content: stretch !important;
+    }
+    .footer-section .btn {
+        flex: 1 !important;
+        margin: 2px !important;
+    }
+}
 </style>
 
 <div class="card shadow-sm border-0">

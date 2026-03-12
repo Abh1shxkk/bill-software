@@ -2135,7 +2135,10 @@
     </script>
 
     <!-- Transaction Date Validator - Global Script -->
-    <script src="{{ asset('js/transaction-date-validator.js') }}?v={{ time() }}"></script>
+    @php($transactionDateValidatorPath = public_path('js/transaction-date-validator.js'))
+    @if (file_exists($transactionDateValidatorPath))
+        <script src="{{ asset('js/transaction-date-validator.js') }}?v={{ filemtime($transactionDateValidatorPath) }}"></script>
+    @endif
 
     @stack('scripts')
 
@@ -2785,11 +2788,7 @@
     </script>
     
     <!-- Exit Confirmation Modal for Transaction/Modification Pages - MUST load before keyboard shortcuts -->
-    @php
-        $currentPath = request()->path();
-        $shouldShowExitConfirm = str_contains($currentPath, 'transaction') || str_contains($currentPath, 'modification');
-    @endphp
-    @if($shouldShowExitConfirm)
+    @if(str_contains(request()->path(), 'transaction') || str_contains(request()->path(), 'modification'))
     @include('layouts.partials.exit-confirmation')
     @endif
     

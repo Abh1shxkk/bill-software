@@ -243,6 +243,33 @@
         color: #155724 !important;
         border-color: #28a745 !important;
     }
+
+@media (max-width: 767px) {
+    .d-flex.justify-content-between.align-items-center.mb-2 { flex-wrap: wrap !important; }
+    .d-flex.justify-content-between.align-items-center.mb-2 > h5 { width: 100% !important; margin-bottom: 6px !important; }
+    .d-flex.justify-content-between.align-items-center.mb-2 > .d-flex { width: 100% !important; flex-wrap: wrap !important; }
+    .d-flex.justify-content-between.align-items-center.mb-2 .btn { flex: 1 !important; margin: 2px !important; }
+
+    .header-section .col-md-4 { flex: 0 0 100% !important; max-width: 100% !important; margin-bottom: 8px !important; }
+
+    .field-group { flex-wrap: wrap !important; }
+    .field-group input, .field-group select { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    #salesmanSearchWrapper, #areaSearchWrapper, #routeSearchWrapper,
+    #bankSearchWrapper, #collBoySearchWrapper { width: 100% !important; flex: 1 !important; }
+    .searchable-select-wrapper { width: 100% !important; }
+
+    #itemsTableContainer { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
+    #itemsTableContainer .table-compact { min-width: 680px !important; }
+
+    .total-section .col-md-6 { flex: 0 0 100% !important; max-width: 100% !important; }
+    .total-section .col-md-6.text-end { text-align: left !important; }
+
+    .row.mb-2 > .col-md-6 { flex: 0 0 100% !important; max-width: 100% !important; margin-bottom: 8px !important; }
+
+    .d-flex.justify-content-end.gap-2.mt-3 { flex-wrap: wrap !important; justify-content: stretch !important; }
+    .d-flex.justify-content-end.gap-2.mt-3 .btn { flex: 1 !important; margin: 2px !important; }
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">

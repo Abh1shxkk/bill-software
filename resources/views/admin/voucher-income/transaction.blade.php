@@ -73,6 +73,58 @@
     .debit-acct-item { padding: 4px 8px; cursor: pointer; font-size: 11px; border-bottom: 1px solid #eee; }
     .debit-acct-item:hover { background: #ffe0e0; }
     .debit-acct-item.kb-active { background: #cc0000 !important; color: #fff !important; }
+
+@media (max-width: 767px) {
+    /* ── Header section: stack col-auto fields ── */
+    .header-section .row.g-2 { flex-direction: column !important; }
+    .header-section .col-auto {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 4px !important;
+    }
+    .header-section .col-auto input { width: 100% !important; }
+
+    /* ── Main body: col-md-8 / col-md-4 stack ── */
+    .row.g-0 > .col-md-8,
+    .row.g-0 > .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* ── Customer info row fields ── */
+    .row.g-1 .col-auto {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 4px !important;
+    }
+    .row.g-1 .col-auto input { width: 100% !important; }
+
+    /* ── Customer dropdown wrapper ── */
+    .customer-dropdown-wrap {
+        width: 100% !important;
+        display: block !important;
+    }
+    .customer-dropdown-wrap input { width: 100% !important; }
+
+    /* ── Account / HSN tables: horizontal scroll ── */
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-grid { min-width: 420px !important; }
+    .table-hsn  { min-width: 500px !important; }
+    .table-gst  { min-width: 420px !important; }
+
+    /* ── Footer buttons ── */
+    .footer-section.d-flex.justify-content-end.gap-2 {
+        flex-wrap: wrap !important;
+        justify-content: stretch !important;
+    }
+    .footer-section .btn {
+        flex: 1 !important;
+        margin: 2px !important;
+    }
+}
 </style>
 
 <div class="card shadow-sm border-0">

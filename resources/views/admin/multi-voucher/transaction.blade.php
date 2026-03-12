@@ -52,6 +52,37 @@
         color: #0000ff;
         font-weight: bold;
     }
+
+@media (max-width: 767px) {
+    /* ── Header: Fixed Account row ── */
+    .header-section .row.g-2 { flex-wrap: wrap !important; }
+    .header-section .col-auto,
+    .header-section .col-auto.ms-auto {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        margin-bottom: 6px !important;
+    }
+    /* Account links wrap on small screen */
+    .account-link { display: inline-block; margin-bottom: 4px !important; }
+
+    /* ── Entries table: horizontal scroll ── */
+    .table-responsive.mb-2 {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #entriesTable { min-width: 580px !important; }
+
+    /* ── Footer buttons: wrap and stretch ── */
+    .footer-section.d-flex.justify-content-center.gap-2 {
+        flex-wrap: wrap !important;
+        justify-content: stretch !important;
+    }
+    .footer-section .btn {
+        flex: 1 1 40% !important;
+        margin: 2px !important;
+    }
+}
 </style>
 
 <div class="card shadow-sm border-0">

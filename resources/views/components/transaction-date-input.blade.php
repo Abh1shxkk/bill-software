@@ -37,6 +37,9 @@
 
 @once
 @push('scripts')
-<script src="{{ asset('js/transaction-date-validator.js') }}"></script>
+@php($transactionDateValidatorPath = public_path('js/transaction-date-validator.js'))
+@if (file_exists($transactionDateValidatorPath))
+<script src="{{ asset('js/transaction-date-validator.js') }}?v={{ filemtime($transactionDateValidatorPath) }}"></script>
+@endif
 @endpush
 @endonce

@@ -119,6 +119,56 @@
     .custom-modal-close:hover { opacity:0.8; }
     .custom-modal-body { padding:20px; max-height:calc(90vh - 60px); overflow-y:auto; }
     .kb-row-active, .kb-row-active td { background-color: #e8d8ff !important; font-weight: bold; }
+
+@media (max-width: 767px) {
+    /* ── Search section ── */
+    .search-section .col-md-4,
+    .search-section .col-md-3,
+    .search-section .col-md-5 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+    .search-section .col-md-5.text-end { text-align: left !important; }
+    .search-section .field-group { flex-wrap: wrap !important; }
+    .search-section .field-group input,
+    .search-section .field-group select { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* ── Header section cols ── */
+    .header-section .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+    .header-section .col-md-4.text-center { text-align: left !important; }
+    .header-section .col-md-4.text-end    { text-align: left !important; }
+    .header-section .d-flex { flex-wrap: wrap !important; }
+    .header-section .d-flex select,
+    .header-section .d-flex input { flex: 1 !important; width: auto !important; min-width: 0 !important; }
+
+    /* ── Items table ── */
+    #itemsTableContainer {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    #itemsTableContainer .table-compact { min-width: 480px !important; }
+
+    /* ── Narration section ── */
+    .narration-section .col-md-8,
+    .narration-section .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .narration-section .col-md-4.text-end { text-align: left !important; }
+
+    /* ── Footer section ── */
+    .footer-section {
+        flex-wrap: wrap !important;
+    }
+    .footer-section > div { width: 100% !important; margin-bottom: 4px !important; }
+    .footer-section .d-flex.gap-2 { flex-wrap: wrap !important; }
+    .footer-section .btn { flex: 1 !important; margin: 2px !important; }
+}
 </style>
 
 <!-- Account Selection Modal -->
