@@ -18,13 +18,15 @@ class TransactionDateController extends Controller
     {
         $request->validate([
             'transaction_type' => 'required|string',
-            'date' => 'required|date',
+            'date' => 'required|string',
             'exclude_id' => 'nullable|integer'
         ]);
 
+        $rawDate = (string) $request->input('date');
+
         $result = TransactionDateValidator::validate(
-            $request->transaction_type,
-            $request->date,
+            (string) $request->input('transaction_type'),
+            $rawDate,
             $request->exclude_id
         );
 

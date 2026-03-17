@@ -4986,33 +4986,7 @@ function getDiscountForItem(itemId, companyId) {
     return 0;
 }
 
-// Show toast notification
-function showToast(message, type = 'info') {
-    // Try SweetAlert2 first
-    if (typeof Swal !== 'undefined') {
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-        Toast.fire({
-            icon: type,
-            title: message
-        });
-        return;
-    }
-    
-    // Try toastr
-    if (typeof toastr !== 'undefined') {
-        toastr[type](message);
-        return;
-    }
-    
-    // Fallback to alert
-    alert(message);
-}
+// showToast defined below (custom toast notification)
 
 // Close modal on backdrop click
 document.getElementById('discountOptionsBackdrop')?.addEventListener('click', closeDiscountOptionsModal);
@@ -5099,10 +5073,14 @@ function insertItem() {
 
 // Save sale transaction
 function saveSale() {
+    const saleDateElement = document.getElementById('saleDate');
+    // Read date directly from input value (always YYYY-MM-DD for type=date)
+    const saleDateIso = saleDateElement ? (saleDateElement.value || '') : '';
+
     // Collect header data
     const headerData = {
         series: document.getElementById('seriesSelect')?.value || 'SB',
-        date: document.getElementById('saleDate')?.value || '',
+        date: saleDateIso,
         invoice_no: document.getElementById('invoiceNo')?.value || '',
         due_date: document.getElementById('dueDate')?.value || null,
         customer_id: document.getElementById('customerSelect')?.value || '',
@@ -7689,7 +7667,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // ── Header fields ────────────────────────────────────────────────
             _setField('seriesSelect',  'value', draft.series,      updateInvoiceType);
-            _setField('saleDate',      'value', draft.date,        updateDayName);
+            // If draft date is in the past, use today's date instead
+            var draftDate = draft.date;
+            var todayStr  = new Date().toISOString().split('T')[0];
+            if (!draftDate || draftDate < todayStr) { draftDate = todayStr; }
+            _setField('saleDate',      'value', draftDate,          updateDayName);
             _setField('dueDate',       'value', draft.due_date);
             _setField('cash',          'value', draft.cash);
             _setField('transfer',      'value', draft.transfer);
@@ -7768,6 +7750,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (typeof fetchCustomerDue === 'function') fetchCustomerDue();
                 }, 400);
             }
+
+            // Auto-delete draft after restoring — one-time use only
+            window.clearDraft();
 
         } catch(e) {
             console.warn('[Draft] Restore failed:', e);

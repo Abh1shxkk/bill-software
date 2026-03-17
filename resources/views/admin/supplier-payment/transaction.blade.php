@@ -82,6 +82,95 @@
     .custom-dropdown-menu::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
+
+@media (max-width: 767px) {
+    /* ── Page title row ── */
+    .d-flex.justify-content-between.align-items-center.mb-2 {
+        flex-wrap: wrap !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 > h5 {
+        width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 > .d-flex,
+    .d-flex.justify-content-between.align-items-center.mb-2 > a {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+    }
+    .d-flex.justify-content-between.align-items-center.mb-2 .btn {
+        flex: 1 !important;
+        margin: 2px !important;
+    }
+
+    /* ── Search card (modification only) ── */
+    .card.shadow-sm.border-0.mb-2 .col-md-3 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 6px !important;
+    }
+
+    /* ── Header cols ── */
+    .header-section .col-md-4 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+    .header-section .col-md-4.text-end {
+        text-align: left !important;
+    }
+
+    /* ── field-group inputs ── */
+    .field-group {
+        flex-wrap: wrap !important;
+    }
+    .field-group input,
+    .field-group select {
+        flex: 1 !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+
+    /* ── Bank custom dropdown wrapper (style="width:230px") ── */
+    .custom-dropdown-wrapper {
+        width: 100% !important;
+        flex: 1 !important;
+    }
+
+    /* ── Items table ── */
+    .table-responsive {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    .table-compact {
+        min-width: 680px !important;
+    }
+
+    /* ── Totals row ── */
+    .total-section .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+    .total-section .col-md-6.text-end {
+        text-align: left !important;
+    }
+
+    /* ── Adjustment tables cols ── */
+    .row.mb-2 > .col-md-6 {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* ── Action buttons ── */
+    .d-flex.justify-content-end.gap-2.mt-3 {
+        flex-wrap: wrap !important;
+        justify-content: stretch !important;
+    }
+    .d-flex.justify-content-end.gap-2.mt-3 .btn {
+        flex: 1 !important;
+        margin: 2px !important;
+    }
+}
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-2">

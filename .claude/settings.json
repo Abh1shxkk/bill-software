@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find c:/xampp/htdocs/bill-software/app/Http/Controllers -name *Sale* -o -name *sale*)"
+    ]
+  }
+}

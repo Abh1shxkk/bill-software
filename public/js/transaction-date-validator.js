@@ -41,18 +41,13 @@ const TransactionDateValidator = {
         const fieldId = $dateInput.attr('id') || dateSelector;
         self.lastValidDates[fieldId] = $dateInput.val();
 
-        // Fetch and set date constraints
+        // Fetch date range for reference only — do NOT set min/max on input
+        // (backend validates dates; restricting min/max causes UI snapping issues)
         self.fetchDateRange(transactionType).then(function (range) {
-            if (range) {
-                $dateInput.attr('min', range.min_date);
-                $dateInput.attr('max', range.max_date);
-
-                // Set default to today if empty
-                if (!$dateInput.val()) {
-                    const today = new Date().toISOString().split('T')[0];
-                    $dateInput.val(today);
-                    self.lastValidDates[fieldId] = today;
-                }
+            if (range && !$dateInput.val()) {
+                const today = new Date().toISOString().split('T')[0];
+                $dateInput.val(today);
+                self.lastValidDates[fieldId] = today;
             }
         });
 
@@ -69,35 +64,63 @@ const TransactionDateValidator = {
         const self = this;
         const transactionType = $field.data('txn-type');
         const excludeId = $field.data('exclude-id');
-        const date = $field.val();
+        const date = self.extractIsoDateFromField($field);
         const fieldId = $field.attr('id') || $field.attr('name');
 
         if (!date || !transactionType) return;
 
         self.validate(transactionType, date, excludeId).then(function (result) {
             if (!result.valid) {
-                // Show error immediately
+                // Show error message
                 self.showAlert(result.message);
 
-                // Always revert to TODAY's date when invalid
-                const today = new Date().toISOString().split('T')[0];
-                $field.val(today);
-                self.lastValidDates[fieldId] = today;
+                // Snap to today's date (not last_date) so user can proceed normally
+                var todayIso = (function() {
+                    var d = new Date();
+                    var y = d.getFullYear();
+                    var m = String(d.getMonth() + 1).padStart(2, '0');
+                    var day = String(d.getDate()).padStart(2, '0');
+                    return y + '-' + m + '-' + day;
+                })();
+                $field.val(todayIso);
+                self.lastValidDates[fieldId] = todayIso;
 
-                // Trigger change event for day name update etc.
-                $field.trigger('input');
+                // Trigger input so day-name etc. updates
+                $field.trigger('input').trigger('change');
 
-                // Add visual feedback
+                // Visual feedback
                 $field.addClass('is-invalid');
-                setTimeout(function () {
-                    $field.removeClass('is-invalid');
-                }, 2000);
+                setTimeout(function () { $field.removeClass('is-invalid'); }, 2000);
             } else {
                 // Store as last valid date
                 self.lastValidDates[fieldId] = date;
                 self.clearError($field);
             }
         });
+    },
+
+    /**
+     * Extract an ISO (YYYY-MM-DD) date from an input field robustly.
+     */
+    extractIsoDateFromField: function ($field) {
+        const element = $field && $field.length ? $field[0] : null;
+        if (!element) {
+            return '';
+        }
+
+        // Prefer valueAsDate for native <input type="date"> to avoid locale string ambiguity.
+        if (element.type === 'date' && element.valueAsDate instanceof Date && !Number.isNaN(element.valueAsDate.getTime())) {
+            const y = element.valueAsDate.getFullYear();
+            const m = String(element.valueAsDate.getMonth() + 1).padStart(2, '0');
+            const d = String(element.valueAsDate.getDate()).padStart(2, '0');
+            const isoDate = `${y}-${m}-${d}`;
+
+            // Keep the control value normalized as well.
+            element.value = isoDate;
+            return isoDate;
+        }
+
+        return this.normalizeDateForApi(String($field.val() || ''));
     },
 
     /**
@@ -147,6 +170,7 @@ const TransactionDateValidator = {
     validate: function (transactionType, date, excludeId = null) {
         const self = this;
         const baseUrl = self.getBaseUrl();
+        const normalizedDate = self.normalizeDateForApi(date);
 
         return $.ajax({
             url: baseUrl + '/admin/api/validate-transaction-date',
@@ -154,7 +178,7 @@ const TransactionDateValidator = {
             data: {
                 _token: $('meta[name="csrf-token"]').attr('content'),
                 transaction_type: transactionType,
-                date: date,
+                date: normalizedDate,
                 exclude_id: excludeId
             },
             dataType: 'json'
@@ -166,6 +190,48 @@ const TransactionDateValidator = {
             }
             return { valid: false, message: 'Validation failed' };
         });
+    },
+
+    /**
+     * Normalize date value into YYYY-MM-DD for API calls.
+     */
+    normalizeDateForApi: function (date) {
+        if (!date || typeof date !== 'string') return date;
+
+        const value = date.trim();
+
+        // Already ISO date
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return value;
+        }
+
+        // ISO datetime -> take date part
+        const isoDateMatch = value.match(/^(\d{4}-\d{2}-\d{2})[T\s].*$/);
+        if (isoDateMatch) {
+            return isoDateMatch[1];
+        }
+
+        // dd-mm-yyyy or dd/mm/yyyy
+        const dmyMatch = value.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
+        if (dmyMatch) {
+            return `${dmyMatch[3]}-${dmyMatch[2]}-${dmyMatch[1]}`;
+        }
+
+        // dd-MMM-yyyy
+        const monMap = {
+            jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06',
+            jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12'
+        };
+        const dMonYMatch = value.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/);
+        if (dMonYMatch) {
+            const dd = dMonYMatch[1].padStart(2, '0');
+            const mm = monMap[dMonYMatch[2].toLowerCase()];
+            if (mm) {
+                return `${dMonYMatch[3]}-${mm}-${dd}`;
+            }
+        }
+
+        return value;
     },
 
     /**
@@ -238,25 +304,23 @@ const TransactionDateValidator = {
      * Show alert/toast message
      */
     showAlert: function (message) {
-        // Try SweetAlert2 first
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Invalid Date',
-                text: message,
-                confirmButtonText: 'OK'
-            });
+        // Use page's custom showToast if available (non-blocking)
+        if (typeof window.showToast === 'function') {
+            window.showToast('Invalid Date: ' + message, 'error', 'Invalid Date');
             return;
         }
-
+        // Try SweetAlert2
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ icon: 'warning', title: 'Invalid Date', text: message, confirmButtonText: 'OK' });
+            return;
+        }
         // Try Toastr
         if (typeof toastr !== 'undefined') {
             toastr.warning(message, 'Invalid Date');
             return;
         }
-
-        // Fallback to alert
-        alert('Invalid Date: ' + message);
+        // Console fallback (no native alert)
+        console.warn('Invalid Date:', message);
     },
 
     /**
